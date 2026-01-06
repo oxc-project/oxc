@@ -115,4 +115,102 @@ node_modules
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it("should migrate prettier-plugin-tailwindcss options to experimentalTailwindcss", async () => {
+    const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
+
+    try {
+      // Create prettier config with Tailwind plugin options
+      await fs.writeFile(
+        join(tempDir, ".prettierrc"),
+        JSON.stringify({
+          plugins: ["prettier-plugin-tailwindcss"],
+          tailwindConfig: "./tailwind.config.js",
+          tailwindFunctions: ["clsx", "cn"],
+          tailwindAttributes: ["myClass"],
+          tailwindPreserveWhitespace: true,
+        }),
+      );
+
+      const result = await runCli(tempDir, ["--migrate", "prettier"]);
+      expect(result.exitCode).toBe(0);
+
+      const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
+      const oxfmtrc = JSON.parse(content);
+
+      // Tailwind options should be migrated to experimentalTailwindcss
+      expect(oxfmtrc.experimentalTailwindcss).toEqual({
+        config: "./tailwind.config.js",
+        functions: ["clsx", "cn"],
+        attributes: ["myClass"],
+        preserveWhitespace: true,
+      });
+      // Tailwind options should not be at root level
+      expect(oxfmtrc.tailwindConfig).toBeUndefined();
+      expect(oxfmtrc.tailwindFunctions).toBeUndefined();
+      // plugins should not be copied
+      expect(oxfmtrc.plugins).toBeUndefined();
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should enable experimentalTailwindcss when plugin is listed without options", async () => {
+    const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
+
+    try {
+      // Create prettier config with Tailwind plugin but no options
+      await fs.writeFile(
+        join(tempDir, ".prettierrc"),
+        JSON.stringify({
+          plugins: ["prettier-plugin-tailwindcss"],
+        }),
+      );
+
+      const result = await runCli(tempDir, ["--migrate", "prettier"]);
+      expect(result.exitCode).toBe(0);
+
+      const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
+      const oxfmtrc = JSON.parse(content);
+
+      // experimentalTailwindcss should be enabled (empty object)
+      expect(oxfmtrc.experimentalTailwindcss).toEqual({});
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should warn about regex values in tailwindFunctions and tailwindAttributes", async () => {
+    const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
+
+    try {
+      // Create prettier config with regex values in Tailwind options
+      await fs.writeFile(
+        join(tempDir, ".prettierrc"),
+        JSON.stringify({
+          plugins: ["prettier-plugin-tailwindcss"],
+          tailwindFunctions: ["clsx", "/^tw-/"],
+          tailwindAttributes: ["className", "/^data-tw-/"],
+        }),
+      );
+
+      const result = await runCli(tempDir, ["--migrate", "prettier"]);
+      expect(result.exitCode).toBe(0);
+
+      // Check warnings are printed for regex values
+      expect(result.stderr).toContain('Do not support regex in "tailwindFunctions"');
+      expect(result.stderr).toContain("/^tw-/");
+      expect(result.stderr).toContain('Do not support regex in "tailwindAttributes"');
+      expect(result.stderr).toContain("/^data-tw-/");
+
+      const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
+      const oxfmtrc = JSON.parse(content);
+
+      // Non-regex values should still be migrated
+      expect(oxfmtrc.experimentalTailwindcss.functions).toEqual(["clsx", "/^tw-/"]);
+      expect(oxfmtrc.experimentalTailwindcss.attributes).toEqual(["className", "/^data-tw-/"]);
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });

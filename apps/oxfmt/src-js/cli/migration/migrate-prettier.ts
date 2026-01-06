@@ -3,6 +3,8 @@
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
+import { TAILWIND_OPTION_MAPPING } from "../../libs/prettier";
+import { Options } from "prettier";
 
 /**
  * Run the `--migrate prettier` command to migrate various Prettier's config to `.oxfmtrc.json` file.
@@ -64,9 +66,18 @@ export async function runMigratePrettier() {
       console.error(`  - "overrides" is not supported, skipping...`);
       continue;
     }
-    // Oxfmt does not yet support plugins
-    if (key === "plugins") {
-      console.error(`  - "plugins" is not supported yet, skipping...`);
+    // Handle plugins - check for prettier-plugin-tailwindcss and warn about others
+    if (key === "plugins" && Array.isArray(value)) {
+      for (const plugin of (value as Options["plugins"])!) {
+        if (plugin === "prettier-plugin-tailwindcss") {
+          // Migrate `prettier-plugin-tailwindcss` options
+          migrateTailwindOptions(prettierConfig!, oxfmtrc);
+        } else if (typeof plugin === "string") {
+          console.error(`  - plugins: "${plugin}" is not supported, skipping...`);
+        } else {
+          console.error(`  - plugins: custom plugin module is not supported, skipping...`);
+        }
+      }
       continue;
     }
     // Oxfmt does not support this, fallback to default
@@ -77,6 +88,11 @@ export async function runMigratePrettier() {
     // Oxfmt does not support these experimental options yet
     if (key === "experimentalTernaries" || key === "experimentalOperatorPosition") {
       console.error(`  - "${key}" is not supported in JS/TS files yet`);
+      continue;
+    }
+
+    // Skip Tailwind options - handled separately by migrateTailwindOptions
+    if (key.startsWith("tailwind")) {
       continue;
     }
 
@@ -93,8 +109,7 @@ export async function runMigratePrettier() {
     );
     oxfmtrc.printWidth = 80;
   }
-  // `embeddedLanguageFormatting` is not fully supported yet and default "off" in Oxfmt.
-  // Prettier default is "auto".
+  // `embeddedLanguageFormatting` is not fully supported for JS-in-XXX yet.
   if (oxfmtrc.embeddedLanguageFormatting !== "off") {
     console.error(`  - "embeddedLanguageFormatting" in JS/TS files is not fully supported yet`);
   }
@@ -139,4 +154,59 @@ async function resolvePrettierIgnore(cwd: string) {
   } catch {}
 
   return ignores;
+}
+
+// ---
+
+/**
+ * Migrate prettier-plugin-tailwindcss options to Oxfmt's experimentalTailwindcss format.
+ *
+ * Prettier format:
+ * ```json
+ * {
+ *   "plugins": ["prettier-plugin-tailwindcss"],
+ *   "tailwindConfig": "./tailwind.config.js",
+ *   "tailwindFunctions": ["clsx", "cn"]
+ * }
+ * ```
+ *
+ * Oxfmt format:
+ * ```json
+ * {
+ *   "experimentalTailwindcss": {
+ *     "config": "./tailwind.config.js",
+ *     "functions": ["clsx", "cn"]
+ *   }
+ * }
+ * ```
+ */
+function migrateTailwindOptions(
+  prettierConfig: Record<string, unknown>,
+  oxfmtrc: Record<string, unknown>,
+): void {
+  // Collect Tailwind options from Prettier config
+  const tailwindOptions: Record<string, unknown> = {};
+  for (const [oxfmtKey, prettierKey] of Object.entries(TAILWIND_OPTION_MAPPING)) {
+    const value = prettierConfig[prettierKey];
+    if (value !== undefined) {
+      if (
+        (prettierKey == "tailwindFunctions" || prettierKey == "tailwindAttributes") &&
+        Array.isArray(value)
+      ) {
+        for (const item of value as string[]) {
+          if (typeof item === "string" && item.startsWith("/") && item.endsWith("/")) {
+            console.warn(
+              `  - Do not support regex in "${prettierKey}" option yet, skipping: ${item}`,
+            );
+            continue;
+          }
+        }
+      }
+      tailwindOptions[oxfmtKey] = value;
+    }
+  }
+
+  // Only add experimentalTailwindcss if plugin is used or options are present
+  oxfmtrc.experimentalTailwindcss = tailwindOptions;
+  console.log("Migrated prettier-plugin-tailwindcss options to experimentalTailwindcss");
 }
