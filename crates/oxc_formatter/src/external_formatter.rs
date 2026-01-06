@@ -17,7 +17,7 @@ const SUPPORTED_TAGS: &[&str] = &["css", "styled", "gql", "graphql", "html", "md
 /// This struct holds all callbacks that delegate to external (typically JS) implementations:
 /// - Embedded language formatting (CSS, GraphQL, HTML in template literals)
 /// - Tailwind CSS class sorting
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct ExternalCallbacks {
     embedded_formatter: Option<EmbeddedFormatterCallback>,
     tailwind: Option<TailwindCallback>,

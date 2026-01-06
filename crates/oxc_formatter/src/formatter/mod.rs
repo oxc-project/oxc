@@ -56,7 +56,7 @@ pub use self::{
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Formatted<'a> {
     document: Document<'a>,
     context: FormatContext<'a>,
