@@ -694,6 +694,7 @@ pub(crate) mod vue {
     pub mod no_deprecated_destroyed_lifecycle;
     pub mod no_export_in_script_setup;
     pub mod no_import_compiler_macros;
+    pub mod no_lifecycle_after_await;
     pub mod no_multiple_slot_args;
     pub mod no_required_prop_with_default;
     pub mod no_this_in_before_route_enter;
@@ -1349,6 +1350,7 @@ oxc_macros::declare_all_lint_rules! {
     vue::no_deprecated_destroyed_lifecycle,
     vue::no_export_in_script_setup,
     vue::no_import_compiler_macros,
+    vue::no_lifecycle_after_await,
     vue::no_multiple_slot_args,
     vue::no_required_prop_with_default,
     vue::no_this_in_before_route_enter,
