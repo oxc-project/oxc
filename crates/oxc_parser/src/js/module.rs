@@ -272,7 +272,15 @@ impl<'a> ParserImpl<'a> {
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
-                    Kind::Star => specifiers.push(self.parse_import_namespace_specifier()),
+                    Kind::Star => {
+                        // TS1363: A type-only import can specify a default import or named bindings, but not both.
+                        if self.is_ts && import_kind == ImportOrExportKind::Type {
+                            self.error(diagnostics::type_only_import_default_and_named(
+                                default_span,
+                            ));
+                        }
+                        specifiers.push(self.parse_import_namespace_specifier());
+                    }
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
                         // TS1363: A type-only import can specify a default import or named bindings, but not both.
