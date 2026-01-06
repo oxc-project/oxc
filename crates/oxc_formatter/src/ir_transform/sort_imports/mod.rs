@@ -8,8 +8,12 @@ mod source_line;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
-    SortImportsOptions,
-    formatter::format_element::{FormatElement, LineMode, document::Document},
+    JsLabels, SortImportsOptions,
+    formatter::format_element::{
+        FormatElement, LineMode,
+        document::Document,
+        tag::{LabelId, Tag},
+    },
     ir_transform::sort_imports::{
         group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
         source_line::SourceLine,
@@ -65,19 +69,54 @@ impl SortImportsTransform {
         //   - If this is the case, we should check `Tag::StartLabelled(JsLabels::ImportDeclaration)`
         let mut lines = vec![];
         let mut current_line_start = 0;
+        // Track if we're inside a multiline block comment (started with `/*` but not yet closed with `*/`)
+        let mut in_multiline_comment = false;
+        // Track if current line is a standalone multiline comment (no import on same line)
+        let mut is_standalone_multiline_comment = false;
+
         for (idx, el) in prev_elements.iter().enumerate() {
+            // Check for multiline comment boundaries
+            if let FormatElement::Text { text, .. } = el {
+                if !in_multiline_comment && text.starts_with("/*") && !text.ends_with("*/") {
+                    in_multiline_comment = true;
+                    is_standalone_multiline_comment = true;
+                } else if in_multiline_comment && text.ends_with("*/") {
+                    in_multiline_comment = false;
+                }
+            }
+
+            // An import on the same line means the comment is attached to it, not standalone
+            if let FormatElement::Tag(Tag::StartLabelled(id)) = el
+                && *id == LabelId::of(JsLabels::ImportDeclaration)
+            {
+                is_standalone_multiline_comment = false;
+            }
+
             if let FormatElement::Line(mode) = el
                 && matches!(mode, LineMode::Empty | LineMode::Hard)
             {
+                // If we're inside a multiline comment, don't flush the line yet.
+                // Wait until the comment is closed so the entire comment is treated as one line.
+                if in_multiline_comment {
+                    continue;
+                }
+
                 // Flush current line
                 if current_line_start < idx {
-                    lines.push(SourceLine::from_element_range(
-                        prev_elements,
-                        current_line_start..idx,
-                        *mode,
-                    ));
+                    let line = if is_standalone_multiline_comment {
+                        // Standalone multiline comment: directly create CommentOnly
+                        SourceLine::CommentOnly(current_line_start..idx, *mode)
+                    } else {
+                        SourceLine::from_element_range(
+                            prev_elements,
+                            current_line_start..idx,
+                            *mode,
+                        )
+                    };
+                    lines.push(line);
                 }
                 current_line_start = idx + 1;
+                is_standalone_multiline_comment = false;
 
                 // We need this explicitly to detect boundaries later.
                 if matches!(mode, LineMode::Empty) {

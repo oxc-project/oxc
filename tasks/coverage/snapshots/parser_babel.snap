@@ -1,9 +1,9 @@
-commit: cbdc42fe
+commit: 761c2509
 
 parser_babel Summary:
 AST Parsed     : 2223/2235 (99.46%)
 Positive Passed: 2203/2235 (98.57%)
-Negative Passed: 1646/1696 (97.05%)
+Negative Passed: 1647/1696 (97.11%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
@@ -89,8 +89,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-escaped-with/input.ts
 
@@ -3331,7 +3329,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                    ───────────
    ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/duplicate-export-default/input.js:1:8]
  1 │ export default {};
    ·        ───────
@@ -3339,7 +3337,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ───────
    ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/duplicate-export-default-and-export-as-default/input.js:1:8]
  1 │ export default function() {};
    ·        ───────
@@ -14288,6 +14286,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/import-invalid-type-only-as-string/input.ts:1:22]
  1 │ import { type foo as "bar" } from "mod";
    ·                      ─────
+   ╰────
+
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts:1:1]
+ 1 │ import type FooDefault, { Bar, Baz } from "module";
+   · ───────────────────────────────────────────────────
    ╰────
 
   × TS(1141): String literal expected.

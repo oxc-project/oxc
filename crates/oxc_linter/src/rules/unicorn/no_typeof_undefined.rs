@@ -88,10 +88,10 @@ impl Rule for NoTypeofUndefined {
         ctx.diagnostic(no_typeof_undefined_diagnostic(bin_expr.span));
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoTypeofUndefined>>(value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 }
 

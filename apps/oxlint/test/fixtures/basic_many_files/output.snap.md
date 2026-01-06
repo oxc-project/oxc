@@ -264,7 +264,7 @@
   help: Remove the debugger statement
 
 Found 20 warnings and 20 errors.
-Finished in Xms on 20 files using X threads.
+Finished in Xms on 20 files with 56 rules using X threads.
 ```
 
 # stderr

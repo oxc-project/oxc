@@ -10,7 +10,7 @@ use oxc_linter::table::RuleTable;
 pub fn render_rules_table(table: &RuleTable, docs_prefix: &str) -> String {
     let total = table.total;
     let turned_on_by_default_count = table.turned_on_by_default_count;
-
+    let rules_with_fixes = table.rules_with_fixes;
     let body = table
         .sections
         .iter()
@@ -28,6 +28,7 @@ The progress of all rule implementations is tracked [here](https://github.com/ox
 
 - Total number of rules: {total}
 - Rules turned on by default: {turned_on_by_default_count}
+- Rules with fixes available: {rules_with_fixes}
 
 **Legend for 'Fixable?' column:**
 - 🛠️: an auto-fix is available for this rule

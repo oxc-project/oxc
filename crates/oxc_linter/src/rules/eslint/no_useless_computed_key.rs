@@ -118,10 +118,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessComputedKey {
-    fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoUselessComputedKey>>(value)
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
             .unwrap_or_default()
-            .into_inner()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -345,6 +345,86 @@ fn test() {
         ("(class { ['__proto__'] })", None),
         ("(class { static ['__proto__'] })", None),
         ("(class { ['prototype'] })", None),
+    ];
+
+    let _fix = vec![
+        ("({ ['0']: 0 })", "({ '0': 0 })", None),
+        ("var { ['0']: a } = obj", "var { '0': a } = obj", None),
+        ("({ ['0+1,234']: 0 })", "({ '0+1,234': 0 })", None),
+        ("({ [0]: 0 })", "({ 0: 0 })", None),
+        ("var { [0]: a } = obj", "var { 0: a } = obj", None),
+        ("({ ['x']: 0 })", "({ 'x': 0 })", None),
+        ("var { ['x']: a } = obj", "var { 'x': a } = obj", None),
+        ("var { ['__proto__']: a } = obj", "var { '__proto__': a } = obj", None),
+        ("({ ['x']() {} })", "({ 'x'() {} })", None),
+        ("({ [('x')]: 0 })", "({ 'x': 0 })", None),
+        ("var { [('x')]: a } = obj", "var { 'x': a } = obj", None),
+        ("({ *['x']() {} })", "({ *'x'() {} })", None),
+        ("({ async ['x']() {} })", "({ async 'x'() {} })", None),
+        ("({ get[.2]() {} })", "({ get.2() {} })", None),
+        ("({ set[.2](value) {} })", "({ set.2(value) {} })", None),
+        ("({ async[.2]() {} })", "({ async.2() {} })", None),
+        ("({ [2]() {} })", "({ 2() {} })", None),
+        ("({ get [2]() {} })", "({ get 2() {} })", None),
+        ("({ set [2](value) {} })", "({ set 2(value) {} })", None),
+        ("({ async [2]() {} })", "({ async 2() {} })", None),
+        ("({ get[2]() {} })", "({ get 2() {} })", None),
+        ("({ set[2](value) {} })", "({ set 2(value) {} })", None),
+        ("({ async[2]() {} })", "({ async 2() {} })", None),
+        ("({ get['foo']() {} })", "({ get'foo'() {} })", None),
+        ("({ *[2]() {} })", "({ *2() {} })", None),
+        ("({ async*[2]() {} })", "({ async*2() {} })", None),
+        ("({ ['constructor']: 1 })", "({ 'constructor': 1 })", None),
+        ("({ ['prototype']: 1 })", "({ 'prototype': 1 })", None),
+        (
+            "class Foo { ['0']() {} }",
+            "class Foo { '0'() {} }",
+            Some(serde_json::json!([{ "enforceForClassMembers": true }])),
+        ),
+        (
+            "class Foo { ['0+1,234']() {} }",
+            "class Foo { '0+1,234'() {} }",
+            Some(serde_json::json!([{}])),
+        ),
+        // (
+        //     "class Foo { ['x']() {} }",
+        //     "class Foo { 'x'() {} }",
+        //     Some(serde_json::json!([{ "enforceForClassMembers": void 0 }])), // there is something ironic about this one causing a syntax error.
+        // ),
+        ("class Foo { [('x')]() {} }", "class Foo { 'x'() {} }", None),
+        ("class Foo { *['x']() {} }", "class Foo { *'x'() {} }", None),
+        ("class Foo { async ['x']() {} }", "class Foo { async 'x'() {} }", None),
+        ("class Foo { get[.2]() {} }", "class Foo { get.2() {} }", None),
+        ("class Foo { set[.2](value) {} }", "class Foo { set.2(value) {} }", None),
+        ("class Foo { async[.2]() {} }", "class Foo { async.2() {} }", None),
+        ("class Foo { [2]() {} }", "class Foo { 2() {} }", None),
+        ("class Foo { get [2]() {} }", "class Foo { get 2() {} }", None),
+        ("class Foo { set [2](value) {} }", "class Foo { set 2(value) {} }", None),
+        ("class Foo { async [2]() {} }", "class Foo { async 2() {} }", None),
+        ("class Foo { get[2]() {} }", "class Foo { get 2() {} }", None),
+        ("class Foo { set[2](value) {} }", "class Foo { set 2(value) {} }", None),
+        ("class Foo { async[2]() {} }", "class Foo { async 2() {} }", None),
+        ("class Foo { get['foo']() {} }", "class Foo { get'foo'() {} }", None),
+        ("class Foo { *[2]() {} }", "class Foo { *2() {} }", None),
+        ("class Foo { async*[2]() {} }", "class Foo { async*2() {} }", None),
+        (
+            "class Foo { static ['constructor']() {} }",
+            "class Foo { static 'constructor'() {} }",
+            None,
+        ),
+        ("class Foo { ['prototype']() {} }", "class Foo { 'prototype'() {} }", None),
+        ("(class { ['x']() {} })", "(class { 'x'() {} })", None),
+        ("(class { ['__proto__']() {} })", "(class { '__proto__'() {} })", None),
+        ("(class { static ['__proto__']() {} })", "(class { static '__proto__'() {} })", None),
+        ("(class { static ['constructor']() {} })", "(class { static 'constructor'() {} })", None),
+        ("(class { ['prototype']() {} })", "(class { 'prototype'() {} })", None),
+        ("class Foo { ['0'] }", "class Foo { '0' }", None),
+        ("class Foo { ['0'] = 0 }", "class Foo { '0' = 0 }", None),
+        ("class Foo { static[0] }", "class Foo { static 0 }", None),
+        ("class Foo { ['#foo'] }", "class Foo { '#foo' }", None),
+        ("(class { ['__proto__'] })", "(class { '__proto__' })", None),
+        ("(class { static ['__proto__'] })", "(class { static '__proto__' })", None),
+        ("(class { ['prototype'] })", "(class { 'prototype' })", None),
     ];
 
     Tester::new(NoUselessComputedKey::NAME, NoUselessComputedKey::PLUGIN, pass, fail)

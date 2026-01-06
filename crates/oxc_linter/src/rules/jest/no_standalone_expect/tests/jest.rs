@@ -36,6 +36,12 @@ fn test() {
         ),
         ("it.only('an only', value => { expect(value).toBe(true); });", None),
         ("it.concurrent('an concurrent', value => { expect(value).toBe(true); });", None),
+        ("it.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("it.only.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("it.skip.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.only.failing('a failing test', () => expect(1).toBe(2));", None),
+        ("test.skip.failing('a failing test', () => expect(1).toBe(2));", None),
         (
             "describe.each([1, true])('trues', value => { it('an it', () => expect(value).toBe(true) ); });",
             None,
@@ -101,6 +107,15 @@ fn test() {
                 });
               });
             });",
+            None,
+        ),
+        (
+            r"import {fakeAsync} from '@angular/core/testing';
+            describe('App', () => { it('should create the app', fakeAsync(() => { expect(true).toBeTruthy(); })); });",
+            None,
+        ),
+        (
+            r"describe('App', () => { it('should work with wrapper function', wrapperFn(() => { expect(true).toBeTruthy(); })); });",
             None,
         ),
     ];
@@ -180,6 +195,7 @@ fn test() {
             None,
         ),
         ("describe.each([1, true])('trues', value => { expect(value).toBe(true); });", None),
+        (r"describe('App', () => { wrapperFn(() => { expect(true).toBeTruthy(); }); });", None),
         (
             "
                 import { expect as pleaseExpect } from '@jest/globals';

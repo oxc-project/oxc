@@ -20,6 +20,11 @@ export declare const fooBad2: () => number;
 export declare function withAny(a: any, b: string): void;
 export declare function withUnknown(a: unknown, b: string): void;
 export declare function withTypeAssertion(a?: any): void;
+export declare function restWithDefault(...[value, options]: [string, object]): void;
+export declare function restWithNestedDefault(...[a, { b, c }]: [number, {
+	b: number;
+	c: number;
+}]): void;
 
 
 ==================== Errors ====================

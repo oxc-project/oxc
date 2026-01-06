@@ -357,12 +357,14 @@ fn test() {
         "let items = array.filter(bar); console.log(items[0]); items = [1,2,3]; console.log(items[0]);",
         "array.filter(foo).pop",
         "pop(array.filter(foo))",
+        // r#"array.filter(foo)["pop"]()"#,
         "array.filter(foo)[pop]()",
         "array.filter(foo).notPop()",
         "array.filter(foo).pop(extraArgument)",
         "array.filter(foo).pop(...[])",
         "array.filter.pop()",
         "filter(foo).pop()",
+        // r#"array["filter"](foo).pop()"#,
         "array[filter](foo).pop()",
         "array.notFilter(foo).pop()",
         "array.filter().pop()",
@@ -370,6 +372,7 @@ fn test() {
         "array.filter(...foo).pop()",
         "array.filter(foo).at",
         "at(array.filter(foo), -1)",
+        // r#"array.filter(foo)["at"](-1)"#,
         "array.filter(foo)[at](-1)",
         "array.filter(foo).notAt(-1)",
         "array.filter(foo).at()",
@@ -391,6 +394,7 @@ fn test() {
         "array.filter(foo).at(-true)",
         "array.filter.at(-1)",
         "filter(foo).at(-1)",
+        // r#"array["filter"](foo).at(-1)"#,
         "array[filter](foo).at(-1)",
         "array.notFilter(foo).at(-1)",
         "array.filter().at(-1)",
@@ -398,6 +402,7 @@ fn test() {
         "array.filter(...foo).at(-1)",
         "array2.filter(foo).at",
         "at(array.filter(foo), 0)",
+        // r#"array.filter(foo)["at"](0)"#,
         "array.filter(foo)[at](0)",
         "array.filter(foo).notAt(0)",
         "array2.filter(foo).at()",
@@ -422,9 +427,13 @@ fn test() {
 
     let fail = vec![
         "array.filter(foo)[0]",
+        "array?.filter(foo)[0]",
         "array.filter(foo, thisArgument)[0]",
+        "array?.filter(foo, thisArgument)[0]",
         "array.filter(foo).shift()",
+        "array?.filter(foo).shift()",
         "array.filter(foo, thisArgument).shift()",
+        "array?.filter(foo, thisArgument).shift()",
         "const item = array
 				// comment 1
 				.filter(
@@ -585,7 +594,9 @@ fn test() {
 				// comment 6
 				;",
         "array.filter(foo).at(0)",
+        "array?.filter(foo).at(0)",
         "array.filter(foo, thisArgument).at(0)",
+        "array?.filter(foo, thisArgument).at(0)",
         "const item = array
 				// comment 1
 				.filter(
@@ -605,11 +616,16 @@ fn test() {
         "array.filter(foo)?.pop()",
     ];
 
+    // TODO: Implement autofix and use these tests.
     let _fix: Vec<(&'static str, &'static str, Option<serde_json::Value>)> = vec![
         ("array.filter(foo)[0]", "array.find(foo)", None),
+        ("array?.filter(foo)[0]", "array?.find(foo)", None),
         ("array.filter(foo, thisArgument)[0]", "array.find(foo, thisArgument)", None),
+        ("array?.filter(foo, thisArgument)[0]", "array?.find(foo, thisArgument)", None),
         ("array.filter(foo).shift()", "array.find(foo)", None),
+        ("array?.filter(foo).shift()", "array?.find(foo)", None),
         ("array.filter(foo, thisArgument).shift()", "array.find(foo, thisArgument)", None),
+        ("array?.filter(foo, thisArgument).shift()", "array?.find(foo, thisArgument)", None),
         (
             "const item = array
 				// comment 1
@@ -956,7 +972,9 @@ fn test() {
             None,
         ),
         ("array.filter(foo).at(0)", "array.find(foo)", None),
+        ("array?.filter(foo).at(0)", "array?.find(foo)", None),
         ("array.filter(foo, thisArgument).at(0)", "array.find(foo, thisArgument)", None),
+        ("array?.filter(foo, thisArgument).at(0)", "array?.find(foo, thisArgument)", None),
         (
             "const item = array
 				// comment 1

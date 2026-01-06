@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.22.0] - 2026-01-05
+
+### 💥 BREAKING CHANGES
+
+- f7da875 oxlint: [**BREAKING**] Remove oxc_language_server binary (#17457) (Boshen)
+
+### 🚀 Features
+
+- 8fd4ea9 oxfmt: `options.embeddedLanguageFormatting` is now `"auto"` by default (#17649) (leaysgur)
+
+## [0.21.0] - 2025-12-29
+
+### 🐛 Bug Fixes
+
+- 0a39cba oxfmt: Update wrong doc comment (#17288) (leaysgur)
+
 ## [0.20.0] - 2025-12-22
 
 ### 🚀 Features

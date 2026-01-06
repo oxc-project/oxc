@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 6870b64 parser: Add TS1363 error code (#17609) (Sysix)
+- a7e1643 parser: Add TS2528 error code to duplicate_default_export diagnostic (#17558) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- 4ac23e1 parser: Produce syntax error for `({ foo(bar) })` (#17267) (Boshen)
+- a15e183 parser: Change span for missing initializer in decleration (#17134) (camc314)
+- 3ee71b0 parser: Add diagnostic for parameters with question mark and initializer (#17132) (camc314)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🚀 Features

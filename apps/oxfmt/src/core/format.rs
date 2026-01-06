@@ -137,28 +137,32 @@ impl SourceFormatter {
         }
 
         #[cfg(feature = "napi")]
-        let is_embed_off = format_options.embedded_language_formatting.is_off();
+        let external_callbacks = {
+            let external_formatter = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-        let base_formatter = Formatter::new(&allocator, format_options);
+            // Only create callbacks if at least one feature needs them
+            let needs_embedded = !format_options.embedded_language_formatting.is_off();
+            let needs_tailwind = format_options.experimental_tailwindcss.is_some();
 
-        #[cfg(feature = "napi")]
-        let formatted = {
-            if is_embed_off {
-                base_formatter.format(&ret.program)
+            if needs_embedded || needs_tailwind {
+                Some(external_formatter.to_external_callbacks(path, external_options))
             } else {
-                let embedded_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter(external_options);
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
+                None
             }
         };
+
         #[cfg(not(feature = "napi"))]
-        let formatted = {
-            let _ = external_options;
-            base_formatter.format(&ret.program)
+        let external_callbacks = {
+            let _ = (path, external_options);
+            None
         };
+
+        let base_formatter = Formatter::new(&allocator, format_options);
+        let formatted =
+            base_formatter.format_with_external_callbacks(&ret.program, external_callbacks);
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -228,12 +232,17 @@ impl SourceFormatter {
         sort_package_json: bool,
     ) -> Result<String, OxcDiagnostic> {
         let source_text: Cow<'_, str> = if sort_package_json {
-            Cow::Owned(sort_package_json::sort_package_json(source_text).map_err(|err| {
-                OxcDiagnostic::error(format!(
-                    "Failed to sort package.json: {}\n{err}",
-                    path.display()
-                ))
-            })?)
+            let options = sort_package_json::SortOptions { sort_scripts: false, pretty: false };
+            Cow::Owned(
+                sort_package_json::sort_package_json_with_options(source_text, &options).map_err(
+                    |err| {
+                        OxcDiagnostic::error(format!(
+                            "Failed to sort package.json: {}\n{err}",
+                            path.display()
+                        ))
+                    },
+                )?,
+            )
         } else {
             Cow::Borrowed(source_text)
         };

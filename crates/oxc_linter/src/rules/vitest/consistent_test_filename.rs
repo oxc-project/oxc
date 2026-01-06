@@ -117,7 +117,7 @@ fn compile_matcher_pattern(matcher_pattern: &serde_json::Value) -> Option<lazy_r
 }
 
 impl Rule for ConsistentTestFilename {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
 
         let all_test_pattern = config
@@ -130,7 +130,7 @@ impl Rule for ConsistentTestFilename {
             .and_then(|value| compile_matcher_pattern(value).map(CompiledTestPatternName))
             .unwrap_or_default();
 
-        Self(Box::new(ConsistentTestFilenameConfig { all_test_pattern, pattern }))
+        Ok(Self(Box::new(ConsistentTestFilenameConfig { all_test_pattern, pattern })))
     }
 
     fn run_once(&self, ctx: &LintContext) {

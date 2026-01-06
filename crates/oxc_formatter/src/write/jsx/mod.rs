@@ -15,10 +15,11 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Formatter,
+        TailwindContextEntry,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
+    utils::tailwindcss::is_tailwind_jsx_attribute,
     write,
 };
 
@@ -197,24 +198,26 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 let should_inline = !has_comment(f)
                     && (is_conditional_or_binary || should_inline_jsx_expression(self));
 
-                if should_inline {
-                    write!(f, ["{", self.expression(), line_suffix_boundary(), "}"]);
-                } else {
-                    write!(
-                        f,
-                        [group(&format_args!(
-                            "{",
+                let format_expression = format_with(|f| {
+                    if should_inline {
+                        write!(f, self.expression());
+                    } else {
+                        write!(
+                            f,
                             soft_block_indent(&format_with(|f| {
                                 write!(f, [self.expression()]);
                                 let comments =
                                     f.context().comments().comments_before(self.span.end);
                                 write!(f, [FormatTrailingComments::Comments(comments)]);
-                            })),
-                            line_suffix_boundary(),
-                            "}"
-                        ))]
-                    );
-                }
+                            }))
+                        );
+                    }
+                });
+
+                write!(
+                    f,
+                    [group(&format_args!("{", format_expression, line_suffix_boundary(), "}"))]
+                );
             }
         } else {
             // JSXAttributeValue
@@ -320,8 +323,26 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, JSXAttributeItem<'a>>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         write!(f, self.name());
+
         if let Some(value) = &self.value() {
+            // Check if this is a Tailwind attribute and push context
+            // Extract context entry before mutating f
+            let tailwind_ctx_to_push = f
+                .options()
+                .experimental_tailwindcss
+                .as_ref()
+                .filter(|opts| is_tailwind_jsx_attribute(&self.name, opts))
+                .map(|opts| TailwindContextEntry::new(true, opts.preserve_whitespace));
+
+            if let Some(ctx) = tailwind_ctx_to_push {
+                f.context_mut().push_tailwind_context(ctx);
+            }
+
             write!(f, ["=", value]);
+
+            if tailwind_ctx_to_push.is_some() {
+                f.context_mut().pop_tailwind_context();
+            }
         }
     }
 }

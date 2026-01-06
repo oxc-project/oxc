@@ -15,6 +15,7 @@ export default defineConfig({
   noExternal: [
     // Bundle it to control version
     "prettier",
+    "prettier-plugin-tailwindcss",
     // Cannot bundle: worker.js runs in separate thread and can't resolve bundled chunks
     // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!
     // "tinypool",

@@ -3,11 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
 };
 
 fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
@@ -16,7 +17,7 @@ fn no_namespace_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoNamespace {
     /// Whether to allow declare with custom TypeScript namespaces.
@@ -115,19 +116,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNamespace {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        Self {
-            allow_declarations: value
-                .get(0)
-                .and_then(|x| x.get("allowDeclarations"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-            allow_definition_files: value
-                .get(0)
-                .and_then(|x| x.get("allowDefinitionFiles"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(true),
-        }
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -178,200 +170,306 @@ fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use std::path::PathBuf;
 
     let pass = vec![
-        ("declare global {}", None),
-        ("declare module 'foo' {}", None),
-        ("declare module foo {}", Some(serde_json::json!([{ "allowDeclarations": true }]))),
-        ("declare namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": true }]))),
+        ("declare global {}", None, None, None),
+        ("declare module 'foo' {}", None, None, None),
+        (
+            "declare module foo {}",
+            Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
+        ),
+        (
+            "declare namespace foo {}",
+            Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
+        ),
         (
             "declare global {
-    		   namespace foo {}
-    		 }",
+               namespace foo {}
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "declare module foo {
-    		   namespace bar {}
-    		 }",
+               namespace bar {}
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "declare global {
-    		   namespace foo {
-    		     namespace bar {}
-    		   }
-    		 }",
+               namespace foo {
+                 namespace bar {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "declare namespace foo {
-    		   namespace bar {
-    		     namespace baz {}
-    		   }
-    		 }",
+               namespace bar {
+                 namespace baz {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export declare namespace foo {
-    		   export namespace bar {
-    		     namespace baz {}
-    		   }
-    		 }",
+               export namespace bar {
+                 namespace baz {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
+        ),
+        (
+            "namespace foo {}",
+            Some(serde_json::json!([{ "allowDefinitionFiles": true }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
+        (
+            "module foo {}",
+            Some(serde_json::json!([{ "allowDefinitionFiles": true }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
         ),
     ];
 
     let fail = vec![
-        ("module foo {}", None),
-        ("namespace foo {}", None),
-        ("module foo {}", Some(serde_json::json!([{ "allowDeclarations": false }]))),
-        ("namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": false }]))),
-        ("module foo {}", Some(serde_json::json!([{ "allowDeclarations": true }]))),
-        ("namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": true }]))),
-        ("declare module foo {}", None),
-        ("declare namespace foo {}", None),
-        ("declare module foo {}", Some(serde_json::json!([{ "allowDeclarations": false }]))),
-        ("declare namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": false }]))),
-        ("namespace Foo.Bar {}", Some(serde_json::json!([{ "allowDeclarations": false }]))),
+        ("module foo {}", None, None, None),
+        ("namespace foo {}", None, None, None),
+        ("module foo {}", Some(serde_json::json!([{ "allowDeclarations": false }])), None, None),
+        ("namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": false }])), None, None),
+        ("module foo {}", Some(serde_json::json!([{ "allowDeclarations": true }])), None, None),
+        ("namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": true }])), None, None),
+        ("declare module foo {}", None, None, None),
+        ("declare namespace foo {}", None, None, None),
+        (
+            "declare module foo {}",
+            Some(serde_json::json!([{ "allowDeclarations": false }])),
+            None,
+            None,
+        ),
+        (
+            "declare namespace foo {}",
+            Some(serde_json::json!([{ "allowDeclarations": false }])),
+            None,
+            None,
+        ),
+        (
+            "namespace foo {}",
+            Some(serde_json::json!([{ "allowDefinitionFiles": false }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
+        (
+            "module foo {}",
+            Some(serde_json::json!([{ "allowDefinitionFiles": false }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
+        (
+            "declare module foo {}",
+            Some(serde_json::json!([{ "allowDefinitionFiles": false }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
+        (
+            "declare namespace foo {}",
+            Some(serde_json::json!([{ "allowDefinitionFiles": false }])),
+            None,
+            Some(PathBuf::from("test.d.ts")),
+        ),
+        (
+            "namespace Foo.Bar {}",
+            Some(serde_json::json!([{ "allowDeclarations": false }])),
+            None,
+            None,
+        ),
         (
             "namespace Foo.Bar {
-    		   namespace Baz.Bas {
-    		     interface X {}
-    		   }
-    		 }",
+               namespace Baz.Bas {
+                 interface X {}
+               }
+             }",
+            None,
+            None,
             None,
         ),
         (
             "namespace A {
-    		   namespace B {
-    		     declare namespace C {}
-    		   }
-    		 }",
+               namespace B {
+                 declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "namespace A {
-    		   namespace B {
-    		     export declare namespace C {}
-    		   }
-    		 }",
+               namespace B {
+                 export declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "namespace A {
-    		   declare namespace B {
-    		     namespace C {}
-    		   }
-    		 }",
+               declare namespace B {
+                 namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "namespace A {
-    		   export declare namespace B {
-    		     namespace C {}
-    		   }
-    		 }",
+               export declare namespace B {
+                 namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "namespace A {
-    		   export declare namespace B {
-    		     declare namespace C {}
-    		   }
-    		 }",
+               export declare namespace B {
+                 declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "namespace A {
-    		   export declare namespace B {
-    		     export declare namespace C {}
-    		   }
-    		 }",
+               export declare namespace B {
+                 export declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "namespace A {
-    		   declare namespace B {
-    		     export declare namespace C {}
-    		   }
-    		 }",
+               declare namespace B {
+                 export declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "namespace A {
-    		   export namespace B {
-    		     export declare namespace C {}
-    		   }
-    	 	 }",
+               export namespace B {
+                 export declare namespace C {}
+               }
+              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   namespace B {
-    		     declare namespace C {}
-    		   }
-    		 }",
+               namespace B {
+                 declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   namespace B {
-    		     export declare namespace C {}
-    		   }
-    		 }",
+               namespace B {
+                 export declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   declare namespace B {
-    		     namespace C {}
-    		   }
-    	 	 }",
+               declare namespace B {
+                 namespace C {}
+               }
+              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   export declare namespace B {
-    		     namespace C {}
-    		   }
-    		 }",
+               export declare namespace B {
+                 namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   export declare namespace B {
-    		     declare namespace C {}
-    		   }
-    		 }",
+               export declare namespace B {
+                 declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   export declare namespace B {
-    		     export declare namespace C {}
-    		   }
-    		 }",
+               export declare namespace B {
+                 export declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   declare namespace B {
-    		     export declare namespace C {}
-    		   }
-    	 	}",
+               declare namespace B {
+                 export declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
         (
             "export namespace A {
-    		   export namespace B {
-    		     export declare namespace C {}
-    		   }
-    		 }",
+               export namespace B {
+                 export declare namespace C {}
+               }
+             }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
+            None,
+            None,
         ),
-        ("declare /* module */ module foo {}", None),
-        ("declare /* namespace */ namespace foo {}", None),
+        ("declare /* module */ module foo {}", None, None, None),
+        ("declare /* namespace */ namespace foo {}", None, None, None),
     ];
 
     Tester::new(NoNamespace::NAME, NoNamespace::PLUGIN, pass, fail).test_and_snapshot();

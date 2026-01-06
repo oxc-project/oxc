@@ -14,7 +14,7 @@ working directory: fixtures/ignore_patterns_whitelist
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file using 1 threads.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
@@ -32,7 +32,7 @@ working directory: fixtures/ignore_patterns_whitelist
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file using 1 threads.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

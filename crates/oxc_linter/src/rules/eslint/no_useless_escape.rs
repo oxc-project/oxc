@@ -9,14 +9,19 @@ use oxc_regular_expression::{
 use oxc_semantic::NodeId;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_useless_escape_diagnostic(escape_char: char, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unnecessary escape character {escape_char:?}")).with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoUselessEscape(Box<NoUselessEscapeConfig>);
 
 impl std::ops::Deref for NoUselessEscape {
@@ -27,10 +32,13 @@ impl std::ops::Deref for NoUselessEscape {
     }
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoUselessEscapeConfig {
     /// An array of characters that are allowed to be escaped unnecessarily in regexes.
+    /// For example, setting this to `["#"]` allows `\#` in regexes.
+    ///
+    /// Each string in this array must be a single character.
     allow_regex_characters: Vec<char>,
 }
 
@@ -49,8 +57,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// /*eslint no-useless-escape: "error"*/
-    ///
     /// "\'";
     /// '\"';
     /// "\#";
@@ -66,8 +72,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
-    /// /*eslint no-useless-escape: "error"*/
-    ///
     /// "\"";
     /// '\'';
     /// "\x12";
@@ -139,23 +143,10 @@ impl Rule for NoUselessEscape {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let allow_regex_characters = value
-            .as_array()
-            .and_then(|array| array.first())
-            .and_then(|obj| obj.as_object())
-            .and_then(|obj| obj.get("allowRegexCharacters"))
-            .and_then(|arr| arr.as_array())
-            .map(|array| {
-                array
-                    .iter()
-                    .filter_map(|el| el.as_str())
-                    .filter_map(|el| el.chars().next())
-                    .collect::<Vec<_>>()
-            })
-            .unwrap_or_default();
-
-        Self(Box::new(NoUselessEscapeConfig { allow_regex_characters }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
+            .unwrap_or_default()
+            .into_inner())
     }
 }
 

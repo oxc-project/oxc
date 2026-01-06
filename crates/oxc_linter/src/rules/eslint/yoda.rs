@@ -193,11 +193,11 @@ declare_oxc_lint!(
 );
 
 impl Rule for Yoda {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config = Self::default();
 
         let Some(arr) = value.as_array() else {
-            return config;
+            return Ok(config);
         };
 
         let option1 = arr.first().and_then(serde_json::Value::as_str);
@@ -216,7 +216,7 @@ impl Rule for Yoda {
             }
         }
 
-        config
+        Ok(config)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

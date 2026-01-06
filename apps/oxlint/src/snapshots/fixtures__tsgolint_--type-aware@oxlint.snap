@@ -132,6 +132,14 @@ working directory: fixtures/tsgolint
  3 | }
    `----
 
+  x typescript-eslint(no-unnecessary-template-expression): Template literal expression is unnecessary and can be simplified.
+   ,-[no-unnecessary-template-expression.ts:2:18]
+ 1 | const text = 'hello';
+ 2 | const wrapped = `${text}`;
+   :                  ^^^^^^^
+ 3 | 
+   `----
+
   x typescript-eslint(no-unnecessary-type-arguments): This is the default value for this type parameter, so it can be omitted.
    ,-[no-unnecessary-type-arguments.ts:4:25]
  3 | }
@@ -388,8 +396,8 @@ working directory: fixtures/tsgolint
    :                   ^^^^^^^^
    `----
 
-Found 0 warnings and 50 errors.
-Finished in <variable>ms on 45 files using 1 threads.
+Found 0 warnings and 51 errors.
+Finished in <variable>ms on 45 files with 44 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

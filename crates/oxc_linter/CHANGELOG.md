@@ -4,6 +4,75 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.37.0] - 2026-01-05
+
+### 🚀 Features
+
+- 659c23e linter: Init note field boilerplate  (#17589) (Shrey Sudhir)
+- 6870b64 parser: Add TS1363 error code (#17609) (Sysix)
+- 6154c8c linter/eslint-plugin-vitest: Implemented vitest/warn-todo rule (#17228) (Said Atrahouch)
+- 0043cd6 linter/eslint-plugin-vitest: Implement consistent-vitest-vi rule (#17389) (Said Atrahouch)
+- a6d773d linter: Add full TS support to eslint/no-useless-constructor (#17592) (camc314)
+- f02c0e7 linter/eslint: Implement complexity (#17569) (Nguyen Tran)
+- bc7aae7 linter/no-unused-vars: Add fixer to remove unused catch bindings (#17567) (Don Isaac)
+- 9e8ec78 linter/only-throw-error rule: Add `allowRethrowing` option for  (#17554) (camc314)
+- b67e819 linter: Add fixer for `unicorn/prefer-response-static-json` rule (#17559) (Mikhail Baev)
+- 44b0361 linter/vue: Implement no-this-in-before-route-enter (#17525) (yefan)
+- ee34716 linter/react: Implement no-will-update-set-state (#17530) (Kenzo Wada)
+- 3088e1d linter/react: Implement no-this-in-sfc (#17535) (Kenzo Wada)
+- 29a2868 linter/jsx-a11y: Implement no-static-element-interactions (#17538) (Kenzo Wada)
+- eadf057 linter: Enable tsconfig auto discovery by default (#17489) (Boshen)
+- 12a7d6e website_linter: Add a count of rules with fixes available to rules table. (#17476) (Connor Shea)
+
+### 🐛 Bug Fixes
+
+- 19fdfb6 linter: Panic in `sort-keys` rule with Unicode numeric characters (#17629) (Adel Rodríguez)
+- be39906 linter/aria-proptypes: Allow template literals with expressions for string-type ARIA props (#17460) (Jökull Sólberg Auðunsson)
+- 529901c linter: Include JS plugin rules when calculating total rule count (#17520) (connorshea)
+- 96ef2cc linter: Print total rule # when using a single nested config (#17517) (connorshea)
+- ff70fe9 linter/no-standalone-expect: Allows expect in wrapper functions passed to test blocks (#17427) (Copilot)
+- dab232f linter/catch-or-return: Handle arrow functions with implicit returns correctly (#17440) (Copilot)
+- a38892a linter: Update no-unnecessary-template-expression docs and test case (#17453) (camc314)
+
+### 📚 Documentation
+
+- 884fb63 linter/react: Improve docs for jsx-curly-brace-presence (#17579) (connorshea)
+- 1d3ee07 linter: Improve rule explanation for `vue/no-this-in-before-route-enter`. (#17581) (connorshea)
+- 5f189f8 linter/arrow-body-style: Correctly document default mode option (#17566) (Rägnar O'ock)
+- bb2e8e4 linter: Add a note to the `typescript/no-var-requires` rule about the missing `allow` option (#17551) (connorshea)
+- 655afc1 linter: Improve docs for `import/extensions` and add a few more tests (#17539) (connorshea)
+- 7e5fc90 linter: Update list of plugins that are reserved. (#17516) (connorshea)
+
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 71ead34 linter/no-nonoctal-decimal-escape: Implement suggestion (#17319) (GRK)
+- 267e255 linter/react: Implement react/no-did-mount-set-state (#17313) (Kenzo Wada)
+- c813582 linter/react: Implement react/jsx-max-depth (#17279) (Kenzo Wada)
+- 94a482b linter/node: Implement n/global-require (#17283) (Mikhail Baev)
+- 5cc7c90 linter/plugins: Pass `env` from Rust to JS (#17291) (overlookmotel)
+- ed79fca linter/eslint-plugin-vitest: Implement consistent-test-filename (#17284) (Said Atrahouch)
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- b97101a linter: Implement aria/proptypes (#17253) (mehm8128)
+- a5ef127 linter: Auto-fixer for prefer-destructuring (#17235) (Hamir Mahal)
+
+### 🐛 Bug Fixes
+
+- 79b83b0 linter/no-unused-vars: Handle non-null assertion in update expressions (#17281) (camc314)
+- b547335 linter/import-first: Correctly respect all relative path imports (#17268) (Mohit Karekar)
+
+### ⚡ Performance
+
+- c27514c linter/only-used-in-recursion: Improve `skip_to_next_char` slicing (#17374) (camchenry)
+- eecee5d linter: Inline `is_function_node` into run functions (#17373) (camchenry)
+- d2abc78 linter: No-multi-str: skip searching strings when in jsx attribute (#17327) (camchenry)
+- 687ffd6 linter: Jest/no-confusing-set-timeout: do not lowercase import name (#17324) (camchenry)
+
+### 📚 Documentation
+
+- e8444bf linter: Fix grammar and typos in consistent_test_filename rule (#17359) (camc314)
+
 ## [1.35.0] - 2025-12-22
 
 ### 🚀 Features

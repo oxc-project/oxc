@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 23680a3 mangler: Skip mangling only in scopes affected by direct eval (#17612) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### ⚡ Performance
+
+- e073925 mangler: Early exit in liveness walk when scope already marked live (#17382) (camc314)
+- 50f0ddd mangler: Optimize slot assignment with pre-computed ancestor sets (#17379) (camc314)
+- c3ff642 mangler: Avoid `ToString` allocations (#17378) (camc314)
+
 
 ## [0.95.0] - 2025-10-15
 

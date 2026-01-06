@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.37.0] - 2026-01-05
+
+### 🚀 Features
+
+- 6154c8c linter/eslint-plugin-vitest: Implemented vitest/warn-todo rule (#17228) (Said Atrahouch)
+- 9e8ec78 linter/only-throw-error rule: Add `allowRethrowing` option for  (#17554) (camc314)
+- ee34716 linter/react: Implement no-will-update-set-state (#17530) (Kenzo Wada)
+- 3088e1d linter/react: Implement no-this-in-sfc (#17535) (Kenzo Wada)
+- 29a2868 linter/jsx-a11y: Implement no-static-element-interactions (#17538) (Kenzo Wada)
+
+### 🐛 Bug Fixes
+
+- a702f13 oxlint/lsp: Correct position for "disable for this file" with shebang (#17613) (Sysix)
+- 529901c linter: Include JS plugin rules when calculating total rule count (#17520) (connorshea)
+- 96ef2cc linter: Print total rule # when using a single nested config (#17517) (connorshea)
+- 9ad0f29 oxlint: Do not enable external plugin store when no external linter is passed (#17498) (Sysix)
+- 174375d oxfmt,oxlint: Disable mimalloc for 32-bit Arm targets (#17473) (Yaksh Bariya)
+- a38892a linter: Update no-unnecessary-template-expression docs and test case (#17453) (camc314)
+
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 267e255 linter/react: Implement react/no-did-mount-set-state (#17313) (Kenzo Wada)
+- 5cc7c90 linter/plugins: Pass `env` from Rust to JS (#17291) (overlookmotel)
+- b97101a linter: Implement aria/proptypes (#17253) (mehm8128)
+
+### 🐛 Bug Fixes
+
+- fec2863 linter: Respect `.gitignore` regardless of if a git repo is initialized (#17375) (copilot-swe-agent)
+- c6690d1 rust: Remove unsupported tokio io-std feature for WASM compatibility (#17311) (Boshen)
+- 7eaa660 linter/plugins: Set up global scope correctly (#17293) (overlookmotel)
+
 ## [1.35.0] - 2025-12-22
 
 ### 🚀 Features

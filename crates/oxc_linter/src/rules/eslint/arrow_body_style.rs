@@ -104,7 +104,7 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// #### `"never"` (default)
+    /// #### `"never"`
     ///
     /// Examples of **incorrect** code for this rule with the `never` option:
     /// ```js
@@ -145,7 +145,7 @@ declare_oxc_lint!(
     /// };
     /// ```
     ///
-    /// #### `"as-needed"`
+    /// #### `"as-needed"` (default)
     ///
     /// Examples of **incorrect** code for this rule with the `as-needed` option:
     /// ```js
@@ -200,7 +200,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ArrowBodyStyle {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
 
         let require_return_for_object_literal = value
@@ -209,7 +209,7 @@ impl Rule for ArrowBodyStyle {
             .and_then(Value::as_bool)
             .unwrap_or(false);
 
-        Self { mode, require_return_for_object_literal }
+        Ok(Self { mode, require_return_for_object_literal })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

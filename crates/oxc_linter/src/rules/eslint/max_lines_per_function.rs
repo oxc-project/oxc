@@ -121,7 +121,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxLinesPerFunction {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let config = if let Some(max) = config
             .and_then(Value::as_number)
@@ -158,7 +158,7 @@ impl Rule for MaxLinesPerFunction {
             MaxLinesPerFunctionConfig { max, skip_comments, skip_blank_lines, iifes }
         };
 
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

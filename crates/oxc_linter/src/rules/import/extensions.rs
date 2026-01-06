@@ -31,7 +31,7 @@ fn extension_should_not_be_included_in_diagnostic(
 fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
     let import_or_export = if is_import { "import" } else { "export" };
 
-    OxcDiagnostic::warn(format!("Missing file extension in {import_or_export} declaration"))
+    OxcDiagnostic::warn(format!("Missing file extension in {import_or_export} declaration."))
         .with_help(format!("Add a file extension to this {import_or_export}."))
         .with_label(span)
 }
@@ -39,6 +39,7 @@ fn extension_missing_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
 /// Extension rule configuration; Copy to avoid extra indirection.
 #[repr(u8)]
 #[derive(Copy, Clone, Debug, PartialEq, Eq, JsonSchema, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub enum ExtensionRule {
     Always = 0,
     Never = 1,
@@ -64,39 +65,18 @@ impl ExtensionRule {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum PathGroupAction {
-    /// Enforce extension validation for matching imports (require extensions based on config)
+    /// Enforce extension validation for matching imports (require extensions based on config).
     Enforce,
-    /// Ignore matching imports entirely (skip all extension validation)
+    /// Ignore matching imports entirely (skip all extension validation).
     Ignore,
 }
 
-/// Path group override configuration for bespoke import specifiers.
-///
-/// Allows fine-grained control over extension validation for custom import protocols
-/// (e.g., monorepo tools, custom resolvers, framework-specific imports).
-///
-/// **Pattern matching:**
-///
-/// Uses fast-glob patterns to match import specifiers:
-/// - `*`: Match any characters except `/`
-/// - `**`: Match any characters including `/` (recursive)
-/// - `{a,b}`: Match alternatives
-///
-/// **Examples:**
-///
-/// ```json
-/// {
-///   "pattern": "rootverse{*,*/**}",
-///   "action": "enforce"
-/// }
-/// ```
-///
-/// Matches: `rootverse+debug:src`, `rootverse+bfe:src/symbols`
 #[derive(Debug, Clone, Deserialize, JsonSchema, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub struct PathGroupOverride {
-    /// Glob pattern to match import specifiers
+    /// Glob pattern to match import specifiers. This uses Rust's fast-glob library for matching.
     pattern: String,
-    /// Action to take when pattern matches
+    /// Action to take when pattern matches.
     action: PathGroupAction,
 }
 
@@ -120,10 +100,12 @@ impl PathGroupOverride {
 ///
 /// 1. **Global rule** (string): `"always"`, `"never"`, or `"ignorePackages"`
 ///
-/// ```json
+/// ```jsonc
 /// {
 ///   "rules": {
-///     // this would require extensions for all imports
+///     // this would require extensions for all imports, *including from packages*
+///     // e.g. `import React from 'react';` would be disallowed.
+///     // You should generally always set `ignorePackages` to `true` when using `always`.
 ///     "import/extensions": ["error", "always"]
 ///   }
 /// }
@@ -131,14 +113,14 @@ impl PathGroupOverride {
 ///
 /// 2. **Per-extension rules** (object): `{ "js": "always", "jsx": "never", ... }`
 ///
-/// ```json
+/// ```jsonc
 /// {
 ///   "rules": {
 ///     "import/extensions": [
 ///       "error",
 ///       // per-extension rules:
 ///       // require extensions for .js imports and disallow them for .ts imports
-///       { "js": "always", "ts": "never" }
+///       { "js": "always", "ts": "never", "ignorePackages": true }
 ///     ]
 ///   }
 /// }
@@ -146,27 +128,37 @@ impl PathGroupOverride {
 ///
 /// 3. **Combined** (array): `["error", "always", { "js": "never" }]` or `["error", { "js": "always" }]`
 ///
-/// ```json
+/// ```jsonc
 /// {
 ///   "rules": {
 ///     "import/extensions": [
 ///       "error",
 ///       "always", // by default, require extensions for all imports
-///       { "ts": "never" } // override the global value and disallow extensions on imports for specific file types
+///       {
+///         "ts": "never", // override the global value and disallow extensions on imports for specific file types
+///         "ignorePackages": true
+///       }
 ///     ]
 ///   }
 /// }
 /// ```
 ///
-/// **Default behavior (no configuration)**: All imports pass.
+/// **Default behavior (no configuration)**: All imports - of all kinds - pass.
 /// Unconfigured file extensions are ignored, to avoid false positives.
 #[derive(Debug, Clone, JsonSchema, Serialize, Default)]
 #[serde(rename_all = "camelCase", default)]
 pub struct ExtensionsConfig {
     /// Whether to ignore package imports when enforcing extension rules.
     ///
+    /// > [!IMPORTANT]
+    /// > When setting this rule to `always`, you should also set `ignorePackages` to `true`.
+    /// > Otherwise, package imports without extensions (such as `import React from 'react';`)
+    /// > will be disallowed, which is not desirable and is not fixable.
+    ///
     /// A boolean option (not per-extension) that exempts package imports from the "always" rule.
+    ///
     /// Can be set in the config object: `["error", "always", { "ignorePackages": true }]`
+    ///
     /// Legacy shorthand: `["error", "ignorePackages"]` is equivalent to `["error", "always", { "ignorePackages": true }]`
     ///
     /// - **With "always"**: When `true`, package imports (e.g., `lodash`, `@babel/core`) don't require extensions
@@ -174,11 +166,20 @@ pub struct ExtensionsConfig {
     ///
     /// Example: `["error", "always", { "ignorePackages": true }]` allows `import foo from "lodash"` but requires `import bar from "./bar.js"`
     ignore_packages: bool,
-    #[serde(skip)]
+    #[serde(skip)] // skipped because it cannot actually be set directly in the config object.
     require_extension: Option<ExtensionRule>,
     /// Whether to check type imports when enforcing extension rules.
+    ///
+    /// ```ts
+    /// // If checkTypeImports is `false`, we don't care about
+    /// // whether these imports have file extensions or not, both are always allowed:
+    /// import type { Foo } from './foo';
+    /// import type { Foo } from './foo.ts';
+    /// ```
     check_type_imports: bool,
     /// Map from file extension (without dot) to its configured rule.
+    // skipped because we build this dynamically and it is not an actual named field.
+    #[serde(skip)]
     extensions: FxHashMap<String, ExtensionRule>,
     /// Path group overrides for bespoke import specifiers.
     ///
@@ -186,6 +187,8 @@ pub struct ExtensionsConfig {
     /// Each override has: `{ "pattern": "<glob-pattern>", "action": "enforce" | "ignore" }`
     ///
     /// **Pattern matching**: Uses glob patterns (`*`, `**`, `{a,b}`) to match import specifiers.
+    /// Note that the pattern matching is done in Rust with the fast-glob library, and so may differ
+    /// from the JavaScript glob library used by the original ESLint rule.
     ///
     /// **Actions**:
     /// - `"enforce"`: Apply normal extension validation (respect global/per-extension rules)
@@ -193,9 +196,17 @@ pub struct ExtensionsConfig {
     ///
     /// **Precedence**: First matching pattern wins.
     ///
-    /// Example: `["error", "always", { "pathGroupOverrides": [{ "pattern": "rootverse{*,*/**}", "action": "ignore" }] }]`
-    /// - Allows `import { x } from 'rootverse+debug:src'` without extension
-    /// - Still requires extensions for standard imports
+    /// **Examples:**
+    ///
+    /// ```json
+    /// {
+    ///   "pattern": "rootverse{*,*/**}",
+    ///   "action": "ignore"
+    /// }
+    /// ```
+    ///
+    /// Matches imports from `rootverse+debug:src`, `rootverse+bfe:src/symbols` and
+    /// ignores whether or not they have an extension.
     path_group_overrides: Vec<PathGroupOverride>,
 }
 
@@ -441,7 +452,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for Extensions {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         if let Some(first_arg) = value.get(0).and_then(Value::as_str) {
             let default = ExtensionRule::from_str(first_arg);
 
@@ -450,19 +461,19 @@ impl Rule for Extensions {
 
                 let config = ExtensionsConfig::from_json_value(root, default);
 
-                Self(Box::new(config))
+                Ok(Self(Box::new(config)))
             } else {
                 let config = ExtensionsConfig::from_json_value(&value, default);
 
-                Self(Box::new(config))
+                Ok(Self(Box::new(config)))
             }
         } else if let Some(first_obj) = value.get(0) {
             // First element is not a string, but is present (e.g., [{ "json": "always" }])
             let config = ExtensionsConfig::from_json_value(first_obj, None);
-            Self(Box::new(config))
+            Ok(Self(Box::new(config)))
         } else {
             let config = ExtensionsConfig::from_json_value(&value, None);
-            Self(Box::new(config))
+            Ok(Self(Box::new(config)))
         }
     }
 
@@ -618,6 +629,7 @@ impl Extensions {
         );
     }
 }
+
 /// Determines if an import specifier is a ROOT package (package name without subpath).
 ///
 /// Root packages are package names where dots are part of the package name itself,
@@ -1172,6 +1184,53 @@ fn test() {
         (r"import x from './foo.JS';", Some(json!(["always", { "js": "always" }]))),
         // Edge case: Case-insensitive extension matching (mixed case)
         (r"import x from './foo.Ts';", Some(json!(["always", { "ts": "always" }]))),
+        // 'react' import when ignorePackages is true should be allowed
+        (r"import React from 'react';", Some(json!(["always", { "ignorePackages": true }]))),
+        (
+            r"import React from 'react';",
+            Some(json!(["ignorePackages"])), // equivalent to the above
+        ),
+        (
+            r#"import React from "react";"#, // works with double-quotes as well
+            Some(json!(["ignorePackages"])),
+        ),
+        // This should also be allowed when set to `never`.
+        (r"import React from 'react';", Some(json!(["never"]))),
+        // Built-in Node modules should always be allowed without extension
+        (r"import fs from 'fs';", Some(json!(["always"]))),
+        (r"import crypto from 'crypto';", Some(json!(["always"]))),
+        // import starting with 'node:' should be treated specially and always be allowed without extension.
+        (r"import fs from 'node:fs';", Some(json!(["always"]))),
+        (r"import crypto from 'node:crypto';", Some(json!(["always"]))),
+        (r"import crypto from 'node:crypto';", Some(json!(["always", { "ignorePackages": true }]))),
+        (r"import crypto from 'node:crypto';", Some(json!(["never"]))),
+        (r"import * as crypto from 'node:crypto';", Some(json!(["always"]))),
+        (r"import { default as foo } from 'node:crypto';", Some(json!(["always"]))),
+        // Ensure that import attributes like "type: json" work fine
+        (
+            r#"import data from "./data.json" with { type: "json" };"#,
+            Some(json!(["always", { "json": "always" }])),
+        ),
+        (r#"import data from "./data" with { type: "json" };"#, Some(json!(["never"]))),
+        (r#"import data from "./data.json" with { type: "json" };"#, Some(json!(["always"]))),
+        (
+            r#"import data from "./data.json" with { type: "json" };"#,
+            Some(json!(["ignorePackages"])),
+        ),
+        // Subpath imports
+        // https://nodejs.org/api/packages.html#subpath-imports
+        // (
+        //     r##"import internalZ from "#internal/z";"##,
+        //     Some(json!(["never"])),
+        // ),
+        // (
+        //     r##"import internalZ from "#internal/z.js";"##,
+        //     Some(json!(["always", { "ignorePackages": true }])),
+        // ),
+        // (
+        //     r##"import internalZ from "#internal/z.js";"##,
+        //     Some(json!(["always"])),
+        // ),
     ];
 
     let fail = vec![
@@ -1411,7 +1470,7 @@ fn test() {
             ",
             Some(json!(["always"])),
         ),
-        // Scoped package subpaths with extensions fail when ignorePackages: false
+        // Scoped package subpaths with extensions fail, regardless of ignorePackages setting
         (
             r"
                 import { bar } from '@scope/pkg/file.js';
@@ -1423,6 +1482,24 @@ fn test() {
                 import { baz } from '@org/lib/sub/index.ts';
             ",
             Some(json!(["never", { "ignorePackages": false }])),
+        ),
+        (
+            r"
+                import { bar } from '@scope/pkg/file.js';
+            ",
+            Some(json!(["never", { "ignorePackages": true }])),
+        ),
+        (
+            r"
+                import { baz } from '@org/lib/sub/index.ts';
+            ",
+            Some(json!(["never", { "ignorePackages": true }])),
+        ),
+        (
+            r"
+                import { baz } from '@org/lib/sub/index.ts';
+            ",
+            Some(json!(["never"])),
         ),
         // Mixed configuration: some should pass, some should fail
         (
@@ -1589,6 +1666,42 @@ fn test() {
         (r"import x from './foo.JS';", Some(json!(["never", { "js": "never" }]))),
         // Edge case fail: Case-insensitive - mixed case extension should still fail with "never"
         (r"import x from './foo.Ts';", Some(json!(["never", { "ts": "never" }]))),
+        // Fails because ignorePackages defaults to false. (not great default behavior, but matches ESLint)
+        (r"import React from 'react';", Some(json!(["always"]))),
+        // Not a real node: protocol import, so should fail when extension is required and ignorePackages is false.
+        (r"import crypto from 'node_crypto';", Some(json!(["always"]))),
+        // If an import has the same name as a built-in module, but isn't actually _from_ a built-in module,
+        // it should fail (assuming ignorePackages is false).
+        (r"import fs from 'some-package';", Some(json!(["always"]))),
+        (r"import fs from '@fs/some-package';", Some(json!(["always"]))),
+        (r"import { default as crypto } from '@fs/some-package';", Some(json!(["always"]))),
+        (r"import * as fs from '@fs/some-package';", Some(json!(["always"]))),
+        // When requiring no extension but ignoring packages, still fail when the import is a package subpath.
+        (
+            r"import useState from 'react/useState.ts';",
+            Some(json!(["never", { "ignorePackages": true }])),
+        ),
+        (
+            r"import useState from '@foo/bar/useState.ts';",
+            Some(json!(["never", { "ignorePackages": true }])),
+        ),
+        // TODO: This should probably fail? Needs further investigation.
+        // (
+        //     r"import useState from '@foo/bar/useState';",
+        //     Some(json!(["always", { "ignorePackages": true }])),
+        // ),
+        // TODO: This is not handled yet.
+        // For subpath imports that start with `#`, they should not be considered
+        // packages and should fail based on whether they have an extension.
+        // https://nodejs.org/api/packages.html#subpath-imports
+        // (
+        //     r##"import internalZ from "#internal/z";"##,
+        //     Some(json!(["always", { "ignorePackages": true }])),
+        // ),
+        // (
+        //     r##"import internalZ from "#internal/z.js";"##,
+        //     Some(json!(["never"])),
+        // ),
     ];
 
     Tester::new(Extensions::NAME, Extensions::PLUGIN, pass, fail).test_and_snapshot();
