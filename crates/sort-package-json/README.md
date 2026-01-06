@@ -14,6 +14,16 @@
 
 </div>
 
+> **⚠️ Vendored Copy**: This is a vendored copy of `sort-package-json` v0.0.7 with a patch applied.
+> The patch fixes an issue where the `size-limit` field was being incorrectly transformed, causing
+> its array of configuration objects to be filtered out. The fix removes the transformation on line 419,
+> allowing the field to be preserved as-is.
+>
+> **Original repository**: https://github.com/oxc-project/sort-package-json
+>
+> **Upstream issue**: The `size-limit` field should not use `sort_array_unique` transformation as it
+> contains objects, not strings.
+
 A Rust implementation that sorts package.json files according to well-established npm conventions.
 
 > **Note on Compatibility:** This crate is **not compatible** with the original [sort-package-json](https://github.com/keithamus/sort-package-json) npm package. While both tools sort package.json files, this Rust implementation uses different sorting groupings that we believe are clearer and easier to navigate. The field order is inspired by both the original sort-package-json and Prettier's package.json sorting, but organized into more intuitive logical groups.
