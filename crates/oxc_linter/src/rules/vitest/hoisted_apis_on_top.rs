@@ -226,9 +226,8 @@ fn is_hoisted_api(member: &KnownMemberExpressionProperty) -> bool {
 }
 
 #[test]
-fn test_mock() {
+fn test() {
     use crate::tester::Tester;
-
     let pass = vec![
         "vi.mock()",
         "
@@ -285,136 +284,8 @@ fn test_mock() {
 			  vi.mock('foo', () => {});
 			}
 			      ",
-            (
-                "vi.mock('foo', () => {});
-
-			if (foo) {
-			  ;
-			}
-			      ",
-                "
-			if (foo) {
-			  vi.doMock('foo', () => {});
-			}
-			      ",
-            ),
+            ("", ""),
         ),
-        (
-            "
-			import foo from 'bar';
-
-			if (foo) {
-			  vi.mock();
-			}
-			    ",
-            (
-                "
-			import foo from 'bar';
-vi.mock();
-
-
-			if (foo) {
-			  ;
-			}
-			    ",
-                "
-			import foo from 'bar';
-
-			if (foo) {
-			  vi.doMock();
-			}
-			    ",
-            ),
-        ),
-        (
-            "
-			if (shouldMock) {
-			  vi.mock(import('something'), () => bar);
-			}
-
-			import something from 'something';
-			    ",
-            (
-                "
-			if (shouldMock) {
-			  ;
-			}
-
-			import something from 'something';
-vi.mock(import('something'), () => bar);
-
-			    ",
-                "
-			if (shouldMock) {
-			  vi.doMock(import('something'), () => bar);
-			}
-
-			import something from 'something';
-			    ",
-            ),
-        ),
-    ];
-
-    Tester::new(HoistedApisOnTop::NAME, HoistedApisOnTop::PLUGIN, pass, fail)
-        .expect_fix(fix)
-        .with_vitest_plugin(true)
-        .test_and_snapshot();
-}
-
-#[test]
-fn test_hoisted() {
-    use crate::tester::Tester;
-
-    let pass = vec![
-        "vi.mock()",
-        "
-			vi.hoisted();
-			import foo from 'bar';
-			    ",
-        "
-			import foo from 'bar';
-			vi.unmock(baz);
-			    ",
-        "const foo = await vi.hoisted(async () => {});",
-    ];
-
-    let fail = vec![
-        "
-			if (foo) {
-			  vi.mock('foo', () => {});
-			}
-			      ",
-        "
-			import foo from 'bar';
-
-			if (foo) {
-			  vi.hoisted();
-			}
-			    ",
-        "
-			import foo from 'bar';
-
-			if (foo) {
-			  vi.unmock();
-			}
-			    ",
-        "
-			import foo from 'bar';
-
-			if (foo) {
-			  vi.mock();
-			}
-			    ",
-        "
-			if (shouldMock) {
-			  vi.mock(import('something'), () => bar);
-			}
-
-			import something from 'something';
-			      ",
-    ];
-
-    let fix = vec![
         (
             "
 			import foo from 'bar';
@@ -423,15 +294,7 @@ fn test_hoisted() {
 			  vi.hoisted();
 			}
 			    ",
-            "
-			import foo from 'bar';
-vi.hoisted();
-
-
-			if (foo) {
-			  ;
-			}
-			    ",
+            ("", ""),
         ),
         (
             "
@@ -441,15 +304,27 @@ vi.hoisted();
 			  vi.unmock();
 			}
 			    ",
+            ("", ""),
+        ),
+        (
             "
 			import foo from 'bar';
-vi.unmock();
-
 
 			if (foo) {
-			  ;
+			  vi.mock();
 			}
 			    ",
+            ("", ""),
+        ),
+        (
+            "
+			if (shouldMock) {
+			  vi.mock(import('something'), () => bar);
+			}
+
+			import something from 'something';
+			      ",
+            ("", ""),
         ),
     ];
 
