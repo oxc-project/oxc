@@ -1,7 +1,11 @@
 use std::fmt;
 use std::str::FromStr;
 
-use crate::oxfmtrc::CustomGroupDefinition;
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct NormalizedCustomGroupDefinition {
+    pub group_name: String,
+    pub element_name_pattern: Vec<String>,
+}
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
@@ -33,7 +37,7 @@ pub struct SortImportsOptions {
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
     pub groups: Vec<Vec<String>>,
     /// Define your own groups and use regex for matching very specific imports
-    pub custom_groups: Vec<CustomGroupDefinition>,
+    pub custom_groups: Vec<NormalizedCustomGroupDefinition>,
 }
 
 impl Default for SortImportsOptions {

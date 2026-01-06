@@ -1,9 +1,8 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{
-    ir_transform::sort_imports::group_config::{GroupName, ImportModifier, ImportSelector},
-    oxfmtrc::CustomGroupDefinition,
-};
+use super::options::NormalizedCustomGroupDefinition;
+
+use super::group_config::{GroupName, ImportModifier, ImportSelector};
 
 // intermediate import metadata that is used for group matching
 pub struct ImportMetadata<'a> {
@@ -12,9 +11,26 @@ pub struct ImportMetadata<'a> {
     pub modifiers: Vec<ImportModifier>,
 }
 
+// CustomGroup is intended to be a processed NormalizedCustomGroupDefinition with compiled regex patterns,
+// but for now, it's the same as NormalizedCustomGroupDefinition, because I don't know which regex lib to use.
+type CustomGroup = NormalizedCustomGroupDefinition;
+
+impl CustomGroup {
+    pub fn does_match(&self, import_metadata: &ImportMetadata) -> bool {
+        for pattern in &self.element_name_pattern {
+            if (pattern.starts_with('^') && import_metadata.source.starts_with(&pattern[1..]))
+                || import_metadata.source.contains(pattern)
+            {
+                return true;
+            }
+        }
+        false
+    }
+}
+
 pub struct GroupMatcher {
     // custom groups that are used in options.groups.
-    pub custom_groups: Vec<(CustomGroupDefinition, usize)>,
+    pub custom_groups: Vec<(CustomGroup, usize)>,
 
     // > Predefined groups are characterized by a single selector and potentially multiple modifiers.
     // > You may enter modifiers in any order, but the selector must always come at the end.
@@ -28,9 +44,9 @@ pub struct GroupMatcher {
 }
 
 impl GroupMatcher {
-    pub fn new(groups: &[Vec<String>], custom_groups: &[CustomGroupDefinition]) -> Self {
+    pub fn new(groups: &[Vec<String>], custom_groups: &[CustomGroup]) -> Self {
         let custom_group_name_set =
-            custom_groups.iter().map(|g| g.name.clone()).collect::<FxHashSet<_>>();
+            custom_groups.iter().map(|g| g.group_name.clone()).collect::<FxHashSet<_>>();
 
         let mut unknown_group_index: Option<usize> = None;
 
@@ -48,10 +64,10 @@ impl GroupMatcher {
             }
         }
 
-        let mut used_custom_groups: Vec<(CustomGroupDefinition, usize)> =
+        let mut used_custom_groups: Vec<(CustomGroup, usize)> =
             Vec::with_capacity(used_custom_group_index_map.len());
         for custom_group in custom_groups {
-            if let Some(index) = used_custom_group_index_map.get(&custom_group.name) {
+            if let Some(index) = used_custom_group_index_map.get(&custom_group.group_name) {
                 used_custom_groups.push((custom_group.clone(), *index));
             }
         }
@@ -93,35 +109,5 @@ impl GroupMatcher {
         self.predefined_groups
             .iter()
             .any(|(group, _)| group.is_plain_selector(ImportSelector::SideEffectStyle))
-    }
-}
-
-impl CustomGroupDefinition {
-    pub fn does_match(&self, import_metadata: &ImportMetadata) -> bool {
-        for rule in &self.any_of {
-            if rule.selector.as_ref().is_some_and(|s| {
-                ImportSelector::parse(s)
-                    .is_some_and(|selector| !import_metadata.selectors.contains(&selector))
-            }) {
-                continue;
-            }
-            if rule.modifiers.as_ref().is_some_and(|modifiers| {
-                !modifiers.iter().all(|m| {
-                    ImportModifier::parse(m)
-                        .is_some_and(|modifier| import_metadata.modifiers.contains(&modifier))
-                })
-            }) {
-                continue;
-            }
-            if rule
-                .element_name_pattern
-                .as_ref()
-                .is_some_and(|pattern| !import_metadata.source.starts_with(pattern))
-            {
-                continue;
-            }
-            return true;
-        }
-        false
     }
 }
