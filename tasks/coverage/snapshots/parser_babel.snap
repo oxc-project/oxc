@@ -14289,9 +14289,9 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × TS(1363): A type-only import can specify a default import or named bindings, but not both.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts:1:1]
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/import-type-declaration-error/input.ts:1:13]
  1 │ import type FooDefault, { Bar, Baz } from "module";
-   · ───────────────────────────────────────────────────
+   ·             ──────────
    ╰────
 
   × TS(1141): String literal expected.
