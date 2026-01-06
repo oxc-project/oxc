@@ -284,7 +284,18 @@ fn test() {
 			  vi.mock('foo', () => {});
 			}
 			      ",
-            ("", ""),
+            (
+                "vi.mock('foo', () => {});\n
+			if (foo) {
+			  ;
+			}
+			      ",
+                "
+			if (foo) {
+			  vi.doMock('foo', () => {});
+			}
+			      ",
+            ),
         ),
         (
             "
@@ -294,7 +305,24 @@ fn test() {
 			  vi.hoisted();
 			}
 			    ",
-            ("", ""),
+            (
+                "
+			import foo from 'bar';
+vi.hoisted();
+
+
+			if (foo) {
+			  ;
+			}
+			    ",
+                "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.hoisted();
+			}
+			    ",
+            ),
         ),
         (
             "
@@ -304,7 +332,24 @@ fn test() {
 			  vi.unmock();
 			}
 			    ",
-            ("", ""),
+            (
+                "
+			import foo from 'bar';
+vi.unmock();
+
+
+			if (foo) {
+			  ;
+			}
+			    ",
+                "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.unmock();
+			}
+			    ",
+            ),
         ),
         (
             "
@@ -314,7 +359,24 @@ fn test() {
 			  vi.mock();
 			}
 			    ",
-            ("", ""),
+            (
+                "
+			import foo from 'bar';
+vi.mock();
+
+
+			if (foo) {
+			  ;
+			}
+			    ",
+                "
+			import foo from 'bar';
+
+			if (foo) {
+			  vi.doMock();
+			}
+			    ",
+            ),
         ),
         (
             "
@@ -324,7 +386,24 @@ fn test() {
 
 			import something from 'something';
 			      ",
-            ("", ""),
+            (
+                "
+			if (shouldMock) {
+			  ;
+			}
+
+			import something from 'something';
+vi.mock(import('something'), () => bar);
+
+			      ",
+                "
+			if (shouldMock) {
+			  vi.doMock(import('something'), () => bar);
+			}
+
+			import something from 'something';
+			      ",
+            ),
         ),
     ];
 
