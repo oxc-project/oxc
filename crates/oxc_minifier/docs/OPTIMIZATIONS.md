@@ -15,11 +15,11 @@ Many optimizations rely on [`oxc_ecmascript`](../../oxc_ecmascript) for ECMAScri
 ```javascript
 // Before
 2 + 3;
-'a' + 'b';
+"a" + "b";
 
 // After
 5;
-'ab';
+("ab");
 ```
 
 ### Dead Code Elimination
@@ -31,7 +31,7 @@ Many optimizations rely on [`oxc_ecmascript`](../../oxc_ecmascript) for ECMAScri
 ```javascript
 // Before
 if (false) {
-  console.log('never runs');
+  console.log("never runs");
 }
 
 // After
@@ -105,7 +105,7 @@ void 0;
 
 ```javascript
 // Before
-obj['property'];
+obj["property"];
 
 // After
 obj.property;
@@ -119,10 +119,10 @@ obj.property;
 
 ```javascript
 // Before
-`hello ${'world'}`;
+`hello ${"world"}`;
 
 // After
-'hello world';
+("hello world");
 ```
 
 ### Built-in Method Replacement
@@ -133,11 +133,11 @@ obj.property;
 
 ```javascript
 // Before
-'test'.indexOf('e');
+"test".indexOf("e");
 Math.pow(2, 3);
 
 // After
-'test'.indexOf('e'); // or optimized form
+"test".indexOf("e"); // or optimized form
 2 ** 3;
 ```
 
@@ -167,7 +167,7 @@ a();
 b();
 
 // After (with sequences option)
-a(), b();
+(a(), b());
 ```
 
 ### Unused Code Removal
@@ -179,10 +179,10 @@ a(), b();
 ```javascript
 // Before
 let unused = 5;
-console.log('hello');
+console.log("hello");
 
 // After
-console.log('hello');
+console.log("hello");
 
 // Before
 [1, 2, fn()]; // unused array with side effects
@@ -228,10 +228,12 @@ x ? true : false;
 
 ```javascript
 // Before
-if (x === true) {}
+if (x === true) {
+}
 
 // After
-if (x) {}
+if (x) {
+}
 ```
 
 ### Variable Inlining
