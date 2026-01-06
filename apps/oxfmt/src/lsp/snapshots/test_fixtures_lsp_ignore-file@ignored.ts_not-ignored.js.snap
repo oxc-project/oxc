@@ -4,7 +4,7 @@ source: apps/oxfmt/src/lsp/tester.rs
 ========================================
 File: test/fixtures/lsp/ignore-file/ignored.ts
 ========================================
-File is ignored
+No changes
 ========================================
 File: test/fixtures/lsp/ignore-file/not-ignored.js
 ========================================

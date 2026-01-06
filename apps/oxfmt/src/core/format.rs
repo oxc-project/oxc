@@ -143,15 +143,7 @@ impl SourceFormatter {
                 .as_ref()
                 .expect("`external_formatter` must exist when `napi` feature is enabled");
 
-            // Only create callbacks if at least one feature needs them
-            let needs_embedded = !format_options.embedded_language_formatting.is_off();
-            let needs_tailwind = format_options.experimental_tailwindcss.is_some();
-
-            if needs_embedded || needs_tailwind {
-                Some(external_formatter.to_external_callbacks(path, external_options))
-            } else {
-                None
-            }
+            Some(external_formatter.to_external_callbacks(path, &format_options, external_options))
         };
 
         #[cfg(not(feature = "napi"))]

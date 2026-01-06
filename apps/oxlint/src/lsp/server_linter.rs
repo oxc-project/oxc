@@ -515,10 +515,7 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
-        let Some(diagnostics) = self.run_file(uri, content) else {
-            return Ok(vec![]);
-        };
-        Ok(vec![(uri.clone(), diagnostics)])
+        Ok(vec![(uri.clone(), self.run_file(uri, content)?)])
     }
 
     /// Lint a file with the current linter
@@ -572,7 +569,7 @@ impl ServerLinter {
         if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
             cached_code_actions.clone()
         } else {
-            self.run_file(uri, None);
+            let _ = self.run_file(uri, None);
             self.code_actions.pin().get(uri).and_then(std::clone::Clone::clone)
         }
     }
@@ -599,29 +596,27 @@ impl ServerLinter {
         false
     }
 
-    /// Lint a single file, return `None` if the file is ignored.
-    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    /// Lint a single file, returning an empty diagnostics list if the file is ignored.
+    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<Diagnostic>, String> {
         if self.is_ignored(uri) {
-            return None;
+            return Ok(Vec::new());
         }
 
         let mut diagnostics = vec![];
         let mut code_actions = vec![];
 
-        let reports = self.isolated_linter.run_single(uri, content);
-        if let Some(reports) = reports {
-            for report in reports {
-                diagnostics.push(report.diagnostic);
+        let reports = self.isolated_linter.run_single(uri, content)?;
+        for report in reports {
+            diagnostics.push(report.diagnostic);
 
-                if let Some(code_action) = report.code_action {
-                    code_actions.push(code_action);
-                }
+            if let Some(code_action) = report.code_action {
+                code_actions.push(code_action);
             }
         }
 
         self.code_actions.pin().insert(uri.clone(), Some(code_actions));
 
-        Some(diagnostics)
+        Ok(diagnostics)
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {

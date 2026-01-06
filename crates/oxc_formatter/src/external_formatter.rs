@@ -17,7 +17,7 @@ const SUPPORTED_TAGS: &[&str] = &["css", "styled", "gql", "graphql", "html", "md
 /// This struct holds all callbacks that delegate to external (typically JS) implementations:
 /// - Embedded language formatting (CSS, GraphQL, HTML in template literals)
 /// - Tailwind CSS class sorting
-#[derive(Clone, Default)]
+#[derive(Default)]
 pub struct ExternalCallbacks {
     embedded_formatter: Option<EmbeddedFormatterCallback>,
     tailwind: Option<TailwindCallback>,
@@ -31,15 +31,15 @@ impl ExternalCallbacks {
 
     /// Set the embedded formatter callback.
     #[must_use]
-    pub fn with_embedded_formatter(mut self, callback: EmbeddedFormatterCallback) -> Self {
-        self.embedded_formatter = Some(callback);
+    pub fn with_embedded_formatter(mut self, callback: Option<EmbeddedFormatterCallback>) -> Self {
+        self.embedded_formatter = callback;
         self
     }
 
     /// Set the Tailwind callback.
     #[must_use]
-    pub fn with_tailwind(mut self, callback: TailwindCallback) -> Self {
-        self.tailwind = Some(callback);
+    pub fn with_tailwind(mut self, callback: Option<TailwindCallback>) -> Self {
+        self.tailwind = callback;
         self
     }
 
@@ -68,9 +68,15 @@ impl ExternalCallbacks {
     /// * `classes` - List of class strings to sort
     ///
     /// # Returns
-    /// * `Some(Vec<String>)` - The sorted classes
-    /// * `None` - No Tailwind callback is set
-    pub fn sort_tailwind_classes(&self, classes: Vec<String>) -> Option<Vec<String>> {
-        self.tailwind.as_ref().map(|cb| cb(classes))
+    /// The sorted classes, or the original classes unsorted if no Tailwind callback is set.
+    pub fn sort_tailwind_classes(&self, classes: Vec<String>) -> Vec<String> {
+        if classes.is_empty() {
+            return classes;
+        }
+
+        match self.tailwind.as_ref() {
+            Some(cb) => cb(classes),
+            None => classes,
+        }
     }
 }
