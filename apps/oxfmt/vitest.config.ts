@@ -12,6 +12,6 @@ export default defineConfig({
     testTimeout: 10_000,
     // Limit workers to avoid resource contention
     // - each test spawns CLI subprocesses with their own worker pools
-    maxWorkers: Math.floor(os.cpus().length / 2),
+    maxWorkers: Math.max(1, Math.floor(os.cpus().length / 2)),
   },
 });
