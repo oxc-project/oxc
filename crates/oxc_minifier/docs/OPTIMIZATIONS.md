@@ -12,6 +12,7 @@ Many optimizations rely on [`oxc_ecmascript`](../../oxc_ecmascript) for ECMAScri
 **Size Impact**: High
 **Description**: Evaluates expressions at compile time using `oxc_ecmascript::constant_evaluation`
 
+<!-- prettier-ignore-start -->
 ```javascript
 // Before
 2 + 3;
@@ -19,8 +20,9 @@ Many optimizations rely on [`oxc_ecmascript`](../../oxc_ecmascript) for ECMAScri
 
 // After
 5;
-("ab");
+"ab";
 ```
+<!-- prettier-ignore-end -->
 
 ### Dead Code Elimination
 
@@ -117,13 +119,15 @@ obj.property;
 **Size Impact**: Medium
 **Description**: Simplifies template literals
 
+<!-- prettier-ignore-start -->
 ```javascript
 // Before
 `hello ${"world"}`;
 
 // After
-("hello world");
+"hello world";
 ```
+<!-- prettier-ignore-end -->
 
 ### Built-in Method Replacement
 
@@ -161,14 +165,16 @@ for (;;);
 **Size Impact**: Medium
 **Description**: Combines and simplifies statements
 
+<!-- prettier-ignore-start -->
 ```javascript
 // Before
 a();
 b();
 
 // After (with sequences option)
-(a(), b());
+a(), b();
 ```
+<!-- prettier-ignore-end -->
 
 ### Unused Code Removal
 
