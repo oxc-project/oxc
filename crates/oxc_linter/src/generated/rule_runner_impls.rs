@@ -4083,8 +4083,8 @@ impl RuleRunner for crate::rules::vue::max_props::MaxProps {
 
 impl RuleRunner for crate::rules::vue::no_arrow_functions_in_watch::NoArrowFunctionsInWatch {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ExportDefaultDeclaration,
         AstType::CallExpression,
+        AstType::ExportDefaultDeclaration,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
