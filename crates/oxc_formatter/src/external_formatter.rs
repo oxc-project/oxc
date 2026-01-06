@@ -70,6 +70,10 @@ impl ExternalCallbacks {
     /// # Returns
     /// The sorted classes, or the original classes unsorted if no Tailwind callback is set.
     pub fn sort_tailwind_classes(&self, classes: Vec<String>) -> Vec<String> {
+        if classes.is_empty() {
+            return classes;
+        }
+
         match self.tailwind.as_ref() {
             Some(cb) => cb(classes),
             None => classes,
