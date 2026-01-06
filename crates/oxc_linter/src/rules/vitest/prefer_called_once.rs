@@ -10,12 +10,10 @@ use crate::{
 };
 
 fn prefer_called_once_diagnostic(span: Span, new_matcher_name: &str) -> OxcDiagnostic {
-    let help_message = format!("Prefer `{new_matcher_name}()`.");
-
     OxcDiagnostic::warn(
         "The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.",
     )
-    .with_help(help_message)
+    .with_help(format!("Prefer `{new_matcher_name}()`."))
     .with_label(span)
 }
 
@@ -71,8 +69,6 @@ impl Rule for PreferCalledOnce {
     }
 }
 
-const LENGTH_ARG_SPAN: u32 = 3;
-
 impl PreferCalledOnce {
     fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
         let node = possible_jest_node.node;
@@ -110,10 +106,8 @@ impl PreferCalledOnce {
                 format!("{}Once", ctx.source_range(span_matcher_without_suffix))
             };
 
-            let matcher_and_args_span = Span::new(
-                matcher_to_be_fixed.span.start,
-                matcher_to_be_fixed.span.end + LENGTH_ARG_SPAN,
-            );
+            let matcher_and_args_span =
+                Span::new(matcher_to_be_fixed.span.start, call_expr.span.end);
 
             ctx.diagnostic_with_fix(
                 prefer_called_once_diagnostic(matcher_and_args_span, new_matcher_name.as_ref()),
@@ -158,22 +152,18 @@ fn test() {
         "expect(fn).not.toHaveBeenCalledTimes(1);",
         "expect(fn).resolves.toBeCalledTimes(1);",
         "expect(fn).resolves.toHaveBeenCalledTimes(1);",
+        "expect(fn).resolves.toHaveBeenCalledTimes(/*comment*/1);",
     ];
 
     let fix = vec![
-        ("expect(fn).toBeCalledTimes(1);", "expect(fn).toBeCalledOnce();", None),
-        ("expect(fn).toHaveBeenCalledTimes(1);", "expect(fn).toHaveBeenCalledOnce();", None),
-        ("expect(fn).not.toBeCalledTimes(1);", "expect(fn).not.toBeCalledOnce();", None),
-        (
-            "expect(fn).not.toHaveBeenCalledTimes(1);",
-            "expect(fn).not.toHaveBeenCalledOnce();",
-            None,
-        ),
-        ("expect(fn).resolves.toBeCalledTimes(1);", "expect(fn).resolves.toBeCalledOnce();", None),
+        ("expect(fn).toBeCalledTimes(1);", "expect(fn).toBeCalledOnce();"),
+        ("expect(fn).toHaveBeenCalledTimes(1);", "expect(fn).toHaveBeenCalledOnce();"),
+        ("expect(fn).not.toBeCalledTimes(1);", "expect(fn).not.toBeCalledOnce();"),
+        ("expect(fn).not.toHaveBeenCalledTimes(1);", "expect(fn).not.toHaveBeenCalledOnce();"),
+        ("expect(fn).resolves.toBeCalledTimes(1);", "expect(fn).resolves.toBeCalledOnce();"),
         (
             "expect(fn).resolves.toHaveBeenCalledTimes(1);",
             "expect(fn).resolves.toHaveBeenCalledOnce();",
-            None,
         ),
     ];
     Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)

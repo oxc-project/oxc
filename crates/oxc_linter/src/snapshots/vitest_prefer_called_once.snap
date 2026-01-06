@@ -42,3 +42,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────────────────
    ╰────
   help: Prefer `toHaveBeenCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:21]
+ 1 │ expect(fn).resolves.toHaveBeenCalledTimes(/*comment*/1);
+   ·                     ───────────────────────────────────
+   ╰────
+  help: Prefer `toHaveBeenCalledOnce()`.
