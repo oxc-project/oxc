@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 6870b64 parser: Add TS1363 error code (#17609) (Sysix)
+- a7e1643 parser: Add TS2528 error code to duplicate_default_export diagnostic (#17558) (camc314)
+
 ## [0.106.0] - 2025-12-29
 
 ### 🚀 Features

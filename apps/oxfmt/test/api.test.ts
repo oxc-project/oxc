@@ -64,7 +64,9 @@ describe("API Tests", () => {
       `
 <template><div>Vue</div></template>
 <style>
-  div{color:red;}
+  div {
+    color: red;
+  }
 </style>
 `.trimStart(),
     );

@@ -798,7 +798,17 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return Ok(None);
         };
-        Ok(worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await)
+        match worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await {
+            Ok(edits) => {
+                if edits.is_empty() {
+                    return Ok(None);
+                }
+                Ok(Some(edits))
+            }
+            Err(err) => {
+                Err(Error { code: ErrorCode::ServerError(1), message: Cow::Owned(err), data: None })
+            }
+        }
     }
 }
 

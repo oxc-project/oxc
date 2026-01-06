@@ -119,6 +119,7 @@ pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
     pub labels: Option<Vec<LabeledSpan>>,
     pub help: Option<Cow<'static, str>>,
+    pub note: Option<Cow<'static, str>>,
     pub severity: Severity,
     pub code: OxcCode,
     pub url: Option<Cow<'static, str>>,
@@ -136,6 +137,14 @@ impl Diagnostic for OxcDiagnostic {
     /// The secondary help message.
     fn help<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
         self.help.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
+    }
+
+    /// A note for the diagnostic.
+    ///
+    /// Similar to rustc - intended for additional explanation and information,
+    /// e.g. why an error was emitted, how to turn it off.
+    fn note<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.note.as_ref().map(Box::new).map(|c| c as Box<dyn Display>)
     }
 
     /// The severity level of this diagnostic.
@@ -174,6 +183,7 @@ impl OxcDiagnostic {
             inner: Box::new(OxcDiagnosticInner {
                 message: message.into(),
                 labels: None,
+                note: None,
                 help: None,
                 severity: Severity::Error,
                 code: OxcCode::default(),
@@ -189,6 +199,7 @@ impl OxcDiagnostic {
                 message: message.into(),
                 labels: None,
                 help: None,
+                note: None,
                 severity: Severity::Warning,
                 code: OxcCode::default(),
                 url: None,
@@ -266,6 +277,25 @@ impl OxcDiagnostic {
     /// ```
     pub fn with_help<T: Into<Cow<'static, str>>>(mut self, help: T) -> Self {
         self.inner.help = Some(help.into());
+        self
+    }
+
+    /// Show a note to the user.
+    ///
+    /// ## Example
+    /// ```
+    /// use std::path::PathBuf;
+    /// use oxc_diagnostics::OxcDiagnostic
+    ///
+    /// let config_file_path = Path::from("config.json");
+    /// if !config_file_path.exists() {
+    ///     return Err(OxcDiagnostic::error("No config file found")
+    ///         .with_help("Run my_tool --init to set up a new config file")
+    ///         .with_note("Some useful information or suggestion"));
+    /// }
+    /// ```
+    pub fn with_note<T: Into<Cow<'static, str>>>(mut self, note: T) -> Self {
+        self.inner.note = Some(note.into());
         self
     }
 

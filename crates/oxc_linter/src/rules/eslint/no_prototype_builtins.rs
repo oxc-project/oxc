@@ -90,13 +90,13 @@ fn test() {
         "({}.propertyIsEnumerable.apply(foo, ['bar']))",
         "foo[hasOwnProperty]('bar')",
         "foo['HasOwnProperty']('bar')",
-        "foo[`isPrototypeOff`]('bar')",
-        "foo?.['propertyIsEnumerabl']('bar')",
+        "foo[`isPrototypeOff`]('bar')", // { "ecmaVersion": 2015 },
+        "foo?.['propertyIsEnumerabl']('bar')", // { "ecmaVersion": 2020 },
         "foo[1]('bar')",
         "foo[null]('bar')",
-        "class C { #hasOwnProperty; foo() { obj.#hasOwnProperty('bar'); } }",
+        "class C { #hasOwnProperty; foo() { obj.#hasOwnProperty('bar'); } }", // { "ecmaVersion": 2022 },
         "foo['hasOwn' + 'Property']('bar')",
-        "foo[`hasOwnProperty${''}`]('bar')",
+        "foo[`hasOwnProperty${''}`]('bar')", // { "ecmaVersion": 2015 }
     ];
 
     let fail = vec![
@@ -106,12 +106,20 @@ fn test() {
         "foo.bar.hasOwnProperty('bar')",
         "foo.bar.baz.isPrototypeOf('bar')",
         "foo['hasOwnProperty']('bar')",
-        "foo[`isPrototypeOf`]('bar').baz",
-        "foo.bar[\"propertyIsEnumerable\"]('baz')",
-        "foo?.hasOwnProperty('bar')",
-        "(foo?.hasOwnProperty)('bar')",
-        "foo?.['hasOwnProperty']('bar')",
-        "(foo?.[`hasOwnProperty`])('bar')",
+        "foo[`isPrototypeOf`]('bar').baz", // { "ecmaVersion": 2015 },
+        r#"foo.bar["propertyIsEnumerable"]('baz')"#,
+        "(function(Object) {return foo.hasOwnProperty('bar');})",
+        "foo.hasOwnProperty('bar')", // { "globals": { "Object": "off", }, },
+        "foo?.hasOwnProperty('bar')", // { "ecmaVersion": 2020 },
+        "foo?.bar.hasOwnProperty('baz')", // { "ecmaVersion": 2020 },
+        "foo.hasOwnProperty?.('bar')", // { "ecmaVersion": 2020 },
+        "foo?.hasOwnProperty('bar').baz", // { "ecmaVersion": 2020 },
+        "foo.hasOwnProperty('bar')?.baz", // { "ecmaVersion": 2020 },
+        "(a,b).hasOwnProperty('bar')", // { "ecmaVersion": 2020 },
+        "(foo?.hasOwnProperty)('bar')", // { "ecmaVersion": 2020 },
+        "(foo?.hasOwnProperty)?.('bar')", // { "ecmaVersion": 2020 },
+        "foo?.['hasOwnProperty']('bar')", // { "ecmaVersion": 2020 },
+        "(foo?.[`hasOwnProperty`])('bar')", // { "ecmaVersion": 2020 }
     ];
 
     Tester::new(NoPrototypeBuiltins::NAME, NoPrototypeBuiltins::PLUGIN, pass, fail)

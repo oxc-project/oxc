@@ -7,11 +7,11 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    EmbeddedFormatter, IndentWidth,
+    ExternalCallbacks, IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
-        Format, FormatElement, Formatter, VecBuffer,
+        Format, FormatElement, Formatter, TailwindContextEntry, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         prelude::{document::Document, *},
         printer::Printer,
@@ -20,6 +20,7 @@ use crate::{
     utils::{
         call_expression::is_test_each_pattern,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        tailwindcss::{is_tailwind_function_call, write_tailwind_template_element},
     },
     write,
 };
@@ -53,6 +54,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
 
         write!(f, [line_suffix_boundary()]);
 
+        // Check if this is a Tailwind function call (e.g., tw`flex p-4`)
+        // Extract context entry before mutating f
+        let tailwind_ctx_to_push = f
+            .options()
+            .experimental_tailwindcss
+            .as_ref()
+            .filter(|opts| is_tailwind_function_call(&self.tag, opts))
+            .map(|opts| TailwindContextEntry::new(false, opts.preserve_whitespace));
+
+        if let Some(ctx) = tailwind_ctx_to_push {
+            f.context_mut().push_tailwind_context(ctx);
+        }
+
         if try_format_embedded_template(self, f) {
         } else if is_test_each_pattern(&self.tag) {
             let template = &EachTemplateTable::from_template(quasi, f);
@@ -62,12 +76,29 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
             let template = TemplateLike::TemplateLiteral(quasi);
             write!(f, template);
         }
+
+        if tailwind_ctx_to_push.is_some() {
+            f.context_mut().pop_tailwind_context();
+        }
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, text(self.value.raw.as_str()));
+        let source = f.source_text().text_for(self);
+
+        // Check if we're in a Tailwind context via the stack
+        // (handles JSXAttribute, CallExpression, TaggedTemplateExpression, and nested contexts)
+        let tailwind_ctx = f.context().tailwind_context().copied().filter(|_| {
+            // No whitespace means only one class, so no need to sort
+            source.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
+        });
+
+        if let Some(ctx) = tailwind_ctx {
+            write_tailwind_template_element(self, ctx, f);
+        } else {
+            write!(f, text(self.value.raw.as_str()));
+        }
     }
 }
 
@@ -190,18 +221,66 @@ impl<'a> Format<'a> for TemplateLike<'a, '_> {
             Self::TSTemplateLiteralType(t) => TemplateExpressionIterator::TSType(t.types().iter()),
         };
 
-        for quasi in quasis {
-            write!(f, quasi);
+        // Check if we're in a Tailwind context - if so, we need to push expression context
+        let tailwind_ctx = f.context().tailwind_context().copied();
+
+        // When in Tailwind context with preserve_whitespace false, newlines are collapsed
+        let tailwind_collapses_newlines = tailwind_ctx.is_some_and(|ctx| !ctx.preserve_whitespace);
+
+        let quasis_len = quasis.len();
+
+        for (i, quasi) in quasis.iter().enumerate() {
+            // If in Tailwind context, push context with quasi position for boundary detection
+            if let Some(ctx) = tailwind_ctx {
+                let is_first = i == 0;
+                let is_last = i == quasis_len - 1;
+                f.context_mut().push_tailwind_context(ctx.with_quasi_position(is_first, is_last));
+            }
+
+            write!(f, *quasi);
+
+            // Pop quasi position context
+            if tailwind_ctx.is_some() {
+                f.context_mut().pop_tailwind_context();
+            }
 
             let quasi_text = quasi.value.raw.as_str();
 
             if let Some(expr) = expression_iterator.next() {
-                let tab_width = u32::from(f.options().indent_width.value());
-                indention =
-                    TemplateElementIndention::after_last_new_line(quasi_text, tab_width, indention);
-                let after_new_line = quasi_text.ends_with('\n');
+                // Only calculate indention if newlines are NOT being collapsed
+                if !tailwind_collapses_newlines {
+                    let tab_width = u32::from(f.options().indent_width.value());
+                    indention = TemplateElementIndention::after_last_new_line(
+                        quasi_text, tab_width, indention,
+                    );
+                }
+                // When Tailwind collapses newlines, treat as if there's no newline
+                let after_new_line = !tailwind_collapses_newlines && quasi_text.ends_with('\n');
                 let options = FormatTemplateExpressionOptions { indention, after_new_line };
+
+                // If in Tailwind context, push template expression context with quasi whitespace info
+                if let Some(ctx) = tailwind_ctx {
+                    let quasi_before_has_trailing_ws =
+                        quasi_text.ends_with(|c: char| c.is_ascii_whitespace());
+                    let quasi_after_has_leading_ws = quasis.get(i + 1).is_some_and(|q| {
+                        q.value.raw.as_str().starts_with(|c: char| c.is_ascii_whitespace())
+                    });
+
+                    f.context_mut().push_tailwind_context(
+                        TailwindContextEntry::template_expression(
+                            ctx,
+                            quasi_before_has_trailing_ws,
+                            quasi_after_has_leading_ws,
+                        ),
+                    );
+                }
+
                 FormatTemplateExpression::new(&expr, options).fmt(f);
+
+                // Pop the template expression context
+                if tailwind_ctx.is_some() {
+                    f.context_mut().pop_tailwind_context();
+                }
             }
         }
 
@@ -588,7 +667,7 @@ impl<'a> EachTemplateTable<'a> {
             // let range = element.range();
             let print_options = f.options().as_print_options();
             // TODO: if `unwrap()` panics here, it's a internal error
-            let printed = Printer::new(print_options).print(&root).unwrap();
+            let printed = Printer::new(print_options, &[]).print(&root).unwrap();
             let text = f.context().allocator().alloc_str(&printed.into_code());
             let will_break = text.contains('\n');
 
@@ -696,17 +775,16 @@ fn try_format_embedded_template<'a>(
 
     let tag_name = ident.name.as_str();
     // Check if the tag is supported by the embedded formatter
-    if !EmbeddedFormatter::is_supported_tag(tag_name) {
+    if !ExternalCallbacks::is_supported_tag(tag_name) {
         return false;
     }
 
-    // Get the embedded formatter from the context
-    let Some(embedded_formatter) = f.context().embedded_formatter() else {
-        return false;
-    };
+    // Get the external callbacks from the context
     let template_content = quasi.quasis[0].value.raw.as_str();
 
-    let Ok(formatted) = embedded_formatter.format(tag_name, template_content) else {
+    let Some(Ok(formatted)) =
+        f.context().external_callbacks().format_embedded(tag_name, template_content)
+    else {
         return false;
     };
 

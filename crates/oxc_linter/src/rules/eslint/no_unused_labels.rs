@@ -106,6 +106,7 @@ fn test() {
         ("A: { function f() { B: { } } break A; }", None),
         ("label: while (true) { (() => { label: while (false) {} })(); }", None),
     ];
+
     let fix = vec![
         ("A: var foo = 0;", "var foo = 0;", None),
         ("A: /* comment */ foo", "foo", None),
@@ -115,6 +116,11 @@ fn test() {
             "A: for (var i = 0; i < 10; ++i) { break A; }",
             None,
         ),
+        ("A: { var A = 0; console.log(A); }", "{ var A = 0; console.log(A); }", None),
+        ("if (foo) { bar: 'baz' }", "if (foo) { 'baz' }", None),
+        ("A: B: 'foo'", "B: 'foo'", None),
+        ("A: B: C: 'foo'", "B: C: 'foo'", None),
+        ("A: 42", "42", None),
     ];
 
     Tester::new(NoUnusedLabels::NAME, NoUnusedLabels::PLUGIN, pass, fail)

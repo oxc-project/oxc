@@ -14,10 +14,10 @@ These assumptions are held regardless of the options.
 
 ```javascript
 // The minifier assumes this never happens:
-Array.prototype.push = function() {
-  console.log('hijacked!');
+Array.prototype.push = function () {
+  console.log("hijacked!");
 };
-Object.defineProperty(Number.prototype, 'toString', { value: () => 'hijacked!' });
+Object.defineProperty(Number.prototype, "toString", { value: () => "hijacked!" });
 ```
 
 ### No `document.all` Usage
@@ -26,8 +26,8 @@ The deprecated [`document.all`](https://tc39.es/ecma262/multipage/additional-ecm
 
 ```javascript
 // The minifier assumes this never happens:
-typeof document.all === 'undefined'; // true in browsers
-document.all && console.log('exists but falsy');
+typeof document.all === "undefined"; // true in browsers
+document.all && console.log("exists but falsy");
 ```
 
 ### No `with` Statement
@@ -49,8 +49,8 @@ with (obj) {
 // The minifier assumes this never happens:
 const obj = {
   toString() {
-    console.log('side effect!');
-    return '';
+    console.log("side effect!");
+    return "";
   },
 };
 String(obj); // Would trigger side effect
@@ -75,7 +75,7 @@ Creating strings or arrays that exceed maximum length can be moved or removed.
 try {
   new Array(2 ** 32); // RangeError
 } catch {
-  console.log('caught');
+  console.log("caught");
 }
 ```
 
@@ -94,7 +94,7 @@ Variables declared in direct `eval` are not referenced outside the eval, which i
 
 ```javascript
 // The minifier assumes this never happens:
-eval('var x = 1');
+eval("var x = 1");
 console.log(x); // 1
 ```
 
@@ -116,7 +116,7 @@ Code doesn't depend on function names being preserved. This assumption is held b
 ```javascript
 // The minifier assumes this never happens:
 function myFunc() {}
-if (myFunc.name !== 'myFunc') throw Error();
+if (myFunc.name !== "myFunc") throw Error();
 ```
 
 ## Configuration

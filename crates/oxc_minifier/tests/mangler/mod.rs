@@ -22,10 +22,38 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
 
 #[test]
 fn direct_eval() {
-    let source_text = "function foo() { let NO_MANGLE; eval('') }";
     let options = MangleOptions::default();
+
+    // Symbols in scopes with direct eval should NOT be mangled
+    let source_text = "function foo() { let NO_MANGLE; eval('') }";
     let mangled = mangle(source_text, options);
     assert_eq!(mangled, "function foo() {\n\tlet NO_MANGLE;\n\teval(\"\");\n}\n");
+
+    // Nested direct eval: parent scope also should not mangle
+    let source_text = "function foo() { let NO_MANGLE; function bar() { eval('') } }";
+    let mangled = mangle(source_text, options);
+    assert_eq!(
+        mangled,
+        "function foo() {\n\tlet NO_MANGLE;\n\tfunction bar() {\n\t\teval(\"\");\n\t}\n}\n"
+    );
+
+    // Sibling scope without direct eval should be mangled
+    let source_text =
+        "function foo() { let NO_MANGLE; eval('') } function bar() { let SHOULD_MANGLE; }";
+    let mangled = mangle(source_text, options);
+    // SHOULD_MANGLE gets mangled (to some short name), NO_MANGLE stays as is
+    assert!(mangled.contains("NO_MANGLE"));
+    assert!(!mangled.contains("SHOULD_MANGLE"));
+
+    // Child function scope without direct eval CAN be mangled (eval in parent cannot access child function locals)
+    let source_text = "function foo() { eval(''); function bar() { let CAN_MANGLE; } }";
+    let mangled = mangle(source_text, options);
+    assert!(!mangled.contains("CAN_MANGLE"));
+
+    // Indirect eval should still allow mangling
+    let source_text = "function foo() { let SHOULD_MANGLE; (0, eval)('') }";
+    let mangled = mangle(source_text, options);
+    assert!(!mangled.contains("SHOULD_MANGLE"));
 }
 
 #[test]

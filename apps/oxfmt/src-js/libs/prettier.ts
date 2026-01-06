@@ -1,4 +1,4 @@
-import type { Options } from "prettier";
+import type { Options, Plugin } from "prettier";
 
 // Lazy load Prettier
 //
@@ -71,13 +71,11 @@ export async function formatEmbeddedCode({
     .catch(() => code);
 }
 
-// ---
-
 export type FormatFileParam = {
   code: string;
   parserName: string;
   fileName: string;
-  options: Options;
+  options: Options & { experimentalTailwindcss?: TailwindcssOptions };
 };
 
 /**
@@ -100,5 +98,129 @@ export async function formatFile({
   options.parser = parserName;
   // But some plugins rely on `filepath`, so we set it too
   options.filepath = fileName;
+
+  // Enable Tailwind CSS plugin for non-JS files when experimentalTailwindcss is set
+  await setupTailwindPlugin(options);
+
   return prettierCache.format(code, options);
+}
+
+// ---
+// Tailwind CSS support
+// ---
+
+// Import types only to avoid runtime error if plugin is not installed
+import type { TransformerEnv } from "prettier-plugin-tailwindcss";
+import type { TailwindcssOptions } from "../index";
+
+// Shared cache for prettier-plugin-tailwindcss
+let tailwindPlugin: typeof import("prettier-plugin-tailwindcss") | null = null;
+
+// Oxfmt to Prettier option name mapping (adds `tailwind` prefix)
+export const TAILWIND_OPTION_MAPPING: Record<string, string> = {
+  config: "tailwindConfig",
+  stylesheet: "tailwindStylesheet",
+  functions: "tailwindFunctions",
+  attributes: "tailwindAttributes",
+  preserveWhitespace: "tailwindPreserveWhitespace",
+  preserveDuplicates: "tailwindPreserveDuplicates",
+};
+
+/**
+ * Load prettier-plugin-tailwindcss lazily.
+ * @returns The plugin module or null if not available.
+ */
+async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tailwindcss") | null> {
+  if (tailwindPlugin) return tailwindPlugin;
+
+  try {
+    tailwindPlugin = await import("prettier-plugin-tailwindcss");
+    return tailwindPlugin;
+  } catch {
+    // Plugin not available
+    return null;
+  }
+}
+
+/**
+ * Map Oxfmt Tailwind options to Prettier format.
+ */
+function mapTailwindOptions(
+  tailwindcss: TailwindcssOptions,
+  target: Record<string, unknown>,
+): void {
+  for (const [oxfmtKey, prettierKey] of Object.entries(TAILWIND_OPTION_MAPPING)) {
+    const value = tailwindcss[oxfmtKey as keyof TailwindcssOptions];
+    if (value !== undefined) {
+      target[prettierKey] = value;
+    }
+  }
+}
+
+/**
+ * Set up Tailwind CSS plugin for Prettier when experimentalTailwindcss is enabled.
+ * Loads the plugin lazily and maps Oxfmt config options to Prettier format.
+ */
+async function setupTailwindPlugin(
+  options: Options & { experimentalTailwindcss?: TailwindcssOptions },
+): Promise<void> {
+  const tailwindcss = options.experimentalTailwindcss;
+  if (!tailwindcss) return;
+
+  const plugin = await loadTailwindPlugin();
+  if (plugin) {
+    // Cast to `any` because the module type is not compatible with Prettier's plugin type
+    options.plugins = options.plugins || [];
+    options.plugins.push(plugin as Plugin);
+    mapTailwindOptions(tailwindcss, options as Record<string, unknown>);
+  }
+
+  // Clean up experimentalTailwindcss from options to avoid passing it to Prettier
+  delete options.experimentalTailwindcss;
+}
+
+// ---
+
+export interface SortTailwindClassesArgs {
+  filepath: string;
+  classes: string[];
+  options?: { experimentalTailwindcss?: TailwindcssOptions } & Record<string, unknown>;
+}
+
+/**
+ * Process Tailwind CSS classes found in JSX attributes.
+ * @param args - Object containing filepath, classes, and options
+ * @returns Array of sorted class strings (same order/length as input)
+ */
+export async function sortTailwindClasses({
+  filepath,
+  classes,
+  options = {},
+}: SortTailwindClassesArgs): Promise<string[]> {
+  const plugin = await loadTailwindPlugin();
+  if (!plugin) return classes;
+
+  const tailwindcss = options.experimentalTailwindcss || {};
+  const configOptions: Record<string, unknown> = { filepath, ...options };
+  mapTailwindOptions(tailwindcss, configOptions);
+
+  // Load Tailwind context
+  const tailwindContext = await plugin.getTailwindConfig(configOptions);
+  if (!tailwindContext) return classes;
+
+  // Create transformer env with options
+  const env: TransformerEnv = {
+    context: tailwindContext,
+    options: configOptions,
+  };
+
+  // Sort all classes
+  return classes.map((classStr) => {
+    try {
+      return plugin.sortClasses(classStr, { env });
+    } catch {
+      // Failed to sort, return original
+      return classStr;
+    }
+  });
 }

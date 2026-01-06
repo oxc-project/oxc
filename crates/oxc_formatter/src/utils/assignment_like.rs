@@ -1027,7 +1027,7 @@ fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> b
         if let TSType::TSTypeReference(type_ref) = first_argument
             && let Some(type_args) = &type_ref.type_arguments
         {
-            return is_complex_type_arguments(type_args);
+            return type_args.params.iter().any(is_complex_ts_type);
         }
 
         false

@@ -11,8 +11,7 @@ use crate::{
 
 use super::FunctionKind;
 
-type Extends<'a> =
-    Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
+type ImplementsWithKeywordSpan<'a> = (Span, Vec<'a, TSClassImplements<'a>>);
 
 /// Section 15.7 Class Definitions
 impl<'a> ParserImpl<'a> {
@@ -88,10 +87,10 @@ impl<'a> ParserImpl<'a> {
             && !extends.is_empty()
         {
             let first_extends = extends.remove(0);
-            super_class = Some(first_extends.0);
-            super_type_parameters = first_extends.1;
-            for (_, _, span) in extends {
-                self.error(diagnostics::classes_can_only_extend_single_class(span));
+            super_class = Some(first_extends.expression);
+            super_type_parameters = first_extends.type_arguments;
+            for extend in extends {
+                self.error(diagnostics::classes_can_only_extend_single_class(extend.span));
             }
         }
         let body = self.parse_class_body();
@@ -120,7 +119,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_heritage_clause(
         &mut self,
-    ) -> (Option<Extends<'a>>, Option<(Span, Vec<'a, TSClassImplements<'a>>)>) {
+    ) -> (Option<Vec<'a, TSInterfaceHeritage<'a>>>, Option<ImplementsWithKeywordSpan<'a>>) {
         let mut extends = None;
         let mut implements: Option<(Span, Vec<'a, TSClassImplements<'a>>)> = None;
 
@@ -165,7 +164,7 @@ impl<'a> ParserImpl<'a> {
 
     /// `ClassHeritage`
     /// extends `LeftHandSideExpression`[?Yield, ?Await]
-    fn parse_extends_clause(&mut self) -> Extends<'a> {
+    fn parse_extends_clause(&mut self) -> Vec<'a, TSInterfaceHeritage<'a>> {
         self.bump_any(); // bump `extends`
 
         let mut extends = self.ast.vec();
@@ -181,7 +180,11 @@ impl<'a> ParserImpl<'a> {
                 type_argument = self.try_parse_type_arguments();
             }
 
-            extends.push((extend, type_argument, self.end_span(span)));
+            extends.push(self.ast.ts_interface_heritage(
+                self.end_span(span),
+                extend,
+                type_argument,
+            ));
 
             if !self.eat(Kind::Comma) {
                 break;

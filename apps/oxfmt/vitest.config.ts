@@ -8,5 +8,6 @@ export default defineConfig({
       printBasicPrototype: false,
     },
     snapshotSerializers: [],
+    testTimeout: 10000,
   },
 });

@@ -325,18 +325,30 @@ fn disable_for_this_section(
 /// Get the insert position and content prefix for section-based insertions.
 ///
 /// For framework files (section_offset > 0), this handles proper line break detection.
-/// For regular JS files (section_offset == 0), it returns the offset as-is.
+/// For regular JS files (section_offset == 0), this handles shebang lines.
 ///
 /// Returns (content_prefix, insert_offset) where:
 /// - content_prefix: "\n" if we need to add a line break, "" otherwise
 /// - insert_offset: the byte offset where the content should be inserted
+#[expect(clippy::cast_possible_truncation)]
 fn get_section_insert_position(
     section_offset: u32,
     target_offset: u32,
     bytes: &[u8],
 ) -> (&'static str, u32) {
-    if section_offset == 0 {
-        // Regular JS files - insert at target offset
+    if section_offset == 0 && target_offset == 0 {
+        if bytes.starts_with(b"#!") {
+            // Shebang present, insert after the first line
+            let mut shebang_end = 0;
+            for (i, &byte) in bytes.iter().enumerate() {
+                if byte == b'\n' {
+                    shebang_end = i + 1;
+                    break;
+                }
+            }
+            return ("", shebang_end as u32);
+        }
+        // Regular JS file without shebang, insert at start
         ("", target_offset)
     } else if target_offset == section_offset {
         // Framework files - check for line breaks at section_offset
@@ -431,6 +443,28 @@ mod test {
         let source = "<script>\r\nconsole.log('hello');";
         let rope = Rope::from_str(source);
         let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_with_shebang() {
+        let source = "#!/usr/bin/env node\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_with_shebang_crlf() {
+        let source = "#!/usr/bin/env node\r\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -637,6 +671,28 @@ mod test {
         let error_offset = 8; // Error exactly at section offset
         let fix =
             super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_with_shebang() {
+        let source = "#!/usr/bin/env node\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_with_shebang_crlf() {
+        let source = "#!/usr/bin/env node\r\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.107.0] - 2026-01-05
+
+### ⚡ Performance
+
+- ea82b50 transformer: Mark all diagnostic functions as `#[cold]` (#17486) (camc314)
+
 ## [0.106.0] - 2025-12-29
 
 ### 🚀 Features

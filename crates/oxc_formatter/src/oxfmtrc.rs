@@ -13,7 +13,7 @@ use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TrailingCommas,
+    TailwindcssOptions, TrailingCommas,
 };
 
 /// Configuration options for the Oxfmt.
@@ -80,7 +80,8 @@ pub struct Oxfmtrc {
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether to format embedded parts in the file. (Default: `"off"`)
+    /// Control whether to format embedded parts in the file.
+    /// e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
@@ -95,6 +96,13 @@ pub struct Oxfmtrc {
     /// Experimental: Sort `package.json` keys. (Default: `true`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_package_json: Option<bool>,
+
+    /// Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
+    /// When enabled, class strings will be collected and passed to a callback for sorting.
+    /// Pass `true` or an object with options from `prettier-plugin-tailwindcss`.
+    /// (Default: disabled)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub experimental_tailwindcss: Option<TailwindcssConfig>,
 
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -232,6 +240,61 @@ where
 pub enum SortOrderConfig {
     Asc,
     Desc,
+}
+
+/// Configuration for Tailwind CSS class sorting.
+/// Based on options from `prettier-plugin-tailwindcss`.
+///
+/// Note: All `tailwind` prefixes have been removed from option names.
+/// For example, use `config` instead of `tailwindConfig`.
+///
+/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct TailwindcssConfig {
+    /// Path to your Tailwind CSS configuration file (v3).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Default: `"./tailwind.config.js"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<String>,
+
+    /// Path to your Tailwind CSS stylesheet (v4).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Example: `"./src/app.css"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stylesheet: Option<String>,
+
+    /// List of custom function names that contain Tailwind CSS classes.
+    ///
+    /// Example: `["clsx", "cn", "cva", "tw"]`
+    ///
+    /// Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub functions: Option<Vec<String>>,
+
+    /// List of attributes that contain Tailwind CSS classes.
+    ///
+    /// Example: `["myClassProp", ":class"]`
+    ///
+    /// Default: `["class", "className"]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attributes: Option<Vec<String>>,
+
+    /// Preserve whitespace around classes.
+    ///
+    /// Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preserve_whitespace: Option<bool>,
+
+    /// Preserve duplicate classes.
+    ///
+    /// Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preserve_duplicates: Option<bool>,
 }
 
 // ---
@@ -422,6 +485,18 @@ impl Oxfmtrc {
             }
 
             format_options.experimental_sort_imports = Some(sort_imports);
+        }
+
+        // [Oxfmt] experimentalTailwindcss: object | null
+        if let Some(config) = self.experimental_tailwindcss {
+            format_options.experimental_tailwindcss = Some(TailwindcssOptions {
+                config: config.config,
+                stylesheet: config.stylesheet,
+                functions: config.functions.unwrap_or_default(),
+                attributes: config.attributes.unwrap_or_default(),
+                preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
+                preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
+            });
         }
 
         let mut oxfmt_options = OxfmtOptions::default();

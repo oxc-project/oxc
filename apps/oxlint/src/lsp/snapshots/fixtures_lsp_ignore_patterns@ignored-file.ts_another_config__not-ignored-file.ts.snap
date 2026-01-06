@@ -4,7 +4,11 @@ source: apps/oxlint/src/lsp/tester.rs
 ########## 
 Linted file: fixtures/lsp/ignore_patterns/ignored-file.ts
 ----------
-No diagnostics / Files are ignored
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/ignore_patterns/ignored-file.ts
+
+########### Code Actions/Commands
+
 ########## 
 Linted file: fixtures/lsp/ignore_patterns/another_config/not-ignored-file.ts
 ----------

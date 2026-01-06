@@ -124,5 +124,55 @@ fn test() {
         r"return foo.forEach(element => {bar(element)});",
     ];
 
+    // TODO: Implement a fixer.
+    #[expect(clippy::no_effect_underscore_binding)]
+    let _fix = [
+        (
+            "foo.forEach(function(element) {
+                delete element;
+                console.log(element)
+            });",
+            "for (const element of foo) {
+                delete element;
+                console.log(element)
+            }",
+            None::<()>,
+        ),
+        (
+            "staticPages.forEach((pg) => allStaticPages.add(pg))
+            pageInfos.forEach((info: PageInfo, key: string) => {
+                allPageInfos.set(key, info)
+            })",
+            "for (const pg of staticPages) allStaticPages.add(pg)
+            pageInfos.forEach((info: PageInfo, key: string) => {
+                allPageInfos.set(key, info)
+            })",
+            None,
+        ),
+        (
+            "const cloakVals: string[] = [];
+            elements.forEach(element => cloakVals.push(cloakElement(element)));",
+            "const cloakVals: string[] = [];
+            for (const element of elements) cloakVals.push(cloakElement(element));",
+            None,
+        ),
+        (
+            "while (true) return;
+            foo.forEach(element => bar(element));",
+            "while (true) return;
+            for (const element of foo) bar(element);",
+            None,
+        ),
+        (
+            "foo.forEach(_ => {
+                with (a) return {};
+            })",
+            "for (const _ of foo) {
+                with (a)  { ({}); continue; }
+            }",
+            None,
+        ),
+    ];
+
     Tester::new(NoArrayForEach::NAME, NoArrayForEach::PLUGIN, pass, fail).test_and_snapshot();
 }

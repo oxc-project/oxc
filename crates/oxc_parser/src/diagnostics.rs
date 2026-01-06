@@ -343,6 +343,16 @@ pub fn implements_clause_already_seen(span: Span, seen_span: Span) -> OxcDiagnos
         .with_help("Merge the two 'implements' clauses into one by a ','")
 }
 
+// A type-only import can specify a default import or named bindings, but not both. ts(1363)
+#[cold]
+pub fn type_only_import_default_and_named(specifier_span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1363",
+        "A type-only import can specify a default import or named bindings, but not both.",
+    )
+    .with_label(specifier_span)
+}
+
 #[cold]
 pub fn binding_rest_element_last(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest element must be last in a destructuring pattern").with_label(span)

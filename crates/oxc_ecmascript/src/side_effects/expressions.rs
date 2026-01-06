@@ -248,7 +248,7 @@ fn is_pure_call(name: &str) -> bool {
 fn is_pure_constructor(name: &str) -> bool {
     matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap" | "ArrayBuffer" | "Date"
             | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
+            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String")
 }
 
 /// Whether the name matches any known global constructors.

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 54/54 (100.00%)
 Positive Passed: 54/54 (100.00%)
-Negative Passed: 122/122 (100.00%)
+Negative Passed: 124/124 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -230,6 +230,20 @@ Negative Passed: 122/122 (100.00%)
  1 │ import source 'module';
    ·               ────┬───
    ·                   ╰── `from` expected
+   ╰────
+
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
+   ╭─[misc/fail/import-type-mixed-empty.ts:3:13]
+ 2 │ // TS1363: A type-only import can specify a default import or named bindings, but not both.
+ 3 │ import type foo, {} from 'bar';
+   ·             ───
+   ╰────
+
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
+   ╭─[misc/fail/import-type-mixed-star.ts:3:13]
+ 2 │ // TS1363: A type-only import can specify a default import or named bindings, but not both.
+ 3 │ import type A, * as NS from 'mod';
+   ·             ─
    ╰────
 
   × TS(1141): String literal expected.

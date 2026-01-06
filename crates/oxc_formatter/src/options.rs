@@ -74,6 +74,56 @@ pub struct FormatOptions {
 
     /// Sort import statements. By default disabled.
     pub experimental_sort_imports: Option<SortImportsOptions>,
+
+    /// Enable Tailwind CSS class sorting in JSX class/className attributes.
+    /// When enabled, class strings will be collected and passed to a callback for sorting.
+    /// Defaults to None (disabled).
+    pub experimental_tailwindcss: Option<TailwindcssOptions>,
+}
+
+/// Options for Tailwind CSS class sorting.
+/// Based on options from `prettier-plugin-tailwindcss`.
+///
+/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+#[derive(Debug, Default, Clone)]
+pub struct TailwindcssOptions {
+    /// Path to your Tailwind CSS configuration file (v3).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Default: `"./tailwind.config.js"`
+    pub config: Option<String>,
+
+    /// Path to your Tailwind CSS stylesheet (v4).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Example: `"./src/app.css"`
+    pub stylesheet: Option<String>,
+
+    /// List of custom function names that contain Tailwind CSS classes.
+    ///
+    /// Example: `["clsx", "cn", "cva", "tw"]`
+    ///
+    /// Default: `[]`
+    pub functions: Vec<String>,
+
+    /// List of attributes that contain Tailwind CSS classes.
+    ///
+    /// Example: `["myClassProp", ":class"]`
+    ///
+    /// Default: `["class", "className"]`
+    pub attributes: Vec<String>,
+
+    /// Preserve whitespace around classes.
+    ///
+    /// Default: `false`
+    pub preserve_whitespace: bool,
+
+    /// Preserve duplicate classes.
+    ///
+    /// Default: `false`
+    pub preserve_duplicates: bool,
 }
 
 impl FormatOptions {
@@ -97,6 +147,7 @@ impl FormatOptions {
             experimental_ternaries: false,
             embedded_language_formatting: EmbeddedLanguageFormatting::default(),
             experimental_sort_imports: None,
+            experimental_tailwindcss: None,
         }
     }
 
@@ -123,7 +174,8 @@ impl fmt::Display for FormatOptions {
         writeln!(f, "Expand lists: {}", self.expand)?;
         writeln!(f, "Experimental operator position: {}", self.experimental_operator_position)?;
         writeln!(f, "Embedded language formatting: {}", self.embedded_language_formatting)?;
-        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)
+        writeln!(f, "Experimental sort imports: {:?}", self.experimental_sort_imports)?;
+        writeln!(f, "Experimental tailwindcss: {:?}", self.experimental_tailwindcss)
     }
 }
 
@@ -947,10 +999,9 @@ impl fmt::Display for OperatorPosition {
 #[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 pub enum EmbeddedLanguageFormatting {
     /// Enable formatting for embedded languages.
-    Auto,
-    // Disable by default at alpha release, synced with `oxfmtrc.rs`
-    /// Disable formatting for embedded languages.
     #[default]
+    Auto,
+    /// Disable formatting for embedded languages.
     Off,
 }
 

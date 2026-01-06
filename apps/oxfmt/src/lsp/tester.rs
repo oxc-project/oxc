@@ -17,6 +17,9 @@ pub fn get_file_uri(relative_file_path: &str) -> Uri {
 }
 
 fn get_snapshot_from_text_edits(edits: &[TextEdit]) -> String {
+    if edits.is_empty() {
+        return "No changes".to_string();
+    }
     if edits.len() == 1 {
         // Single edit - show range and the actual formatted content with proper indentation
         let edit = &edits[0];
@@ -76,10 +79,9 @@ impl Tester<'_> {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
             let formatted = self.create_formatter().run_format(&uri, None);
 
-            let snapshot = if let Some(formatted) = formatted {
-                get_snapshot_from_text_edits(&formatted)
-            } else {
-                "File is ignored".to_string()
+            let snapshot = match formatted {
+                Ok(edits) => get_snapshot_from_text_edits(&edits),
+                Err(e) => format!("Error: {e}"),
             };
 
             let _ = write!(

@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferExponentiationOperator,
     eslint,
     style,
+    pending,
 );
 
 impl Rule for PreferExponentiationOperator {
@@ -127,6 +128,24 @@ fn test() {
         "Math.pow(a, b as any)",
         "Math.pow(a as any, b)",
         "Math.pow(a, b) as any",
+    ];
+
+    // TODO: Implement a fixer.
+    #[expect(clippy::no_effect_underscore_binding)]
+    let _fix = [
+        ("globalThis.Math.pow(a, b)", "a**b", None::<()>),
+        ("globalThis.Math['pow'](a, b)", "a**b", None),
+        (
+            "Math.pow(a, b) + Math.pow(c,
+			 d)",
+            "a**b + c**d",
+            None,
+        ),
+        ("Math.pow(Math.pow(a, b), Math.pow(c, d))", "Math.pow(a, b)**Math.pow(c, d)", None),
+        ("Math.pow(a, b)**Math.pow(c, d)", "(a**b)**c**d", None),
+        ("Math.pow(a, b as any)", "a**(b as any)", None),
+        ("Math.pow(a as any, b)", "(a as any)**b", None),
+        ("Math.pow(a, b) as any", "(a**b) as any", None),
     ];
 
     Tester::new(

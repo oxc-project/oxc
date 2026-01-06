@@ -67,11 +67,6 @@ impl Rule for NoDistractingElements {
 #[test]
 fn test() {
     use crate::tester::Tester;
-    fn config() -> serde_json::Value {
-        serde_json::json!([2,{
-            "ignoreNonDOM": true
-        }])
-    }
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
@@ -99,8 +94,8 @@ fn test() {
         (r"<blink />", None, None),
         (r"<blink {...props} />", None, None),
         (r"<blink foo={undefined} />", None, None),
-        (r"<Blink />", Some(config()), Some(settings())),
-        (r"<Marquee />", Some(config()), Some(settings())),
+        (r"<Blink />", None, Some(settings())),
+        (r"<Marquee />", None, Some(settings())),
     ];
 
     Tester::new(NoDistractingElements::NAME, NoDistractingElements::PLUGIN, pass, fail)
