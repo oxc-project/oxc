@@ -42,7 +42,6 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
-log = { workspace = true }
 napi = { workspace = true, features = ["async"], optional = true }
 napi-derive = { workspace = true, optional = true }
 rayon = { workspace = true }
@@ -52,6 +51,7 @@ serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 tower-lsp-server = { workspace = true, features = ["proposed"] }
 

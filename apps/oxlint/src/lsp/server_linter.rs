@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
-use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
 use tower_lsp_server::{
@@ -13,6 +12,7 @@ use tower_lsp_server::{
         WorkDoneProgressOptions, WorkspaceEdit,
     },
 };
+use tracing::{debug, warn};
 
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, FixKind,

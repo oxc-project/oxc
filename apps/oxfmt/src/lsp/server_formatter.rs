@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
+use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use log::{debug, warn};
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
@@ -10,8 +10,7 @@ use oxc_formatter::{
 };
 use oxc_parser::Parser;
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
-
-use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
+use tracing::{debug, warn};
 
 use oxc_language_server::{
     Capabilities,
@@ -82,9 +81,10 @@ impl ServerFormatterBuilder {
                 Oxfmtrc::default()
             }
         } else {
+            let config_names = &FORMAT_CONFIG_FILES.join(", ");
             warn!(
                 "Config file not found: {}, fallback to default config",
-                config_path.unwrap_or(&FORMAT_CONFIG_FILES.join(", "))
+                config_path.unwrap_or(config_names)
             );
             Oxfmtrc::default()
         }

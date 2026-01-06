@@ -2550,7 +2550,6 @@ dependencies = [
  "ignore",
  "insta",
  "json-strip-comments",
- "log",
  "mimalloc-safe",
  "napi",
  "napi-build",
@@ -2586,7 +2585,6 @@ dependencies = [
  "ignore",
  "insta",
  "lazy-regex",
- "log",
  "mimalloc-safe",
  "napi",
  "napi-build",
@@ -2610,6 +2608,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "tower-lsp-server",
+ "tracing",
  "tracing-subscriber",
 ]
 
