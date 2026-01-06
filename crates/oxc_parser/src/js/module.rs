@@ -264,6 +264,7 @@ impl<'a> ParserImpl<'a> {
         };
 
         if let Some(default_specifier) = default_specifier {
+            let default_span = default_specifier.span;
             specifiers.push(self.ast.import_declaration_specifier_import_default_specifier(
                 default_specifier.span,
                 default_specifier,
@@ -274,6 +275,12 @@ impl<'a> ParserImpl<'a> {
                     Kind::Star => specifiers.push(self.parse_import_namespace_specifier()),
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
+                        // TS1363: A type-only import can specify a default import or named bindings, but not both.
+                        if self.is_ts && import_kind == ImportOrExportKind::Type {
+                            self.error(diagnostics::type_only_import_default_and_named(
+                                default_span,
+                            ));
+                        }
                         let mut import_specifiers = self.parse_import_specifiers(import_kind);
                         specifiers.append(&mut import_specifiers);
                     }
