@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.23.0] - 2026-01-06
+
+### 🚀 Features
+
+- a19cc93 oxfmt: Add debug logging to oxfmt LSP to troubleshoot resolved options at runtime (#17695) (Nicholas Rayburn)
+
+### 🐛 Bug Fixes
+
+- dcfdd41 formatter: Should not set up tailwindcss callback when no tailwindcss configuration is set (#17696) (Dunqing)
+
 ## [0.22.0] - 2026-01-05
 
 ### 🚀 Features

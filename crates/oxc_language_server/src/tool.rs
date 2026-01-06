@@ -93,9 +93,12 @@ pub trait Tool: Send + Sync {
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of `TextEdit` representing the formatting changes.
     ///
-    /// Not all tools will implement formatting, so the default implementation returns `None`.
-    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Option<Vec<TextEdit>> {
-        None
+    /// Not all tools will implement formatting, so the default implementation returns empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring formatting should return [`Ok`] with an empty vector.
+    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Result<Vec<TextEdit>, String> {
+        Ok(Vec::new())
     }
 
     /// Run diagnostics on the content of the given URI.

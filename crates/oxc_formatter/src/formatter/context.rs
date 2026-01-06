@@ -84,7 +84,6 @@ impl TailwindContextEntry {
 }
 
 /// Context object storing data relevant when formatting an object.
-#[derive(Clone)]
 pub struct FormatContext<'ast> {
     options: FormatOptions,
 
