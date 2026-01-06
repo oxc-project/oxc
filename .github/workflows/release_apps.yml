@@ -282,7 +282,7 @@ jobs:
         run: pnpm run build-napi-release --target ${{ matrix.target }} ${{ matrix.build-oxfmt-args }}
 
       - name: Build Rust binary
-        run: cross build --release -p oxfmt --features allocator --target=${{ matrix.target }}
+        run: cross build --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive oxfmt .node binary
