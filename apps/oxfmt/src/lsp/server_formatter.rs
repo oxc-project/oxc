@@ -36,8 +36,12 @@ impl ServerFormatterBuilder {
         };
 
         let root_path = root_uri.to_file_path().unwrap();
+        debug!("root_path = {:?}", root_path.display());
         let oxfmtrc = Self::get_config(&root_path, options.config_path.as_ref());
+        debug!("oxfmtrc = {oxfmtrc:?}");
         let (format_options, oxfmt_options) = Self::get_options(oxfmtrc);
+        debug!("format_options = {format_options:?}");
+        debug!("oxfmt_options = {oxfmt_options:?}");
 
         let gitignore_glob =
             match Self::create_ignore_globs(&root_path, &oxfmt_options.ignore_patterns) {
