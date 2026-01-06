@@ -180,8 +180,6 @@ pub enum ImportModifier {
     Type,
     /// Value imports (non-type)
     Value,
-    /// Require imports
-    Require,
     /// Default specifier present
     Default,
     /// Namespace/wildcard specifier present (`* as`)
@@ -198,7 +196,6 @@ impl ImportModifier {
             "side-effect" => Some(Self::SideEffect),
             "type" => Some(Self::Type),
             "value" => Some(Self::Value),
-            "require" => Some(Self::Require),
             "default" => Some(Self::Default),
             "wildcard" => Some(Self::Wildcard),
             "named" => Some(Self::Named),
@@ -210,7 +207,6 @@ impl ImportModifier {
         ImportModifier::SideEffect,
         ImportModifier::Type,
         ImportModifier::Value,
-        ImportModifier::Require,
         ImportModifier::Default,
         ImportModifier::Wildcard,
         ImportModifier::Named,
@@ -221,7 +217,6 @@ impl ImportModifier {
             ImportModifier::SideEffect => "side-effect",
             ImportModifier::Type => "type",
             ImportModifier::Value => "value",
-            ImportModifier::Require => "require",
             ImportModifier::Default => "default",
             ImportModifier::Wildcard => "wildcard",
             ImportModifier::Named => "named",
