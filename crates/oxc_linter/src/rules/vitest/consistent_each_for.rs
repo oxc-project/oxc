@@ -55,8 +55,8 @@ impl MemberNames {
 
     fn allowed_method_from_disallowed_method(&self) -> CompactStr {
         match self {
-            MemberNames::For => ".each".into(),
-            MemberNames::Each => ".for".into(),
+            MemberNames::For => ".for".into(),
+            MemberNames::Each => ".each".into(),
         }
     }
 }
