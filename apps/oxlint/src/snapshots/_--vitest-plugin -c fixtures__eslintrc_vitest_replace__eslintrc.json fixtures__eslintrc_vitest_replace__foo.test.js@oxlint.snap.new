@@ -1,5 +1,6 @@
 ---
 source: apps/oxlint/src/tester.rs
+assertion_line: 134
 ---
 ########## 
 arguments: --vitest-plugin -c fixtures/eslintrc_vitest_replace/eslintrc.json fixtures/eslintrc_vitest_replace/foo.test.js
