@@ -190,11 +190,15 @@ impl Tool for ServerFormatter {
             }
         };
 
-        if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-            return vec![config_path.clone()];
-        }
+        let mut patterns: Vec<Pattern> =
+            if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
+                vec![config_path.clone()]
+            } else {
+                FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+            };
 
-        FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+        patterns.push(".editorconfig".to_string());
+        patterns
     }
 
     fn handle_watched_file_change(
@@ -379,9 +383,10 @@ mod test_watchers {
         #[test]
         fn test_default_options() {
             let patterns = Tester::new(FAKE_DIR, json!({})).get_watcher_patterns();
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], ".oxfmtrc.json");
             assert_eq!(patterns[1], ".oxfmtrc.jsonc");
+            assert_eq!(patterns[2], ".editorconfig");
         }
 
         #[test]
@@ -393,8 +398,9 @@ mod test_watchers {
                 }),
             )
             .get_watcher_patterns();
-            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], "configs/formatter.json");
+            assert_eq!(patterns[1], ".editorconfig");
         }
 
         #[test]
@@ -406,9 +412,10 @@ mod test_watchers {
                 }),
             )
             .get_watcher_patterns();
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], ".oxfmtrc.json");
             assert_eq!(patterns[1], ".oxfmtrc.jsonc");
+            assert_eq!(patterns[2], ".editorconfig");
         }
     }
 
@@ -433,8 +440,9 @@ mod test_watchers {
                 }));
 
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/formatter.json");
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], ".editorconfig");
         }
     }
 }
