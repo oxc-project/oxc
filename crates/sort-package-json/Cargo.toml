@@ -1,0 +1,22 @@
+[package]
+name = "sort-package-json"
+version = "0.0.7"
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "A Rust implementation of sort-package-json that sorts package.json files according to well-established npm conventions"
+publish = false
+
+[lib]
+name = "sort_package_json"
+path = "src/lib.rs"
+doctest = false
+
+[dependencies]
+serde_json = { workspace = true, features = ["preserve_order"] }
+
+[lints]
+workspace = true
+

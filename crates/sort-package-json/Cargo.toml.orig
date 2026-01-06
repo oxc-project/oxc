@@ -1,0 +1,76 @@
+[package]
+name = "sort-package-json"
+version = "0.0.7"
+authors = ["Boshen <boshenc@gmail.com>"]
+categories = []
+edition = "2021"
+include = ["/src"]
+keywords = []
+license = "MIT"
+publish = true
+readme = "README.md"
+repository = "https://github.com/oxc-project/sort-package-json"
+rust-version = "1.76"
+description = "A Rust implementation of sort-package-json that sorts package.json files according to well-established npm conventions"
+
+[lints.rust]
+absolute_paths_not_starting_with_crate = "warn"
+non_ascii_idents = "warn"
+unit-bindings = "warn"
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+# restriction
+dbg_macro = "warn"
+todo = "warn"
+unimplemented = "warn"
+print_stdout = "warn" # Must be opt-in
+print_stderr = "warn" # Must be opt-in
+allow_attributes = "warn"
+# I like the explicitness of this rule as it removes confusion around `clone`.
+# This increases readability, avoids `clone` mindlessly and heap allocating by accident.
+clone_on_ref_ptr = "warn"
+# These two are mutually exclusive, I like `mod.rs` files for better fuzzy searches on module entries.
+self_named_module_files = "warn" # "-Wclippy::mod_module_files"
+empty_drop = "warn"
+empty_structs_with_brackets = "warn"
+exit = "warn"
+filetype_is_file = "warn"
+get_unwrap = "warn"
+impl_trait_in_params = "warn"
+rc_buffer = "warn"
+rc_mutex = "warn"
+rest_pat_in_fully_bound_structs = "warn"
+unnecessary_safety_comment = "warn"
+undocumented_unsafe_blocks = "warn"
+infinite_loop = "warn"
+
+[dependencies]
+serde_json = { version = "1.0", features = ["preserve_order"] }
+
+[dev-dependencies]
+criterion2 = { version = "3", default-features = false }
+ignore = "0.4"
+insta = "1.41"
+
+[lib]
+test = false
+doctest = false
+
+[[bench]]
+name = "sort"
+harness = false
+
+[features]
+codspeed = ["criterion2/codspeed"]
+
+[profile.release]
+# Configurations explicitly listed here for clarity.
+# Using the best options for performance.
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = "symbols" # set to `false` for debug information
+debug = false # set to `true` for debug information
+panic = "abort" # Let it crash and force ourselves to write safe Rust.

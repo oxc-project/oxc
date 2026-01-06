@@ -72,4 +72,29 @@ describe("API Tests", () => {
     );
     expect(result3.errors).toStrictEqual([]);
   });
+
+  test("should preserve size-limit field with objects when sorting package.json", async () => {
+    const pkgJSON = JSON.stringify({
+      "$schema": "https://json.schemastore.org/package.json",
+      name: "test",
+      version: "1.0.0",
+      "size-limit": [
+        {
+          name: "useQuery only from source",
+          path: "src/index.ts",
+          import: "{ useQuery, PiniaColada }",
+          ignore: ["vue", "pinia", "@vue/devtools-api"],
+        },
+      ],
+    });
+    const result = await format("package.json", pkgJSON, {
+      experimentalSortPackageJson: true,
+    });
+    const parsed = JSON.parse(result.code);
+    expect(parsed["size-limit"]).toBeDefined();
+    expect(Array.isArray(parsed["size-limit"])).toBe(true);
+    expect(parsed["size-limit"].length).toBe(1);
+    expect(parsed["size-limit"][0].name).toBe("useQuery only from source");
+    expect(result.errors).toStrictEqual([]);
+  });
 });
