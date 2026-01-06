@@ -113,7 +113,6 @@ impl Rule for NoUnneededAsyncExpectFunction {
         };
 
         ctx.diagnostic_with_fix(no_unneeded_async_expect_function_diagnostic(func_span), |fixer| {
-            // Note: .to_string() is required here due to lifetime constraints
             fixer.replace(func_span, fixer.source_range(inner_call_span).to_string())
         });
     }
@@ -124,16 +123,11 @@ impl Rule for NoUnneededAsyncExpectFunction {
 fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> Option<Span> {
     // Case 1: Arrow function with expression body (async () => await doSomething())
     if arrow.expression {
-        // When arrow.expression is true (concise body), the AST wraps the expression
-        // in a single ExpressionStatement within FunctionBody
-        let stmt = arrow.body.statements.first()?;
-        let Statement::ExpressionStatement(expr_stmt) = stmt else {
-            return None;
-        };
-        let Expression::AwaitExpression(await_expr) = &expr_stmt.expression else {
-            return None;
-        };
-        if let Expression::CallExpression(call) = &await_expr.argument {
+        if let Some(first) = arrow.body.statements.first()
+            && let Statement::ExpressionStatement(expr_stmt) = first
+            && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
+            && let Expression::CallExpression(call) = &await_expr.argument
+        {
             return Some(call.span);
         }
         return None;
@@ -144,25 +138,12 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
 }
 
 fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option<Span> {
-    // Must have exactly one statement
-    if body.statements.len() != 1 {
-        return None;
-    }
-
-    let stmt = body.statements.first()?;
-
-    // Must be an expression statement
-    let Statement::ExpressionStatement(expr_stmt) = stmt else {
-        return None;
-    };
-
-    // Must be an await expression
-    let Expression::AwaitExpression(await_expr) = &expr_stmt.expression else {
-        return None;
-    };
-
-    // The awaited value must be a call expression
-    if let Expression::CallExpression(call) = &await_expr.argument {
+    if body.statements.len() == 1
+        && let Some(stmt) = body.statements.first()
+        && let Statement::ExpressionStatement(expr_stmt) = stmt
+        && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
+        && let Expression::CallExpression(call) = &await_expr.argument
+    {
         return Some(call.span);
     }
 
