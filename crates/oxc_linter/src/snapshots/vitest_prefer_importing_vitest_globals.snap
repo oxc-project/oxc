@@ -1,0 +1,57 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Prefer importing vitest global `describe`
+   ╭─[prefer_importing_vitest_globals.tsx:1:1]
+ 1 │ describe('suite', () => {});
+   · ────────
+   ╰────
+  help: Import `describe` from 'vitest' explicitly.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Prefer importing vitest global `describe`
+   ╭─[prefer_importing_vitest_globals.tsx:2:1]
+ 1 │ import { it } from 'vitest';
+ 2 │ describe('suite', () => {});
+   · ────────
+   ╰────
+  help: Import `describe` from 'vitest' explicitly.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Prefer importing vitest global `describe`
+   ╭─[prefer_importing_vitest_globals.tsx:2:1]
+ 1 │ import vitest from 'vitest';
+ 2 │ describe('suite', () => {});
+   · ────────
+   ╰────
+  help: Import `describe` from 'vitest' explicitly.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Prefer importing vitest global `describe`
+   ╭─[prefer_importing_vitest_globals.tsx:2:1]
+ 1 │ import * as abc from 'vitest';
+ 2 │ describe('suite', () => {});
+   · ────────
+   ╰────
+  help: Import `describe` from 'vitest' explicitly.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Prefer importing vitest global `describe`
+   ╭─[prefer_importing_vitest_globals.tsx:2:1]
+ 1 │ import type { describe } from 'vitest';
+ 2 │ describe('suite', () => {});
+   · ────────
+   ╰────
+  help: Import `describe` from 'vitest' explicitly.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Prefer importing vitest global `describe`
+   ╭─[prefer_importing_vitest_globals.tsx:2:1]
+ 1 │ const vitest = require('vitest');
+ 2 │ describe('suite', () => {});
+   · ────────
+   ╰────
+  help: Import `describe` from 'vitest' explicitly.
+
+  ⚠ eslint-plugin-vitest(prefer-importing-vitest-globals): Prefer importing vitest global `describe`
+   ╭─[prefer_importing_vitest_globals.tsx:2:1]
+ 1 │ const { it } = require('vitest');
+ 2 │ describe('suite', () => {});
+   · ────────
+   ╰────
+  help: Import `describe` from 'vitest' explicitly.
