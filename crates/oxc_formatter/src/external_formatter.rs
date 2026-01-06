@@ -68,9 +68,11 @@ impl ExternalCallbacks {
     /// * `classes` - List of class strings to sort
     ///
     /// # Returns
-    /// * `Some(Vec<String>)` - The sorted classes
-    /// * `None` - No Tailwind callback is set
-    pub fn sort_tailwind_classes(&self, classes: Vec<String>) -> Option<Vec<String>> {
-        self.tailwind.as_ref().map(|cb| cb(classes))
+    /// The sorted classes, or the original classes unsorted if no Tailwind callback is set.
+    pub fn sort_tailwind_classes(&self, classes: Vec<String>) -> Vec<String> {
+        match self.tailwind.as_ref() {
+            Some(cb) => cb(classes),
+            None => classes,
+        }
     }
 }

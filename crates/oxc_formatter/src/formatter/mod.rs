@@ -329,7 +329,7 @@ pub fn format<'ast>(
 
     let tailwind_classes = context.take_tailwind_classes();
     let sorted_tailwind_classes =
-        context.external_callbacks().sort_tailwind_classes(tailwind_classes).unwrap_or_default();
+        context.external_callbacks().sort_tailwind_classes(tailwind_classes);
 
     let document = Document::new(elements, sorted_tailwind_classes);
 
