@@ -40,10 +40,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         let module_record = &self.module_record;
 
         // Skip checking for exports in TypeScript
-        if self.source_type.is_typescript() {
-            // Note: TS1363 (type-only import with both default and named bindings) is now
-            // checked in the parser itself, so we don't need to check it here anymore.
-        } else {
+        if !self.source_type.is_typescript() {
             // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
             for name_span in &self.exported_bindings_duplicated {
                 let old_span = module_record.exported_bindings[&name_span.name];
