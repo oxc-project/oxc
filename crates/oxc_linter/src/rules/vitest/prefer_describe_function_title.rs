@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -5,7 +7,6 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,
@@ -83,12 +84,8 @@ impl PreferDescribeFunctionTitle {
             return;
         }
 
-        let imported_entries = ctx
-            .module_record()
-            .import_entries
-            .iter()
-            .map(|entry| entry.local_name.name.as_ref())
-            .collect::<FxHashSet<_>>();
+        let mut imported_entries =
+            ctx.module_record().import_entries.iter().map(|entry| entry.local_name.name.as_ref());
 
         let Some(title_arg) = call_expr.arguments.first() else {
             return;
