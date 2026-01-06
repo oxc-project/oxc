@@ -673,6 +673,7 @@ pub(crate) mod vitest {
     pub mod no_import_node_test;
     pub mod no_unneeded_async_expect_function;
     pub mod prefer_called_times;
+    pub mod prefer_describe_function_title;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
@@ -1339,6 +1340,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::no_import_node_test,
     vitest::no_unneeded_async_expect_function,
     vitest::prefer_called_times,
+    vitest::prefer_describe_function_title,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
