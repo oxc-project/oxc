@@ -8,7 +8,7 @@ use serde::Deserialize;
 
 use crate::{
     context::LintContext,
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_general_jest_fn_call},
 };
 
@@ -164,11 +164,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConsistentEachFor {
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
-        let config: ConsistentEachForJson =
-            value.get(0).and_then(|v| serde_json::from_value(v.clone()).ok()).unwrap_or_default();
-
-        Ok(Self(Box::new(config.into_consistent_each_for_config())))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(Self(Box::new(
+            serde_json::from_value::<DefaultRuleConfig<ConsistentEachForJson>>(value)
+                .unwrap_or_default()
+                .into_inner()
+                .into_consistent_each_for_config(),
+        )))
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -409,5 +411,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(ConsistentEachFor::NAME, ConsistentEachFor::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(ConsistentEachFor::NAME, ConsistentEachFor::PLUGIN, pass, fail)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }
