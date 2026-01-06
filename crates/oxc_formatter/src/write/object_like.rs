@@ -35,7 +35,7 @@ impl<'a> ObjectLike<'a, '_> {
             // Check if parent is TSTypeAnnotation
             matches!(node.parent, AstNodes::TSTypeAnnotation(type_ann) if {
                 match &type_ann.parent {
-                    AstNodes::FormalParameter(param) => {
+                    AstNodes::FormalParameter(param) if param.initializer.is_none() => {
                         let AstNodes::FormalParameters(parameters) = &param.parent else {
                             unreachable!()
                         };

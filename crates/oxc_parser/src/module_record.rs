@@ -9,15 +9,17 @@ use crate::diagnostics;
 
 pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
+    source_type: SourceType,
     module_record: ModuleRecord<'a>,
     export_entries: Vec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
         Self {
             allocator,
+            source_type,
             module_record: ModuleRecord::new(allocator),
             export_entries: Vec::new_in(allocator),
             exported_bindings_duplicated: Vec::new_in(allocator),
@@ -37,28 +39,69 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         let module_record = &self.module_record;
 
-        // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
-        for name_span in &self.exported_bindings_duplicated {
-            let old_span = module_record.exported_bindings[&name_span.name];
-            errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
+        // Skip checking for exports in TypeScript
+        if self.source_type.is_typescript() {
+            // TS1363: A type-only import can specify a default import or named bindings, but not both.
+            // Group import entries by statement and check only those statements that are type-only imports.
+            if !module_record.import_entries.is_empty() {
+                // Build map of type-only import statement spans -> (has_default, has_named).
+                // `requested_modules` contains entries for both imports and exports, so filter is_import && is_type.
+                let mut seen: rustc_hash::FxHashMap<Span, (bool, bool)> =
+                    rustc_hash::FxHashMap::default();
+                for requests in module_record.requested_modules.values() {
+                    for req in requests {
+                        if req.is_import && req.is_type {
+                            seen.entry(req.statement_span).or_insert((false, false));
+                        }
+                    }
+                }
+                if !seen.is_empty() {
+                    for entry in &module_record.import_entries {
+                        if let Some(lookup) = seen.get_mut(&entry.statement_span) {
+                            match &entry.import_name {
+                                ImportImportName::Default(_) => lookup.0 = true,
+                                ImportImportName::Name(_) | ImportImportName::NamespaceObject => {
+                                    lookup.1 = true;
+                                }
+                            }
+                        }
+                    }
+                    for (stmt_span, (has_default, has_named)) in seen {
+                        if has_default && has_named {
+                            errors.push(diagnostics::type_only_import_default_and_named(stmt_span));
+                        }
+                    }
+                }
+            }
+        } else {
+            // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
+            for name_span in &self.exported_bindings_duplicated {
+                let old_span = module_record.exported_bindings[&name_span.name];
+                errors.push(diagnostics::duplicate_export(
+                    &name_span.name,
+                    name_span.span,
+                    old_span,
+                ));
+            }
+
+            // Multiple default exports
+            // `export default foo`
+            // `export { default }`
+            let default_exports = module_record
+                .local_export_entries
+                .iter()
+                .filter_map(|export_entry| export_entry.export_name.default_export_span())
+                .chain(
+                    module_record
+                        .indirect_export_entries
+                        .iter()
+                        .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+                );
+            if default_exports.clone().count() > 1 {
+                errors.push(diagnostics::duplicate_default_export(default_exports));
+            }
         }
 
-        // Multiple default exports
-        // `export default foo`
-        // `export { default }`
-        let default_exports = module_record
-            .local_export_entries
-            .iter()
-            .filter_map(|export_entry| export_entry.export_name.default_export_span())
-            .chain(
-                module_record
-                    .indirect_export_entries
-                    .iter()
-                    .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            );
-        if default_exports.clone().count() > 1 {
-            errors.push(diagnostics::duplicate_default_export(default_exports));
-        }
         errors
     }
 

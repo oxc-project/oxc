@@ -66,7 +66,7 @@ impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
     }
 }
 
-impl<T> AstNode<'_, T> {
+impl<'a, T> AstNode<'a, T> {
     /// Returns an iterator over all ancestor nodes in the AST, starting from self.
     ///
     /// The iteration includes the current node and proceeds upward through the tree,
@@ -96,14 +96,14 @@ impl<T> AstNode<'_, T> {
     /// let in_arrow_fn = self.ancestors()
     ///     .any(|p| matches!(p, AstNodes::ArrowFunctionExpression(_)));
     /// ```
-    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'_>> {
+    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'a>> {
         self.parent.ancestors()
     }
 
     /// Returns the grandparent node (parent's parent).
     ///
     /// This is a convenience method equivalent to `self.parent.parent()`.
-    pub fn grand_parent(&self) -> &AstNodes<'_> {
+    pub fn grand_parent(&self) -> &AstNodes<'a> {
         self.parent.parent()
     }
 }

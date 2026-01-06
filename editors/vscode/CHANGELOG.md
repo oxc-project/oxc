@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.37.0] - 2026-01-05
+
+### 🐛 Bug Fixes
+
+- 2e8f469 vscode: Search for `node_modules/.bin/oxlint.exe` too (bun setup) (#17597) (Sysix)
+
+### ⚡ Performance
+
+- 605dbf1 vscode: Restrict searching for oxlint/oxfmt binaries only 3 levels deep + 10s timeout (#17345) (Sysix)
+
 ## [1.36.0] - 2025-12-29
 
 ### 🚀 Features
