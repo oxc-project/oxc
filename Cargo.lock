@@ -2348,6 +2348,7 @@ dependencies = [
  "rustc-hash",
  "self_cell",
  "serde_json",
+ "smallvec",
 ]
 
 [[package]]

@@ -627,7 +627,7 @@ impl Scoping {
 
     pub(crate) fn set_root_unresolved_references<'a>(
         &mut self,
-        entries: impl Iterator<Item = (&'a str, Vec<ReferenceId>)>,
+        entries: impl Iterator<Item = (&'a str, impl IntoIterator<Item = ReferenceId>)>,
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             for (k, v) in entries {

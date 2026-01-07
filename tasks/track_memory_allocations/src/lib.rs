@@ -323,8 +323,6 @@ pub fn run() -> Result<(), io::Error> {
         Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
     }
 
-
-
     for file in files.files() {
         // Enable callsite tracking for the actual measurement phase
         #[cfg(feature = "track_callsites")]
