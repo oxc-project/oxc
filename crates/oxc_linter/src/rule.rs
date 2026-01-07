@@ -119,7 +119,7 @@ where
 
         if let serde_json::Value::Array(arr) = value {
             let config = match arr.into_iter().next() {
-                Some(v) => serde_json::from_value::<T>(v.clone()).map_err(|e| {
+                Some(v) => T::deserialize(&v).map_err(|e| {
                     // Try to include the config object in the error message if we can.
                     // Collapse any whitespace so we emit a single-line message.
                     if let Ok(value_str) = serde_json::to_string_pretty(&v) {
