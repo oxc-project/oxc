@@ -199,6 +199,25 @@ fn test() {
             );",
             "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
         ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1,);",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(/* comment (because why not) */1,);",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1/* comment (because why not) */,);",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+                /* I only want to call this function 1 (ONE) time, please. */
+                1,
+            );",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+        ),
     ];
     Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)
         .expect_fix(fix)
