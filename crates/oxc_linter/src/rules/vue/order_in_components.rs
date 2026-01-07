@@ -127,14 +127,17 @@ pub enum OrderElement {
 }
 
 #[derive(Debug, Clone)]
-pub struct OrderInComponents {
+pub struct OrderInComponents(Box<OrderInComponentsInner>);
+
+#[derive(Debug, Clone)]
+struct OrderInComponentsInner {
     /// Cached expanded order for performance (avoid repeated allocations)
     order: Vec<Vec<String>>,
 }
 
 impl Default for OrderInComponents {
     fn default() -> Self {
-        Self { order: expand_default_order() }
+        Self(Box::new(OrderInComponentsInner { order: expand_default_order() }))
     }
 }
 
@@ -237,7 +240,7 @@ impl Rule for OrderInComponents {
             expand_default_order()
         };
 
-        Ok(Self { order })
+        Ok(Self(Box::new(OrderInComponentsInner { order })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -312,7 +315,7 @@ impl OrderInComponents {
             match prop {
                 ObjectPropertyKind::ObjectProperty(property) => {
                     if let Some(name) = property.key.static_name() {
-                        let order_position = get_order_position(&name, &self.order);
+                        let order_position = get_order_position(&name, &self.0.order);
                         properties.push(PropertyInfo {
                             name: CompactStr::from(name.as_ref()),
                             order_position,
