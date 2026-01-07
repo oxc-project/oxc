@@ -1,4 +1,15 @@
-use crate::tester::{test, test_same};
+use crate::tester::{test, test_idempotency, test_same};
+
+/// Block comments followed by another block comment must have a newline between them
+/// for idempotent output. Without the newline, re-parsing would set `preceded_by_newline`
+/// on the second comment, causing different output on the second pass.
+#[test]
+fn consecutive_block_comments_idempotency() {
+    // Multiple block comments on same line
+    test_idempotency("/* block1 *//* block2 */\nfunction foo() {}");
+    // JSDoc followed by another JSDoc
+    test_idempotency("/** doc1 *//** doc2 */\nfunction foo() {}");
+}
 
 #[test]
 fn test_comment_at_top_of_file() {

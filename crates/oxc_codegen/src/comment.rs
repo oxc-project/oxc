@@ -105,19 +105,25 @@ impl Codegen<'_> {
             self.print_indent();
         }
         self.print_comment(first);
+        let mut prev_is_block = first.is_block();
 
         if let Some((last, middle)) = rest.split_last() {
             for comment in middle {
-                if comment.preceded_by_newline() {
+                // Add newline after block comments for idempotency.
+                // When re-parsing the output, the next comment will have `preceded_by_newline`
+                // set, so we need to match that behavior on the first pass.
+                if comment.preceded_by_newline() || prev_is_block {
                     self.print_hard_newline();
                     self.print_indent();
                 } else if comment.is_legal() {
                     self.print_hard_newline();
                 }
                 self.print_comment(comment);
+                prev_is_block = comment.is_block();
             }
 
-            if last.preceded_by_newline() {
+            // Add newline after block comments for idempotency.
+            if last.preceded_by_newline() || prev_is_block {
                 self.print_hard_newline();
                 self.print_indent();
             } else if last.is_legal() {
