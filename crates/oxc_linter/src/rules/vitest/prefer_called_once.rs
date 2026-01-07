@@ -112,8 +112,13 @@ impl PreferCalledOnce {
             ctx.diagnostic_with_fix(
                 prefer_called_once_diagnostic(matcher_and_args_span, new_matcher_name.as_ref()),
                 |fixer| {
-                    let argument_without_parenthesis_span =
-                        get_comma_span(call_expr.span, called_times_value.span, ctx);
+                    let argument_without_parenthesis_span = ctx
+                        .find_next_token_within(
+                            called_times_value.span.end,
+                            call_expr.span.end,
+                            ",",
+                        )
+                        .map(|i| Span::sized(called_times_value.span.end + i, 1));
 
                     let number_of_fixes =
                         if argument_without_parenthesis_span.is_some() { 3 } else { 2 };
@@ -133,26 +138,6 @@ impl PreferCalledOnce {
             );
         }
     }
-}
-
-fn has_comma(source_text: &str) -> bool {
-    source_text.ends_with(',')
-}
-
-fn get_comma_span(call_expr: Span, argument_span: Span, ctx: &LintContext<'_>) -> Option<Span> {
-    let mut offset: u32 = 0;
-
-    while call_expr.end != argument_span.end + offset
-        && !has_comma(ctx.source_range(argument_span.expand_right(offset)))
-    {
-        offset += 1;
-    }
-
-    if call_expr.end == argument_span.end + offset {
-        return None;
-    }
-
-    Some(Span::new(argument_span.start + offset, argument_span.end + offset))
 }
 
 #[test]
@@ -227,6 +212,14 @@ fn test() {
                 /* I only want to call this function 1 (ONE) time, please. */
 
             );",
+        ),
+        (
+            "expect(fn).resolves.toHaveBeenCalledTimes(/*comment,*/1,);",
+            "expect(fn).resolves.toHaveBeenCalledOnce(/*comment,*/);",
+        ),
+        (
+            "expect(fn).resolves.toHaveBeenCalledTimes(/*comment,*/1/*comment,*/,);",
+            "expect(fn).resolves.toHaveBeenCalledOnce(/*comment,*//*comment,*/);",
         ),
     ];
     Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)
