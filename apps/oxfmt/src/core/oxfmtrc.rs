@@ -3,10 +3,10 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, NormalizedCustomGroupDefinition, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    TailwindcssOptions, TrailingCommas,
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
@@ -392,7 +392,7 @@ pub struct SortImportsConfig {
     pub groups: Option<Vec<SortGroupItemConfig>>,
     /// Define your own groups and use regex for matching very specific imports
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub custom_groups: Option<Vec<CustomGroupDefinition>>,
+    pub custom_groups: Option<Vec<CustomGroupItem>>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -402,6 +402,18 @@ pub enum SortOrderConfig {
     Desc,
 }
 
+#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct CustomGroupItem {
+    pub group_name: String,
+    pub element_name_pattern: Vec<String>,
+}
+
+/// User-provided configuration for `package.json` sorting.
+///
+/// - `true`: Enable sorting with default options
+/// - `false`: Disable sorting
+/// - `{ sortScripts: true }`: Enable sorting with custom options
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum SortGroupItemConfig {
@@ -695,11 +707,13 @@ impl Oxfmtrc {
                         v.into_iter().map(SortGroupItemConfig::into_vec).collect();
                 }
                 if let Some(v) = config.custom_groups {
-                    sort_imports.custom_groups = v;
-                }
-                if let Some(v) = config.custom_groups {
-                    sort_imports.custom_groups =
-                        v.into_iter().map(std::convert::Into::into).collect();
+                    sort_imports.custom_groups = v
+                        .into_iter()
+                        .map(|group| CustomGroupDefinition {
+                            group_name: group.group_name,
+                            element_name_pattern: group.element_name_pattern,
+                        })
+                        .collect();
                 }
 
                 // `partition_by_newline: true` and `newlines_between: true` cannot be used together
