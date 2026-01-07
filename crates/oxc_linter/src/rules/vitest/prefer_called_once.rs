@@ -113,41 +113,46 @@ impl PreferCalledOnce {
                 prefer_called_once_diagnostic(matcher_and_args_span, new_matcher_name.as_ref()),
                 |fixer| {
                     let argument_without_parenthesis_span =
-                        get_inside_parenthesis_span(called_times_value.span, ctx);
+                        get_comma_span(call_expr.span, called_times_value.span, ctx);
+
+                    let number_of_fixes =
+                        if argument_without_parenthesis_span.is_some() { 3 } else { 2 };
 
                     let multi_fix = fixer.for_multifix();
-                    let mut fixes = multi_fix.new_fix_with_capacity(2);
+                    let mut fixes = multi_fix.new_fix_with_capacity(number_of_fixes);
 
                     fixes.push(fixer.replace(matcher_to_be_fixed.span, new_matcher_name));
-                    fixes.push(fixer.delete(&argument_without_parenthesis_span));
+                    fixes.push(fixer.delete(&called_times_value.span));
 
-                    fixes.with_message("Replace API with preferOnce instead of Times")
+                    if let Some(comma_span) = argument_without_parenthesis_span {
+                        fixes.push(fixer.delete(&comma_span));
+                    }
+
+                    fixes.with_message("Replace API with prefer Once instead of Times")
                 },
             );
         }
     }
 }
 
-fn is_open_parenthesis(source_text: &str) -> bool {
-    source_text.starts_with('(')
+fn has_comma(source_text: &str) -> bool {
+    source_text.ends_with(',')
 }
 
-fn is_close_parenthesis(source_text: &str) -> bool {
-    source_text.ends_with(')')
-}
+fn get_comma_span(call_expr: Span, argument_span: Span, ctx: &LintContext<'_>) -> Option<Span> {
+    let mut offset: u32 = 0;
 
-fn get_inside_parenthesis_span(argument_span: Span, ctx: &LintContext<'_>) -> Span {
-    let mut inside_parenthesis_span = Span::new(argument_span.start, argument_span.end);
-
-    while !is_open_parenthesis(ctx.source_range(inside_parenthesis_span.expand_left(1))) {
-        inside_parenthesis_span = inside_parenthesis_span.expand_left(1);
+    while call_expr.end != argument_span.end + offset
+        && !has_comma(ctx.source_range(argument_span.expand_right(offset)))
+    {
+        offset += 1;
     }
 
-    while !is_close_parenthesis(ctx.source_range(inside_parenthesis_span.expand_right(1))) {
-        inside_parenthesis_span = inside_parenthesis_span.expand_right(1);
+    if call_expr.end == argument_span.end + offset {
+        return None;
     }
 
-    inside_parenthesis_span
+    Some(Span::new(argument_span.start + offset, argument_span.end + offset))
 }
 
 #[test]
@@ -195,9 +200,11 @@ fn test() {
         ),
         (
             "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
-            1,
+1,
             );",
-            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(
+
+            );",
         ),
         (
             "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1,);",
@@ -205,18 +212,21 @@ fn test() {
         ),
         (
             "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(/* comment (because why not) */1,);",
-            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(/* comment (because why not) */);",
         ),
         (
             "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1/* comment (because why not) */,);",
-            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(/* comment (because why not) */);",
         ),
         (
             "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
                 /* I only want to call this function 1 (ONE) time, please. */
-                1,
+1,
             );",
-            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(
+                /* I only want to call this function 1 (ONE) time, please. */
+
+            );",
         ),
     ];
     Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)
