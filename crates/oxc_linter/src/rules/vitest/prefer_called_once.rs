@@ -137,17 +137,17 @@ fn is_close_parenthesis(source_text: &str) -> bool {
 }
 
 fn get_inside_parenthesis_span(argument_span: Span, ctx: &LintContext<'_>) -> Span {
-    let mut inside_parentehsis_span = Span::new(argument_span.start, argument_span.end);
+    let mut inside_parenthesis_span = Span::new(argument_span.start, argument_span.end);
 
-    while !is_open_parenthesis(ctx.source_range(inside_parentehsis_span.expand_left(1))) {
-        inside_parentehsis_span = inside_parentehsis_span.expand_left(1);
+    while !is_open_parenthesis(ctx.source_range(inside_parenthesis_span.expand_left(1))) {
+        inside_parenthesis_span = inside_parenthesis_span.expand_left(1);
     }
 
-    while !is_close_parenthesis(ctx.source_range(inside_parentehsis_span.expand_right(1))) {
-        inside_parentehsis_span = inside_parentehsis_span.expand_right(1);
+    while !is_close_parenthesis(ctx.source_range(inside_parenthesis_span.expand_right(1))) {
+        inside_parenthesis_span = inside_parenthesis_span.expand_right(1);
     }
 
-    inside_parentehsis_span
+    inside_parenthesis_span
 }
 
 #[test]
