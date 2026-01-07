@@ -240,7 +240,7 @@ export default class FormatterTool implements ToolInterface {
       ".lintstagedrc",
       // https://github.com/oxc-project/oxc/pull/17113/
       // TOML filenames
-      "Pipfile", 
+      "Pipfile",
       "Cargo.toml.orig",
     ];
 
