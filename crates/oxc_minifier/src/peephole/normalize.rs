@@ -186,17 +186,19 @@ impl<'a> Normalize {
             // direct eval may have a assignment inside
             && !ctx.current_scope_flags().contains_direct_eval()
         {
-            let all_declarations_are_only_read =
-                decl.declarations.iter().flat_map(|d| d.id.get_binding_identifiers()).all(|id| {
+            let all_declarations_are_only_read = decl.declarations.iter().all(|d| {
+                d.id.all_binding_identifiers(&mut |id| {
                     ctx.scoping()
                         .get_resolved_references(id.symbol_id())
                         .all(|reference| reference.flags().is_read_only())
-                });
+                })
+            });
             if all_declarations_are_only_read {
+                // mark all declarations as `let`
                 decl.kind = VariableDeclarationKind::Let;
-            }
-            for decl in &mut decl.declarations {
-                decl.kind = VariableDeclarationKind::Let;
+                for decl in &mut decl.declarations {
+                    decl.kind = VariableDeclarationKind::Let;
+                }
             }
         }
     }
