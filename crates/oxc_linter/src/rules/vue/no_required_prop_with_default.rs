@@ -870,6 +870,46 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        // Unicode escape in defaults: '\u0061' matches property 'a'
+        (
+            r#"
+    		        <script setup lang="ts">
+    		          interface TestPropType {
+    		            readonly 'a'
+    		            age?: number
+    		          }
+    		          const props = withDefaults(
+    		            defineProps<TestPropType>(),
+    		            {
+    		              '\u0061': 'World',
+    		            }
+    		          );
+    		        </script>
+    		      "#,
+            Some(serde_json::json!([{ "autofix": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
+        // Unicode escape in interface: '\u0061' matches 'a' in defaults
+        (
+            r#"
+    		        <script setup lang="ts">
+    		          interface TestPropType {
+    		            readonly '\u0061'
+    		            age?: number
+    		          }
+    		          const props = withDefaults(
+    		            defineProps<TestPropType>(),
+    		            {
+    		              'a': 'World',
+    		            }
+    		          );
+    		        </script>
+    		      "#,
+            Some(serde_json::json!([{ "autofix": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ), // {        "parserOptions": {          "parser": require.resolve("@typescript-eslint/parser")        }      },
         (
             "
     		        <script>
@@ -1140,6 +1180,72 @@ fn test() {
                 defineProps<TestPropType>(),
                 {
                   foo() {console.log(123)},
+                }
+              );
+            </script>
+            "#,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // Unicode escape in defaults: '\u0061' matches property 'a'
+        (
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                readonly 'a'
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  '\u0061': 'World',
+                }
+              );
+            </script>
+            "#,
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                readonly 'a'?
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  '\u0061': 'World',
+                }
+              );
+            </script>
+            "#,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // Unicode escape in interface: '\u0061' matches 'a' in defaults
+        (
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                readonly '\u0061'
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  'a': 'World',
+                }
+              );
+            </script>
+            "#,
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                readonly '\u0061'?
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  'a': 'World',
                 }
               );
             </script>
