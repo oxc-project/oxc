@@ -321,7 +321,7 @@ fn handle_type_argument(ctx: &LintContext, ts_type: &TSType, key_hash: &FxHashSe
                     if ctx.has_comments_between(fix_span) {
                         ctx.diagnostic(diagnostic);
                     } else {
-                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                             create_optional_fix(fixer, key)
                         });
                     }
@@ -353,7 +353,7 @@ fn handle_type_argument(ctx: &LintContext, ts_type: &TSType, key_hash: &FxHashSe
                     if ctx.has_comments_between(fix_span) {
                         ctx.diagnostic(diagnostic);
                     } else {
-                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                             create_optional_fix(fixer, key)
                         });
                     }
@@ -432,7 +432,7 @@ fn handle_prop_object(
                         if ctx.has_comments_between(span) {
                             ctx.diagnostic(diagnostic);
                         } else {
-                            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                                 fixer.replace(span, "false")
                             });
                         }
