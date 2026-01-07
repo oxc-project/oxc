@@ -50,10 +50,10 @@ pub async fn run_cli(
     )]
     sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
-    // Convert String args to OsString for compatibility with bpaf
+    // Convert `String` args to `OsString` for compatibility with `bpaf`
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
-    // Use `run_inner()` to report errors instead of panicking.
+    // Use `run_inner()` to report errors instead of panicking
     let command = match format_command().run_inner(&*args) {
         Ok(cmd) => cmd,
         Err(e) => {
@@ -64,49 +64,52 @@ pub async fn run_cli(
         }
     };
 
+    // Early return for modes that handle everything in JS side
     match command.mode {
-        Mode::Init => ("init".to_string(), None),
-        Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
-        Mode::Lsp => {
-            utils::init_tracing();
+        Mode::Init => {
+            return ("init".to_string(), None);
+        }
+        Mode::Migrate(_) => {
+            return ("migrate:prettier".to_string(), None);
+        }
+        _ => {}
+    }
 
-            run_lsp().await;
+    // Otherwise, handle modes that require Rust side processing
+
+    let external_formatter = ExternalFormatter::new(
+        init_external_formatter_cb,
+        format_embedded_cb,
+        format_file_cb,
+        sort_tailwindcss_classes_cb,
+    );
+
+    utils::init_tracing();
+    match command.mode {
+        Mode::Lsp => {
+            run_lsp(external_formatter).await;
 
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
-            utils::init_tracing();
             init_miette();
 
-            let result = StdinRunner::new(command)
-                // Create external formatter from JS callbacks
-                .with_external_formatter(Some(ExternalFormatter::new(
-                    init_external_formatter_cb,
-                    format_embedded_cb,
-                    format_file_cb,
-                    sort_tailwindcss_classes_cb,
-                )))
-                .run();
+            // TODO: `.with_external_formatter()` is not needed, just pass with `new(command, external_formatter)`
+            let result =
+                StdinRunner::new(command).with_external_formatter(Some(external_formatter)).run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
         Mode::Cli(_) => {
-            utils::init_tracing();
             init_miette();
             init_rayon(command.runtime_options.threads);
 
-            let result = FormatRunner::new(command)
-                // Create external formatter from JS callbacks
-                .with_external_formatter(Some(ExternalFormatter::new(
-                    init_external_formatter_cb,
-                    format_embedded_cb,
-                    format_file_cb,
-                    sort_tailwindcss_classes_cb,
-                )))
-                .run();
+            let result =
+                FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run();
 
             ("cli".to_string(), Some(result.exit_code()))
         }
+        _ => unreachable!("All other modes must have been handled above match arm"),
     }
 }
 

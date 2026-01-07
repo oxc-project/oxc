@@ -47,6 +47,7 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
 
 /// Resolved options for each file type.
 /// Each variant contains only the options needed for that formatter.
+#[derive(Debug)]
 pub enum ResolvedOptions {
     /// For JS/TS files formatted by oxc_formatter.
     OxcFormatter {

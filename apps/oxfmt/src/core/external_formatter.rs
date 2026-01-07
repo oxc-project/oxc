@@ -176,6 +176,18 @@ impl ExternalFormatter {
     ) -> Result<String, String> {
         (self.format_file)(options, parser_name, file_name, code)
     }
+
+    #[cfg(test)]
+    pub fn dummy() -> Self {
+        // Currently, LSP tests are implemented in Rust, while our external formatter relies on JS.
+        // Therefore, just provides a dummy external formatter that consistently returns errors.
+        Self {
+            init: Arc::new(|_| Err("Dummy init called".to_string())),
+            format_embedded: Arc::new(|_, _, _| Err("Dummy format_embedded called".to_string())),
+            format_file: Arc::new(|_, _, _, _| Err("Dummy format_file called".to_string())),
+            sort_tailwindcss_classes: Arc::new(|_, _, _| vec![]),
+        }
+    }
 }
 
 // ---
