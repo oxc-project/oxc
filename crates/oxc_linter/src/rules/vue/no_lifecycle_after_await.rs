@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AwaitExpression, CallExpression, Expression, Function},
+    ast::{
+        AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
+        ObjectExpression, ObjectPropertyKind,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -82,61 +85,85 @@ const LIFECYCLE_HOOKS: &[&str] = &[
 
 impl Rule for NoLifecycleAfterAwait {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ObjectProperty(obj_prop) = node.kind() else {
-            return;
-        };
-
-        // Check if this is a setup method
-        if obj_prop.key.static_name().as_deref() != Some("setup") {
-            return;
+        match node.kind() {
+            // e.g. `export default { setup() {} }`
+            AstKind::ExportDefaultDeclaration(export_decl) => {
+                if let ExportDefaultDeclarationKind::ObjectExpression(obj_expr) =
+                    &export_decl.declaration
+                {
+                    check_setup_in_object(obj_expr, ctx);
+                }
+            }
+            // e.g. `defineComponent({ setup() {} })`
+            AstKind::CallExpression(call_expr) => {
+                if let Some(ident) = call_expr.callee.get_identifier_reference()
+                    && ident.name == "defineComponent"
+                    && let Some(first_arg) = call_expr.arguments.first()
+                    && let Some(Expression::ObjectExpression(obj_expr)) = first_arg.as_expression()
+                {
+                    check_setup_in_object(obj_expr, ctx);
+                }
+            }
+            _ => {}
         }
-
-        let function_body_opt = match &obj_prop.value {
-            Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
-            Expression::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
-            _ => None,
-        };
-        let Some(function_body) = function_body_opt else {
-            return;
-        };
-
-        let module_record = ctx.module_record();
-        let scoping = ctx.scoping();
-        // map the `symbol_id` to the `import_entry`
-        // e.g `import { onMounted } from 'vue'; onMounted();` -> `symbol_id: import_entry`
-        // so we can find the `import_entry` by the `symbol_id` later
-        let mut symbol_to_import_entry: FxHashMap<SymbolId, &ImportEntry> = FxHashMap::default();
-
-        for import_entry in &module_record.import_entries {
-            if import_entry.module_request.name() != "vue" {
-                continue;
-            }
-            let import_name = match &import_entry.import_name {
-                ImportImportName::Name(name_span) => name_span.name(),
-                _ => continue,
-            };
-
-            // e.g `import { onMounted as A } from 'vue'; A();`
-            if !LIFECYCLE_HOOKS.contains(&import_name) {
-                continue;
-            }
-            if let Some(symbol_id) = scoping.get_root_binding(import_entry.local_name.name()) {
-                symbol_to_import_entry.insert(symbol_id, import_entry);
-            }
-        }
-
-        let mut visitor = LifecycleAfterAwaitVisitor::new(scoping, symbol_to_import_entry);
-        visitor.visit_function_body(function_body);
-
-        visitor.errors.iter().for_each(|(span, hook_name)| {
-            ctx.diagnostic(no_lifecycle_after_await_diagnostic(*span, hook_name));
-        });
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
         ctx.file_extension().is_some_and(|ext| ext == "vue")
             && ctx.frameworks_options() != FrameworkOptions::VueSetup
     }
+}
+
+fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
+    let Some(setup_prop) = obj_expr.properties.iter().find_map(|prop| {
+        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
+            return None;
+        };
+        obj_prop.key.static_name().is_some_and(|name| name == "setup").then_some(obj_prop)
+    }) else {
+        return;
+    };
+
+    let function_body_opt = match &setup_prop.value {
+        Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
+        Expression::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
+        _ => None,
+    };
+    let Some(function_body) = function_body_opt else {
+        return;
+    };
+
+    let module_record = ctx.module_record();
+    let scoping = ctx.scoping();
+    // map the `symbol_id` to the `import_entry`
+    // e.g `import { onMounted } from 'vue'; onMounted();` -> `symbol_id: import_entry`
+    // so we can find the `import_entry` by the `symbol_id` later
+    let mut symbol_to_import_entry: FxHashMap<SymbolId, &ImportEntry> = FxHashMap::default();
+
+    for import_entry in &module_record.import_entries {
+        if import_entry.module_request.name() != "vue" {
+            continue;
+        }
+        let import_name = match &import_entry.import_name {
+            ImportImportName::Name(name_span) => name_span.name(),
+            _ => continue,
+        };
+
+        // e.g `import { onMounted as A } from 'vue'; A();`
+        if !LIFECYCLE_HOOKS.contains(&import_name) {
+            continue;
+        }
+        if let Some(symbol_id) = scoping.get_root_binding(import_entry.local_name.name()) {
+            symbol_to_import_entry.insert(symbol_id, import_entry);
+        }
+    }
+
+    let mut visitor = LifecycleAfterAwaitVisitor::new(scoping, symbol_to_import_entry);
+    visitor.visit_function_body(function_body);
+
+    visitor.errors.iter().for_each(|(span, hook_name)| {
+        ctx.diagnostic(no_lifecycle_after_await_diagnostic(*span, hook_name));
+    });
 }
 
 struct LifecycleAfterAwaitVisitor<'a> {
@@ -211,6 +238,18 @@ fn test() {
 			          await doSomething()
 			        }
 			      }
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+			      import {onMounted} from 'vue'
+                  let a = {
+                    async setup() {
+                      await doSomething()
+                      onMounted(() => { /* ... */ }) // ok
+                    }
+                  }
+			      export default a;
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
@@ -391,6 +430,18 @@ fn test() {
 			      ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
 			      <script>
+			      import {onMounted} from 'vue'
+			      let a = {
+			        async setup() {
+			          await d();
+			          onMounted(() => {});
+			        }
+			      }
+			      export default a;
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
 			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
 			      export default {
 			        async setup() {
@@ -424,6 +475,30 @@ fn test() {
 			          (onMounted)(() => { /* ... */ }) // error
 			        }
 			      }
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+			      import {onMounted} from 'vue'
+			      export default defineComponent({
+                    name: 'Index',
+                    async setup() {
+                        await doSomething();
+                        onMounted(() => {});
+                    },
+                    });
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+			      import {onMounted} from 'vue'
+			      defineComponent({
+                    name: 'Index',
+                    async setup() {
+                        await doSomething();
+                        onMounted(() => {});
+                    },
+                    });
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
                   ("
