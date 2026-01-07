@@ -362,7 +362,7 @@ impl OrderInComponents {
                                 // Use for_multifix() since we create a composite fix with
                                 // multiple operations (delete + insert)
                                 let fixer = fixer.for_multifix();
-                                self.create_reorder_fix(
+                                Self::create_reorder_fix(
                                     fixer.source_text(),
                                     obj,
                                     prop.index,
@@ -391,8 +391,8 @@ impl OrderInComponents {
     /// - If the property has a trailing comma, include it in the delete/insert
     /// - If the property is last (no trailing comma), delete the preceding comma
     /// - When inserting, ensure proper comma placement for valid syntax
+    #[expect(clippy::cast_possible_truncation)]
     fn create_reorder_fix<'a>(
-        &self,
         source_text: &str,
         obj: &ObjectExpression<'a>,
         from_index: usize,
