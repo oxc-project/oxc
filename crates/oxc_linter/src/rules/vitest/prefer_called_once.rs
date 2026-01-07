@@ -112,17 +112,42 @@ impl PreferCalledOnce {
             ctx.diagnostic_with_fix(
                 prefer_called_once_diagnostic(matcher_and_args_span, new_matcher_name.as_ref()),
                 |fixer| {
+                    let argument_without_parenthesis_span =
+                        get_inside_parenthesis_span(called_times_value.span, ctx);
+
                     let multi_fix = fixer.for_multifix();
                     let mut fixes = multi_fix.new_fix_with_capacity(2);
 
                     fixes.push(fixer.replace(matcher_to_be_fixed.span, new_matcher_name));
-                    fixes.push(fixer.delete(&called_times_value.span));
+                    fixes.push(fixer.delete(&argument_without_parenthesis_span));
 
                     fixes.with_message("Replace API with preferOnce instead of Times")
                 },
             );
         }
     }
+}
+
+fn is_open_parenthesis(source_text: &str) -> bool {
+    source_text.starts_with('(')
+}
+
+fn is_close_parenthesis(source_text: &str) -> bool {
+    source_text.ends_with(')')
+}
+
+fn get_inside_parenthesis_span(argument_span: Span, ctx: &LintContext<'_>) -> Span {
+    let mut inside_parentehsis_span = Span::new(argument_span.start, argument_span.end);
+
+    while !is_open_parenthesis(ctx.source_range(inside_parentehsis_span.expand_left(1))) {
+        inside_parentehsis_span = inside_parentehsis_span.expand_left(1);
+    }
+
+    while !is_close_parenthesis(ctx.source_range(inside_parentehsis_span.expand_right(1))) {
+        inside_parentehsis_span = inside_parentehsis_span.expand_right(1);
+    }
+
+    inside_parentehsis_span
 }
 
 #[test]
@@ -153,6 +178,9 @@ fn test() {
         "expect(fn).resolves.toBeCalledTimes(1);",
         "expect(fn).resolves.toHaveBeenCalledTimes(1);",
         "expect(fn).resolves.toHaveBeenCalledTimes(/*comment*/1);",
+        "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+              1,
+            );",
     ];
 
     let fix = vec![
@@ -164,6 +192,12 @@ fn test() {
         (
             "expect(fn).resolves.toHaveBeenCalledTimes(1);",
             "expect(fn).resolves.toHaveBeenCalledOnce();",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+            1,
+            );",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
         ),
     ];
     Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)
