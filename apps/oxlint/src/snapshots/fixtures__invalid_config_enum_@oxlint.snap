@@ -8,7 +8,6 @@ working directory: fixtures/invalid_config_enum
 Failed to parse oxlint configuration file.
 
   x Invalid configuration for rule `no-return-assign`: unknown variant `foobar`, expected `always` or `except-parens`, received `"foobar"`
-  | 
 
 ----------
 CLI result: InvalidOptionConfig
