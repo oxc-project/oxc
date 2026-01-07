@@ -224,7 +224,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for OrderInComponents {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value
             .get(0)
             .and_then(|v| serde_json::from_value::<OrderInComponentsConfig>(v.clone()).ok())
@@ -237,7 +237,7 @@ impl Rule for OrderInComponents {
             expand_default_order()
         };
 
-        Self { order }
+        Ok(Self { order })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
