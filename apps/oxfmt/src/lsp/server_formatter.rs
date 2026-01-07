@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use log::{debug, warn};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
+use tracing::{debug, warn};
 
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
@@ -75,7 +75,6 @@ impl ToolBuilder for ServerFormatterBuilder {
 
 impl ServerFormatterBuilder {
     /// Build a `ConfigResolver` from config paths.
-    ///
     /// Returns the resolver and ignore patterns.
     ///
     /// # Errors
@@ -548,13 +547,8 @@ mod tests {
 
     #[test]
     fn test_root_config_detection() {
-        Tester::new(
-            "test/fixtures/lsp/root_config",
-            json!({
-                "fmt.experimental": true
-            }),
-        )
-        .format_and_snapshot_single_file("semicolons-as-needed.ts");
+        Tester::new("test/fixtures/lsp/root_config", json!(null))
+            .format_and_snapshot_single_file("semicolons-as-needed.ts");
     }
 
     #[test]
@@ -562,7 +556,6 @@ mod tests {
         Tester::new(
             "test/fixtures/lsp/custom_config_path",
             json!({
-                "fmt.experimental": true,
                 "fmt.configPath": "./format.json",
             }),
         )
@@ -571,23 +564,19 @@ mod tests {
 
     #[test]
     fn test_ignore_files() {
-        Tester::new(
-            "test/fixtures/lsp/ignore-file",
-            json!({
-                "fmt.experimental": true
-            }),
-        )
-        .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+        Tester::new("test/fixtures/lsp/ignore-file", json!(null))
+            .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
     }
 
     #[test]
     fn test_ignore_pattern() {
-        Tester::new(
-            "test/fixtures/lsp/ignore-pattern",
-            json!({
-                "fmt.experimental": true
-            }),
-        )
-        .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+        Tester::new("test/fixtures/lsp/ignore-pattern", json!(null))
+            .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+    }
+
+    #[test]
+    fn test_editorconfig() {
+        Tester::new("test/fixtures/lsp/editorconfig", json!(null))
+            .format_and_snapshot_single_file("editorconfig.ts");
     }
 }

@@ -123,13 +123,15 @@ async fn lint_impl(
         }
     };
 
+    // Both LSP and CLI use `tracing` for logging
+    init_tracing();
+
     // If --lsp flag is set, run the language server
     if command.lsp {
         crate::lsp::run_lsp().await;
         return CliRunResult::LintSucceeded;
     }
 
-    init_tracing();
     init_miette();
 
     command.handle_threads();

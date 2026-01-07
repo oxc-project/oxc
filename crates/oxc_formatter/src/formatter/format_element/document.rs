@@ -32,6 +32,14 @@ impl<'a> Document<'a> {
     pub fn into_elements_and_tailwind_classes(self) -> (&'a [FormatElement<'a>], Vec<String>) {
         (self.elements, self.sorted_tailwind_classes)
     }
+
+    /// Replaces the document's format elements with new ones.
+    ///
+    /// If you have modified the elements and want to update the document,
+    /// use this method to set the new elements.
+    pub fn replace_elements(&mut self, elements: ArenaVec<'a, FormatElement<'a>>) {
+        self.elements = elements.into_bump_slice();
+    }
 }
 
 impl Document<'_> {
@@ -147,12 +155,6 @@ impl Document<'_> {
         let mut enclosing: Vec<Enclosing> = Vec::new();
         let mut interned = FxHashMap::default();
         propagate_expands(self, &mut enclosing, &mut interned);
-    }
-}
-
-impl<'a> From<ArenaVec<'a, FormatElement<'a>>> for Document<'a> {
-    fn from(elements: ArenaVec<'a, FormatElement<'a>>) -> Self {
-        Self { elements: elements.into_bump_slice(), sorted_tailwind_classes: Vec::default() }
     }
 }
 

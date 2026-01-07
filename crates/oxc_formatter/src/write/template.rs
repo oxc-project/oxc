@@ -662,7 +662,7 @@ impl<'a> EachTemplateTable<'a> {
 
             recording.stop();
 
-            let root = Document::from(vec_buffer.into_vec());
+            let root = Document::new(vec_buffer.into_vec(), Vec::default());
 
             // let range = element.range();
             let print_options = f.options().as_print_options();

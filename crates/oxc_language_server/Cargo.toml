@@ -20,10 +20,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
-log = { workspace = true }
 papaya = { workspace = true }
+tracing = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

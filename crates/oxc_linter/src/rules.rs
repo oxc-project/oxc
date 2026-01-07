@@ -667,11 +667,14 @@ pub(crate) mod promise {
 }
 
 pub(crate) mod vitest {
+    pub mod consistent_each_for;
     pub mod consistent_test_filename;
     pub mod consistent_vitest_vi;
+    pub mod hoisted_apis_on_top;
     pub mod no_conditional_tests;
     pub mod no_import_node_test;
     pub mod no_unneeded_async_expect_function;
+    pub mod prefer_called_once;
     pub mod prefer_called_times;
     pub mod prefer_describe_function_title;
     pub mod prefer_to_be_falsy;
@@ -1335,11 +1338,14 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::switch_case_braces,
     unicorn::text_encoding_identifier_case,
     unicorn::throw_new_error,
+    vitest::consistent_each_for,
     vitest::consistent_test_filename,
     vitest::consistent_vitest_vi,
+    vitest::hoisted_apis_on_top,
     vitest::no_conditional_tests,
     vitest::no_import_node_test,
     vitest::no_unneeded_async_expect_function,
+    vitest::prefer_called_once,
     vitest::prefer_called_times,
     vitest::prefer_describe_function_title,
     vitest::prefer_to_be_falsy,

@@ -1010,3 +1010,42 @@ describe("Tailwind CSS Sorting (Non-JS Files)", () => {
     expect(result.errors).toStrictEqual([]);
   });
 });
+
+describe("Tailwind CSS Sorting with `experimentalSortImports` enabled", () => {
+  test("should sort Tailwind classes in default options", async () => {
+    const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // After sorting, flex should come before p-4 (display before spacing)
+    // The exact order of bg-red-500 and text-white may vary by Tailwind version
+    expect(result.code).toContain('className="flex');
+    expect(result.code).not.toContain('className="p-4 flex'); // p-4 should not be before flex
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should preserve whitespace when preserveWhitespace is true", async () => {
+    // Input with leading/trailing whitespace in class string
+    const input = `const A = <div className="  p-4 flex  ">Hello</div>;`;
+
+    // Without preserveWhitespace, whitespace should be trimmed
+    const resultWithoutOption = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+      experimentalSortImports: {},
+    });
+    expect(resultWithoutOption.code).toContain('className="flex p-4"');
+
+    // With preserveWhitespace: true, whitespace should be preserved
+    const resultWithOption = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        preserveWhitespace: true,
+      },
+      experimentalSortImports: {},
+    });
+    // Whitespace should be preserved around the sorted classes
+    expect(resultWithOption.code).toContain('className="  flex p-4  "');
+    expect(resultWithOption.errors).toStrictEqual([]);
+  });
+});

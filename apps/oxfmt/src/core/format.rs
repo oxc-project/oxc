@@ -92,7 +92,7 @@ impl SourceFormatter {
                     path,
                     parser_name,
                     external_options,
-                    sort_package_json,
+                    sort_package_json.as_ref(),
                 ),
                 insert_final_newline,
             ),
@@ -221,12 +221,11 @@ impl SourceFormatter {
         path: &Path,
         parser_name: &str,
         external_options: Value,
-        sort_package_json: bool,
+        sort_options: Option<&sort_package_json::SortOptions>,
     ) -> Result<String, OxcDiagnostic> {
-        let source_text: Cow<'_, str> = if sort_package_json {
-            let options = sort_package_json::SortOptions { sort_scripts: false, pretty: false };
+        let source_text: Cow<'_, str> = if let Some(options) = sort_options {
             Cow::Owned(
-                sort_package_json::sort_package_json_with_options(source_text, &options).map_err(
+                sort_package_json::sort_package_json_with_options(source_text, options).map_err(
                     |err| {
                         OxcDiagnostic::error(format!(
                             "Failed to sort package.json: {}\n{err}",

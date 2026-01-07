@@ -3,10 +3,10 @@ use std::{
     sync::{Arc, OnceLock},
 };
 
-use log::{debug, warn};
 use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::Uri;
+use tracing::{debug, warn};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{

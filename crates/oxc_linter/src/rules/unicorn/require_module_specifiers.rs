@@ -190,8 +190,9 @@ fn test() {
         r#"import foo,{}/* comment */from "foo";"#,
         r#"import type {} from "foo""#,
         r#"import type{}from"foo""#,
-        r#"import type foo, {} from "foo""#,
-        r#"import type foo,{}from "foo""#,
+        // Invalid TS (1363)
+        // r#"import type foo, {} from "foo""#,
+        // r#"import type foo,{}from "foo""#,
         "export {}",
         r#"export {} from "foo";"#,
         r#"export{}from"foo";"#,
