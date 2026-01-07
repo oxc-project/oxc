@@ -162,7 +162,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for DotNotation {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let allow_keywords = config
             .and_then(|c| c.get("allowKeywords"))
@@ -175,7 +175,7 @@ impl Rule for DotNotation {
             .and_then(serde_json::Value::as_str)
             .and_then(|s| Regex::new(s).ok());
 
-        Self(Box::new(DotNotationConfig { allow_pattern, allow_keywords }))
+        Ok(Self(Box::new(DotNotationConfig { allow_pattern, allow_keywords })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
