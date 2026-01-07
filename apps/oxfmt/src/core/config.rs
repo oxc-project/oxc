@@ -214,7 +214,7 @@ impl ConfigResolver {
             FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
                 ResolvedOptions::ExternalFormatterPackageJson {
                     external_options,
-                    sort_package_json: oxfmt_options.sort_package_json,
+                    sort_package_json: oxfmt_options.sort_package_json.is_some(),
                     insert_final_newline,
                 }
             }

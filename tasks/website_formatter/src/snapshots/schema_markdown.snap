@@ -61,7 +61,7 @@ Which end of line characters to apply. (Default: `"lf"`)
 type: `object | null`
 
 
-Experimental: Sort import statements. Disabled by default.
+Experimental: Sort import statements. (Default: disabled)
 
 
 ### experimentalSortImports.groups
@@ -140,10 +140,18 @@ Sort side-effect imports. (Default: `false`)
 
 ## experimentalSortPackageJson
 
-type: `boolean | null`
+type: `object | boolean | null`
 
 
 Experimental: Sort `package.json` keys. (Default: `true`)
+
+
+### experimentalSortPackageJson.sortScripts
+
+type: `boolean | null`
+
+
+Sort the `scripts` field alphabetically. (Default: `false`)
 
 
 ## experimentalTailwindcss

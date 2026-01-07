@@ -1939,6 +1939,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "sort-package-json",
  "unicode-width",
 ]
 

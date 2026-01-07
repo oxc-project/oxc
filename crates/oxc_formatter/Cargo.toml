@@ -35,6 +35,7 @@ rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+sort-package-json = { workspace = true }
 unicode-width = { workspace = true }
 
 [dev-dependencies]
