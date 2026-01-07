@@ -184,7 +184,6 @@ criterion2 = { version = "3.0.2", default-features = false } # Benchmarking
 dragonbox_ecma = "0.0.5" # Fast float formatting
 encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
-env_logger = { version = "0.11.8", default-features = false } # Logging implementation
 fast-glob = "1.0.0" # Fast glob matching
 flate2 = "1.1.5" # Compression
 futures = "0.3.31" # Async utilities
@@ -198,7 +197,6 @@ itertools = "0.14.0" # Iterator utilities
 itoa = "1.0.15" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
 lazy-regex = "3.4.2" # Lazy regex compilation
-log = "0.4.29" # Logging facade
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.7.6" # Fast byte searching
 miette = { package = "oxc-miette", version = "2.7.0", features = [

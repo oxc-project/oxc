@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use log::{debug, warn};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
+use tracing::{debug, warn};
 
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
@@ -75,7 +75,6 @@ impl ToolBuilder for ServerFormatterBuilder {
 
 impl ServerFormatterBuilder {
     /// Build a `ConfigResolver` from config paths.
-    ///
     /// Returns the resolver and ignore patterns.
     ///
     /// # Errors

@@ -7,11 +7,11 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
+    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon},
     core::{
         ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
         JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-        SourceFormatter,
+        SourceFormatter, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -68,11 +68,14 @@ pub async fn run_cli(
         Mode::Init => ("init".to_string(), None),
         Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
         Mode::Lsp => {
+            utils::init_tracing();
+
             run_lsp().await;
+
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
-            init_tracing();
+            utils::init_tracing();
             init_miette();
 
             let result = StdinRunner::new(command)
@@ -88,7 +91,7 @@ pub async fn run_cli(
             ("stdin".to_string(), Some(result.exit_code()))
         }
         Mode::Cli(_) => {
-            init_tracing();
+            utils::init_tracing();
             init_miette();
             init_rayon(command.runtime_options.threads);
 
