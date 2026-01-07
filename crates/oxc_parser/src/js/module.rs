@@ -264,6 +264,7 @@ impl<'a> ParserImpl<'a> {
         };
 
         if let Some(default_specifier) = default_specifier {
+            let default_span = default_specifier.span;
             specifiers.push(self.ast.import_declaration_specifier_import_default_specifier(
                 default_specifier.span,
                 default_specifier,
@@ -271,9 +272,21 @@ impl<'a> ParserImpl<'a> {
             if self.eat(Kind::Comma) {
                 match self.cur_kind() {
                     // import defaultExport, * as name from "module-name";
-                    Kind::Star => specifiers.push(self.parse_import_namespace_specifier()),
+                    Kind::Star => {
+                        if self.is_ts && import_kind == ImportOrExportKind::Type {
+                            self.error(diagnostics::type_only_import_default_and_named(
+                                default_span,
+                            ));
+                        }
+                        specifiers.push(self.parse_import_namespace_specifier());
+                    }
                     // import defaultExport, { export1 [ , [...] ] } from "module-name";
                     Kind::LCurly => {
+                        if self.is_ts && import_kind == ImportOrExportKind::Type {
+                            self.error(diagnostics::type_only_import_default_and_named(
+                                default_span,
+                            ));
+                        }
                         let mut import_specifiers = self.parse_import_specifiers(import_kind);
                         specifiers.append(&mut import_specifiers);
                     }

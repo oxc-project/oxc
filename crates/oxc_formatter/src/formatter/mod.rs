@@ -56,7 +56,7 @@ pub use self::{
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Formatted<'a> {
     document: Document<'a>,
     context: FormatContext<'a>,
@@ -329,7 +329,7 @@ pub fn format<'ast>(
 
     let tailwind_classes = context.take_tailwind_classes();
     let sorted_tailwind_classes =
-        context.external_callbacks().sort_tailwind_classes(tailwind_classes).unwrap_or_default();
+        context.external_callbacks().sort_tailwind_classes(tailwind_classes);
 
     let document = Document::new(elements, sorted_tailwind_classes);
 

@@ -1,0 +1,108 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:6]
+ 2 │ 
+ 3 │ test.for([1, 2, 3])('test', ([n]) => { expect(n).toBeDefined() })
+   ·      ───
+   ╰────
+  help: To create parameterized test with `test` function you should use `.each`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:11]
+ 2 │ 
+ 3 │ test.skip.for([1, 2, 3])('test', ([n]) => { expect(n).toBeDefined() })
+   ·           ───
+   ╰────
+  help: To create parameterized test with `test` function you should use `.each`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:11]
+ 2 │ 
+ 3 │ test.only.for([1, 2, 3])('test', ([n]) => { expect(n).toBeDefined() })
+   ·           ───
+   ╰────
+  help: To create parameterized test with `test` function you should use `.each`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.each` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:6]
+ 2 │ 
+ 3 │ test.each([1, 2, 3])('test', (n) => { expect(n).toBeDefined() })
+   ·      ────
+   ╰────
+  help: To create parameterized test with `test` function you should use `.for`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.each` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:11]
+ 2 │ 
+ 3 │ test.skip.each([1, 2, 3])('test', (n) => { expect(n).toBeDefined() })
+   ·           ────
+   ╰────
+  help: To create parameterized test with `test` function you should use `.for`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `it` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:4]
+ 2 │ 
+ 3 │ it.for([1, 2, 3])('test', ([n]) => { expect(n).toBeDefined() })
+   ·    ───
+   ╰────
+  help: To create parameterized test with `it` function you should use `.each`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `it` can not be used with `.each` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:4]
+ 2 │ 
+ 3 │ it.each([1, 2, 3])('test', (n) => { expect(n).toBeDefined() })
+   ·    ────
+   ╰────
+  help: To create parameterized test with `it` function you should use `.for`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `describe` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:10]
+ 2 │ 
+ 3 │ describe.for([1, 2, 3])('suite', ([n]) => { test('test', () => {}) })
+   ·          ───
+   ╰────
+  help: To create parameterized test with `describe` function you should use `.each`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `describe` can not be used with `.each` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:10]
+ 2 │ 
+ 3 │ describe.each([1, 2, 3])('suite', (n) => { test('test', () => {}) })
+   ·          ────
+   ╰────
+  help: To create parameterized test with `describe` function you should use `.for`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `suite` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:7]
+ 2 │ 
+ 3 │ suite.for([1, 2, 3])('suite', ([n]) => { test('test', () => {}) })
+   ·       ───
+   ╰────
+  help: To create parameterized test with `suite` function you should use `.each`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `suite` can not be used with `.each` to create parameterized test.
+   ╭─[consistent_each_for.tsx:3:7]
+ 2 │ 
+ 3 │ suite.each([1, 2, 3])('suite', (n) => { test('test', () => {}) })
+   ·       ────
+   ╰────
+  help: To create parameterized test with `suite` function you should use `.for`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:4:17]
+ 3 │ 
+ 4 │                     test.for([1, 2])('test1', ([n]) => {})
+   ·                          ───
+ 5 │                     test.for([3, 4])('test2', ([n]) => {})
+   ╰────
+  help: To create parameterized test with `test` function you should use `.each`
+
+  ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.for` to create parameterized test.
+   ╭─[consistent_each_for.tsx:5:17]
+ 4 │                     test.for([1, 2])('test1', ([n]) => {})
+ 5 │                     test.for([3, 4])('test2', ([n]) => {})
+   ·                          ───
+ 6 │                   
+   ╰────
+  help: To create parameterized test with `test` function you should use `.each`

@@ -89,13 +89,13 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
-    /// Experimental: Sort import statements. Disabled by default.
+    /// Experimental: Sort import statements. (Default: disabled)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
 
     /// Experimental: Sort `package.json` keys. (Default: `true`)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_sort_package_json: Option<bool>,
+    pub experimental_sort_package_json: Option<SortPackageJsonUserConfig>,
 
     /// Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
     /// When enabled, class strings will be collected and passed to a callback for sorting.
@@ -242,6 +242,55 @@ pub enum SortOrderConfig {
     Desc,
 }
 
+/// User-provided configuration for `package.json` sorting.
+///
+/// - `true`: Enable sorting with default options
+/// - `false`: Disable sorting
+/// - `{ sortScripts: true }`: Enable sorting with custom options
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortPackageJsonUserConfig {
+    Bool(bool),
+    Object(SortPackageJsonConfig),
+}
+
+impl Default for SortPackageJsonUserConfig {
+    fn default() -> Self {
+        Self::Bool(true)
+    }
+}
+
+impl SortPackageJsonUserConfig {
+    /// Convert to `sort_package_json::SortOptions`.
+    /// Returns `None` if sorting is disabled.
+    pub fn to_sort_options(&self) -> Option<sort_package_json::SortOptions> {
+        match self {
+            Self::Bool(false) => None,
+            Self::Bool(true) => Some(SortPackageJsonConfig::default().to_sort_options()),
+            Self::Object(config) => Some(config.to_sort_options()),
+        }
+    }
+}
+
+/// Configuration for `package.json` sorting.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SortPackageJsonConfig {
+    /// Sort the `scripts` field alphabetically. (Default: `false`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_scripts: Option<bool>,
+}
+
+impl SortPackageJsonConfig {
+    fn to_sort_options(&self) -> sort_package_json::SortOptions {
+        sort_package_json::SortOptions {
+            sort_scripts: self.sort_scripts.unwrap_or(false),
+            // Small optimization: Prettier will reformat anyway
+            pretty: false,
+        }
+    }
+}
+
 /// Configuration for Tailwind CSS class sorting.
 /// Based on options from `prettier-plugin-tailwindcss`.
 ///
@@ -305,13 +354,17 @@ pub struct TailwindcssConfig {
 #[derive(Debug, Clone)]
 pub struct OxfmtOptions {
     pub ignore_patterns: Vec<String>,
-    pub sort_package_json: bool,
+    pub sort_package_json: Option<sort_package_json::SortOptions>,
     pub insert_final_newline: bool,
 }
 
 impl Default for OxfmtOptions {
     fn default() -> Self {
-        Self { ignore_patterns: vec![], sort_package_json: true, insert_final_newline: true }
+        Self {
+            ignore_patterns: vec![],
+            sort_package_json: Some(SortPackageJsonConfig::default().to_sort_options()),
+            insert_final_newline: true,
+        }
     }
 }
 
@@ -500,12 +553,15 @@ impl Oxfmtrc {
         }
 
         let mut oxfmt_options = OxfmtOptions::default();
+
         if let Some(patterns) = self.ignore_patterns {
             oxfmt_options.ignore_patterns = patterns;
         }
-        if let Some(sort_package_json) = self.experimental_sort_package_json {
-            oxfmt_options.sort_package_json = sort_package_json;
+
+        if let Some(config) = self.experimental_sort_package_json {
+            oxfmt_options.sort_package_json = config.to_sort_options();
         }
+
         if let Some(insert_final_newline) = self.insert_final_newline {
             oxfmt_options.insert_final_newline = insert_final_newline;
         }

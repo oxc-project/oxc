@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter/tests/schema.rs
+assertion_line: 17
 expression: json
 ---
 {
@@ -133,6 +134,33 @@ expression: json
         "desc"
       ],
       "type": "string"
+    },
+    "SortPackageJsonConfig": {
+      "description": "Configuration for `package.json` sorting.",
+      "markdownDescription": "Configuration for `package.json` sorting.",
+      "properties": {
+        "sortScripts": {
+          "description": "Sort the `scripts` field alphabetically. (Default: `false`)",
+          "markdownDescription": "Sort the `scripts` field alphabetically. (Default: `false`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SortPackageJsonUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SortPackageJsonConfig"
+        }
+      ],
+      "description": "User-provided configuration for `package.json` sorting.\n\n- `true`: Enable sorting with default options\n- `false`: Disable sorting\n- `{ sortScripts: true }`: Enable sorting with custom options",
+      "markdownDescription": "User-provided configuration for `package.json` sorting.\n\n- `true`: Enable sorting with default options\n- `false`: Disable sorting\n- `{ sortScripts: true }`: Enable sorting with custom options"
     },
     "TailwindcssConfig": {
       "description": "Configuration for Tailwind CSS class sorting.\nBased on options from `prettier-plugin-tailwindcss`.\n\nNote: All `tailwind` prefixes have been removed from option names.\nFor example, use `config` instead of `tailwindConfig`.\n\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
@@ -268,16 +296,20 @@ expression: json
           "type": "null"
         }
       ],
-      "description": "Experimental: Sort import statements. Disabled by default.",
-      "markdownDescription": "Experimental: Sort import statements. Disabled by default."
+      "description": "Experimental: Sort import statements. (Default: disabled)",
+      "markdownDescription": "Experimental: Sort import statements. (Default: disabled)"
     },
     "experimentalSortPackageJson": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortPackageJsonUserConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Experimental: Sort `package.json` keys. (Default: `true`)",
-      "markdownDescription": "Experimental: Sort `package.json` keys. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "markdownDescription": "Experimental: Sort `package.json` keys. (Default: `true`)"
     },
     "experimentalTailwindcss": {
       "anyOf": [

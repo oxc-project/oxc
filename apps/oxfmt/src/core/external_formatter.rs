@@ -7,7 +7,9 @@ use napi::{
 };
 use serde_json::Value;
 
-use oxc_formatter::ExternalCallbacks;
+use oxc_formatter::{
+    EmbeddedFormatterCallback, ExternalCallbacks, FormatOptions, TailwindCallback,
+};
 
 /// Type alias for the init external formatter callback function signature.
 /// Takes num_threads as argument and returns plugin languages.
@@ -131,18 +133,33 @@ impl ExternalFormatter {
 
     /// Convert this external formatter to the oxc_formatter::ExternalCallbacks type.
     /// The filepath and options are captured in the closures and passed to JS on each call.
-    pub fn to_external_callbacks(&self, filepath: &Path, options: Value) -> ExternalCallbacks {
-        let format_embedded = Arc::clone(&self.format_embedded);
-        let options_for_embedded = options.clone();
-        let embedded_callback = Arc::new(move |tag_name: &str, code: &str| {
-            (format_embedded)(&options_for_embedded, tag_name, code)
-        });
+    pub fn to_external_callbacks(
+        &self,
+        filepath: &Path,
+        format_options: &FormatOptions,
+        options: Value,
+    ) -> ExternalCallbacks {
+        let needs_embedded = !format_options.embedded_language_formatting.is_off();
+        let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
+            let format_embedded = Arc::clone(&self.format_embedded);
+            let options_for_embedded = options.clone();
+            Some(Arc::new(move |tag_name: &str, code: &str| {
+                (format_embedded)(&options_for_embedded, tag_name, code)
+            }))
+        } else {
+            None
+        };
 
-        let file_path = filepath.to_string_lossy().to_string();
-        let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
-        let tailwind_callback = Arc::new(move |classes: Vec<String>| {
-            (sort_tailwindcss_classes)(&file_path, &options, classes)
-        });
+        let needs_tailwind = format_options.experimental_tailwindcss.is_some();
+        let tailwind_callback: Option<TailwindCallback> = if needs_tailwind {
+            let file_path = filepath.to_string_lossy().to_string();
+            let sort_tailwindcss_classes = Arc::clone(&self.sort_tailwindcss_classes);
+            Some(Arc::new(move |classes: Vec<String>| {
+                (sort_tailwindcss_classes)(&file_path, &options, classes)
+            }))
+        } else {
+            None
+        };
 
         ExternalCallbacks::new()
             .with_embedded_formatter(embedded_callback)

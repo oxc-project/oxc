@@ -1,4 +1,3 @@
-use log::debug;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
 use std::sync::Arc;
@@ -11,6 +10,7 @@ use tower_lsp_server::{
         TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
     },
 };
+use tracing::debug;
 
 use crate::{
     ToolRestartChanges,

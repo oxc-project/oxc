@@ -1611,7 +1611,7 @@ two lines`,
             )
             .finish();
 
-        let document = Document::from(buffer.into_vec());
+        let document = Document::new(buffer.into_vec(), Vec::default());
 
         let printed = Printer::new(
             PrinterOptions::default()

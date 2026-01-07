@@ -159,7 +159,7 @@ impl Oxlintrc {
                 }
             };
             OxcDiagnostic::error(format!(
-                "Failed to parse eslint config {}.\n{err}",
+                "Failed to parse oxlint config {}.\n{err}",
                 path.display()
             ))
         })?;

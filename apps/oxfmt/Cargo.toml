@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.22.0"
+version = "0.23.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -41,7 +41,6 @@ cow-utils = { workspace = true }
 editorconfig-parser = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
-log = { workspace = true }
 miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }

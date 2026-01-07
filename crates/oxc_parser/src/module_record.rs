@@ -40,40 +40,7 @@ impl<'a> ModuleRecordBuilder<'a> {
         let module_record = &self.module_record;
 
         // Skip checking for exports in TypeScript
-        if self.source_type.is_typescript() {
-            // TS1363: A type-only import can specify a default import or named bindings, but not both.
-            // Group import entries by statement and check only those statements that are type-only imports.
-            if !module_record.import_entries.is_empty() {
-                // Build map of type-only import statement spans -> (has_default, has_named).
-                // `requested_modules` contains entries for both imports and exports, so filter is_import && is_type.
-                let mut seen: rustc_hash::FxHashMap<Span, (bool, bool)> =
-                    rustc_hash::FxHashMap::default();
-                for requests in module_record.requested_modules.values() {
-                    for req in requests {
-                        if req.is_import && req.is_type {
-                            seen.entry(req.statement_span).or_insert((false, false));
-                        }
-                    }
-                }
-                if !seen.is_empty() {
-                    for entry in &module_record.import_entries {
-                        if let Some(lookup) = seen.get_mut(&entry.statement_span) {
-                            match &entry.import_name {
-                                ImportImportName::Default(_) => lookup.0 = true,
-                                ImportImportName::Name(_) | ImportImportName::NamespaceObject => {
-                                    lookup.1 = true;
-                                }
-                            }
-                        }
-                    }
-                    for (stmt_span, (has_default, has_named)) in seen {
-                        if has_default && has_named {
-                            errors.push(diagnostics::type_only_import_default_and_named(stmt_span));
-                        }
-                    }
-                }
-            }
-        } else {
+        if !self.source_type.is_typescript() {
             // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
             for name_span in &self.exported_bindings_duplicated {
                 let old_span = module_record.exported_bindings[&name_span.name];

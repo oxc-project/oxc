@@ -1,7 +1,6 @@
 use std::{borrow::Cow, sync::Arc};
 
 use futures::future::join_all;
-use log::{debug, error, info, warn};
 use rustc_hash::FxBuildHasher;
 use serde_json::Value;
 use tokio::sync::{OnceCell, RwLock, SetError};
@@ -19,6 +18,7 @@ use tower_lsp_server::{
         Uri,
     },
 };
+use tracing::{debug, error, info, warn};
 
 use crate::{
     ConcurrentHashMap, ToolBuilder,

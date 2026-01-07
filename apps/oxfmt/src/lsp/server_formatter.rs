@@ -1,23 +1,22 @@
 use std::path::{Path, PathBuf};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
-use log::{debug, warn};
+use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
+use tracing::{debug, warn};
+
 use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_formatter::{
-    FormatOptions, Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
-    oxfmtrc::{OxfmtOptions, Oxfmtrc},
+    Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
 };
+use oxc_language_server::{Capabilities, Tool, ToolBuilder, ToolRestartChanges};
 use oxc_parser::Parser;
-use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
 
-use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
-
-use oxc_language_server::{
-    Capabilities,
-    utils::normalize_path,
-    {Tool, ToolBuilder, ToolRestartChanges},
+use crate::core::{
+    ConfigResolver, FormatFileStrategy, ResolvedOptions, resolve_editorconfig_path,
+    resolve_oxfmtrc_path, utils,
 };
+use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
 
 pub struct ServerFormatterBuilder;
 
@@ -36,21 +35,27 @@ impl ServerFormatterBuilder {
         };
 
         let root_path = root_uri.to_file_path().unwrap();
-        let oxfmtrc = Self::get_config(&root_path, options.config_path.as_ref());
-        let (format_options, oxfmt_options) = Self::get_options(oxfmtrc);
+        debug!("root_path = {:?}", root_path.display());
 
-        let gitignore_glob =
-            match Self::create_ignore_globs(&root_path, &oxfmt_options.ignore_patterns) {
-                Ok(glob) => Some(glob),
+        // Build `ConfigResolver` from config paths
+        let (config_resolver, ignore_patterns) =
+            match Self::build_config_resolver(&root_path, options.config_path.as_ref()) {
+                Ok((resolver, patterns)) => (resolver, patterns),
                 Err(err) => {
-                    warn!(
-                        "Failed to create gitignore globs: {err}, proceeding without ignore globs"
-                    );
-                    None
+                    warn!("Failed to build config resolver: {err}, falling back to default config");
+                    Self::default_config_resolver()
                 }
             };
 
-        ServerFormatter::new(format_options, gitignore_glob)
+        let gitignore_glob = match Self::create_ignore_globs(&root_path, &ignore_patterns) {
+            Ok(glob) => Some(glob),
+            Err(err) => {
+                warn!("Failed to create gitignore globs: {err}, proceeding without ignore globs");
+                None
+            }
+        };
+
+        ServerFormatter::new(config_resolver, gitignore_glob)
     }
 }
 
@@ -69,70 +74,39 @@ impl ToolBuilder for ServerFormatterBuilder {
 }
 
 impl ServerFormatterBuilder {
-    fn get_config(root_path: &Path, config_path: Option<&String>) -> Oxfmtrc {
-        if let Some(config) = Self::search_config_file(root_path, config_path) {
-            if let Ok(oxfmtrc) = Self::from_file(&config) {
-                oxfmtrc
-            } else {
-                warn!("Failed to initialize oxfmtrc config: {}", config.to_string_lossy());
-                Oxfmtrc::default()
-            }
-        } else {
-            warn!(
-                "Config file not found: {}, fallback to default config",
-                config_path.unwrap_or(&FORMAT_CONFIG_FILES.join(", "))
-            );
-            Oxfmtrc::default()
-        }
-    }
-
+    /// Build a `ConfigResolver` from config paths.
+    /// Returns the resolver and ignore patterns.
+    ///
     /// # Errors
-    /// Returns error if:
-    /// - file cannot be found or read
-    /// - file content is not valid JSONC
-    /// - deserialization fails for string enum values
-    fn from_file(path: &Path) -> Result<Oxfmtrc, String> {
-        let mut string = std::fs::read_to_string(path)
-            // Do not include OS error, it differs between platforms
-            .map_err(|_| format!("Failed to read config {}: File not found", path.display()))?;
+    /// Returns error if config file parsing fails.
+    fn build_config_resolver(
+        root_path: &Path,
+        config_path: Option<&String>,
+    ) -> Result<(ConfigResolver, Vec<String>), String> {
+        let oxfmtrc_path =
+            resolve_oxfmtrc_path(root_path, config_path.filter(|s| !s.is_empty()).map(Path::new));
+        let editorconfig_path = resolve_editorconfig_path(root_path);
 
-        // JSONC support - strip comments
-        json_strip_comments::strip(&mut string)
-            .map_err(|err| format!("Failed to strip comments from {}: {err}", path.display()))?;
+        let mut resolver = ConfigResolver::from_config_paths(
+            root_path,
+            oxfmtrc_path.as_deref(),
+            editorconfig_path.as_deref(),
+        )?;
 
-        // NOTE: String enum deserialization errors are handled here
-        serde_json::from_str(&string)
-            .map_err(|err| format!("Failed to deserialize config {}: {err}", path.display()))
+        // Validate config and cache options, returns ignore patterns
+        let ignore_patterns = resolver.build_and_validate()?;
+
+        Ok((resolver, ignore_patterns))
     }
 
-    fn get_options(oxfmtrc: Oxfmtrc) -> (FormatOptions, OxfmtOptions) {
-        match oxfmtrc.into_options() {
-            Ok(opts) => opts,
-            Err(err) => {
-                warn!("Failed to parse oxfmtrc config: {err}, fallback to default config");
-                (FormatOptions::default(), OxfmtOptions::default())
-            }
-        }
-    }
-
-    fn search_config_file(root_path: &Path, config_path: Option<&String>) -> Option<PathBuf> {
-        if let Some(config_path) = config_path.filter(|s| !s.is_empty()) {
-            let config = normalize_path(root_path.join(config_path));
-            if config.try_exists().is_ok_and(|exists| exists) {
-                return Some(config);
-            }
-
-            warn!(
-                "Config file not found: {}, searching for `{}` in the root path",
-                config.to_string_lossy(),
-                FORMAT_CONFIG_FILES.join(", ")
-            );
-        }
-
-        FORMAT_CONFIG_FILES.iter().find_map(|&file| {
-            let config = normalize_path(root_path.join(file));
-            config.try_exists().is_ok_and(|exists| exists).then_some(config)
-        })
+    /// Create a default `ConfigResolver` when config loading fails.
+    fn default_config_resolver() -> (ConfigResolver, Vec<String>) {
+        let mut resolver = ConfigResolver::from_config_paths(Path::new("."), None, None)
+            .expect("Default ConfigResolver should never fail");
+        let ignore_patterns = resolver
+            .build_and_validate()
+            .expect("Default ConfigResolver validation should never fail");
+        (resolver, ignore_patterns)
     }
 
     fn create_ignore_globs(
@@ -155,7 +129,7 @@ impl ServerFormatterBuilder {
     }
 }
 pub struct ServerFormatter {
-    options: FormatOptions,
+    config_resolver: ConfigResolver,
     gitignore_glob: Option<Gitignore>,
 }
 
@@ -215,11 +189,15 @@ impl Tool for ServerFormatter {
             }
         };
 
-        if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
-            return vec![config_path.clone()];
-        }
+        let mut patterns: Vec<Pattern> =
+            if let Some(config_path) = options.config_path.as_ref().filter(|s| !s.is_empty()) {
+                vec![config_path.clone()]
+            } else {
+                FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+            };
 
-        FORMAT_CONFIG_FILES.iter().map(|file| (*file).to_string()).collect()
+        patterns.push(".editorconfig".to_string());
+        patterns
     }
 
     fn handle_watched_file_change(
@@ -252,13 +230,23 @@ impl Tool for ServerFormatter {
             debug!("Unsupported source type for formatting: {}", path.display());
             return Ok(Vec::new());
         };
-
         let source_text = match content {
             Some(c) => c,
             None => {
-                &std::fs::read_to_string(&path).map_err(|e| format!("Failed to read file: {e}"))?
+                &utils::read_to_string(&path).map_err(|e| format!("Failed to read file: {e}"))?
             }
         };
+
+        // Create `FormatFileStrategy` for config resolution
+        let strategy = FormatFileStrategy::OxcFormatter { path: path.to_path_buf(), source_type };
+
+        let resolved = self.config_resolver.resolve(&strategy);
+        let ResolvedOptions::OxcFormatter { format_options, .. } = resolved else {
+            unreachable!("Strategy is OxcFormatter, so resolved should also be OxcFormatter");
+        };
+
+        debug!("format_options = {format_options:?}");
+        // debug!("oxfmt_options = {oxfmt_options:?}");
 
         let allocator = Allocator::new();
         let ret = Parser::new(&allocator, source_text, source_type)
@@ -271,7 +259,7 @@ impl Tool for ServerFormatter {
             return Ok(Vec::new());
         }
 
-        let code = Formatter::new(&allocator, self.options.clone()).build(&ret.program);
+        let code = Formatter::new(&allocator, format_options).build(&ret.program);
 
         // nothing has changed
         if code == *source_text {
@@ -294,8 +282,8 @@ impl Tool for ServerFormatter {
 }
 
 impl ServerFormatter {
-    pub fn new(options: FormatOptions, gitignore_glob: Option<Gitignore>) -> Self {
-        Self { options, gitignore_glob }
+    pub fn new(config_resolver: ConfigResolver, gitignore_glob: Option<Gitignore>) -> Self {
+        Self { config_resolver, gitignore_glob }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -394,9 +382,10 @@ mod test_watchers {
         #[test]
         fn test_default_options() {
             let patterns = Tester::new(FAKE_DIR, json!({})).get_watcher_patterns();
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], ".oxfmtrc.json");
             assert_eq!(patterns[1], ".oxfmtrc.jsonc");
+            assert_eq!(patterns[2], ".editorconfig");
         }
 
         #[test]
@@ -408,8 +397,9 @@ mod test_watchers {
                 }),
             )
             .get_watcher_patterns();
-            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], "configs/formatter.json");
+            assert_eq!(patterns[1], ".editorconfig");
         }
 
         #[test]
@@ -421,9 +411,10 @@ mod test_watchers {
                 }),
             )
             .get_watcher_patterns();
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], ".oxfmtrc.json");
             assert_eq!(patterns[1], ".oxfmtrc.jsonc");
+            assert_eq!(patterns[2], ".editorconfig");
         }
     }
 
@@ -448,8 +439,9 @@ mod test_watchers {
                 }));
 
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 1);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "configs/formatter.json");
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], ".editorconfig");
         }
     }
 }
@@ -555,13 +547,8 @@ mod tests {
 
     #[test]
     fn test_root_config_detection() {
-        Tester::new(
-            "test/fixtures/lsp/root_config",
-            json!({
-                "fmt.experimental": true
-            }),
-        )
-        .format_and_snapshot_single_file("semicolons-as-needed.ts");
+        Tester::new("test/fixtures/lsp/root_config", json!(null))
+            .format_and_snapshot_single_file("semicolons-as-needed.ts");
     }
 
     #[test]
@@ -569,7 +556,6 @@ mod tests {
         Tester::new(
             "test/fixtures/lsp/custom_config_path",
             json!({
-                "fmt.experimental": true,
                 "fmt.configPath": "./format.json",
             }),
         )
@@ -578,23 +564,19 @@ mod tests {
 
     #[test]
     fn test_ignore_files() {
-        Tester::new(
-            "test/fixtures/lsp/ignore-file",
-            json!({
-                "fmt.experimental": true
-            }),
-        )
-        .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+        Tester::new("test/fixtures/lsp/ignore-file", json!(null))
+            .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
     }
 
     #[test]
     fn test_ignore_pattern() {
-        Tester::new(
-            "test/fixtures/lsp/ignore-pattern",
-            json!({
-                "fmt.experimental": true
-            }),
-        )
-        .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+        Tester::new("test/fixtures/lsp/ignore-pattern", json!(null))
+            .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
+    }
+
+    #[test]
+    fn test_editorconfig() {
+        Tester::new("test/fixtures/lsp/editorconfig", json!(null))
+            .format_and_snapshot_single_file("editorconfig.ts");
     }
 }

@@ -79,13 +79,13 @@ impl<'a> Formatter<'a> {
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
         if let Some(sort_imports_options) = &formatted.context().options().experimental_sort_imports
-            && let Some(transformed_document) = SortImportsTransform::transform(
+            && let Some(transformed_elements) = SortImportsTransform::transform(
                 formatted.document(),
                 sort_imports_options,
                 self.allocator,
             )
         {
-            *formatted.document_mut() = transformed_document;
+            formatted.document_mut().replace_elements(transformed_elements);
         }
 
         formatted
