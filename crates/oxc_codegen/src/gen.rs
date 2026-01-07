@@ -2255,7 +2255,7 @@ impl GenExpr for NewExpression<'_> {
 
 impl GenExpr for TSAsExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        let wrap = precedence >= Precedence::Shift;
+        let wrap = precedence >= Precedence::Compare;
 
         p.wrap(wrap, |p| {
             self.expression.print_expr(p, Precedence::Exponentiation, ctx);
