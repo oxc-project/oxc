@@ -112,13 +112,28 @@ impl PreferCalledOnce {
             ctx.diagnostic_with_fix(
                 prefer_called_once_diagnostic(matcher_and_args_span, new_matcher_name.as_ref()),
                 |fixer| {
+                    let argument_without_parenthesis_span = ctx
+                        .find_next_token_within(
+                            called_times_value.span.end,
+                            call_expr.span.end,
+                            ",",
+                        )
+                        .map(|i| Span::sized(called_times_value.span.end + i, 1));
+
+                    let number_of_fixes =
+                        if argument_without_parenthesis_span.is_some() { 3 } else { 2 };
+
                     let multi_fix = fixer.for_multifix();
-                    let mut fixes = multi_fix.new_fix_with_capacity(2);
+                    let mut fixes = multi_fix.new_fix_with_capacity(number_of_fixes);
 
                     fixes.push(fixer.replace(matcher_to_be_fixed.span, new_matcher_name));
                     fixes.push(fixer.delete(&called_times_value.span));
 
-                    fixes.with_message("Replace API with preferOnce instead of Times")
+                    if let Some(comma_span) = argument_without_parenthesis_span {
+                        fixes.push(fixer.delete(&comma_span));
+                    }
+
+                    fixes.with_message("Replace API with prefer Once instead of Times")
                 },
             );
         }
@@ -153,6 +168,9 @@ fn test() {
         "expect(fn).resolves.toBeCalledTimes(1);",
         "expect(fn).resolves.toHaveBeenCalledTimes(1);",
         "expect(fn).resolves.toHaveBeenCalledTimes(/*comment*/1);",
+        "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+              1,
+            );",
     ];
 
     let fix = vec![
@@ -164,6 +182,44 @@ fn test() {
         (
             "expect(fn).resolves.toHaveBeenCalledTimes(1);",
             "expect(fn).resolves.toHaveBeenCalledOnce();",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+1,
+            );",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(
+
+            );",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1,);",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce();",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(/* comment (because why not) */1,);",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(/* comment (because why not) */);",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1/* comment (because why not) */,);",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(/* comment (because why not) */);",
+        ),
+        (
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+                /* I only want to call this function 1 (ONE) time, please. */
+1,
+            );",
+            "expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(
+                /* I only want to call this function 1 (ONE) time, please. */
+
+            );",
+        ),
+        (
+            "expect(fn).resolves.toHaveBeenCalledTimes(/*comment,*/1,);",
+            "expect(fn).resolves.toHaveBeenCalledOnce(/*comment,*/);",
+        ),
+        (
+            "expect(fn).resolves.toHaveBeenCalledTimes(/*comment,*/1/*comment,*/,);",
+            "expect(fn).resolves.toHaveBeenCalledOnce(/*comment,*//*comment,*/);",
         ),
     ];
     Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)
