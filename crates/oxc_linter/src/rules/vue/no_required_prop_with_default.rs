@@ -74,7 +74,7 @@ declare_oxc_lint!(
     NoRequiredPropWithDefault,
     vue,
     suspicious,
-    fix
+    suggestion
 );
 
 impl Rule for NoRequiredPropWithDefault {
