@@ -5,9 +5,11 @@ use oxc_ast::{
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeFlags;
+use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 
+use crate::module_record::{ImportEntry, ImportImportName};
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
 fn no_lifecycle_after_await_diagnostic(span: Span, hook_name: &str) -> OxcDiagnostic {
@@ -98,7 +100,32 @@ impl Rule for NoLifecycleAfterAwait {
             return;
         };
 
-        let mut visitor = LifecycleAfterAwaitVisitor::new();
+        let module_record = ctx.module_record();
+        let scoping = ctx.scoping();
+        // map the `symbol_id` to the `import_entry`
+        // e.g `import { onMounted } from 'vue'; onMounted();` -> `symbol_id: import_entry`
+        // so we can find the `import_entry` by the `symbol_id` later
+        let mut symbol_to_import_entry: FxHashMap<SymbolId, &ImportEntry> = FxHashMap::default();
+
+        for import_entry in &module_record.import_entries {
+            if import_entry.module_request.name() != "vue" {
+                continue;
+            }
+            let import_name = match &import_entry.import_name {
+                ImportImportName::Name(name_span) => name_span.name(),
+                _ => continue,
+            };
+
+            // e.g `import { onMounted as A } from 'vue'; A();`
+            if !LIFECYCLE_HOOKS.contains(&import_name) {
+                continue;
+            }
+            if let Some(symbol_id) = scoping.get_root_binding(import_entry.local_name.name()) {
+                symbol_to_import_entry.insert(symbol_id, import_entry);
+            }
+        }
+
+        let mut visitor = LifecycleAfterAwaitVisitor::new(scoping, symbol_to_import_entry);
         visitor.visit_function_body(function_body);
 
         visitor.errors.iter().for_each(|(span, hook_name)| {
@@ -112,18 +139,23 @@ impl Rule for NoLifecycleAfterAwait {
     }
 }
 
-struct LifecycleAfterAwaitVisitor {
+struct LifecycleAfterAwaitVisitor<'a> {
     found: bool,
     errors: Vec<(Span, String)>,
+    scoping: &'a Scoping,
+    symbol_to_import_entry: FxHashMap<SymbolId, &'a ImportEntry>,
 }
 
-impl LifecycleAfterAwaitVisitor {
-    fn new() -> Self {
-        Self { found: false, errors: Vec::new() }
+impl<'a> LifecycleAfterAwaitVisitor<'a> {
+    fn new(
+        scoping: &'a Scoping,
+        symbol_to_import_entry: FxHashMap<SymbolId, &'a ImportEntry>,
+    ) -> Self {
+        Self { found: false, errors: Vec::new(), scoping, symbol_to_import_entry }
     }
 }
 
-impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor {
+impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         if !self.found {
             self.found = true;
@@ -136,15 +168,26 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor {
             return;
         }
 
-        let Some(ident) = call_expr.callee.get_identifier_reference() else {
+        if call_expr.arguments.len() >= 2 {
+            walk::walk_call_expression(self, call_expr);
+            return;
+        }
+
+        let Some(ident) = call_expr.callee.get_inner_expression().get_identifier_reference() else {
             walk::walk_call_expression(self, call_expr);
             return;
         };
 
-        let hook_name = ident.name.as_str();
+        let reference = self.scoping.get_reference(ident.reference_id());
+        let Some(symbol_id) = reference.symbol_id() else {
+            walk::walk_call_expression(self, call_expr);
+            return;
+        };
 
-        if LIFECYCLE_HOOKS.contains(&hook_name) {
-            self.errors.push((call_expr.span, hook_name.to_string()));
+        if let Some(import_entry) = self.symbol_to_import_entry.get(&symbol_id)
+            && let ImportImportName::Name(name_span) = &import_entry.import_name
+        {
+            self.errors.push((call_expr.span, name_span.name().to_string()));
         }
         walk::walk_call_expression(self, call_expr);
     }
@@ -166,6 +209,31 @@ fn test() {
 			          onMounted(() => { /* ... */ }) // ok
 
 			          await doSomething()
+			        }
+			      }
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+			      import {onMounted} from 'vue'
+			      export default {
+			        async setup() {
+                        await doSomething()
+                        onUpdated(() => { /* ... */ }) // ok
+			        }
+			      }
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+			      import {onMounted} from 'vue'
+			      export default {
+			        async setup() {
+                      function onMounted(callback) {
+                        return;
+                      }
+                      await doSomething()
+			          onMounted(() => { /* ... */ }) // ok
 			        }
 			      }
 			      </script>
@@ -239,6 +307,27 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+                  import { h } from 'vue'
+			      export default {
+			        async setup() {
+                      await doSomething();
+			          onBeforeMount(() => { /* ... */ })
+			          onBeforeUnmount(() => { /* ... */ })
+			          onBeforeUpdate(() => { /* ... */ })
+			          onErrorCaptured(() => { /* ... */ })
+			          onMounted(() => { /* ... */ })
+			          onRenderTracked(() => { /* ... */ })
+			          onRenderTriggered(() => { /* ... */ })
+			          onUnmounted(() => { /* ... */ })
+			          onUpdated(() => { /* ... */ })
+			          onActivated(() => { /* ... */ })
+			          onDeactivated(() => { /* ... */ })
+			        }
+			      }
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
 ("
 			      <script>
 			      import {onMounted} from 'vue'
@@ -299,6 +388,28 @@ fn test() {
 			        }
 			      }
 			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
+			      export default {
+			        async setup() {
+			          await doSomething()
+
+			          onBeforeMount(() => { /* ... */ }, instance)
+			          onBeforeUnmount(() => { /* ... */ }, instance)
+			          onBeforeUpdate(() => { /* ... */ }, instance)
+			          onErrorCaptured(() => { /* ... */ }, instance)
+			          onMounted(() => { /* ... */ }, instance)
+			          onRenderTracked(() => { /* ... */ }, instance)
+			          onRenderTriggered(() => { /* ... */ }, instance)
+			          onUnmounted(() => { /* ... */ }, instance)
+			          onUpdated(() => { /* ... */ }, instance)
+			          onActivated(() => { /* ... */ }, instance)
+			          onDeactivated(() => { /* ... */ }, instance)
+			        }
+			      }
+			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue")))
     ];
 
@@ -308,9 +419,9 @@ fn test() {
 			      import {onMounted} from 'vue'
 			      export default {
 			        async setup() {
-			          await doSomething()
+			          await doSomething();
 
-			          onMounted(() => { /* ... */ }) // error
+			          (onMounted)(() => { /* ... */ }) // error
 			        }
 			      }
 			      </script>
@@ -361,28 +472,30 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-("
+                  ("
 			      <script>
-			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
+			      import {onMounted as A} from 'vue'
 			      export default {
 			        async setup() {
 			          await doSomething()
 
-			          onBeforeMount(() => { /* ... */ }, instance)
-			          onBeforeUnmount(() => { /* ... */ }, instance)
-			          onBeforeUpdate(() => { /* ... */ }, instance)
-			          onErrorCaptured(() => { /* ... */ }, instance)
-			          onMounted(() => { /* ... */ }, instance)
-			          onRenderTracked(() => { /* ... */ }, instance)
-			          onRenderTriggered(() => { /* ... */ }, instance)
-			          onUnmounted(() => { /* ... */ }, instance)
-			          onUpdated(() => { /* ... */ }, instance)
-			          onActivated(() => { /* ... */ }, instance)
-			          onDeactivated(() => { /* ... */ }, instance)
+			          A?.(() => { /* ... */ }) // error
 			        }
 			      }
 			      </script>
-			      ", None, None, Some(PathBuf::from("test.vue")))
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  ("
+			      <script>
+			      import {onMounted as A} from 'vue'
+			      export default {
+			        async setup() {
+			          await doSomething()
+
+			          A() // error
+			        }
+			      }
+			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
     ];
 
     Tester::new(NoLifecycleAfterAwait::NAME, NoLifecycleAfterAwait::PLUGIN, pass, fail)
