@@ -36,7 +36,7 @@ impl SortImportsTransform {
         document: &Document<'a>,
         options: &SortImportsOptions,
         allocator: &'a Allocator,
-    ) -> Option<Document<'a>> {
+    ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
         // Early return for empty files
         if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
             return None;
@@ -305,6 +305,6 @@ impl SortImportsTransform {
             }
         }
 
-        Some(Document::from(next_elements))
+        Some(next_elements)
     }
 }
