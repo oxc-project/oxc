@@ -38,7 +38,7 @@ impl fmt::Display for OverrideRulesError {
         match self {
             OverrideRulesError::ExternalRuleLookup(e) => write!(f, "{e}"),
             OverrideRulesError::RuleConfiguration { rule_name, message } => {
-                write!(f, "Failed to parse configuration for rule `{rule_name}`: {message}")
+                writeln!(f, "Invalid configuration for rule `{rule_name}`: {message}")
             }
         }
     }

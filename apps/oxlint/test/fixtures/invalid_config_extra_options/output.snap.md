@@ -5,7 +5,8 @@
 ```
 Failed to parse oxlint configuration file.
 
-  x Failed to parse configuration for rule `jest/no-hooks`: Invalid rule configuration `{ "foo": "bar" }`: unknown field `foo`, expected `allow`
+  x Invalid configuration for rule `jest/no-hooks`: unknown field `foo`, expected `allow`, received `{ "foo": "bar" }`
+  |   See: https://oxc.rs/docs/guide/usage/linter/rules/jest/no-hooks
 ```
 
 # stderr

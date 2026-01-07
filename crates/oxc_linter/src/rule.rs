@@ -124,9 +124,9 @@ where
                     // Collapse any whitespace so we emit a single-line message.
                     if let Ok(value_str) = serde_json::to_string_pretty(&v) {
                         let compact = value_str.split_whitespace().collect::<Vec<_>>().join(" ");
-                        D::Error::custom(format!("Invalid rule configuration `{compact}`: {e}"))
+                        D::Error::custom(format!("{e}, received `{compact}`"))
                     } else {
-                        D::Error::custom(format!("Invalid rule configuration: {e}"))
+                        D::Error::custom(e)
                     }
                 })?,
                 None => T::default(),

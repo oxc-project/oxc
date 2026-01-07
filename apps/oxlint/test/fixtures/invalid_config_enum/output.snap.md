@@ -5,7 +5,8 @@
 ```
 Failed to parse oxlint configuration file.
 
-  x Failed to parse configuration for rule `no-return-assign`: Invalid rule configuration `"foobar"`: unknown variant `foobar`, expected `always` or `except-parens`
+  x Invalid configuration for rule `eslint/no-return-assign`: unknown variant `foobar`, expected `always` or `except-parens`, received `"foobar"`
+  |   See: https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-return-assign
 ```
 
 # stderr

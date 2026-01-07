@@ -5,7 +5,8 @@
 ```
 Failed to parse oxlint configuration file.
 
-  x Failed to parse configuration for rule `jest/no-hooks`: Invalid rule configuration `{ "allow": [ true, false ] }`: invalid type: boolean `true`, expected a string
+  x Invalid configuration for rule `jest/no-hooks`: invalid type: boolean `true`, expected a string, received `{ "allow": [ true, false ] }`
+  |   See: https://oxc.rs/docs/guide/usage/linter/rules/jest/no-hooks
 ```
 
 # stderr

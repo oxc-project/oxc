@@ -5,8 +5,10 @@
 ```
 Failed to parse oxlint configuration file.
 
-  x Failed to parse configuration for rule `jest/no-hooks`: Invalid rule configuration `{ "foo": "bar" }`: unknown field `foo`, expected `allow`
-  | Failed to parse configuration for rule `no-return-assign`: Invalid rule configuration `"foobar"`: unknown variant `foobar`, expected `always` or `except-parens`
+  x Invalid configuration for rule `eslint/no-return-assign`: unknown variant `foobar`, expected `always` or `except-parens`, received `"foobar"`
+  |   See: https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-return-assign
+  | Invalid configuration for rule `jest/no-hooks`: unknown field `foo`, expected `allow`, received `{ "foo": "bar" }`
+  |   See: https://oxc.rs/docs/guide/usage/linter/rules/jest/no-hooks
 ```
 
 # stderr
