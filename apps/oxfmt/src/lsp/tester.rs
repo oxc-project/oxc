@@ -55,10 +55,8 @@ impl Tester<'_> {
     }
 
     fn create_formatter(&self) -> ServerFormatter {
-        ServerFormatterBuilder::build(
-            &Self::get_root_uri(self.relative_root_dir),
-            self.options.clone(),
-        )
+        ServerFormatterBuilder::dummy()
+            .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {
@@ -109,7 +107,7 @@ impl Tester<'_> {
         &self,
         new_options: serde_json::Value,
     ) -> ToolRestartChanges {
-        let builder = ServerFormatterBuilder;
+        let builder = ServerFormatterBuilder::dummy();
         self.create_formatter().handle_configuration_change(
             &builder,
             &Self::get_root_uri(self.relative_root_dir),
