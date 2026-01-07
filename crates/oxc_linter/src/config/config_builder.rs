@@ -21,7 +21,7 @@ use crate::{
         rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
+    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
     rules::RULES,
 };
 
@@ -632,7 +632,6 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
         error: String,
     },
-    ExternalRuleLookupError(ExternalRuleLookupError),
     NoExternalLinterConfigured {
         plugin_specifier: String,
     },
@@ -694,7 +693,6 @@ impl Display for ConfigBuilderError {
                 )?;
                 Ok(())
             }
-            ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
             ConfigBuilderError::RuleConfigurationErrors { errors } => {
                 for (i, error) in errors.iter().enumerate() {
                     if i > 0 {
