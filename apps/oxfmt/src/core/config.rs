@@ -64,7 +64,7 @@ pub enum ResolvedOptions {
     #[cfg(feature = "napi")]
     ExternalFormatterPackageJson {
         external_options: Value,
-        sort_package_json: bool,
+        sort_package_json: Option<sort_package_json::SortOptions>,
         insert_final_newline: bool,
     },
 }
@@ -194,7 +194,7 @@ impl ConfigResolver {
                 .expect("`build_and_validate()` must be called before `resolve()`")
         };
 
-        let insert_final_newline = oxfmt_options.insert_final_newline;
+        let OxfmtOptions { sort_package_json, insert_final_newline, .. } = oxfmt_options;
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
@@ -214,7 +214,7 @@ impl ConfigResolver {
             FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
                 ResolvedOptions::ExternalFormatterPackageJson {
                     external_options,
-                    sort_package_json: oxfmt_options.sort_package_json.is_some(),
+                    sort_package_json,
                     insert_final_newline,
                 }
             }
