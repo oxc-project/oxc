@@ -188,6 +188,10 @@ export default class FormatterTool implements ToolInterface {
       "syntax",
       "yaml",
       "yaml-tmlanguage",
+      // https://github.com/oxc-project/oxc/pull/17113/
+      // TOML
+      "toml",
+      "toml.example",
     ];
 
     // Special filenames that are valid JS files
@@ -234,6 +238,10 @@ export default class FormatterTool implements ToolInterface {
       ".prettierrc",
       ".stylelintrc",
       ".lintstagedrc",
+      // https://github.com/oxc-project/oxc/pull/17113/
+      // TOML filenames
+      "Pipfile", 
+      "Cargo.toml.orig",
     ];
 
     // If the extension is launched in debug mode then the debug server options are used
