@@ -16,7 +16,13 @@ import { registeredPluginUrls, registeredRules } from "./load.js";
 const workspaceRoots = new Set<string>();
 
 /**
- * Create a new workspace.
+ * Creates a new workspace and initializes plugin and rule storage for it.
+ *
+ * Registers the workspace root directory and sets up empty collections for
+ * plugin URLs and rules. Throws an error in DEBUG mode if the workspace
+ * already exists.
+ *
+ * @param rootDir - The root directory of the workspace to create.
  */
 export const createWorkspace = async (rootDir: string): Promise<undefined> => {
   if (DEBUG) {
@@ -30,7 +36,13 @@ export const createWorkspace = async (rootDir: string): Promise<undefined> => {
 };
 
 /**
- * Destroy a workspace.
+ * Destroys an existing workspace and frees all associated resources.
+ *
+ * Removes the workspace root directory from the internal sets and maps,
+ * effectively clearing all plugin URLs and rules registered for this workspace.
+ * Throws an error in DEBUG mode if the workspace does not exist.
+ *
+ * @param rootDir - The root directory of the workspace to destroy.
  */
 export const destroyWorkspace = (rootDir: string): undefined => {
   if (DEBUG) {
