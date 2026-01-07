@@ -272,15 +272,9 @@ fn process_define_props_call(
     handle_type_argument(ctx, first_type_argument, key_hash);
 }
 
-/// Returns the span where `?` should be inserted to make a property optional.
-/// For TypeScript signatures, this is right after the key name.
-fn get_optional_marker_span(key: &PropertyKey) -> u32 {
-    key.span().end
-}
-
 /// Creates a fix that inserts `?` after the property key to make it optional.
 fn create_optional_fix(fixer: RuleFixer<'_, '_>, key: &PropertyKey) -> RuleFix {
-    let insert_pos = get_optional_marker_span(key);
+    let insert_pos = key.span().end;
     fixer.insert_text_after_range(Span::new(insert_pos, insert_pos), "?")
 }
 
