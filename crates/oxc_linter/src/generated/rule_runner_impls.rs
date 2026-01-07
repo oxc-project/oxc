@@ -98,7 +98,10 @@ impl RuleRunner for crate::rules::eslint::default_param_last::DefaultParamLast {
 }
 
 impl RuleRunner for crate::rules::eslint::dot_notation::DotNotation {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ComputedMemberExpression,
+        AstType::StaticMemberExpression,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
