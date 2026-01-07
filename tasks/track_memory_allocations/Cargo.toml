@@ -26,7 +26,12 @@ oxc_transformer = { workspace = true }
 
 humansize = { workspace = true }
 mimalloc-safe = { workspace = true }
+rustc-hash = { workspace = true }
 
 [features]
 # Sentinel flag that should only get enabled if we're running under `--all-features`
 is_all_features = []
+# Enable tracking of allocation callsites. This captures backtraces for each allocation
+# and prints a summary of the top callsites sorted by allocation count. Note: this is
+# slow due to backtrace capture overhead, so only enable when debugging allocation sources.
+track_callsites = []

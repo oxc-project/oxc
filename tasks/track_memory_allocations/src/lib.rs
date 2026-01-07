@@ -16,6 +16,22 @@ use oxc_transformer::{TransformOptions, Transformer};
 use std::alloc::{GlobalAlloc, Layout};
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 
+#[cfg(feature = "track_callsites")]
+use std::sync::atomic::AtomicBool;
+
+#[cfg(feature = "track_callsites")]
+use std::{backtrace::Backtrace, cell::Cell, sync::Mutex};
+
+#[cfg(feature = "track_callsites")]
+use rustc_hash::FxHashMap;
+
+// Thread-local guard to prevent recursive callsite tracking.
+// Capturing a backtrace may itself cause allocations, which would lead to infinite recursion.
+#[cfg(feature = "track_callsites")]
+thread_local! {
+    static IN_CALLSITE_RECORDING: Cell<bool> = const { Cell::new(false) };
+}
+
 #[global_allocator]
 static GLOBAL: TrackedAllocator = TrackedAllocator;
 
@@ -58,9 +74,153 @@ impl AtomicCounter {
 static NUM_ALLOC: AtomicCounter = AtomicCounter::new();
 static NUM_REALLOC: AtomicCounter = AtomicCounter::new();
 
+/// When `track_callsites` feature is enabled, this tracks allocation callsites.
+/// Each unique callsite (identified by a normalized backtrace string) maps to its allocation count.
+#[cfg(feature = "track_callsites")]
+static CALLSITE_COUNTS: Mutex<Option<FxHashMap<String, usize>>> = Mutex::new(None);
+
+/// Flag to enable/disable callsite tracking at runtime. This allows us to only track
+/// callsites during the actual measurement phase, not during warmup.
+#[cfg(feature = "track_callsites")]
+static TRACK_CALLSITES_ENABLED: AtomicBool = AtomicBool::new(false);
+
+#[cfg(feature = "track_callsites")]
+fn enable_callsite_tracking() {
+    // Initialize the hashmap if not already done
+    {
+        let mut guard = CALLSITE_COUNTS.lock().unwrap();
+        if guard.is_none() {
+            *guard = Some(FxHashMap::default());
+        }
+    }
+    TRACK_CALLSITES_ENABLED.store(true, SeqCst);
+}
+
+#[cfg(feature = "track_callsites")]
+fn disable_callsite_tracking() {
+    TRACK_CALLSITES_ENABLED.store(false, SeqCst);
+}
+
+#[cfg(feature = "track_callsites")]
+fn reset_callsite_counts() {
+    let mut guard = CALLSITE_COUNTS.lock().unwrap();
+    if let Some(map) = guard.as_mut() {
+        map.clear();
+    }
+}
+
+#[cfg(feature = "track_callsites")]
+fn record_callsite() {
+    if !TRACK_CALLSITES_ENABLED.load(SeqCst) {
+        return;
+    }
+
+    // Guard against recursive callsite recording - capturing backtraces can allocate
+    let already_recording = IN_CALLSITE_RECORDING.with(|flag| {
+        if flag.get() {
+            true
+        } else {
+            flag.set(true);
+            false
+        }
+    });
+
+    if already_recording {
+        return;
+    }
+
+    let bt = Backtrace::capture();
+    let bt_str = bt.to_string();
+
+    // Extract the relevant part of the backtrace (skip allocator frames)
+    let callsite = normalize_backtrace(&bt_str);
+
+    let mut guard = CALLSITE_COUNTS.lock().unwrap();
+    if let Some(map) = guard.as_mut() {
+        *map.entry(callsite).or_insert(0) += 1;
+    }
+
+    // Reset the guard
+    IN_CALLSITE_RECORDING.with(|flag| flag.set(false));
+}
+
+/// Normalize backtrace to extract a meaningful callsite identifier.
+/// This skips the allocator-related frames and captures the actual caller.
+#[cfg(feature = "track_callsites")]
+fn normalize_backtrace(bt: &str) -> String {
+    let lines: Vec<&str> = bt.lines().collect();
+
+    // Find frames that are from the oxc crates (skip allocator frames)
+    let mut relevant_frames = Vec::new();
+    let mut skip = true;
+
+    for line in &lines {
+        let trimmed = line.trim();
+
+        // Skip frames until we get past the allocator internals
+        if skip {
+            if trimmed.contains("track_memory_allocations")
+                || trimmed.contains("GlobalAlloc")
+                || trimmed.contains("__rust_alloc")
+                || trimmed.contains("alloc::") && !trimmed.contains("oxc_allocator")
+            {
+                continue;
+            }
+            skip = false;
+        }
+
+        // Capture frames from oxc crates (but not from this tracking crate itself)
+        if trimmed.contains("oxc_") && !trimmed.contains("track_memory_allocations") {
+            relevant_frames.push(trimmed.to_string());
+            // Only keep top few frames to reduce noise
+            if relevant_frames.len() >= 5 {
+                break;
+            }
+        }
+    }
+
+    if relevant_frames.is_empty() {
+        // Fall back to first non-allocator frame
+        for line in &lines {
+            let trimmed = line.trim();
+            if !trimmed.contains("track_memory_allocations")
+                && !trimmed.contains("GlobalAlloc")
+                && !trimmed.contains("__rust_alloc")
+                && !trimmed.is_empty()
+                && trimmed.chars().next().is_some_and(char::is_numeric)
+            {
+                return trimmed.to_string();
+            }
+        }
+        return "unknown".to_string();
+    }
+
+    relevant_frames.join("\n")
+}
+
+#[cfg(feature = "track_callsites")]
+#[expect(clippy::print_stdout)]
+fn print_callsite_stats(file: &str) {
+    let guard = CALLSITE_COUNTS.lock().unwrap();
+    if let Some(map) = guard.as_ref() {
+        let mut entries: Vec<_> = map.iter().collect();
+        entries.sort_by(|a, b| b.1.cmp(a.1)); // Sort by count descending
+
+        println!("\n=== Allocation callers for {} ===", file);
+
+        // Show top 100
+        for (callsite, count) in entries.iter().take(100) {
+            println!("--- {count} allocations ---");
+            println!("{callsite}\n");
+        }
+    }
+}
+
 fn reset_global_allocs() {
     NUM_ALLOC.reset();
     NUM_REALLOC.reset();
+    #[cfg(feature = "track_callsites")]
+    reset_callsite_counts();
 }
 
 // SAFETY: Methods simply delegate to `MiMalloc` allocator to ensure that the allocator
@@ -71,6 +231,8 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         let ret = unsafe { MiMalloc.alloc(layout) };
         if !ret.is_null() {
             NUM_ALLOC.increment();
+            #[cfg(feature = "track_callsites")]
+            record_callsite();
         }
         ret
     }
@@ -83,6 +245,8 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         let ret = unsafe { MiMalloc.alloc_zeroed(layout) };
         if !ret.is_null() {
             NUM_ALLOC.increment();
+            #[cfg(feature = "track_callsites")]
+            record_callsite();
         }
         ret
     }
@@ -91,6 +255,8 @@ unsafe impl GlobalAlloc for TrackedAllocator {
         let ret = unsafe { MiMalloc.realloc(ptr, layout, new_size) };
         if !ret.is_null() {
             NUM_REALLOC.increment();
+            #[cfg(feature = "track_callsites")]
+            record_callsite();
         }
         ret
     }
@@ -157,7 +323,13 @@ pub fn run() -> Result<(), io::Error> {
         Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
     }
 
+
+
     for file in files.files() {
+        // Enable callsite tracking for the actual measurement phase
+        #[cfg(feature = "track_callsites")]
+        enable_callsite_tracking();
+
         let minifier_options = minifier_options.clone();
 
         allocator.reset();
@@ -198,6 +370,13 @@ pub fn run() -> Result<(), io::Error> {
             fixture_width,
             width,
         ));
+
+        // Disable callsite tracking and print stats
+        #[cfg(feature = "track_callsites")]
+        {
+            disable_callsite_tracking();
+            print_callsite_stats(file.file_name.as_str());
+        }
     }
 
     write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
