@@ -10,10 +10,10 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 use crate::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
-    LineWidth, NormalizedCustomGroupDefinition, QuoteProperties, QuoteStyle, Semicolons,
-    SortImportsOptions, SortOrder, TailwindcssOptions, TrailingCommas,
+    LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+    TailwindcssOptions, TrailingCommas,
 };
 
 /// Configuration options for the Oxfmt.
@@ -535,7 +535,7 @@ impl Oxfmtrc {
                 sort_imports.groups = v;
             }
             if let Some(v) = config.custom_groups {
-                sort_imports.custom_groups = v.into_iter().map(std::convert::Into::into).collect();
+                sort_imports.custom_groups = v;
             }
 
             // `partition_by_newline: true` and `newlines_between: true` cannot be used together

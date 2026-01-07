@@ -1,6 +1,6 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use super::options::NormalizedCustomGroupDefinition;
+use super::options::CustomGroupDefinition;
 
 use super::group_config::{GroupName, ImportModifier, ImportSelector};
 
@@ -13,7 +13,7 @@ pub struct ImportMetadata<'a> {
 
 // CustomGroup is intended to be a processed NormalizedCustomGroupDefinition with compiled regex patterns,
 // but for now, it's the same as NormalizedCustomGroupDefinition, because I don't know which regex lib to use.
-type CustomGroup = NormalizedCustomGroupDefinition;
+type CustomGroup = CustomGroupDefinition;
 
 impl CustomGroup {
     pub fn does_match(&self, import_metadata: &ImportMetadata) -> bool {

@@ -1,11 +1,8 @@
 use std::fmt;
 use std::str::FromStr;
 
-#[derive(Clone, Debug, Eq, PartialEq)]
-pub struct NormalizedCustomGroupDefinition {
-    pub group_name: String,
-    pub element_name_pattern: Vec<String>,
-}
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SortImportsOptions {
@@ -37,7 +34,7 @@ pub struct SortImportsOptions {
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
     pub groups: Vec<Vec<String>>,
     /// Define your own groups and use regex for matching very specific imports
-    pub custom_groups: Vec<NormalizedCustomGroupDefinition>,
+    pub custom_groups: Vec<CustomGroupDefinition>,
 }
 
 impl Default for SortImportsOptions {
@@ -97,6 +94,13 @@ impl fmt::Display for SortOrder {
         };
         f.write_str(s)
     }
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct CustomGroupDefinition {
+    pub group_name: String,
+    pub element_name_pattern: Vec<String>,
 }
 
 /// Returns default prefixes for identifying internal imports: `["~/", "@/"]`.
