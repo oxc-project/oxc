@@ -16,7 +16,7 @@ In addition, some options are our own extensions.
 
 ## arrowParens
 
-type: `string | null`
+type: `"always" | "avoid" | null`
 
 
 Include parentheses around a sole arrow function parameter. (Default: `"always"`)
@@ -41,7 +41,7 @@ Print spaces between brackets in object literals. (Default: `true`)
 
 ## embeddedLanguageFormatting
 
-type: `string | null`
+type: `"auto" | "off" | null`
 
 
 Control whether to format embedded parts in the file.
@@ -50,7 +50,7 @@ e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
 
 ## endOfLine
 
-type: `string | null`
+type: `"lf" | "crlf" | "cr" | null`
 
 
 Which end of line characters to apply. (Default: `"lf"`)
@@ -108,7 +108,7 @@ Add newlines between import groups. (Default: `true`)
 
 ### experimentalSortImports.order
 
-type: `string | null`
+type: `"asc" | "desc" | null`
 
 
 Sort order. (Default: `"asc"`)
@@ -251,7 +251,7 @@ Use single quotes instead of double quotes in JSX. (Default: `false`)
 
 ## objectWrap
 
-type: `string | null`
+type: `"preserve" | "collapse" | "always" | null`
 
 
 How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
@@ -268,7 +268,7 @@ The line length that the printer will wrap on. (Default: `100`)
 
 ## quoteProps
 
-type: `string | null`
+type: `"as-needed" | "consistent" | "preserve" | null`
 
 
 Change when properties in objects are quoted. (Default: `"as-needed"`)
@@ -308,7 +308,7 @@ Number of spaces per indentation level. (Default: `2`)
 
 ## trailingComma
 
-type: `string | null`
+type: `"all" | "es5" | "none" | null`
 
 
 Print trailing commas wherever possible. (Default: `"all"`)

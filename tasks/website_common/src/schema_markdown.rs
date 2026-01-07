@@ -214,9 +214,23 @@ impl Renderer {
                     // This is a complex object or array - should be expanded
                     object_schemas.push(subschema);
                 } else if let Some(instance_type) = &subschema.instance_type {
-                    // This is a primitive type
-                    primitive_types
-                        .push(serde_json::to_string(instance_type).unwrap().replace('"', ""));
+                    // Check if this is an enum type
+                    if let Some(enum_values) = &subschema.enum_values {
+                        // This is an enum - render the enum values instead of just "string"
+                        let enum_type = enum_values
+                            .iter()
+                            .map(|v| v.as_str().unwrap())
+                            .map(|s| format!(r#""{s}""#))
+                            .collect::<Vec<_>>()
+                            .join(" | ");
+                        if !enum_type.is_empty() {
+                            primitive_types.push(enum_type);
+                        }
+                    } else {
+                        // This is a primitive type
+                        primitive_types
+                            .push(serde_json::to_string(instance_type).unwrap().replace('"', ""));
+                    }
                 }
             }
 
