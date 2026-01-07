@@ -314,10 +314,17 @@ fn handle_type_argument(ctx: &LintContext, ts_type: &TSType, key_hash: &FxHashSe
                     && !optional
                     && key_hash.contains(key_name.as_ref())
                 {
-                    ctx.diagnostic_with_fix(
-                        no_required_prop_with_default_diagnostic(item.span(), key_name.as_ref()),
-                        |fixer| create_optional_fix(fixer, key),
-                    );
+                    let diagnostic =
+                        no_required_prop_with_default_diagnostic(item.span(), key_name.as_ref());
+                    // Check for comments around the key before applying fix
+                    let fix_span = Span::new(key.span().start, key.span().end + 1);
+                    if ctx.has_comments_between(fix_span) {
+                        ctx.diagnostic(diagnostic);
+                    } else {
+                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                            create_optional_fix(fixer, key)
+                        });
+                    }
                 }
             });
         }
@@ -339,10 +346,17 @@ fn handle_type_argument(ctx: &LintContext, ts_type: &TSType, key_hash: &FxHashSe
                     && !optional
                     && key_hash.contains(key_name.as_ref())
                 {
-                    ctx.diagnostic_with_fix(
-                        no_required_prop_with_default_diagnostic(item.span(), key_name.as_ref()),
-                        |fixer| create_optional_fix(fixer, key),
-                    );
+                    let diagnostic =
+                        no_required_prop_with_default_diagnostic(item.span(), key_name.as_ref());
+                    // Check for comments around the key before applying fix
+                    let fix_span = Span::new(key.span().start, key.span().end + 1);
+                    if ctx.has_comments_between(fix_span) {
+                        ctx.diagnostic(diagnostic);
+                    } else {
+                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                            create_optional_fix(fixer, key)
+                        });
+                    }
                 }
             });
         }
@@ -410,13 +424,18 @@ fn handle_prop_object(
                     }
 
                     if has_default_key && let Some(span) = required_true_span {
-                        ctx.diagnostic_with_fix(
-                            no_required_prop_with_default_diagnostic(
-                                inner_prop.span(),
-                                inner_key.as_ref(),
-                            ),
-                            |fixer| fixer.replace(span, "false"),
+                        let diagnostic = no_required_prop_with_default_diagnostic(
+                            inner_prop.span(),
+                            inner_key.as_ref(),
                         );
+                        // Check for comments around the value before applying fix
+                        if ctx.has_comments_between(span) {
+                            ctx.diagnostic(diagnostic);
+                        } else {
+                            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                                fixer.replace(span, "false")
+                            });
+                        }
                         break;
                     }
                 }
@@ -1115,6 +1134,74 @@ fn test() {
             None,
             Some(PathBuf::from("test.vue")),
         ),
+        // TypeScript interface: imported type reference
+        (
+            r#"
+            <script setup lang="ts">
+              import nameType from 'name.ts';
+              interface TestPropType {
+                name: nameType
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  name: "World",
+                }
+              );
+            </script>
+            "#,
+            r#"
+            <script setup lang="ts">
+              import nameType from 'name.ts';
+              interface TestPropType {
+                name?: nameType
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  name: "World",
+                }
+              );
+            </script>
+            "#,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // TypeScript interface: bare property without type annotation
+        (
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                name
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  name: "World",
+                }
+              );
+            </script>
+            "#,
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                name?
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  name: "World",
+                }
+              );
+            </script>
+            "#,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
         // TypeScript interface: string literal key
         (
             r#"
@@ -1141,6 +1228,39 @@ fn test() {
                 defineProps<TestPropType>(),
                 {
                   'na::me': "World",
+                }
+              );
+            </script>
+            "#,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // TypeScript interface: escaped quotes in property name
+        (
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                'na\"me2'
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  'na\"me2': "World",
+                }
+              );
+            </script>
+            "#,
+            r#"
+            <script setup lang="ts">
+              interface TestPropType {
+                'na\"me2'?
+                age?: number
+              }
+              const props = withDefaults(
+                defineProps<TestPropType>(),
+                {
+                  'na\"me2': "World",
                 }
               );
             </script>
@@ -1285,6 +1405,35 @@ fn test() {
             export default {
               props: {
                 name: {
+                  required: false,
+                  default: 'Hello'
+                }
+              }
+            }
+            </script>
+            ",
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        // Options API: quoted property key
+        (
+            "
+            <script>
+            export default {
+              props: {
+                'name': {
+                  required: true,
+                  default: 'Hello'
+                }
+              }
+            }
+            </script>
+            ",
+            "
+            <script>
+            export default {
+              props: {
+                'name': {
                   required: false,
                   default: 'Hello'
                 }
