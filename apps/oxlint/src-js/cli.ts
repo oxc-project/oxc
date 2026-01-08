@@ -7,6 +7,39 @@ import { debugAssertIsNonNull } from "./utils/asserts.ts";
 let loadPlugin: typeof import("./plugins/index.ts").loadPlugin | null = null;
 let setupRuleConfigs: typeof import("./plugins/index.ts").setupRuleConfigs | null = null;
 let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
+let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | null = null;
+let destroyWorkspace: typeof destroyWorkspaceWrapper | null = null;
+
+/**
+ * Creates a new workspace.
+ *
+ * Lazy-loads workspace code on first call, so that overhead is skipped.
+ *
+ * @param workspace - Workspace URI
+ * @returns Promise which resolves when workspace is created
+ */
+function createWorkspaceWrapper(workspace: string): Promise<undefined> {
+  if (createWorkspace === null) {
+    return import("./workspace/index.ts").then((mod) => {
+      ({ createWorkspace, destroyWorkspace } = mod);
+      return createWorkspace(workspace);
+    });
+  }
+  debugAssertIsNonNull(createWorkspace);
+  return Promise.resolve(createWorkspace(workspace));
+}
+
+/**
+ *
+ * Destroys a workspace.
+ *
+ * @param workspace - Workspace URI
+ * @returns `undefined`
+ */
+function destroyWorkspaceWrapper(workspace: string): undefined {
+  debugAssertIsNonNull(destroyWorkspace);
+  destroyWorkspace(workspace);
+}
 
 /**
  * Load a plugin.
@@ -80,8 +113,15 @@ function lintFileWrapper(
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
-// Call Rust, passing `loadPlugin`, `setupRuleConfigs`, and `lintFile` as callbacks, and CLI arguments
-const success = await lint(args, loadPluginWrapper, setupRuleConfigsWrapper, lintFileWrapper);
+// Call Rust, passing `loadPlugin`, `setupRuleConfigs`, `lintFile`, `createWorkspace`, and `destroyWorkspace` as callbacks, and CLI arguments
+const success = await lint(
+  args,
+  loadPluginWrapper,
+  setupRuleConfigsWrapper,
+  lintFileWrapper,
+  createWorkspaceWrapper,
+  destroyWorkspaceWrapper,
+);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
