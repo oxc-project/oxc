@@ -203,11 +203,6 @@ export default class FormatterTool implements ToolInterface {
       // "start.frag",
       // "end.frag",
 
-      // https://github.com/oxc-project/oxc/pull/16524/
-      // JSON stringify filenames
-      "package.json",
-      "package-lock.json",
-      "composer.json",
       // JSON filenames
       ".all-contributorsrc",
       ".arcconfig",
