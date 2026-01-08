@@ -200,7 +200,6 @@ export default class FormatterTool implements ToolInterface {
       "syntax",
       "yaml",
       "yaml-tmlanguage",
-      // Vue
       // https://github.com/oxc-project/oxc/pull/17113/
       // TOML
       "toml",
