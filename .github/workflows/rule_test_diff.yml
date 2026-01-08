@@ -7,6 +7,12 @@ on:
     types: [opened, synchronize]
     paths:
       - "crates/oxc_linter/src/rules/**/*.rs"
+  workflow_dispatch:
+    inputs:
+      test_with_existing_rule:
+        description: 'Test with an existing rule (e.g., "jsx-key react" or leave empty for normal behavior)'
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -24,6 +30,39 @@ jobs:
       - name: Detect new rule files
         id: detect-new-rules
         run: |
+          # Check if this is a manual test with an existing rule
+          TEST_INPUT="${{ github.event.inputs.test_with_existing_rule }}"
+          
+          if [ -n "$TEST_INPUT" ]; then
+            echo "🧪 Manual test mode enabled"
+            echo "Test input: $TEST_INPUT"
+            
+            # Parse the input (expected format: "rule-name plugin-name")
+            RULE_NAME=$(echo "$TEST_INPUT" | awk '{print $1}' | tr '-' '_')
+            PLUGIN=$(echo "$TEST_INPUT" | awk '{print $2}')
+            
+            if [ -z "$RULE_NAME" ] || [ -z "$PLUGIN" ]; then
+              echo "❌ Invalid input format. Expected: 'rule-name plugin-name' (e.g., 'jsx-key react')"
+              exit 1
+            fi
+            
+            # Construct the file path
+            TEST_FILE="crates/oxc_linter/src/rules/${PLUGIN}/${RULE_NAME}.rs"
+            
+            if [ ! -f "$TEST_FILE" ]; then
+              echo "❌ Test file does not exist: $TEST_FILE"
+              exit 1
+            fi
+            
+            echo "✅ Testing with existing rule: $TEST_FILE"
+            echo "new_files<<EOF" >> $GITHUB_OUTPUT
+            echo "$TEST_FILE" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "has_new_rules=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Normal mode: detect new files in PR
           # Get the base branch (usually main)
           BASE_REF="${{ github.event.pull_request.base.ref }}"
           
