@@ -133,7 +133,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                     match &sig.type_annotation.type_annotation {
                         TSType::TSTypeReference(r) => match &r.type_name {
                             TSTypeName::IdentifierReference(ide) => {
-                                if ide.name != inf.id.name {
+                                if ide.name != inf.id.name
+                                    && !is_circular_reference(
+                                        &sig.type_annotation.type_annotation,
+                                        inf.id.name.as_str(),
+                                        ctx,
+                                    )
+                                {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                         preferred_style,
                                         sig.span,
@@ -151,19 +157,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                             for t in &uni.types {
                                 if let TSType::TSTypeReference(tref) = t
                                     && let TSTypeName::IdentifierReference(ide) = &tref.type_name
+                                    && ide.name != inf.id.name
+                                    && !is_circular_reference(t, inf.id.name.as_str(), ctx)
                                 {
-                                    let AstKind::TSTypeAliasDeclaration(dec) =
-                                        ctx.nodes().parent_kind(node.id())
-                                    else {
-                                        return;
-                                    };
-
-                                    if dec.id.name != ide.name {
-                                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                            preferred_style,
-                                            sig.span,
-                                        ));
-                                    }
+                                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                                        preferred_style,
+                                        sig.span,
+                                    ));
                                 }
                             }
                         }
@@ -193,7 +193,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                                     return;
                                 };
 
-                                if ide.name != dec.id.name {
+                                if ide.name != dec.id.name
+                                    && !is_circular_reference(
+                                        &sig.type_annotation.type_annotation,
+                                        dec.id.name.as_str(),
+                                        ctx,
+                                    )
+                                {
                                     ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                         preferred_style,
                                         sig.span,
@@ -218,7 +224,9 @@ impl Rule for ConsistentIndexedObjectStyle {
                                         return;
                                     };
 
-                                    if dec.id.name != ide.name {
+                                    if dec.id.name != ide.name
+                                        && !is_circular_reference(t, dec.id.name.as_str(), ctx)
+                                    {
                                         ctx.diagnostic(consistent_indexed_object_style_diagnostic(
                                             preferred_style,
                                             sig.span,
@@ -276,6 +284,31 @@ impl Rule for ConsistentIndexedObjectStyle {
     }
 }
 
+fn is_circular_reference(type_: &TSType, parent_name: &str, ctx: &LintContext) -> bool {
+    match type_ {
+        TSType::TSTypeReference(r) => {
+            if let TSTypeName::IdentifierReference(ide) = &r.type_name {
+                if ide.name.as_str() == parent_name {
+                    return true;
+                }
+                // find definition
+                for node in ctx.nodes().iter() {
+                    if let AstKind::TSTypeAliasDeclaration(dec) = node.kind()
+                        && dec.id.name == ide.name
+                    {
+                        return is_circular_reference(&dec.type_annotation, parent_name, ctx);
+                    }
+                }
+            }
+            false
+        }
+        TSType::TSUnionType(u) => {
+            u.types.iter().any(|t| is_circular_reference(t, parent_name, ctx))
+        }
+        _ => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
@@ -299,6 +332,19 @@ fn test() {
     ];
 
     let pass = vec![
+        (
+            "
+            export type ParsedEndPrimitive = string | null;
+            export type ParsedEndArray = ParsedEndData[];
+            // Interface not possible due to circular reference
+            export type ParsedEndRecord = { [k: string]: ParsedEndData };
+            export type ParsedEndData =
+            | ParsedEndPrimitive
+            | ParsedEndRecord
+            | ParsedEndArray;
+            ",
+            None,
+        ),
         ("type Foo = Record<string, any>;", None),
         ("interface Foo {}", None),
         (
