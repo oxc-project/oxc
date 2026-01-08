@@ -16,6 +16,16 @@ pub fn redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     ])
 }
 
+/// TS(2804): Duplicate identifier '#x'. Static and instance elements cannot share the same private name.
+#[cold]
+pub fn static_and_instance_private_identifier(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    ts_error(
+        "2804",
+        format!("Duplicate identifier `#{x0}`. Static and instance elements cannot share the same private name."),
+    )
+    .with_labels([span1.label(format!("`#{x0}` has already been declared here")), span2.label("It can not be redeclared here")])
+}
+
 #[cold]
 pub fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1)
