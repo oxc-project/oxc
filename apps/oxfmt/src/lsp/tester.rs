@@ -17,6 +17,9 @@ pub fn get_file_uri(relative_file_path: &str) -> Uri {
 }
 
 fn get_snapshot_from_text_edits(edits: &[TextEdit]) -> String {
+    if edits.is_empty() {
+        return "No changes".to_string();
+    }
     if edits.len() == 1 {
         // Single edit - show range and the actual formatted content with proper indentation
         let edit = &edits[0];
@@ -52,10 +55,8 @@ impl Tester<'_> {
     }
 
     fn create_formatter(&self) -> ServerFormatter {
-        ServerFormatterBuilder::build(
-            &Self::get_root_uri(self.relative_root_dir),
-            self.options.clone(),
-        )
+        ServerFormatterBuilder::dummy()
+            .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {
@@ -76,10 +77,9 @@ impl Tester<'_> {
             let uri = get_file_uri(&format!("{}/{}", self.relative_root_dir, relative_file_path));
             let formatted = self.create_formatter().run_format(&uri, None);
 
-            let snapshot = if let Some(formatted) = formatted {
-                get_snapshot_from_text_edits(&formatted)
-            } else {
-                "File is ignored".to_string()
+            let snapshot = match formatted {
+                Ok(edits) => get_snapshot_from_text_edits(&edits),
+                Err(e) => format!("Error: {e}"),
             };
 
             let _ = write!(
@@ -107,7 +107,7 @@ impl Tester<'_> {
         &self,
         new_options: serde_json::Value,
     ) -> ToolRestartChanges {
-        let builder = ServerFormatterBuilder;
+        let builder = ServerFormatterBuilder::dummy();
         self.create_formatter().handle_configuration_change(
             &builder,
             &Self::get_root_uri(self.relative_root_dir),

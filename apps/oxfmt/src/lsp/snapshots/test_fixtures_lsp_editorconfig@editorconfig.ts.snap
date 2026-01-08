@@ -1,0 +1,19 @@
+---
+source: apps/oxfmt/src/lsp/tester.rs
+---
+========================================
+File: test/fixtures/lsp/editorconfig/editorconfig.ts
+========================================
+Range: Range {
+    start: Position {
+        line: 1,
+        character: 2,
+    },
+    end: Position {
+        line: 2,
+        character: 1,
+    },
+}
+
+    console.log("Hello, EditorConfig!");
+}

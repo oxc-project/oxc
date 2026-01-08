@@ -87,8 +87,8 @@ npm install oxc-parser
 ```
 
 ```js
-import { parseSync } from 'oxc-parser';
-const result = parseSync('const x = 1;');
+import { parseSync } from "oxc-parser";
+const result = parseSync("const x = 1;");
 ```
 
 → [Parser documentation](https://oxc.rs/docs/guide/usage/parser)
@@ -102,8 +102,8 @@ npm install oxc-transform
 ```
 
 ```js
-import { transform } from 'oxc-transform';
-const result = transform('source.tsx', code, { typescript: true });
+import { transform } from "oxc-transform";
+const result = transform("source.tsx", code, { typescript: true });
 ```
 
 → [Transformer documentation](https://oxc.rs/docs/guide/usage/transformer)
@@ -117,7 +117,7 @@ npm install oxc-minify
 ```
 
 ```js
-import { minify } from 'oxc-minify';
+import { minify } from "oxc-minify";
 const result = minify(code, { mangle: true });
 ```
 

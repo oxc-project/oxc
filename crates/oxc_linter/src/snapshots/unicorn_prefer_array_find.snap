@@ -9,9 +9,23 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
   ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:1:8]
+ 1 │ array?.filter(foo)[0]
+   ·        ──────
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
    ╭─[prefer_array_find.tsx:1:7]
  1 │ array.filter(foo, thisArgument)[0]
    ·       ──────
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:1:8]
+ 1 │ array?.filter(foo, thisArgument)[0]
+   ·        ──────
    ╰────
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
@@ -23,9 +37,23 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
   ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:1:8]
+ 1 │ array?.filter(foo).shift()
+   ·        ──────
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
    ╭─[prefer_array_find.tsx:1:7]
  1 │ array.filter(foo, thisArgument).shift()
    ·       ──────
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:1:8]
+ 1 │ array?.filter(foo, thisArgument).shift()
+   ·        ──────
    ╰────
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
@@ -549,9 +577,23 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 
   ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:1:8]
+ 1 │ array?.filter(foo).at(0)
+   ·        ──────
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
    ╭─[prefer_array_find.tsx:1:7]
  1 │ array.filter(foo, thisArgument).at(0)
    ·       ──────
+   ╰────
+  help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
+   ╭─[prefer_array_find.tsx:1:8]
+ 1 │ array?.filter(foo, thisArgument).at(0)
+   ·        ──────
    ╰────
   help: Use `find(predicate)` instead of `filter(predicate)[0]` or similar patterns.
 

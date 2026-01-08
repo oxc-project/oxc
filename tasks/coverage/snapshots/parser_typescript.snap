@@ -3,7 +3,7 @@ commit: f3770c9b
 parser_typescript Summary:
 AST Parsed     : 9840/9841 (99.99%)
 Positive Passed: 9831/9841 (99.90%)
-Negative Passed: 1496/2552 (58.62%)
+Negative Passed: 1497/2552 (58.66%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1079,8 +1079,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/m
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesInNestedClasses-2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAccessModifiers.ts
 
@@ -7241,7 +7239,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ───
    ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationBindMultipleDefaultExports.ts:1:8]
  1 │ export default class a {
    ·        ───────
@@ -13978,6 +13976,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  25 │     }
     ╰────
 
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:29:9]
+ 28 │     class A_Field_StaticField {
+ 29 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 30 │         static #foo = "foo";
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 31 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:35:9]
+ 34 │     class A_Field_StaticMethod {
+ 35 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 36 │         static #foo() { }
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 37 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:41:9]
+ 40 │     class A_Field_StaticGetter {
+ 41 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 42 │         static get #foo() { return ""}
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 43 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:47:9]
+ 46 │     class A_Field_StaticSetter {
+ 47 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 48 │         static set #foo(value: string) { }
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 49 │     }
+    ╰────
+
   × Identifier `foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:55:9]
  54 │     class A_Method_Field {
@@ -14026,6 +14072,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  75 │     }
     ╰────
 
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:79:9]
+ 78 │     class A_Method_StaticField {
+ 79 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 80 │         static #foo = "foo";
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 81 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:85:9]
+ 84 │     class A_Method_StaticMethod {
+ 85 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 86 │         static #foo() { }
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 87 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:91:9]
+ 90 │     class A_Method_StaticGetter {
+ 91 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 92 │         static get #foo() { return ""}
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 93 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:97:9]
+ 96 │     class A_Method_StaticSetter {
+ 97 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 98 │         static set #foo(value: string) { }
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 99 │     }
+    ╰────
+
   × Identifier `foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:106:13]
  105 │     class A_Getter_Field {
@@ -14062,6 +14156,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  120 │     }
      ╰────
 
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:130:13]
+ 129 │     class A_Getter_StaticField {
+ 130 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 131 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 132 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:136:13]
+ 135 │     class A_Getter_StaticMethod {
+ 136 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 137 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 138 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:142:13]
+ 141 │     class A_Getter_StaticGetter {
+ 142 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 143 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 144 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:148:13]
+ 147 │     class A_Getter_StaticSetter {
+ 148 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 149 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 150 │     }
+     ╰────
+
   × Identifier `foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:156:13]
  155 │     class A_Setter_Field {
@@ -14096,6 +14238,102 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
      ·             ──┬─
      ·               ╰── It can not be redeclared here
  176 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:180:13]
+ 179 │     class A_Setter_StaticField {
+ 180 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 181 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 182 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:186:13]
+ 185 │     class A_Setter_StaticMethod {
+ 186 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 187 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 188 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:192:13]
+ 191 │     class A_Setter_StaticGetter {
+ 192 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 193 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 194 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:198:13]
+ 197 │     class A_Setter_StaticSetter {
+ 198 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 199 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 200 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:206:16]
+ 205 │     class A_StaticField_Field {
+ 206 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 207 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 208 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:212:16]
+ 211 │     class A_StaticField_Method {
+ 212 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 213 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 214 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:218:16]
+ 217 │     class A_StaticField_Getter {
+ 218 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 219 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 220 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:224:16]
+ 223 │     class A_StaticField_Setter {
+ 224 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 225 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 226 │     }
      ╰────
 
   × Identifier `foo` has already been declared
@@ -14146,6 +14384,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  250 │     }
      ╰────
 
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:256:16]
+ 255 │     class A_StaticMethod_Field {
+ 256 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 257 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 258 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:262:16]
+ 261 │     class A_StaticMethod_Method {
+ 262 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 263 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 264 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:268:16]
+ 267 │     class A_StaticMethod_Getter {
+ 268 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 269 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 270 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:274:16]
+ 273 │     class A_StaticMethod_Setter {
+ 274 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 275 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 276 │     }
+     ╰────
+
   × Identifier `foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:280:16]
  279 │     class A_StaticMethod_StaticField {
@@ -14194,6 +14480,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  300 │     }
      ╰────
 
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:307:20]
+ 306 │     class A_StaticGetter_Field {
+ 307 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 308 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 309 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:313:20]
+ 312 │     class A_StaticGetter_Method {
+ 313 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 314 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 315 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:319:20]
+ 318 │     class A_StaticGetter_Getter {
+ 319 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 320 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 321 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:325:20]
+ 324 │     class A_StaticGetter_Setter {
+ 325 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 326 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 327 │     }
+     ╰────
+
   × Identifier `foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:331:20]
  330 │     class A_StaticGetter_StaticField {
@@ -14228,6 +14562,54 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
  345 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:356:20]
+ 355 │     class A_StaticSetter_Field {
+ 356 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 357 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 358 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:362:20]
+ 361 │     class A_StaticSetter_Method {
+ 362 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 363 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 364 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:369:20]
+ 368 │     class A_StaticSetter_Getter {
+ 369 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 370 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 371 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:375:20]
+ 374 │     class A_StaticSetter_Setter {
+ 375 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 376 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 377 │     }
      ╰────
 
   × Identifier `foo` has already been declared
@@ -14769,6 +15151,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedInVariableDeclarations.ts:1:7]
  1 │ const #foo = 3;
    ·       ────
+   ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-3.ts:2:5]
+ 1 │ class A {
+ 2 │     #foo = 1;
+   ·     ──┬─
+   ·       ╰── `#foo` has already been declared here
+ 3 │     static #foo = true; // error (duplicate)
+   ·            ──┬─
+   ·              ╰── It can not be redeclared here
+ 4 │                         // because static and instance private names
    ╰────
 
   × Expected `;` but found `Identifier`
@@ -19906,12 +20300,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ╰── Opened here
    ╰────
 
-  × Expected `from` but found `Identifier`
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts:1:13]
- 1 │ import type A from './a';
-   ·             ┬
-   ·             ╰── `from` expected
- 2 │ export type { A };
+ 1 │ import type A, { B, C } from './a';
+   ·             ─
    ╰────
 
   × Expected `,` or `}` but found `as`
@@ -24098,7 +24490,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │     deleted() {
     ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:1:8]
  1 │ export default 12
    ·        ───────

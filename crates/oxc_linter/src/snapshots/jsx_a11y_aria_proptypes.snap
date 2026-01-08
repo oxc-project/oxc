@@ -312,3 +312,35 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: The valid value for 'aria-relevant' is: a space-separated list of the following tokens: additions, all, removals, text.
         You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
+  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
+   ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-labelledby={true} />
+   ·      ──────────────────────
+   ╰────
+  help: The valid value for 'aria-labelledby' is: a space-separated list of element IDs.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
+  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
+   ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-labelledby={false} />
+   ·      ───────────────────────
+   ╰────
+  help: The valid value for 'aria-labelledby' is: a space-separated list of element IDs.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
+  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-labelledby'.
+   ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-labelledby={123} />
+   ·      ─────────────────────
+   ╰────
+  help: The valid value for 'aria-labelledby' is: a space-separated list of element IDs.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes
+
+  ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
+   ╭─[aria_proptypes.tsx:1:6]
+ 1 │ <div aria-hidden={"!!foo"} />
+   ·      ─────────────────────
+   ╰────
+  help: The valid value for 'aria-hidden' is: 'true' or 'false'.
+        You can find a list of valid ARIA state and property values at https://www.w3.org/TR/wai-aria/#x6-7-definitions-of-states-and-properties-all-aria-attributes

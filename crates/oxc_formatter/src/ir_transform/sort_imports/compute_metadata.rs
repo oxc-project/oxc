@@ -310,19 +310,11 @@ fn is_style(source: &str) -> bool {
         .is_some_and(|ext| STYLE_EXTENSIONS.contains(ext))
 }
 
-static NODE_BUILTINS: phf::Set<&'static str> = phf_set! {
-    "assert", "async_hooks", "buffer", "child_process", "cluster", "console",
-    "constants", "crypto", "dgram", "diagnostics_channel", "dns", "domain",
-    "events", "fs", "http", "http2", "https", "inspector", "module", "net",
-    "os", "path", "perf_hooks", "process", "punycode", "querystring",
-    "readline", "repl", "stream", "string_decoder", "sys", "timers", "tls",
-    "trace_events", "tty", "url", "util", "v8", "vm", "wasi", "worker_threads",
-    "zlib",
-};
-
 /// Check if an import source is a Node.js or Bun builtin module.
 fn is_builtin(source: &str) -> bool {
-    source.starts_with("node:") || source.starts_with("bun:") || NODE_BUILTINS.contains(source)
+    source.starts_with("node:")
+        || source.starts_with("bun:")
+        || nodejs_built_in_modules::is_nodejs_builtin_module(source)
 }
 
 #[derive(Debug, PartialEq, Eq, Default)]

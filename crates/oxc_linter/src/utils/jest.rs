@@ -20,7 +20,7 @@ pub use crate::utils::jest::parse_jest_fn::{
 
 mod parse_jest_fn;
 
-const JEST_METHOD_NAMES: [&str; 18] = [
+const JEST_METHOD_NAMES: [&str; 19] = [
     "afterAll",
     "afterEach",
     "beforeAll",
@@ -34,6 +34,7 @@ const JEST_METHOD_NAMES: [&str; 18] = [
     "it",
     "jest",
     "pending",
+    "suite",
     "test",
     "vi",
     "xdescribe",
@@ -54,10 +55,12 @@ impl JestFnKind {
         match name {
             "expect" => Self::Expect,
             "expectTypeOf" => Self::ExpectTypeOf,
-            "vi" => Self::General(JestGeneralFnKind::Vitest),
+            "vi" | "vitest" => Self::General(JestGeneralFnKind::Vitest),
             "bench" => Self::General(JestGeneralFnKind::Bench),
             "jest" => Self::General(JestGeneralFnKind::Jest),
-            "describe" | "fdescribe" | "xdescribe" => Self::General(JestGeneralFnKind::Describe),
+            "describe" | "fdescribe" | "xdescribe" | "suite" => {
+                Self::General(JestGeneralFnKind::Describe)
+            }
             "fit" | "it" | "test" | "xit" | "xtest" => Self::General(JestGeneralFnKind::Test),
             "beforeAll" | "beforeEach" | "afterAll" | "afterEach" => {
                 Self::General(JestGeneralFnKind::Hook)

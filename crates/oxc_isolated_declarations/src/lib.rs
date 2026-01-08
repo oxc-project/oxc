@@ -92,7 +92,7 @@ impl<'a> IsolatedDeclarations<'a> {
             SPAN,
             source_type,
             program.source_text,
-            self.ast.vec_from_iter(program.comments.iter().copied()),
+            self.ast.vec_from_iter(program.comments.iter().filter(|c| c.is_jsdoc()).copied()),
             None,
             directives,
             stmts,

@@ -215,6 +215,21 @@ fn test() {
             None,
         ),
         (
+            "expect(method.mock.calls).toHaveLength(
+                1,
+            );",
+            "expect(method).toHaveBeenCalledTimes(1);",
+            None,
+        ),
+        (
+            "expect(method.mock.calls).toHaveLength(
+                /* number of calls (one) */
+                1,
+            );",
+            "expect(method).toHaveBeenCalledTimes(1);",
+            None,
+        ),
+        (
             "expect(method.mock.calls).resolves.toHaveLength(x);",
             "expect(method).resolves.toHaveBeenCalledTimes(x);",
             None,

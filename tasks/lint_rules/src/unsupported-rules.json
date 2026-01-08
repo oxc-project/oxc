@@ -2,6 +2,7 @@
   "unsupportedRules": {
     "eslint/no-dupe-args": "Superseded by strict mode.",
     "eslint/no-octal": "Superseded by strict mode.",
+    "eslint/no-octal-escape": "Superseded by strict mode.",
     "eslint/no-new-symbol": "Deprecated as of ESLint v9, but for a while disable manually.",
     "eslint/no-undef-init": "#6456, `unicorn/no-useless-undefined` covers this case.",
     "import/no-unresolved": "Will always contain false positives due to module resolution complexity.",
@@ -23,10 +24,13 @@
     "jsx-a11y/accessible-emoji": "Deprecated.",
     "jsx-a11y/label-has-for": "Deprecated, replaced by `jsx-a11y/label-has-associated-control`.",
     "jsx-a11y/no-onchange": "Deprecated, based on behavior of very old browsers, and so no longer necessary.",
+    "eslint/camelcase": "Preference is to implement this rule via `@typescript-eslint/naming-convention` instead to accomplish the same behavior with more flexibility.",
 
     "n/prefer-node-protocol": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "n/no-process-exit": "No need to implement, already implemented by `unicorn/no-process-exit`.",
     "n/file-extension-in-import": "No need to implement, already implemented by `import/extensions`.",
+    "import/enforce-node-protocol-usage": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
+    "import/no-deprecated": "No need to implement, already implemented by `typescript/no-deprecated` via tsgolint.",
 
     "jest/no-unnecessary-assertion": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",

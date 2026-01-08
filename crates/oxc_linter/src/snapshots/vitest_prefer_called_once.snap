@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:12]
+ 1 │ expect(fn).toBeCalledTimes(1);
+   ·            ──────────────────
+   ╰────
+  help: Prefer `toBeCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:12]
+ 1 │ expect(fn).toHaveBeenCalledTimes(1);
+   ·            ────────────────────────
+   ╰────
+  help: Prefer `toHaveBeenCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:16]
+ 1 │ expect(fn).not.toBeCalledTimes(1);
+   ·                ──────────────────
+   ╰────
+  help: Prefer `toBeCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:16]
+ 1 │ expect(fn).not.toHaveBeenCalledTimes(1);
+   ·                ────────────────────────
+   ╰────
+  help: Prefer `toHaveBeenCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:21]
+ 1 │ expect(fn).resolves.toBeCalledTimes(1);
+   ·                     ──────────────────
+   ╰────
+  help: Prefer `toBeCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:21]
+ 1 │ expect(fn).resolves.toHaveBeenCalledTimes(1);
+   ·                     ────────────────────────
+   ╰────
+  help: Prefer `toHaveBeenCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:21]
+ 1 │ expect(fn).resolves.toHaveBeenCalledTimes(/*comment*/1);
+   ·                     ───────────────────────────────────
+   ╰────
+  help: Prefer `toHaveBeenCalledOnce()`.
+
+  ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
+   ╭─[prefer_called_once.tsx:1:53]
+ 1 │ ╭─▶ expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+ 2 │ │                 1,
+ 3 │ ╰─▶             );
+   ╰────
+  help: Prefer `toHaveBeenCalledOnce()`.

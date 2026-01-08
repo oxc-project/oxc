@@ -13,7 +13,7 @@ use crate::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
-    TrailingCommas,
+    TailwindcssOptions, TrailingCommas,
 };
 
 /// Configuration options for the Oxfmt.
@@ -64,7 +64,6 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
     /// How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
-    /// NOTE: In addition to Prettier's `"preserve"` and `"collapse"`, we also support `"always"`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub object_wrap: Option<ObjectWrapConfig>,
     /// Put each attribute on a new line in JSX. (Default: `false`)
@@ -80,7 +79,8 @@ pub struct Oxfmtrc {
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether to format embedded parts in the file. (Default: `"off"`)
+    /// Control whether to format embedded parts in the file.
+    /// e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
@@ -88,13 +88,20 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
-    /// Experimental: Sort import statements. Disabled by default.
+    /// Experimental: Sort import statements. (Default: disabled)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
 
     /// Experimental: Sort `package.json` keys. (Default: `true`)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub experimental_sort_package_json: Option<bool>,
+    pub experimental_sort_package_json: Option<SortPackageJsonUserConfig>,
+
+    /// Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
+    /// When enabled, class strings will be collected and passed to a callback for sorting.
+    /// Pass `true` or an object with options from `prettier-plugin-tailwindcss`.
+    /// (Default: disabled)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub experimental_tailwindcss: Option<TailwindcssConfig>,
 
     /// Ignore files matching these glob patterns. Current working directory is used as the root.
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -139,7 +146,6 @@ pub enum ArrowParensConfig {
 pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
-    Always,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -234,6 +240,110 @@ pub enum SortOrderConfig {
     Desc,
 }
 
+/// User-provided configuration for `package.json` sorting.
+///
+/// - `true`: Enable sorting with default options
+/// - `false`: Disable sorting
+/// - `{ sortScripts: true }`: Enable sorting with custom options
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortPackageJsonUserConfig {
+    Bool(bool),
+    Object(SortPackageJsonConfig),
+}
+
+impl Default for SortPackageJsonUserConfig {
+    fn default() -> Self {
+        Self::Bool(true)
+    }
+}
+
+impl SortPackageJsonUserConfig {
+    /// Convert to `sort_package_json::SortOptions`.
+    /// Returns `None` if sorting is disabled.
+    pub fn to_sort_options(&self) -> Option<sort_package_json::SortOptions> {
+        match self {
+            Self::Bool(false) => None,
+            Self::Bool(true) => Some(SortPackageJsonConfig::default().to_sort_options()),
+            Self::Object(config) => Some(config.to_sort_options()),
+        }
+    }
+}
+
+/// Configuration for `package.json` sorting.
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SortPackageJsonConfig {
+    /// Sort the `scripts` field alphabetically. (Default: `false`)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sort_scripts: Option<bool>,
+}
+
+impl SortPackageJsonConfig {
+    fn to_sort_options(&self) -> sort_package_json::SortOptions {
+        sort_package_json::SortOptions {
+            sort_scripts: self.sort_scripts.unwrap_or(false),
+            // Small optimization: Prettier will reformat anyway
+            pretty: false,
+        }
+    }
+}
+
+/// Configuration for Tailwind CSS class sorting.
+/// Based on options from `prettier-plugin-tailwindcss`.
+///
+/// Note: All `tailwind` prefixes have been removed from option names.
+/// For example, use `config` instead of `tailwindConfig`.
+///
+/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+#[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct TailwindcssConfig {
+    /// Path to your Tailwind CSS configuration file (v3).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Default: `"./tailwind.config.js"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub config: Option<String>,
+
+    /// Path to your Tailwind CSS stylesheet (v4).
+    ///
+    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    ///
+    /// Example: `"./src/app.css"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub stylesheet: Option<String>,
+
+    /// List of custom function names that contain Tailwind CSS classes.
+    ///
+    /// Example: `["clsx", "cn", "cva", "tw"]`
+    ///
+    /// Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub functions: Option<Vec<String>>,
+
+    /// List of attributes that contain Tailwind CSS classes.
+    ///
+    /// Example: `["myClassProp", ":class"]`
+    ///
+    /// Default: `["class", "className"]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub attributes: Option<Vec<String>>,
+
+    /// Preserve whitespace around classes.
+    ///
+    /// Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preserve_whitespace: Option<bool>,
+
+    /// Preserve duplicate classes.
+    ///
+    /// Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub preserve_duplicates: Option<bool>,
+}
+
 // ---
 
 /// Additional options specific to Oxfmt.
@@ -242,13 +352,17 @@ pub enum SortOrderConfig {
 #[derive(Debug, Clone)]
 pub struct OxfmtOptions {
     pub ignore_patterns: Vec<String>,
-    pub sort_package_json: bool,
+    pub sort_package_json: Option<sort_package_json::SortOptions>,
     pub insert_final_newline: bool,
 }
 
 impl Default for OxfmtOptions {
     fn default() -> Self {
-        Self { ignore_patterns: vec![], sort_package_json: true, insert_final_newline: true }
+        Self {
+            ignore_patterns: vec![],
+            sort_package_json: Some(SortPackageJsonConfig::default().to_sort_options()),
+            insert_final_newline: true,
+        }
     }
 }
 
@@ -370,8 +484,6 @@ impl Oxfmtrc {
             format_options.expand = match object_wrap {
                 ObjectWrapConfig::Preserve => Expand::Auto,
                 ObjectWrapConfig::Collapse => Expand::Never,
-                // NOTE: Our own extension
-                ObjectWrapConfig::Always => Expand::Always,
             };
         }
 
@@ -424,13 +536,28 @@ impl Oxfmtrc {
             format_options.experimental_sort_imports = Some(sort_imports);
         }
 
+        // [Oxfmt] experimentalTailwindcss: object | null
+        if let Some(config) = self.experimental_tailwindcss {
+            format_options.experimental_tailwindcss = Some(TailwindcssOptions {
+                config: config.config,
+                stylesheet: config.stylesheet,
+                functions: config.functions.unwrap_or_default(),
+                attributes: config.attributes.unwrap_or_default(),
+                preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
+                preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
+            });
+        }
+
         let mut oxfmt_options = OxfmtOptions::default();
+
         if let Some(patterns) = self.ignore_patterns {
             oxfmt_options.ignore_patterns = patterns;
         }
-        if let Some(sort_package_json) = self.experimental_sort_package_json {
-            oxfmt_options.sort_package_json = sort_package_json;
+
+        if let Some(config) = self.experimental_sort_package_json {
+            oxfmt_options.sort_package_json = config.to_sort_options();
         }
+
         if let Some(insert_final_newline) = self.insert_final_newline {
             oxfmt_options.insert_final_newline = insert_final_newline;
         }
@@ -544,11 +671,10 @@ impl Oxfmtrc {
         );
 
         // [Prettier] objectWrap: "preserve" | "collapse"
-        // NOTE: "always" is our extension and not supported by Prettier, fallback to "preserve" for now
         obj.insert(
             "objectWrap".to_string(),
             Value::from(match options.expand {
-                Expand::Auto | Expand::Always => "preserve",
+                Expand::Auto => "preserve",
                 Expand::Never => "collapse",
             }),
         );
@@ -742,11 +868,6 @@ mod tests {
         let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
         let (format_options, _) = config.into_options().unwrap();
         assert_eq!(format_options.expand, Expand::Never);
-
-        // Test "always" remains unchanged
-        let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "always"}"#).unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        assert_eq!(format_options.expand, Expand::Always);
     }
 
     #[test]

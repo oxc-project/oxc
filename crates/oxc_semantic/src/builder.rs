@@ -49,8 +49,11 @@ macro_rules! control_flow {
 #[cfg(not(feature = "cfg"))]
 macro_rules! control_flow {
     ($self:ident, |$cfg:tt| $body:expr) => {{
-        let _ = $self; // Suppress unused variable warning
-        ()
+        #[expect(clippy::unused_unit)]
+        {
+            let _ = $self; // Suppress unused variable warning
+            ()
+        }
     }};
 }
 
@@ -103,7 +106,7 @@ pub struct SemanticBuilder<'a> {
     #[cfg(feature = "cfg")]
     pub(crate) cfg: Option<ControlFlowGraphBuilder<'a>>,
     #[cfg(not(feature = "cfg"))]
-    #[allow(unused)]
+    #[expect(unused)]
     pub(crate) cfg: (),
 
     pub(crate) class_table_builder: ClassTableBuilder<'a>,
@@ -183,6 +186,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[cfg(not(feature = "cfg"))]
+    #[must_use]
     pub fn with_cfg(self, _cfg: bool) -> Self {
         self
     }
@@ -380,6 +384,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     #[cfg(not(feature = "cfg"))]
+    #[expect(clippy::unused_self, clippy::needless_pass_by_ref_mut)]
     fn record_ast_node(&mut self) {}
 
     #[inline]
@@ -520,7 +525,8 @@ impl<'a> SemanticBuilder<'a> {
             let bindings = self.scoping.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flags = self.scoping.symbol_flags(symbol_id);
-                references.retain(|&reference_id| {
+                references.retain(|reference_id| {
+                    let reference_id = *reference_id;
                     let reference = &mut self.scoping.references[reference_id];
 
                     let flags = reference.flags_mut();
