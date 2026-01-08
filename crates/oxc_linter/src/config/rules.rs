@@ -642,7 +642,8 @@ mod test {
         let rules = OxlintRules::deserialize(&json!({
             "no-console": "warn",
             "jest/expect-expect": ["warn", {"assertFunctionNames": ["expect", "custom"]}],
-            "dummy": ["error", "arg1", "arg2"]
+            "dummy": ["error", "arg1", "arg2"],
+            "tuple-config": ["error", ["option1", "option2"]]
         }))
         .unwrap();
 
@@ -670,5 +671,15 @@ mod test {
         assert_eq!(arr[0], json!("deny")); // "error" is serialized as "deny"
         assert_eq!(arr[1], json!("arg1"));
         assert_eq!(arr[2], json!("arg2"));
+
+        // Rule with tuple/array config should serialize as ["severity", [...]]
+        // The array config should NOT be double-wrapped
+        let tuple_config = obj.get("tuple-config").unwrap();
+        assert!(tuple_config.is_array());
+        let arr = tuple_config.as_array().unwrap();
+        assert_eq!(arr.len(), 2);
+        assert_eq!(arr[0], json!("deny")); // "error" is serialized as "deny"
+        assert!(arr[1].is_array(), "Config should be an array: {:?}", arr[1]);
+        assert_eq!(arr[1], json!(["option1", "option2"]));
     }
 }
