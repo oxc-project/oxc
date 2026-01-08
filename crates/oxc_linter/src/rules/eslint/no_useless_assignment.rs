@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::AssignmentTarget};
+use oxc_ast::{
+    AstKind,
+    ast::{AssignmentTarget, Expression},
+};
 use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
     visit::neighbors_filtered_by_edge_weight,
@@ -9,7 +12,7 @@ use oxc_semantic::{
     NodeId, SymbolId,
     dot::{DebugDot, DebugDotContext},
 };
-use oxc_span::{GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -85,6 +88,17 @@ impl Rule for NoUselessAssignment {
                     };
                     analyze(ctx, cfg, node.id(), symbol_id);
                 }
+                AstKind::UpdateExpression(update) => {
+                    let id_name = update.argument.get_identifier_name();
+                    let Some(name) = id_name else {
+                        continue;
+                    };
+                    let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), &name) else {
+                        continue;
+                    };
+
+                    analyze(ctx, cfg, node.id(), symbol_id);
+                }
                 _ => continue,
             }
         }
@@ -96,6 +110,7 @@ enum FoundAssignmentUsage {
     #[default]
     Yes,
     No,
+    Missing,
 }
 
 const KEEP_WALKING_ON_THIS_PATH: bool = true;
@@ -105,13 +120,17 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
     let start_node = ctx.nodes().get_node(start_node_id);
     let start_node_bb_id = ctx.nodes().cfg_id(start_node_id);
 
+    if pre_checks_skip(ctx, cfg, start_node_id, symbol_id) {
+        return;
+    }
+
     println!("-------------------------------");
     println!(
         "Analyzing assignment at span: {:?}",
         ctx.nodes().parent_node(start_node_id).span().source_text(ctx.source_text())
     );
 
-    let found_usage = neighbors_filtered_by_edge_weight(
+    let found_usages = neighbors_filtered_by_edge_weight(
         cfg.graph(),
         start_node_bb_id,
         &|edge_type| match edge_type {
@@ -119,7 +138,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                 ErrorEdgeKind::Explicit => None,
                 _ => Some(FoundAssignmentUsage::No),
             },
-            EdgeType::Unreachable => Some(FoundAssignmentUsage::No),
+            EdgeType::Unreachable => Some(FoundAssignmentUsage::Missing),
             _ => None,
         },
         &mut |basic_block_id, _| {
@@ -187,17 +206,82 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
             }
 
             println!("No matching read/write found in this block, continuing traversal");
-            (FoundAssignmentUsage::No, KEEP_WALKING_ON_THIS_PATH)
+            (FoundAssignmentUsage::Missing, KEEP_WALKING_ON_THIS_PATH)
         },
-    )
-    .iter()
-    .any(|result| matches!(result, FoundAssignmentUsage::Yes));
+    );
 
-    println!("Found usage: {}", found_usage);
+    if found_usages.iter().all(|usage| matches!(usage, FoundAssignmentUsage::Missing)) {
+        return;
+    }
+
     println!("{:?}", ctx.nodes().parent_node(start_node_id).span().source_text(ctx.source_text()));
     println!("-------------------------------");
-    if !found_usage {
+    if !found_usages.iter().any(|usage| matches!(usage, FoundAssignmentUsage::Yes)) {
         ctx.diagnostic(no_useless_assignment_diagnostic(start_node.span()));
+    }
+}
+
+fn pre_checks_skip(
+    ctx: &LintContext,
+    _cfg: &ControlFlowGraph,
+    start_node_id: NodeId,
+    _symbol_id: SymbolId,
+) -> bool {
+    let start_node = ctx.nodes().get_node(start_node_id);
+
+    let (name, span) = match start_node.kind() {
+        AstKind::VariableDeclarator(declarator) => {
+            let Some(identifier) = declarator.id.get_binding_identifier() else {
+                return false;
+            };
+            (identifier.name, identifier.span)
+        }
+        AstKind::AssignmentExpression(assignment) => {
+            let AssignmentTarget::AssignmentTargetIdentifier(ident) = &assignment.left else {
+                return false;
+            };
+            (ident.name, ident.span)
+        }
+        _ => return false,
+    };
+
+    // Check if the symbol is exported
+    if is_exported(ctx, name, span) {
+        return true;
+    }
+
+    if is_var_function_decl(ctx, start_node_id) {
+        return true;
+    }
+
+    return false;
+}
+
+fn is_exported(ctx: &LintContext, name: Atom, span: Span) -> bool {
+    let modules = ctx.module_record();
+
+    modules.exported_bindings.contains_key(name.as_str())
+        || modules.export_default.is_some_and(|default| default == span)
+        || modules
+            .local_export_entries
+            .iter()
+            .any(|entry| entry.local_name.name().is_some_and(|n| n == name))
+}
+
+fn is_var_function_decl(ctx: &LintContext, node_id: NodeId) -> bool {
+    let node = ctx.nodes().get_node(node_id);
+    match node.kind() {
+        AstKind::VariableDeclarator(declarator) => {
+            let Some(init) = &declarator.init else {
+                return false;
+            };
+            declarator.kind.is_var()
+                && matches!(
+                    init.without_parentheses(),
+                    Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+                )
+        }
+        _ => false,
     }
 }
 
@@ -645,34 +729,12 @@ fn test() {
     ];
 
     let _pass = vec![
-        "let v = 'used';
-              console.log(v);
-              v = 'used-2'
-              console.log(v);",
-        "function foo() {
-                  let v = 'used';
-                  console.log(v);
-                  v = 'used-2';
-                  console.log(v);
-              }",
-        "function foo() {
-                  let v = 'used';
-                  if (condition) {
-                      v = 'used-2';
-                      console.log(v);
-                      return
-                  }
-                  console.log(v);
-              }",
-        "function foo() {
-                  let v = 'used';
-                  if (condition) {
-                      console.log(v);
-                  } else {
-                      v = 'used-2';
-                      console.log(v);
-                  }
-              }",
+        "export default function foo () {};
+			        console.log(foo);
+			        foo = 'unused like but exported';",
+        "export default class foo {};
+			        console.log(foo);
+			        foo = 'unused like but exported';",
     ];
 
     let fail = vec![
@@ -994,32 +1056,7 @@ fn test() {
 			            }", // {  "parserOptions": {  "ecmaFeatures": { "jsx": true },  },  }
     ];
 
-    let _fail = vec![
-        "let v = 'used';
-                    console.log(v);
-                    v = 'unused'",
-        "function foo() {
-                        let v = 'used';
-                        console.log(v);
-                        v = 'unused';
-                    }",
-        "function foo() {
-                        let v = 'used';
-                        if (condition) {
-                            v = 'unused';
-                            return
-                        }
-                        console.log(v);
-                    }",
-        "function foo() {
-                        let v = 'used';
-                        if (condition) {
-                            console.log(v);
-                        } else {
-                            v = 'unused';
-                        }
-                    }",
-    ];
+    // let _fail = vec![];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
         .test_and_snapshot();
