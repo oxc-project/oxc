@@ -1,3 +1,4 @@
+use nodejs_built_in_modules::is_nodejs_builtin_module;
 use oxc_ast::{
     AstKind,
     ast::{Expression, TSModuleReference},
@@ -74,9 +75,7 @@ impl Rule for PreferNodeProtocol {
         } else {
             string_lit_value.as_str()
         };
-        if module_name.starts_with("node:")
-            || nodejs_built_in_modules::BUILTINS.binary_search(&module_name).is_err()
-        {
+        if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
             return;
         }
 
