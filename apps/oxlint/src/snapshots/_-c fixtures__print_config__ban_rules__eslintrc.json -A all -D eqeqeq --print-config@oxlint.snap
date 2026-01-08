@@ -15,9 +15,7 @@ working directory:
   "rules": {
     "eqeqeq": [
       "deny",
-      [
-        "always"
-      ]
+      "always"
     ]
   },
   "settings": {
