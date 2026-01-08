@@ -207,7 +207,8 @@ impl Serialize for OxlintRules {
             } else {
                 // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
                 // Create a JSON array with severity followed by config elements
-                let mut value = vec![serde_json::json!(rule.severity.as_str())];
+                let mut value = Vec::with_capacity(1 + rule.config.len());
+                value.push(serde_json::json!(rule.severity.as_str()));
                 value.extend(rule.config.iter().cloned());
                 rules.serialize_entry(&key, &value)?;
             }
