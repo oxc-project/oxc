@@ -83,6 +83,42 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Export a component object directly instead of using a functional component function.
 
+  ⚠ eslint-plugin-vue(require-direct-export): Function component must return a value.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                       <script>
+ 3 │ ╭─▶                   export default (props) => {
+ 4 │ │                       if (props.show) {
+ 5 │ │                           return;
+ 6 │ │                       }
+ 7 │ │                       return;
+ 8 │ ╰─▶                   }
+ 9 │                       </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(require-direct-export): Function component must return a value.
+   ╭─[require_direct_export.tsx:3:10]
+ 2 │                       <script>
+ 3 │ ╭─▶                   export default function(props) {
+ 4 │ │                       if (props.show) {
+ 5 │ │                           return;
+ 6 │ │                       }
+ 7 │ │                       return;
+ 8 │ ╰─▶                   }
+ 9 │                       </script>
+   ╰────
+
+  ⚠ eslint-plugin-vue(require-direct-export): Functional component functions are not allowed.
+   ╭─[require_direct_export.tsx:4:10]
+ 3 │                       import { h } from 'vue'
+ 4 │ ╭─▶                   export default (props) => {
+ 5 │ │                       if (props.show) {
+ 6 │ │                           return h('div', `Hello! ${props.name}`)
+ 7 │ │                       }
+ 8 │ ╰─▶                   }
+ 9 │                       </script>
+   ╰────
+  help: Export a component object directly instead of using a functional component function.
+
   ⚠ eslint-plugin-vue(require-direct-export): Functional component functions are not allowed.
    ╭─[require_direct_export.tsx:3:10]
  2 │                       import { h } from 'vue'
