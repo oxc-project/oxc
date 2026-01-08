@@ -19,7 +19,7 @@ use oxc::{
     isolated_declarations::{IsolatedDeclarations, IsolatedDeclarationsOptions},
     mangler::{MangleOptions, MangleOptionsKeepNames},
     minifier::{CompressOptions, Minifier, MinifierOptions, MinifierReturn},
-    parser::{ParseOptions, Parser, ParserReturn},
+    parser::{ParseOptions, Parser, ParserReturn, Stats},
     semantic::{
         ReferenceId, ScopeFlags, ScopeId, Scoping, SemanticBuilder, SymbolFlags, SymbolId,
         dot::{DebugDot, DebugDotContext},
@@ -126,12 +126,17 @@ impl Oxc {
             SourceType::from_path(&path).map_err(|e| napi::Error::from_reason(e.to_string()))?;
 
         // Phase 1: Parse source
-        let (mut program, mut module_record) =
+        let (mut program, mut module_record, stats) =
             self.parse_source(&allocator, &source_text, source_type, parser_options);
 
         // Phase 2: Build semantic analysis
-        let semantic =
-            self.build_semantic(&program, run_options, parser_options, &control_flow_options);
+        let semantic = self.build_semantic(
+            &program,
+            stats,
+            run_options,
+            parser_options,
+            &control_flow_options,
+        );
 
         // Phase 3: Run linter
         let linter_module_record = Arc::new(ModuleRecord::new(&path, &module_record, &semantic));
@@ -140,6 +145,7 @@ impl Oxc {
             &linter_options,
             &path,
             &program,
+            stats,
             &linter_module_record,
             &allocator,
         );
@@ -198,7 +204,7 @@ impl Oxc {
         }
 
         // Phase 7: Apply minification
-        let minifier_return = self.apply_minification(&allocator, &mut program, &options);
+        let minifier_return = self.apply_minification(&allocator, &mut program, stats, &options);
 
         // Phase 8: Generate code
         self.codegen(&path, &program, minifier_return, run_options, &codegen_options);
@@ -215,22 +221,24 @@ impl Oxc {
         source_text: &'a str,
         source_type: SourceType,
         parser_options: &OxcParserOptions,
-    ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>) {
+    ) -> (Program<'a>, oxc::syntax::module_record::ModuleRecord<'a>, oxc::syntax::stats::Stats)
+    {
         let parser_options = ParseOptions {
             parse_regular_expression: true,
             allow_return_outside_function: parser_options.allow_return_outside_function,
             preserve_parens: parser_options.preserve_parens,
             allow_v8_intrinsics: parser_options.allow_v8_intrinsics,
         };
-        let ParserReturn { program, errors, module_record, .. } =
+        let ParserReturn { program, errors, module_record, stats, .. } =
             Parser::new(allocator, source_text, source_type).with_options(parser_options).parse();
         self.diagnostics.extend(errors);
-        (program, module_record)
+        (program, module_record, stats)
     }
 
     fn build_semantic<'a>(
         &mut self,
         program: &'a Program<'a>,
+        stats: oxc::syntax::stats::Stats,
         run_options: &OxcRunOptions,
         parser_options: &OxcParserOptions,
         control_flow_options: &OxcControlFlowOptions,
@@ -243,7 +251,7 @@ impl Oxc {
         let semantic_ret = semantic_builder
             .with_check_syntax_error(parser_options.semantic_errors)
             .with_cfg(run_options.cfg)
-            .build(program);
+            .build(program, stats);
         self.diagnostics.extend(semantic_ret.errors);
 
         self.control_flow_graph = semantic_ret.semantic.cfg().map_or_else(String::default, |cfg| {
@@ -313,6 +321,7 @@ impl Oxc {
         &mut self,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
+        stats: Stats,
         options: &OxcOptions,
     ) -> Option<MinifierReturn> {
         if !options.run.compress && !options.run.mangle {
@@ -344,7 +353,7 @@ impl Oxc {
         } else {
             None
         };
-        Some(Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program))
+        Some(Minifier::new(MinifierOptions { mangle, compress }).minify(allocator, program, stats))
     }
 
     fn finalize_output<'a>(
@@ -384,13 +393,14 @@ impl Oxc {
         linter_options: &OxcLinterOptions,
         path: &Path,
         program: &Program,
+        stats: Stats,
         module_record: &Arc<ModuleRecord>,
         allocator: &Allocator,
     ) {
         // Only lint if there are no syntax errors
         if run_options.lint && self.diagnostics.is_empty() {
             let mut external_plugin_store = ExternalPluginStore::default();
-            let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
+            let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program, stats);
             let semantic = semantic_ret.semantic;
             let lint_config = if linter_options.config.is_some() {
                 let oxlintrc =

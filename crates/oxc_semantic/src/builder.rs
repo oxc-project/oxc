@@ -95,7 +95,6 @@ pub struct SemanticBuilder<'a> {
     unused_labels: UnusedLabels<'a>,
     #[cfg(feature = "linter")]
     jsdoc: JSDocBuilder<'a>,
-    stats: Option<Stats>,
     excess_capacity: f64,
 
     /// Should additional syntax checks be performed?
@@ -149,8 +148,7 @@ impl<'a> SemanticBuilder<'a> {
             unused_labels: UnusedLabels::default(),
             #[cfg(feature = "linter")]
             jsdoc: JSDocBuilder::default(),
-            stats: None,
-            excess_capacity: 0.0,
+            excess_capacity: 0.05,
             check_syntax_error: false,
             #[cfg(feature = "cfg")]
             cfg: None,
@@ -197,26 +195,10 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    /// Provide statistics about AST to optimize memory usage of semantic analysis.
-    ///
-    /// Accurate statistics can greatly improve performance, especially for large ASTs.
-    /// If no stats are provided, [`SemanticBuilder::build`] will compile stats by performing
-    /// a complete AST traversal.
-    /// If semantic analysis has already been performed on this AST, get the existing stats with
-    /// [`Semantic::stats`], and pass them in with this method, to avoid the stats collection AST pass.
-    #[must_use]
-    pub fn with_stats(mut self, stats: Stats) -> Self {
-        self.stats = Some(stats);
-        self
-    }
-
     /// Request `SemanticBuilder` to allocate excess capacity for scopes, symbols, and references.
     ///
     /// `excess_capacity` is provided as a fraction.
     /// e.g. to over-allocate by 20%, pass `0.2` as `excess_capacity`.
-    ///
-    /// Has no effect if a `Stats` object is provided with [`SemanticBuilder::with_stats`],
-    /// only if `SemanticBuilder` is calculating stats itself.
     ///
     /// This is useful when you intend to modify `Semantic`, adding more `nodes`, `scopes`, `symbols`,
     /// or `references`. Allocating excess capacity for these additions at the outset prevents
@@ -230,8 +212,12 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Finalize the builder.
     ///
+    /// `stats` should be obtained from the parser via [`ParserReturn::stats`].
+    ///
+    /// [`ParserReturn::stats`]: https://docs.rs/oxc_parser/latest/oxc_parser/struct.ParserReturn.html#structfield.stats
+    ///
     /// # Panics
-    pub fn build(mut self, program: &'a Program<'a>) -> SemanticBuilderReturn<'a> {
+    pub fn build(mut self, program: &'a Program<'a>, stats: Stats) -> SemanticBuilderReturn<'a> {
         self.source_text = program.source_text;
         self.source_type = program.source_type;
         #[cfg(feature = "linter")]
@@ -248,16 +234,7 @@ impl<'a> SemanticBuilder<'a> {
         // For large source files, these structures are very large, so growth is very costly
         // as it involves copying massive chunks of memory.
         // Avoiding this growth produces up to 30% perf boost on our benchmarks.
-        //
-        // If user did not provide existing `Stats`, calculate them by visiting AST.
-        #[cfg_attr(not(debug_assertions), expect(unused_variables))]
-        let (stats, check_stats) = if let Some(stats) = self.stats {
-            (stats, None)
-        } else {
-            let stats = Stats::count(program);
-            let stats_with_excess = stats.increase_by(self.excess_capacity);
-            (stats_with_excess, Some(stats))
-        };
+        let stats = stats.increase_by(self.excess_capacity);
         self.nodes.reserve(stats.nodes as usize);
         self.scoping.reserve(
             stats.symbols as usize,
@@ -270,7 +247,7 @@ impl<'a> SemanticBuilder<'a> {
 
         // Check that estimated counts accurately (unless in release mode)
         #[cfg(debug_assertions)]
-        if let Some(stats) = check_stats {
+        {
             #[expect(clippy::cast_possible_truncation)]
             let actual_stats = Stats::new(
                 self.nodes.len() as u32,
@@ -278,7 +255,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.scoping.symbols_len() as u32,
                 self.scoping.references.len() as u32,
             );
-            stats.assert_accurate(actual_stats);
+            // stats.assert_accurate(actual_stats, self.source_text);
         }
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);

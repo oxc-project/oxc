@@ -59,6 +59,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.expect(Kind::RCurly);
+        self.stats.add_node();
         self.ast.binding_pattern_object_pattern(
             self.end_span(span),
             list,
@@ -79,6 +80,7 @@ impl<'a> ParserImpl<'a> {
             diagnostics::binding_rest_element_last,
         );
         self.expect(Kind::RBrack);
+        self.stats.add_node();
         self.ast.binding_pattern_array_pattern(
             self.end_span(span),
             list,
@@ -124,6 +126,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
         }
 
+        self.stats.add_node();
         self.ast.binding_rest_element(self.end_span(span), argument)
     }
 
@@ -153,6 +156,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::a_rest_element_cannot_have_an_initializer(pat.span));
         }
 
+        self.stats.add_node();
         self.ast.binding_rest_element(self.end_span(span), argument)
     }
 
@@ -174,6 +178,8 @@ impl<'a> ParserImpl<'a> {
             if let PropertyKey::StaticIdentifier(ident) = &key {
                 shorthand = true;
                 self.check_identifier_with_span(key_cur_kind, self.ctx, ident.span);
+                self.stats.add_node();
+                self.stats.add_symbol();
                 let identifier =
                     self.ast.binding_pattern_binding_identifier(ident.span, ident.name);
                 self.context_add(Context::In, |p| p.parse_initializer(span, identifier))
@@ -187,6 +193,7 @@ impl<'a> ParserImpl<'a> {
             self.parse_binding_pattern_with_initializer()
         };
 
+        self.stats.add_node();
         self.ast.binding_property(self.end_span(span), key, value, shorthand, computed)
     }
 
@@ -195,6 +202,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_initializer(&mut self, span: u32, left: BindingPattern<'a>) -> BindingPattern<'a> {
         if self.eat(Kind::Eq) {
             let expr = self.parse_assignment_expression_or_higher();
+            self.stats.add_node();
             self.ast.binding_pattern_assignment_pattern(self.end_span(span), left, expr)
         } else {
             left

@@ -28,20 +28,30 @@ fn bench_minifier(criterion: &mut Criterion) {
                 allocator.reset();
 
                 // Create fresh AST + semantic data for each iteration
-                let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+                let mut parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+                let scoping = SemanticBuilder::new()
+                    .build(&parser_ret.program, parser_ret.stats)
+                    .semantic
+                    .into_scoping();
 
                 // Minifier only works on esnext.
                 let transform_options = TransformOptions::from_target("esnext").unwrap();
                 let transformer_ret =
                     Transformer::new(&allocator, Path::new(&file.file_name), &transform_options)
-                        .build_with_scoping(scoping, &mut program);
+                        .build_with_scoping(scoping, &mut parser_ret.program);
                 assert!(transformer_ret.errors.is_empty());
-                let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+                let scoping = SemanticBuilder::new()
+                    .build(&parser_ret.program, parser_ret.stats)
+                    .semantic
+                    .into_scoping();
 
                 let options = CompressOptions::smallest();
                 runner.run(|| {
-                    Compressor::new(&allocator).build_with_scoping(&mut program, scoping, options);
+                    Compressor::new(&allocator).build_with_scoping(
+                        &mut parser_ret.program,
+                        scoping,
+                        options,
+                    );
                 });
             });
         });
@@ -62,12 +72,14 @@ fn bench_mangler(criterion: &mut Criterion) {
             b.iter_with_setup_wrapper(|runner| {
                 allocator.reset();
                 temp_allocator.reset();
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let mut semantic =
-                    SemanticBuilder::new().with_scope_tree_child_ids(true).build(&program).semantic;
+                let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
+                let mut semantic = SemanticBuilder::new()
+                    .with_scope_tree_child_ids(true)
+                    .build(&parser_ret.program, parser_ret.stats)
+                    .semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
-                        .build_with_semantic(&mut semantic, &program);
+                        .build_with_semantic(&mut semantic, &parser_ret.program);
                 });
             });
         });

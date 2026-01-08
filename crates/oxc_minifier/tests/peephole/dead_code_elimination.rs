@@ -15,7 +15,7 @@ fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptio
     assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = &mut ret.program;
     if let Some(options) = options {
-        Compressor::new(&allocator).dead_code_elimination(program, options);
+        Compressor::new(&allocator).dead_code_elimination(program, ret.stats, options);
     }
     Codegen::new().build(program).code
 }
@@ -45,7 +45,7 @@ fn test_with_options(source_text: &str, expected: &str, options: CompressOptions
     let mut ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
     let program = &mut ret.program;
-    Compressor::new(&allocator).dead_code_elimination(program, options);
+    Compressor::new(&allocator).dead_code_elimination(program, ret.stats, options);
     let result = Codegen::new().build(program).code;
     let expected = run(expected, source_type, None);
     assert_eq!(result, expected, "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{result}");

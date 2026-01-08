@@ -36,6 +36,8 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
                 SimpleAssignmentTarget::from(member_expr)
             }
             Expression::ParenthesizedExpression(expr) => {
+                // ParenthesizedExpression is unwrapped during cover grammar, so subtract the node count
+                p.stats.nodes -= 1;
                 let span = expr.span;
                 match expr.unbox().expression {
                     Expression::ObjectExpression(_) | Expression::ArrayExpression(_) => {
@@ -209,6 +211,14 @@ impl<'a> CoverGrammar<'a, ObjectProperty<'a>> for AssignmentTargetProperty<'a> {
             let binding = match property.key {
                 PropertyKey::StaticIdentifier(ident) => {
                     let ident = ident.unbox();
+                    // Don't add_node() or add_reference() here.
+                    // The shorthand ObjectProperty parsing already counted the IdentifierReference
+                    // (via add_reference() and add_node() in object.rs).
+                    // However, we need to REMOVE the IdentifierName that was counted for the key,
+                    // since it won't exist in the final AssignmentTargetPropertyIdentifier.
+                    // Net effect: nodes stay same (IdentifierName removed, reusing IdentifierReference),
+                    // reference stays same.
+                    p.stats.nodes -= 1; // Remove the IdentifierName count
                     p.ast.identifier_reference(ident.span, ident.name)
                 }
                 _ => return p.unexpected(),

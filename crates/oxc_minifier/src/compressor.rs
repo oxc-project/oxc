@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
-use oxc_semantic::{Scoping, SemanticBuilder};
+use oxc_semantic::{Scoping, SemanticBuilder, Stats};
 use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
@@ -18,8 +18,8 @@ impl<'a> Compressor<'a> {
         Self { allocator }
     }
 
-    pub fn build(self, program: &mut Program<'a>, options: CompressOptions) {
-        let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
+    pub fn build(self, program: &mut Program<'a>, stats: Stats, options: CompressOptions) {
+        let scoping = SemanticBuilder::new().build(program, stats).semantic.into_scoping();
         self.build_with_scoping(program, scoping, options);
     }
 
@@ -42,8 +42,13 @@ impl<'a> Compressor<'a> {
         PeepholeOptimizations::new(max_iterations).run_in_loop(program, &mut ctx)
     }
 
-    pub fn dead_code_elimination(self, program: &mut Program<'a>, options: CompressOptions) -> u8 {
-        let scoping = SemanticBuilder::new().build(program).semantic.into_scoping();
+    pub fn dead_code_elimination(
+        self,
+        program: &mut Program<'a>,
+        stats: Stats,
+        options: CompressOptions,
+    ) -> u8 {
+        let scoping = SemanticBuilder::new().build(program, stats).semantic.into_scoping();
         self.dead_code_elimination_with_scoping(program, scoping, options)
     }
 
