@@ -1,0 +1,124 @@
+name: Rule Test Diff
+
+permissions: {}
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "crates/oxc_linter/src/rules/**/*.rs"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-new-rules:
+    name: Check Rule Test Generation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+        with:
+          fetch-depth: 0  # Fetch all history to detect new files
+
+      - name: Detect new rule files
+        id: detect-new-rules
+        run: |
+          # Get the base branch (usually main)
+          BASE_REF="${{ github.event.pull_request.base.ref }}"
+          
+          # Find files added in this PR in the rules directory
+          NEW_RULE_FILES=$(git diff --name-only --diff-filter=A "origin/${BASE_REF}...HEAD" -- "crates/oxc_linter/src/rules/**/*.rs" | grep -v "mod.rs" || true)
+          
+          echo "Detected new rule files:"
+          echo "$NEW_RULE_FILES"
+          
+          # Save to output for the next step
+          echo "new_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$NEW_RULE_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Check if there are any new files
+          if [ -z "$NEW_RULE_FILES" ]; then
+            echo "has_new_rules=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_new_rules=true" >> $GITHUB_OUTPUT
+          fi
+
+      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+        if: steps.detect-new-rules.outputs.has_new_rules == 'true'
+        with:
+          cache-key: rule-test-diff
+          tools: just
+
+      - name: Process each new rule
+        if: steps.detect-new-rules.outputs.has_new_rules == 'true'
+        run: |
+          # Process each new rule file
+          echo "${{ steps.detect-new-rules.outputs.new_files }}" | while IFS= read -r file; do
+            if [ -z "$file" ]; then
+              continue
+            fi
+            
+            echo "Processing: $file"
+            
+            # Extract plugin name from directory structure
+            # Example: crates/oxc_linter/src/rules/react/jsx_key.rs -> react
+            plugin=$(echo "$file" | sed -n 's|crates/oxc_linter/src/rules/\([^/]*\)/.*|\1|p')
+            
+            # Extract rule name from filename (remove .rs extension)
+            # Example: jsx_key.rs -> jsx_key
+            rule_name=$(basename "$file" .rs)
+            
+            echo "  Rule: $rule_name"
+            echo "  Plugin: $plugin"
+            
+            # Skip if we couldn't extract the plugin or rule name
+            if [ -z "$plugin" ] || [ -z "$rule_name" ]; then
+              echo "  ⚠️ Could not extract plugin or rule name from: $file"
+              continue
+            fi
+            
+            # Create a backup of the current file
+            cp "$file" "${file}.backup"
+            
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📝 Regenerating tests for: $rule_name ($plugin)"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            
+            # Run the update-rule-tests command
+            just update-rule-tests "$rule_name" "$plugin" || {
+              echo "  ⚠️ Failed to run update-rule-tests for $rule_name"
+              # Restore the backup
+              mv "${file}.backup" "$file"
+              continue
+            }
+            
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo "📊 Diff: PR version vs Generated version"
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            echo "Comparing:"
+            echo "  - PR version:        $file (from backup)"
+            echo "  - Generated version: $file (just regenerated)"
+            echo ""
+            
+            # Show the diff between the backup (PR version) and the regenerated version
+            if diff -u "${file}.backup" "$file" > /dev/null 2>&1; then
+              echo "✅ No differences found! The tests in the PR match the generated tests."
+            else
+              echo "⚠️ Differences found between PR version and generated version:"
+              echo ""
+              diff -u "${file}.backup" "$file" || true
+            fi
+            
+            echo ""
+            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            echo ""
+            
+            # Restore the original file (PR version)
+            mv "${file}.backup" "$file"
+          done
