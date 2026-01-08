@@ -8,22 +8,12 @@
 #
 # When it runs:
 #   1. Automatically on PRs that add new files to crates/oxc_linter/src/rules/**/*.rs
-#   2. Manually via workflow_dispatch for testing with existing rules
-#
-# How to use manually:
-#   1. Go to Actions tab -> Rule Test Diff workflow
-#   2. Click "Run workflow"
-#   3. Enter a rule name and plugin (e.g., "jsx-key react")
-#   4. The workflow will show the diff between current tests and generated tests
-#
-# Example manual test input: "jsx-key react"
 #
 # What it does:
-#   1. Detects new rule files in the PR (or uses manual input)
+#   1. Detects new rule files in the PR
 #   2. Backs up the current version of the rule file
 #   3. Runs `just update-rule-tests <rule-name> <plugin-name>`
 #   4. Shows a diff comparing the PR version vs the generated version
-#   5. Restores the original file (doesn't commit changes)
 
 name: Rule Test Diff
 
@@ -34,12 +24,6 @@ on:
     types: [opened, synchronize]
     paths:
       - "crates/oxc_linter/src/rules/**/*.rs"
-  workflow_dispatch:
-    inputs:
-      test_with_existing_rule:
-        description: 'Test with an existing rule (e.g., "jsx-key react" or leave empty for normal behavior)'
-        required: false
-        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -51,50 +35,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        id: filter
         with:
-          fetch-depth: 50 # Fetch last 50 commits to detect new files
+          list-files: shell
+          filters: |
+            rules:
+              - added: 'crates/oxc_linter/src/rules/**/*.rs'
 
       - name: Detect new rule files
         id: detect-new-rules
         run: |
-          # Check if this is a manual test with an existing rule
-          TEST_INPUT="${GITHUB_EVENT_INPUTS_TEST_WITH_EXISTING_RULE}"
+          # Use dorny/paths-filter outputs for added rule files
+          NEW_RULE_FILES="${STEPS_FILTER_OUTPUTS_RULES_ADDED_FILES}"
 
-          if [ -n "$TEST_INPUT" ]; then
-            echo "🧪 Manual test mode enabled"
-            echo "Test input: $TEST_INPUT"
-
-            # Parse the input (expected format: "rule-name plugin-name")
-            RULE_NAME=$(echo "$TEST_INPUT" | awk '{print $1}' | tr '-' '_')
-            PLUGIN=$(echo "$TEST_INPUT" | awk '{print $2}')
-
-            if [ -z "$RULE_NAME" ] || [ -z "$PLUGIN" ]; then
-              echo "❌ Invalid input format. Expected: 'rule-name plugin-name' (e.g., 'jsx-key react')"
-              exit 1
-            fi
-
-            # Construct the file path
-            TEST_FILE="crates/oxc_linter/src/rules/${PLUGIN}/${RULE_NAME}.rs"
-
-            if [ ! -f "$TEST_FILE" ]; then
-              echo "❌ Test file does not exist: $TEST_FILE"
-              exit 1
-            fi
-
-            echo "✅ Testing with existing rule: $TEST_FILE"
+          # Only proceed when exactly one file was added; otherwise bail out
+          FILE_COUNT=$(echo "$NEW_RULE_FILES" | sed '/^$/d' | wc -l | tr -d ' ')
+          if [ "$FILE_COUNT" -gt 1 ]; then
+            echo "⚠️ More than one new rule file detected; skipping"
             echo "new_files<<EOF" >> $GITHUB_OUTPUT
-            echo "$TEST_FILE" >> $GITHUB_OUTPUT
+            echo "" >> $GITHUB_OUTPUT
             echo "EOF" >> $GITHUB_OUTPUT
-            echo "has_new_rules=true" >> $GITHUB_OUTPUT
+            echo "has_new_rules=false" >> $GITHUB_OUTPUT
             exit 0
           fi
-
-          # Normal mode: detect new files in PR
-          # Get the base branch (usually main)
-          BASE_REF="${GITHUB_EVENT_PULL_REQUEST_BASE_REF}"
-
-          # Find files added in this PR in the rules directory
-          NEW_RULE_FILES=$(git diff --name-only --diff-filter=A "origin/${BASE_REF}...HEAD" -- "crates/oxc_linter/src/rules/**/*.rs" | grep -v "mod.rs" || true)
 
           echo "Detected new rule files:"
           echo "$NEW_RULE_FILES"
@@ -111,85 +76,67 @@ jobs:
             echo "has_new_rules=true" >> $GITHUB_OUTPUT
           fi
         env:
-          GITHUB_EVENT_INPUTS_TEST_WITH_EXISTING_RULE: ${{ github.event.inputs.test_with_existing_rule }}
-          GITHUB_EVENT_PULL_REQUEST_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          STEPS_FILTER_OUTPUTS_RULES_ADDED_FILES: ${{ steps.filter.outputs.rules_files }}
 
       - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
         if: steps.detect-new-rules.outputs.has_new_rules == 'true'
         with:
           cache-key: rule-test-diff
           tools: just
+          components: rustfmt
 
-      - name: Process each new rule
+      - name: Regenerate tests for new rule
         if: steps.detect-new-rules.outputs.has_new_rules == 'true'
         run: |
-          # Process each new rule file
           echo "${STEPS_DETECT_NEW_RULES_OUTPUTS_NEW_FILES}" | while IFS= read -r file; do
-            if [ -z "$file" ]; then
-              continue
-            fi
+            [ -z "$file" ] && continue
 
-            echo "Processing: $file"
+            echo "Regenerating: $file"
 
-            # Extract plugin name from directory structure
-            # Example: crates/oxc_linter/src/rules/react/jsx_key.rs -> react
             plugin=$(echo "$file" | sed -n 's|crates/oxc_linter/src/rules/\([^/]*\)/.*|\1|p')
-
-            # Extract rule name from filename (remove .rs extension)
-            # Example: jsx_key.rs -> jsx_key
             rule_name=$(basename "$file" .rs)
 
-            echo "  Rule: $rule_name"
-            echo "  Plugin: $plugin"
-
-            # Skip if we couldn't extract the plugin or rule name
             if [ -z "$plugin" ] || [ -z "$rule_name" ]; then
-              echo "  ⚠️ Could not extract plugin or rule name from: $file"
-              continue
+              echo "⚠️ Could not extract plugin or rule name from: $file"
+              exit 1
             fi
 
-            # Create a backup of the current file
             cp "$file" "${file}.backup"
 
-            echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "📝 Regenerating tests for: $rule_name ($plugin)"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo ""
-
-            # Run the update-rule-tests command
             just update-rule-tests "$rule_name" "$plugin" || {
-              echo "  ⚠️ Failed to run update-rule-tests for $rule_name"
-              # Restore the backup
+              echo "⚠️ Failed to run update-rule-tests for $rule_name; restoring backup"
               mv "${file}.backup" "$file"
-              continue
+              exit 1
             }
+          done
+        env:
+          STEPS_DETECT_NEW_RULES_OUTPUTS_NEW_FILES: ${{ steps.detect-new-rules.outputs.new_files }}
 
-            echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo "📊 Diff: PR version vs Generated version"
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo ""
-            echo "Comparing:"
-            echo "  - PR version:        $file (from backup)"
-            echo "  - Generated version: $file (just regenerated)"
-            echo ""
+      - name: Diff regenerated tests vs PR
+        if: steps.detect-new-rules.outputs.has_new_rules == 'true'
+        run: |
+          echo "${STEPS_DETECT_NEW_RULES_OUTPUTS_NEW_FILES}" | while IFS= read -r file; do
+            [ -z "$file" ] && continue
 
-            # Show the diff between the backup (PR version) and the regenerated version
-            if diff -u "${file}.backup" "$file" > /dev/null 2>&1; then
-              echo "✅ No differences found! The tests in the PR match the generated tests."
-            else
-              echo "⚠️ Differences found between PR version and generated version:"
-              echo ""
-              diff -u "${file}.backup" "$file" || true
+            if [ ! -f "${file}.backup" ]; then
+              echo "❌ Missing backup for $file"
+              exit 1
             fi
 
-            echo ""
-            echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-            echo ""
+            echo "Comparing: $file"
+            echo "  - PR version:        ${file}.backup"
+            echo "  - Generated version: $file"
 
-            # Restore the original file (PR version)
-            mv "${file}.backup" "$file"
+            # Show color diff for clarity
+            if git diff --no-index --color=always "${file}.backup" "$file" > /tmp/rule_diff.out; then
+              if [ ! -s /tmp/rule_diff.out ]; then
+                echo "✅ No differences found!"
+              else
+                cat /tmp/rule_diff.out
+              fi
+            else
+              cat /tmp/rule_diff.out || true
+            fi
           done
         env:
           STEPS_DETECT_NEW_RULES_OUTPUTS_NEW_FILES: ${{ steps.detect-new-rules.outputs.new_files }}
