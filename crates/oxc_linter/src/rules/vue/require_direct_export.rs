@@ -2,12 +2,14 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, CallExpression, ExportDefaultDeclarationKind, Expression,
-        Function, Statement,
+        Function, FunctionBody, ReturnStatement,
     },
     match_expression,
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::ScopeFlags;
 use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -199,11 +201,7 @@ fn has_object_expression_argument(call_expr: &CallExpression) -> bool {
 }
 
 fn has_function_return_value(func: &Function) -> bool {
-    func.body.as_ref().is_some_and(|body| {
-        body.statements
-            .iter()
-            .any(|stmt| matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.is_some()))
-    })
+    func.body.as_deref().is_some_and(find_return_value)
 }
 
 fn has_arrow_function_return_value(arrow_func: &ArrowFunctionExpression) -> bool {
@@ -211,12 +209,38 @@ fn has_arrow_function_return_value(arrow_func: &ArrowFunctionExpression) -> bool
     if arrow_func.expression {
         return true;
     }
+    find_return_value(&arrow_func.body)
+}
 
-    arrow_func
-        .body
-        .statements
-        .iter()
-        .any(|stmt| matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.is_some()))
+fn find_return_value(body: &FunctionBody) -> bool {
+    let mut finder = ReturnFinder::new();
+    finder.visit_function_body(body);
+    finder.found
+}
+
+struct ReturnFinder {
+    found: bool,
+}
+
+impl ReturnFinder {
+    fn new() -> Self {
+        Self { found: false }
+    }
+}
+
+impl<'a> Visit<'a> for ReturnFinder {
+    fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
+        if self.found {
+            return;
+        }
+        if it.argument.is_some() {
+            self.found = true;
+        }
+    }
+
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
+
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {}
 }
 
 #[test]
@@ -226,6 +250,34 @@ fn test() {
 
     let pass = vec![
         ("", None, None, Some(PathBuf::from("test.vue"))),
+        (
+            "
+            <script>
+export default function (props) {
+  if (props.show) {
+    return h('div', props.msg)
+  }
+}
+</script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+            <script>
+export default (props) => {
+  if (props.show) {
+    return h('div', props.msg)
+  }
+}
+</script>
+            ",
+            None,
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
         ("export default {}", None, None, Some(PathBuf::from("test.vue"))),
         (
             "export default {}",
@@ -382,6 +434,48 @@ fn test() {
 			      import { h } from 'vue'
 			      export default function (props) {
 			        return h('div', `Hello! ${props.name}`)
+			      }
+			      </script>",
+            Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+			      <script>
+			      export default (props) => {
+                    if (props.show) {
+                        return;
+                    }
+                    return;
+			      }
+			      </script>",
+            Some(serde_json::json!([{ "disallowFunctionalComponentFunction": false }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+			      <script>
+			      export default function(props) {
+                    if (props.show) {
+                        return;
+                    }
+                    return;
+			      }
+			      </script>",
+            Some(serde_json::json!([{ "disallowFunctionalComponentFunction": false }])),
+            None,
+            Some(PathBuf::from("test.vue")),
+        ),
+        (
+            "
+			      <script>
+			      import { h } from 'vue'
+			      export default (props) => {
+                    if (props.show) {
+                        return h('div', `Hello! ${props.name}`)
+                    }
 			      }
 			      </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
