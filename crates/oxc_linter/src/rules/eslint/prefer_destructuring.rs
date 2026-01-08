@@ -86,7 +86,7 @@ declare_oxc_lint!(
     PreferDestructuring,
     eslint,
     style,
-    fix,
+    conditional_fix,
     config = PreferDestructuring,
 );
 
