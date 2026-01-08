@@ -93,7 +93,8 @@ jobs:
 
             echo "Regenerating: $file"
 
-            plugin=$(echo "$file" | sed -n 's|crates/oxc_linter/src/rules/\([^/]*\)/.*|\1|p')
+            plugin_raw=$(echo "$file" | sed -n 's|crates/oxc_linter/src/rules/\([^/]*\)/.*|\1|p')
+            plugin=${plugin_raw//_/-}
             rule_name=$(basename "$file" .rs)
 
             if [ -z "$plugin" ] || [ -z "$rule_name" ]; then
