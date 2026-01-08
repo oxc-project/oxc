@@ -191,8 +191,6 @@ export default class FormatterTool implements ToolInterface {
       "ronn",
       "scd",
       "workbook",
-      // MDX
-      "mdx",
       // YAML
       "yml",
       "mir",
