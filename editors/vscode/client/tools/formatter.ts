@@ -160,6 +160,10 @@ export default class FormatterTool implements ToolInterface {
       "wxss",
       "pcss",
       "postcss",
+      // LESS
+      "less",
+      // SCSS
+      "scss",
       // GraphQL
       "graphql",
       "gql",
@@ -179,6 +183,8 @@ export default class FormatterTool implements ToolInterface {
       "ronn",
       "scd",
       "workbook",
+      // MDX
+      "mdx",
       // YAML
       "yml",
       "mir",
