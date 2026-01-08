@@ -2,7 +2,6 @@ import * as path from "node:path";
 import {
   CancellationTokenSource,
   ConfigurationChangeEvent,
-  RelativePattern,
   Uri,
   workspace,
   WorkspaceFolder,
@@ -120,13 +119,8 @@ export class ConfigService implements IDisposable {
     settingsBinary: string | undefined,
     defaultBinaryName: string,
   ): Promise<string | undefined> {
-    const cwd = this.workspaceConfigs.keys().next().value;
-    if (!cwd) {
-      return undefined;
-    }
-
     if (!settingsBinary) {
-      return this.searchNodeModulesBin(cwd, defaultBinaryName);
+      return this.searchNodeModulesBin(defaultBinaryName);
     }
 
     if (!workspace.isTrusted) {
@@ -139,6 +133,10 @@ export class ConfigService implements IDisposable {
     }
 
     if (!path.isAbsolute(settingsBinary)) {
+      const cwd = this.workspaceConfigs.keys().next().value;
+      if (!cwd) {
+        return undefined;
+      }
       // if the path is not absolute, resolve it to the first workspace folder
       settingsBinary = path.normalize(path.join(cwd, settingsBinary));
       settingsBinary = this.removeWindowsLeadingSlash(settingsBinary);
@@ -181,37 +179,10 @@ export class ConfigService implements IDisposable {
   }
 
   /**
-   * Search for the binary in the workspace's node_modules/.bin directory.
+   * Search for the binary in all workspaces' node_modules/.bin directories.
+   * If multiple workspaces contain the binary, the first one found is returned.
    */
-  private async searchNodeModulesBin(
-    workspacePath: string,
-    binaryName: string,
-  ): Promise<string | undefined> {
-    // try to find the binary in workspace's node_modules/.bin.
-    //
-    // Performance: this is a fast check before searching with glob.
-    // glob on windows is very slow.
-    const binPath = this.removeWindowsLeadingSlash(
-      path.normalize(path.join(workspacePath, "node_modules", ".bin", binaryName)),
-    );
-    try {
-      await workspace.fs.stat(Uri.file(binPath));
-      return binPath;
-    } catch {
-      // not found, continue to glob search
-    }
-
-    // on Windows, also check for `.exe` extension
-    if (process.platform === "win32") {
-      const binPathExe = `${binPath}.exe`;
-      try {
-        await workspace.fs.stat(Uri.file(binPathExe));
-        return binPathExe;
-      } catch {
-        // not found, continue to glob search
-      }
-    }
-
+  private async searchNodeModulesBin(binaryName: string): Promise<string | undefined> {
     const cts = new CancellationTokenSource();
     setTimeout(() => cts.cancel(), 10000); // cancel after 10 seconds
 
@@ -219,14 +190,10 @@ export class ConfigService implements IDisposable {
       // bun package manager uses `.exe` extension on Windows
       // search for both with and without `.exe` extension
       const extension = process.platform === "win32" ? "{,.exe}" : "";
-      // fallback: search with glob
       // maybe use `tinyglobby` later for better performance, VSCode can be slow on globbing large projects.
       const files = await workspace.findFiles(
-        // search up to 3 levels deep for the binary path
-        new RelativePattern(
-          workspacePath,
-          `{*/,*/*,*/*/*}/node_modules/.bin/${binaryName}${extension}`,
-        ),
+        // search workspace root plus up to 3 subdirectory levels for the binary path
+        `{,*/,*/*,*/*/*}/node_modules/.bin/${binaryName}${extension}`,
         undefined,
         1,
         cts.token,
