@@ -354,6 +354,7 @@ jobs:
               - 'crates/oxc_minifier/**'
               - 'crates/oxc_mangler/**'
               - 'crates/oxc_allocator/**'
+              - 'crates/oxc_semantic/**'
               - 'tasks/track_memory_allocations/**'
 
       - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
