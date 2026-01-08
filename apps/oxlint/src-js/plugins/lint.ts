@@ -1,21 +1,21 @@
-import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
-import { setupFileContext, resetFileContext } from "./context.ts";
+import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
+import { getErrorMessage } from "../utils/utils.ts";
+import { resetCfgWalk, walkProgramWithCfg } from "./cfg.ts";
+import { resetFileContext, setupFileContext } from "./context.ts";
+import { resetGlobals, setGlobalsForFile } from "./globals.ts";
 import { registeredRules } from "./load.ts";
 import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
-import { setSettingsForFile, resetSettings } from "./settings.ts";
+import { resetSettings, setSettingsForFile } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
-import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
-import { getErrorMessage } from "../utils/utils.ts";
-import { setGlobalsForFile, resetGlobals } from "./globals.ts";
 
 import {
   addVisitorToCompiled,
   compiledVisitor,
   finalizeCompiledVisitor,
   initCompiledVisitor,
-  VISITOR_EMPTY,
   VISITOR_CFG,
+  VISITOR_EMPTY,
 } from "./visitor.ts";
 
 // Lazy implementation
@@ -24,8 +24,9 @@ import { TOKEN } from '../../dist/src-js/raw-transfer/lazy-common.js';
 import { walkProgram } from '../generated/walk.js';
 */
 
-import { walkProgram, ancestors } from "../generated/walk.js";
+import { ancestors, walkProgram } from "../generated/walk.js";
 
+import { getResponsibleWorkspace } from "../workspace/index.ts";
 import type { AfterHook, BufferWithArrays } from "./types.ts";
 
 // Buffers cache.
@@ -143,8 +144,18 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
+  const workspace = getResponsibleWorkspace(filePath);
+  // ensure all relevant workspace configurations are loaded
+  debugAssertIsNonNull(workspace, "No workspace responsible for file being linted");
+  debugAssert(registeredRules.has(workspace), "No rules registered for workspace");
+  debugAssert(allOptions.has(workspace), "No options registered for workspace");
+
   // Pass file path to context module, so `Context`s know what file is being linted
-  setupFileContext(filePath);
+  setupFileContext(workspace, filePath);
+
+  // load all relevant workspace configurations
+  const rules = registeredRules.get(workspace)!;
+  const workspaceOptions = allOptions.get(workspace)!;
 
   // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
   //
@@ -167,21 +178,21 @@ export function lintFileImpl(
 
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
-    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
-    const ruleDetails = registeredRules[ruleId];
+    debugAssert(ruleId < rules.length, "Rule ID out of bounds");
+    const ruleDetails = rules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
-    debugAssertIsNonNull(allOptions);
-    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
+    debugAssertIsNonNull(workspaceOptions);
+    debugAssert(optionsId < workspaceOptions.length, "Options ID out of bounds");
 
     // If the rule has no user-provided options, use the plugin-provided default
     // options (which falls back to `DEFAULT_OPTIONS`)
     ruleDetails.options =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : workspaceOptions[optionsId];
 
     let { visitor } = ruleDetails;
     if (visitor === null) {

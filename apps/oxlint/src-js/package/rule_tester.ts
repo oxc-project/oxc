@@ -7,15 +7,17 @@
  * License (MIT): https://github.com/eslint/eslint/blob/0f5a94a84beee19f376025c74f703f275d52c94b/LICENSE
  */
 
-import { default as assert, AssertionError } from "node:assert";
-import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
-import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
-import { registerPlugin, registeredRules } from "../plugins/load.ts";
+import { default as assert, AssertionError } from "node:assert";
+import path from "node:path";
+import util from "node:util";
+import { ECMA_VERSION, setEcmaVersion } from "../plugins/context.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
+import { registerPlugin } from "../plugins/load.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
-import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
-import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
+import { DEFAULT_OPTIONS_ID, setOptions } from "../plugins/options.ts";
+import { diagnostics, PLACEHOLDER_REGEX, replacePlaceholders } from "../plugins/report.ts";
+import { createWorkspace, destroyWorkspace } from "../workspace/index.ts";
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
@@ -953,6 +955,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
 
+  const cwd = process.cwd();
   // Determine filename.
   // If not provided, use default filename based on `parseOptions.lang`.
   let { filename } = test;
@@ -963,15 +966,17 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     } else if (ext === "dts") {
       ext = "d.ts";
     }
-    filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+    filename = path.join(cwd, `${DEFAULT_FILENAME_BASE}.${ext}`);
   }
+
+  createWorkspace(cwd);
 
   try {
     // Register plugin. This adds rule to `registeredRules` array.
-    registerPlugin(plugin, null, false);
+    registerPlugin(filename, plugin, null, false);
 
     // Set up options
-    const optionsId = setupOptions(test);
+    const optionsId = setupOptions(cwd, test);
 
     // Parse file into buffer
     parse(filename, test.code, parseOptions);
@@ -1010,8 +1015,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     });
   } finally {
     // Reset state
-    registeredRules.length = 0;
-    if (allOptions !== null) allOptions.length = 1;
+    destroyWorkspace(cwd);
 
     // Even if there hasn't been an error, do a full reset of state just to be sure.
     // This includes emptying `diagnostics`.
@@ -1170,10 +1174,11 @@ function getGlobalsJson(test: TestCase): string {
  *
  * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for user-provided options).
  *
+ * @param cwd - Current working directory
  * @param test - Test case
  * @returns Options ID to pass to `lintFileImpl`
  */
-function setupOptions(test: TestCase): number {
+function setupOptions(cwd: string, test: TestCase): number {
   // Initial entries for default options
   const allOptions: Options[] = [[]],
     allRuleIds: number[] = [0];
@@ -1191,7 +1196,11 @@ function setupOptions(test: TestCase): number {
   // Serialize to JSON and pass to `setOptions`
   let allOptionsJson: string;
   try {
-    allOptionsJson = JSON.stringify({ options: allOptions, ruleIds: allRuleIds });
+    allOptionsJson = JSON.stringify({
+      options: allOptions,
+      ruleIds: allRuleIds,
+      cwd,
+    });
   } catch (err) {
     throw new Error(`Failed to serialize options: ${err}`);
   }

@@ -1,35 +1,35 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import {
-  getTokens,
-  getTokensBefore,
-  getTokenBefore,
-  getTokensAfter,
-  getTokenAfter,
-  getFirstTokens,
-  getFirstToken,
-  getLastTokens,
-  getLastToken,
-  getFirstTokensBetween,
-  getFirstTokenBetween,
-  getLastTokenBetween,
-  getLastTokensBetween,
-  getTokenByRangeStart,
-  getTokensBetween,
-  getTokenOrCommentBefore,
-  getTokenOrCommentAfter,
-} from "../src-js/plugins/tokens.ts";
-import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
+import { parse as parseRaw } from "../src-js/package/parse.ts";
+import { resetFileContext, setupFileContext } from "../src-js/plugins/context.ts";
 import { buffers } from "../src-js/plugins/lint.ts";
 import {
   initSourceText,
   resetSourceAndAst,
   setupSourceForFile,
 } from "../src-js/plugins/source_code.ts";
-import { parse as parseRaw } from "../src-js/package/parse.ts";
+import {
+  getFirstToken,
+  getFirstTokenBetween,
+  getFirstTokens,
+  getFirstTokensBetween,
+  getLastToken,
+  getLastTokenBetween,
+  getLastTokens,
+  getLastTokensBetween,
+  getTokenAfter,
+  getTokenBefore,
+  getTokenByRangeStart,
+  getTokenOrCommentAfter,
+  getTokenOrCommentBefore,
+  getTokens,
+  getTokensAfter,
+  getTokensBefore,
+  getTokensBetween,
+} from "../src-js/plugins/tokens.ts";
 import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
 
-import type { Node } from "../src-js/plugins/types.ts";
 import type { BinaryExpression } from "../src-js/generated/types.d.ts";
+import type { Node } from "../src-js/plugins/types.ts";
 
 // Source text used for most tests
 const SOURCE_TEXT = "/*A*/var answer/*B*/=/*C*/a/*D*/* b/*E*///F\n    call();\n/*Z*/";
@@ -55,7 +55,7 @@ function setup(sourceText: string) {
 
   // Set file path
   const path = "dummy.js";
-  setupFileContext(path);
+  setupFileContext(process.cwd(), path);
 
   // Parse source text into buffer
   parseRaw(path, sourceText);
