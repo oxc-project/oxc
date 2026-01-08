@@ -127,15 +127,13 @@ jobs:
           echo "  - PR version:        ${file}.backup"
           echo "  - Generated version: $file"
 
-          # Show color diff for clarity
-          if git diff --no-index --color=always "${file}.backup" "$file" > /tmp/rule_diff.out; then
-            if [ ! -s /tmp/rule_diff.out ]; then
-              echo "✅ No differences found!"
-            else
-              cat /tmp/rule_diff.out
-            fi
+          # Show color diff for clarity. git diff --no-index exits with 1 when files differ,
+          # which is expected, so don't fail the job on that basis.
+          git diff --no-index --color=always "${file}.backup" "$file" > /tmp/rule_diff.out || true
+          if [ ! -s /tmp/rule_diff.out ]; then
+            echo "✅ No differences found!"
           else
-            cat /tmp/rule_diff.out || true
+            cat /tmp/rule_diff.out
           fi
         env:
           STEPS_DETECT_NEW_RULES_OUTPUTS_NEW_FILES: ${{ steps.detect-new-rules.outputs.new_files }}
