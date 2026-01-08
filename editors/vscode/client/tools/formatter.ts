@@ -130,8 +130,6 @@ export default class FormatterTool implements ToolInterface {
       "webmanifest",
       "yy",
       "yyp",
-      // json5
-      "json5",
       // JSONC
       "jsonc",
       "code-snippets",
