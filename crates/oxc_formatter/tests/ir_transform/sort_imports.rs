@@ -2049,3 +2049,35 @@ import "node:os";
 "#,
     );
 }
+
+// ---
+
+#[test]
+fn issue_17788() {
+    // Should not panic
+    assert_format(
+        r"
+`/*`
+",
+        r#"{ "experimentalSortImports": {} }"#,
+        r"
+`/*`;
+",
+    );
+    // Should not panic
+    assert_format(
+        r"
+acc[path] = `src/${path
+.split('/')
+.map((s) => s[0].toUpperCase() + s.slice(1))
+.join('/')}/*`;
+",
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+acc[path] = `src/${path
+  .split("/")
+  .map((s) => s[0].toUpperCase() + s.slice(1))
+  .join("/")}/*`;
+"#,
+    );
+}
