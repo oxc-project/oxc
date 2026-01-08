@@ -52,7 +52,7 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
         with:
-          fetch-depth: 50  # Fetch last 50 commits to detect new files
+          fetch-depth: 50 # Fetch last 50 commits to detect new files
 
       - name: Detect new rule files
         id: detect-new-rules
