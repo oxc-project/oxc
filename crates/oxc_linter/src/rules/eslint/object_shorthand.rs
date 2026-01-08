@@ -1,14 +1,17 @@
-use std::fmt::Debug;
+use std::{collections::VecDeque, fmt::Debug};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
-use lazy_regex::{ Lazy, Regex, RegexBuilder, lazy_regex};
+use lazy_regex::{Lazy, Regex, RegexBuilder, lazy_regex};
 use oxc_ast::{
     AstKind,
     ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{ GetSpan, Span};
+use oxc_semantic::{NodeId, ReferenceId, ScopeId};
+use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 
 fn expected_all_properties_shorthanded(span: Span) -> OxcDiagnostic {
@@ -183,97 +186,60 @@ impl Rule for ObjectShorthand {
         )))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ObjectProperty(property) = node.kind() {
-            let is_concise_property = property.shorthand || property.method;
-
-            if !can_property_have_shorthand(property) {
-                return;
-            }
-
-            if is_concise_property {
-                if property.method
-                    && (self.apply_never
-                        || self.avoid_quotes && is_property_key_string_literal(property))
-                {
-                    // from { x() {} } to { x: function() {} }
-                    ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
-                        let property_key_span = property.key.span();
-                        let key_text_range = if property.computed {
-                            let (Some(paren_start), Some(paren_end_offset)) = (
-                                ctx.find_prev_token_from(property_key_span.start, "["),
-                                ctx.find_next_token_from(property_key_span.end, "]"),
-                            ) else {
-                                return fixer.noop();
-                            };
-                            Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
-                        } else {
-                            property_key_span
-                        };
-                        let key_text = ctx.source_range(key_text_range);
-
-                        let Expression::FunctionExpression(func) =
-                            &property.value.without_parentheses()
-                        else {
-                            return fixer.noop();
-                        };
-                        let function_header = match (func.r#async, func.generator) {
-                            (true, true) => "async function*",
-                            (true, false) => "async function",
-                            (false, true) => "function*",
-                            (false, false) => "function",
-                        };
-
-                        fixer.replace(key_text_range, format!("{key_text}: {function_header}"))
-                    });
-                } else if self.apply_never {
-                    // from { x } to { x: x }
-                    Self::check_shorthand_properties(&self, property, ctx);
-                }
-            } else if self.apply_to_methods && is_property_value_anonymous_function(property) {
-                // from { x: function() {} }   to { x() {} }
-                // from { [x]: function() {} } to { [x]() {} }
-                // from { x: () => {} }        to { x() {} }
-                // from { [x]: () => {} }      to { [x]() {} }
-                Self::check_longform_methods(&self, property, ctx);
-            } else if self.apply_to_properties {
-                // from { x: x }   to { x }
-                // from { "x": x } to { x }
-                Self::check_longform_properties(&self, property, ctx);
-            }
-        } else if let AstKind::ObjectExpression(obj_expr) = node.kind() {
-            if self.apply_consistent {
-                Self::check_consistency(obj_expr, false, ctx);
-            } else if self.apply_consistent_as_needed {
-                Self::check_consistency(obj_expr, true, ctx);
-            }
-        }
+    fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+        let mut checker = ObjectShorthandChecker::new(self, ctx);
+        walk::walk_program(&mut checker, ctx.semantic().nodes().program());
     }
 }
 
-impl ObjectShorthand {
-    fn check_longform_methods(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
-        if self.ignore_constructors
+struct ObjectShorthandChecker<'a, 'c> {
+    rule: &'c ObjectShorthand,
+    ctx: &'c LintContext<'a>,
+    lexical_scope_stack: VecDeque<FxHashSet<ScopeId>>,
+    arrows_with_lexical_identifiers: FxHashSet<ScopeId>,
+    arguments_identifiers: FxHashSet<ReferenceId>,
+}
+
+impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
+    fn new(rule: &'c ObjectShorthand, ctx: &'c LintContext<'a>) -> Self {
+        let arguments_identifiers = ctx
+            .scoping()
+            .root_unresolved_references()
+            .get("arguments")
+            .map(|v| FxHashSet::from_iter(v.iter().map(|&id| id)))
+            .unwrap_or_default();
+
+        Self {
+            rule,
+            ctx,
+            lexical_scope_stack: Default::default(),
+            arrows_with_lexical_identifiers: Default::default(),
+            arguments_identifiers,
+        }
+    }
+
+    fn check_longform_methods(&self, property: &ObjectProperty) {
+        if self.rule.ignore_constructors
             && property.key.is_identifier()
             && property.key.name().map(is_constructor).unwrap_or(false)
         {
             return;
         }
         if let (Some(pattern), Some(static_name)) =
-            (self.methods_ignore_pattern.as_ref(), property.key.static_name())
+            (self.rule.methods_ignore_pattern.as_ref(), property.key.static_name())
         {
             if pattern.is_match(static_name.as_ref()) {
                 return;
             }
         }
 
-        if self.avoid_quotes && is_property_key_string_literal(property) {
+        if self.rule.avoid_quotes && is_property_key_string_literal(property) {
             return;
         }
 
         if let Expression::FunctionExpression(func) = &property.value.without_parentheses() {
-            ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
-                let has_comment = ctx.semantic().has_comments_between(Span::new(
+            self.ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
+                let has_comment = self.ctx.semantic().has_comments_between(Span::new(
                     property.key.span().start,
                     property.value.span().start,
                 ));
@@ -290,41 +256,44 @@ impl ObjectShorthand {
                 let property_key_span = property.key.span();
                 let key_text = if property.computed {
                     let (Some(paren_start), Some(paren_end_offset)) = (
-                        ctx.find_prev_token_from(property_key_span.start, "["),
-                        ctx.find_next_token_from(property_key_span.end, "]"),
+                        self.ctx.find_prev_token_from(property_key_span.start, "["),
+                        self.ctx.find_next_token_from(property_key_span.end, "]"),
                     ) else {
                         return fixer.noop();
                     };
-                    ctx.source_range(Span::new(
+                    self.ctx.source_range(Span::new(
                         paren_start,
                         property_key_span.end + paren_end_offset + 1,
                     ))
                 } else {
-                    ctx.source_range(property_key_span)
+                    self.ctx.source_range(property_key_span)
                 };
                 let next_token = if func.generator {
-                    ctx.find_next_token_from(property_key_span.end, "*")
+                    self.ctx
+                        .find_next_token_from(property_key_span.end, "*")
                         .map(|offset| offset + "*".len() as u32)
                 } else {
-                    ctx.find_next_token_from(property_key_span.end, "function")
+                    self.ctx
+                        .find_next_token_from(property_key_span.end, "function")
                         .map(|offset| offset + "function".len() as u32)
                 };
                 let Some(func_token) = next_token else {
                     return fixer.noop();
                 };
-                let body =
-                    ctx.source_range(Span::new(property_key_span.end + func_token, func.span.end));
+                let body = self
+                    .ctx
+                    .source_range(Span::new(property_key_span.end + func_token, func.span.end));
                 let ret = format!("{key_prefix}{key_text}{body}");
                 fixer.replace(property.span, ret)
             });
         }
 
-        if self.avoid_explicit_return_arrows {
-            if let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
+        if self.rule.avoid_explicit_return_arrows {
+            if let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses() && !self.arrows_with_lexical_identifiers.contains(&func.scope_id())
             {
                 if !func.expression {
-                    ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
-                        let has_comment = ctx.semantic().has_comments_between(Span::new(
+                    self.ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
+                        let has_comment = self.ctx.semantic().has_comments_between(Span::new(
                             property.key.span().start,
                             property.value.span().start,
                         ));
@@ -339,30 +308,31 @@ impl ObjectShorthand {
                         let property_key_span = property.key.span();
                         let key_text = if property.computed {
                             let (Some(paren_start), Some(paren_end_offset)) = (
-                                ctx.find_prev_token_from(property_key_span.start, "["),
-                                ctx.find_next_token_from(property_key_span.end, "]"),
+                                self.ctx.find_prev_token_from(property_key_span.start, "["),
+                                self.ctx.find_next_token_from(property_key_span.end, "]"),
                             ) else {
                                 return fixer.noop();
                             };
-                            ctx.source_range(Span::new(
+                            self.ctx.source_range(Span::new(
                                 paren_start,
                                 property_key_span.end + paren_end_offset + 1,
                             ))
                         } else {
-                            ctx.source_range(property_key_span)
+                            self.ctx.source_range(property_key_span)
                         };
 
-                        let next_token = ctx
+                        let next_token = self
+                            .ctx
                             .find_prev_token_from(func.body.span.start, "=>")
                             .map(|offset| offset + "=>".len() as u32);
                         let Some(arrow_token) = next_token else {
                             return fixer.noop();
                         };
-                        let arrow_body = ctx.source_range(Span::new(
+                        let arrow_body = self.ctx.source_range(Span::new(
                             arrow_token,
                             property.value.without_parentheses().span().end,
                         ));
-                        let old_param_text = ctx.source_range(Span::new(
+                        let old_param_text = self.ctx.source_range(Span::new(
                             func.params.span.start,
                             func.return_type
                                 .as_ref()
@@ -371,15 +341,16 @@ impl ObjectShorthand {
                         ));
                         let should_add_parens = if func.r#async {
                             if let Some(async_token) =
-                                ctx.find_next_token_from(func.span.start, "async")
+                                self.ctx.find_next_token_from(func.span.start, "async")
                             {
                                 if let Some(fist_param) = func.params.items.first() {
-                                    ctx.find_next_token_within(
-                                        func.span.start + async_token,
-                                        fist_param.span.start,
-                                        "(",
-                                    )
-                                    .is_none()
+                                    self.ctx
+                                        .find_next_token_within(
+                                            func.span.start + async_token,
+                                            fist_param.span.start,
+                                            "(",
+                                        )
+                                        .is_none()
                                 } else {
                                     false
                                 }
@@ -388,12 +359,13 @@ impl ObjectShorthand {
                             }
                         } else {
                             if let Some(fist_param) = func.params.items.first() {
-                                ctx.find_next_token_within(
-                                    func.span.start,
-                                    fist_param.span.start,
-                                    "(",
-                                )
-                                .is_none()
+                                self.ctx
+                                    .find_next_token_within(
+                                        func.span.start,
+                                        fist_param.span.start,
+                                        "(",
+                                    )
+                                    .is_none()
                             } else {
                                 false
                             }
@@ -403,8 +375,14 @@ impl ObjectShorthand {
                         } else {
                             old_param_text.to_string()
                         };
-                        let type_param = func.type_parameters.as_ref().map(|t|ctx.source_range(t.span())).unwrap_or("");
-                        let ret = format!("{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}");
+                        let type_param = func
+                            .type_parameters
+                            .as_ref()
+                            .map(|t| self.ctx.source_range(t.span()))
+                            .unwrap_or("");
+                        let ret = format!(
+                            "{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}"
+                        );
                         fixer.replace(property.span, ret)
                     });
                 }
@@ -412,9 +390,9 @@ impl ObjectShorthand {
         }
     }
 
-    fn check_shorthand_properties(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
+    fn check_shorthand_properties(&self, property: &ObjectProperty) {
         if let Some(property_name) = property.key.name() {
-            ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+            self.ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
                 fixer.replace(
                     property.span,
                     property_name.to_string() + ": " + &property_name.to_string(),
@@ -423,8 +401,8 @@ impl ObjectShorthand {
         }
     }
 
-    fn check_longform_properties(&self, property: &ObjectProperty, ctx: &LintContext<'_>) {
-        if self.avoid_quotes && is_property_key_string_literal(property) {
+    fn check_longform_properties(&self, property: &ObjectProperty) {
+        if self.rule.avoid_quotes && is_property_key_string_literal(property) {
             return;
         }
 
@@ -434,13 +412,13 @@ impl ObjectShorthand {
 
         if let Some(property_name) = property.key.name() {
             if property_name == value_identifier.name {
-                if ctx.semantic().has_comments_between(Span::new(
+                if self.ctx.semantic().has_comments_between(Span::new(
                     property.key.span().start,
                     value_identifier.span.end,
                 )) {
-                    ctx.diagnostic(expected_property_shorthand(property.span));
+                    self.ctx.diagnostic(expected_property_shorthand(property.span));
                 } else {
-                    ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
+                    self.ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
                         fixer.replace(property.span, property_name.to_string())
                     });
                 }
@@ -448,11 +426,7 @@ impl ObjectShorthand {
         }
     }
 
-    fn check_consistency(
-        obj_expr: &ObjectExpression,
-        check_redundancy: bool,
-        ctx: &LintContext<'_>,
-    ) {
+    fn check_consistency(&self, obj_expr: &ObjectExpression, check_redundancy: bool) {
         let properties =
             obj_expr.properties.iter().filter_map(|property_kind| match property_kind {
                 ObjectPropertyKind::ObjectProperty(property) => {
@@ -466,15 +440,139 @@ impl ObjectShorthand {
 
             if shorthand_properties.clone().count() != properties.clone().count() {
                 if shorthand_properties.count() > 0 {
-                    ctx.diagnostic(unexpected_mix(obj_expr.span));
+                    self.ctx.diagnostic(unexpected_mix(obj_expr.span));
                 } else if check_redundancy {
                     if properties.clone().all(|p| is_redundant_property(p)) {
-                        ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
+                        self.ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
                     }
                 }
             }
         }
     }
+
+    fn enter_function(&mut self) {
+        self.lexical_scope_stack.push_front(FxHashSet::default());
+    }
+
+    fn exit_function(&mut self) {
+        self.lexical_scope_stack.pop_front();
+    }
+
+    fn report_lexical_identifier(&mut self) {
+        let Some(scope)= self.lexical_scope_stack.iter().nth(0) else {
+            return
+        };
+        scope.iter().for_each(|item| {
+            self.arrows_with_lexical_identifiers.insert(item.clone());
+        });
+    }
+}
+
+impl<'a> Visit<'a> for ObjectShorthandChecker<'a, '_> {
+    fn visit_function(&mut self, it: &oxc_ast::ast::Function<'a>, flags: oxc_semantic::ScopeFlags) {
+        self.enter_function();
+        walk::walk_function(self, it, flags);
+        self.exit_function();
+    }
+
+    fn visit_arrow_function_expression(&mut self, it: &oxc_ast::ast::ArrowFunctionExpression<'a>) {
+        let scope_id = it.scope_id();
+        self.lexical_scope_stack.iter_mut().nth(0).map(|scope| scope.insert(scope_id));
+        walk::walk_arrow_function_expression(self, it);
+        self.lexical_scope_stack.iter_mut().nth(0).map(|scope| scope.remove(&scope_id));
+    }
+
+    fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
+        self.report_lexical_identifier();
+    }
+
+    fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
+        self.report_lexical_identifier();
+    }
+
+    fn visit_meta_property(&mut self, it: &oxc_ast::ast::MetaProperty<'a>) {
+        if it.meta.name == "new" && it.property.name == "target" {
+            self.report_lexical_identifier();
+        }
+    }
+
+    fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
+        if self.arguments_identifiers.contains(&it.reference_id()) {
+            self.report_lexical_identifier();
+        }
+    }
+
+    fn visit_object_expression(&mut self, it: &ObjectExpression<'a>) {
+        if self.rule.apply_consistent {
+            self.check_consistency(it, false);
+        } else if self.rule.apply_consistent_as_needed {
+            self.check_consistency(it, true);
+        }
+        walk::walk_object_expression(self, it);
+    }
+
+    fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
+        walk::walk_object_property(self, it);
+        let property = it;
+        // if let AstKind::ObjectProperty(property) = node.kind() {
+        let is_concise_property = property.shorthand || property.method;
+
+        if !can_property_have_shorthand(property) {
+            return;
+        }
+
+        if is_concise_property {
+            if property.method
+                && (self.rule.apply_never
+                    || self.rule.avoid_quotes && is_property_key_string_literal(property))
+            {
+                // from { x() {} } to { x: function() {} }
+                self.ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+                    let property_key_span = property.key.span();
+                    let key_text_range = if property.computed {
+                        let (Some(paren_start), Some(paren_end_offset)) = (
+                            self.ctx.find_prev_token_from(property_key_span.start, "["),
+                            self.ctx.find_next_token_from(property_key_span.end, "]"),
+                        ) else {
+                            return fixer.noop();
+                        };
+                        Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
+                    } else {
+                        property_key_span
+                    };
+                    let key_text = self.ctx.source_range(key_text_range);
+
+                    let Expression::FunctionExpression(func) =
+                        &property.value.without_parentheses()
+                    else {
+                        return fixer.noop();
+                    };
+                    let function_header = match (func.r#async, func.generator) {
+                        (true, true) => "async function*",
+                        (true, false) => "async function",
+                        (false, true) => "function*",
+                        (false, false) => "function",
+                    };
+
+                    fixer.replace(key_text_range, format!("{key_text}: {function_header}"))
+                });
+            } else if self.rule.apply_never {
+                // from { x } to { x: x }
+                self.check_shorthand_properties(property);
+            }
+        } else if self.rule.apply_to_methods && is_property_value_anonymous_function(property) {
+            // from { x: function() {} }   to { x() {} }
+            // from { [x]: function() {} } to { [x]() {} }
+            // from { x: () => {} }        to { x() {} }
+            // from { [x]: () => {} }      to { [x]() {} }
+            self.check_longform_methods(property);
+        } else if self.rule.apply_to_properties {
+            // from { x: x }   to { x }
+            // from { "x": x } to { x }
+            self.check_longform_properties(property);
+        }
+    }
+
 }
 
 #[derive(Debug, Default, Clone)]
@@ -1168,79 +1266,79 @@ fn test_avoid_explicit_return_arrows() {
             "({ x: () => foo, y() { return; } })",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
-        // (
-        //     "({ x: () => { this; } })",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "function foo() { ({ x: () => { arguments; } }) }",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "
-        //         class Foo extends Bar {
-        //             constructor() {
-        //                 var foo = { x: () => { super(); } };
-        //             }
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "
-        //         class Foo extends Bar {
-        //             baz() {
-        //                 var foo = { x: () => { super.baz(); } };
-        //             }
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "
-        //         function foo() {
-        //             var x = { x: () => { new.target; } };
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "
-        //         function foo() {
-        //             var x = {
-        //                 x: () => {
-        //                     var y = () => { this; };
-        //                 }
-        //             };
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "
-        //         function foo() {
-        //             var x = {
-        //                 x: () => {
-        //                     var y = () => { this; };
-        //                     function foo() { this; }
-        //                 }
-        //             };
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "
-        //         function foo() {
-        //             var x = {
-        //                 x: () => {
-        //                     return { y: () => { this; } };
-        //                 }
-        //             };
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
+        (
+            "({ x: () => { this; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "function foo() { ({ x: () => { arguments; } }) }",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                class Foo extends Bar {
+                    constructor() {
+                        var foo = { x: () => { super(); } };
+                    }
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                class Foo extends Bar {
+                    baz() {
+                        var foo = { x: () => { super.baz(); } };
+                    }
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                function foo() {
+                    var x = { x: () => { new.target; } };
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                function foo() {
+                    var x = {
+                        x: () => {
+                            var y = () => { this; };
+                        }
+                    };
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                function foo() {
+                    var x = {
+                        x: () => {
+                            var y = () => { this; };
+                            function foo() { this; }
+                        }
+                    };
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                function foo() {
+                    var x = {
+                        x: () => {
+                            return { y: () => { this; } };
+                        }
+                    };
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
     ];
 
     let fix = vec![
@@ -1284,11 +1382,11 @@ fn test_avoid_explicit_return_arrows() {
             "({ x({ foo: bar = 1 } = {}) { return; } })",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
-        // (
-        //     "({ x: () => { function foo() { this; } } })",
-        //     "({ x() { function foo() { this; } } })",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
+        (
+            "({ x: () => { function foo() { this; } } })",
+            "({ x() { function foo() { this; } } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
         (
             "({ x: () => { var foo = function() { arguments; } } })",
             "({ x() { var foo = function() { arguments; } } })",
@@ -1370,52 +1468,52 @@ fn test_avoid_explicit_return_arrows() {
             "({ key(arg = () => {}) {} })",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
-        // (
-        //     "
-        //         function foo() {
-        //             var x = {
-        //                 x: () => {
-        //                     this;
-        //                     return { y: () => { foo; } };
-        //                 }
-        //             };
-        //         }
-        //     ",
-        //     "
-        //         function foo() {
-        //             var x = {
-        //                 x: () => {
-        //                     this;
-        //                     return { y() { foo; } };
-        //                 }
-        //             };
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
-        // (
-        //     "
-        //         function foo() {
-        //             var x = {
-        //                 x: () => {
-        //                     ({ y: () => { foo; } });
-        //                     this;
-        //                 }
-        //             };
-        //         }
-        //     ",
-        //     "
-        //         function foo() {
-        //             var x = {
-        //                 x: () => {
-        //                     ({ y() { foo; } });
-        //                     this;
-        //                 }
-        //             };
-        //         }
-        //     ",
-        //     Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        // ),
+        (
+            "
+                function foo() {
+                    var x = {
+                        x: () => {
+                            this;
+                            return { y: () => { foo; } };
+                        }
+                    };
+                }
+            ",
+            "
+                function foo() {
+                    var x = {
+                        x: () => {
+                            this;
+                            return { y() { foo; } };
+                        }
+                    };
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
+                function foo() {
+                    var x = {
+                        x: () => {
+                            ({ y: () => { foo; } });
+                            this;
+                        }
+                    };
+                }
+            ",
+            "
+                function foo() {
+                    var x = {
+                        x: () => {
+                            ({ y() { foo; } });
+                            this;
+                        }
+                    };
+                }
+            ",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
         (
             "({ a: (() => { return foo; }) })",
             "({ a() { return foo; } })",
