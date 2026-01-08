@@ -7,7 +7,7 @@ working directory: fixtures/auto_config_parse_error
 ----------
 Failed to parse oxlint configuration file.
 
-  x Failed to parse eslint config <cwd>/fixtures/auto_config_parse_error/.oxlintrc.json.
+  x Failed to parse oxlint config <cwd>/fixtures/auto_config_parse_error/.oxlintrc.json.
   | expected `:` at line 2 column 11
 
 ----------

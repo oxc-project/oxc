@@ -4,7 +4,8 @@ import { Executable, MessageType, ShowMessageParams } from "vscode-languageclien
 export function runExecutable(path: string, nodePath?: string, tsgolintPath?: string): Executable {
   const serverEnv: Record<string, string> = {
     ...process.env,
-    RUST_LOG: process.env.RUST_LOG || "info",
+    RUST_LOG: process.env.RUST_LOG || "info", // Keep for backward compatibility for a while
+    OXC_LOG: process.env.OXC_LOG || "info",
   };
   if (nodePath) {
     serverEnv.PATH = `${nodePath}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}`;

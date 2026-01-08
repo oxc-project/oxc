@@ -34,7 +34,7 @@ Any deviation would be considered a bug.
 [@oxc-project/types](https://www.npmjs.com/package/@oxc-project/types) can be used. For example:
 
 ```typescript
-import { Statement } from '@oxc-project/types';
+import { Statement } from "@oxc-project/types";
 ```
 
 ### Visitor
@@ -44,7 +44,7 @@ An AST visitor is provided. See example below.
 This package also exports visitor keys which can be used with any other ESTree walker.
 
 ```js
-import { visitorKeys } from 'oxc-parser';
+import { visitorKeys } from "oxc-parser";
 ```
 
 ### Fast Mode
@@ -113,12 +113,12 @@ Use `parseSync` for synchronous parsing. Use `parse` for asynchronous parsing, w
 ### Example
 
 ```javascript
-import { parseSync, Visitor } from 'oxc-parser';
+import { parseSync, Visitor } from "oxc-parser";
 
-const code = 'const url: String = /* 🤨 */ import.meta.url;';
+const code = "const url: String = /* 🤨 */ import.meta.url;";
 
 // File extension is used to determine which dialect to parse source as.
-const filename = 'test.tsx';
+const filename = "test.tsx";
 
 const result = parseSync(filename, code);
 // Or use async version: const result = await parse(filename, code);
@@ -139,7 +139,7 @@ const visitor = new Visitor({
   VariableDeclaration(decl) {
     visitations.push(`enter ${decl.kind}`);
   },
-  'VariableDeclaration:exit'(decl) {
+  "VariableDeclaration:exit"(decl) {
     visitations.push(`exit ${decl.kind}`);
   },
   Identifier(ident) {

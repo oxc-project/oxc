@@ -1325,6 +1325,41 @@ impl<'a> BindingPattern<'a> {
         idents
     }
 
+    /// Returns `true` if all binding identifiers in this pattern satisfy the given predicate.
+    ///
+    /// This method is more efficient than [`BindingPattern::get_binding_identifiers`] followed by [`Iterator::all`]
+    /// when you only need to check a condition, as it does not allocate a `Vec` and can
+    /// short-circuit on the first `false` result.
+    ///
+    /// If the pattern contains no binding identifiers, returns `true`.
+    pub fn all_binding_identifiers<F>(&self, predicate: &mut F) -> bool
+    where
+        F: FnMut(&BindingIdentifier<'a>) -> bool,
+    {
+        match self {
+            Self::BindingIdentifier(ident) => predicate(ident),
+            Self::AssignmentPattern(assign) => assign.left.all_binding_identifiers(predicate),
+            Self::ArrayPattern(pattern) => {
+                pattern
+                    .elements
+                    .iter()
+                    .filter_map(|item| item.as_ref())
+                    .all(|item| item.all_binding_identifiers(predicate))
+                    && pattern
+                        .rest
+                        .as_ref()
+                        .is_none_or(|rest| rest.argument.all_binding_identifiers(predicate))
+            }
+            Self::ObjectPattern(pattern) => {
+                pattern.properties.iter().all(|item| item.value.all_binding_identifiers(predicate))
+                    && pattern
+                        .rest
+                        .as_ref()
+                        .is_none_or(|rest| rest.argument.all_binding_identifiers(predicate))
+            }
+        }
+    }
+
     /// Returns `true` if this binding pattern is destructuring.
     ///
     /// ## Example

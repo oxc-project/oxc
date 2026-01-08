@@ -19,6 +19,11 @@ pub trait ToolBuilder: Send + Sync {
 
     /// Build a boxed instance of the tool for the given root URI and options.
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool>;
+
+    /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
+    fn shutdown(&self, _root_uri: &Uri) {
+        // Default implementation does nothing.
+    }
 }
 
 pub type DiagnosticResult = Result<Vec<(Uri, Vec<Diagnostic>)>, String>;
@@ -88,9 +93,12 @@ pub trait Tool: Send + Sync {
     /// If `content` is `None`, the tool should read the content from the file system.
     /// Returns a vector of `TextEdit` representing the formatting changes.
     ///
-    /// Not all tools will implement formatting, so the default implementation returns `None`.
-    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Option<Vec<TextEdit>> {
-        None
+    /// Not all tools will implement formatting, so the default implementation returns empty vector.
+    ///
+    /// # Errors
+    /// Return [`Err`] when an error occurs, ignoring formatting should return [`Ok`] with an empty vector.
+    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Result<Vec<TextEdit>, String> {
+        Ok(Vec::new())
     }
 
     /// Run diagnostics on the content of the given URI.
@@ -127,11 +135,6 @@ pub trait Tool: Send + Sync {
 
     /// Remove internal cache for the given URI, if any.
     fn remove_uri_cache(&self, _uri: &Uri) {
-        // Default implementation does nothing.
-    }
-
-    /// Shutdown hook for the tool. Implementors may perform any necessary cleanup here.
-    fn shutdown(&self) {
         // Default implementation does nothing.
     }
 }

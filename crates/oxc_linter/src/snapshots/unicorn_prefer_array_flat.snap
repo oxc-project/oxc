@@ -10,8 +10,8 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
- 1 │ (array?.flatMap)?.(x => x)
-   · ──────────────────────────
+ 1 │ array?.flatMap(x => x)
+   · ──────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 
@@ -37,9 +37,23 @@ source: crates/oxc_linter/src/tester.rs
   help: Call `.flat()` on the array instead.
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:1:1]
+ 1 │ array?.reduce((a, b) => a.concat(b), [])
+   · ────────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:22]
  1 │ function foo(){return[].reduce((a, b) => a.concat(b), [])}
    ·                      ────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:1:22]
+ 1 │ function foo(){return[]?.reduce((a, b) => a.concat(b), [])}
+   ·                      ─────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 
@@ -373,9 +387,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Call `.flat()` on the array instead.
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
-   ╭─[prefer_array_flat.tsx:1:1]
- 1 │ [].concat.apply([], array)
-   · ──────────────────────────
+   ╭─[prefer_array_flat.tsx:1:5]
+ 1 │ /**/[].concat.apply([], array)
+   ·     ──────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 
@@ -383,6 +397,30 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_array_flat.tsx:1:1]
  1 │ Array.prototype.concat.apply([], array)
    · ───────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.apply([], [array].concat(array))
+   ·             ───────────────────────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.apply([], +1)
+   ·             ────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.call([], +1)
+   ·             ───────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 
@@ -404,6 +442,70 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_array_flat.tsx:1:29]
  1 │ async function a() { return [].concat(await getArray()); }
    ·                             ───────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.apply([], 1)
+   ·             ───────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.call([], 1)
+   ·             ──────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.apply([], 1.)
+   ·             ────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.call([], 1.)
+   ·             ───────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.apply([], .1)
+   ·             ────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.call([], .1)
+   ·             ───────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.apply([], 1.0)
+   ·             ─────────────────────────────────────
+   ╰────
+  help: Call `.flat()` on the array instead.
+
+  ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
+   ╭─[prefer_array_flat.tsx:2:4]
+ 1 │ before()
+ 2 │             Array.prototype.concat.call([], 1.0)
+   ·             ────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
 

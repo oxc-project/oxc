@@ -98,7 +98,8 @@ fn test() {
         "import Default, { mod } from 'mod'",
         "import { Named } from 'mod'",
         "import type { Named } from 'mod'",
-        "import type Default, { Named } from 'mod'",
+        // "import type Default, { Named } from 'mod'", ts error 1363
+        "import type Default from 'mod'",
         "import type * as Namespace from 'mod'",
         "import * as Namespace from 'mod'",
         r#"
@@ -124,9 +125,9 @@ fn test() {
         ("import a,            {         } from 'mod'", "import a from 'mod'"),
         ("import a,      {    }       from 'mod'", "import a from 'mod'"),
         ("import a,      {    }       from'mod'", "import a from'mod'"),
-        ("import type a,      {    }       from'mod'", "import type a from'mod'"),
+        // ("import type a,      {    }       from'mod'", "import type a from'mod'"),
         ("import a,{} from 'mod'", "import a from 'mod'"),
-        ("import type a,{} from 'foo'", "import type a from 'foo'"),
+        // ("import type a,{} from 'foo'", "import type a from 'foo'"),
         ("import type {} from 'foo'", ""),
         ("import{}from ''", ""),
         ("import Default, /* from */ {} from 'mod'", "import Default from 'mod'"),

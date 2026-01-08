@@ -32,3 +32,6 @@ export function withAny(a: any = 1, b: string): void { }
 export function withUnknown(a: unknown = 1, b: string): void { }
 
 export function withTypeAssertion(a = /regular-repression-cannot-infer/ as any): void { }
+
+export function restWithDefault(...[value, options = {}]: [string, object]): void { }
+export function restWithNestedDefault(...[a, { b = 1, c = 2 }]: [number, { b: number, c: number }]): void { }
