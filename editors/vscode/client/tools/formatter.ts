@@ -180,11 +180,10 @@ export default class FormatterTool implements ToolInterface {
       "mkd",
       "mkdn",
       "mkdown",
+      "mdx",
       "ronn",
       "scd",
       "workbook",
-      // MDX
-      "mdx",
       // YAML
       "yml",
       "mir",
