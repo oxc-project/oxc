@@ -285,6 +285,7 @@
   "activationEvents": [
     "onLanguage:astro",
     "onLanguage:css",
+    "onLanguage:less",
     "onLanguage:handlebars",
     "onLanguage:html",
     "onLanguage:javascript",
@@ -292,6 +293,7 @@
     "onLanguage:json",
     "onLanguage:jsonc",
     "onLanguage:markdown",
+    "onLanguage:scss",
     "onLanguage:svelte",
     "onLanguage:toml",
     "onLanguage:typescript",

@@ -130,6 +130,8 @@ export default class FormatterTool implements ToolInterface {
       "webmanifest",
       "yy",
       "yyp",
+      // json5
+      "json5",
       // JSONC
       "jsonc",
       "code-snippets",
@@ -155,11 +157,21 @@ export default class FormatterTool implements ToolInterface {
       "inc",
       "xht",
       "xhtml",
+      // Vue
+      "vue",
+      // Angular
+      ".component.html",
+      // mjml
+      "mjml",
       // CSS
       "css",
       "wxss",
       "pcss",
       "postcss",
+      // less
+      "less",
+      // scss
+      "scss",
       // GraphQL
       "graphql",
       "gql",
@@ -179,6 +191,8 @@ export default class FormatterTool implements ToolInterface {
       "ronn",
       "scd",
       "workbook",
+      // MDX
+      "mdx",
       // YAML
       "yml",
       "mir",
@@ -188,6 +202,7 @@ export default class FormatterTool implements ToolInterface {
       "syntax",
       "yaml",
       "yaml-tmlanguage",
+      // Vue
       // https://github.com/oxc-project/oxc/pull/17113/
       // TOML
       "toml",
