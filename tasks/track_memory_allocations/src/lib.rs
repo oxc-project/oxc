@@ -128,6 +128,7 @@ pub fn run() -> Result<(), io::Error> {
     let table_header = format_table_header(fixture_width, width);
 
     let mut parser_out = table_header.clone();
+    let mut semantic_out = table_header.clone();
     let mut minifier_out = table_header;
 
     let mut allocator = Allocator::default();
@@ -163,12 +164,13 @@ pub fn run() -> Result<(), io::Error> {
         allocator.reset();
         reset_global_allocs();
 
-        let mut parsed = Parser::new(&allocator, &file.source_text, file.source_type)
-            .with_options(parse_options)
-            .parse();
-        assert!(parsed.errors.is_empty());
-
-        let parser_stats = record_stats(&allocator);
+        let (mut parsed, parser_stats) = record_stats_in(&allocator, || {
+            let parsed = Parser::new(&allocator, &file.source_text, file.source_type)
+                .with_options(parse_options)
+                .parse();
+            assert!(parsed.errors.is_empty());
+            parsed
+        });
 
         parser_out.push_str(&format_table_row(
             file.file_name.as_str(),
@@ -178,18 +180,27 @@ pub fn run() -> Result<(), io::Error> {
             width,
         ));
 
+        let (scoping, semantic_stats) = record_stats_in(&allocator, || {
+            SemanticBuilder::new().build(&parsed.program).semantic.into_scoping()
+        });
+
+        semantic_out.push_str(&format_table_row(
+            file.file_name.as_str(),
+            file.source_text.len(),
+            &semantic_stats,
+            fixture_width,
+            width,
+        ));
+
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
-        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
         let transform_options = TransformOptions::from_target("esnext").unwrap();
         let _ =
             Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
                 .build_with_scoping(scoping, &mut parsed.program);
 
-        let before_minify_stats = record_stats(&allocator);
-
-        Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
-
-        let minifier_stats = record_stats_diff(&allocator, &before_minify_stats);
+        let ((), minifier_stats) = record_stats_in(&allocator, || {
+            Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
+        });
 
         minifier_out.push_str(&format_table_row(
             file.file_name.as_str(),
@@ -201,6 +212,7 @@ pub fn run() -> Result<(), io::Error> {
     }
 
     write_snapshot("tasks/track_memory_allocations/allocs_parser.snap", &parser_out)?;
+    write_snapshot("tasks/track_memory_allocations/allocs_semantic.snap", &semantic_out)?;
     write_snapshot("tasks/track_memory_allocations/allocs_minifier.snap", &minifier_out)?;
 
     Ok(())
@@ -229,6 +241,18 @@ fn record_stats_diff(allocator: &Allocator, prev: &AllocatorStats) -> AllocatorS
         arena_allocs: stats.arena_allocs.saturating_sub(prev.arena_allocs),
         arena_reallocs: stats.arena_reallocs.saturating_sub(prev.arena_reallocs),
     }
+}
+
+/// Records the allocations stats before and after the given closure is executed.
+fn record_stats_in<F, R>(allocator: &Allocator, f: F) -> (R, AllocatorStats)
+where
+    F: FnOnce() -> R,
+{
+    let before_stats = record_stats(allocator);
+    let result = f();
+    let diff_stats = record_stats_diff(allocator, &before_stats);
+
+    (result, diff_stats)
 }
 
 /// Formats a single row of the allocator stats table

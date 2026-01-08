@@ -1925,6 +1925,7 @@ dependencies = [
  "cow-utils",
  "insta",
  "natord",
+ "nodejs-built-in-modules",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
@@ -2304,6 +2305,7 @@ dependencies = [
  "rustc-hash",
  "self_cell",
  "serde_json",
+ "smallvec",
 ]
 
 [[package]]

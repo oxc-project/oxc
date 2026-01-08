@@ -7,6 +7,15 @@ import type { Options, Plugin } from "prettier";
 // Anyway, we keep lazy loading for now to minimize initial load time.
 let prettierCache: typeof import("prettier");
 
+async function loadPrettier(): Promise<typeof import("prettier")> {
+  if (prettierCache) return prettierCache;
+
+  prettierCache = await import("prettier");
+  return prettierCache;
+}
+
+// ---
+
 /**
  * TODO: Plugins support
  * - Read `plugins` field
@@ -59,17 +68,17 @@ export async function formatEmbeddedCode({
   // Unknown tag, return original code
   if (!parserName) return code;
 
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
+  const prettier = await loadPrettier();
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   options.parser = parserName;
-  return prettierCache
+  return prettier
     .format(code, options)
     .then((formatted) => formatted.trimEnd())
     .catch(() => code);
 }
+
+// ---
 
 export type FormatFileParam = {
   code: string;
@@ -89,9 +98,7 @@ export async function formatFile({
   fileName,
   options,
 }: FormatFileParam): Promise<string> {
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
+  const prettier = await loadPrettier();
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   // We specify `parser` to skip parser inference for performance
@@ -102,7 +109,7 @@ export async function formatFile({
   // Enable Tailwind CSS plugin for non-JS files when experimentalTailwindcss is set
   await setupTailwindPlugin(options);
 
-  return prettierCache.format(code, options);
+  return prettier.format(code, options);
 }
 
 // ---
@@ -114,7 +121,16 @@ import type { TransformerEnv } from "prettier-plugin-tailwindcss";
 import type { TailwindcssOptions } from "../index";
 
 // Shared cache for prettier-plugin-tailwindcss
-let tailwindPlugin: typeof import("prettier-plugin-tailwindcss") | null = null;
+let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
+
+async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tailwindcss")> {
+  if (tailwindPluginCache) return tailwindPluginCache;
+
+  tailwindPluginCache = await import("prettier-plugin-tailwindcss");
+  return tailwindPluginCache;
+}
+
+// ---
 
 // Oxfmt to Prettier option name mapping (adds `tailwind` prefix)
 export const TAILWIND_OPTION_MAPPING: Record<string, string> = {
@@ -125,22 +141,6 @@ export const TAILWIND_OPTION_MAPPING: Record<string, string> = {
   preserveWhitespace: "tailwindPreserveWhitespace",
   preserveDuplicates: "tailwindPreserveDuplicates",
 };
-
-/**
- * Load prettier-plugin-tailwindcss lazily.
- * @returns The plugin module or null if not available.
- */
-async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tailwindcss") | null> {
-  if (tailwindPlugin) return tailwindPlugin;
-
-  try {
-    tailwindPlugin = await import("prettier-plugin-tailwindcss");
-    return tailwindPlugin;
-  } catch {
-    // Plugin not available
-    return null;
-  }
-}
 
 /**
  * Map Oxfmt Tailwind options to Prettier format.
@@ -157,6 +157,8 @@ function mapTailwindOptions(
   }
 }
 
+// ---
+
 /**
  * Set up Tailwind CSS plugin for Prettier when experimentalTailwindcss is enabled.
  * Loads the plugin lazily and maps Oxfmt config options to Prettier format.
@@ -167,13 +169,12 @@ async function setupTailwindPlugin(
   const tailwindcss = options.experimentalTailwindcss;
   if (!tailwindcss) return;
 
-  const plugin = await loadTailwindPlugin();
-  if (plugin) {
-    // Cast to `any` because the module type is not compatible with Prettier's plugin type
-    options.plugins = options.plugins || [];
-    options.plugins.push(plugin as Plugin);
-    mapTailwindOptions(tailwindcss, options as Record<string, unknown>);
-  }
+  const tailwindPlugin = await loadTailwindPlugin();
+
+  // Cast to `any` because the module type is not compatible with Prettier's plugin type
+  options.plugins = options.plugins || [];
+  options.plugins.push(tailwindPlugin as Plugin);
+  mapTailwindOptions(tailwindcss, options as Record<string, unknown>);
 
   // Clean up experimentalTailwindcss from options to avoid passing it to Prettier
   delete options.experimentalTailwindcss;
@@ -197,15 +198,14 @@ export async function sortTailwindClasses({
   classes,
   options = {},
 }: SortTailwindClassesArgs): Promise<string[]> {
-  const plugin = await loadTailwindPlugin();
-  if (!plugin) return classes;
+  const tailwindPlugin = await loadTailwindPlugin();
 
   const tailwindcss = options.experimentalTailwindcss || {};
   const configOptions: Record<string, unknown> = { filepath, ...options };
   mapTailwindOptions(tailwindcss, configOptions);
 
   // Load Tailwind context
-  const tailwindContext = await plugin.getTailwindConfig(configOptions);
+  const tailwindContext = await tailwindPlugin.getTailwindConfig(configOptions);
   if (!tailwindContext) return classes;
 
   // Create transformer env with options
@@ -217,7 +217,7 @@ export async function sortTailwindClasses({
   // Sort all classes
   return classes.map((classStr) => {
     try {
-      return plugin.sortClasses(classStr, { env });
+      return tailwindPlugin.sortClasses(classStr, { env });
     } catch {
       // Failed to sort, return original
       return classStr;

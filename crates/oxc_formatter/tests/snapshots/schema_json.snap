@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_formatter/tests/schema.rs
-assertion_line: 17
 expression: json
 ---
 {
@@ -33,8 +32,7 @@ expression: json
     "ObjectWrapConfig": {
       "enum": [
         "preserve",
-        "collapse",
-        "always"
+        "collapse"
       ],
       "type": "string"
     },
@@ -359,8 +357,8 @@ expression: json
           "type": "null"
         }
       ],
-      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`.",
-      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`."
+      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)",
+      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)"
     },
     "printWidth": {
       "description": "The line length that the printer will wrap on. (Default: `100`)",

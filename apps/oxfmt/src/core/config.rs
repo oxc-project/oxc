@@ -47,10 +47,11 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
 
 /// Resolved options for each file type.
 /// Each variant contains only the options needed for that formatter.
+#[derive(Debug)]
 pub enum ResolvedOptions {
     /// For JS/TS files formatted by oxc_formatter.
     OxcFormatter {
-        format_options: FormatOptions,
+        format_options: Box<FormatOptions>,
         /// For embedded language formatting (e.g., CSS in template literals)
         external_options: Value,
         insert_final_newline: bool,
@@ -198,7 +199,7 @@ impl ConfigResolver {
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
-                format_options,
+                format_options: Box::new(format_options),
                 external_options,
                 insert_final_newline,
             },

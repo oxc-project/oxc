@@ -15,7 +15,7 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::{IsGlobalReference, builder::SemanticBuilder, diagnostics};
+use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
 
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
@@ -57,21 +57,46 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                         true
                     };
 
-                is_duplicate = if ctx.source_type.is_typescript() {
+                // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
+                // unless the name is used once for a getter and once for a setter and in no other entries,
+                // and the getter and setter are either both static or both non-static.
+                // For TypeScript, public elements with different static status are allowed (overloads, etc.),
+                // but private identifiers follow the same rules as JavaScript - static and instance
+                // elements cannot share the same private name.
+                is_duplicate = if element.is_private {
+                    is_duplicate
+                } else if ctx.source_type.is_typescript() {
                     element.r#static == prev_element.r#static && is_duplicate
                 } else {
-                    // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
-                    // unless the name is used once for a getter and once for a setter and in no other entries,
-                    // and the getter and setter are either both static or both non-static.
-                    element.is_private && is_duplicate
+                    false
                 };
 
                 if is_duplicate {
-                    ctx.error(diagnostics::redeclaration(
-                        &element.name,
-                        prev_element.span,
-                        element.span,
-                    ));
+                    #[cold]
+                    fn report_duplicate_class_element(
+                        element: &Element,
+                        prev_element: &Element,
+                        ctx: &SemanticBuilder<'_>,
+                    ) {
+                        if element.is_private
+                            && element.r#static != prev_element.r#static
+                            && ctx.source_type.is_typescript()
+                        {
+                            ctx.error(diagnostics::static_and_instance_private_identifier(
+                                &element.name,
+                                prev_element.span,
+                                element.span,
+                            ));
+                        } else {
+                            ctx.error(diagnostics::redeclaration(
+                                &element.name,
+                                prev_element.span,
+                                element.span,
+                            ));
+                        }
+                    }
+
+                    report_duplicate_class_element(element, prev_element, ctx);
                 }
             }
         }

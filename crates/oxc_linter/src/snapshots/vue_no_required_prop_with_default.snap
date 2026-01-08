@@ -102,6 +102,24 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
 
+  ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "a" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:19]
+ 3 │                       interface TestPropType {
+ 4 │                         readonly 'a'
+   ·                         ────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
+  ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "a" should be optional.
+   ╭─[no_required_prop_with_default.tsx:4:19]
+ 3 │                       interface TestPropType {
+ 4 │                         readonly '\u0061'
+   ·                         ─────────────────
+ 5 │                         age?: number
+   ╰────
+  help: Remove the `required: true` option, or drop the `required` key entirely to make this prop optional.
+
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
    ╭─[no_required_prop_with_default.tsx:5:19]
  4 │                           props: {

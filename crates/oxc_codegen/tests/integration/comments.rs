@@ -510,6 +510,13 @@ delete /* @__PURE__ */ (() => {})();",
             "const Foo = /* @__PURE__ */ (() => {})()<X>",
             "const Foo = /* @__PURE__ */ <Foo>(() => {})()!",
             "const Foo = /* @__PURE__ */ <Foo>(() => {})()! as X satisfies Y",
+            // https://github.com/oxc-project/oxc/issues/17670 - annotation before parenthesized arrow function
+            r"/* @__NO_SIDE_EFFECTS__ */ ((options, extraOptions) => {
+  return defineCustomElement(options, extraOptions, hydrate);
+})",
+            r"/* @__NO_SIDE_EFFECTS__ */ ((x) => x)",
+            r"/* @__NO_SIDE_EFFECTS__ */ (function() {})",
+            r"/* @__NO_SIDE_EFFECTS__ */ (function foo() {})",
         ];
 
         snapshot("pure_comments", &cases);

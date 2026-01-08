@@ -38,7 +38,7 @@ fn get_formatter_options_list() -> [FormatOptions; 3] {
             bracket_spacing: BracketSpacing::from(false),
             bracket_same_line: BracketSameLine::from(false),
             attribute_position: AttributePosition::Multiline,
-            expand: Expand::Always,
+            expand: Expand::Never,
             ..Default::default()
         },
         // Different from above two options
@@ -48,7 +48,6 @@ fn get_formatter_options_list() -> [FormatOptions; 3] {
             line_ending: LineEnding::Lf,
             quote_properties: QuoteProperties::Preserve,
             trailing_commas: TrailingCommas::None,
-            expand: Expand::Never,
             ..Default::default()
         },
     ]

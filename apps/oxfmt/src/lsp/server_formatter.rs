@@ -2,28 +2,35 @@ use std::path::{Path, PathBuf};
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 use tower_lsp_server::ls_types::{Pattern, Position, Range, ServerCapabilities, TextEdit, Uri};
-use tracing::{debug, warn};
+use tracing::{debug, error, warn};
 
-use oxc_allocator::Allocator;
 use oxc_data_structures::rope::{Rope, get_line_column};
-use oxc_formatter::{
-    Formatter, enable_jsx_source_type, get_parse_options, get_supported_source_type,
-};
 use oxc_language_server::{Capabilities, Tool, ToolBuilder, ToolRestartChanges};
-use oxc_parser::Parser;
 
 use crate::core::{
-    ConfigResolver, FormatFileStrategy, ResolvedOptions, resolve_editorconfig_path,
-    resolve_oxfmtrc_path, utils,
+    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
+    resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
 
-pub struct ServerFormatterBuilder;
+pub struct ServerFormatterBuilder {
+    external_formatter: ExternalFormatter,
+}
 
 impl ServerFormatterBuilder {
+    pub fn new(external_formatter: ExternalFormatter) -> Self {
+        Self { external_formatter }
+    }
+
+    /// Create a dummy `ServerFormatterBuilder` for testing.
+    #[cfg(test)]
+    pub fn dummy() -> Self {
+        Self { external_formatter: ExternalFormatter::dummy() }
+    }
+
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
+    pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerFormatter {
         let options = match serde_json::from_value::<LSPFormatOptions>(options) {
             Ok(opts) => opts,
             Err(err) => {
@@ -55,7 +62,19 @@ impl ServerFormatterBuilder {
             }
         };
 
-        ServerFormatter::new(config_resolver, gitignore_glob)
+        let num_of_threads = 1; // Single threaded for LSP
+        // Use `block_in_place()` to avoid nested async runtime access
+        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
+            // TODO: Plugins support
+            Ok(_) => {}
+            Err(err) => {
+                error!("Failed to setup external formatter.\n{err}\n");
+            }
+        }
+        let source_formatter = SourceFormatter::new(num_of_threads)
+            .with_external_formatter(Some(self.external_formatter.clone()));
+
+        ServerFormatter::new(source_formatter, config_resolver, gitignore_glob)
     }
 }
 
@@ -68,8 +87,9 @@ impl ToolBuilder for ServerFormatterBuilder {
         capabilities.document_formatting_provider =
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
     }
+
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(ServerFormatterBuilder::build(root_uri, options))
+        Box::new(self.build(root_uri, options))
     }
 }
 
@@ -128,7 +148,11 @@ impl ServerFormatterBuilder {
         builder.build().map_err(|_| "Failed to build ignore globs".to_string())
     }
 }
+
+// ---
+
 pub struct ServerFormatter {
+    source_formatter: SourceFormatter,
     config_resolver: ConfigResolver,
     gitignore_glob: Option<Gitignore>,
 }
@@ -137,6 +161,7 @@ impl Tool for ServerFormatter {
     fn name(&self) -> &'static str {
         "formatter"
     }
+
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     fn handle_configuration_change(
@@ -226,8 +251,9 @@ impl Tool for ServerFormatter {
             return Ok(Vec::new());
         }
 
-        let Some(source_type) = get_supported_source_type(&path).map(enable_jsx_source_type) else {
-            debug!("Unsupported source type for formatting: {}", path.display());
+        // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
+        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
+            debug!("Unsupported file type for formatting: {}", path.display());
             return Ok(Vec::new());
         };
         let source_text = match content {
@@ -237,53 +263,50 @@ impl Tool for ServerFormatter {
             }
         };
 
-        // Create `FormatFileStrategy` for config resolution
-        let strategy = FormatFileStrategy::OxcFormatter { path: path.to_path_buf(), source_type };
+        // Resolve options for this file
+        let resolved_options = self.config_resolver.resolve(&strategy);
+        debug!("resolved_options = {resolved_options:?}");
 
-        let resolved = self.config_resolver.resolve(&strategy);
-        let ResolvedOptions::OxcFormatter { format_options, .. } = resolved else {
-            unreachable!("Strategy is OxcFormatter, so resolved should also be OxcFormatter");
-        };
+        let result = tokio::task::block_in_place(|| {
+            self.source_formatter.format(&strategy, source_text, resolved_options)
+        });
 
-        debug!("format_options = {format_options:?}");
-        // debug!("oxfmt_options = {oxfmt_options:?}");
+        // Handle result
+        match result {
+            FormatResult::Success { code, is_changed } => {
+                if !is_changed {
+                    return Ok(vec![]);
+                }
 
-        let allocator = Allocator::new();
-        let ret = Parser::new(&allocator, source_text, source_type)
-            .with_options(get_parse_options())
-            .parse();
+                let (start, end, replacement) = compute_minimal_text_edit(source_text, &code);
+                let rope = Rope::from(source_text);
+                let (start_line, start_character) = get_line_column(&rope, start, source_text);
+                let (end_line, end_character) = get_line_column(&rope, end, source_text);
 
-        if !ret.errors.is_empty() {
-            // Parser errors should not be returned to the user.
-            // The user probably wanted to format while typing incomplete code.
-            return Ok(Vec::new());
+                Ok(vec![TextEdit::new(
+                    Range::new(
+                        Position::new(start_line, start_character),
+                        Position::new(end_line, end_character),
+                    ),
+                    replacement.to_string(),
+                )])
+            }
+            FormatResult::Error(_) => {
+                // Errors should not be returned to the user.
+                // The user probably wanted to format while typing incomplete code.
+                Ok(Vec::new())
+            }
         }
-
-        let code = Formatter::new(&allocator, format_options).build(&ret.program);
-
-        // nothing has changed
-        if code == *source_text {
-            return Ok(vec![]);
-        }
-
-        let (start, end, replacement) = compute_minimal_text_edit(source_text, &code);
-        let rope = Rope::from(source_text);
-        let (start_line, start_character) = get_line_column(&rope, start, source_text);
-        let (end_line, end_character) = get_line_column(&rope, end, source_text);
-
-        Ok(vec![TextEdit::new(
-            Range::new(
-                Position::new(start_line, start_character),
-                Position::new(end_line, end_character),
-            ),
-            replacement.to_string(),
-        )])
     }
 }
 
 impl ServerFormatter {
-    pub fn new(config_resolver: ConfigResolver, gitignore_glob: Option<Gitignore>) -> Self {
-        Self { config_resolver, gitignore_glob }
+    pub fn new(
+        source_formatter: SourceFormatter,
+        config_resolver: ConfigResolver,
+        gitignore_glob: Option<Gitignore>,
+    ) -> Self {
+        Self { source_formatter, config_resolver, gitignore_glob }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {
@@ -298,6 +321,8 @@ impl ServerFormatter {
         }
     }
 }
+
+// ---
 
 /// Returns the minimal text edit (start, end, replacement) to transform `source_text` into `formatted_text`
 #[expect(clippy::cast_possible_truncation)]
@@ -351,6 +376,8 @@ fn load_ignore_paths(cwd: &Path) -> Vec<PathBuf> {
         .collect::<Vec<_>>()
 }
 
+// ---
+
 #[cfg(test)]
 mod tests_builder {
     use crate::lsp::server_formatter::ServerFormatterBuilder;
@@ -360,7 +387,7 @@ mod tests_builder {
     fn test_server_capabilities() {
         use tower_lsp_server::ls_types::{OneOf, ServerCapabilities};
 
-        let builder = ServerFormatterBuilder;
+        let builder = ServerFormatterBuilder::dummy();
         let mut capabilities = ServerCapabilities::default();
 
         builder.server_capabilities(&mut capabilities, &Capabilities::default());

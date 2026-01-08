@@ -61,7 +61,7 @@ impl SourceFormatter {
                     source_text,
                     path,
                     *source_type,
-                    format_options,
+                    *format_options,
                     external_options,
                 ),
                 insert_final_newline,

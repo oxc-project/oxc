@@ -5,7 +5,6 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/set-get-accessor.ts
 ```
 ==================== .D.TS ====================
 
-// Correct
 declare class Cls {
 	get a(): number;
 	set a(v: number);
@@ -17,27 +16,22 @@ declare class Cls {
 	private accessor e;
 	private static accessor f;
 }
-// Incorrect
 declare class ClsBad {
 	get a();
 	set a(v);
 }
-/// Infer type from the function body of the getter
 declare class GlobalSymbol1 {
 	set [Symbol.toStringTag](v: string);
 	get [Symbol.toStringTag](): string;
 }
-// Infer type from the parameter type of the setter
 declare class GlobalSymbol2 {
 	set [Symbol.toStringTag](v: number);
 	get [Symbol.toStringTag](): number;
 }
-// Infer type from the parameter type of the setter
 declare class GlobalSymbol3 {
 	set [Symbol.toStringTag](v: number);
 	get [Symbol.toStringTag](): string;
 }
-// Cannot infer type from the function body of the getter
 declare class GlobalSymbol4 {
 	set [Symbol.toStringTag](v);
 	get [Symbol.toStringTag]();

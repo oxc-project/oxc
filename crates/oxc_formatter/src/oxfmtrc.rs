@@ -64,7 +64,6 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
     /// How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
-    /// NOTE: In addition to Prettier's `"preserve"` and `"collapse"`, we also support `"always"`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub object_wrap: Option<ObjectWrapConfig>,
     /// Put each attribute on a new line in JSX. (Default: `false`)
@@ -147,7 +146,6 @@ pub enum ArrowParensConfig {
 pub enum ObjectWrapConfig {
     Preserve,
     Collapse,
-    Always,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -486,8 +484,6 @@ impl Oxfmtrc {
             format_options.expand = match object_wrap {
                 ObjectWrapConfig::Preserve => Expand::Auto,
                 ObjectWrapConfig::Collapse => Expand::Never,
-                // NOTE: Our own extension
-                ObjectWrapConfig::Always => Expand::Always,
             };
         }
 
@@ -675,11 +671,10 @@ impl Oxfmtrc {
         );
 
         // [Prettier] objectWrap: "preserve" | "collapse"
-        // NOTE: "always" is our extension and not supported by Prettier, fallback to "preserve" for now
         obj.insert(
             "objectWrap".to_string(),
             Value::from(match options.expand {
-                Expand::Auto | Expand::Always => "preserve",
+                Expand::Auto => "preserve",
                 Expand::Never => "collapse",
             }),
         );
@@ -873,11 +868,6 @@ mod tests {
         let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
         let (format_options, _) = config.into_options().unwrap();
         assert_eq!(format_options.expand, Expand::Never);
-
-        // Test "always" remains unchanged
-        let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "always"}"#).unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        assert_eq!(format_options.expand, Expand::Always);
     }
 
     #[test]
