@@ -206,7 +206,9 @@ impl Serialize for OxlintRules {
                 rules.serialize_entry(&key, rule.severity.as_str())?;
             } else {
                 // e.g. unicorn/some-rule: ["warn", { foo: "bar" }]
-                let value = (rule.severity.as_str(), &rule.config);
+                // Create a JSON array with severity followed by config elements
+                let mut value = vec![serde_json::json!(rule.severity.as_str())];
+                value.extend(rule.config.iter().cloned());
                 rules.serialize_entry(&key, &value)?;
             }
         }
@@ -631,5 +633,41 @@ mod test {
         let (_rule_id, &(options_id, severity)) = external_rules.iter().next().unwrap();
         assert_eq!(options_id, ExternalOptionsId::NONE, "no options should use reserved id 0");
         assert_eq!(severity, AllowWarnDeny::Deny);
+    }
+
+    #[test]
+    fn test_serialize_rules_with_config() {
+        // Test that rules with config are serialized correctly without extra array wrapping
+        let rules = OxlintRules::deserialize(&json!({
+            "no-console": "warn",
+            "jest/expect-expect": ["warn", {"assertFunctionNames": ["expect", "custom"]}],
+            "dummy": ["error", "arg1", "arg2"]
+        }))
+        .unwrap();
+
+        let serialized = serde_json::to_value(&rules).unwrap();
+        let obj = serialized.as_object().unwrap();
+
+        // Rule without config should serialize as just severity string
+        assert_eq!(obj.get("no-console"), Some(&json!("warn")));
+
+        // Rule with single config object should serialize as ["severity", {...}]
+        // NOT as ["severity", [{...}]]
+        let expect_expect = obj.get("jest/expect-expect").unwrap();
+        assert!(expect_expect.is_array());
+        let arr = expect_expect.as_array().unwrap();
+        assert_eq!(arr.len(), 2);
+        assert_eq!(arr[0], json!("warn"));
+        assert!(arr[1].is_object(), "Config should be an object, not an array: {:?}", arr[1]);
+        assert_eq!(arr[1], json!({"assertFunctionNames": ["expect", "custom"]}));
+
+        // Rule with multiple config arguments should serialize as ["severity", arg1, arg2]
+        let dummy = obj.get("dummy").unwrap();
+        assert!(dummy.is_array());
+        let arr = dummy.as_array().unwrap();
+        assert_eq!(arr.len(), 3);
+        assert_eq!(arr[0], json!("deny")); // "error" is serialized as "deny"
+        assert_eq!(arr[1], json!("arg1"));
+        assert_eq!(arr[2], json!("arg2"));
     }
 }
