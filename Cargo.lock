@@ -1925,6 +1925,7 @@ dependencies = [
  "cow-utils",
  "insta",
  "natord",
+ "nodejs-built-in-modules",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
