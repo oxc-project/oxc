@@ -22,9 +22,9 @@ use walk_mut::*;
 /// Syntax tree traversal
 pub trait VisitMut<'a>: Sized {
     #[inline]
-    fn enter_node(&mut self, kind: AstKind) {}
+    fn enter_node(&mut self, kind: AstKind<'a>) {}
     #[inline]
-    fn leave_node(&mut self, kind: AstKind) {}
+    fn leave_node(&mut self, kind: AstKind<'a>) {}
 
     #[inline]
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
