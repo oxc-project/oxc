@@ -1,7 +1,7 @@
 import assert from "node:assert";
-import { describe, it, expect, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { parse as parseRaw } from "../src-js/package/parse.ts";
-import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
+import { resetFileContext, setupFileContext } from "../src-js/plugins/context.ts";
 import { buffers } from "../src-js/plugins/lint.ts";
 import {
   ast,
@@ -12,8 +12,8 @@ import {
 import { isSpaceBetween, isSpaceBetweenTokens } from "../src-js/plugins/tokens.ts";
 import { debugAssertIsNonNull } from "../src-js/utils/asserts.ts";
 
-import type { ParseOptions } from "../src-js/package/parse.ts";
 import type { Program } from "../src-js/generated/types.d.ts";
+import type { ParseOptions } from "../src-js/package/parse.ts";
 
 /**
  * Parse source text into AST using Oxc parser.
@@ -25,7 +25,7 @@ import type { Program } from "../src-js/generated/types.d.ts";
  */
 function parse(path: string, sourceText: string, options?: ParseOptions): Program {
   // Set file path
-  setupFileContext(path);
+  setupFileContext(process.cwd(), path);
 
   // Parse source, writing source text and AST into buffer
   parseRaw(path, sourceText, options);
