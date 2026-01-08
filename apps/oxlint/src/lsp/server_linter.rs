@@ -56,9 +56,15 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+
         let mut nested_ignore_patterns = Vec::new();
-        let (nested_configs, mut extended_paths) =
-            Self::create_nested_configs(&root_path, &options, &mut nested_ignore_patterns);
+        let (nested_configs, mut extended_paths) = self.create_nested_configs(
+            &root_path,
+            &options,
+            &mut external_plugin_store,
+            &mut nested_ignore_patterns,
+        );
         let config_path = match options.config_path.as_deref() {
             Some("") | None => LINT_CONFIG_FILE,
             Some(v) => v,
@@ -81,7 +87,6 @@ impl ServerLinterBuilder {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
         let config_builder = ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
@@ -232,8 +237,10 @@ impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
     fn create_nested_configs(
+        &self,
         root_path: &Path,
         options: &LSPLintOptions,
+        external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> (ConcurrentHashMap<PathBuf, Config>, FxHashSet<PathBuf>) {
         let mut extended_paths = FxHashSet::default();
@@ -258,22 +265,20 @@ impl ServerLinterBuilder {
             };
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
-            let mut external_plugin_store = ExternalPluginStore::new(false);
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
-                None,
-                &mut external_plugin_store,
+                self.external_linter.as_ref(),
+                external_plugin_store,
             ) else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config =
-                config_store_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
-                    warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                    ConfigStoreBuilder::empty().build(&mut external_plugin_store).unwrap()
-                });
+            let config = config_store_builder.build(external_plugin_store).unwrap_or_else(|err| {
+                warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
+                ConfigStoreBuilder::empty().build(external_plugin_store).unwrap()
+            });
             nested_configs.pin().insert(dir_path.to_path_buf(), config);
         }
 
@@ -952,6 +957,7 @@ mod test_watchers {
 mod test {
     use std::path::{Path, PathBuf};
 
+    use oxc_linter::ExternalPluginStore;
     use serde_json::json;
 
     use crate::lsp::{
@@ -963,9 +969,11 @@ mod test {
     #[test]
     fn test_create_nested_configs_with_disabled_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
-        let (configs, _) = ServerLinterBuilder::create_nested_configs(
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
             Path::new("/root/"),
             &LintOptions { disable_nested_config: true, ..LintOptions::default() },
+            &mut external_plugin_store,
             &mut nested_ignore_patterns,
         );
 
@@ -975,9 +983,11 @@ mod test {
     #[test]
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
-        let (configs, _) = ServerLinterBuilder::create_nested_configs(
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
             &LintOptions::default(),
+            &mut external_plugin_store,
             &mut nested_ignore_patterns,
         );
         let configs = configs.pin();
