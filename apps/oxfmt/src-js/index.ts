@@ -85,9 +85,8 @@ export type FormatOptions = {
   bracketSameLine?: boolean;
   /**
    * How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
-   * NOTE: In addition to Prettier's `"preserve"` and `"collapse"`, we also support `"always"`.
    */
-  objectWrap?: "preserve" | "collapse" | "always";
+  objectWrap?: "preserve" | "collapse";
   /** Put each attribute on a new line in JSX. (Default: `false`) */
   singleAttributePerLine?: boolean;
   /** Control whether formats quoted code embedded in the file. (Default: `"auto"`) */

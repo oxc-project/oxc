@@ -925,8 +925,6 @@ pub enum Expand {
     /// expanded if they are shorter than the line width.
     #[default]
     Auto,
-    /// Objects and arrays are always expanded.
-    Always,
     /// Objects and arrays are never expanded, if they are shorter than the line width.
     Never,
 }
@@ -937,7 +935,6 @@ impl FromStr for Expand {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "auto" => Ok(Self::Auto),
-            "always" => Ok(Self::Always),
             "never" => Ok(Self::Never),
             _ => Err(std::format!("unknown expand literal: {s}")),
         }
@@ -948,7 +945,6 @@ impl fmt::Display for Expand {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
             Expand::Auto => "Auto",
-            Expand::Always => "Always",
             Expand::Never => "Never",
         };
         f.write_str(s)

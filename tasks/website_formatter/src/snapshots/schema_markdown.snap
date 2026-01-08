@@ -259,11 +259,10 @@ Use single quotes instead of double quotes in JSX. (Default: `false`)
 
 ## objectWrap
 
-type: `"preserve" | "collapse" | "always" | null`
+type: `"preserve" | "collapse" | null`
 
 
 How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
-NOTE: In addition to Prettier's `"preserve"` and `"collapse"`, we also support `"always"`.
 
 
 ## printWidth
