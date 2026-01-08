@@ -6,5 +6,5 @@ source: crates/oxc_codegen/tests/integration/tester.rs
 function foo() {}
 
 ----------
-/** block1 *//** block2 */
+/** block1 */ /** block2 */
 function foo() {}
