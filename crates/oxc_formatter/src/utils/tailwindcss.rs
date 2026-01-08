@@ -17,6 +17,8 @@ use crate::{
     write,
 };
 
+use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
+
 // ============================================================================
 // Detection Functions
 // ============================================================================
@@ -198,17 +200,40 @@ where
 /// - With `preserve_whitespace`, outputs content unchanged
 pub fn write_tailwind_string_literal<'a>(
     string_literal: &AstNode<'a, StringLiteral<'a>>,
-    preserve_whitespace: bool,
+    ctx: TailwindContextEntry,
     f: &mut Formatter<'_, 'a>,
 ) {
-    if preserve_whitespace {
-        let content = f.source_text().text_for(&string_literal.span.shrink(1));
+    debug_assert!(
+        !string_literal.value.is_empty(),
+        "Empty string literals should be skipped for Tailwind sorting"
+    );
+
+    let normalized_string = FormatLiteralStringToken::new(
+        f.source_text().text_for(&string_literal),
+        ctx.is_jsx,
+        StringLiteralParentKind::Expression,
+    )
+    .clean_text(f);
+
+    let quote = normalized_string.as_bytes()[0];
+    let quote = match quote {
+        b'\'' => "\'",
+        b'"' => "\"",
+        _ => unreachable!("Unexpected quote character in string literal"),
+    };
+
+    write!(f, quote);
+
+    // At least three characters: opening quote, content, closing quote
+    let content = &normalized_string[1..normalized_string.len() - 1];
+
+    if ctx.preserve_whitespace {
         let index = f.context_mut().add_tailwind_class(content.to_string());
         f.write_element(FormatElement::TailwindClass(index));
+        write!(f, quote);
         return;
     }
 
-    let content = string_literal.value().as_str();
     let trimmed = content.trim();
 
     // Whitespace-only → normalize to single space
@@ -216,6 +241,7 @@ pub fn write_tailwind_string_literal<'a>(
         if !content.is_empty() {
             write!(f, text(" "));
         }
+        write!(f, quote);
         return;
     }
 
@@ -236,6 +262,7 @@ pub fn write_tailwind_string_literal<'a>(
     if has_trailing_ws && !collapse.end {
         write!(f, text(" "));
     }
+    write!(f, quote);
 }
 
 /// Writes a template element (quasi) with Tailwind class sorting.

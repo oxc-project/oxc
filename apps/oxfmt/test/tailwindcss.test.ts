@@ -1049,3 +1049,62 @@ describe("Tailwind CSS Sorting with `experimentalSortImports` enabled", () => {
     expect(resultWithOption.errors).toStrictEqual([]);
   });
 });
+
+describe("Tailwind CSS Sorting works with other options", () => {
+  test("should keep quotes with `singleQuote: false`", async () => {
+    const input = `
+      <div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
+      <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+    `;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+      singleQuote: false,
+    });
+
+    expect(result.code).toMatchInlineSnapshot(`
+      "<div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
+      <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+      "
+    `);
+  });
+
+  test("should keep quotes with default `singleQuote`", async () => {
+    const input = `
+      <div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
+      <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+    `;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+    });
+
+    expect(result.code).toMatchInlineSnapshot(`
+      "<div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
+      <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+      "
+    `);
+  });
+
+  test("should handle quotes with `jsxSingleQuote: true` correctly", async () => {
+    const input = `
+        <div className="text-md before:content-['hello']">Hello</div>;
+        <div className='text-md before:content-["hello"]'>Hello</div>;
+    `;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {},
+      jsxSingleQuote: true,
+    });
+
+    expect(result.code).toMatchInlineSnapshot(`
+      "<div className="text-md before:content-['hello']">Hello</div>;
+      <div className='text-md before:content-["hello"]'>Hello</div>;
+      "
+    `);
+  });
+});
