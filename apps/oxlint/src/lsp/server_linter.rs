@@ -2,7 +2,6 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use ignore::gitignore::Gitignore;
-use log::{debug, warn};
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
 use tower_lsp_server::{
@@ -13,10 +12,11 @@ use tower_lsp_server::{
         WorkDoneProgressOptions, WorkspaceEdit,
     },
 };
+use tracing::{debug, warn};
 
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalPluginStore, FixKind,
-    LintIgnoreMatcher, LintOptions, Oxlintrc,
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    FixKind, LintIgnoreMatcher, LintOptions, Oxlintrc,
 };
 
 use oxc_language_server::{
@@ -37,12 +37,15 @@ use crate::lsp::{
     options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
 };
 
-pub struct ServerLinterBuilder;
+#[derive(Default)]
+pub struct ServerLinterBuilder {
+    external_linter: Option<ExternalLinter>,
+}
 
 impl ServerLinterBuilder {
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
-    pub fn build(root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
+    pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
         let options = match serde_json::from_value::<LSPLintOptions>(options) {
             Ok(opts) => opts,
             Err(e) => {
@@ -78,10 +81,14 @@ impl ServerLinterBuilder {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let mut external_plugin_store = ExternalPluginStore::new(false);
-        let config_builder =
-            ConfigStoreBuilder::from_oxlintrc(false, oxlintrc, None, &mut external_plugin_store)
-                .unwrap_or_default();
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+        let config_builder = ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc,
+            self.external_linter.as_ref(),
+            &mut external_plugin_store,
+        )
+        .unwrap_or_default();
 
         // TODO(refactor): pull this into a shared function, because in oxlint we have the same functionality.
         let use_nested_config = options.use_nested_configs();
@@ -215,8 +222,9 @@ impl ToolBuilder for ServerLinterBuilder {
             Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
         };
     }
+
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(ServerLinterBuilder::build(root_uri, options))
+        Box::new(self.build(root_uri, options))
     }
 }
 
@@ -515,10 +523,7 @@ impl Tool for ServerLinter {
     /// Lint a file with the current linter
     /// - If the file is not lintable or ignored, an empty vector is returned
     fn run_diagnostic(&self, uri: &Uri, content: Option<&str>) -> DiagnosticResult {
-        let Some(diagnostics) = self.run_file(uri, content) else {
-            return Ok(vec![]);
-        };
-        Ok(vec![(uri.clone(), diagnostics)])
+        Ok(vec![(uri.clone(), self.run_file(uri, content)?)])
     }
 
     /// Lint a file with the current linter
@@ -572,7 +577,7 @@ impl ServerLinter {
         if let Some(cached_code_actions) = self.code_actions.pin().get(uri) {
             cached_code_actions.clone()
         } else {
-            self.run_file(uri, None);
+            let _ = self.run_file(uri, None);
             self.code_actions.pin().get(uri).and_then(std::clone::Clone::clone)
         }
     }
@@ -599,29 +604,27 @@ impl ServerLinter {
         false
     }
 
-    /// Lint a single file, return `None` if the file is ignored.
-    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<Diagnostic>> {
+    /// Lint a single file, returning an empty diagnostics list if the file is ignored.
+    fn run_file(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<Diagnostic>, String> {
         if self.is_ignored(uri) {
-            return None;
+            return Ok(Vec::new());
         }
 
         let mut diagnostics = vec![];
         let mut code_actions = vec![];
 
-        let reports = self.isolated_linter.run_single(uri, content);
-        if let Some(reports) = reports {
-            for report in reports {
-                diagnostics.push(report.diagnostic);
+        let reports = self.isolated_linter.run_single(uri, content)?;
+        for report in reports {
+            diagnostics.push(report.diagnostic);
 
-                if let Some(code_action) = report.code_action {
-                    code_actions.push(code_action);
-                }
+            if let Some(code_action) = report.code_action {
+                code_actions.push(code_action);
             }
         }
 
         self.code_actions.pin().insert(uri.clone(), Some(code_actions));
 
-        Some(diagnostics)
+        Ok(diagnostics)
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
@@ -666,7 +669,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_empty_capabilities() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities::default();
 
         builder.server_capabilities(&mut capabilities, &Capabilities::default());
@@ -690,7 +693,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_code_action_kinds() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities {
             code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
                 code_action_kinds: Some(vec![CodeActionKind::REFACTOR]),
@@ -717,7 +720,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_quickfix_kind() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities {
             code_action_provider: Some(CodeActionProviderCapability::Options(CodeActionOptions {
                 code_action_kinds: Some(vec![CodeActionKind::QUICKFIX]),
@@ -742,7 +745,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_simple_code_action_provider() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities {
             code_action_provider: Some(CodeActionProviderCapability::Simple(true)),
             ..Default::default()
@@ -764,7 +767,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_commands() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities {
             execute_command_provider: Some(ExecuteCommandOptions {
                 commands: vec!["existing.command".to_string()],
@@ -789,7 +792,7 @@ mod tests_builder {
 
     #[test]
     fn test_server_capabilities_with_existing_fix_all_command() {
-        let builder = ServerLinterBuilder;
+        let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities {
             execute_command_provider: Some(ExecuteCommandOptions {
                 commands: vec![FIX_ALL_COMMAND_ID.to_string()],

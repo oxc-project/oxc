@@ -1,6 +1,6 @@
 [package]
 name = "oxlint"
-version = "1.36.0"
+version = "1.38.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -42,8 +42,8 @@ bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"]
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 miette = { workspace = true }
-log = { workspace = true }
 napi = { workspace = true, features = ["async"], optional = true }
+tracing = { workspace = true }
 napi-derive = { workspace = true, optional = true }
 rayon = { workspace = true }
 rustc-hash = { workspace = true }

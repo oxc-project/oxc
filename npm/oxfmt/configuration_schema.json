@@ -28,8 +28,7 @@
     "ObjectWrapConfig": {
       "enum": [
         "preserve",
-        "collapse",
-        "always"
+        "collapse"
       ],
       "type": "string"
     },
@@ -130,6 +129,94 @@
       ],
       "type": "string"
     },
+    "SortPackageJsonConfig": {
+      "description": "Configuration for `package.json` sorting.",
+      "markdownDescription": "Configuration for `package.json` sorting.",
+      "properties": {
+        "sortScripts": {
+          "description": "Sort the `scripts` field alphabetically. (Default: `false`)",
+          "markdownDescription": "Sort the `scripts` field alphabetically. (Default: `false`)",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SortPackageJsonUserConfig": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/definitions/SortPackageJsonConfig"
+        }
+      ],
+      "description": "User-provided configuration for `package.json` sorting.\n\n- `true`: Enable sorting with default options\n- `false`: Disable sorting\n- `{ sortScripts: true }`: Enable sorting with custom options",
+      "markdownDescription": "User-provided configuration for `package.json` sorting.\n\n- `true`: Enable sorting with default options\n- `false`: Disable sorting\n- `{ sortScripts: true }`: Enable sorting with custom options"
+    },
+    "TailwindcssConfig": {
+      "description": "Configuration for Tailwind CSS class sorting.\nBased on options from `prettier-plugin-tailwindcss`.\n\nNote: All `tailwind` prefixes have been removed from option names.\nFor example, use `config` instead of `tailwindConfig`.\n\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
+      "markdownDescription": "Configuration for Tailwind CSS class sorting.\nBased on options from `prettier-plugin-tailwindcss`.\n\nNote: All `tailwind` prefixes have been removed from option names.\nFor example, use `config` instead of `tailwindConfig`.\n\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
+      "properties": {
+        "attributes": {
+          "description": "List of attributes that contain Tailwind CSS classes.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of attributes that contain Tailwind CSS classes.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "config": {
+          "description": "Path to your Tailwind CSS configuration file (v3).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nDefault: `\"./tailwind.config.js\"`",
+          "markdownDescription": "Path to your Tailwind CSS configuration file (v3).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nDefault: `\"./tailwind.config.js\"`",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "functions": {
+          "description": "List of custom function names that contain Tailwind CSS classes.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of custom function names that contain Tailwind CSS classes.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "preserveDuplicates": {
+          "description": "Preserve duplicate classes.\n\nDefault: `false`",
+          "markdownDescription": "Preserve duplicate classes.\n\nDefault: `false`",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "preserveWhitespace": {
+          "description": "Preserve whitespace around classes.\n\nDefault: `false`",
+          "markdownDescription": "Preserve whitespace around classes.\n\nDefault: `false`",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "stylesheet": {
+          "description": "Path to your Tailwind CSS stylesheet (v4).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nExample: `\"./src/app.css\"`",
+          "markdownDescription": "Path to your Tailwind CSS stylesheet (v4).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nExample: `\"./src/app.css\"`",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "TrailingCommaConfig": {
       "enum": [
         "all",
@@ -203,16 +290,32 @@
           "type": "null"
         }
       ],
-      "description": "Experimental: Sort import statements. Disabled by default.",
-      "markdownDescription": "Experimental: Sort import statements. Disabled by default."
+      "description": "Experimental: Sort import statements. (Default: disabled)",
+      "markdownDescription": "Experimental: Sort import statements. (Default: disabled)"
     },
     "experimentalSortPackageJson": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortPackageJsonUserConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
       "description": "Experimental: Sort `package.json` keys. (Default: `true`)",
-      "markdownDescription": "Experimental: Sort `package.json` keys. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
+      "markdownDescription": "Experimental: Sort `package.json` keys. (Default: `true`)"
+    },
+    "experimentalTailwindcss": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TailwindcssConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)",
+      "markdownDescription": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)"
     },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",
@@ -250,8 +353,8 @@
           "type": "null"
         }
       ],
-      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`.",
-      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)\nNOTE: In addition to Prettier's `\"preserve\"` and `\"collapse\"`, we also support `\"always\"`."
+      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)",
+      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)"
     },
     "printWidth": {
       "description": "The line length that the printer will wrap on. (Default: `100`)",

@@ -215,6 +215,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
+        // Capture annotation flags before bumping `(` since bump resets them
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         self.bump_any(); // `bump` `(`
         let expr_span = self.start_span();
         let (mut expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
@@ -251,8 +254,18 @@ impl<'a> ParserImpl<'a> {
         };
 
         match &mut expression {
-            Expression::ArrowFunctionExpression(arrow_expr) => arrow_expr.pife = true,
-            Expression::FunctionExpression(func_expr) => func_expr.pife = true,
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                arrow_expr.pife = true;
+                if has_no_side_effects_comment {
+                    arrow_expr.pure = true;
+                }
+            }
+            Expression::FunctionExpression(func_expr) => {
+                func_expr.pife = true;
+                if has_no_side_effects_comment {
+                    func_expr.pure = true;
+                }
+            }
             _ => {}
         }
 

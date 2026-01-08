@@ -1,7 +1,6 @@
 use std::{borrow::Cow, sync::Arc};
 
 use futures::future::join_all;
-use log::{debug, error, info, warn};
 use rustc_hash::FxBuildHasher;
 use serde_json::Value;
 use tokio::sync::{OnceCell, RwLock, SetError};
@@ -19,6 +18,7 @@ use tower_lsp_server::{
         Uri,
     },
 };
+use tracing::{debug, error, info, warn};
 
 use crate::{
     ConcurrentHashMap, ToolBuilder,
@@ -798,7 +798,17 @@ impl LanguageServer for Backend {
         let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
             return Ok(None);
         };
-        Ok(worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await)
+        match worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await {
+            Ok(edits) => {
+                if edits.is_empty() {
+                    return Ok(None);
+                }
+                Ok(Some(edits))
+            }
+            Err(err) => {
+                Err(Error { code: ErrorCode::ServerError(1), message: Cow::Owned(err), data: None })
+            }
+        }
     }
 }
 

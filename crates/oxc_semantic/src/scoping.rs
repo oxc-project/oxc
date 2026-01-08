@@ -250,6 +250,8 @@ mod scoping_cell {
 }
 use scoping_cell::ScopingCell;
 
+use crate::unresolved_stack::ReferenceIds;
+
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
     symbol_names: ArenaVec<'cell, Atom<'cell>>,
@@ -627,7 +629,7 @@ impl Scoping {
 
     pub(crate) fn set_root_unresolved_references<'a>(
         &mut self,
-        entries: impl Iterator<Item = (&'a str, Vec<ReferenceId>)>,
+        entries: impl Iterator<Item = (&'a str, ReferenceIds)>,
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             for (k, v) in entries {

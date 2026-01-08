@@ -525,7 +525,8 @@ impl<'a> SemanticBuilder<'a> {
             let bindings = self.scoping.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flags = self.scoping.symbol_flags(symbol_id);
-                references.retain(|&reference_id| {
+                references.retain(|reference_id| {
+                    let reference_id = *reference_id;
                     let reference = &mut self.scoping.references[reference_id];
 
                     let flags = reference.flags_mut();
