@@ -11419,12 +11419,12 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ }
     ╰────
 
-  × Identifier `x` has already been declared
+  × Identifier `#x` has already been declared
     ╭─[test262/test/language/expressions/class/elements/fields-duplicate-privatenames.js:23:3]
  22 │ var C = class {
  23 │   #x;
     ·   ─┬
-    ·    ╰── `x` has already been declared here
+    ·    ╰── `#x` has already been declared here
  24 │   #x;
     ·   ─┬
     ·    ╰── It can not be redeclared here
@@ -12143,7 +12143,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:41:19]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -12159,7 +12159,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:41:19]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -12175,7 +12175,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:41:19]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -12191,7 +12191,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:41:19]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -12207,7 +12207,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:41:19]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -12223,7 +12223,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:41:19]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -12239,7 +12239,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:41:19]
  40 │   g = this.f;
  41 │   x = delete (g().#m);
@@ -12263,7 +12263,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:41:20]
  40 │   
  41 │   x = delete (this.#m
@@ -12279,7 +12279,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:41:20]
  40 │   
  41 │   x = delete (this.#m
@@ -12319,7 +12319,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:41:20]
  40 │   
  41 │   x = delete (this.#m
@@ -12335,7 +12335,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:41:20]
  40 │   
  41 │   x = delete (this.#m);
@@ -12359,7 +12359,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -12375,7 +12375,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -12391,7 +12391,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -12407,7 +12407,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -12423,7 +12423,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -12439,7 +12439,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -12455,7 +12455,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -12479,7 +12479,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:35:19]
  34 │   
  35 │   x = delete this.#m
@@ -12495,7 +12495,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:19]
  34 │   
  35 │   x = delete this.#m
@@ -12535,7 +12535,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:35:19]
  34 │   
  35 │   x = delete this.#m
@@ -12551,7 +12551,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:19]
  34 │   
  35 │   x = delete this.#m;
@@ -12575,7 +12575,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:41:20]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -12591,7 +12591,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:41:20]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -12607,7 +12607,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:41:20]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -12623,7 +12623,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:41:20]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -12639,7 +12639,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:41:20]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -12655,7 +12655,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:41:20]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -12671,7 +12671,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:41:20]
  40 │   g = this.f;
  41 │   x = delete ((g().#m));
@@ -12695,7 +12695,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:41:21]
  40 │   
  41 │   x = delete ((this.#m
@@ -12711,7 +12711,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:41:21]
  40 │   
  41 │   x = delete ((this.#m
@@ -12751,7 +12751,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:41:21]
  40 │   
  41 │   x = delete ((this.#m
@@ -12767,7 +12767,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  42 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:41:21]
  40 │   
  41 │   x = delete ((this.#m));
@@ -12791,7 +12791,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -12807,7 +12807,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -12823,7 +12823,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -12839,7 +12839,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -12855,7 +12855,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -12871,7 +12871,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -12887,7 +12887,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -12911,7 +12911,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:43:18]
  42 │     
  43 │     delete (this.#m
@@ -12927,7 +12927,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:18]
  42 │     
  43 │     delete (this.#m
@@ -12967,7 +12967,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:43:18]
  42 │     
  43 │     delete (this.#m
@@ -12983,7 +12983,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:18]
  42 │     
  43 │     delete (this.#m);
@@ -13007,7 +13007,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -13023,7 +13023,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -13039,7 +13039,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -13055,7 +13055,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -13071,7 +13071,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -13087,7 +13087,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -13103,7 +13103,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -13127,7 +13127,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:37:17]
  36 │     
  37 │     delete this.#m
@@ -13143,7 +13143,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:17]
  36 │     
  37 │     delete this.#m
@@ -13183,7 +13183,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:37:17]
  36 │     
  37 │     delete this.#m
@@ -13199,7 +13199,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:17]
  36 │     
  37 │     delete this.#m;
@@ -13223,7 +13223,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -13239,7 +13239,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -13255,7 +13255,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -13271,7 +13271,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -13287,7 +13287,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -13303,7 +13303,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -13319,7 +13319,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -13343,7 +13343,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:43:19]
  42 │     
  43 │     delete ((this.#m
@@ -13359,7 +13359,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:19]
  42 │     
  43 │     delete ((this.#m
@@ -13399,7 +13399,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:43:19]
  42 │     
  43 │     delete ((this.#m
@@ -13415,7 +13415,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:19]
  42 │     
  43 │     delete ((this.#m));
@@ -13498,7 +13498,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:37:68]
  36 │ 
  37 │ var C = class extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
@@ -13506,7 +13506,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'bar' must be declared in an enclosing class
+  × Private field '#bar' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:37:93]
  36 │ 
  37 │ var C = class extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
@@ -13514,7 +13514,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'fuz' must be declared in an enclosing class
+  × Private field '#fuz' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:37:118]
  36 │ 
  37 │ var C = class extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
@@ -13539,7 +13539,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-recursive.js:37:54]
  36 │ 
  37 │ var C = class extends class extends class { x = this.#foo; } {}
@@ -13547,7 +13547,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage.js:37:40]
  36 │ 
  37 │ var C = class extends class { x = this.#foo; }
@@ -13579,156 +13579,156 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  34 │     }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-async-gen.js:25:3]
  24 │ var C = class {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   async * #m() {}
     ·           ─┬
     ·            ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-async.js:25:3]
  24 │ var C = class {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   async #m() {}
     ·         ─┬
     ·          ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-gen.js:25:3]
  24 │ var C = class {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   * #m() {}
     ·     ─┬
     ·      ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-get-field.js:25:3]
  24 │ var C = class {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   get #m() {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-get-get.js:25:7]
  24 │ var C = class {
  25 │   get #m() {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   get #m() {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-field.js:25:3]
  24 │ var C = class {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-get.js:25:7]
  24 │ var C = class {
  25 │   get #m() {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-meth.js:25:3]
  24 │ var C = class {
  25 │   #m() {}
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-set.js:25:7]
  24 │ var C = class {
  25 │   set #m(_) {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticfield.js:25:10]
  24 │ var C = class {
  25 │   static #m;
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticmeth.js:25:10]
  24 │ var C = class {
  25 │   static #m() {}
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-set-field.js:25:3]
  24 │ var C = class {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   set #m(_) {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
  27 │ };
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-set-set.js:25:7]
  24 │ var C = class {
  25 │   set #m(_) {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   set #m(_) {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
@@ -13775,7 +13775,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  65 │ 
     ╰────
 
-  × Private field 'f' must be declared in an enclosing class
+  × Private field '#f' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-privatename-in-computed-property-missing.js:52:9]
  51 │ var C = class {
  52 │   [this.#f] = 'Test262'
@@ -14232,7 +14232,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-bad-reference.js:52:20]
  51 │ var C = class {
  52 │   f = (() => {})().#x
@@ -14240,7 +14240,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-this.js:52:22]
  51 │ var C = class {
  52 │   f = (() => this)().#x
@@ -14248,7 +14248,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-bad-reference.js:52:33]
  51 │ var C = class {
  52 │   f = function() { (() => {})().#x }
@@ -14256,7 +14256,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-this.js:52:35]
  51 │ var C = class {
  52 │   f = function() { (() => this)().#x }
@@ -14264,7 +14264,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-bad-reference.js:52:30]
  51 │ var C = class {
  52 │   f = function() { something.#x }
@@ -14272,7 +14272,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-this.js:52:25]
  51 │ var C = class {
  52 │   f = function() { this.#x }
@@ -14280,7 +14280,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-call-expression-bad-reference.js:56:20]
  55 │ var C = class extends Parent {
  56 │   f = (() => {})().#x
@@ -14288,7 +14288,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  57 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-call-expression-this.js:56:22]
  55 │ var C = class extends Parent {
  56 │   f = (() => this)().#x
@@ -14296,7 +14296,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  57 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-member-expression-bad-reference.js:56:17]
  55 │ var C = class extends Parent {
  56 │   f = something.#x
@@ -14304,7 +14304,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  57 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-heritage-member-expression-this.js:56:12]
  55 │ var C = class extends Parent {
  56 │   f = this.#x
@@ -14312,7 +14312,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  57 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-bad-reference.js:52:17]
  51 │ var C = class {
  52 │   f = something.#x
@@ -14320,7 +14320,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-this.js:52:12]
  51 │ var C = class {
  52 │   f = this.#x
@@ -14328,7 +14328,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-call-expression-bad-reference.js:52:22]
  51 │ var C = class {
  52 │   m() { (() => {})().#x }
@@ -14336,7 +14336,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-call-expression-this.js:52:24]
  51 │ var C = class {
  52 │   m() { (() => this)().#x }
@@ -14344,7 +14344,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-bad-reference.js:53:34]
  52 │   m() {
  53 │     function fn() { (() => {})().#x }
@@ -14352,7 +14352,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  54 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-this.js:53:36]
  52 │   m() {
  53 │     function fn() { (() => this)().#x }
@@ -14360,7 +14360,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  54 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-bad-reference.js:53:31]
  52 │   m() {
  53 │     function fn() { something.#x }
@@ -14368,7 +14368,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  54 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-this.js:53:26]
  52 │   m() {
  53 │     function fn() { this.#x }
@@ -14376,7 +14376,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  54 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-bad-reference.js:57:18]
  56 │   m() {
  57 │     (() => {})().#x
@@ -14384,7 +14384,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-this.js:57:20]
  56 │   m() {
  57 │     (() => this)().#x
@@ -14392,7 +14392,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-bad-reference.js:57:15]
  56 │   m() {
  57 │     something.#x
@@ -14400,7 +14400,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-this.js:57:10]
  56 │   m() {
  57 │     this.#x
@@ -14408,7 +14408,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-member-expression-bad-reference.js:52:19]
  51 │ var C = class {
  52 │   m() { something.#x }
@@ -14416,7 +14416,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-member-expression-this.js:52:14]
  51 │ var C = class {
  52 │   m() { this.#x }
@@ -14424,7 +14424,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  53 │ };
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-bad-reference.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -14432,7 +14432,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-this.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -14440,7 +14440,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-bad-reference.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -14448,7 +14448,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-this.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -18830,7 +18830,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  31 │   }
     ╰────
 
-  × Private field 'b' must be declared in an enclosing class
+  × Private field '#b' must be declared in an enclosing class
     ╭─[test262/test/language/expressions/in/private-field-invalid-identifier-complex.js:30:5]
  29 │   constructor() {
  30 │     #b in {};
@@ -26350,7 +26350,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·   ──
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/module-code/privatename-not-valid-earlyerr-module-1.js:21:10]
  20 │   constructor() {
  21 │     this.#x;
@@ -26358,7 +26358,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/module-code/privatename-not-valid-earlyerr-module-2.js:21:10]
  20 │   f() {
  21 │     this.#x;
@@ -26366,7 +26366,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/module-code/privatename-not-valid-earlyerr-module-3.js:20:12]
  19 │ class C {
  20 │   y = this.#x;
@@ -26374,7 +26374,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/module-code/privatename-not-valid-earlyerr-module-4.js:22:10]
  21 │   f() {
  22 │     this.#x;
@@ -30461,12 +30461,12 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ }
     ╰────
 
-  × Identifier `x` has already been declared
+  × Identifier `#x` has already been declared
     ╭─[test262/test/language/statements/class/elements/fields-duplicate-privatenames.js:23:3]
  22 │ class C {
  23 │   #x;
     ·   ─┬
-    ·    ╰── `x` has already been declared here
+    ·    ╰── `#x` has already been declared here
  24 │   #x;
     ·   ─┬
     ·    ╰── It can not be redeclared here
@@ -31075,7 +31075,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  28 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/privatename-not-valid-earlyerr-script-1.js:23:10]
  22 │   constructor() {
  23 │     this.#x;
@@ -31083,7 +31083,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  24 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/privatename-not-valid-earlyerr-script-2.js:23:10]
  22 │   f() {
  23 │     this.#x;
@@ -31091,7 +31091,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  24 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/privatename-not-valid-earlyerr-script-3.js:22:12]
  21 │ class C {
  22 │   y = this.#x;
@@ -31099,7 +31099,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  23 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/privatename-not-valid-earlyerr-script-4.js:23:10]
  22 │   f() {
  23 │     this.#x;
@@ -31246,7 +31246,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-get.js:38:19]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -31262,7 +31262,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-accessor-set.js:38:19]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -31278,7 +31278,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async-gen.js:38:19]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -31294,7 +31294,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-async.js:38:19]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -31310,7 +31310,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method-gen.js:38:19]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -31326,7 +31326,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-method.js:38:19]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -31342,7 +31342,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-call-expression-private-no-reference.js:38:19]
  37 │   g = this.f;
  38 │   x = delete (g().#m);
@@ -31366,7 +31366,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-get.js:38:20]
  37 │   
  38 │   x = delete (this.#m
@@ -31382,7 +31382,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method-accessor-set.js:38:20]
  37 │   
  38 │   x = delete (this.#m
@@ -31422,7 +31422,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-method.js:38:20]
  37 │   
  38 │   x = delete (this.#m
@@ -31438,7 +31438,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │   
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-covered-err-delete-member-expression-private-no-reference.js:38:20]
  37 │   
  38 │   x = delete (this.#m);
@@ -31462,7 +31462,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-get.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -31478,7 +31478,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-accessor-set.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -31494,7 +31494,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async-gen.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -31510,7 +31510,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-async.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -31526,7 +31526,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method-gen.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -31542,7 +31542,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-method.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -31558,7 +31558,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   f() {
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-call-expression-private-no-reference.js:35:18]
  34 │   g = this.f;
  35 │   x = delete g().#m;
@@ -31582,7 +31582,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-get.js:35:19]
  34 │   
  35 │   x = delete this.#m
@@ -31598,7 +31598,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method-accessor-set.js:35:19]
  34 │   
  35 │   x = delete this.#m
@@ -31638,7 +31638,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-method.js:35:19]
  34 │   
  35 │   x = delete this.#m
@@ -31654,7 +31654,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  36 │   
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-err-delete-member-expression-private-no-reference.js:35:19]
  34 │   
  35 │   x = delete this.#m;
@@ -31678,7 +31678,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:38:20]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -31694,7 +31694,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:38:20]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -31710,7 +31710,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:38:20]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -31726,7 +31726,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-async.js:38:20]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -31742,7 +31742,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method-gen.js:38:20]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -31758,7 +31758,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-method.js:38:20]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -31774,7 +31774,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-call-expression-private-no-reference.js:38:20]
  37 │   g = this.f;
  38 │   x = delete ((g().#m));
@@ -31798,7 +31798,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:38:21]
  37 │   
  38 │   x = delete ((this.#m
@@ -31814,7 +31814,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:38:21]
  37 │   
  38 │   x = delete ((this.#m
@@ -31854,7 +31854,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-method.js:38:21]
  37 │   
  38 │   x = delete ((this.#m
@@ -31870,7 +31870,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  39 │ 
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/field-delete-twice-covered-err-delete-member-expression-private-no-reference.js:38:21]
  37 │   
  38 │   x = delete ((this.#m));
@@ -31894,7 +31894,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-get.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -31910,7 +31910,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-accessor-set.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -31926,7 +31926,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async-gen.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -31942,7 +31942,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-async.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -31958,7 +31958,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method-gen.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -31974,7 +31974,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-method.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -31990,7 +31990,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-call-expression-private-no-reference.js:43:17]
  42 │     var g = this.f;
  43 │     delete (g().#m);
@@ -32014,7 +32014,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-get.js:43:18]
  42 │     
  43 │     delete (this.#m
@@ -32030,7 +32030,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method-accessor-set.js:43:18]
  42 │     
  43 │     delete (this.#m
@@ -32070,7 +32070,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ );
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-method.js:43:18]
  42 │     
  43 │     delete (this.#m
@@ -32086,7 +32086,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-covered-err-delete-member-expression-private-no-reference.js:43:18]
  42 │     
  43 │     delete (this.#m);
@@ -32110,7 +32110,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-get.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -32126,7 +32126,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-accessor-set.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -32142,7 +32142,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async-gen.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -32158,7 +32158,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-async.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -32174,7 +32174,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method-gen.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -32190,7 +32190,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-method.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -32206,7 +32206,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-call-expression-private-no-reference.js:37:16]
  36 │     var g = this.f;
  37 │     delete g().#m;
@@ -32230,7 +32230,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-get.js:37:17]
  36 │     
  37 │     delete this.#m
@@ -32246,7 +32246,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method-accessor-set.js:37:17]
  36 │     
  37 │     delete this.#m
@@ -32286,7 +32286,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ ;
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-method.js:37:17]
  36 │     
  37 │     delete this.#m
@@ -32302,7 +32302,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-err-delete-member-expression-private-no-reference.js:37:17]
  36 │     
  37 │     delete this.#m;
@@ -32326,7 +32326,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-get.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -32342,7 +32342,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-accessor-set.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -32358,7 +32358,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async-gen.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -32374,7 +32374,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-async.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -32390,7 +32390,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method-gen.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -32406,7 +32406,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-method.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -32422,7 +32422,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-call-expression-private-no-reference.js:43:18]
  42 │     var g = this.f;
  43 │     delete ((g().#m));
@@ -32446,7 +32446,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-get.js:43:19]
  42 │     
  43 │     delete ((this.#m
@@ -32462,7 +32462,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method-accessor-set.js:43:19]
  42 │     
  43 │     delete ((this.#m
@@ -32502,7 +32502,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │ ));
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-method.js:43:19]
  42 │     
  43 │     delete ((this.#m
@@ -32518,7 +32518,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'm' must be declared in an enclosing class
+  × Private field '#m' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/delete/method-delete-twice-covered-err-delete-member-expression-private-no-reference.js:43:19]
  42 │     
  43 │     delete ((this.#m));
@@ -32601,7 +32601,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:37:62]
  36 │ 
  37 │ class C extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
@@ -32609,7 +32609,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'bar' must be declared in an enclosing class
+  × Private field '#bar' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:37:87]
  36 │ 
  37 │ class C extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
@@ -32617,7 +32617,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'fuz' must be declared in an enclosing class
+  × Private field '#fuz' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-chained-usage.js:37:112]
  36 │ 
  37 │ class C extends class extends class extends class { x = this.#foo; } { #foo; x = this.#bar; } { #bar; x = this.#fuz; }
@@ -32642,7 +32642,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage-recursive.js:37:48]
  36 │ 
  37 │ class C extends class extends class { x = this.#foo; } {}
@@ -32650,7 +32650,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ {
     ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-private-environment-on-class-heritage.js:37:34]
  36 │ 
  37 │ class C extends class { x = this.#foo; }
@@ -32682,156 +32682,156 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  34 │     }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-async-gen.js:25:3]
  24 │ class C {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   async * #m() {}
     ·           ─┬
     ·            ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-async.js:25:3]
  24 │ class C {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   async #m() {}
     ·         ─┬
     ·          ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-gen.js:25:3]
  24 │ class C {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   * #m() {}
     ·     ─┬
     ·      ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-get-field.js:25:3]
  24 │ class C {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   get #m() {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-get-get.js:25:7]
  24 │ class C {
  25 │   get #m() {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   get #m() {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-field.js:25:3]
  24 │ class C {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-get.js:25:7]
  24 │ class C {
  25 │   get #m() {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-meth.js:25:3]
  24 │ class C {
  25 │   #m() {}
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-set.js:25:7]
  24 │ class C {
  25 │   set #m(_) {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticfield.js:25:10]
  24 │ class C {
  25 │   static #m;
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-meth-staticmeth.js:25:10]
  24 │ class C {
  25 │   static #m() {}
     ·          ─┬
-    ·           ╰── `m` has already been declared here
+    ·           ╰── `#m` has already been declared here
  26 │   #m() {}
     ·   ─┬
     ·    ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-set-field.js:25:3]
  24 │ class C {
  25 │   #m;
     ·   ─┬
-    ·    ╰── `m` has already been declared here
+    ·    ╰── `#m` has already been declared here
  26 │   set #m(_) {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
  27 │ }
     ╰────
 
-  × Identifier `m` has already been declared
+  × Identifier `#m` has already been declared
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatemeth-duplicate-set-set.js:25:7]
  24 │ class C {
  25 │   set #m(_) {}
     ·       ─┬
-    ·        ╰── `m` has already been declared here
+    ·        ╰── `#m` has already been declared here
  26 │   set #m(_) {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
@@ -32878,7 +32878,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  65 │ 
     ╰────
 
-  × Private field 'f' must be declared in an enclosing class
+  × Private field '#f' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-privatename-in-computed-property-missing.js:52:9]
  51 │ class C {
  52 │   [this.#f] = 'Test262'
@@ -33335,7 +33335,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-bad-reference.js:42:20]
  41 │ class C {
  42 │   f = (() => {})().#x
@@ -33343,7 +33343,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-call-expression-this.js:42:22]
  41 │ class C {
  42 │   f = (() => this)().#x
@@ -33351,7 +33351,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-bad-reference.js:42:33]
  41 │ class C {
  42 │   f = function() { (() => {})().#x }
@@ -33359,7 +33359,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-call-expression-this.js:42:35]
  41 │ class C {
  42 │   f = function() { (() => this)().#x }
@@ -33367,7 +33367,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-bad-reference.js:42:30]
  41 │ class C {
  42 │   f = function() { something.#x }
@@ -33375,7 +33375,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-fn-member-expression-this.js:42:25]
  41 │ class C {
  42 │   f = function() { this.#x }
@@ -33383,7 +33383,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-bad-reference.js:42:17]
  41 │ class C {
  42 │   f = something.#x
@@ -33391,7 +33391,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/field-init-member-expression-this.js:42:12]
  41 │ class C {
  42 │   f = this.#x
@@ -33399,7 +33399,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-call-expression-bad-reference.js:57:20]
  56 │ class C extends Parent {
  57 │   f = (() => {})().#x
@@ -33407,7 +33407,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-call-expression-this.js:57:22]
  56 │ class C extends Parent {
  57 │   f = (() => this)().#x
@@ -33415,7 +33415,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-member-expression-bad-reference.js:57:17]
  56 │ class C extends Parent {
  57 │   f = something.#x
@@ -33423,7 +33423,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/fields-init-heritage-member-expression-this.js:57:12]
  56 │ class C extends Parent {
  57 │   f = this.#x
@@ -33431,7 +33431,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-call-expression-bad-reference.js:42:22]
  41 │ class C {
  42 │   m() { (() => {})().#x }
@@ -33439,7 +33439,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-call-expression-this.js:42:24]
  41 │ class C {
  42 │   m() { (() => this)().#x }
@@ -33447,7 +33447,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-bad-reference.js:43:34]
  42 │   m() {
  43 │     function fn() { (() => {})().#x }
@@ -33455,7 +33455,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-call-expression-this.js:43:36]
  42 │   m() {
  43 │     function fn() { (() => this)().#x }
@@ -33463,7 +33463,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-bad-reference.js:43:31]
  42 │   m() {
  43 │     function fn() { something.#x }
@@ -33471,7 +33471,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-fn-member-expression-this.js:43:26]
  42 │   m() {
  43 │     function fn() { this.#x }
@@ -33479,7 +33479,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  44 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-bad-reference.js:57:18]
  56 │   m() {
  57 │     (() => {})().#x
@@ -33487,7 +33487,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-call-expression-this.js:57:20]
  56 │   m() {
  57 │     (() => this)().#x
@@ -33495,7 +33495,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-bad-reference.js:57:15]
  56 │   m() {
  57 │     something.#x
@@ -33503,7 +33503,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-heritage-member-expression-this.js:57:10]
  56 │   m() {
  57 │     this.#x
@@ -33511,7 +33511,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-member-expression-bad-reference.js:42:19]
  41 │ class C {
  42 │   m() { something.#x }
@@ -33519,7 +33519,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-member-expression-this.js:42:14]
  41 │ class C {
  42 │   m() { this.#x }
@@ -33527,7 +33527,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  43 │ }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-bad-reference.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -33535,7 +33535,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-call-expression-this.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -33543,7 +33543,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-bad-reference.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -33551,7 +33551,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  58 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/invalid-names/method-outter-member-expression-this.js:57:10]
  56 │ 
  57 │     this.#x;
@@ -34110,48 +34110,48 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Remove the trailing comma here
 
-  × Identifier `f` has already been declared
+  × Identifier `#f` has already been declared
     ╭─[test262/test/language/statements/class/private-non-static-getter-static-setter-early-error.js:17:7]
  16 │ class C {
  17 │   get #f() {}
     ·       ─┬
-    ·        ╰── `f` has already been declared here
+    ·        ╰── `#f` has already been declared here
  18 │   static set #f(v) {}
     ·              ─┬
     ·               ╰── It can not be redeclared here
  19 │ }
     ╰────
 
-  × Identifier `f` has already been declared
+  × Identifier `#f` has already been declared
     ╭─[test262/test/language/statements/class/private-non-static-setter-static-getter-early-error.js:17:7]
  16 │ class C {
  17 │   set #f(v) {}
     ·       ─┬
-    ·        ╰── `f` has already been declared here
+    ·        ╰── `#f` has already been declared here
  18 │   static get #f() {}
     ·              ─┬
     ·               ╰── It can not be redeclared here
  19 │ }
     ╰────
 
-  × Identifier `f` has already been declared
+  × Identifier `#f` has already been declared
     ╭─[test262/test/language/statements/class/private-static-getter-non-static-setter-early-error.js:17:14]
  16 │ class C {
  17 │   static get #f() {}
     ·              ─┬
-    ·               ╰── `f` has already been declared here
+    ·               ╰── `#f` has already been declared here
  18 │   set #f(v) {}
     ·       ─┬
     ·        ╰── It can not be redeclared here
  19 │ }
     ╰────
 
-  × Identifier `f` has already been declared
+  × Identifier `#f` has already been declared
     ╭─[test262/test/language/statements/class/private-static-setter-non-static-getter-early-error.js:17:14]
  16 │ class C {
  17 │   static set #f(v) {}
     ·              ─┬
-    ·               ╰── `f` has already been declared here
+    ·               ╰── `#f` has already been declared here
  18 │   get #f() {}
     ·       ─┬
     ·        ╰── It can not be redeclared here

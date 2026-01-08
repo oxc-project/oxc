@@ -88,9 +88,11 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                                 element.span,
                             ));
                         } else {
+                            let span = prev_element.span;
                             ctx.error(diagnostics::redeclaration(
-                                &element.name,
-                                prev_element.span,
+                                // `span` includes `#` for private identifiers
+                                span.source_text(ctx.source_text),
+                                span,
                                 element.span,
                             ));
                         }

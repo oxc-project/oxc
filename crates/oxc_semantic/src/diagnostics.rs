@@ -69,7 +69,7 @@ pub fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Private field '{x0}' must be declared in an enclosing class"))
+    OxcDiagnostic::error(format!("Private field '#{x0}' must be declared in an enclosing class"))
         .with_label(span1)
 }
 
