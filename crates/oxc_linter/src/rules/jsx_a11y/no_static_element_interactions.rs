@@ -16,9 +16,7 @@ use crate::{
     globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        get_element_type, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role,
-        is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
-        is_non_interactive_role, is_presentation_role,
+        get_element_type, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role, is_hidden_from_screen_reader, is_interactive_element, is_interactive_role, is_non_interactive_element, is_non_interactive_role, is_presentation_role
     },
 };
 
@@ -118,6 +116,10 @@ impl Rule for NoStaticElementInteractions {
         }
 
         if is_interactive_element(&element_type, jsx_el) {
+            return;
+        }
+
+        if is_non_interactive_element(&element_type, jsx_el) {
             return;
         }
 

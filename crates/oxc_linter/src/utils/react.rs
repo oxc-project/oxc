@@ -178,6 +178,26 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
     }
 }
 
+// TODO: Implement this.
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isNonInteractiveElement.js
+pub fn is_non_interactive_element(element_type: &str, _jsx_opening_el: &JSXOpeningElement) -> bool {
+    // Do not test custom JSX components, we do not know what
+    // low-level DOM element this maps to.
+    if !HTML_TAG.contains(element_type.as_ref()) {
+        return false;
+    }
+
+    match element_type {
+        // <header> elements do not technically have semantics, unless the
+        // element is a direct descendant of <body>, and this plugin cannot
+        // reliably test that.
+        // @see https://www.w3.xorg/TR/wai-aria-practices/examples/landmarks/banner.html
+        "header" => return false,
+        // TODO: Implement this.
+        _ => true
+    }
+}
+
 const INTERACTIVE_ROLES: [&str; 27] = [
     "button",
     "checkbox",
