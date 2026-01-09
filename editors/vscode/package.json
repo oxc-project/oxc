@@ -285,9 +285,9 @@
   "activationEvents": [
     "onLanguage:astro",
     "onLanguage:css",
+    "onLanguage:graphql",
     "onLanguage:handlebars",
     "onLanguage:html",
-    "onLanguage:graphql",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
     "onLanguage:json",
