@@ -1,0 +1,28 @@
+---
+source: crates/oxc_linter/tests/schema_validation_test.rs
+expression: snapshot_body
+---
+File: invalid_overrides_with_categories.json
+
+.oxlintrc.json:
+{
+  "rules": {
+    "curly": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.js"
+      ],
+      "rules": {
+        "no-console": "error"
+      },
+      "categories": {
+        "perf": true
+      }
+    }
+  ]
+}
+
+Errors:
+- Additional properties are not allowed ('categories' was unexpected)

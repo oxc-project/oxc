@@ -1,0 +1,8 @@
+{
+  "ignorePatterns": [
+    "dist",
+    "node_modules",
+    "*.min.js",
+    "**/*.ts"
+  ]
+}

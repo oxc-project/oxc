@@ -1,0 +1,79 @@
+{
+  "$schema": "../../../../../../npm/oxlint/configuration_schema.json",
+  "env": {
+    "browser": true,
+    "node": true
+  },
+  "globals": {
+    "globalThis": "readonly",
+    "window": "readonly"
+  },
+  "plugins": [
+    "typescript",
+    "jest",
+    "unicorn"
+  ],
+  "rules": {
+    "curly": [
+      "error",
+      "all"
+    ],
+    "no-shadow": "warn",
+    "jest/valid-title": "warn",
+    "unicorn/prefer-string-replace-all": "warn",
+    "typescript/no-explicit-any": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/**"
+      ],
+      "env": {
+        "browser": true
+      },
+      "rules": {
+        "no-console": [
+          "warn",
+          {
+            "allow": [
+              "warn",
+              "error"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": [
+        "server/**"
+      ],
+      "env": {
+        "node": true
+      },
+      "globals": {
+        "__dirname": "readonly"
+      },
+      "rules": {
+        "no-console": "off",
+        "unicorn/no-process-exit": "off"
+      }
+    },
+    {
+      "files": [
+        "tests/**"
+      ],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "jest/no-identical-title": "error",
+        "jest/no-conditional-expect": "warn"
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "**/.cache/**",
+    "**/dist/**",
+    "**/coverage/**"
+  ]
+}
