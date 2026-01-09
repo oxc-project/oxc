@@ -3098,6 +3098,11 @@ impl RuleRunner for crate::rules::typescript::prefer_nullish_coalescing::PreferN
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }
 
+impl RuleRunner for crate::rules::typescript::prefer_optional_chain::PreferOptionalChain {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
 impl RuleRunner
     for crate::rules::typescript::prefer_promise_reject_errors::PreferPromiseRejectErrors
 {
