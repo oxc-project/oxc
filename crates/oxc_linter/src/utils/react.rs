@@ -149,9 +149,8 @@ pub fn is_abstract_role<'a>(ctx: &LintContext<'a>, jsx_opening_el: &JSXOpeningEl
     )
 }
 
-// TODO: Should re-implement
+// TODO: Should re-implement based on
 // https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
-// with `oxc-project/aria-query` which is currently W.I.P.
 //
 // Until then, use simplified version by https://html.spec.whatwg.org/multipage/dom.html#interactive-content
 pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
