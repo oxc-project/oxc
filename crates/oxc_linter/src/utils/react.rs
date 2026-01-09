@@ -11,6 +11,7 @@ use oxc_ast::{
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 
+use crate::globals::HTML_TAG;
 use crate::{LintContext, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
@@ -61,6 +62,8 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
     get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
 }
 
+// TODO: Move the a11y methods to their own util for jsx-a11y?
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/isHiddenFromScreenReader.js
 pub fn is_hidden_from_screen_reader<'a>(
     ctx: &LintContext<'a>,
@@ -105,12 +108,45 @@ pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<
         || has_jsx_prop_ignore_case(&node.opening_element, "children").is_some()
 }
 
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isPresentationRole.js
 pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
     let Some(role) = has_jsx_prop(jsx_opening_el, "role") else {
         return false;
     };
 
     matches!(get_string_literal_prop_value(role), Some("presentation" | "none"))
+}
+
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isAbstractRole.js
+pub fn is_abstract_role<'a>(ctx: &LintContext<'a>, jsx_opening_el: &JSXOpeningElement<'a>) -> bool {
+    // Do not test custom JSX components, we do not know what
+    // low-level DOM element this maps to.
+    let element_type = get_element_type(ctx, jsx_opening_el);
+    if !HTML_TAG.contains(element_type.as_ref()) {
+        return false;
+    }
+
+    let Some(role) = has_jsx_prop(jsx_opening_el, "role") else {
+        return false;
+    };
+
+    matches!(
+        get_string_literal_prop_value(role),
+        Some(
+            "command"
+                | "composite"
+                | "input"
+                | "landmark"
+                | "range"
+                | "roletype"
+                | "section"
+                | "sectionhead"
+                | "select"
+                | "structure"
+                | "widget"
+                | "window"
+        )
+    )
 }
 
 // TODO: Should re-implement
