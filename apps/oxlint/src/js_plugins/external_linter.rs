@@ -1,4 +1,4 @@
-use std::sync::{atomic::Ordering, mpsc::channel};
+use std::sync::{Arc, atomic::Ordering, mpsc::channel};
 
 use napi::{
     Status,
@@ -51,7 +51,7 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterCreateWorkspaceCb {
-    Box::new(move |workspace_dir| {
+    Arc::new(Box::new(move |workspace_dir| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
@@ -65,16 +65,16 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterC
             // `createWorkspace` threw an error
             Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
         }
-    })
+    }))
 }
 
 /// Wrap `destroyWorkspace` JS callback as a normal Rust function.
 fn wrap_destroy_workspace(
     cb: JsDestroyWorkspaceCb,
 ) -> oxc_linter::ExternalLinterDestroyWorkspaceCb {
-    Box::new(move |root_dir: String| {
+    Arc::new(Box::new(move |root_dir: String| {
         let _ = cb.call(FnArgs::from((root_dir,)), ThreadsafeFunctionCallMode::Blocking);
-    })
+    }))
 }
 
 /// Result returned by `loadPlugin` JS callback.
@@ -91,7 +91,7 @@ pub enum LoadPluginReturnValue {
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Box::new(move |plugin_url, plugin_name, plugin_name_is_alias| {
+    Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
@@ -117,7 +117,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
             // `loadPlugin` threw an error - should be impossible because `loadPlugin` is wrapped in try-catch
             Err(err) => Err(format!("`loadPlugin` threw an error: {err}")),
         }
-    })
+    }))
 }
 
 /// Wrap `setupRuleConfigs` JS callback as a normal Rust function.
@@ -126,7 +126,7 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
 /// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
 /// and block current thread until `setupRuleConfigs` completes execution.
 fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleConfigsCb {
-    Box::new(move |options_json: String| {
+    Arc::new(Box::new(move |options_json: String| {
         let (tx, rx) = channel();
 
         // Send data to JS
@@ -159,7 +159,7 @@ fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleC
         } else {
             Err(format!("Failed to schedule `setupRuleConfigs` callback: {status:?}"))
         }
-    })
+    }))
 }
 
 /// Result returned by `lintFile` JS callback.
@@ -179,7 +179,7 @@ pub enum LintFileReturnValue {
 /// Use an `mpsc::channel` to wait for the result from JS side, and block current thread until `lintFile`
 /// completes execution.
 fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
-    Box::new(
+    Arc::new(Box::new(
         move |file_path: String,
               rule_ids: Vec<u32>,
               options_ids: Vec<u32>,
@@ -246,7 +246,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                 Err(format!("Failed to schedule `lintFile` callback: {status:?}"))
             }
         },
-    )
+    ))
 }
 
 /// Get buffer ID of the `Allocator` and, if it hasn't already been sent to JS,

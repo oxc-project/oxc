@@ -41,7 +41,7 @@ suite("code actions", () => {
 
   // flaky test for multi workspace mode
   testSingleFolderMode("listed code actions", async () => {
-    await loadFixture("debugger");
+    await loadFixture("debugger_empty_config");
     await sleep(500);
     const fileUri = Uri.joinPath(fixturesWorkspaceUri(), "fixtures", "debugger.js");
     // await window.showTextDocument(fileUri); -- should also work without opening the file
@@ -57,7 +57,6 @@ suite("code actions", () => {
 
     assert(Array.isArray(codeActions));
     const quickFixes = codeActions.filter((action) => action.kind?.value === "quickfix");
-    strictEqual(quickFixes.length, 3);
     deepStrictEqual(
       quickFixes.map(({ edit: _edit, kind: _kind, ...fix }) => {
         return fix;

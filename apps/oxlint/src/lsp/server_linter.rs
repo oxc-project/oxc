@@ -51,6 +51,10 @@ pub struct ServerLinterBuilder {
 }
 
 impl ServerLinterBuilder {
+    pub fn new(external_linter: Option<ExternalLinter>) -> Self {
+        Self { external_linter }
+    }
+
     /// # Panics
     /// Panics if the root URI cannot be converted to a file path.
     pub fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ServerLinter {
@@ -129,7 +133,7 @@ impl ServerLinterBuilder {
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
             warn!("Failed to build config: {err}");
-            ConfigStoreBuilder::empty().build(&mut external_plugin_store).unwrap()
+            ConfigStoreBuilder::empty().build(&mut ExternalPluginStore::new(false)).unwrap()
         });
 
         let lint_options = LintOptions {
@@ -141,10 +145,22 @@ impl ServerLinterBuilder {
             },
             ..Default::default()
         };
+        let external_linter =
+            if external_plugin_store.is_empty() { None } else { self.external_linter.as_ref() };
+
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
         let config_store_clone = config_store.clone();
+        // Send JS plugins config to JS side
+        if let Some(external_linter) = &external_linter {
+            let res = config_store
+                .external_plugin_store()
+                .setup_rule_configs(root_path.to_string_lossy().into_owned(), external_linter);
+            if let Err(err) = res {
+                error!("Failed to setup JS plugins config:\n{err}\n");
+            }
+        }
 
-        let linter = Linter::new(lint_options, config_store, None);
+        let linter = Linter::new(lint_options, config_store, external_linter.cloned());
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
 
@@ -164,7 +180,8 @@ impl ServerLinterBuilder {
             Ok(runner) => runner,
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
-                let linter = Linter::new(lint_options, config_store_clone, None);
+                let linter =
+                    Linter::new(lint_options, config_store_clone, external_linter.cloned());
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(fix_kind)
@@ -308,20 +325,26 @@ impl ServerLinterBuilder {
             };
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
-            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
+            let config_store_builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
                 external_linter,
                 external_plugin_store,
-            ) else {
-                warn!("Skipping config (builder failed): {}", file_path.display());
-                continue;
+            ) {
+                Ok(builder) => builder,
+                Err(err) => {
+                    warn!("Skipping config: {}: {err}", file_path.display());
+                    continue;
+                }
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config = config_store_builder.build(external_plugin_store).unwrap_or_else(|err| {
-                warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                ConfigStoreBuilder::empty().build(external_plugin_store).unwrap()
-            });
+            let config = match config_store_builder.build(external_plugin_store) {
+                Ok(config) => config,
+                Err(err) => {
+                    warn!("Skipping config: {}: {err}", file_path.display());
+                    continue;
+                }
+            };
             nested_configs.insert(dir_path.to_path_buf(), config);
         }
 
