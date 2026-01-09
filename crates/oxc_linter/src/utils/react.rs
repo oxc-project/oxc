@@ -256,10 +256,12 @@ const NON_INTERACTIVE_ROLES: [&str; 42] = [
     "tooltip",
 ];
 
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
 pub fn is_interactive_role(role: &str) -> bool {
     INTERACTIVE_ROLES.contains(&role)
 }
 
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
 pub fn is_non_interactive_role(role: &str) -> bool {
     NON_INTERACTIVE_ROLES.contains(&role)
 }
