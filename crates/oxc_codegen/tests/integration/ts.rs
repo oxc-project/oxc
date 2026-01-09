@@ -2,7 +2,7 @@ use oxc_codegen::CodegenOptions;
 
 use crate::{
     snapshot, snapshot_options,
-    tester::{test_same, test_tsx},
+    tester::{test_idempotency, test_same, test_tsx},
 };
 
 #[test]
@@ -142,4 +142,15 @@ export import b = require("b");
 
     snapshot("ts", &cases);
     snapshot_options("minify", &cases, &CodegenOptions::minify());
+}
+
+#[test]
+fn ts_as_expression_in_binary_expr() {
+    test_idempotency("key in (that as object)");
+    test_idempotency("'foo' in (x as Record<string, unknown>)");
+    test_idempotency("(x as object) instanceof Map");
+    test_idempotency("'foo' in ((x as object) as Record<string, unknown>)");
+    test_idempotency(
+        "!(typeof that === 'object' && 'keys' in that && typeof (that as object & { keys: unknown }).keys === 'function')",
+    );
 }

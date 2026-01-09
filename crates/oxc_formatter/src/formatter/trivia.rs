@@ -424,9 +424,12 @@ impl<'a> Format<'a> for Comment {
             if is_alignable_comment(content) {
                 // Using `write_element` directly instead of `labelled()`
                 // to avoid allocating a `Vec` for `lines` iter
-                f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
-                    JsLabels::AlignableBlockComment,
-                ))));
+                let sort_imports_enabled = f.options().experimental_sort_imports.is_some();
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
+                        JsLabels::AlignableBlockComment,
+                    ))));
+                }
 
                 // `unwrap` is safe because `content` contains at least one line.
                 let first_line = lines.next().unwrap();
@@ -437,7 +440,9 @@ impl<'a> Format<'a> for Comment {
                     write!(f, [hard_line_break(), " ", text(line.trim())]);
                 }
 
-                f.write_element(FormatElement::Tag(Tag::EndLabelled));
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::EndLabelled));
+                }
             } else {
                 // Normalize line endings `\r\n` to `\n`
                 let mut string = StringBuilder::with_capacity_in(content.len(), f.allocator());

@@ -56,7 +56,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportDeclaration<'a>> {
             write!(f, [OptionalSemicolon]);
         });
 
-        write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)]);
+        if f.options().experimental_sort_imports.is_some() {
+            write!(f, [labelled(LabelId::of(JsLabels::ImportDeclaration), decl)]);
+        } else {
+            write!(f, decl);
+        }
     }
 }
 

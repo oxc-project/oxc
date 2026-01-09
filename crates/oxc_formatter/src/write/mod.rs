@@ -1221,16 +1221,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeOperator<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let needs_parentheses = self.needs_parentheses(f);
-        if needs_parentheses {
-            write!(f, "(");
-        }
-
         write!(f, [self.operator().to_str(), hard_space(), self.type_annotation()]);
-
-        if needs_parentheses {
-            write!(f, ")");
-        }
     }
 }
 

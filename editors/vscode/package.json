@@ -284,12 +284,20 @@
   },
   "activationEvents": [
     "onLanguage:astro",
+    "onLanguage:css",
+    "onLanguage:handlebars",
+    "onLanguage:html",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
+    "onLanguage:json",
+    "onLanguage:jsonc",
+    "onLanguage:markdown",
     "onLanguage:svelte",
+    "onLanguage:toml",
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
-    "onLanguage:vue"
+    "onLanguage:vue",
+    "onLanguage:yaml"
   ],
   "icon": "icon.png",
   "engines": {

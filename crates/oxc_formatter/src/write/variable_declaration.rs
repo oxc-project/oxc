@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::utils::assignment_like::AssignmentLike;
-use crate::write::semicolon::MaybeOptionalSemicolon;
+use crate::write::semicolon::OptionalSemicolon;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
@@ -21,7 +21,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
             AstNodes::ForStatement(stmt) => {
                 stmt.init().is_some_and(|init| init.span() != self.span())
             }
-            // TODO: It would be better if there is a AstNodes which is `left` of `ForInStatement` and `ForOfStatement`.
             AstNodes::ForInStatement(stmt) => stmt.left().span() != self.span(),
             AstNodes::ForOfStatement(stmt) => stmt.left().span() != self.span(),
             _ => true,
@@ -37,7 +36,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
                 self.kind().as_str(),
                 space(),
                 self.declarations(),
-                MaybeOptionalSemicolon(semicolon)
+                semicolon.then_some(OptionalSemicolon)
             ))
         );
     }
