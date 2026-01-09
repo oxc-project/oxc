@@ -178,6 +178,92 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
     }
 }
 
+const INTERACTIVE_ROLES: [&str; 27] = [
+    "button",
+    "checkbox",
+    "columnheader",
+    "combobox",
+    "gridcell",
+    "link",
+    "listbox",
+    "menu",
+    "menubar",
+    "menuitem",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "option",
+    "radio",
+    "radiogroup",
+    "row",
+    "rowheader",
+    "scrollbar",
+    "searchbox",
+    "separator",
+    "slider",
+    "spinbutton",
+    "switch",
+    "tab",
+    "textbox",
+    // Per the original rule:
+    // > 'toolbar' does not descend from widget, but it does support
+    // > aria-activedescendant, thus in practice we treat it as a widget.
+    "toolbar",
+    "treeitem",
+];
+
+const NON_INTERACTIVE_ROLES: [&str; 42] = [
+    "alert",
+    "alertdialog",
+    "application",
+    "article",
+    "banner",
+    "blockquote",
+    "caption",
+    "cell",
+    "complementary",
+    "contentinfo",
+    "definition",
+    "deletion",
+    "dialog",
+    "directory",
+    "document",
+    "feed",
+    "figure",
+    "form",
+    "group",
+    "heading",
+    "img",
+    "insertion",
+    "list",
+    "listitem",
+    "log",
+    "main",
+    "marquee",
+    "math",
+    "navigation",
+    "note",
+    "paragraph",
+    "region",
+    "row",
+    "rowgroup",
+    "search",
+    "status",
+    "table",
+    "tabpanel",
+    "term",
+    "time",
+    "timer",
+    "tooltip",
+];
+
+pub fn is_interactive_role(role: &str) -> bool {
+    INTERACTIVE_ROLES.contains(&role)
+}
+
+pub fn is_non_interactive_role(role: &str) -> bool {
+    NON_INTERACTIVE_ROLES.contains(&role)
+}
+
 const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";
 

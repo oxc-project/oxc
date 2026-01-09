@@ -17,7 +17,8 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     utils::{
         get_element_type, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role,
-        is_hidden_from_screen_reader, is_interactive_element, is_presentation_role,
+        is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
+        is_non_interactive_role, is_presentation_role,
     },
 };
 
@@ -82,81 +83,6 @@ declare_oxc_lint!(
     config = NoStaticElementInteractionsConfig,
 );
 
-const INTERACTIVE_ROLES: [&str; 26] = [
-    "button",
-    "checkbox",
-    "columnheader",
-    "combobox",
-    "gridcell",
-    "link",
-    "listbox",
-    "menu",
-    "menubar",
-    "menuitem",
-    "menuitemcheckbox",
-    "menuitemradio",
-    "option",
-    "radio",
-    "radiogroup",
-    "row",
-    "rowheader",
-    "scrollbar",
-    "searchbox",
-    "separator",
-    "slider",
-    "spinbutton",
-    "switch",
-    "tab",
-    "textbox",
-    "treeitem",
-];
-
-const NON_INTERACTIVE_ROLES: [&str; 43] = [
-    "alert",
-    "alertdialog",
-    "application",
-    "article",
-    "banner",
-    "blockquote",
-    "caption",
-    "cell",
-    "complementary",
-    "contentinfo",
-    "definition",
-    "deletion",
-    "dialog",
-    "directory",
-    "document",
-    "feed",
-    "figure",
-    "form",
-    "group",
-    "heading",
-    "img",
-    "insertion",
-    "list",
-    "listitem",
-    "log",
-    "main",
-    "marquee",
-    "math",
-    "navigation",
-    "note",
-    "paragraph",
-    "region",
-    "row",
-    "rowgroup",
-    "search",
-    "status",
-    "table",
-    "tabpanel",
-    "term",
-    "time",
-    "timer",
-    "toolbar",
-    "tooltip",
-];
-
 impl Rule for NoStaticElementInteractions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
@@ -217,10 +143,10 @@ impl Rule for NoStaticElementInteractions {
                 let roles: Vec<&str> = role_str.split_whitespace().collect();
 
                 if let Some(first_role) = roles.first() {
-                    if INTERACTIVE_ROLES.contains(first_role) {
+                    if is_interactive_role(first_role) {
                         return;
                     }
-                    if NON_INTERACTIVE_ROLES.contains(first_role) {
+                    if is_non_interactive_role(first_role) {
                         ctx.diagnostic(no_static_element_interactions_diagnostic(
                             jsx_el.name.span(),
                         ));
