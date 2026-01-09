@@ -1055,6 +1055,7 @@ describe("Tailwind CSS Sorting works with other options", () => {
     const input = `
       <div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
       <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+      <div className={showLandingPage ? "container pb-6" : 'hidden'}>title</div>
     `;
 
     const result = await format("test.tsx", input, {
@@ -1067,6 +1068,7 @@ describe("Tailwind CSS Sorting works with other options", () => {
     expect(result.code).toMatchInlineSnapshot(`
       "<div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
       <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+      <div className={showLandingPage ? 'container pb-6' : 'hidden'}>title</div>;
       "
     `);
   });
@@ -1075,6 +1077,7 @@ describe("Tailwind CSS Sorting works with other options", () => {
     const input = `
       <div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
       <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+      <div className={showLandingPage ? "container pb-6" : 'hidden'}>title</div>
     `;
 
     const result = await format("test.tsx", input, {
@@ -1086,6 +1089,7 @@ describe("Tailwind CSS Sorting works with other options", () => {
     expect(result.code).toMatchInlineSnapshot(`
       "<div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
       <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
+      <div className={showLandingPage ? "container pb-6" : "hidden"}>title</div>;
       "
     `);
   });

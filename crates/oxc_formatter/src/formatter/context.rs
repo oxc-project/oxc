@@ -14,8 +14,6 @@ use super::{Comments, SourceText};
 /// Entry in the Tailwind context stack, tracking whether we're inside a Tailwind class context.
 #[derive(Clone, Copy, Debug)]
 pub struct TailwindContextEntry {
-    /// Whether the context is inside a JSX attribute (affects quote style).
-    pub is_jsx: bool,
     /// Whether to preserve whitespace (newlines) in template literals.
     pub preserve_whitespace: bool,
     /// Whether we're inside a template literal expression (between `${` and `}`).
@@ -42,9 +40,8 @@ pub struct TailwindContextEntry {
 
 impl TailwindContextEntry {
     /// Create a new context entry for JSX attributes or function calls.
-    pub fn new(is_jsx: bool, preserve_whitespace: bool) -> Self {
+    pub fn new(preserve_whitespace: bool) -> Self {
         Self {
-            is_jsx,
             preserve_whitespace,
             in_template_expression: false,
             quasi_before_has_trailing_ws: true, // Default: can collapse
@@ -63,7 +60,6 @@ impl TailwindContextEntry {
         quasi_after_has_leading_ws: bool,
     ) -> Self {
         Self {
-            is_jsx: parent.is_jsx,
             preserve_whitespace: parent.preserve_whitespace,
             in_template_expression: true,
             quasi_before_has_trailing_ws,
