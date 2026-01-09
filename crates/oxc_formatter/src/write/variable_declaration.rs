@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::utils::assignment_like::AssignmentLike;
-use crate::write::semicolon::MaybeOptionalSemicolon;
+use crate::write::semicolon::OptionalSemicolon;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
@@ -36,7 +36,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
                 self.kind().as_str(),
                 space(),
                 self.declarations(),
-                MaybeOptionalSemicolon(semicolon)
+                semicolon.then_some(OptionalSemicolon)
             ))
         );
     }
