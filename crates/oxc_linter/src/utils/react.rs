@@ -194,7 +194,7 @@ pub fn is_non_interactive_element(element_type: &str, _jsx_opening_el: &JSXOpeni
         // @see https://www.w3.xorg/TR/wai-aria-practices/examples/landmarks/banner.html
         "header" => return false,
         // TODO: Implement this.
-        _ => true
+        _ => false,
     }
 }
 
