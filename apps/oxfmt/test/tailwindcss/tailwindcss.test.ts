@@ -1051,7 +1051,7 @@ describe("Tailwind CSS Sorting with `experimentalSortImports` enabled", () => {
 });
 
 describe("Tailwind CSS Sorting works with other options", () => {
-  test("should keep quotes with `singleQuote: false`", async () => {
+  test("should keep quotes with `singleQuote: true`", async () => {
     const input = `
       <div className={clsx('text-md before:content-["hello"]')}>Hello</div>;
       <div className={clsx("text-md before:content-['hello']")}>Hello</div>;
@@ -1061,7 +1061,7 @@ describe("Tailwind CSS Sorting works with other options", () => {
       experimentalTailwindcss: {
         functions: ["clsx"],
       },
-      singleQuote: false,
+      singleQuote: true,
     });
 
     expect(result.code).toMatchInlineSnapshot(`
