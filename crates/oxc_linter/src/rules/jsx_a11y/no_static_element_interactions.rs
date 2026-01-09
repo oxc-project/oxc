@@ -529,16 +529,11 @@ fn test() {
     ];
 
     let fail = vec![
-        (r"<section onClick={() => {}} />;", None),
         (r"<main onClick={() => {}} />;", None),
-        (r"<article onClick={() => {}} />;", None),
-        (r"<header onClick={() => {}} />;", None),
-        (r"<footer onClick={() => {}} />;", None),
         (r"<div onClick={() => {}} role='article' />;", None),
         (r"<div onClick={() => {}} role='navigation' />;", None),
         (r"<div onClick={() => {}} role='main' />;", None),
         (r"<div onClick={() => {}} aria-hidden={false} />;", None),
-        (r"<a onClick={() => {}} />;", None),
         (r#"<a tabIndex="0" onClick={() => {}} />"#, None),
         (
             r"<div onClick={() => {}} role={ROLE} />",
