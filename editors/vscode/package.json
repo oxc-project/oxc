@@ -239,22 +239,22 @@
         "oxc.path.oxlint": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc linter binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc linter binary. Default: auto detection in `node_modules`."
         },
         "oxc.path.oxfmt": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc formatter binary. Default: auto detection in `node_modules`."
         },
         "oxc.path.tsgolint": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc tsgolint binary. Default: auto detection from `oxlint`."
         },
         "oxc.path.node": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to a Node.js binary. Will be added to the language server `PATH` environment."
+          "markdownDescription": "Path to a Node.js binary. Will be added to the `oxfmt` and `oxlint` `PATH` environment."
         }
       }
     },

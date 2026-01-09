@@ -48,16 +48,16 @@ To enable it, use a VSCode `settings.json` like:
 
 Following configurations are supported via `settings.json` and affect the window editor:
 
-| Key                 | Default Value | Possible Values                  | Description                                                                                      |
-| ------------------- | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `oxc.enable`        | `true`        | `true` \| `false`                | Enable oxc language server                                                                       |
-| `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the language server `PATH` environment.               |
-| `oxc.path.oxfmt`    | -             | `<string>`                       | Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one. |
-| `oxc.path.oxlint`   | -             | `<string>`                       | Path to an Oxc linter binary. Will be used by the language server instead of the bundled one.    |
-| `oxc.path.tsgolint` | -             | `<string>`                       | Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one.  |
-| `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                                |
-| Deprecated          |               |                                  |                                                                                                  |
-| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.                      |
+| Key                 | Default Value | Possible Values                  | Description                                                                             |
+| ------------------- | ------------- | -------------------------------- | --------------------------------------------------------------------------------------- |
+| `oxc.enable`        | `true`        | `true` \| `false`                | Enable oxc language server                                                              |
+| `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the `oxfmt` and `oxlint` `PATH` environment. |
+| `oxc.path.oxfmt`    | -             | `<string>`                       | Path to an Oxc formatter binary. Default: auto detection in `node_modules`.             |
+| `oxc.path.oxlint`   | -             | `<string>`                       | Path to an Oxc linter binary. Default: auto detection in `node_modules`.                |
+| `oxc.path.tsgolint` | -             | `<string>`                       | Path to an Oxc tsgolint binary. Default: auto detection from `oxlint`.                  |
+| `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                       |
+| Deprecated          |               |                                  |                                                                                         |
+| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.             |
 
 ### Workspace Configuration
 
