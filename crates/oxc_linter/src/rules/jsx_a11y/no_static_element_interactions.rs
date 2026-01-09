@@ -16,8 +16,7 @@ use crate::{
     globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        get_element_type, has_jsx_prop, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
-        is_interactive_element, is_presentation_role,
+        get_element_type, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role, is_hidden_from_screen_reader, is_interactive_element, is_presentation_role
     },
 };
 
@@ -182,6 +181,7 @@ impl Rule for NoStaticElementInteractions {
 
         let element_type = get_element_type(ctx, jsx_el);
 
+        // Do not test custom JSX elements.
         if !HTML_TAG.contains(element_type.as_ref()) {
             return;
         }
@@ -191,6 +191,11 @@ impl Rule for NoStaticElementInteractions {
         }
 
         if is_interactive_element(&element_type, jsx_el) {
+            return;
+        }
+
+        // This rule has no opinion on abstract roles, so just ignore them.
+        if is_abstract_role(ctx, jsx_el) {
             return;
         }
 
