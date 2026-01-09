@@ -1118,12 +1118,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BigIntLiteral<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'a, RegExpLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let raw = self.raw().unwrap().as_str();
-        let (pattern, flags) = raw.rsplit_once('/').unwrap();
-        // TODO: print the flags without allocation.
-        let mut flags = flags.chars().collect::<std::vec::Vec<_>>();
-        flags.sort_unstable();
-        let flags = flags.iter().collect::<String>();
-        let s = StringBuilder::from_strs_array_in([pattern, "/", &flags], f.context().allocator());
+
+        let Some((pattern, flags)) = raw.rsplit_once('/') else {
+            return write!(f, text(raw));
+        };
+
+        // Regex flags are ASCII and limited to at most 8 unique: d, g, i, m, s, u, v, y
+        debug_assert!(flags.len() <= 8 && flags.is_ascii());
+        let mut flags_buf = [0u8; 8];
+        let len = flags.len();
+        flags_buf[..len].copy_from_slice(flags.as_bytes());
+        flags_buf[..len].sort_unstable();
+        let flags = str::from_utf8(&flags_buf[..len]).unwrap();
+        let s = StringBuilder::from_strs_array_in([pattern, "/", flags], f.context().allocator());
         write!(f, text(s.into_str()));
     }
 }
