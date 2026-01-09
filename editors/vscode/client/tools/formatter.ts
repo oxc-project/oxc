@@ -158,7 +158,6 @@ export default class FormatterTool implements ToolInterface {
       // Vue
       "vue",
       // Angular
-      "component.html",
       // mjml
       "mjml",
       // CSS
