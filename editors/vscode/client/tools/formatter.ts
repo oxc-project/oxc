@@ -155,11 +155,20 @@ export default class FormatterTool implements ToolInterface {
       "inc",
       "xht",
       "xhtml",
+      // Vue
+      "vue",
+      // Angular
+      // mjml
+      "mjml",
       // CSS
       "css",
       "wxss",
       "pcss",
       "postcss",
+      // less
+      "less",
+      // scss
+      "scss",
       // GraphQL
       "graphql",
       "gql",
@@ -179,6 +188,8 @@ export default class FormatterTool implements ToolInterface {
       "ronn",
       "scd",
       "workbook",
+      // mdx
+      "mdx",
       // YAML
       "yml",
       "mir",
