@@ -262,6 +262,10 @@ website path:
 linter-schema-json:
   cargo run -p website_linter schema-json > npm/oxlint/configuration_schema.json
 
+# Generate formatter schema json for `npm/oxfmt/configuration_schema.json`
+formatter-schema-json:
+  cargo run -p website_formatter schema-json > npm/oxfmt/configuration_schema.json
+
 # Update VSCode extension README configuration section
 vscode-docs:
   cargo run -p vscode_docs update

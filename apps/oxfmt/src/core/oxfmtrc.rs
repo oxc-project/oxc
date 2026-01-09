@@ -1,15 +1,8 @@
-//! This file handles the `Oxfmtrc` struct, which ideally should be defined under `apps/oxfmt`.
-//!
-//! The reason it is not done so at this time is that `oxc_language_server` uses this struct,
-//! and `apps/oxfmt` also depends on `oxc_language_server`, creating a circular reference.
-//!
-//! While it is possible to define a separate crate for `Oxfmtrc`, we compromise with this method for now.
-
 use schemars::{JsonSchema, schema_for};
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
-use crate::{
+use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
@@ -698,7 +691,11 @@ impl Oxfmtrc {
         // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
         // Other options defined independently by plugins are also left as they are.
     }
+}
 
+// ---
+
+impl Oxfmtrc {
     /// Generates the JSON schema for Oxfmtrc configuration files.
     ///
     /// # Panics

@@ -1927,7 +1927,6 @@ dependencies = [
  "insta",
  "natord",
  "nodejs-built-in-modules",
- "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
  "oxc_data_structures",
@@ -1937,11 +1936,9 @@ dependencies = [
  "oxc_syntax",
  "phf",
  "pico-args",
- "project-root",
  "rustc-hash",
  "serde",
  "serde_json",
- "sort-package-json",
  "unicode-width",
 ]
 
@@ -2513,6 +2510,7 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc-miette",
+ "oxc-schemars",
  "oxc-toml",
  "oxc_allocator",
  "oxc_data_structures",
@@ -3853,10 +3851,9 @@ dependencies = [
  "bpaf",
  "insta",
  "oxc-schemars",
- "oxc_formatter",
  "oxfmt",
  "pico-args",
- "serde_json",
+ "project-root",
  "website_common",
 ]
 

@@ -7,10 +7,9 @@ use editorconfig_parser::{
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
-use oxc_formatter::{
-    FormatOptions,
-    oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc},
-};
+use oxc_formatter::FormatOptions;
+
+use super::oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc};
 
 use super::{FormatFileStrategy, utils};
 

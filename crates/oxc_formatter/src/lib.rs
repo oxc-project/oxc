@@ -7,7 +7,6 @@ mod external_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
-pub mod oxfmtrc;
 mod parentheses;
 mod service;
 mod utils;

@@ -56,3 +56,11 @@ When adding new tests:
 - Place test in the appropriate domain directory
 - If the test needs fixtures, create a `fixtures/` subdirectory
 - If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)
+
+## `Oxfmtrc` Configuration (`src/core/oxfmtrc.rs`)
+
+When modifying the `Oxfmtrc` struct (configuration options):
+
+1. Update `src-js/index.ts` types to match the Rust struct
+2. Run `just formatter-schema-json` to update `npm/oxfmt/configuration_schema.json`
+3. Run `cargo test -p website_formatter` to update schema markdown snapshots
