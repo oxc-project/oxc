@@ -1,0 +1,142 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {})
+   · ───────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ it("a", () => {})
+   · ─────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test.only("a", () => {})
+   · ────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test.concurrent("a", () => {})
+   · ──────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ it.concurrent("a", () => {})
+   · ────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:19]
+ 1 │ vi.setConfig({}); test("a", () => {})
+   ·                   ───────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:16]
+ 1 │ const t = 500; test("a", { timeout: t }, () => {})
+   ·                ───────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}, { timeout: null })
+   · ──────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}, { timeout: undefined })
+   · ───────────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}, -100)
+   · ─────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}, { timeout: -1 })
+   · ────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:38]
+ 1 │ vi.setConfig({ testTimeout: null }); test("a", () => {})
+   ·                                      ───────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:43]
+ 1 │ vi.setConfig({ testTimeout: undefined }); test("a", () => {})
+   ·                                           ───────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}); vi.setConfig({ testTimeout: 1000 })
+   · ───────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:33]
+ 1 │ const opts = { timeout: 1000 }; test("a", { ...opts }, () => {})
+   ·                                 ────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:33]
+ 1 │ const opts = { timeout: 1000 }; test("a", { ...opts }, { foo: 1 }, () => {})
+   ·                                 ────────────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}, { timeout: -1 }, { timeout: 500 })
+   · ──────────────────────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", { timeout: 500 }, { timeout: -1 })
+   · ────────────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}, { timeout: -1 }, 1000)
+   · ──────────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.
+
+  ⚠ eslint-plugin-vitest(require-test-timeout): Test is missing a timeout.
+   ╭─[require_test_timeout.tsx:1:1]
+ 1 │ test("a", () => {}, 1000, { timeout: -1 })
+   · ──────────────────────────────────────────
+   ╰────
+  help: Add a timeout to prevent tests from hanging indefinitely.

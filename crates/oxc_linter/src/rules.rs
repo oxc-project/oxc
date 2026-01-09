@@ -681,6 +681,7 @@ pub(crate) mod vitest {
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
+    pub mod require_test_timeout;
     pub mod warn_todo;
 }
 
@@ -1353,6 +1354,7 @@ oxc_macros::declare_all_lint_rules! {
     vitest::prefer_to_be_object,
     vitest::prefer_to_be_truthy,
     vitest::require_local_test_context_for_concurrent_snapshots,
+    vitest::require_test_timeout,
     vitest::warn_todo,
     vue::define_emits_declaration,
     vue::define_props_declaration,
