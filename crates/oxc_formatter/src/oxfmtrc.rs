@@ -10,7 +10,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 use crate::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing,
+    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     EmbeddedLanguageFormatting, Expand, FormatOptions, IndentStyle, IndentWidth, LineEnding,
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
     TailwindcssOptions, TrailingCommas,
@@ -184,6 +184,9 @@ pub struct SortImportsConfig {
     /// Accepts both `string` and `string[]` as group elements.
     #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "deserialize_groups")]
     pub groups: Option<Vec<Vec<String>>>,
+    /// Define your own groups and use regex for matching very specific imports
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub custom_groups: Option<Vec<CustomGroupDefinition>>,
 }
 
 /// Custom deserializer for groups field to support both `string` and `string[]` as group elements
@@ -526,6 +529,9 @@ impl Oxfmtrc {
             }
             if let Some(v) = config.groups {
                 sort_imports.groups = v;
+            }
+            if let Some(v) = config.custom_groups {
+                sort_imports.custom_groups = v;
             }
 
             // `partition_by_newline: true` and `newlines_between: true` cannot be used together
