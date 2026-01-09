@@ -487,7 +487,6 @@ fn test() {
         (r"<button onClick={() => {}} className='foo' />;", None),
         (r"<select onClick={() => {}} />;", None),
         (r"<textarea onClick={() => {}} />;", None),
-        (r"<a tabIndex='0' onClick={() => {}} href='http://x.y.z' />;", None),
         (r"<input type='hidden' onClick={() => {}} />;", None),
         (r"<div onClick={() => {}} role='presentation' />;", None),
         (r"<div onClick={() => {}} role='none' />;", None),
@@ -523,15 +522,13 @@ fn test() {
         (r"<div onClick={() => {}} role='slider' />;", None),
         (r"<div onClick={() => {}} role='spinbutton' />;", None),
         (r"<div onClick={() => {}} role='tab' />;", None),
+        // Test that it works regardless of order.
+        (r"<div role='tab' onClick={() => {}} />;", None),
+        // Test that it works regardless of extra attributes.
+        (r#"<div role="tab" onClick={() => {}} style="color: red;" />;"#, None),
     ];
 
     let fail = vec![
-        (r"<div onClick={() => {}} />;", None),
-        (r"<div onMouseDown={() => {}} />;", None),
-        (r"<div onMouseUp={() => {}} />;", None),
-        (r"<div onKeyPress={() => {}} />;", None),
-        (r"<div onKeyDown={() => {}} />;", None),
-        (r"<div onKeyUp={() => {}} />;", None),
         (r"<section onClick={() => {}} />;", None),
         (r"<main onClick={() => {}} />;", None),
         (r"<article onClick={() => {}} />;", None),
@@ -619,12 +616,12 @@ fn test() {
         (r"<wbr onClick={() => {}} />;", None),
         (r"<xmp onClick={() => {}} />;", None),
         // Handlers
-        (r"<div onKeyDown={() => {}} />;'", None),
-        (r"<div onKeyPress={() => {}} />;'", None),
-        (r"<div onKeyUp={() => {}} />;'", None),
-        (r"<div onClick={() => {}} />;'", None),
-        (r"<div onMouseDown={() => {}} />;'", None),
-        (r"<div onMouseUp={() => {}} />;'", None),
+        (r"<div onKeyDown={() => {}} />;", None),
+        (r"<div onKeyPress={() => {}} />;", None),
+        (r"<div onKeyUp={() => {}} />;", None),
+        (r"<div onClick={() => {}} />;", None),
+        (r"<div onMouseDown={() => {}} />;", None),
+        (r"<div onMouseUp={() => {}} />;", None),
         // More possible handlers
         (r"<div onContextMenu={() => {}} />;", None),
         (r"<div onDblClick={() => {}} />;", None),
