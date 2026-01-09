@@ -103,25 +103,17 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Directive<'a>>> {
         f.join_nodes_with_hardline().entries(self);
 
         // if next_sibling's first leading_trivia has more than one new_line, we should add an extra empty line at the end of
-        // JsDirectiveList, for example:
+        // the last directive, for example:
         //```js
         // "use strict"; <- first leading new_line
         //  			 <- second leading new_line
         // function foo() {
-
+        //
         // }
         //```
-        // so we should keep an extra empty line after JsDirectiveList
+        // so we should keep an extra empty line after the last directive.
 
-        let end = if let Some(last_printed_comment) = f.comments().printed_comments().last()
-            && last_printed_comment.span.end > last_directive.span.end
-        {
-            last_printed_comment.span.end
-        } else {
-            last_directive.span.end
-        };
-
-        let need_extra_empty_line = f.source_text().lines_after(end) > 1;
+        let need_extra_empty_line = f.source_text().lines_after(last_directive.span.end) > 1;
         write!(f, if need_extra_empty_line { empty_line() } else { hard_line_break() });
     }
 }
