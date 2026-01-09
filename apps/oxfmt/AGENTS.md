@@ -37,3 +37,22 @@ pnpm build-test && pnpm t
 # Run unit test in Rust
 cargo t
 ```
+
+## Test Organization (`test/` directory)
+
+Tests are organized by domain and colocated with strict structural rules.
+
+- 1:1:1 Rule: Each test directory contains exactly
+  - 1 test file (`*.test.ts` with the same name with directory)
+  - 0 or 1 `fixtures/` directory (if needed)
+  - Snapshots are colocated automatically by Vitest
+- No Upward References (except `utils.ts` and `oxfmt` binary)
+  - Test files may only reference:
+    - Files within their own directory
+    - Shared `utils.ts` in parent directories
+
+When adding new tests:
+
+- Place test in the appropriate domain directory
+- If the test needs fixtures, create a `fixtures/` subdirectory
+- If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)

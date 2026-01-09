@@ -1,0 +1,255 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP formatting > basic formatting > should handle format/formatted.ts 1`] = `
+"--- FILE -----------
+format/formatted.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+null
+--------------------"
+`;
+
+exports[`LSP formatting > basic formatting > should handle format/test.json 1`] = `
+"--- FILE -----------
+format/test.json
+--- BEFORE ---------
+{"name":"test","version":"1.0.0"}
+
+--- AFTER ----------
+{ "name": "test", "version": "1.0.0" }
+
+--------------------"
+`;
+
+exports[`LSP formatting > basic formatting > should handle format/test.toml 1`] = `
+"--- FILE -----------
+format/test.toml
+--- BEFORE ---------
+[package]
+name="test"
+version="1.0.0"
+
+--- AFTER ----------
+[package]
+name = "test"
+version = "1.0.0"
+
+--------------------"
+`;
+
+exports[`LSP formatting > basic formatting > should handle format/test.tsx 1`] = `
+"--- FILE -----------
+format/test.tsx
+--- BEFORE ---------
+const   App:   React.FC   =   ()   =>   <div>Hello</div>
+
+--- AFTER ----------
+const App: React.FC = () => <div>Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting > basic formatting > should handle format/test.txt 1`] = `
+"--- FILE -----------
+format/test.txt
+--- BEFORE ---------
+hello   world
+
+--- AFTER ----------
+null
+--------------------"
+`;
+
+exports[`LSP formatting > basic formatting > should handle format/test.vue 1`] = `
+"--- FILE -----------
+format/test.vue
+--- BEFORE ---------
+<script>const   x   =   1;</script>
+
+--- AFTER ----------
+<script>
+const x = 1;
+</script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-no-sort-package-json/package.json 1`] = `
+"--- FILE -----------
+config-no-sort-package-json/package.json
+--- BEFORE ---------
+{"version":"1.0.0","name":"test"}
+
+--- AFTER ----------
+{
+  "version": "1.0.0",
+  "name": "test"
+}
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-semi/test.ts 1`] = `
+"--- FILE -----------
+config-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER ----------
+const x = 1
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-sort-both/test.jsx 1`] = `
+"--- FILE -----------
+config-sort-both/test.jsx
+--- BEFORE ---------
+import { z } from "z";
+import { a } from "a";
+
+const App = () => <div className="p-4 flex m-2">Hello</div>;
+
+--- AFTER ----------
+import { a } from "a";
+import { z } from "z";
+
+const App = () => <div className="m-2 flex p-4">Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-sort-imports/test.js 1`] = `
+"--- FILE -----------
+config-sort-imports/test.js
+--- BEFORE ---------
+import { z } from "z";
+import { a } from "a";
+
+--- AFTER ----------
+import { a } from "a";
+import { z } from "z";
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-sort-tailwindcss/test.tsx 1`] = `
+"--- FILE -----------
+config-sort-tailwindcss/test.tsx
+--- BEFORE ---------
+const App = () => <div className="p-4 flex m-2">Hello</div>;
+
+--- AFTER ----------
+const App = () => <div className="m-2 flex p-4">Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-sort-tailwindcss/test.vue 1`] = `
+"--- FILE -----------
+config-sort-tailwindcss/test.vue
+--- BEFORE ---------
+<template>
+  <div class="p-4 flex m-2">Hello</div>
+</template>
+
+--- AFTER ----------
+<template>
+  <div class="m-2 flex p-4">Hello</div>
+</template>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from config-vue-indent/test.vue 1`] = `
+"--- FILE -----------
+config-vue-indent/test.vue
+--- BEFORE ---------
+<script>
+const x = 1;
+</script>
+
+--- AFTER ----------
+<script>
+  const x = 1;
+</script>
+
+--------------------"
+`;
+
+exports[`LSP formatting > config options > should apply config from editorconfig/test.ts 1`] = `
+"--- FILE -----------
+editorconfig/test.ts
+--- BEFORE ---------
+if (true) {
+x = 1;
+}
+
+--- AFTER ----------
+if (true) {
+    x = 1;
+}
+
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should handle ignore-config/file.generated.ts 1`] = `
+"--- FILE -----------
+ignore-config/file.generated.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+null
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should handle ignore-prettierignore/ignored.ts 1`] = `
+"--- FILE -----------
+ignore-prettierignore/ignored.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+null
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should respect .gitignore 1`] = `
+"--- FILE -----------
+ignore-gitignore/ignored.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+null
+--------------------"
+`;
+
+exports[`LSP formatting > ignore patterns > should respect .gitignore 2`] = `
+"--- FILE -----------
+ignore-gitignore/not-ignored.ts
+--- BEFORE ---------
+const   x   =   1
+
+--- AFTER ----------
+const x = 1;
+
+--------------------"
+`;
+
+exports[`LSP formatting > initializationOptions > should use custom config path from fmt.configPath 1`] = `
+"--- FILE -----------
+custom_config_path/semicolons-as-needed.ts
+--- BEFORE ---------
+// semicolon is on character 8-9, which will be removed
+debugger;
+
+--- AFTER ----------
+// semicolon is on character 8-9, which will be removed
+debugger
+
+--------------------"
+`;
