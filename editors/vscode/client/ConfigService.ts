@@ -184,25 +184,32 @@ export class ConfigService implements IDisposable {
    */
   private async searchNodeModulesBin(binaryName: string): Promise<string | undefined> {
     const cts = new CancellationTokenSource();
-    setTimeout(() => cts.cancel(), 10000); // cancel after 10 seconds
+    setTimeout(() => cts.cancel(), 20000); // cancel after 20 seconds
 
     try {
-      // bun package manager uses `.exe` extension on Windows
-      // search for both with and without `.exe` extension
-      const extension = process.platform === "win32" ? "{,.exe}" : "";
-      // maybe use `tinyglobby` later for better performance, VSCode can be slow on globbing large projects.
-      const files = await workspace.findFiles(
-        // search workspace root plus up to 3 subdirectory levels for the binary path
-        `{,*/,*/*,*/*/*}/node_modules/.bin/${binaryName}${extension}`,
-        undefined,
-        1,
-        cts.token,
-      );
+      // search workspace root plus up to 3 subdirectory levels for the binary path
+      let patterns = [
+        `node_modules/.bin/${binaryName}`,
+        `*/node_modules/.bin/${binaryName}`,
+        `*/*/node_modules/.bin/${binaryName}`,
+        `*/*/*/node_modules/.bin/${binaryName}`,
+      ];
 
-      return files.length > 0 ? files[0].fsPath : undefined;
-    } catch {
-      return undefined;
-    }
+      if (process.platform === "win32") {
+        // bun package manager uses `.exe` extension on Windows
+        // search for both with and without `.exe` extension
+        patterns = patterns.flatMap((pattern) => [`${pattern}`, `${pattern}.exe`]);
+      }
+
+      for (const pattern of patterns) {
+        // maybe use `tinyglobby` later for better performance, VSCode can be slow on globbing large projects.
+        // oxlint-disable-next-line no-await-in-loop -- search sequentially up the directories
+        const files = await workspace.findFiles(pattern, null, 1, cts.token);
+        if (files.length > 0) {
+          return files[0].fsPath;
+        }
+      }
+    } catch {}
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {

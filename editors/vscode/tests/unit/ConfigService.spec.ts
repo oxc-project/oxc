@@ -154,8 +154,7 @@ suite("ConfigService", () => {
       strictEqual(relativeServerPath, `${workspace_path}\\relative\\oxlint`);
     });
 
-    // Skipped due to Test API limitation?
-    test.skip("resolves binary path in multi-folder workspace", async () => {
+    test("resolves binary path in multi-folder workspace", async () => {
       const service = new ConfigService();
       const workspace_path = getWorkspaceFolderPlatformSafe();
 
@@ -163,7 +162,6 @@ suite("ConfigService", () => {
       await createWorkspaceFolderFileUri("node_modules/.bin/oxlint", WORKSPACE_SECOND_FOLDER);
       const absoluteServerPath = await service.getOxlintServerBinPath();
 
-      // returns undefined, but it should search with glob and return the first found binary
       strictEqual(absoluteServerPath, `${workspace_path}/node_modules/.bin/oxlint`);
 
       await deleteWorkspaceFolderFileUri("node_modules/.bin/oxlint");
