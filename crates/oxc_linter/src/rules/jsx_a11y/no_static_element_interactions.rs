@@ -151,9 +151,6 @@ impl Rule for NoStaticElementInteractions {
                         return;
                     }
                     if is_non_interactive_role(first_role) {
-                        ctx.diagnostic(no_static_element_interactions_diagnostic(
-                            jsx_el.name.span(),
-                        ));
                         return;
                     }
                 }
