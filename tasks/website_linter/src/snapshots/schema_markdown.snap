@@ -642,6 +642,27 @@ Configure React plugin rules.
 Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
 
 
+#### settings.react.componentWrapperFunctions
+
+type: `string[]`
+
+default: `[]`
+
+Functions that wrap React components and should be treated as HOCs.
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"componentWrapperFunctions": ["observer", "withRouter"]
+}
+}
+}
+```
+
+
 #### settings.react.formComponents
 
 type: `array`
