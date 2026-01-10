@@ -160,7 +160,7 @@ new-rule name plugin='eslint':
 # Update test cases for an existing lint rule from upstream
 update-rule-tests name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}} --update-tests
-  just fmt
+  cargo fmt
 
 # Legacy aliases for backward compatibility
 new-jest-rule name: (new-rule name "jest")
