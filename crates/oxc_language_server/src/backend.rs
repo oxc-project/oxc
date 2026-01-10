@@ -898,9 +898,20 @@ impl Backend {
         workers: &'a [WorkspaceWorker],
         uri: &Uri,
     ) -> Option<&'a WorkspaceWorker> {
-        workers.iter().filter(|worker| worker.is_responsible_for_uri(uri)).max_by_key(|worker| {
-            // Get the path length to find the most specific (longest) match
-            worker.get_root_uri().to_file_path().map_or(0, |path| path.as_os_str().len())
-        })
+        let file_path = uri.to_file_path()?;
+
+        workers
+            .iter()
+            .filter(|worker| {
+                // Check if the file path starts with the worker's root path
+                worker
+                    .get_root_uri()
+                    .to_file_path()
+                    .is_some_and(|root_path| file_path.starts_with(root_path))
+            })
+            .max_by_key(|worker| {
+                // Get the path length to find the most specific (longest) match
+                worker.get_root_uri().to_file_path().map_or(0, |path| path.as_os_str().len())
+            })
     }
 }

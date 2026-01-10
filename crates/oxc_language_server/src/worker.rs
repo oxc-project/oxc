@@ -61,21 +61,6 @@ impl WorkspaceWorker {
         &self.root_uri
     }
 
-    /// Check if the worker is responsible for the given URI
-    /// A worker is responsible for a URI if the URI is a file URI and is located within the root URI of the worker
-    /// e.g. root URI: file:///path/to/root
-    ///      responsible for: file:///path/to/root/file.js
-    ///      not responsible for: file:///path/to/other/file.js
-    ///
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
-    pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
-        if let Some(path) = uri.to_file_path() {
-            return path.starts_with(self.root_uri.to_file_path().unwrap());
-        }
-        false
-    }
-
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: serde_json::Value) {
@@ -485,78 +470,6 @@ mod tests {
             WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new([]), false);
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
-    }
-
-    #[test]
-    fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/root").unwrap(),
-            Arc::new([]),
-            false,
-        );
-
-        assert!(
-            worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
-        );
-        assert!(worker.is_responsible_for_uri(
-            &Uri::from_str("file:///path/to/root/folder/file.js").unwrap()
-        ));
-        assert!(
-            !worker
-                .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
-        );
-    }
-
-    #[test]
-    fn test_is_responsible_nested_workspaces() {
-        // Test case 1: workspace and workspace/deeper
-        let workspace1 = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/workspace").unwrap(),
-            Arc::new([]),
-            false,
-        );
-        let workspace2 = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/workspace/deeper").unwrap(),
-            Arc::new([]),
-            false,
-        );
-
-        let file_in_deeper = Uri::from_str("file:///path/to/workspace/deeper/file.js").unwrap();
-        let file_in_workspace = Uri::from_str("file:///path/to/workspace/file.js").unwrap();
-
-        // Both workers should be responsible for files in the deeper workspace
-        assert!(workspace1.is_responsible_for_uri(&file_in_deeper));
-        assert!(workspace2.is_responsible_for_uri(&file_in_deeper));
-
-        // Only workspace1 should be responsible for files directly in workspace
-        assert!(workspace1.is_responsible_for_uri(&file_in_workspace));
-        assert!(!workspace2.is_responsible_for_uri(&file_in_workspace));
-    }
-
-    #[test]
-    fn test_is_responsible_similar_names() {
-        // Test case 2: workspace and workspace-2
-        let workspace1 = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/workspace").unwrap(),
-            Arc::new([]),
-            false,
-        );
-        let workspace2 = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/workspace-2").unwrap(),
-            Arc::new([]),
-            false,
-        );
-
-        let file_in_workspace2 = Uri::from_str("file:///path/to/workspace-2/file.js").unwrap();
-        let file_in_workspace = Uri::from_str("file:///path/to/workspace/file.js").unwrap();
-
-        // Only workspace2 should be responsible for files in workspace-2
-        assert!(!workspace1.is_responsible_for_uri(&file_in_workspace2));
-        assert!(workspace2.is_responsible_for_uri(&file_in_workspace2));
-
-        // Only workspace1 should be responsible for files in workspace
-        assert!(workspace1.is_responsible_for_uri(&file_in_workspace));
-        assert!(!workspace2.is_responsible_for_uri(&file_in_workspace));
     }
 
     #[tokio::test]
