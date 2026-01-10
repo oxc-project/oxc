@@ -563,6 +563,7 @@ pub(crate) mod jsx_a11y {
     pub mod no_aria_hidden_on_focusable;
     pub mod no_autofocus;
     pub mod no_distracting_elements;
+    pub mod no_noninteractive_element_interactions;
     pub mod no_noninteractive_tabindex;
     pub mod no_redundant_roles;
     pub mod no_static_element_interactions;
@@ -997,6 +998,7 @@ oxc_macros::declare_all_lint_rules! {
     jsx_a11y::lang,
     jsx_a11y::media_has_caption,
     jsx_a11y::mouse_events_have_key_events,
+    jsx_a11y::no_noninteractive_element_interactions,
     jsx_a11y::no_noninteractive_tabindex,
     jsx_a11y::no_static_element_interactions,
     jsx_a11y::no_access_key,
