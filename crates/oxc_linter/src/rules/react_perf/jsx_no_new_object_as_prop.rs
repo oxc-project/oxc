@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, ast::BindingPattern, ast::Expression};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
@@ -61,10 +61,32 @@ impl ReactPerfRule for JsxNoNewObjectAsProp {
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
         match kind {
             AstKind::VariableDeclarator(decl) => {
-                if let Some(init_span) = decl.init.as_ref().and_then(check_expression) {
-                    return Some((decl.id.span(), Some(init_span)));
+                match &decl.id {
+                    BindingPattern::ObjectPattern(pattern) => {
+                        // Check for default values in object pattern properties
+                        // e.g., `const { a = {} } = value ?? {};`
+                        pattern
+                            .properties
+                            .iter()
+                            .find_map(|prop| process_pattern(&prop.value, symbol_id))
+                    }
+                    BindingPattern::ArrayPattern(pattern) => {
+                        // Check for default values in array pattern elements
+                        // e.g., `const [a = {}] = value ?? {};`
+                        pattern
+                            .elements
+                            .iter()
+                            .flatten()
+                            .find_map(|ele| process_pattern(ele, symbol_id))
+                    }
+                    _ => {
+                        // For non-destructuring assignments, check the initialization expression
+                        if let Some(init_span) = decl.init.as_ref().and_then(check_expression) {
+                            return Some((decl.id.span(), Some(init_span)));
+                        }
+                        None
+                    }
                 }
-                None
             }
             AstKind::FormalParameter(param) => {
                 let (id, init) = find_initialized_binding(&param.pattern, symbol_id)?;
@@ -74,6 +96,31 @@ impl ReactPerfRule for JsxNoNewObjectAsProp {
             _ => None,
         }
     }
+}
+
+fn process_pattern<'a>(
+    pattern: &'a BindingPattern<'a>,
+    symbol_id: SymbolId,
+) -> Option<(Span, Option<Span>)> {
+    find_initialized_binding(pattern, symbol_id).and_then(|(binding_id, default_expr)| {
+        check_default_value(default_expr).map(|span| (binding_id.span(), Some(span)))
+    })
+}
+
+fn check_default_value(expr: &Expression) -> Option<Span> {
+    let inner = expr.get_inner_expression();
+
+    if let Expression::ObjectExpression(expr) = inner {
+        return Some(expr.span);
+    }
+
+    let (callee, span) = match inner {
+        Expression::CallExpression(e) => (Some(&e.callee), e.span),
+        Expression::NewExpression(e) => (Some(&e.callee), e.span),
+        _ => (None, Span::default()),
+    };
+
+    callee.filter(|c| is_constructor_matching_name(c, "Object")).map(|_| span)
 }
 
 fn check_expression(expr: &Expression) -> Option<Span> {
@@ -117,7 +164,24 @@ fn test() {
 
     let pass = vec![
         r"<Item config={staticConfig} />",
-        r"<Item config={{}} />",
+        r"
+            const a = ({ value }) => {
+                const { min } = value ?? {}
+                return <InputNumber value={min} />
+            }
+        ",
+        r"
+            const a = ({ value }) => {
+                const { min = [] } = value ?? {}
+                return <InputNumber value={min} />
+            }
+        ",
+        r"
+            const a = ({ value }) => {
+                const { min = getDefault() } = value ?? {}
+                return <InputNumber value={min} />
+            }
+        ",
         r"<Item config={'foo'} />",
         r"const Foo = () => <Item config={staticConfig} />",
         r"const Foo = (props) => <Item {...props} />",
@@ -147,6 +211,24 @@ fn test() {
     ];
 
     let fail = vec![
+        r"
+            const a = ({ value }) => {
+                const { min = {} } = value;
+                return <InputNumber value={min} />
+            }
+        ",
+        r"
+            const a = ({ value }) => {
+                const { min = Object() } = value;
+                return <InputNumber value={min} />
+            }
+        ",
+        r"
+            const a = ({ value }) => {
+                const { min = new Object() } = value;
+                return <InputNumber value={min} />
+            }
+        ",
         r"const Foo = () => <Item config={{}} />",
         r"const Foo = () => <Item config={Object.create(null)} />",
         r"const Foo = ({ x }) => <Item config={Object.assign({}, x)} />",
