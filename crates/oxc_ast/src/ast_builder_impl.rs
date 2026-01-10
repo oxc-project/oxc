@@ -28,6 +28,13 @@ impl<'a> AllocatorAccessor<'a> for AstBuilder<'a> {
     }
 }
 
+impl<'a> AllocatorAccessor<'a> for &AstBuilder<'a> {
+    #[inline]
+    fn allocator(self) -> &'a Allocator {
+        self.allocator
+    }
+}
+
 /// AST builder for creating AST nodes.
 #[derive(Clone, Copy)]
 pub struct AstBuilder<'a> {
