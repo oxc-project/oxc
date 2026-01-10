@@ -104,6 +104,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
 
         // `using x = _x;`
+        let read_expr = temp_id.create_read_expression(ctx);
         let using_stmt = Statement::from(ctx.ast.declaration_variable(
             SPAN,
             variable_decl_kind,
@@ -112,7 +113,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                 variable_decl_kind,
                 binding_pattern,
                 NONE,
-                Some(temp_id.create_read_expression(ctx)),
+                Some(read_expr),
                 false,
             )),
             false,
@@ -134,7 +135,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             body.body.insert(0, using_stmt);
         } else {
             // `for (const _x of y) x();` -> `for (const _x of y) { using x = _x; x(); }`
-            let old_body = for_of_stmt.body.take_in(ctx.ast);
+            let old_body = for_of_stmt.body.take_in(&ctx.ast);
 
             let new_body = ctx.ast.vec_from_array([using_stmt, old_body]);
             for_of_stmt.body = ctx.ast.statement_block_with_scope_id(SPAN, new_body, scope_id);
@@ -177,13 +178,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::StrictMode;
 
             block.set_scope_id(static_block_new_scope_id);
-            block.body = ctx.ast.vec1(Self::create_try_stmt(
-                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
+            let block_stmt = ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id);
+            let try_stmt = Self::create_try_stmt(
+                block_stmt,
                 &using_ctx,
                 static_block_new_scope_id,
                 needs_await,
                 ctx,
-            ));
+            );
+            block.body = ctx.ast.vec1(try_stmt);
         }
     }
 
@@ -218,13 +221,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
 
             let current_scope_id = ctx.current_scope_id();
 
-            body.statements = ctx.ast.vec1(Self::create_try_stmt(
-                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt_scope_id),
-                &using_ctx,
-                current_scope_id,
-                needs_await,
-                ctx,
-            ));
+            let block_stmt =
+                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, block_stmt_scope_id);
+            let try_stmt =
+                Self::create_try_stmt(block_stmt, &using_ctx, current_scope_id, needs_await, ctx);
+            body.statements = ctx.ast.vec1(try_stmt);
         }
     }
 
@@ -277,13 +278,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                 ScopeFlags::empty(),
             );
 
-            node.block.body = ctx.ast.vec1(Self::create_try_stmt(
-                ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id),
+            let block_stmt = ctx.ast.block_statement_with_scope_id(SPAN, new_stmts, scope_id);
+            let try_stmt = Self::create_try_stmt(
+                block_stmt,
                 &using_ctx,
                 block_stmt_scope_id,
                 needs_await,
                 ctx,
-            ));
+            );
+            node.block.body = ctx.ast.vec1(try_stmt);
 
             let current_hoist_scope_id = ctx.current_hoist_scope_id();
             node.block.set_scope_id(block_stmt_scope_id);
@@ -308,7 +311,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             return;
         }
 
-        let program_body = program.body.take_in(ctx.ast);
+        let program_body = program.body.take_in(&ctx.ast);
 
         let (mut program_body, inner_block): (
             ArenaVec<'a, Statement<'a>>,
@@ -382,23 +385,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                             ),
                         ));
 
-                        program_body.push(Statement::ExportNamedDeclaration(
+                        program_body.push(Statement::ExportNamedDeclaration({
+                            let read_ref = var_id.create_read_reference(ctx);
                             ctx.ast.alloc_export_named_declaration(
                                 SPAN,
                                 None,
                                 ctx.ast.vec1(ctx.ast.export_specifier(
                                     SPAN,
-                                    ModuleExportName::IdentifierReference(
-                                        var_id.create_read_reference(ctx),
-                                    ),
+                                    ModuleExportName::IdentifierReference(read_ref),
                                     ctx.ast.module_export_name_identifier_name(SPAN, "default"),
                                     ImportOrExportKind::Value,
                                 )),
                                 None,
                                 ImportOrExportKind::Value,
                                 NONE,
-                            ),
-                        ));
+                            )
+                        }));
                     }
                     Statement::ExportNamedDeclaration(ref mut export_named_declaration) => {
                         let Some(ref mut decl) = export_named_declaration.declaration else {
@@ -420,7 +422,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                             return (program_body, inner_block);
                         }
 
-                        let export_specifiers = match decl.take_in(ctx.ast) {
+                        let export_specifiers = match decl.take_in(&ctx.ast) {
                             Declaration::ClassDeclaration(class_decl) => {
                                 let class_binding = class_decl.id.as_ref().unwrap();
                                 let class_binding_name = class_binding.name;
@@ -443,30 +445,38 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                             }
                             Declaration::VariableDeclaration(mut var_decl) => {
                                 var_decl.kind = VariableDeclarationKind::Var;
-                                let mut export_specifiers = ctx.ast.vec();
 
                                 for decl in &mut var_decl.declarations {
                                     decl.kind = VariableDeclarationKind::Var;
                                 }
 
+                                // Collect all bound names first to avoid borrow conflicts
+                                let mut bound_idents: std::vec::Vec<(
+                                    BoundIdentifier<'a>,
+                                    Atom<'a>,
+                                )> = std::vec::Vec::new();
                                 var_decl.bound_names(&mut |ident| {
                                     *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
                                         SymbolFlags::FunctionScopedVariable;
 
-                                    export_specifiers.push(
-                                        ctx.ast.export_specifier(
-                                            SPAN,
-                                            ModuleExportName::IdentifierReference(
-                                                BoundIdentifier::from_binding_ident(ident)
-                                                    .create_read_reference(ctx),
-                                            ),
-                                            ctx.ast.module_export_name_identifier_name(
-                                                SPAN, ident.name,
-                                            ),
-                                            ImportOrExportKind::Value,
-                                        ),
-                                    );
+                                    bound_idents.push((
+                                        BoundIdentifier::from_binding_ident(ident),
+                                        ident.name,
+                                    ));
                                 });
+
+                                // Now create the export specifiers
+                                let mut export_specifiers = ctx.ast.vec();
+                                for (bound_ident, name) in bound_idents {
+                                    let read_ref = bound_ident.create_read_reference(ctx);
+                                    export_specifiers.push(ctx.ast.export_specifier(
+                                        SPAN,
+                                        ModuleExportName::IdentifierReference(read_ref),
+                                        ctx.ast.module_export_name_identifier_name(SPAN, name),
+                                        ImportOrExportKind::Value,
+                                    ));
+                                }
+
                                 inner_block.push(Statement::VariableDeclaration(var_decl));
                                 export_specifiers
                             }
@@ -618,28 +628,22 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
                 for decl in &mut var_decl.declarations {
                     if let Some(old_init) = decl.init.take() {
-                        decl.init = Some(
-                            ctx.ast.expression_call(
+                        let read_expr = using_ctx
+                            .as_ref()
+                            .expect("`using_ctx` should have been set")
+                            .create_read_expression(ctx);
+                        decl.init = Some(ctx.ast.expression_call(
+                            SPAN,
+                            Expression::from(ctx.ast.member_expression_static(
                                 SPAN,
-                                Expression::from(
-                                    ctx.ast.member_expression_static(
-                                        SPAN,
-                                        using_ctx
-                                            .as_ref()
-                                            .expect("`using_ctx` should have been set")
-                                            .create_read_expression(ctx),
-                                        ctx.ast.identifier_name(
-                                            SPAN,
-                                            if needs_await { "a" } else { "u" },
-                                        ),
-                                        false,
-                                    ),
-                                ),
-                                NONE,
-                                ctx.ast.vec1(Argument::from(old_init)),
+                                read_expr,
+                                ctx.ast.identifier_name(SPAN, if needs_await { "a" } else { "u" }),
                                 false,
-                            ),
-                        );
+                            )),
+                            NONE,
+                            ctx.ast.vec1(Argument::from(old_init)),
+                            false,
+                        ));
                     }
                 }
             }
@@ -668,7 +672,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                     )),
                     false,
                 )),
-                stmt.take_in(ctx.ast),
+                stmt.take_in(&ctx.ast),
             ]);
 
             ctx.ast.block_statement_with_scope_id(SPAN, vec, block_stmt_sid)
@@ -745,11 +749,12 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             // `await using foo = bar;` -> `const foo = _usingCtx.a(bar);`
             for decl in &mut variable_declaration.declarations {
                 if let Some(old_init) = decl.init.take() {
+                    let read_expr = using_ctx.as_ref().unwrap().create_read_expression(ctx);
                     decl.init = Some(ctx.ast.expression_call(
                         SPAN,
                         Expression::from(ctx.ast.member_expression_static(
                             SPAN,
-                            using_ctx.as_ref().unwrap().create_read_expression(ctx),
+                            read_expr,
                             ctx.ast.identifier_name(SPAN, if is_await_using { "a" } else { "u" }),
                             false,
                         )),
@@ -763,7 +768,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let using_ctx = using_ctx?;
 
-        let mut stmts = stmts.take_in(ctx.ast);
+        let mut stmts = stmts.take_in(&ctx.ast);
 
         // `var _usingCtx = babelHelpers.usingCtx();`
         let callee = self.ctx.helper_load(Helper::UsingCtx, ctx);
@@ -821,6 +826,8 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             ctx.ast.catch_parameter(SPAN, ident.create_binding_pattern(ctx), NONE);
 
         // `_usingCtx.e = _;`
+        let using_ctx_read = using_ctx.create_read_expression(ctx);
+        let ident_read = ident.create_read_expression(ctx);
         let stmt = ctx.ast.statement_expression(
             SPAN,
             ctx.ast.expression_assignment(
@@ -828,11 +835,11 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
                 AssignmentOperator::Assign,
                 AssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,
-                    using_ctx.create_read_expression(ctx),
+                    using_ctx_read,
                     ctx.ast.identifier_name(SPAN, "e"),
                     false,
                 )),
-                ident.create_read_expression(ctx),
+                ident_read,
             ),
         );
 
@@ -855,11 +862,12 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         let finally_scope_id = ctx.create_child_scope(parent_scope_id, ScopeFlags::empty());
 
         // `_usingCtx.d()`
+        let using_ctx_read = using_ctx.create_read_expression(ctx);
         let expr = ctx.ast.expression_call(
             SPAN,
             Expression::from(ctx.ast.member_expression_static(
                 SPAN,
-                using_ctx.create_read_expression(ctx),
+                using_ctx_read,
                 ctx.ast.identifier_name(SPAN, "d"),
                 false,
             )),

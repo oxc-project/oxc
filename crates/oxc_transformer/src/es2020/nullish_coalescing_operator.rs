@@ -59,7 +59,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for NullishCoalescingOperator<'a, '_> 
         }
 
         // Take ownership of the `LogicalExpression`
-        let Expression::LogicalExpression(logical_expr) = expr.take_in(ctx.ast) else {
+        let Expression::LogicalExpression(logical_expr) = expr.take_in(&ctx.ast) else {
             unreachable!()
         };
 
@@ -129,16 +129,19 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             SymbolFlags::FunctionScopedVariable,
         );
 
+        let write_target = binding.create_write_target(ctx);
         let assignment = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
-            binding.create_write_target(ctx),
+            write_target,
             logical_expr.left,
         );
+        let read_expr1 = binding.create_read_expression(ctx);
+        let read_expr2 = binding.create_read_expression(ctx);
         let mut new_expr = Self::create_conditional_expression(
             assignment,
-            binding.create_read_expression(ctx),
-            binding.create_read_expression(ctx),
+            read_expr1,
+            read_expr2,
             logical_expr.right,
             logical_expr.span,
             ctx,

@@ -79,9 +79,11 @@ impl<'a> ClassProperties<'a, '_> {
     ) -> Expression<'a> {
         let private_props = self.current_class().private_props.as_ref().unwrap();
         let prop = &private_props[&ident.name];
+        let this_expr = ctx.ast.expression_this(SPAN);
+        let prop_read = prop.binding.create_read_expression(ctx);
         let arguments = ctx.ast.vec_from_array([
-            Argument::from(ctx.ast.expression_this(SPAN)),
-            Argument::from(prop.binding.create_read_expression(ctx)),
+            Argument::from(this_expr),
+            Argument::from(prop_read),
             Argument::from(value),
         ]);
         // TODO: Should this have span of original `PropertyDefinition`?
@@ -379,9 +381,10 @@ impl<'a> ClassProperties<'a, '_> {
 
         let private_props = self.current_class().private_props.as_ref().unwrap();
         let prop_binding = &private_props[&ident.name].binding;
+        let prop_read = prop_binding.create_read_expression(ctx);
         let arguments = ctx.ast.vec_from_array([
             Argument::from(assignee),
-            Argument::from(prop_binding.create_read_expression(ctx)),
+            Argument::from(prop_read),
             Argument::from(prop_def),
         ]);
         // TODO: Should this have span of original `PropertyDefinition`?

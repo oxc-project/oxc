@@ -335,7 +335,7 @@ impl<'a> Pragma<'a> {
     fn parse(
         pragma: Option<&str>,
         default_property_name: &'static str,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
         ctx: &TransformCtx<'a>,
     ) -> Self {
         if let Some(pragma) = pragma {
@@ -349,7 +349,7 @@ impl<'a> Pragma<'a> {
         Self::Double(Atom::from("React"), Atom::from(default_property_name))
     }
 
-    fn parse_impl(pragma: &str, ast: AstBuilder<'a>) -> Self {
+    fn parse_impl(pragma: &str, ast: &AstBuilder<'a>) -> Self {
         let strs_to_atoms = |parts: &[&str]| parts.iter().map(|part| ast.atom(part)).collect();
 
         let parts = pragma.split('.').collect::<Vec<_>>();
@@ -410,7 +410,7 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
     pub fn new(
         options: JsxOptions,
         object_rest_spread_options: Option<ObjectRestSpreadOptions>,
-        ast: AstBuilder<'a>,
+        ast: &AstBuilder<'a>,
         ctx: &'ctx TransformCtx<'a>,
     ) -> Self {
         // Only add `pure` when `pure` is explicitly set to `true` or all JSX options are default.
@@ -500,7 +500,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
         if !expr.is_jsx() {
             return;
         }
-        *expr = match expr.take_in(ctx.ast) {
+        *expr = match expr.take_in(&ctx.ast) {
             Expression::JSXElement(e) => self.transform_jsx_element(e, ctx),
             Expression::JSXFragment(e) => self.transform_jsx(e.span, None, e.unbox().children, ctx),
             _ => unreachable!(),
@@ -656,11 +656,11 @@ impl<'a> JsxImpl<'a, '_> {
 
         // Append children to object properties in automatic mode
         if is_automatic {
-            let mut children = ctx.ast.vec_from_iter(
-                children
-                    .into_iter()
-                    .filter_map(|child| self.transform_jsx_child_automatic(child, ctx)),
-            );
+            let children_vec: Vec<_> = children
+                .into_iter()
+                .filter_map(|child| self.transform_jsx_child_automatic(child, ctx))
+                .collect();
+            let mut children = ctx.ast.vec_from_iter(children_vec);
             let children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
@@ -1265,7 +1265,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = None;
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(member) = &expr else { panic!() };
@@ -1279,7 +1279,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = Some("single");
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::Identifier(ident) = &expr else { panic!() };
@@ -1291,7 +1291,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = Some("first.second");
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(member) = &expr else { panic!() };
@@ -1305,7 +1305,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = Some("first.second.third");
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(outer_member) = &expr else { panic!() };
@@ -1323,7 +1323,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = Some("this");
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         assert!(matches!(&expr, Expression::ThisExpression(_)));
@@ -1334,7 +1334,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = Some("this.a.b");
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(outer_member) = &expr else { panic!() };
@@ -1351,7 +1351,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = Some("import.meta");
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::MetaProperty(meta_prop) = &expr else { panic!() };
@@ -1364,7 +1364,7 @@ mod test {
         setup!(traverse_ctx, transform_ctx);
 
         let pragma = Some("import.meta.prop");
-        let pragma = Pragma::parse(pragma, "createElement", traverse_ctx.ast, &transform_ctx);
+        let pragma = Pragma::parse(pragma, "createElement", &traverse_ctx.ast, &transform_ctx);
         let expr = pragma.create_expression(traverse_ctx);
 
         let Expression::StaticMemberExpression(member) = &expr else { panic!() };

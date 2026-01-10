@@ -82,7 +82,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         };
 
         let left = AssignmentTarget::from(SimpleAssignmentTarget::from(module_exports));
-        let right = export_assignment.expression.take_in(ctx.ast);
+        let right = export_assignment.expression.take_in(&ctx.ast);
         let assignment_expr =
             ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, assignment_expr)
@@ -170,15 +170,12 @@ impl<'a> TypeScriptModule<'a, '_> {
                 *reference.flags_mut() = ReferenceFlags::Read;
                 Expression::Identifier(ctx.alloc(ident))
             }
-            TSTypeName::QualifiedName(qualified_name) => ctx
-                .ast
-                .member_expression_static(
-                    SPAN,
-                    self.transform_ts_type_name(&mut qualified_name.left, ctx),
-                    qualified_name.right.clone(),
-                    false,
-                )
-                .into(),
+            TSTypeName::QualifiedName(qualified_name) => {
+                let object = self.transform_ts_type_name(&mut qualified_name.left, ctx);
+                ctx.ast
+                    .member_expression_static(SPAN, object, qualified_name.right.clone(), false)
+                    .into()
+            }
             TSTypeName::ThisExpression(e) => ctx.ast.expression_this(e.span),
         }
     }
