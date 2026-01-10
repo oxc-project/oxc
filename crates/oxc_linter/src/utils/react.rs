@@ -299,7 +299,7 @@ const INTERACTIVE_ROLES: [&str; 27] = [
     "treeitem",
 ];
 
-const NON_INTERACTIVE_ROLES: [&str; 42] = [
+const NON_INTERACTIVE_ROLES: [&str; 47] = [
     "alert",
     "alertdialog",
     "application",
@@ -318,6 +318,7 @@ const NON_INTERACTIVE_ROLES: [&str; 42] = [
     "feed",
     "figure",
     "form",
+    "grid",
     "group",
     "heading",
     "img",
@@ -331,17 +332,24 @@ const NON_INTERACTIVE_ROLES: [&str; 42] = [
     "navigation",
     "note",
     "paragraph",
+    // per the original impl:
+    // >  The `progressbar` is descended from `widget`, but in practice, its
+    // > value is always `readonly`, so we treat it as a non-interactive role.
+    "progressbar",
     "region",
     "row",
     "rowgroup",
     "search",
     "status",
     "table",
+    "tablist",
     "tabpanel",
     "term",
     "time",
     "timer",
     "tooltip",
+    "tree",
+    "treegrid",
 ];
 
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
