@@ -24,7 +24,8 @@
     "jsx-a11y/accessible-emoji": "Deprecated.",
     "jsx-a11y/label-has-for": "Deprecated, replaced by `jsx-a11y/label-has-associated-control`.",
     "jsx-a11y/no-onchange": "Deprecated, based on behavior of very old browsers, and so no longer necessary.",
-    "eslint/camelcase": "Preference is to implement this rule via `@typescript-eslint/naming-convention` instead to accomplish the same behavior with more flexibility.",
+    "eslint/camelcase": "Superseded by `@typescript-eslint/naming-convention`, which accomplishes the same behavior with more flexibility.",
+    "eslint/no-invalid-this": "Superseded by TypeScript's [`noImplicitThis`](https://www.typescriptlang.org/tsconfig/#noImplicitThis) compiler option (enabled by `strict` mode).",
 
     "n/prefer-node-protocol": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "n/no-process-exit": "No need to implement, already implemented by `unicorn/no-process-exit`.",
