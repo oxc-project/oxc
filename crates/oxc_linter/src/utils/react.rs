@@ -149,19 +149,33 @@ pub fn is_abstract_role<'a>(ctx: &LintContext<'a>, jsx_opening_el: &JSXOpeningEl
     )
 }
 
-// TODO: Should re-implement based on
-// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
 //
-// Until then, use simplified version by https://html.spec.whatwg.org/multipage/dom.html#interactive-content
+// See also https://html.spec.whatwg.org/multipage/dom.html#interactive-content
 pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
     // Interactive contents are...
-    // - button, details, embed, iframe, label, select, textarea
-    // - input (if the `type` attribute is not in the Hidden state)
-    // - a (if the `href` attribute is present)
-    // - audio, video (if the `controls` attribute is present)
-    // - img (if the `usemap` attribute is present)
+    // - a, area (when they have `href`)
+    // - audio, video
+    // - button, canvas, datalist, details, embed, iframe, label, menuitem,
+    //   option, select, summary, textarea, td, th, tr
+    // - input (unless `type` is hidden)
+    // - img (when `usemap` is present)
     match element_type {
-        "button" | "details" | "embed" | "iframe" | "label" | "select" | "textarea" => true,
+        "button"
+        | "canvas"
+        | "datalist"
+        | "details"
+        | "embed"
+        | "iframe"
+        | "label"
+        | "menuitem"
+        | "option"
+        | "select"
+        | "summary"
+        | "td"
+        | "th"
+        | "tr"
+        | "textarea" => true,
         "input" => {
             if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type")
                 && get_string_literal_prop_value(input_type)
@@ -171,16 +185,16 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
             }
             true
         }
-        "a" => has_jsx_prop(jsx_opening_el, "href").is_some(),
-        "audio" | "video" => has_jsx_prop(jsx_opening_el, "controls").is_some(),
+        "a" | "area" => has_jsx_prop(jsx_opening_el, "href").is_some(),
+        // Upstream treats audio/video as interactive regardless of controls.
+        "audio" | "video" => true,
         "img" => has_jsx_prop(jsx_opening_el, "usemap").is_some(),
         _ => false,
     }
 }
 
-// TODO: Implement this.
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isNonInteractiveElement.js
-pub fn is_non_interactive_element(element_type: &str, _jsx_opening_el: &JSXOpeningElement) -> bool {
+pub fn is_non_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
     // Do not test custom JSX components, we do not know what
     // low-level DOM element this maps to.
     if !HTML_TAG.contains(element_type.as_ref()) {
@@ -193,10 +207,77 @@ pub fn is_non_interactive_element(element_type: &str, _jsx_opening_el: &JSXOpeni
         // reliably test that.
         // @see https://www.w3.xorg/TR/wai-aria-practices/examples/landmarks/banner.html
         "header" => return false,
-        // TODO: Implement this.
-        _ => false,
+        // Only treat <section> as non-interactive when it has an accessible name.
+        "section" => {
+            has_jsx_prop_ignore_case(jsx_opening_el, "aria-label").is_some()
+                || has_jsx_prop_ignore_case(jsx_opening_el, "aria-labelledby").is_some()
+        }
+        _ => NON_INTERACTIVE_ELEMENT_TYPES.contains(&element_type),
     }
 }
+
+// Based on https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isNonInteractiveElement.js
+const NON_INTERACTIVE_ELEMENT_TYPES: [&str; 59] = [
+    "abbr",
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "br",
+    "caption",
+    "code",
+    "dd",
+    "del",
+    "details",
+    "dfn",
+    "dialog",
+    "dir",
+    "dl",
+    "dt",
+    "em",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "hr",
+    "html",
+    "iframe",
+    "img",
+    "ins",
+    "label",
+    "legend",
+    "li",
+    "main",
+    "mark",
+    "marquee",
+    "menu",
+    "meter",
+    "nav",
+    "ol",
+    "optgroup",
+    "output",
+    "p",
+    "pre",
+    "progress",
+    "ruby",
+    "section",
+    "strong",
+    "sub",
+    "sup",
+    "table",
+    "tbody",
+    "tfoot",
+    "thead",
+    "time",
+    "ul",
+];
 
 const INTERACTIVE_ROLES: [&str; 27] = [
     "button",
