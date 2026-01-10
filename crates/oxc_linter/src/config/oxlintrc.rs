@@ -318,6 +318,9 @@ impl Oxlintrc {
 
         let schema = self.schema.clone().or(other.schema);
 
+        let mut ignore_patterns = other.ignore_patterns;
+        ignore_patterns.extend(self.ignore_patterns.clone());
+
         Oxlintrc {
             schema,
             plugins,
@@ -329,7 +332,7 @@ impl Oxlintrc {
             globals,
             overrides,
             path: self.path.clone(),
-            ignore_patterns: self.ignore_patterns.clone(),
+            ignore_patterns,
             extends: self.extends.clone(),
         }
     }
@@ -510,5 +513,21 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
+    }
+
+    #[test]
+    fn test_oxlintrc_ignore_patterns_merge() {
+        // Test that ignore_patterns are merged correctly
+        let config1: Oxlintrc = serde_json::from_str(r#"{"ignorePatterns": ["**/dist"]}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.ignore_patterns, vec!["**/dist"]);
+
+        // Test merging when both configs have ignore_patterns
+        let config1: Oxlintrc = serde_json::from_str(r#"{"ignorePatterns": ["**/dist"]}"#).unwrap();
+        let config2: Oxlintrc =
+            serde_json::from_str(r#"{"ignorePatterns": ["**/node_modules"]}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.ignore_patterns, vec!["**/node_modules", "**/dist"]);
     }
 }
