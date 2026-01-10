@@ -326,25 +326,27 @@ impl<'a> ObjectRestSpread<'a, '_> {
         let rest = object_assignment_target.rest.take()?;
         let rest_target = rest.unbox().target;
         let mut all_primitives = true;
-        let keys =
-            ctx.ast.vec_from_iter(object_assignment_target.properties.iter_mut().filter_map(|e| {
-                match e {
-                    AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
-                        let name = ident.binding.name;
-                        let expr = ctx.ast.expression_string_literal(SPAN, name, None);
-                        Some(ArrayExpressionElement::from(expr))
-                    }
-                    AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                        Self::transform_property_key(
-                            &mut p.name,
-                            new_decls,
-                            &mut all_primitives,
-                            state,
-                            ctx,
-                        )
-                    }
+        let collected_keys: Vec<_> = object_assignment_target
+            .properties
+            .iter_mut()
+            .filter_map(|e| match e {
+                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(ident) => {
+                    let name = ident.binding.name;
+                    let expr = ctx.ast.expression_string_literal(SPAN, name, None);
+                    Some(ArrayExpressionElement::from(expr))
                 }
-            }));
+                AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
+                    Self::transform_property_key(
+                        &mut p.name,
+                        new_decls,
+                        &mut all_primitives,
+                        state,
+                        ctx,
+                    )
+                }
+            })
+            .collect();
+        let keys = ctx.ast.vec_from_iter(collected_keys);
         Some(SpreadPair {
             lhs: BindingPatternOrAssignmentTarget::AssignmentTarget(rest_target),
             keys,
@@ -872,8 +874,10 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 let mut all_primitives = true;
                 // Create the access keys.
                 // `let { a, b, ...c } = foo` -> `["a", "b"]`
-                let keys = ctx.ast.vec_from_iter(pat.properties.iter_mut().filter_map(
-                    |binding_property| {
+                let collected_keys: Vec<_> = pat
+                    .properties
+                    .iter_mut()
+                    .filter_map(|binding_property| {
                         Self::transform_property_key(
                             &mut binding_property.key,
                             &mut temp_keys,
@@ -881,8 +885,9 @@ impl<'a> ObjectRestSpread<'a, '_> {
                             state,
                             ctx,
                         )
-                    },
-                ));
+                    })
+                    .collect();
+                let keys = ctx.ast.vec_from_iter(collected_keys);
                 let datum = SpreadPair {
                     lhs,
                     keys,

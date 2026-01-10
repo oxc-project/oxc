@@ -656,18 +656,19 @@ impl<'a> JsxImpl<'a, '_> {
 
         // Append children to object properties in automatic mode
         if is_automatic {
-            let mut children = ctx.ast.vec_from_iter(
-                children
-                    .into_iter()
-                    .filter_map(|child| self.transform_jsx_child_automatic(child, ctx)),
-            );
+            let children_vec: Vec<_> = children
+                .into_iter()
+                .filter_map(|child| self.transform_jsx_child_automatic(child, ctx))
+                .collect();
+            let mut children = ctx.ast.vec_from_iter(children_vec);
             let children_len = children.len();
             if children_len != 0 {
                 let value = if children_len == 1 {
                     children.pop().unwrap()
                 } else {
                     need_jsxs = true;
-                    let elements = children.into_iter().map(ArrayExpressionElement::from);
+                    let elements: Vec<_> =
+                        children.into_iter().map(ArrayExpressionElement::from).collect();
                     let elements = ctx.ast.vec_from_iter(elements);
                     ctx.ast.expression_array(SPAN, elements)
                 };

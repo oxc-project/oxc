@@ -107,17 +107,20 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ConditionalExpression(consequent) = &mut expr.consequent
             && ctx.expr_eq(&consequent.alternate, &expr.alternate)
         {
+            let test = Self::join_with_left_associative_op(
+                expr.test.span(),
+                LogicalOperator::And,
+                expr.test.take_in(ctx.ast),
+                consequent.test.take_in(ctx.ast),
+                ctx,
+            );
+            let consequent_expr = consequent.consequent.take_in(ctx.ast);
+            let alternate_expr = consequent.alternate.take_in(ctx.ast);
             return Some(ctx.ast.expression_conditional(
                 expr.span,
-                Self::join_with_left_associative_op(
-                    expr.test.span(),
-                    LogicalOperator::And,
-                    expr.test.take_in(ctx.ast),
-                    consequent.test.take_in(ctx.ast),
-                    ctx,
-                ),
-                consequent.consequent.take_in(ctx.ast),
-                consequent.alternate.take_in(ctx.ast),
+                test,
+                consequent_expr,
+                alternate_expr,
             ));
         }
 
@@ -125,17 +128,20 @@ impl<'a> PeepholeOptimizations {
         if let Expression::ConditionalExpression(alternate) = &mut expr.alternate
             && ctx.expr_eq(&alternate.consequent, &expr.consequent)
         {
+            let test = Self::join_with_left_associative_op(
+                expr.test.span(),
+                LogicalOperator::Or,
+                expr.test.take_in(ctx.ast),
+                alternate.test.take_in(ctx.ast),
+                ctx,
+            );
+            let consequent_expr = expr.consequent.take_in(ctx.ast);
+            let alternate_expr = alternate.alternate.take_in(ctx.ast);
             return Some(ctx.ast.expression_conditional(
                 expr.span,
-                Self::join_with_left_associative_op(
-                    expr.test.span(),
-                    LogicalOperator::Or,
-                    expr.test.take_in(ctx.ast),
-                    alternate.test.take_in(ctx.ast),
-                    ctx,
-                ),
-                expr.consequent.take_in(ctx.ast),
-                alternate.alternate.take_in(ctx.ast),
+                test,
+                consequent_expr,
+                alternate_expr,
             ));
         }
 
@@ -144,19 +150,17 @@ impl<'a> PeepholeOptimizations {
             && alternate.expressions.len() == 2
             && ctx.expr_eq(&alternate.expressions[1], &expr.consequent)
         {
-            return Some(ctx.ast.expression_sequence(
-                expr.span,
-                ctx.ast.vec_from_array([
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        expr.test.take_in(ctx.ast),
-                        alternate.expressions[0].take_in(ctx.ast),
-                        ctx,
-                    ),
-                    expr.consequent.take_in(ctx.ast),
-                ]),
-            ));
+            let left = Self::join_with_left_associative_op(
+                expr.test.span(),
+                LogicalOperator::Or,
+                expr.test.take_in(ctx.ast),
+                alternate.expressions[0].take_in(ctx.ast),
+                ctx,
+            );
+            let right = expr.consequent.take_in(ctx.ast);
+            return Some(
+                ctx.ast.expression_sequence(expr.span, ctx.ast.vec_from_array([left, right])),
+            );
         }
 
         // "a ? (b, c) : c" => "(a && b), c"
@@ -164,19 +168,17 @@ impl<'a> PeepholeOptimizations {
             && consequent.expressions.len() == 2
             && ctx.expr_eq(&consequent.expressions[1], &expr.alternate)
         {
-            return Some(ctx.ast.expression_sequence(
-                expr.span,
-                ctx.ast.vec_from_array([
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        expr.test.take_in(ctx.ast),
-                        consequent.expressions[0].take_in(ctx.ast),
-                        ctx,
-                    ),
-                    expr.alternate.take_in(ctx.ast),
-                ]),
-            ));
+            let left = Self::join_with_left_associative_op(
+                expr.test.span(),
+                LogicalOperator::And,
+                expr.test.take_in(ctx.ast),
+                consequent.expressions[0].take_in(ctx.ast),
+                ctx,
+            );
+            let right = expr.alternate.take_in(ctx.ast);
+            return Some(
+                ctx.ast.expression_sequence(expr.span, ctx.ast.vec_from_array([left, right])),
+            );
         }
 
         // "a ? b || c : c" => "(a && b) || c"
@@ -184,18 +186,15 @@ impl<'a> PeepholeOptimizations {
             && logical_expr.operator.is_or()
             && ctx.expr_eq(&logical_expr.right, &expr.alternate)
         {
-            return Some(ctx.ast.expression_logical(
-                expr.span,
-                Self::join_with_left_associative_op(
-                    expr.test.span(),
-                    LogicalOperator::And,
-                    expr.test.take_in(ctx.ast),
-                    logical_expr.left.take_in(ctx.ast),
-                    ctx,
-                ),
-                LogicalOperator::Or,
-                expr.alternate.take_in(ctx.ast),
-            ));
+            let left = Self::join_with_left_associative_op(
+                expr.test.span(),
+                LogicalOperator::And,
+                expr.test.take_in(ctx.ast),
+                logical_expr.left.take_in(ctx.ast),
+                ctx,
+            );
+            let right = expr.alternate.take_in(ctx.ast);
+            return Some(ctx.ast.expression_logical(expr.span, left, LogicalOperator::Or, right));
         }
 
         // "a ? c : b && c" => "(a || b) && c"
@@ -203,18 +202,15 @@ impl<'a> PeepholeOptimizations {
             && logical_expr.operator == LogicalOperator::And
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
-            return Some(ctx.ast.expression_logical(
-                expr.span,
-                Self::join_with_left_associative_op(
-                    expr.test.span(),
-                    LogicalOperator::Or,
-                    expr.test.take_in(ctx.ast),
-                    logical_expr.left.take_in(ctx.ast),
-                    ctx,
-                ),
-                LogicalOperator::And,
-                expr.consequent.take_in(ctx.ast),
-            ));
+            let left = Self::join_with_left_associative_op(
+                expr.test.span(),
+                LogicalOperator::Or,
+                expr.test.take_in(ctx.ast),
+                logical_expr.left.take_in(ctx.ast),
+                ctx,
+            );
+            let right = expr.consequent.take_in(ctx.ast);
+            return Some(ctx.ast.expression_logical(expr.span, left, LogicalOperator::And, right));
         }
 
         // `a ? b(c, d) : b(e, d)` -> `b(a ? c : e, d)`
