@@ -34,7 +34,8 @@ fn no_redundant_super_call(constructor_span: Span, super_span: Span) -> OxcDiagn
             constructor_span.primary_label("This constructor is unnecessary,"),
             super_span.label("because it only passes arguments through to the superclass"),
         ])
-        .with_help("Subclasses automatically use the constructor of their superclass, making this redundant.\nRemove this constructor or add code to it.")
+        .with_note("Subclasses automatically use the constructor of their superclass, making this redundant.")
+        .with_help("Remove this constructor or add code to it.")
 }
 
 #[derive(Debug, Default, Clone)]
