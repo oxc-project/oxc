@@ -147,7 +147,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -160,12 +160,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -178,7 +178,7 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
@@ -219,7 +219,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -232,12 +232,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -250,7 +250,7 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
@@ -291,7 +291,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -304,12 +304,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -322,7 +322,7 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
@@ -363,7 +363,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -376,12 +376,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -394,12 +394,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -412,12 +412,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -430,5 +430,5 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
