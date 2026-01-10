@@ -161,8 +161,9 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
     // - input (unless `type` is hidden)
     // - img (when `usemap` is present)
     match element_type {
-        "button" | "canvas" | "datalist" | "details" | "embed" | "iframe" | "label"
-        | "menuitem" | "option" | "select" | "summary" | "td" | "th" | "tr" | "textarea" => true,
+        "audio" | "button" | "canvas" | "datalist" | "details" | "embed" | "iframe" | "label"
+        | "menuitem" | "option" | "select" | "summary" | "td" | "th" | "tr" | "textarea"
+        | "video" => true,
         "input" => {
             if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type")
                 && get_string_literal_prop_value(input_type)
@@ -173,8 +174,6 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
             true
         }
         "a" | "area" => has_jsx_prop(jsx_opening_el, "href").is_some(),
-        // Upstream treats audio/video as interactive regardless of controls.
-        "audio" | "video" => true,
         "img" => has_jsx_prop(jsx_opening_el, "usemap").is_some(),
         _ => false,
     }
@@ -193,7 +192,7 @@ pub fn is_non_interactive_element(element_type: &str, jsx_opening_el: &JSXOpenin
         // element is a direct descendant of <body>, and this plugin cannot
         // reliably test that.
         // @see https://www.w3.xorg/TR/wai-aria-practices/examples/landmarks/banner.html
-        "header" => return false,
+        "header" => false,
         // Only treat <section> as non-interactive when it has an accessible name.
         "section" => {
             has_jsx_prop_ignore_case(jsx_opening_el, "aria-label").is_some()
