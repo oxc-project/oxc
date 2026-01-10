@@ -10,9 +10,9 @@ use tracing::{debug, warn};
 
 use oxc_allocator::Allocator;
 use oxc_linter::{
-    AllowWarnDeny, ConfigStore, DisableDirectives, Fix, FixKind, LINTABLE_EXTENSIONS, LintOptions,
-    LintRunner, LintRunnerBuilder, LintServiceOptions, Linter, Message, PossibleFixes,
-    RuleCommentType, RuntimeFileSystem, read_to_arena_str, read_to_string,
+    AllowWarnDeny, ConfigStore, DisableDirectives, ExternalLinter, Fix, FixKind,
+    LINTABLE_EXTENSIONS, LintOptions, LintRunner, LintRunnerBuilder, LintServiceOptions, Linter,
+    Message, PossibleFixes, RuleCommentType, RuntimeFileSystem, read_to_arena_str, read_to_string,
 };
 
 use super::error_with_position::{
@@ -66,11 +66,12 @@ impl IsolatedLintHandler {
     pub fn new(
         lint_options: LintOptions,
         config_store: ConfigStore,
+        external_linter: Option<ExternalLinter>,
         options: &IsolatedLintHandlerOptions,
     ) -> Self {
         let config_store_clone = config_store.clone();
 
-        let linter = Linter::new(lint_options, config_store, None);
+        let linter = Linter::new(lint_options, config_store, external_linter.clone());
         let mut lint_service_options = LintServiceOptions::new(options.root_path.clone())
             .with_cross_module(options.use_cross_module);
 
@@ -89,7 +90,7 @@ impl IsolatedLintHandler {
             Ok(runner) => runner,
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
-                let linter = Linter::new(lint_options, config_store_clone, None);
+                let linter = Linter::new(lint_options, config_store_clone, external_linter);
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(options.fix_kind)
