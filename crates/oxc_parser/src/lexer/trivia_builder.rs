@@ -81,8 +81,16 @@ impl TriviaBuilder {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
         if self.processed < len {
-            self.comments[len - 1].set_followed_by_newline(true);
-            if !self.saw_newline {
+            let comment = &mut self.comments[len - 1];
+            comment.set_followed_by_newline(true);
+            // If there was no newline before this comment (it's on the same line as the previous token),
+            // and now we see a newline after it, consider marking it as "processed" (trailing).
+            // However, don't mark legal comments as trailing because they need to be preserved and
+            // should be attached to the next token as leading comments.
+            // See: https://github.com/oxc-project/monitor-oxc/actions/runs/20846938716/job/59892838711
+            if !self.saw_newline
+                && !matches!(comment.content, CommentContent::Legal | CommentContent::JsdocLegal)
+            {
                 self.processed = self.comments.len();
             }
         }
