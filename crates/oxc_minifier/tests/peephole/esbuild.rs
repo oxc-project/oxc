@@ -2021,7 +2021,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
-        "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
+        "function wrapper(arg0, arg1) { if (arg0 === 0) return 1; }",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",
