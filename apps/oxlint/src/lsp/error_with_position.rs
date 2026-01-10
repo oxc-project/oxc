@@ -261,7 +261,7 @@ fn add_ignore_fixes(
     }
 
     if let Some(rule_name) = code.number.as_ref() {
-        // this conversation is a bit messy, but basically we need to reconstruct the rule name with plugin prefix
+        // this conversion is a bit messy, but basically we need to reconstruct the rule name with plugin prefix
         let rule_name_with_plugin = if let Some(scope) = &code.scope
             && !scope.is_empty()
             // eslint does not has a plugin prefix
