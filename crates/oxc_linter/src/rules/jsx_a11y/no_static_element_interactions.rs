@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue},
+    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -16,7 +16,7 @@ use crate::{
     globals::HTML_TAG,
     rule::{DefaultRuleConfig, Rule},
     utils::{
-        get_element_type, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role,
+        get_element_type, get_prop_value, has_jsx_prop, has_jsx_prop_ignore_case, is_abstract_role,
         is_hidden_from_screen_reader, is_interactive_element, is_interactive_role,
         is_non_interactive_element, is_non_interactive_role, is_presentation_role,
     },
@@ -95,11 +95,18 @@ impl Rule for NoStaticElementInteractions {
             return;
         };
 
+        // Note: We skip the handler if it exists with a `null` value, e.g. `<div onClick={null} />`.
         let has_handler = match &self.handlers {
-            Some(handlers) => {
-                handlers.iter().any(|handler| has_jsx_prop(jsx_el, handler.as_str()).is_some())
-            }
-            None => DEFAULT_HANDLERS.iter().any(|handler| has_jsx_prop(jsx_el, handler).is_some()),
+            Some(handlers) => handlers.iter().any(|handler| {
+                has_jsx_prop(jsx_el, handler.as_str())
+                    .and_then(get_prop_value)
+                    .is_some_and(|value| !is_null_value(value))
+            }),
+            None => DEFAULT_HANDLERS.iter().any(|handler| {
+                has_jsx_prop(jsx_el, handler)
+                    .and_then(get_prop_value)
+                    .is_some_and(|value| !is_null_value(value))
+            }),
         };
 
         if !has_handler {
@@ -165,6 +172,14 @@ impl Rule for NoStaticElementInteractions {
 
         ctx.diagnostic(no_static_element_interactions_diagnostic(jsx_el.name.span()));
     }
+}
+
+fn is_null_value(value: &JSXAttributeValue) -> bool {
+    matches!(
+        value,
+        JSXAttributeValue::ExpressionContainer(container)
+            if matches!(container.expression, JSXExpression::NullLiteral(_))
+    )
 }
 
 #[test]
