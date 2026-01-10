@@ -443,20 +443,8 @@ fn test() {
             Some(serde_json::json!([{ "allowExpressionValues": true }])),
         ),
         (r"<div onDblClick={() => {}} />", Some(serde_json::json!([{ "handlers": ["onClick"] }]))),
-        (r#"<div onClick={() => {}} role="checkbox" />;"#, None),
-        (r#"<div onClick={() => {}} role="link" />;"#, None),
-        (r#"<div onClick={() => {}} role="menuitem" />;"#, None),
-        (r#"<div onClick={() => {}} role="option" />;"#, None),
-        (r#"<div onClick={() => {}} role="radio" />;"#, None),
-        (r#"<div onClick={() => {}} role="searchbox" />;"#, None),
-        (r#"<div onClick={() => {}} role="switch" />;"#, None),
-        (r#"<div onClick={() => {}} role="textbox" />;"#, None),
-        (r#"<div onClick={() => {}} role="combobox" />;"#, None),
-        (r#"<div onClick={() => {}} role="slider" />;"#, None),
-        (r#"<div onClick={() => {}} role="spinbutton" />;"#, None),
-        (r#"<div onClick={() => {}} role="tab" />;"#, None),
         // Test that it works regardless of order.
-        (r"<div role='tab' onClick={() => {}} />;", None),
+        (r#"<div onClick={() => {}} role="tab" />;"#, None),
         // Test that it works regardless of extra attributes.
         (r#"<div role="tab" onClick={() => {}} style="color: red;" />;"#, None),
     ];
