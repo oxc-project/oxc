@@ -191,7 +191,7 @@ pub fn is_non_interactive_element(element_type: &str, jsx_opening_el: &JSXOpenin
         // <header> elements do not technically have semantics, unless the
         // element is a direct descendant of <body>, and this plugin cannot
         // reliably test that.
-        // @see https://www.w3.xorg/TR/wai-aria-practices/examples/landmarks/banner.html
+        // @see https://www.w3.org/TR/wai-aria-practices/examples/landmarks/banner.html
         "header" => false,
         // Only treat <section> as non-interactive when it has an accessible name.
         "section" => {
