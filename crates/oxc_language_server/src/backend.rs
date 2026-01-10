@@ -370,7 +370,9 @@ impl LanguageServer for Backend {
         let fs_ref = fs_guard.as_deref();
 
         for option in resolved_options {
-            let Some(worker) = Self::find_worker_for_uri(&workers, &option.workspace_uri) else {
+            let Some(worker) =
+                workers.iter().find(|worker| worker.get_root_uri() == &option.workspace_uri)
+            else {
                 continue;
             };
 
