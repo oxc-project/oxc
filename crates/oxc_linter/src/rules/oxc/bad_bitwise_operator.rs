@@ -115,10 +115,9 @@ impl BadBitwiseOperator {
         good: &'static str,
         ctx: &LintContext<'_>,
     ) -> crate::fixer::RuleFix {
-        let Some(offset) = ctx.find_next_token_from(start, bad) else {
+        let Some(op_start) = ctx.find_next_token_from(start, bad) else {
             return fixer.noop();
         };
-        let op_start = start + offset;
         let op_span = Span::new(op_start, op_start + bad.len() as u32);
         fixer.replace(op_span, good)
     }
@@ -128,10 +127,9 @@ impl BadBitwiseOperator {
         start: u32,
         ctx: &LintContext<'_>,
     ) -> crate::fixer::RuleFix {
-        let Some(offset) = ctx.find_next_token_from(start, "|=") else {
+        let Some(op_start) = ctx.find_next_token_from(start, "|=") else {
             return fixer.noop();
         };
-        let op_start = start + offset;
         let op_span = Span::new(op_start, op_start + 2);
         fixer.replace(op_span, "||=")
     }

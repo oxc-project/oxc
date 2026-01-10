@@ -67,9 +67,17 @@ impl Rule for NoVar {
             }
 
             let is_written_to = dec.declarations.iter().any(|v| is_written_to(&v.id, ctx));
-            let var_offset = ctx.find_next_token_from(dec.span.start, "var").unwrap();
-            let var_start = dec.span.start + var_offset;
+
+            // For declarations with `declare` keyword, skip past it to find the actual `var`
+            let search_start = if dec.declare {
+                dec.span.start + 8 // "declare ".len()
+            } else {
+                dec.span.start
+            };
+
+            let var_start = ctx.find_next_token_from(search_start, "var").unwrap();
             let var_keyword_span = Span::sized(var_start, 3);
+
             ctx.diagnostic_with_fix(no_var_diagnostic(var_keyword_span), |fixer| {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
                 if dec.declarations.iter().any(|decl| {
@@ -109,9 +117,10 @@ impl Rule for NoVar {
 
                 // Replace the entire declaration span to prevent fix conflicts with other rules
                 let source = fixer.source_range(dec.span);
-                // var_offset is relative to dec.span.start, so we need to skip past "var" (3 chars)
-                let after_var = &source[(var_offset as usize + 3)..];
-                let before_var = &source[..(var_offset as usize)];
+                // var_start is absolute, so calculate offset relative to dec.span.start
+                let var_offset = (var_start - dec.span.start) as usize;
+                let after_var = &source[(var_offset + 3)..];
+                let before_var = &source[..var_offset];
                 let fixed_source = format!("{before_var}{new_keyword}{after_var}");
                 fixer.replace(dec.span, fixed_source)
             });
