@@ -148,6 +148,8 @@ Arguments:
 ## Available options:
 - **`    --rules`** &mdash; 
   List all the rules that are currently registered
+- **`    --list-files`** &mdash; 
+  List all files that would be linted, then exit without linting
 - **`    --lsp`** &mdash; 
   Start the language server
 - **`    --disable-nested-config`** &mdash; 
