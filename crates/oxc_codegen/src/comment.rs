@@ -33,9 +33,17 @@ impl Codegen<'_> {
                 if comment.is_normal() && self.options.print_normal_comment() {
                     add = true;
                 }
+            } else if comment.is_trailing() {
+                // Handle trailing legal comments
+                if comment.has_legal_content() && self.options.print_legal_comment() {
+                    add = true;
+                }
             }
             if add {
-                self.comments.entry(comment.attached_to).or_default().push(*comment);
+                // For trailing comments, use their span start as the key since attached_to is 0
+                let key =
+                    if comment.is_trailing() { comment.span.start } else { comment.attached_to };
+                self.comments.entry(key).or_default().push(*comment);
             }
         }
     }
@@ -61,6 +69,59 @@ impl Codegen<'_> {
     pub(crate) fn print_comments_at(&mut self, start: u32) {
         if let Some(comments) = self.get_comments(start) {
             self.print_comments(&comments);
+        }
+    }
+
+    /// Print trailing comments that appear after the given statement end position.
+    /// This finds trailing comments whose span starts right after the expression.
+    pub(crate) fn print_trailing_comments_after(&mut self, stmt_end: u32, next_stmt_start: u32) {
+        if self.comments.is_empty() {
+            return;
+        }
+        // Collect keys for trailing comments that fall between stmt_end and next_stmt_start
+        let keys_in_range: Vec<u32> = self
+            .comments
+            .keys()
+            .filter(|&&key| key >= stmt_end && key < next_stmt_start)
+            .copied()
+            .collect();
+
+        for key in keys_in_range {
+            if let Some(comments) = self.comments.get_mut(&key) {
+                // Extract only trailing comments, leave leading comments in place
+                let trailing_comments: Vec<_> =
+                    comments.iter().filter(|c| c.is_trailing()).copied().collect();
+
+                if !trailing_comments.is_empty() {
+                    // Remove the trailing comments from the vec
+                    comments.retain(|c| !c.is_trailing());
+                    // If no more comments left, remove the entry
+                    if comments.is_empty() {
+                        self.comments.remove(&key);
+                    }
+                    self.print_trailing_comments(&trailing_comments);
+                }
+            }
+        }
+    }
+
+    /// Print trailing comments with appropriate formatting.
+    /// Trailing comments should be printed on the same line as the statement.
+    fn print_trailing_comments(&mut self, comments: &[Comment]) {
+        // Remove trailing newline if present so comments appear on same line
+        let had_newline = self.last_byte() == Some(b'\n');
+        if had_newline {
+            self.code.pop();
+        }
+
+        for comment in comments {
+            self.print_hard_space();
+            self.print_comment(comment);
+        }
+
+        // Restore newline after comments
+        if had_newline {
+            self.print_hard_newline();
         }
     }
 

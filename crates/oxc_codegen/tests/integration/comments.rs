@@ -1,6 +1,15 @@
 use crate::tester::{test, test_same};
 
 #[test]
+fn test_trailing_legal_comment() {
+    // Issue #17301: trailing legal comments should be output
+    test(
+        "//! Copyright notice 1\nconsole.log('in a') //! Copyright notice 2",
+        "//! Copyright notice 1\nconsole.log(\"in a\"); //! Copyright notice 2\n",
+    );
+}
+
+#[test]
 fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
     use oxc_ast::CommentPosition;
