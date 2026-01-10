@@ -12,12 +12,12 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case},
+    utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_element},
 };
 
 fn no_noninteractive_tabindex_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("`tabIndex` should only be declared on interactive elements")
-        .with_help("`tabIndex` attribute should be removed")
+    OxcDiagnostic::warn("`tabIndex` should only be declared on interactive elements.")
+        .with_help("The `tabIndex` attribute should be removed.")
         .with_label(span)
 }
 
@@ -88,12 +88,6 @@ declare_oxc_lint!(
     config = NoNoninteractiveTabindexConfig,
 );
 
-// https://html.spec.whatwg.org/multipage/dom.html#interactive-content
-const INTERACTIVE_HTML_ELEMENTS: [&str; 12] = [
-    "a", "audio", "button", "details", "embed", "iframe", "img", "input", "label", "select",
-    "textarea", "video",
-];
-
 // https://www.w3.org/TR/wai-aria/#widget_roles
 // NOTE: "tabpanel" is not included here because it's technically a section role. It can optionally be considered interactive within the context of a tablist, because its visibility is dynamically controlled by an element with the "tab" aria role. It's included in the recommended jsx-a11y config for this reason.
 const INTERACTIVE_HTML_ROLES: [&str; 19] = [
@@ -140,7 +134,7 @@ impl Rule for NoNoninteractiveTabindex {
 
         let component = &get_element_type(ctx, jsx_el);
 
-        if INTERACTIVE_HTML_ELEMENTS.contains(&component.as_ref()) {
+        if is_interactive_element(component, jsx_el) {
             return;
         }
 
@@ -199,43 +193,79 @@ impl Rule for NoNoninteractiveTabindex {
 fn test() {
     use crate::tester::Tester;
 
+    fn settings() -> serde_json::Value {
+        serde_json::json!({
+            "settings": { "jsx-a11y": {
+                "components": {
+                    "Article": "article",
+                    "MyButton": "button",
+                }
+            } }
+        })
+    }
+
     let pass = vec![
-        (r#"<div role="tabpanel" tabIndex="0" />"#, None),
-        (r#"<div role={ROLE_BUTTON} onClick={() => {}} tabIndex="0" />;"#, None),
+        (r"<MyButton tabIndex={0} />", None, None),
+        (r"<button />", None, None),
+        (r#"<button tabIndex="0" />"#, None, None),
+        (r"<button tabIndex={0} />", None, None),
+        (r"<div />", None, None),
+        (r#"<div tabIndex="-1" />"#, None, None),
+        (r#"<div role="button" tabIndex="0" />"#, None, None),
+        (r#"<div role="article" tabIndex="-1" />"#, None, None),
+        (r#"<article tabIndex="-1" />"#, None, None),
+        (r#"<Article tabIndex="-1" />"#, None, Some(settings())),
+        (r"<MyButton tabIndex={0} />", None, Some(settings())),
+        (r#"<div role="tabpanel" tabIndex="0" />"#, None, None),
+        (r#"<div role={ROLE_BUTTON} onClick={() => {}} tabIndex="0" />;"#, None, None),
         (
             r#"<div role={BUTTON} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "allowExpressionValues": true }])),
+            None,
         ),
         (
             r#"<div role={isButton ? "button" : "link"} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "allowExpressionValues": true }])),
+            None,
         ),
         (
             r#"<div role={isButton ? "button" : LINK} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "allowExpressionValues": true }])),
+            None,
         ),
         (
             r#"<div role={isButton ? BUTTON : LINK} onClick={() => {}} tabIndex="0"/>;"#,
             Some(serde_json::json!([{ "allowExpressionValues": true }])),
+            None,
         ),
     ];
 
     let fail = vec![
+        (r#"<div tabIndex="0" />"#, None, None),
+        // TODO: Fix the rule for these tests.
+        // (r#"<div role="article" tabIndex="0" />"#, None, None),
+        // (r"<article tabIndex={0} />", None, None),
+        // (r"<Article tabIndex={0} />", None, Some(settings())),
+        (r#"<article tabIndex="0" />"#, None, None),
         (
             r#"<div role="tabpanel" tabIndex="0" />"#,
             Some(serde_json::json!([{ "roles": [], "allowExpressionValues": false }])),
+            None,
         ),
         (
             r#"<div role={ROLE_BUTTON} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "roles": [], "allowExpressionValues": false }])),
+            None,
         ),
         (
             r#"<div role={BUTTON} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "allowExpressionValues": false }])),
+            None,
         ),
         (
             r#"<div role={isButton ? "button" : "link"} onClick={() => {}} tabIndex="0" />;"#,
             Some(serde_json::json!([{ "allowExpressionValues": false }])),
+            None,
         ),
     ];
 

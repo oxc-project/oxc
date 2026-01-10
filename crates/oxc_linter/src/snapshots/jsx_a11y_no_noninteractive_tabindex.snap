@@ -1,30 +1,44 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
+   ╭─[no_noninteractive_tabindex.tsx:1:6]
+ 1 │ <div tabIndex="0" />
+   ·      ────────────
+   ╰────
+  help: The `tabIndex` attribute should be removed.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
+   ╭─[no_noninteractive_tabindex.tsx:1:10]
+ 1 │ <article tabIndex="0" />
+   ·          ────────────
+   ╰────
+  help: The `tabIndex` attribute should be removed.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
    ╭─[no_noninteractive_tabindex.tsx:1:22]
  1 │ <div role="tabpanel" tabIndex="0" />
    ·                      ────────────
    ╰────
-  help: `tabIndex` attribute should be removed
+  help: The `tabIndex` attribute should be removed.
 
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
    ╭─[no_noninteractive_tabindex.tsx:1:44]
  1 │ <div role={ROLE_BUTTON} onClick={() => {}} tabIndex="0" />;
    ·                                            ────────────
    ╰────
-  help: `tabIndex` attribute should be removed
+  help: The `tabIndex` attribute should be removed.
 
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
    ╭─[no_noninteractive_tabindex.tsx:1:39]
  1 │ <div role={BUTTON} onClick={() => {}} tabIndex="0" />;
    ·                                       ────────────
    ╰────
-  help: `tabIndex` attribute should be removed
+  help: The `tabIndex` attribute should be removed.
 
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
    ╭─[no_noninteractive_tabindex.tsx:1:61]
  1 │ <div role={isButton ? "button" : "link"} onClick={() => {}} tabIndex="0" />;
    ·                                                             ────────────
    ╰────
-  help: `tabIndex` attribute should be removed
+  help: The `tabIndex` attribute should be removed.
