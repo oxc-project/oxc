@@ -21,7 +21,6 @@ use oxc_linter::{
 
 use oxc_language_server::{
     Capabilities, ConcurrentHashMap, DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges,
-    utils::normalize_path,
 };
 
 use crate::lsp::{
@@ -35,6 +34,7 @@ use crate::lsp::{
     error_with_position::LinterCodeAction,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
     options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+    utils::normalize_path,
 };
 
 #[derive(Default)]

@@ -29,7 +29,7 @@ pub fn normalize_path<P: AsRef<Path>>(path: P) -> PathBuf {
 mod test {
     use std::path::Path;
 
-    use crate::utils::normalize_path;
+    use crate::lsp::utils::normalize_path;
 
     #[test]
     fn test_normalize_path() {
