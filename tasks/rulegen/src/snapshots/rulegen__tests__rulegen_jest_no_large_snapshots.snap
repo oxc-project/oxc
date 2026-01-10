@@ -1,10 +1,11 @@
 ---
-source: tasks/rulegen/src/template.rs
+source: tasks/rulegen/src/main.rs
 expression: rendered
 ---
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -15,22 +16,30 @@ use crate::{
     AstNode,
 };
 
-fn my_rule_diagnostic(span: Span) -> OxcDiagnostic {
+fn no_large_snapshots_diagnostic(span: Span) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
     OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
         .with_help("Should be a command-like statement that tells the user how to fix the issue.")
         .with_label(span)
 }
 
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
-struct MyRuleConfig {
-    pub foo: String,
-    pub bar: Option<i32>,
+struct NoLargeSnapshotsConfig {
+    /// FIXME: Describe the purpose of this field.
+    inline_max_size: f32,
+    /// FIXME: Describe the purpose of this field.
+    max_size: f32,
+    /// FIXME: Describe the purpose of this field.
+    allowed_snapshots: FxHashMap<String, Vec<String>>,
 }
 
+
+
+
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct MyRule(MyRuleConfig);
+pub struct NoLargeSnapshots(NoLargeSnapshotsConfig);
 
 // See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
@@ -53,17 +62,17 @@ declare_oxc_lint!(
     /// ```ts
     /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
     /// ```
-    MyRule,
-    eslint,
+    NoLargeSnapshots,
+    jest,
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
     pending, // TODO: describe fix capabilities. Remove if no fix can be done,
              // keep at 'pending' if you think one could be added but don't know how.
              // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
-    config = MyRuleConfig,
+    config = NoLargeSnapshotsConfig,
 );
 
-impl Rule for MyRule {
+impl Rule for NoLargeSnapshots {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value).unwrap_or_default().into_inner())
     }
@@ -79,16 +88,22 @@ fn test() {
     use std::path::PathBuf;
 
     let pass = vec![
-        ("a")
+        ("expect(something)", None, None, None),
+("expect(something).toBe(1)", None, None, None),
+("expect(something).toMatchInlineSnapshot", None, None, None),
+("expect(something).toMatchInlineSnapshot()", None, None, None),
+("expect(
+			  functionUnderTest(
+			    arg1,
+			    arg2,
+			    arg3
+			  )
+			).toMatchInlineSnapshot(", Some(serde_json::json!([ { "maxSize": 61, }, ])), None, Some(PathBuf::from("mock.jsx")))
     ];
 
     let fail = vec![
-        ("b")
+        
     ];
 
-    let fix = vec![
-        ("fixed")
-    ];
-
-    Tester::new(MyRule::NAME, MyRule::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+    Tester::new(NoLargeSnapshots::NAME, NoLargeSnapshots::PLUGIN, pass, fail).test_and_snapshot();
 }

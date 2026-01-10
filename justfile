@@ -155,7 +155,6 @@ watch-oxlint-node *args='':
 # Create a new lint rule for any plugin
 new-rule name plugin='eslint':
   cargo run -p rulegen {{name}} {{plugin}}
-  just fmt
 
 # Update test cases for an existing lint rule from upstream
 update-rule-tests name plugin='eslint':
@@ -163,6 +162,7 @@ update-rule-tests name plugin='eslint':
   just fmt
 
 # Legacy aliases for backward compatibility
+new-eslint-rule name: (new-rule name "eslint")
 new-jest-rule name: (new-rule name "jest")
 new-ts-rule name: (new-rule name "typescript")
 new-unicorn-rule name: (new-rule name "unicorn")
