@@ -180,6 +180,16 @@ impl CliRunner {
 
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
+        // Setup JS workspace. This must be done before loading any configs
+        if let Some(external_linter) = &external_linter {
+            let res = (external_linter.create_workspace)(self.cwd.to_string_lossy().into_owned());
+
+            if let Err(err) = res {
+                print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
+                return CliRunResult::JsPluginWorkspaceSetupFailed;
+            }
+        }
+
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
             // as the passed config file takes absolute precedence.
@@ -286,7 +296,8 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
+        let mut options =
+            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let lint_config = match config_builder.build(&mut external_plugin_store) {
             Ok(config) => config,
@@ -342,7 +353,9 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            let res = config_store
+                .external_plugin_store()
+                .setup_configs(self.cwd.to_string_lossy().into_owned(), external_linter);
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,

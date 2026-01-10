@@ -26,22 +26,23 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { ast, initAst, SOURCE_CODE } from "./source_code.ts";
-import { report } from "./report.ts";
-import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 import { envs, globals, initGlobals } from "./globals.ts";
+import { report } from "./report.ts";
+import { initSettings, settings } from "./settings.ts";
+import { ast, initAst, SOURCE_CODE } from "./source_code.ts";
 
-import type { Globals, Envs } from "./globals.ts";
+import type { ModuleKind, Program } from "../generated/types.d.ts";
+import type { Envs, Globals } from "./globals.ts";
 import type { RuleDetails } from "./load.ts";
 import type { Options } from "./options.ts";
 import type { Diagnostic } from "./report.ts";
 import type { Settings } from "./settings.ts";
 import type { SourceCode } from "./source_code.ts";
-import type { ModuleKind, Program } from "../generated/types.d.ts";
 
 // Cached current working directory
+// When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
 let cwd: string | null = null;
 
 // Absolute path of file being linted.
@@ -50,9 +51,11 @@ export let filePath: string | null = null;
 
 /**
  * Set up context for linting a file.
+ * @param cwdInput - Current working directory
  * @param filePathInput - Absolute path of file being linted
  */
-export function setupFileContext(filePathInput: string): void {
+export function setupFileContext(cwdInput: string, filePathInput: string): void {
+  cwd = cwdInput;
   filePath = filePathInput;
 }
 
@@ -64,6 +67,7 @@ export function setupFileContext(filePathInput: string): void {
  * properties in next tick, in between linting files (highly unlikely). But it's cheap to do, so we cover this odd case.
  */
 export function resetFileContext(): void {
+  cwd = null;
   filePath = null;
 }
 
@@ -303,10 +307,9 @@ const FILE_CONTEXT = Object.freeze({
    * Current working directory.
    */
   get cwd(): string {
-    // Note: We can allow accessing `cwd` in `createOnce`, as it's global.
-    // Note: If we change this implementation, also change `getCwd` method below,
-    // and `cwd` getter + `getCwd` method in `index.ts` (`createOnce` shim for ESLint).
-    if (cwd === null) cwd = process.cwd();
+    if (cwd === null) {
+      throw new Error("Cannot call `context.cwd` in `createOnce`");
+    }
     return cwd;
   },
 
@@ -316,7 +319,9 @@ const FILE_CONTEXT = Object.freeze({
    * @deprecated Use `context.cwd` property instead.
    */
   getCwd(): string {
-    if (cwd === null) cwd = process.cwd();
+    if (cwd === null) {
+      throw new Error("Cannot call `context.getCwd` in `createOnce`");
+    }
     return cwd;
   },
 
