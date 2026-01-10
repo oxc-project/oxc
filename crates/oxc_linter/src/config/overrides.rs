@@ -7,7 +7,9 @@ use rustc_hash::FxHashSet;
 use schemars::{JsonSchema, r#gen, schema::Schema};
 use serde::{Deserialize, Deserializer, Serialize};
 
-use crate::{LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules};
+use crate::{
+    LintPlugins, OxlintEnv, OxlintGlobals, config::OxlintRules, config::settings::OxlintSettings,
+};
 
 use super::external_plugins::{ExternalPluginEntry, external_plugins_schema};
 
@@ -90,6 +92,9 @@ pub struct OxlintOverride {
 
     /// Enabled or disabled specific global variables.
     pub globals: Option<OxlintGlobals>,
+
+    /// Plugin-specific settings for this override.
+    pub settings: Option<OxlintSettings>,
 
     /// Optionally change what plugins are enabled for this override. When
     /// omitted, the base config's plugins are used.

@@ -50,6 +50,16 @@ impl OxlintGlobals {
         self.0.get(name).is_some_and(|value| *value != GlobalValue::Off)
     }
 
+    /// Merge `self` into `other`, returning the merged globals.
+    /// When both define the same key, `self`'s value takes priority.
+    /// This implements merge semantics compatible with ESLint's extends.
+    pub fn merge(self, mut other: Self) -> Self {
+        for (key, value) in self.0 {
+            other.0.insert(key, value);
+        }
+        other
+    }
+
     pub(crate) fn override_globals(&self, globals_to_override: &mut OxlintGlobals) {
         for (env, supported) in self.0.clone() {
             globals_to_override.0.insert(env, supported);
@@ -201,5 +211,28 @@ mod test {
         override_globals.override_globals(&mut globals);
 
         assert!(!globals.is_enabled("Foo"));
+    }
+
+    #[test]
+    fn test_merge() {
+        // Child config values should override parent values
+        let parent = globals!({
+            "ParentGlobal": "readonly",
+            "SharedGlobal": "writable"
+        });
+
+        let child = globals!({
+            "ChildGlobal": "writable",
+            "SharedGlobal": "off"
+        });
+
+        let merged = child.merge(parent);
+
+        // Parent values preserved
+        assert!(merged.is_enabled("ParentGlobal"));
+        // Child values added
+        assert!(merged.is_enabled("ChildGlobal"));
+        // Child overrides parent
+        assert!(!merged.is_enabled("SharedGlobal"));
     }
 }

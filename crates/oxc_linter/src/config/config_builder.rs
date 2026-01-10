@@ -463,6 +463,7 @@ impl ConfigStoreBuilder {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
+                    settings: override_config.settings,
                     plugins: override_config.plugins,
                     rules: ResolvedOxlintOverrideRules { builtin_rules, external_rules },
                 })
@@ -1357,5 +1358,185 @@ mod test {
         .unwrap()
         .build(&mut external_plugin_store)
         .unwrap()
+    }
+
+    #[test]
+    fn test_extends_env_merge() {
+        // Test that env is merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/env_parent.json"],
+                "env": {
+                    "node": true,
+                    "es6": false
+                }
+            }
+            "#,
+        );
+
+        let env = config.env();
+
+        // Parent values should be preserved
+        assert!(env.contains("browser"), "browser from parent should be preserved");
+        // Child values should be added
+        assert!(env.contains("node"), "node from child should be added");
+        // Child should override parent
+        assert!(!env.contains("es6"), "es6 should be false (child overrides parent's true)");
+    }
+
+    #[test]
+    fn test_extends_globals_merge() {
+        // Test that globals are merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/globals_parent.json"],
+                "globals": {
+                    "ChildGlobal": "writable",
+                    "SharedGlobal": "off"
+                }
+            }
+            "#,
+        );
+
+        let globals = config.globals();
+
+        // Parent values should be preserved
+        assert!(globals.is_enabled("ParentGlobal"), "ParentGlobal from parent should be preserved");
+        // Child values should be added
+        assert!(globals.is_enabled("ChildGlobal"), "ChildGlobal from child should be added");
+        // Child should override parent
+        assert!(
+            !globals.is_enabled("SharedGlobal"),
+            "SharedGlobal should be off (child overrides parent's writable)"
+        );
+    }
+
+    #[test]
+    fn test_extends_settings_merge() {
+        // Test that settings are deep merged when extending configs
+        let config = config_store_from_str(
+            r#"
+            {
+                "extends": ["fixtures/extends_config/merge/settings_parent.json"],
+                "settings": {
+                    "next": {
+                        "rootDir": "child/app"
+                    },
+                    "custom-plugin": {
+                        "setting1": "child-value",
+                        "setting3": "child-only"
+                    }
+                }
+            }
+            "#,
+        );
+
+        // Next settings: child should replace parent (array semantics)
+        assert_eq!(
+            config.base.config.settings.next.get_root_dirs().as_ref(),
+            &["child/app".to_string()],
+            "next.rootDir should be child's value (arrays are replaced)"
+        );
+
+        // React settings: parent should be preserved since child didn't specify
+        assert!(
+            config.base.config.settings.react.get_link_component_attrs("ParentLink").is_some(),
+            "react.linkComponents from parent should be preserved"
+        );
+
+        // Arbitrary settings: should be deep merged
+        let json =
+            config.base.config.settings.json.as_ref().expect("json settings should be present");
+        assert_eq!(
+            json["custom-plugin"]["setting1"], "child-value",
+            "child value should override parent"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting2"], "parent-only",
+            "parent-only value should be preserved"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting3"], "child-only",
+            "child-only value should be added"
+        );
+    }
+
+    #[test]
+    fn test_overrides_settings_merge() {
+        // Test that settings in overrides are merged into base settings
+        let config = config_store_from_str(
+            r#"
+            {
+                "settings": {
+                    "next": {
+                        "rootDir": "base/app"
+                    },
+                    "custom-plugin": {
+                        "setting1": "base-value",
+                        "setting2": "base-only"
+                    }
+                },
+                "overrides": [
+                    {
+                        "files": ["*.test.ts"],
+                        "settings": {
+                            "next": {
+                                "rootDir": "test/app"
+                            },
+                            "custom-plugin": {
+                                "setting1": "override-value",
+                                "setting3": "override-only"
+                            }
+                        }
+                    }
+                ]
+            }
+            "#,
+        );
+
+        // Apply overrides for a test file
+        let resolved = config.apply_overrides(Path::new("foo.test.ts"));
+
+        // Next settings: override should replace base (array semantics)
+        assert_eq!(
+            resolved.config.settings.next.get_root_dirs().as_ref(),
+            &["test/app".to_string()],
+            "next.rootDir should be override's value"
+        );
+
+        // Arbitrary settings: should be deep merged
+        let json = resolved.config.settings.json.as_ref().expect("json settings should be present");
+        assert_eq!(
+            json["custom-plugin"]["setting1"], "override-value",
+            "override value should override base"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting2"], "base-only",
+            "base-only value should be preserved"
+        );
+        assert_eq!(
+            json["custom-plugin"]["setting3"], "override-only",
+            "override-only value should be added"
+        );
+
+        // Non-matching file should have base settings
+        let resolved_non_match = config.apply_overrides(Path::new("foo.ts"));
+        assert_eq!(
+            resolved_non_match.config.settings.next.get_root_dirs().as_ref(),
+            &["base/app".to_string()],
+            "non-matching file should have base next.rootDir"
+        );
+        let json_non_match = resolved_non_match
+            .config
+            .settings
+            .json
+            .as_ref()
+            .expect("json settings should be present");
+        assert_eq!(
+            json_non_match["custom-plugin"]["setting1"], "base-value",
+            "non-matching file should have base setting1"
+        );
     }
 }
