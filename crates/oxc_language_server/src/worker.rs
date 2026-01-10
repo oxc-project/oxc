@@ -507,6 +507,58 @@ mod tests {
         );
     }
 
+    #[test]
+    fn test_is_responsible_nested_workspaces() {
+        // Test case 1: workspace and workspace/deeper
+        let workspace1 = WorkspaceWorker::new(
+            Uri::from_str("file:///path/to/workspace").unwrap(),
+            Arc::new([]),
+            false,
+        );
+        let workspace2 = WorkspaceWorker::new(
+            Uri::from_str("file:///path/to/workspace/deeper").unwrap(),
+            Arc::new([]),
+            false,
+        );
+
+        let file_in_deeper = Uri::from_str("file:///path/to/workspace/deeper/file.js").unwrap();
+        let file_in_workspace = Uri::from_str("file:///path/to/workspace/file.js").unwrap();
+
+        // Both workers should be responsible for files in the deeper workspace
+        assert!(workspace1.is_responsible_for_uri(&file_in_deeper));
+        assert!(workspace2.is_responsible_for_uri(&file_in_deeper));
+
+        // Only workspace1 should be responsible for files directly in workspace
+        assert!(workspace1.is_responsible_for_uri(&file_in_workspace));
+        assert!(!workspace2.is_responsible_for_uri(&file_in_workspace));
+    }
+
+    #[test]
+    fn test_is_responsible_similar_names() {
+        // Test case 2: workspace and workspace-2
+        let workspace1 = WorkspaceWorker::new(
+            Uri::from_str("file:///path/to/workspace").unwrap(),
+            Arc::new([]),
+            false,
+        );
+        let workspace2 = WorkspaceWorker::new(
+            Uri::from_str("file:///path/to/workspace-2").unwrap(),
+            Arc::new([]),
+            false,
+        );
+
+        let file_in_workspace2 = Uri::from_str("file:///path/to/workspace-2/file.js").unwrap();
+        let file_in_workspace = Uri::from_str("file:///path/to/workspace/file.js").unwrap();
+
+        // Only workspace2 should be responsible for files in workspace-2
+        assert!(!workspace1.is_responsible_for_uri(&file_in_workspace2));
+        assert!(workspace2.is_responsible_for_uri(&file_in_workspace2));
+
+        // Only workspace1 should be responsible for files in workspace
+        assert!(workspace1.is_responsible_for_uri(&file_in_workspace));
+        assert!(!workspace2.is_responsible_for_uri(&file_in_workspace));
+    }
+
     #[tokio::test]
     async fn test_needs_init_options() {
         let worker =
