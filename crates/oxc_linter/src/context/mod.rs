@@ -16,6 +16,7 @@ use crate::{
     AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
     WEBSITE_BASE_RULES_URL,
     config::GlobalValue,
+    config::{ConfiguredNamespace, GlobalValue},
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
@@ -59,6 +60,11 @@ pub struct LintContext<'a> {
     /// }
     /// ```
     severity: Severity,
+    /// The original namespace under which this rule was configured.
+    /// For example, if a user configures `vitest/valid-describe-callback`,
+    /// this would be `Some("vitest")` even though the rule is implemented by jest plugin.
+    /// This is `None` if the rule was configured under its native namespace.
+    configured_namespace: ConfiguredNamespace,
 }
 
 impl<'a> Deref for LintContext<'a> {
@@ -111,6 +117,17 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn module_record(&self) -> &ModuleRecord {
         self.parent.module_record()
+    }
+
+    /// Returns `true` if this rule was configured under the vitest namespace.
+    ///
+    /// For example, if a user configures `vitest/valid-describe-callback`, this
+    /// returns `true` even though the rule is implemented by the jest plugin.
+    /// This allows rules to behave differently when configured under vitest
+    /// (e.g., allowing async describe callbacks).
+    #[inline]
+    pub fn is_vitest_context(&self) -> bool {
+        self.configured_namespace == Some("vitest")
     }
 
     /// Get the control flow graph for the current program.

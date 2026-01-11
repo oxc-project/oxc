@@ -186,7 +186,7 @@ impl Linter {
             let semantic = ctx_host.semantic();
             let rules = rules
                 .iter()
-                .filter(|(rule, _)| {
+                .filter(|(rule, _, _)| {
                     if rule.is_tsgolint_rule() {
                         return false;
                     }
@@ -202,7 +202,9 @@ impl Linter {
 
                     rule.should_run(&ctx_host)
                 })
-                .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
+                .map(|(rule, severity, configured_namespace)| {
+                    (rule, Rc::clone(&ctx_host).spawn(rule, *severity, *configured_namespace))
+                })
                 .collect::<Vec<_>>();
 
             let should_run_on_jest_node =
