@@ -107,12 +107,12 @@ impl Rule for NoUselessAssignment {
 
 #[derive(Default, Debug, Copy, Clone)]
 enum FoundAssignmentUsage {
-    #[default]
     Yes,
     No,
     MaybeWrite,
     MaybeWriteRead,
     MaybeWriteWrittenInCatch,
+    #[default]
     Missing,
 }
 
@@ -145,7 +145,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
             _ => None,
         },
         &mut |basic_block_id, state| {
-            println!("Visiting basic block: {:?}", basic_block_id);
+            println!("----- Visiting basic block: {:?}", basic_block_id);
 
             // if the block has only one incoming edge which is an error edge, continue
             let mut incoming_edges =
@@ -154,7 +154,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                 && incoming_edges
                     .all(|edge| matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
             {
-                println!("Block is only reachable via an error edge, continuing traversal");
+                println!("----- Block is only reachable via an error edge, continuing traversal");
                 return (state, KEEP_WALKING_ON_THIS_PATH);
             }
 
@@ -211,14 +211,15 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                                 .source_text(ctx.source_text())
                         );
                         if reference.is_read() {
-                            println!("It's a read, returning Yes");
+                            println!("----- It's a read, returning Yes");
                             if matches!(state, FoundAssignmentUsage::MaybeWrite) {
-                                println!("State was MaybeWrite, returning MaybeWriteRead");
+                                println!("----- State was MaybeWrite, returning MaybeWriteRead");
                                 return (
                                     FoundAssignmentUsage::MaybeWriteRead,
                                     STOP_WALKING_ON_THIS_PATH,
                                 );
                             } else {
+                                println!("----- Returning Yes, state was {:?}", state);
                                 return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
                             }
                         }
@@ -228,7 +229,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                                 && matches!(state, FoundAssignmentUsage::MaybeWrite)
                             {
                                 println!(
-                                    "It's a write in a catch block with MaybeWrite state, returning MaybeWriteWrittenInCatch"
+                                    "----- It's a write in a catch block with MaybeWrite state, returning MaybeWriteWrittenInCatch"
                                 );
                                 return (
                                     FoundAssignmentUsage::MaybeWriteWrittenInCatch,
@@ -243,7 +244,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                                 let rhs = &assignment.right;
                                 if expr_uses_symbol(ctx, rhs, symbol_id) {
                                     println!(
-                                        "It's a write that uses the variable on the right side, returning Yes"
+                                        "----- It's a write that uses the variable on the right side, returning Yes"
                                     );
                                     return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
                                 }
@@ -252,22 +253,31 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                             // check if the reference is in a try block, i.e. there is an explicit error
                             // edge from this block. If so, mark maybe used.
                             if write_part_of_error_block(ctx, &ref_node_id) {
-                                println!("It's a write in a try/catch block, returning MaybeWrite");
+                                println!(
+                                    "----- It's a write in a try/catch block, returning MaybeWrite"
+                                );
                                 return (
                                     FoundAssignmentUsage::MaybeWrite,
                                     KEEP_WALKING_ON_THIS_PATH,
                                 );
                             }
 
-                            println!("It's a write, returning No");
+                            println!("----- It's a write, returning No");
                             return (FoundAssignmentUsage::No, STOP_WALKING_ON_THIS_PATH);
                         }
                     }
                 }
             }
 
-            println!("No matching read/write found in this block, continuing traversal");
-            (FoundAssignmentUsage::Missing, KEEP_WALKING_ON_THIS_PATH)
+            println!("----- No matching read/write found in this block, continuing traversal");
+            (
+                if !matches!(state, FoundAssignmentUsage::Missing) {
+                    state
+                } else {
+                    FoundAssignmentUsage::Missing
+                },
+                KEEP_WALKING_ON_THIS_PATH,
+            )
         },
     );
 
@@ -308,8 +318,12 @@ fn pre_checks_skip(
     ctx: &LintContext,
     _cfg: &ControlFlowGraph,
     start_node_id: NodeId,
-    _symbol_id: SymbolId,
+    symbol_id: SymbolId,
 ) -> bool {
+    if no_references_found(ctx, symbol_id) {
+        return true;
+    }
+
     let start_node = ctx.nodes().get_node(start_node_id);
 
     let (name, span) = match start_node.kind() {
@@ -341,6 +355,11 @@ fn pre_checks_skip(
     }
 
     return false;
+}
+
+fn no_references_found(ctx: &LintContext, symbol_id: SymbolId) -> bool {
+    let references = ctx.scoping().get_resolved_references(symbol_id);
+    references.count() == 0
 }
 
 fn is_exported(ctx: &LintContext, name: Atom, span: Span) -> bool {
@@ -1248,20 +1267,18 @@ fn test() {
     ];
 
     let _fail = vec![
-        "let message = 'unused';
+        "let v = 'unused';
 			            try {
-			                const result = call();
-			                message = result.message;
+			                v = callA();
+			                try {
+			                    v = callB();
+			                } catch (e) {
+			                    // ignore
+			                }
 			            } catch (e) {
-			                message = 'used';
+			                v = 'used';
 			            }
-			            console.log(message)",
-        // "let message = 'unused';
-        //           try {
-        //               message = 'used';
-        //               console.log(message)
-        //           } catch (e) {
-        //           }",
+			            console.log(v)",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
