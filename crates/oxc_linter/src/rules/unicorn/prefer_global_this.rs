@@ -101,11 +101,13 @@ impl Rule for PreferGlobalThis {
             }
         }
 
-        let is_typeof = is_typeof_legacy_global(node, ctx);
-        let replacement =
-            if is_typeof { format!("globalThis.{}", ident.name) } else { "globalThis".to_string() };
-
         ctx.diagnostic_with_suggestion(prefer_global_this_diagnostic(ident.span), |fixer| {
+            let is_typeof = is_typeof_legacy_global(node, ctx);
+            let replacement = if is_typeof {
+                format!("globalThis.{}", ident.name)
+            } else {
+                "globalThis".to_string()
+            };
             fixer.replace(ident.span, replacement)
         });
     }
@@ -389,7 +391,6 @@ fn test() {
         ("self", "globalThis"),
         ("window", "globalThis"),
         ("window.foo", "globalThis.foo"),
-        // aaaaa
         ("window.foo()", "globalThis.foo()"),
         ("window > 10", "globalThis > 10"),
         ("10 > window", "10 > globalThis"),
