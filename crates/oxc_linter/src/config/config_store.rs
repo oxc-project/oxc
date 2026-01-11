@@ -7,6 +7,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     AllowWarnDeny,
+    config::ConfiguredNamespace,
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     rules::{RULES, RuleEnum},
 };
@@ -20,7 +21,7 @@ use super::{
 #[derive(Debug, Clone)]
 pub struct ResolvedLinterState {
     // TODO: Arc + Vec -> SyncVec? It would save a pointer dereference.
-    pub rules: Arc<[(RuleEnum, AllowWarnDeny)]>,
+    pub rules: Arc<[(RuleEnum, AllowWarnDeny, ConfiguredNamespace)]>,
     pub config: Arc<LintConfig>,
 
     pub external_rules: Arc<[(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)]>,
@@ -54,7 +55,7 @@ pub struct ResolvedOxlintOverride {
 
 #[derive(Debug, Clone)]
 pub struct ResolvedOxlintOverrideRules {
-    pub(crate) builtin_rules: Vec<(RuleEnum, AllowWarnDeny)>,
+    pub(crate) builtin_rules: Vec<(RuleEnum, AllowWarnDeny, ConfiguredNamespace)>,
     pub(crate) external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
 }
 
@@ -67,7 +68,7 @@ pub struct Config {
     /// Used as the base config for applying overrides
     /// NOTE: `AllowWarnDeny::Allow` should exist here to allow us to correctly
     ///       keep a rule disabled when an override is applied with a different plugin set
-    pub(crate) base_rules: Vec<(RuleEnum, AllowWarnDeny)>,
+    pub(crate) base_rules: Vec<(RuleEnum, AllowWarnDeny, ConfiguredNamespace)>,
 
     /// Categories specified at the root. This is used to resolve which rules
     /// should be enabled when a different plugin is enabled as part of an override.
@@ -79,7 +80,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(
-        rules: Vec<(RuleEnum, AllowWarnDeny)>,
+        rules: Vec<(RuleEnum, (AllowWarnDeny, ConfiguredNamespace))>,
         mut external_rules: Vec<(ExternalRuleId, ExternalOptionsId, AllowWarnDeny)>,
         categories: OxlintCategories,
         config: LintConfig,
@@ -90,8 +91,8 @@ impl Config {
                 rules: Arc::from(
                     rules
                         .iter()
-                        .filter(|(_, severity)| severity.is_warn_deny())
-                        .cloned()
+                        .filter(|(_, (severity, _))| severity.is_warn_deny())
+                        .map(|(rule, (severity, ns))| (rule.clone(), *severity, *ns))
                         .collect::<Vec<_>>()
                         .into_boxed_slice(),
                 ),
@@ -101,7 +102,7 @@ impl Config {
                     external_rules.into_boxed_slice()
                 }),
             },
-            base_rules: rules,
+            base_rules: rules.into_iter().map(|(r, (s, ns))| (r, s, ns)).collect(),
             categories,
             overrides,
         }
@@ -111,7 +112,7 @@ impl Config {
         self.base.config.plugins
     }
 
-    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
+    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny, ConfiguredNamespace)]> {
         &self.base.rules
     }
 
@@ -158,11 +159,11 @@ impl Config {
         let mut rules = self
             .base_rules
             .iter()
-            .filter(|(rule, _)| {
+            .filter(|(rule, _, _)| {
                 LintPlugins::try_from(rule.plugin_name())
                     .is_ok_and(|plugin| plugins.contains(plugin))
             })
-            .cloned()
+            .map(|(rule, severity, ns)| (rule.clone(), (*severity, *ns)))
             .collect::<FxHashMap<_, _>>();
 
         let all_rules = RULES
@@ -208,19 +209,19 @@ impl Config {
                             None
                         }
                     }) {
-                        rules.entry(rule).or_insert(*severity);
+                        rules.entry(rule).or_insert((*severity, None));
                     }
                     // Mark these plugins as configured
                     configured_plugins |= unconfigured_plugins;
                 }
             }
 
-            for (rule, severity) in &override_config.rules.builtin_rules {
+            for (rule, severity, configured_namespace) in &override_config.rules.builtin_rules {
                 if *severity == AllowWarnDeny::Allow {
                     rules.remove(rule);
                 } else {
                     let _ = rules.remove(rule);
-                    rules.insert(rule.clone(), *severity);
+                    rules.insert(rule.clone(), (*severity, *configured_namespace));
                 }
             }
 
@@ -253,8 +254,11 @@ impl Config {
             Arc::new(config)
         };
 
-        let rules =
-            rules.into_iter().filter(|(_, severity)| severity.is_warn_deny()).collect::<Vec<_>>();
+        let rules = rules
+            .into_iter()
+            .filter(|(_, (severity, _))| severity.is_warn_deny())
+            .map(|(rule, (severity, ns))| (rule, severity, ns))
+            .collect::<Vec<_>>();
 
         let external_rules = external_rules
             .into_iter()
@@ -306,13 +310,13 @@ impl ConfigStore {
         let builtin_count = if type_aware_enabled {
             self.base.base.rules.len()
         } else {
-            self.base.base.rules.iter().filter(|(rule, _)| !rule.is_tsgolint_rule()).count()
+            self.base.base.rules.iter().filter(|(rule, _, _)| !rule.is_tsgolint_rule()).count()
         };
 
         Some(builtin_count + self.base.base.external_rules.len())
     }
 
-    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
+    pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny, ConfiguredNamespace)]> {
         &self.base.base.rules
     }
 
@@ -373,7 +377,7 @@ mod test {
     use crate::{
         AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
         config::{
-            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+            ConfiguredNamespace, LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
@@ -392,8 +396,8 @@ mod test {
     }
 
     #[expect(clippy::default_trait_access)]
-    fn no_explicit_any() -> (RuleEnum, AllowWarnDeny) {
-        (RuleEnum::TypescriptNoExplicitAny(Default::default()), AllowWarnDeny::Warn)
+    fn no_explicit_any() -> (RuleEnum, (AllowWarnDeny, ConfiguredNamespace)) {
+        (RuleEnum::TypescriptNoExplicitAny(Default::default()), (AllowWarnDeny::Warn, None))
     }
 
     /// an empty ruleset is a no-op
@@ -476,6 +480,7 @@ mod test {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
                     AllowWarnDeny::Allow,
+                    None,
                 )],
                 external_rules: vec![],
             },
@@ -513,6 +518,7 @@ mod test {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
                     AllowWarnDeny::Warn,
+                    None,
                 )],
                 external_rules: vec![],
             },
@@ -550,6 +556,7 @@ mod test {
                 builtin_rules: vec![(
                     RuleEnum::TypescriptNoExplicitAny(TypescriptNoExplicitAny::default()),
                     AllowWarnDeny::Deny,
+                    None,
                 )],
                 external_rules: vec![],
             },
@@ -811,6 +818,7 @@ mod test {
                     builtin_rules: vec![(
                         RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
                         AllowWarnDeny::Allow,
+                        None,
                     )],
                     external_rules: vec![],
                 },
@@ -831,7 +839,7 @@ mod test {
         // Create base rules - jsx-filename-extension should be enabled by restriction category
         let base_rules = vec![(
             RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
-            AllowWarnDeny::Warn,
+            (AllowWarnDeny::Warn, None),
         )];
 
         let store = ConfigStore::new(
@@ -848,7 +856,7 @@ mod test {
         let jsx_filename_rule = rules_for_tsx
             .rules
             .iter()
-            .find(|(rule, _)| matches!(rule, RuleEnum::ReactJsxFilenameExtension(_)));
+            .find(|(rule, _, _)| matches!(rule, RuleEnum::ReactJsxFilenameExtension(_)));
 
         // This test should fail with the current implementation
         // The bug causes the rule to be re-enabled (Warn) instead of staying disabled (Allow)
@@ -895,7 +903,7 @@ mod test {
 
         // Check that react rules are present (categories were applied to the new plugin)
         let has_react_rules =
-            rules_for_tsx.rules.iter().any(|(rule, _)| rule.plugin_name() == "react");
+            rules_for_tsx.rules.iter().any(|(rule, _, _)| rule.plugin_name() == "react");
 
         assert!(has_react_rules, "React rules should be enabled by categories for new plugin");
     }
@@ -904,7 +912,7 @@ mod test {
     fn test_rule_config_override_replaces_properly() {
         let base_rules = vec![(
             RuleEnum::EslintNoUnusedVars(EslintNoUnusedVars::default()),
-            AllowWarnDeny::Deny,
+            (AllowWarnDeny::Deny, None),
         )];
         let override_rule =
             EslintNoUnusedVars::from_configuration(Value::from_str(r#"["local"]"#).unwrap())
@@ -918,6 +926,7 @@ mod test {
                 builtin_rules: vec![(
                     RuleEnum::EslintNoUnusedVars(override_rule),
                     AllowWarnDeny::Deny,
+                    None,
                 )],
                 external_rules: vec![],
             },
@@ -943,7 +952,7 @@ mod test {
                         .resolve("app.ts".as_ref())
                         .rules
                         .iter()
-                        .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+                        .find(|(rule, _, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
                         .unwrap()
                         .0
                 )
@@ -956,7 +965,7 @@ mod test {
                         .resolve("app.tsx".as_ref())
                         .rules
                         .iter()
-                        .find(|(rule, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
+                        .find(|(rule, _, _)| matches!(rule, RuleEnum::EslintNoUnusedVars(_)))
                         .unwrap()
                         .0
                 )
@@ -983,7 +992,7 @@ mod test {
         // Base rules with jsx-filename-extension disabled
         let base_rules = vec![(
             RuleEnum::ReactJsxFilenameExtension(ReactJsxFilenameExtension::default()),
-            AllowWarnDeny::Allow, // Disabled at root
+            (AllowWarnDeny::Allow, None), // Disabled at root
         )];
 
         // Override adds typescript plugin
@@ -1007,7 +1016,7 @@ mod test {
         let jsx_filename_rule = rules_for_tsx
             .rules
             .iter()
-            .find(|(rule, _)| matches!(rule, RuleEnum::ReactJsxFilenameExtension(_)));
+            .find(|(rule, _, _)| matches!(rule, RuleEnum::ReactJsxFilenameExtension(_)));
 
         assert!(
             jsx_filename_rule.is_none(),
@@ -1020,11 +1029,11 @@ mod test {
         let base_config = LintConfig::default();
 
         let base_rules = vec![
-            (RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny),
+            (RuleEnum::EslintCurly(EslintCurly::default()), (AllowWarnDeny::Deny, None)),
             (
                 // This is a type-aware, tsgolint rule
                 RuleEnum::TypescriptNoMisusedPromises(TypescriptNoMisusedPromises::default()),
-                AllowWarnDeny::Deny,
+                (AllowWarnDeny::Deny, None),
             ),
         ];
 
@@ -1069,7 +1078,8 @@ mod test {
     #[test]
     fn test_number_of_rules_includes_external_rules() {
         let base_config = LintConfig::default();
-        let base_rules = vec![(RuleEnum::EslintCurly(EslintCurly::default()), AllowWarnDeny::Deny)];
+        let base_rules =
+            vec![(RuleEnum::EslintCurly(EslintCurly::default()), (AllowWarnDeny::Deny, None))];
         let base = Config::new(
             base_rules,
             vec![(ExternalRuleId::from_usize(1), ExternalOptionsId::NONE, AllowWarnDeny::Warn)],
