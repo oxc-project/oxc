@@ -167,6 +167,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                         ctx.diagnostic_with_fix(
                             consistent_indexed_object_style_diagnostic(preferred_style, sig.span),
                             |fixer| {
+                                if matches!(
+                                    ctx.nodes().parent_kind(node.id()),
+                                    AstKind::ExportDefaultDeclaration(_)
+                                ) {
+                                    return fixer.noop();
+                                }
+
                                 let key_type = sig.parameters.first().map_or("string", |p| {
                                     fixer.source_range(p.type_annotation.type_annotation.span())
                                 });
@@ -1169,6 +1176,16 @@ fn test() {
 			      ",
             None,
         ),
+        // export default interface cannot be converted to export default type
+        // because TypeScript doesn't allow "export default type"
+        (
+            "
+			export default interface SchedulerService {
+			  [key: string]: unknown;
+			}
+			      ",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -1199,6 +1216,13 @@ fn test() {
 			}
 			      ", "
 			type Foo<A = any> = Record<string, A>;
+			      ", None),
+("
+			export interface Bar {
+			  [key: string]: any;
+			}
+			      ", "
+			export type Bar = Record<string, any>;
 			      ", None),
 ("
 			interface Foo<A> {
