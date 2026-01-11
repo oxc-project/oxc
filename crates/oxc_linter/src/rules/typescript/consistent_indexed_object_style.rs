@@ -1230,6 +1230,13 @@ fn test() {
 			type Foo<A = any> = Record<string, A>;
 			      ", None),
 ("
+			export interface Bar {
+			  [key: string]: any;
+			}
+			      ", "
+			export type Bar = Record<string, any>;
+			      ", None),
+("
 			interface Foo<A> {
 			  readonly [key: string]: A;
 			}
