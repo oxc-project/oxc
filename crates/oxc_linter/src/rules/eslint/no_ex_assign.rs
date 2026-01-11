@@ -82,17 +82,17 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("try { } catch (e) { three = 2 + 1; }", None),
-        ("try { } catch ({e}) { this.something = 2; }", None),
-        ("function foo() { try { } catch (e) { return false; } }", None),
+        "try { } catch (e) { three = 2 + 1; }",
+        "try { } catch ({e}) { this.something = 2; }", // { "ecmaVersion": 6 },
+        "function foo() { try { } catch (e) { return false; } }",
     ];
 
     let fail = vec![
-        ("try { } catch (e) { e = 10; }", None),
-        ("try { } catch (ex) { ex = 10; }", None),
-        ("try { } catch (ex) { [ex] = []; }", None),
-        ("try { } catch (ex) { ({x: ex = 0} = {}); }", None),
-        ("try { } catch ({message}) { message = 10; }", None),
+        "try { } catch (e) { e = 10; }",
+        "try { } catch (ex) { ex = 10; }",
+        "try { } catch (ex) { [ex] = []; }", // { "ecmaVersion": 6 },
+        "try { } catch (ex) { ({x: ex = 0} = {}); }", // { "ecmaVersion": 6 },
+        "try { } catch ({message}) { message = 10; }", // { "ecmaVersion": 6 }
     ];
 
     Tester::new(NoExAssign::NAME, NoExAssign::PLUGIN, pass, fail).test_and_snapshot();
