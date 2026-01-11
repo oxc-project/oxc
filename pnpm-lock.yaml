@@ -129,8 +129,8 @@ importers:
         specifier: 8.48.1
         version: 8.48.1
       ajv:
-        specifier: ^6.12.6
-        version: 6.12.6
+        specifier: ^8.0.0
+        version: 8.17.1
       cross-env:
         specifier: 'catalog:'
         version: 10.1.0

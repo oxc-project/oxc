@@ -32,7 +32,7 @@
     "@types/json-stable-stringify-without-jsonify": "^1.0.2",
     "@types/node": "catalog:",
     "@typescript-eslint/scope-manager": "8.48.1",
-    "ajv": "^6.12.6",
+    "ajv": "^8.0.0",
     "cross-env": "catalog:",
     "eslint": "catalog:",
     "esquery": "^1.6.0",
