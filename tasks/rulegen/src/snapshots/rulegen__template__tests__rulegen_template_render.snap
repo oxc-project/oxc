@@ -89,5 +89,6 @@ fn test() {
     let fix = vec![
         ("fixed")
     ];
+
     Tester::new(MyRule::NAME, MyRule::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }
