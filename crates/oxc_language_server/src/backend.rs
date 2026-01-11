@@ -158,7 +158,7 @@ impl LanguageServer for Backend {
                 let option = options
                     .iter()
                     .find(|workspace_option| {
-                        worker.is_responsible_for_uri(&workspace_option.workspace_uri)
+                        worker.get_root_uri() == &workspace_option.workspace_uri
                     })
                     .map(|workspace_options| workspace_options.options.clone())
                     .unwrap_or_default();
@@ -233,7 +233,9 @@ impl LanguageServer for Backend {
                 // run diagnostics for all known files in the workspace of the worker.
                 // This is necessary because the worker was not started before.
                 for uri in &known_files {
-                    if !worker.is_responsible_for_uri(uri) {
+                    // Check if this worker is the most specific one for this URI
+                    let responsible_worker = Self::find_worker_for_uri(workers, uri);
+                    if responsible_worker.is_none_or(|w| !std::ptr::eq(w, *worker)) {
                         continue;
                     }
                     let content = self.file_system.read().await.get(uri);
@@ -369,7 +371,7 @@ impl LanguageServer for Backend {
 
         for option in resolved_options {
             let Some(worker) =
-                workers.iter().find(|worker| worker.is_responsible_for_uri(&option.workspace_uri))
+                workers.iter().find(|worker| worker.get_root_uri() == &option.workspace_uri)
             else {
                 continue;
             };
@@ -432,9 +434,7 @@ impl LanguageServer for Backend {
             // We do not expect multiple changes from the same workspace folder.
             // If we should consider it, we need to map the events to the workers first,
             // to only restart the internal linter / diagnostics for once
-            let Some(worker) =
-                workers.iter().find(|worker| worker.is_responsible_for_uri(&file_event.uri))
-            else {
+            let Some(worker) = Self::find_worker_for_uri(&workers, &file_event.uri) else {
                 continue;
             };
             let (diagnostics, registrations, unregistrations) = worker
@@ -487,10 +487,8 @@ impl LanguageServer for Backend {
         let mut removed_registrations = vec![];
 
         for folder in params.event.removed {
-            let Some((index, worker)) = workers
-                .iter()
-                .enumerate()
-                .find(|(_, worker)| worker.is_responsible_for_uri(&folder.uri))
+            let Some((index, worker)) =
+                workers.iter().enumerate().find(|(_, worker)| worker.get_root_uri() == &folder.uri)
             else {
                 continue;
             };
@@ -568,7 +566,7 @@ impl LanguageServer for Backend {
         debug!("oxc server did save");
         let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
+        let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
             return;
         };
 
@@ -596,7 +594,7 @@ impl LanguageServer for Backend {
     async fn did_change(&self, params: DidChangeTextDocumentParams) {
         let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
+        let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
             return;
         };
         let content = params.content_changes.first().map(|c| c.text.clone());
@@ -631,7 +629,7 @@ impl LanguageServer for Backend {
     async fn did_open(&self, params: DidOpenTextDocumentParams) {
         let uri = params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(&uri)) else {
+        let Some(worker) = Self::find_worker_for_uri(&workers, &uri) else {
             return;
         };
 
@@ -665,7 +663,7 @@ impl LanguageServer for Backend {
     async fn did_close(&self, params: DidCloseTextDocumentParams) {
         let uri = &params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
             return;
         };
 
@@ -680,7 +678,7 @@ impl LanguageServer for Backend {
     async fn code_action(&self, params: CodeActionParams) -> Result<Option<CodeActionResponse>> {
         let uri = &params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
             return Ok(None);
         };
 
@@ -730,7 +728,7 @@ impl LanguageServer for Backend {
     ) -> Result<DocumentDiagnosticReportResult> {
         let uri = &params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
             return Ok(DocumentDiagnosticReportResult::Report(DocumentDiagnosticReport::Full(
                 RelatedFullDocumentDiagnosticReport::default(),
             )));
@@ -795,7 +793,7 @@ impl LanguageServer for Backend {
     async fn formatting(&self, params: DocumentFormattingParams) -> Result<Option<Vec<TextEdit>>> {
         let uri = &params.text_document.uri;
         let workers = self.workspace_workers.read().await;
-        let Some(worker) = workers.iter().find(|worker| worker.is_responsible_for_uri(uri)) else {
+        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
             return Ok(None);
         };
         match worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await {
@@ -890,5 +888,133 @@ impl Backend {
             }
         }
         Ok(())
+    }
+
+    /// Find the most specific workspace worker for a given URI.
+    /// When multiple workers are responsible for a URI (e.g., in nested workspaces),
+    /// this returns the worker with the longest matching path.
+    ///
+    /// For example, if we have workspaces `[workspace, workspace/deeper]` and the URI is
+    /// `workspace/deeper/file.js`, both workers match, but `workspace/deeper` is more specific.
+    fn find_worker_for_uri<'a>(
+        workers: &'a [WorkspaceWorker],
+        uri: &Uri,
+    ) -> Option<&'a WorkspaceWorker> {
+        let file_path = uri.to_file_path()?;
+
+        workers
+            .iter()
+            .filter_map(|worker| {
+                let root_path = worker.get_root_uri().to_file_path()?;
+                if file_path.starts_with(&root_path) {
+                    Some((worker, root_path.as_os_str().len()))
+                } else {
+                    None
+                }
+            })
+            .max_by_key(|(_, len)| *len)
+            .map(|(worker, _)| worker)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use tower_lsp_server::ls_types::Uri;
+
+    use super::Backend;
+    use crate::worker::WorkspaceWorker;
+
+    #[test]
+    fn test_find_worker_for_uri_nested_workspaces() {
+        let workspace =
+            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workspace_deeper = WorkspaceWorker::new(
+            "file:///path/to/workspace/deeper".parse().unwrap(),
+            Arc::new([]),
+            false,
+        );
+        let workers = vec![workspace, workspace_deeper];
+
+        // File in deeper workspace should match the deeper worker
+        let file_in_deeper: Uri = "file:///path/to/workspace/deeper/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_in_deeper);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace/deeper");
+
+        // File in parent workspace should match the parent worker
+        let file_in_parent: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_in_parent);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+
+        // File outside both workspaces should not match any worker
+        let file_outside: Uri = "file:///path/to/other/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_outside);
+        assert!(worker.is_none());
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_similar_names() {
+        let workspace =
+            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workspace2 = WorkspaceWorker::new(
+            "file:///path/to/workspace-2".parse().unwrap(),
+            Arc::new([]),
+            false,
+        );
+        let workers = vec![workspace, workspace2];
+
+        // File in workspace-2 should match workspace-2 only
+        let file_in_workspace2: Uri = "file:///path/to/workspace-2/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace2);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace-2");
+
+        // File in workspace should match workspace only
+        let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_single_workspace() {
+        let workspace =
+            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workers = vec![workspace];
+
+        // File in workspace should match
+        let file_in_workspace: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_in_workspace);
+        assert!(worker.is_some());
+        assert_eq!(worker.unwrap().get_root_uri().as_str(), "file:///path/to/workspace");
+
+        // File outside workspace should not match
+        let file_outside: Uri = "file:///path/to/other/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file_outside);
+        assert!(worker.is_none());
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_no_workers() {
+        let workers: Vec<WorkspaceWorker> = vec![];
+
+        let file: Uri = "file:///path/to/workspace/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &file);
+        assert!(worker.is_none());
+    }
+
+    #[test]
+    fn test_find_worker_for_uri_invalid_uri() {
+        let workspace =
+            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workers = vec![workspace];
+
+        // Non-file URI should not match
+        let non_file_uri: Uri = "https://example.com/file.js".parse().unwrap();
+        let worker = Backend::find_worker_for_uri(&workers, &non_file_uri);
+        assert!(worker.is_none());
     }
 }
