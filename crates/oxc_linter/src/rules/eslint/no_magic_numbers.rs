@@ -550,6 +550,7 @@ fn test() {
         ("var x = parseInt(y, 10);", None),
         ("var x = parseInt(y, -10);", None),
         ("var x = Number.parseInt(y, 10);", None),
+        ("const MY_NUMBER = +42;", None),
         ("const foo = 42;", None), // { "ecmaVersion": 6 },
         ("var foo = 42;", Some(serde_json::json!([{ "enforceConst": false }]))), // { "ecmaVersion": 6 },
         ("var foo = -42;", None),
@@ -597,6 +598,11 @@ fn test() {
         ("class C { #foo = 2; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 },
         ("class C { static #foo = 2; }", ignore_class_field_initial_values.clone()), // { "ecmaVersion": 2022 }
         ("const FOO = 10;", ignore_numeric_literal_types.clone()),
+        // TODO: Get these two passing?
+        // ("foo[+0]", ignore_array_indexes.clone()),
+        // ("foo[+1]", ignore_array_indexes.clone()),
+        ("foo[+0n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
+        ("foo[+1n]", ignore_array_indexes.clone()), // { "ecmaVersion": 2020 },
         ("type Foo = 'bar';", None),
         ("type Foo = true;", None),
         ("type Foo = 1;", ignore_numeric_literal_types.clone()),
@@ -923,6 +929,18 @@ fn test() {
         ("type Foo = -3.1e4;", Some(serde_json::json!([{ "ignore": [3.1e4] }]))),
         ("type Foo = 5.1e-6;", Some(serde_json::json!([{ "ignore": [-5.1e-6] }]))),
         ("type Foo = -7.1e-8;", Some(serde_json::json!([{ "ignore": [7.1e-8] }]))),
+        (
+            "type Foo = { bar: 42 };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
+        (
+            "type Foo = { bar: 2 | 3 };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
+        (
+            "type Foo = { bar: Bar[((1 & -2) | 3) | 4] };",
+            Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
+        ),
     ];
 
     Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::PLUGIN, pass, fail).test_and_snapshot();

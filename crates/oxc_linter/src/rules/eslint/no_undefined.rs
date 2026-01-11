@@ -91,6 +91,7 @@ fn test() {
         "void+0",
         "null",
         "undefine",
+        "ndefined",
         "a.undefined",
         "this.undefined",
         "global['undefined']",

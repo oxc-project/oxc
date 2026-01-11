@@ -201,6 +201,13 @@ fn test() {
         "async function foo() { while (true) { class Foo { async foo() { await bar; } } } }",
         // Asynchronous iteration intentionally
         "async function foo() { for await (var x of xs) { await f(x) } }",
+        "while (true) { const value = 0; }",
+        "while (true) { let value = 0; }",
+        "while (true) { var value = 0; }",
+        "await using resource = getResource();", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "while (true) { using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "async function foo() { while (true) { async function foo() { await using resource = getResource(); } } }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "for (await using resource = getResource(); ;) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
     ];
 
     let fail = vec![
@@ -226,6 +233,10 @@ fn test() {
         "async function foo() { while (xyz || 5 > await x) {  } }",
         // In a nested loop of for-await-of
         "async function foo() { for await (var x of xs) { while (1) await f(x) } }",
+        // TODO: Get these working.
+        // "while (true) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        // "for (;;) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        // "for (await using resource of resources) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
     ];
 
     Tester::new(NoAwaitInLoop::NAME, NoAwaitInLoop::PLUGIN, pass, fail).test_and_snapshot();
