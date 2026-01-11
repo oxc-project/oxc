@@ -1,4 +1,11 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let message = 'unused';
+   ·     ─────────┬────────
+   ·              ╰── This assigned value is not used in subsequent statements.
+ 2 │                         try {
+   ╰────
+  help: Remove this assignment.

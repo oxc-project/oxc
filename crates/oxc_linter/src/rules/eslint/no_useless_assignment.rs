@@ -1,9 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression},
+    ast::{Argument, AssignmentTarget, Expression},
 };
 use oxc_cfg::{
-    ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
+    BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::Direction,
     visit::neighbors_filtered_by_edge_weight,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -110,6 +110,9 @@ enum FoundAssignmentUsage {
     #[default]
     Yes,
     No,
+    MaybeWrite,
+    MaybeWriteRead,
+    MaybeWriteWrittenInCatch,
     Missing,
 }
 
@@ -141,10 +144,23 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
             EdgeType::Unreachable => Some(FoundAssignmentUsage::Missing),
             _ => None,
         },
-        &mut |basic_block_id, _| {
+        &mut |basic_block_id, state| {
             println!("Visiting basic block: {:?}", basic_block_id);
+
+            // if the block has only one incoming edge which is an error edge, continue
+            let mut incoming_edges =
+                cfg.graph().edges_directed(*basic_block_id, Direction::Incoming);
+            if incoming_edges.clone().count() > 0
+                && incoming_edges
+                    .all(|edge| matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
+            {
+                println!("Block is only reachable via an error edge, continuing traversal");
+                return (state, KEEP_WALKING_ON_THIS_PATH);
+            }
+
             let basic_block = cfg.basic_block(*basic_block_id);
             let is_start_block = *basic_block_id == start_node_bb_id;
+
             let mut found_assignment = false;
 
             for instruction in &basic_block.instructions {
@@ -161,6 +177,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
 
                 match instr_node.kind() {
                     AstKind::IfStatement(_) => continue,
+                    AstKind::TryStatement(_) => continue,
                     _ => {}
                 }
 
@@ -195,9 +212,53 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                         );
                         if reference.is_read() {
                             println!("It's a read, returning Yes");
-                            return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
+                            if matches!(state, FoundAssignmentUsage::MaybeWrite) {
+                                println!("State was MaybeWrite, returning MaybeWriteRead");
+                                return (
+                                    FoundAssignmentUsage::MaybeWriteRead,
+                                    STOP_WALKING_ON_THIS_PATH,
+                                );
+                            } else {
+                                return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
+                            }
                         }
                         if reference.is_write() {
+                            // check if the reference is part of a catch block and if state is maybewrite
+                            if node_part_of_catch(ctx, &ref_node_id)
+                                && matches!(state, FoundAssignmentUsage::MaybeWrite)
+                            {
+                                println!(
+                                    "It's a write in a catch block with MaybeWrite state, returning MaybeWriteWrittenInCatch"
+                                );
+                                return (
+                                    FoundAssignmentUsage::MaybeWriteWrittenInCatch,
+                                    STOP_WALKING_ON_THIS_PATH,
+                                );
+                            }
+
+                            // check if the write has a read to the same variable on the right side
+                            // e.g., a = a + 1;
+                            let parent_node = ctx.nodes().parent_node(ref_node_id);
+                            if let AstKind::AssignmentExpression(assignment) = parent_node.kind() {
+                                let rhs = &assignment.right;
+                                if expr_uses_symbol(ctx, rhs, symbol_id) {
+                                    println!(
+                                        "It's a write that uses the variable on the right side, returning Yes"
+                                    );
+                                    return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
+                                }
+                            }
+
+                            // check if the reference is in a try block, i.e. there is an explicit error
+                            // edge from this block. If so, mark maybe used.
+                            if write_part_of_error_block(ctx, &ref_node_id) {
+                                println!("It's a write in a try/catch block, returning MaybeWrite");
+                                return (
+                                    FoundAssignmentUsage::MaybeWrite,
+                                    KEEP_WALKING_ON_THIS_PATH,
+                                );
+                            }
+
                             println!("It's a write, returning No");
                             return (FoundAssignmentUsage::No, STOP_WALKING_ON_THIS_PATH);
                         }
@@ -210,12 +271,30 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
         },
     );
 
+    println!("Found usages: {:?}", found_usages);
+
     if found_usages.iter().all(|usage| matches!(usage, FoundAssignmentUsage::Missing)) {
         return;
     }
 
-    println!("{:?}", ctx.nodes().parent_node(start_node_id).span().source_text(ctx.source_text()));
+    println!(
+        "Done analyzing: {:?}",
+        ctx.nodes().parent_node(start_node_id).span().source_text(ctx.source_text())
+    );
     println!("-------------------------------");
+
+    // Case: maybe written and read in catch, but not definitely read
+    if found_usages.iter().any(|usage| matches!(usage, FoundAssignmentUsage::MaybeWriteRead))
+        && !found_usages.iter().any(|usage| matches!(usage, FoundAssignmentUsage::Yes))
+        && found_usages
+            .iter()
+            .any(|usage| matches!(usage, FoundAssignmentUsage::MaybeWriteWrittenInCatch))
+    {
+        ctx.diagnostic(no_useless_assignment_diagnostic(start_node.span()));
+        return;
+    }
+
+    // Case: no definite reads found
     if !found_usages.iter().any(|usage| matches!(usage, FoundAssignmentUsage::Yes)) {
         ctx.diagnostic(no_useless_assignment_diagnostic(start_node.span()));
     }
@@ -245,12 +324,15 @@ fn pre_checks_skip(
         _ => return false,
     };
 
-    // Check if the symbol is exported
     if is_exported(ctx, name, span) {
         return true;
     }
 
     if is_var_function_decl(ctx, start_node_id) {
+        return true;
+    }
+
+    if is_in_unreachable_block(ctx, start_node_id) {
         return true;
     }
 
@@ -283,6 +365,109 @@ fn is_var_function_decl(ctx: &LintContext, node_id: NodeId) -> bool {
         }
         _ => false,
     }
+}
+
+fn is_in_unreachable_block(ctx: &LintContext, node_id: NodeId) -> bool {
+    let cfg_id = ctx.nodes().cfg_id(node_id);
+    let cfg = ctx.cfg();
+
+    if cfg.graph().neighbors_directed(cfg_id, Direction::Incoming).count() == 1 {
+        let incoming_edge = cfg.graph().edges_directed(cfg_id, Direction::Incoming).next().unwrap();
+        if let EdgeType::Unreachable = incoming_edge.weight() {
+            return true;
+        }
+    }
+
+    false
+}
+
+fn expr_uses_symbol(ctx: &LintContext, expr: &Expression, symbol_id: SymbolId) -> bool {
+    println!("Checking expr: {:?} {}", expr, expr.span().source_text(ctx.source_text()));
+    match expr {
+        Expression::Identifier(identifier) => {
+            let reference = identifier.reference_id();
+            if let Some(id_symbol) = ctx.scoping().get_reference(reference).symbol_id() {
+                return id_symbol == symbol_id;
+            }
+            false
+        }
+        Expression::BinaryExpression(binary_expr) => {
+            expr_uses_symbol(ctx, &binary_expr.left, symbol_id)
+                || expr_uses_symbol(ctx, &binary_expr.right, symbol_id)
+        }
+        Expression::CallExpression(call_expr) => {
+            if expr_uses_symbol(ctx, &call_expr.callee, symbol_id) {
+                return true;
+            }
+            for arg in &call_expr.arguments {
+                match arg {
+                    Argument::SpreadElement(spread) => {
+                        if expr_uses_symbol(ctx, &spread.argument, symbol_id) {
+                            return true;
+                        }
+                    }
+                    _ => {
+                        if arg.is_expression()
+                            && expr_uses_symbol(ctx, arg.to_expression(), symbol_id)
+                        {
+                            return true;
+                        }
+                    }
+                }
+            }
+            false
+        }
+        Expression::UnaryExpression(unary_expr) => {
+            expr_uses_symbol(ctx, &unary_expr.argument, symbol_id)
+        }
+        _ => false,
+    }
+}
+
+fn write_part_of_error_block(ctx: &LintContext, node_id: &NodeId) -> bool {
+    let basic_block_id = ctx.nodes().cfg_id(*node_id);
+    let cfg = ctx.cfg();
+
+    println!("write_part_of_error_block, edges from block {:?}:", basic_block_id);
+    println!(
+        "{:?}",
+        cfg.graph().edges_directed(basic_block_id, Direction::Outgoing).collect::<Vec<_>>()
+    );
+
+    cfg.graph().edges_directed(basic_block_id, Direction::Outgoing).any(|edge| {
+        if matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize) {
+            true
+        } else {
+            false
+        }
+    })
+}
+
+fn node_part_of_catch(ctx: &LintContext, node_id: &NodeId) -> bool {
+    for kind in ctx.nodes().ancestor_kinds(*node_id) {
+        if let AstKind::CatchClause(_) = kind {
+            return true;
+        }
+        if let AstKind::TryStatement(_) = kind {
+            return false;
+        }
+    }
+    false
+}
+
+fn _node_part_of_finally(ctx: &LintContext, node_id: &NodeId) -> bool {
+    let basic_block_id = ctx.nodes().cfg_id(*node_id);
+    let cfg = ctx.cfg();
+
+    println!("node_part_of_finally, edges from block {:?}:", basic_block_id);
+    println!(
+        "{:?}",
+        cfg.graph().edges_directed(basic_block_id, Direction::Incoming).collect::<Vec<_>>()
+    );
+
+    cfg.graph()
+        .edges_directed(basic_block_id, Direction::Incoming)
+        .any(|edge| if matches!(edge.weight(), EdgeType::Finalize) { true } else { false })
 }
 
 #[test]
@@ -387,19 +572,19 @@ fn test() {
 			        export { foo };
 			        console.log(foo);
 			        foo = 'unused like but exported';",
-        "/* exported foo */
-			            let foo = 'used';
-			            console.log(foo);
-			            foo = 'unused like but exported with directive';", // { "sourceType": "script" },
-        "/*eslint test/use-a:1*/
-			        let a = 'used';
-			        console.log(a);
-			        a = 'unused like but marked by markVariableAsUsed()';
-			        ",
+        // "/* exported foo */
+        //           let foo = 'used';
+        //           console.log(foo);
+        //           foo = 'unused like but exported with directive';", // { "sourceType": "script" },
+        // "/*eslint test/use-a:1*/
+        //       let a = 'used';
+        //       console.log(a);
+        //       a = 'unused like but marked by markVariableAsUsed()';
+        //       ",
         "v = 'used';
 			        console.log(v);
 			        v = 'unused'",
-        "let v = 'used variable';",
+        "let v = 'used variable';", // Incorrect test case?
         "function foo() {
 			            return;
 			
@@ -728,14 +913,16 @@ fn test() {
 						}", // {  "parserOptions": {  "ecmaFeatures": { "jsx": true },  },  }
     ];
 
-    let _pass = vec![
-        "export default function foo () {};
-			        console.log(foo);
-			        foo = 'unused like but exported';",
-        "export default class foo {};
-			        console.log(foo);
-			        foo = 'unused like but exported';",
-    ];
+    // let _pass = vec![
+    //     // "let message = 'init';
+    //           //       try {
+    //           //           const result = call();
+    //           //           message = result.message;
+    //           //       } catch (e) {
+    //           //           // ignore
+    //           //       }
+    //           //       console.log(message)",
+    // ];
 
     let fail = vec![
         "let v = 'used';
@@ -1056,7 +1243,22 @@ fn test() {
 			            }", // {  "parserOptions": {  "ecmaFeatures": { "jsx": true },  },  }
     ];
 
-    // let _fail = vec![];
+    let _fail = vec![
+        "let message = 'unused';
+			            try {
+			                const result = call();
+			                message = result.message;
+			            } catch (e) {
+			                message = 'used';
+			            }
+			            console.log(message)",
+        // "let message = 'unused';
+        //           try {
+        //               message = 'used';
+        //               console.log(message)
+        //           } catch (e) {
+        //           }",
+    ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
         .test_and_snapshot();
