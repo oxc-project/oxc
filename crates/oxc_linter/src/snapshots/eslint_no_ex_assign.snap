@@ -4,34 +4,44 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:21]
  1 │ try { } catch (e) { e = 10; }
-   ·                     ─
+   ·                     ┬
+   ·                     ╰── this assignment destroys access to the caught exception
    ╰────
-  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
+  help: Remove the assignment to the exception parameter, or refactor the code to use a different variable.
+  note: If code in a catch block assigns a value to the exception parameter, it becomes impossible to refer to the error. Since there is no alternative way to access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:22]
  1 │ try { } catch (ex) { ex = 10; }
-   ·                      ──
+   ·                      ─┬
+   ·                       ╰── this assignment destroys access to the caught exception
    ╰────
-  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
+  help: Remove the assignment to the exception parameter, or refactor the code to use a different variable.
+  note: If code in a catch block assigns a value to the exception parameter, it becomes impossible to refer to the error. Since there is no alternative way to access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:23]
  1 │ try { } catch (ex) { [ex] = []; }
-   ·                       ──
+   ·                       ─┬
+   ·                        ╰── this assignment destroys access to the caught exception
    ╰────
-  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
+  help: Remove the assignment to the exception parameter, or refactor the code to use a different variable.
+  note: If code in a catch block assigns a value to the exception parameter, it becomes impossible to refer to the error. Since there is no alternative way to access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:27]
  1 │ try { } catch (ex) { ({x: ex = 0} = {}); }
-   ·                           ──
+   ·                           ─┬
+   ·                            ╰── this assignment destroys access to the caught exception
    ╰────
-  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
+  help: Remove the assignment to the exception parameter, or refactor the code to use a different variable.
+  note: If code in a catch block assigns a value to the exception parameter, it becomes impossible to refer to the error. Since there is no alternative way to access to this data, assignment of the parameter is absolutely destructive.
 
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:29]
  1 │ try { } catch ({message}) { message = 10; }
-   ·                             ───────
+   ·                             ───┬───
+   ·                                ╰── this assignment destroys access to the caught exception
    ╰────
-  help: If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.
+  help: Remove the assignment to the exception parameter, or refactor the code to use a different variable.
+  note: If code in a catch block assigns a value to the exception parameter, it becomes impossible to refer to the error. Since there is no alternative way to access to this data, assignment of the parameter is absolutely destructive.
