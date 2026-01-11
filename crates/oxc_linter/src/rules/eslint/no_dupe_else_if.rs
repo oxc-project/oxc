@@ -10,9 +10,14 @@ use oxc_syntax::operator::LogicalOperator;
 use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_dupe_else_if_diagnostic(first_test: Span, second_test: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("duplicate conditions in if-else-if chains")
-        .with_help("This branch can never execute. Its condition is a duplicate or covered by previous conditions in the if-else-if chain")
-        .with_labels([first_test, second_test])
+    OxcDiagnostic::warn("Duplicate conditions in if-else-if chain")
+        .with_help(
+            "Remove or modify the duplicate condition, as its branch will never be executed.",
+        )
+        .with_labels([
+            first_test.label("condition first checked here"),
+            second_test.label("this branch will never be executed"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -165,7 +170,7 @@ impl Rule for NoDupeElseIf {
                 .collect();
 
             if list_to_check.iter().any(Vec::is_empty) {
-                ctx.diagnostic(no_dupe_else_if_diagnostic(if_stmt.test.span(), stmt.test.span()));
+                ctx.diagnostic(no_dupe_else_if_diagnostic(stmt.test.span(), if_stmt.test.span()));
                 break;
             }
         }
