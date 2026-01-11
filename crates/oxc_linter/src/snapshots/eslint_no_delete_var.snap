@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-delete-var): variables should not be deleted
+  ⚠ eslint(no-delete-var): Variables should not be deleted
    ╭─[no_delete_var.tsx:1:1]
  1 │ delete x
    · ────────
