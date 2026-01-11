@@ -99,10 +99,10 @@ impl OxlintRules {
                 // If the plugin name was transformed (e.g., vitest -> jest),
                 // store the original plugin name as the configured namespace
                 let configured_namespace: ConfiguredNamespace =
-                    if original_plugin_name != plugin_name {
-                        Some(to_static_str(original_plugin_name))
-                    } else {
+                    if original_plugin_name == plugin_name {
                         None
+                    } else {
+                        Some(to_static_str(original_plugin_name))
                     };
 
                 if LintPlugins::try_from(plugin_name).is_ok() {
@@ -171,7 +171,6 @@ fn to_static_str(plugin_name: &str) -> &'static str {
         "jest" => "jest",
         "unicorn" => "unicorn",
         "typescript" => "typescript",
-        "eslint" => "eslint",
         "react" => "react",
         "jsx_a11y" => "jsx_a11y",
         "nextjs" => "nextjs",
@@ -181,7 +180,8 @@ fn to_static_str(plugin_name: &str) -> &'static str {
         "promise" => "promise",
         "security" => "security",
         "oxc" => "oxc",
-        _ => "eslint", // fallback to eslint for unknown plugins
+        // eslint and unknown plugins fallback to eslint
+        _ => "eslint",
     }
 }
 

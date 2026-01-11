@@ -15,7 +15,6 @@ use crate::rule::RuleFixMeta;
 use crate::{
     AllowWarnDeny, FrameworkFlags, ModuleRecord, OxlintEnv, OxlintGlobals, OxlintSettings,
     WEBSITE_BASE_RULES_URL,
-    config::GlobalValue,
     config::{ConfiguredNamespace, GlobalValue},
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},

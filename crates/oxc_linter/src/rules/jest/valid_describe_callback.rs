@@ -124,7 +124,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
     match &call_expr.arguments[1] {
         Argument::FunctionExpression(fn_expr) => {
-            if fn_expr.r#async {
+            // Vitest supports async describe callbacks, so skip this check when configured under vitest namespace
+            if fn_expr.r#async && !ctx.is_vitest_context() {
                 diagnostic(ctx, fn_expr.span, Message::NoAsyncDescribeCallback);
             }
             let no_each_fields =
@@ -141,7 +142,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             }
         }
         Argument::ArrowFunctionExpression(arrow_expr) => {
-            if arrow_expr.r#async {
+            // Vitest supports async describe callbacks, so skip this check when configured under vitest namespace
+            if arrow_expr.r#async && !ctx.is_vitest_context() {
                 diagnostic(ctx, arrow_expr.span, Message::NoAsyncDescribeCallback);
             }
             let no_each_fields =
@@ -217,11 +219,12 @@ impl Message {
     }
 }
 
+/// Tests for Jest-only behavior (async describe is NOT allowed)
 #[test]
-fn test() {
+fn test_jest() {
     use crate::tester::Tester;
 
-    let mut pass = vec![
+    let pass = vec![
         ("describe.each([1, 2, 3])('%s', (a, b) => {});", None),
         ("describe('foo', function() {})", None),
         ("describe('foo', () => {})", None),
@@ -264,7 +267,8 @@ fn test() {
         ),
     ];
 
-    let mut fail = vec![
+    // Common fail cases (not async-related)
+    let fail = vec![
         ("describe.each()()", None),
         ("describe['each']()()", None),
         ("describe.each(() => {})()", None),
@@ -277,6 +281,39 @@ fn test() {
         ("describe('foo')", None),
         ("describe('foo', 'foo2')", None),
         ("describe()", None),
+        (
+            "
+            describe('foo', function () {
+                return Promise.resolve().then(() => {
+                    it('breaks', () => {
+                        throw new Error('Fail')
+                    })
+                })
+            })
+            ",
+            None,
+        ),
+        ("describe('foo', () => test('bar', () => {})) ", None),
+        ("describe('foo', done => {})", None),
+        ("describe('foo', function (done) {})", None),
+        ("describe('foo', function (one, two, three) {})", None),
+    ];
+
+    Tester::new(ValidDescribeCallback::NAME, ValidDescribeCallback::PLUGIN, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(false)
+        .with_snapshot_suffix("jest")
+        .test_and_snapshot();
+}
+
+/// Tests for Jest async describe (async describe is NOT allowed in Jest)
+#[test]
+fn test_jest_async_describe() {
+    use crate::tester::Tester;
+
+    let pass: Vec<(&str, Option<serde_json::Value>)> = vec![];
+
+    let fail = vec![
         ("describe('foo', async () => {})", None),
         ("describe('foo', async function () {})", None),
         ("xdescribe('foo', async function () {})", None),
@@ -308,37 +345,6 @@ fn test() {
         ),
         (
             "
-            describe('foo', function () {
-                return Promise.resolve().then(() => {
-                    it('breaks', () => {
-                        throw new Error('Fail')
-                    })
-                })
-            })
-            ",
-            None,
-        ),
-        (
-            "
-            describe('foo', () => {
-                return Promise.resolve().then(() => {
-                    it('breaks', () => {
-                        throw new Error('Fail')
-                    })
-                })
-                describe('nested', () => {
-                    return Promise.resolve().then(() => {
-                        it('breaks', () => {
-                            throw new Error('Fail')
-                        })
-                    })
-                })
-            })
-            ",
-            None,
-        ),
-        (
-            "
             describe('foo', async () => {
                 await something()
                 it('does something')
@@ -353,14 +359,23 @@ fn test() {
             ",
             None,
         ),
-        ("describe('foo', () => test('bar', () => {})) ", None),
-        ("describe('foo', done => {})", None),
-        ("describe('foo', function (done) {})", None),
-        ("describe('foo', function (one, two, three) {})", None),
         ("describe('foo', async function (done) {})", None),
     ];
 
-    let pass_vitest = vec![
+    Tester::new(ValidDescribeCallback::NAME, ValidDescribeCallback::PLUGIN, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(false)
+        .with_snapshot_suffix("jest-async")
+        .test_and_snapshot();
+}
+
+/// Tests for Vitest behavior (async describe IS allowed)
+#[test]
+fn test_vitest() {
+    use crate::tester::Tester;
+
+    // In Vitest, async describe is allowed, so these should pass
+    let pass = vec![
         ("describe.each([1, 2, 3])(\"%s\", (a, b) => {});", None),
         ("describe(\"foo\", function() {})", None),
         ("describe(\"foo\", () => {})", None),
@@ -414,21 +429,7 @@ fn test() {
             ",
             None,
         ),
-    ];
-
-    let fail_vitest = vec![
-        ("describe.each()()", None),
-        ("describe[\"each\"]()()", None),
-        ("describe.each(() => {})()", None),
-        ("describe.each(() => {})(\"foo\")", None),
-        ("describe.each()(() => {})", None),
-        ("describe[\"each\"]()(() => {})", None),
-        ("describe.each(\"foo\")(() => {})", None),
-        ("describe.only.each(\"foo\")(() => {})", None),
-        ("describe(() => {})", None),
-        ("describe(\"foo\")", None),
-        ("describe(\"foo\", \"foo2\")", None),
-        ("describe()", None),
+        // Async describe is allowed in Vitest
         ("describe(\"foo\", async () => {})", None),
         ("describe(\"foo\", async function () {})", None),
         ("xdescribe(\"foo\", async function () {})", None),
@@ -451,6 +452,21 @@ fn test() {
             ",
             None,
         ),
+    ];
+
+    let fail = vec![
+        ("describe.each()()", None),
+        ("describe[\"each\"]()()", None),
+        ("describe.each(() => {})()", None),
+        ("describe.each(() => {})(\"foo\")", None),
+        ("describe.each()(() => {})", None),
+        ("describe[\"each\"]()(() => {})", None),
+        ("describe.each(\"foo\")(() => {})", None),
+        ("describe.only.each(\"foo\")(() => {})", None),
+        ("describe(() => {})", None),
+        ("describe(\"foo\")", None),
+        ("describe(\"foo\", \"foo2\")", None),
+        ("describe()", None),
         (
             "
                 describe('foo', function () {
@@ -484,22 +500,6 @@ fn test() {
         ),
         (
             "
-                describe('foo', async () => {
-                    await something()
-                    it('does something')
-                    describe('nested', () => {
-                        return Promise.resolve().then(() => {
-                            it('breaks', () => {
-                                throw new Error('Fail')
-                            })
-                        })
-                    })
-                })
-            ",
-            None,
-        ),
-        (
-            "
                 describe('foo', () =>
                     test('bar', () => {})
                 )
@@ -509,14 +509,14 @@ fn test() {
         ("describe(\"foo\", done => {})", None),
         ("describe(\"foo\", function (done) {})", None),
         ("describe(\"foo\", function (one, two, three) {})", None),
+        // async function with done parameter is still an error (unexpected argument)
         ("describe(\"foo\", async function (done) {})", None),
     ];
-
-    pass.extend(pass_vitest);
-    fail.extend(fail_vitest);
 
     Tester::new(ValidDescribeCallback::NAME, ValidDescribeCallback::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
+        .with_configured_namespace(Some("vitest"))
+        .with_snapshot_suffix("vitest")
         .test_and_snapshot();
 }
