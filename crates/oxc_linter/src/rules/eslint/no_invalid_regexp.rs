@@ -15,17 +15,28 @@ use crate::{
 };
 
 // Use the same prefix with `oxc_regular_expression` crate
-fn duplicated_flag_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Invalid regular expression: Duplicated flag").with_label(span)
+fn duplicated_flag_diagnostic(span: Span, flag: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid regular expression: Duplicated flag")
+        .with_help(
+            format!("Remove the duplicated '{flag}' flag from the regular expression flags",),
+        )
+        .with_label(span.label(format!("flag '{flag}' already specified")))
 }
 
-fn unknown_flag_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Invalid regular expression: Unknown flag").with_label(span)
+fn unknown_flag_diagnostic(span: Span, flag: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid regular expression: Unknown flag")
+        .with_note("Valid flags are: d (indices), g (global), i (ignore case), m (multiline),\n             s (dot all), u (unicode), v (unicode sets), y (sticky)")
+        .with_label(span.label(format!("flag '{flag}' is not a valid regular expression flag")))
 }
 
-fn invalid_unicode_flags_diagnostic(span: Span) -> OxcDiagnostic {
+fn invalid_unicode_flags_diagnostic(span: Span, is_u_specified: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid regular expression: `u` and `v` flags should be used alone")
-        .with_label(span)
+        .with_help("Specify only one of 'u' or 'v' flags")
+        .with_label(span.label(if is_u_specified {
+            "the 'v' flag cannot be used when the 'u' flag is specified"
+        } else {
+            "the 'u' flag cannot be used when the 'v' flag is specified"
+        }))
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -111,29 +122,37 @@ impl Rule for NoInvalidRegexp {
                 // Invalid combination: u+v
                 if ch == 'u' {
                     if v_flag_found {
-                        return ctx
-                            .diagnostic(invalid_unicode_flags_diagnostic(Span::empty(start)));
+                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(
+                            Span::empty(start),
+                            false,
+                        ));
                     }
                     u_flag_found = true;
                 }
                 if ch == 'v' {
                     if u_flag_found {
-                        return ctx
-                            .diagnostic(invalid_unicode_flags_diagnostic(Span::empty(start)));
+                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(
+                            Span::empty(start),
+                            true,
+                        ));
                     }
                     v_flag_found = true;
                 }
 
                 // Duplicated: user defined, invalid or valid
                 if !unique_flags.insert(ch) {
-                    return ctx.diagnostic(duplicated_flag_diagnostic(Span::empty(start)));
+                    return ctx.diagnostic(duplicated_flag_diagnostic(
+                        Span::empty(start),
+                        &ch.to_string(),
+                    ));
                 }
 
                 // Unknown: not valid, not user defined
                 if !(matches!(ch, 'd' | 'g' | 'i' | 'm' | 's' | 'u' | 'v' | 'y')
                     || self.0.allow_constructor_flags.contains(&ch))
                 {
-                    return ctx.diagnostic(unknown_flag_diagnostic(Span::empty(start)));
+                    return ctx
+                        .diagnostic(unknown_flag_diagnostic(Span::empty(start), &ch.to_string()));
                 }
             }
         }
