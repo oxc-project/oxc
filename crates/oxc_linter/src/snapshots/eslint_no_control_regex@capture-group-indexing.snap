@@ -2,29 +2,29 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(no-control-regex): Unexpected control character
-   ╭─[no_control_regex.tsx:1:11]
+   ╭─[no_control_regex.tsx:1:12]
  1 │ const r = /\0/;
-   ·           ────
+   ·            ─┬
+   ·             ╰── '\0' matches the null character (U+0000), which is a control character.
    ╰────
-  help: '\0' matches the null character (U+0000), which is a control character.
 
   ⚠ eslint(no-control-regex): Unexpected control character
-   ╭─[no_control_regex.tsx:1:11]
+   ╭─[no_control_regex.tsx:1:17]
  1 │ const r = /[a-z]\1/;
-   ·           ─────────
+   ·                 ─┬
+   ·                  ╰── '\1' is a control character. It looks like a backreference, but there is no corresponding capture group.
    ╰────
-  help: '\1' is a control character. They look like backreferences, but there is no corresponding capture group.
 
   ⚠ eslint(no-control-regex): Unexpected control character
-   ╭─[no_control_regex.tsx:1:11]
+   ╭─[no_control_regex.tsx:1:19]
  1 │ const r = /([a-z])\2/;
-   ·           ───────────
+   ·                   ─┬
+   ·                    ╰── '\2' is a control character. It looks like a backreference, but there is no corresponding capture group.
    ╰────
-  help: '\2' is a control character. They look like backreferences, but there is no corresponding capture group.
 
   ⚠ eslint(no-control-regex): Unexpected control character
-   ╭─[no_control_regex.tsx:1:11]
+   ╭─[no_control_regex.tsx:1:19]
  1 │ const r = /([a-z])\0/;
-   ·           ───────────
+   ·                   ─┬
+   ·                    ╰── '\0' matches the null character (U+0000), which is a control character.
    ╰────
-  help: '\0' matches the null character (U+0000), which is a control character.
