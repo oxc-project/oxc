@@ -102,11 +102,8 @@ impl Rule for PreferGlobalThis {
         }
 
         let is_typeof = is_typeof_legacy_global(node, ctx);
-        let replacement = if is_typeof {
-            format!("globalThis.{}", ident.name)
-        } else {
-            "globalThis".to_string()
-        };
+        let replacement =
+            if is_typeof { format!("globalThis.{}", ident.name) } else { "globalThis".to_string() };
 
         ctx.diagnostic_with_suggestion(prefer_global_this_diagnostic(ident.span), |fixer| {
             fixer.replace(ident.span, replacement)
