@@ -1,0 +1,14 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/invalid_config_in_override
+----------
+Failed to build configuration.
+
+  x Invalid configuration for rule `jest/no-hooks`: invalid type: boolean `true`, expected a string, received `{ "allow": [ true, false ] }`
+
+----------
+CLI result: InvalidOptionConfig
+----------

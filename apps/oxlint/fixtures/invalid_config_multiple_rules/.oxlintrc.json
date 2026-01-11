@@ -1,0 +1,13 @@
+{
+  "plugins": ["jest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // First invalid rule: unknown option field `foo`
+    "jest/no-hooks": ["error", { "foo": "bar" }],
+
+    // Second invalid rule: invalid enum value
+    "eslint/no-return-assign": ["error", "foobar"]
+  }
+}
