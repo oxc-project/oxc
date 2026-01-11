@@ -1,14 +1,34 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, module_record::ImportImportName, rule::Rule};
 
 fn prefer_event_target_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `EventTarget` over `EventEmitter`")
         .with_help("Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.")
         .with_label(span)
+}
+
+// Packages that should be ignored because they provide their own EventEmitter
+const IGNORED_PACKAGES: &[CompactStr] =
+    &[CompactStr::new_const("@angular/core"), CompactStr::new_const("eventemitter3")];
+const EVENT_EMITTER: CompactStr = CompactStr::new_const("EventEmitter");
+
+/// Check if EventEmitter is imported from an ignored package (module-scoped check)
+fn is_event_emitter_from_ignored_package(ctx: &LintContext) -> bool {
+    ctx.module_record().import_entries.iter().any(|import| {
+        if !IGNORED_PACKAGES.contains(&import.module_request.name) {
+            return false;
+        }
+
+        match &import.import_name {
+            ImportImportName::Name(name_span) => name_span.name == EVENT_EMITTER,
+            ImportImportName::Default(_) => import.local_name.name == EVENT_EMITTER,
+            ImportImportName::NamespaceObject => false,
+        }
+    })
 }
 
 #[derive(Debug, Default, Clone)]
@@ -27,6 +47,8 @@ declare_oxc_lint!(
     ///
     /// While [`EventEmitter`](https://nodejs.org/api/events.html#class-eventemitter) is only available in Node.js, [`EventTarget`](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget) is also available in _Deno_ and browsers.
     ///
+    /// Note: EventEmitter imported from packages like `@angular/core` or `eventemitter3` are allowed, as they provide their own implementation.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
@@ -37,7 +59,14 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// class Foo extends OtherClass {}
+    ///
+    /// // EventEmitter from ignored packages is allowed
+    /// import { EventEmitter } from "@angular/core";
+    /// class Foo extends EventEmitter {}
     /// ```
+    ///
+    /// Note that CommonJS `require`s are not detected for ignored
+    /// packages. ES6 imports should be used instead.
     PreferEventTarget,
     unicorn,
     pedantic
@@ -65,6 +94,11 @@ impl Rule for PreferEventTarget {
                 }
             }
             _ => return,
+        }
+
+        // Check if EventEmitter is from an ES6 import from an ignored package
+        if is_event_emitter_from_ignored_package(ctx) {
+            return;
         }
 
         ctx.diagnostic(prefer_event_target_diagnostic(ident.span));
@@ -95,6 +129,14 @@ fn test() {
         r"const target = new Foo(EventEmitter);",
         r"EventEmitter()",
         r"const emitter = EventEmitter()",
+        // EventEmitter from ignored packages should be allowed - ES6 imports
+        r#"import { EventEmitter } from "@angular/core";
+           class Foo extends EventEmitter {}"#,
+        r#"import { EventEmitter } from "eventemitter3";
+           class Foo extends EventEmitter {}"#,
+        // CommonJS requires are not supported by this rule. ES6 imports should be used instead.
+        // r#"const { EventEmitter } = require("@angular/core");
+        // class Foo extends EventEmitter {}"#,
     ];
 
     let fail = vec![
@@ -105,6 +147,9 @@ fn test() {
         r"const emitter = new EventEmitter;",
         r"for (const {EventEmitter} of []) {new EventEmitter}",
         r"for (const EventEmitter of []) {new EventEmitter}",
+        // From a random package, it should fail.
+        r#"import { EventEmitter } from "foobar";
+           class Foo extends EventEmitter {}"#,
     ];
 
     Tester::new(PreferEventTarget::NAME, PreferEventTarget::PLUGIN, pass, fail).test_and_snapshot();
