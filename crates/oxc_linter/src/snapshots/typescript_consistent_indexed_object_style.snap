@@ -450,3 +450,12 @@ source: crates/oxc_linter/src/tester.rs
  5 │                       
    ╰────
   help: Use a record type such as `Record<string, unknown>` instead of an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:6]
+ 2 │             export default interface SchedulerService {
+ 3 │               [key: string]: unknown;
+   ·               ───────────────────────
+ 4 │             }
+   ╰────
+  help: Use a record type such as `Record<string, unknown>` instead of an index signature.
