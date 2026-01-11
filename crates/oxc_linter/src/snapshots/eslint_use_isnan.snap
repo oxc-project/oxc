@@ -234,8 +234,30 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
    ╭─[use_isnan.tsx:1:7]
+ 1 │ x !== Number?.NaN;
+   ·       ───────────
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
+  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+   ╭─[use_isnan.tsx:1:7]
  1 │ x === Number['NaN'];
    ·       ─────────────
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
+  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+   ╭─[use_isnan.tsx:2:59]
+ 1 │ /* just
+ 2 │                 adding */ x /* some */ === /* comments */ NaN; // here
+   ·                                                           ───
+   ╰────
+  help: Use the `isNaN` function to compare with NaN.
+
+  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+   ╭─[use_isnan.tsx:1:12]
+ 1 │ (1, 2) === NaN;
+   ·            ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
@@ -494,6 +516,13 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
    ╭─[use_isnan.tsx:1:16]
  1 │ foo['indexOf'](NaN)
+   ·                ───
+   ╰────
+  help: Array prototype method 'indexOf' cannot find NaN.
+
+  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+   ╭─[use_isnan.tsx:1:16]
+ 1 │ foo[`indexOf`](NaN)
    ·                ───
    ╰────
   help: Array prototype method 'indexOf' cannot find NaN.
