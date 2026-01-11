@@ -286,12 +286,16 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
     // Case: maybe written and read in catch, but not definitely read
     if found_usages.iter().any(|usage| matches!(usage, FoundAssignmentUsage::MaybeWriteRead))
         && !found_usages.iter().any(|usage| matches!(usage, FoundAssignmentUsage::Yes))
-        && found_usages
+    {
+        if found_usages
             .iter()
             .any(|usage| matches!(usage, FoundAssignmentUsage::MaybeWriteWrittenInCatch))
-    {
-        ctx.diagnostic(no_useless_assignment_diagnostic(start_node.span()));
-        return;
+        {
+            ctx.diagnostic(no_useless_assignment_diagnostic(start_node.span()));
+            return;
+        } else {
+            return;
+        }
     }
 
     // Case: no definite reads found
