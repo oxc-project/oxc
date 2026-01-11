@@ -95,6 +95,9 @@ fn size_asserts() {
     assert_eq!(size_of::<RuleEnum>(), 16);
 }
 
+/// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
+const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
+
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
 pub struct Linter {
