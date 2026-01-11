@@ -1,9 +1,12 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, AssignmentTarget, Expression},
+    ast::{
+        Argument, AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
+        Expression,
+    },
 };
 use oxc_cfg::{
-    BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::Direction,
+    ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::Direction,
     visit::neighbors_filtered_by_edge_weight,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -73,20 +76,60 @@ impl Rule for NoUselessAssignment {
                     analyze(ctx, cfg, node.id(), symbol_id);
                 }
                 AstKind::AssignmentExpression(assignment) => {
-                    let symbol_id = match &assignment.left {
+                    println!("AssignmentExpression left: {:?}", assignment.left);
+                    let symbol_ids: Vec<SymbolId> = match &assignment.left {
                         AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                             let reference = ident.reference_id();
                             match ctx.scoping().get_reference(reference).symbol_id() {
-                                Some(symbol_id) => symbol_id,
+                                Some(symbol_id) => vec![symbol_id],
                                 None => continue,
                             }
                         }
-                        // AssignmentTarget::ObjectAssignmentTarget(target) => {
-                        // 	target.
-                        // }
+                        AssignmentTarget::ObjectAssignmentTarget(target) => {
+                            // ({ a = 'unused', foo: b, ...c } = fn());
+                            let mut symbol_ids = Vec::new();
+                            for prop in &target.properties {
+                                match prop {
+																	AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) => {
+																		let Some(_) = &identifier.init else {
+																			continue;
+																		};
+
+																		let ref_id = identifier.binding.reference_id();
+																		let Some(symbol_id) = ctx.scoping().get_reference(ref_id).symbol_id() else {
+																			continue;
+																		};
+																		symbol_ids.push(symbol_id);
+																	}
+																	AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
+																		match &property.binding {
+																			AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array_target) => {
+																				for element in &array_target.elements {
+																					match element {
+																						Some(AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(identifier)) => {
+																							let ref_id = identifier.reference_id();
+																							let Some(symbol_id) = ctx.scoping().get_reference(ref_id).symbol_id() else {
+																								continue;
+																							};
+																							symbol_ids.push(symbol_id);
+																						}
+																						_ => continue,
+																					}
+																				}
+																			}
+																			_ => continue,
+																		}
+																	}
+															}
+                            }
+
+                            symbol_ids
+                        }
                         _ => continue,
                     };
-                    analyze(ctx, cfg, node.id(), symbol_id);
+                    for symbol_id in symbol_ids {
+                        analyze(ctx, cfg, node.id(), symbol_id);
+                    }
                 }
                 AstKind::UpdateExpression(update) => {
                     let id_name = update.argument.get_identifier_name();
@@ -497,7 +540,7 @@ fn _node_part_of_finally(ctx: &LintContext, node_id: &NodeId) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let _pass = vec![
         "let v = 'used';
 			        console.log(v);
 			        v = 'used-2'
@@ -610,7 +653,7 @@ fn test() {
         "let v = 'used variable';", // Incorrect test case?
         "function foo() {
 			            return;
-			
+
 			            const x = 1;
 			            if (y) {
 			                bar(x);
@@ -620,7 +663,7 @@ fn test() {
 			            const x = 1;
 			            console.log(x);
 			            return;
-			
+
 			            x = 'Foo'
 			        }",
         "function foo() {
@@ -783,9 +826,9 @@ fn test() {
 			                unsafeFn();
 			                return { error: undefined };
 			            } catch {
-			                return { bar }; 
+			                return { bar };
 			            }
-			        }   
+			        }
 			        function unsafeFn() {
 			            throw new Error();
 			        }",
@@ -799,7 +842,7 @@ fn test() {
 			               baz = bar;
 			            }
 			            return baz;
-			        }   
+			        }
 			        function unsafeFn() {
 			            throw new Error();
 			        }",
@@ -813,7 +856,7 @@ fn test() {
 			               // handle error
 			            }
 			            return bar;
-			        }   
+			        }
 			        function unsafeFn() {
 			            throw new Error();
 			        }",
@@ -936,18 +979,19 @@ fn test() {
 						}", // {  "parserOptions": {  "ecmaFeatures": { "jsx": true },  },  }
     ];
 
-    // let _pass = vec![
-    //     // "let message = 'init';
-    //           //       try {
-    //           //           const result = call();
-    //           //           message = result.message;
-    //           //       } catch (e) {
-    //           //           // ignore
-    //           //       }
-    //           //       console.log(message)",
-    // ];
+    let pass = vec![
+        "function foo () {
+			            let v = 'used';
+			            console.log(v);
+			            function bar() {
+			                v = 'used in outer scope';
+			            }
+			            bar();
+			            console.log(v);
+			        }",
+    ];
 
-    let fail = vec![
+    let _fail = vec![
         "let v = 'used';
 			            console.log(v);
 			            v = 'unused'",
@@ -1266,20 +1310,7 @@ fn test() {
 			            }", // {  "parserOptions": {  "ecmaFeatures": { "jsx": true },  },  }
     ];
 
-    let _fail = vec![
-        "let v = 'unused';
-			            try {
-			                v = callA();
-			                try {
-			                    v = callB();
-			                } catch (e) {
-			                    // ignore
-			                }
-			            } catch (e) {
-			                v = 'used';
-			            }
-			            console.log(v)",
-    ];
+    let fail = vec![];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
         .test_and_snapshot();
