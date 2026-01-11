@@ -112,15 +112,11 @@ impl Rule for PreferGlobalThis {
 }
 
 fn is_typeof_legacy_global(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
-    if let AstKind::UnaryExpression(unary) = ctx.nodes().parent_kind(node.id()) {
-        if unary.operator == UnaryOperator::Typeof {
-            if let Expression::Identifier(arg_ident) = &unary.argument {
-                if let AstKind::IdentifierReference(node_ident) = node.kind() {
-                    return arg_ident.span == node_ident.span;
-                }
+    if let AstKind::UnaryExpression(unary) = ctx.nodes().parent_kind(node.id())
+        && unary.operator == UnaryOperator::Typeof
+            && let Expression::Identifier(arg_ident) = &unary.argument {
+                return arg_ident.span == node.span();
             }
-        }
-    }
     false
 }
 
