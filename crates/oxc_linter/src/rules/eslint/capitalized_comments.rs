@@ -45,7 +45,7 @@ struct CommentConfig {
     ignore_consecutive_comments: bool,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 enum CapitalizeOption {
     #[default]
@@ -77,8 +77,11 @@ impl std::ops::Deref for CapitalizedComments {
 #[serde(rename_all = "camelCase")]
 #[expect(clippy::struct_field_names)]
 struct CommentConfigJson {
+    /// A regex pattern. Comments that match the pattern will not cause violations.
     ignore_pattern: Option<String>,
+    /// If true, inline comments (comments in the middle of code) will be ignored.
     ignore_inline_comments: Option<bool>,
+    /// If true, consecutive comments will be ignored after the first comment.
     ignore_consecutive_comments: Option<bool>,
 }
 
@@ -101,13 +104,29 @@ impl CommentConfigJson {
 }
 
 #[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default)]
 struct OptionsJson {
     #[serde(flatten)]
     base: CommentConfigJson,
+    /// Configuration specifically for line comments (`//`).
     line: Option<CommentConfigJson>,
+    /// Configuration specifically for block comments (`/* */`).
     block: Option<CommentConfigJson>,
 }
+
+/// Configuration schema for the rule.
+/// The rule accepts a tuple array configuration: `[capitalize_option, options]`
+///
+/// - First element: `"always"` (default) or `"never"` - controls whether comments should be capitalized
+/// - Second element: Optional object with additional configuration properties
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(default)]
+struct CapitalizedCommentsSchema(
+    /// Controls whether comments should start with an uppercase or lowercase letter. Default: "always".
+    CapitalizeOption,
+    /// Optional configuration object with additional settings.
+    Option<OptionsJson>,
+);
 
 declare_oxc_lint!(
     /// ### What it does
@@ -137,7 +156,7 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = OptionsJson
+    config = CapitalizedCommentsSchema
 );
 
 impl Rule for CapitalizedComments {
@@ -663,7 +682,7 @@ fn test() {
 			// lineCommentIgnorePattern
 			/* blockCommentIgnorePattern */",
             Some(
-                serde_json::json!([				"always",				{					"line": {						"ignorePattern": "lineCommentIgnorePattern",					},					"block": {						"ignorePattern": "blockCommentIgnorePattern",					},				},			]),
+                serde_json::json!([ "always", { "line": { "ignorePattern": "lineCommentIgnorePattern" }, "block": { "ignorePattern": "blockCommentIgnorePattern" } }]),
             ),
         ),
     ];
