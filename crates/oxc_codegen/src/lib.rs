@@ -420,12 +420,14 @@ impl<'a> Codegen<'a> {
     fn print_soft_newline(&mut self) {
         if !self.options.minify {
             self.print_ascii_byte(b'\n');
+            self.print_next_indent_as_space = false;
         }
     }
 
     #[inline]
     fn print_hard_newline(&mut self) {
         self.print_ascii_byte(b'\n');
+        self.print_next_indent_as_space = false;
     }
 
     #[inline]
@@ -527,7 +529,8 @@ impl<'a> Codegen<'a> {
         if self.options.minify {
             self.needs_semicolon = true;
         } else {
-            self.print_str(";\n");
+            self.print_str(";");
+            self.print_hard_newline();
         }
     }
 
