@@ -164,49 +164,37 @@ impl Rule for ConsistentIndexedObjectStyle {
                     };
 
                     if should_report {
-                        // Check if this interface is exported as default.
-                        // We cannot convert `export default interface` to `export default type`
-                        // because TypeScript doesn't allow `export default type`.
-                        let is_export_default = matches!(
-                            ctx.nodes().parent_kind(node.id()),
-                            AstKind::ExportDefaultDeclaration(_)
+                        ctx.diagnostic_with_fix(
+                            consistent_indexed_object_style_diagnostic(preferred_style, sig.span),
+                            |fixer| {
+                                if matches!(
+                                    ctx.nodes().parent_kind(node.id()),
+                                    AstKind::ExportDefaultDeclaration(_)
+                                ) {
+                                    return fixer.noop();
+                                }
+
+                                let key_type = sig.parameters.first().map_or("string", |p| {
+                                    fixer.source_range(p.type_annotation.type_annotation.span())
+                                });
+                                let value_type =
+                                    fixer.source_range(sig.type_annotation.type_annotation.span());
+                                let type_params = inf
+                                    .type_parameters
+                                    .as_ref()
+                                    .map_or("", |tp| fixer.source_range(tp.span));
+
+                                let record = if sig.readonly {
+                                    format!("Readonly<Record<{key_type}, {value_type}>>")
+                                } else {
+                                    format!("Record<{key_type}, {value_type}>")
+                                };
+
+                                let replacement =
+                                    format!("type {}{type_params} = {record};", inf.id.name);
+                                fixer.replace(inf.span, replacement)
+                            },
                         );
-
-                        if is_export_default {
-                            // Report the diagnostic without a fix
-                            ctx.diagnostic(consistent_indexed_object_style_diagnostic(
-                                preferred_style,
-                                sig.span,
-                            ));
-                        } else {
-                            ctx.diagnostic_with_fix(
-                                consistent_indexed_object_style_diagnostic(
-                                    preferred_style,
-                                    sig.span,
-                                ),
-                                |fixer| {
-                                    let key_type = sig.parameters.first().map_or("string", |p| {
-                                        fixer.source_range(p.type_annotation.type_annotation.span())
-                                    });
-                                    let value_type = fixer
-                                        .source_range(sig.type_annotation.type_annotation.span());
-                                    let type_params = inf
-                                        .type_parameters
-                                        .as_ref()
-                                        .map_or("", |tp| fixer.source_range(tp.span));
-
-                                    let record = if sig.readonly {
-                                        format!("Readonly<Record<{key_type}, {value_type}>>")
-                                    } else {
-                                        format!("Record<{key_type}, {value_type}>")
-                                    };
-
-                                    let replacement =
-                                        format!("type {}{type_params} = {record};", inf.id.name);
-                                    fixer.replace(inf.span, replacement)
-                                },
-                            );
-                        }
                     }
                 }
                 AstKind::TSTypeLiteral(lit) => {
