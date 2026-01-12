@@ -159,9 +159,13 @@ Sort the `scripts` field alphabetically. (Default: `false`)
 type: `object | null`
 
 
-Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
-When enabled, class strings will be collected and passed to a callback for sorting.
-Pass `true` or an object with options from `prettier-plugin-tailwindcss`.
+Experimental: Sort Tailwind CSS classes in string literals.
+
+When enabled, `Oxfmt` sorts Tailwind CSS classes using the same algorithm as
+[`prettier-plugin-tailwindcss`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+
+See [`TailwindcssConfig`] for available options.
+
 (Default: disabled)
 
 
@@ -171,6 +175,8 @@ type: `string[]`
 
 
 List of attributes that contain Tailwind CSS classes.
+
+Note: Regex patterns are not yet supported.
 
 Example: `["myClassProp", ":class"]`
 
@@ -195,6 +201,8 @@ type: `string[]`
 
 
 List of custom function names that contain Tailwind CSS classes.
+
+Note: Regex patterns are not yet supported.
 
 Example: `["clsx", "cn", "cva", "tw"]`
 

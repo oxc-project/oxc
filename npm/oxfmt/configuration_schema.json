@@ -157,15 +157,15 @@
       "markdownDescription": "User-provided configuration for `package.json` sorting.\n\n- `true`: Enable sorting with default options\n- `false`: Disable sorting\n- `{ sortScripts: true }`: Enable sorting with custom options"
     },
     "TailwindcssConfig": {
-      "description": "Configuration for Tailwind CSS class sorting.\nBased on options from `prettier-plugin-tailwindcss`.\n\nNote: All `tailwind` prefixes have been removed from option names.\nFor example, use `config` instead of `tailwindConfig`.\n\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
-      "markdownDescription": "Configuration for Tailwind CSS class sorting.\nBased on options from `prettier-plugin-tailwindcss`.\n\nNote: All `tailwind` prefixes have been removed from option names.\nFor example, use `config` instead of `tailwindConfig`.\n\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
+      "description": "Configuration for Tailwind CSS class sorting.\n\nOption names omit the `tailwind` prefix used in the original plugin\n(e.g., `config` instead of `tailwindConfig`).\n\nSee [`prettier-plugin-tailwindcss` options](https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options) for details.",
+      "markdownDescription": "Configuration for Tailwind CSS class sorting.\n\nOption names omit the `tailwind` prefix used in the original plugin\n(e.g., `config` instead of `tailwindConfig`).\n\nSee [`prettier-plugin-tailwindcss` options](https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options) for details.",
       "properties": {
         "attributes": {
-          "description": "List of attributes that contain Tailwind CSS classes.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
+          "description": "List of attributes that contain Tailwind CSS classes.\n\nNote: Regex patterns are not yet supported.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "List of attributes that contain Tailwind CSS classes.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
+          "markdownDescription": "List of attributes that contain Tailwind CSS classes.\n\nNote: Regex patterns are not yet supported.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
           "type": [
             "array",
             "null"
@@ -180,11 +180,11 @@
           ]
         },
         "functions": {
-          "description": "List of custom function names that contain Tailwind CSS classes.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
+          "description": "List of custom function names that contain Tailwind CSS classes.\n\nNote: Regex patterns are not yet supported.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "List of custom function names that contain Tailwind CSS classes.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
+          "markdownDescription": "List of custom function names that contain Tailwind CSS classes.\n\nNote: Regex patterns are not yet supported.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
           "type": [
             "array",
             "null"
@@ -314,8 +314,8 @@
           "type": "null"
         }
       ],
-      "description": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)",
-      "markdownDescription": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)"
+      "description": "Experimental: Sort Tailwind CSS classes in string literals.\n\nWhen enabled, `Oxfmt` sorts Tailwind CSS classes using the same algorithm as\n[`prettier-plugin-tailwindcss`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\n\nSee [`TailwindcssConfig`] for available options.\n\n(Default: disabled)",
+      "markdownDescription": "Experimental: Sort Tailwind CSS classes in string literals.\n\nWhen enabled, `Oxfmt` sorts Tailwind CSS classes using the same algorithm as\n[`prettier-plugin-tailwindcss`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\n\nSee [`TailwindcssConfig`] for available options.\n\n(Default: disabled)"
     },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",

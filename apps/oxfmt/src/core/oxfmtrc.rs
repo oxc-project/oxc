@@ -89,9 +89,13 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_package_json: Option<SortPackageJsonUserConfig>,
 
-    /// Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
-    /// When enabled, class strings will be collected and passed to a callback for sorting.
-    /// Pass `true` or an object with options from `prettier-plugin-tailwindcss`.
+    /// Experimental: Sort Tailwind CSS classes in string literals.
+    ///
+    /// When enabled, `Oxfmt` sorts Tailwind CSS classes using the same algorithm as
+    /// [`prettier-plugin-tailwindcss`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+    ///
+    /// See [`TailwindcssConfig`] for available options.
+    ///
     /// (Default: disabled)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_tailwindcss: Option<TailwindcssConfig>,
@@ -283,12 +287,11 @@ impl SortPackageJsonConfig {
 }
 
 /// Configuration for Tailwind CSS class sorting.
-/// Based on options from `prettier-plugin-tailwindcss`.
 ///
-/// Note: All `tailwind` prefixes have been removed from option names.
-/// For example, use `config` instead of `tailwindConfig`.
+/// Option names omit the `tailwind` prefix used in the original plugin
+/// (e.g., `config` instead of `tailwindConfig`).
 ///
-/// See <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>
+/// See [`prettier-plugin-tailwindcss` options](https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options) for details.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TailwindcssConfig {
@@ -310,6 +313,8 @@ pub struct TailwindcssConfig {
 
     /// List of custom function names that contain Tailwind CSS classes.
     ///
+    /// Note: Regex patterns are not yet supported.
+    ///
     /// Example: `["clsx", "cn", "cva", "tw"]`
     ///
     /// Default: `[]`
@@ -317,6 +322,8 @@ pub struct TailwindcssConfig {
     pub functions: Option<Vec<String>>,
 
     /// List of attributes that contain Tailwind CSS classes.
+    ///
+    /// Note: Regex patterns are not yet supported.
     ///
     /// Example: `["myClassProp", ":class"]`
     ///
