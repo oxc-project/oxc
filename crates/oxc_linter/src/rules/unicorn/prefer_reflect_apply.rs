@@ -40,7 +40,8 @@ declare_oxc_lint!(
     /// ```
     PreferReflectApply,
     unicorn,
-    style
+    style,
+    pending,
 );
 
 fn is_apply_signature(first_arg: &Argument, second_arg: &Argument) -> bool {
@@ -114,34 +115,58 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("foo.apply();", None),
-        ("foo.apply(null);", None),
-        ("foo.apply(this);", None),
-        ("foo.apply(null, 42);", None),
-        ("foo.apply(this, 42);", None),
-        ("foo.apply(bar, arguments);", None),
-        ("[].apply(null, [42]);", None),
-        ("foo.apply(bar);", None),
-        ("foo.apply(bar, []);", None),
-        ("foo.apply;", None),
-        ("apply;", None),
-        ("Reflect.apply(foo, null);", None),
-        ("Reflect.apply(foo, null, [bar]);", None),
-        ("const apply = \"apply\"; foo[apply](null, [42]);", None),
+        "foo.apply();",
+        "foo.apply(null);",
+        "foo.apply(this);",
+        "foo.apply(null, 42);",
+        "foo.apply(this, 42);",
+        "foo.apply(bar, arguments);",
+        "[].apply(null, [42]);",
+        "foo.apply(bar);",
+        "foo.apply(bar, []);",
+        "foo.apply;",
+        "apply;",
+        "Reflect.apply(foo, null);",
+        "Reflect.apply(foo, null, [bar]);",
+        r#"const apply = "apply"; foo[apply](null, [42]);"#,
     ];
 
     let fail = vec![
-        ("foo.apply(null, [42]);", None),
-        ("foo.bar.apply(null, [42]);", None),
-        ("Function.prototype.apply.call(foo, null, [42]);", None),
-        ("Function.prototype.apply.call(foo.bar, null, [42]);", None),
-        ("foo.apply(null, arguments);", None),
-        ("Function.prototype.apply.call(foo, null, arguments);", None),
-        ("foo.apply(this, [42]);", None),
-        ("Function.prototype.apply.call(foo, this, [42]);", None),
-        ("foo.apply(this, arguments);", None),
-        ("Function.prototype.apply.call(foo, this, arguments);", None),
-        ("foo[\"apply\"](null, [42]);", None),
+        "foo.apply(null, [42]);",
+        "foo.bar.apply(null, [42]);",
+        "Function.prototype.apply.call(foo, null, [42]);",
+        "Function.prototype.apply.call(foo.bar, null, [42]);",
+        "foo.apply(null, arguments);",
+        "Function.prototype.apply.call(foo, null, arguments);",
+        "foo.apply(this, [42]);",
+        "Function.prototype.apply.call(foo, this, [42]);",
+        "foo.apply(this, arguments);",
+        "Function.prototype.apply.call(foo, this, arguments);",
+        r#"foo["apply"](null, [42]);"#,
+    ];
+
+    // TODO: Implement a fixer.
+    let _fix = vec![
+        ("foo.apply(null, [42]);", "Reflect.apply(foo, null, [42]);"),
+        ("foo.bar.apply(null, [42]);", "Reflect.apply(foo.bar, null, [42]);"),
+        ("Function.prototype.apply.call(foo, null, [42]);", "Reflect.apply(foo, null, [42]);"),
+        (
+            "Function.prototype.apply.call(foo.bar, null, [42]);",
+            "Reflect.apply(foo.bar, null, [42]);",
+        ),
+        ("foo.apply(null, arguments);", "Reflect.apply(foo, null, arguments);"),
+        (
+            "Function.prototype.apply.call(foo, null, arguments);",
+            "Reflect.apply(foo, null, arguments);",
+        ),
+        ("foo.apply(this, [42]);", "Reflect.apply(foo, this, [42]);"),
+        ("Function.prototype.apply.call(foo, this, [42]);", "Reflect.apply(foo, this, [42]);"),
+        ("foo.apply(this, arguments);", "Reflect.apply(foo, this, arguments);"),
+        (
+            "Function.prototype.apply.call(foo, this, arguments);",
+            "Reflect.apply(foo, this, arguments);",
+        ),
+        (r#"foo["apply"](null, [42]);"#, "Reflect.apply(foo, null, [42]);"),
     ];
 
     Tester::new(PreferReflectApply::NAME, PreferReflectApply::PLUGIN, pass, fail)
