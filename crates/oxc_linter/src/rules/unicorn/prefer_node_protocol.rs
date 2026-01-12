@@ -142,13 +142,13 @@ fn test() {
     ];
 
     let fix = vec![
-        (r#"import fs from "fs";"#, r#"import fs from "node:fs";"#, None),
-        (r#"import * as fs from "fs";"#, r#"import * as fs from "node:fs";"#, None),
-        (r"import fs from 'fs';", r"import fs from 'node:fs';", None),
-        (r"const fs = require('fs');", r"const fs = require('node:fs');", None),
-        (r"import fs = require('fs');", r"import fs = require('node:fs');", None),
-        (r#"import "child_process";"#, r#"import "node:child_process";"#, None),
-        (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#, None),
+        (r#"import fs from "fs";"#, r#"import fs from "node:fs";"#),
+        (r#"import * as fs from "fs";"#, r#"import * as fs from "node:fs";"#),
+        (r"import fs from 'fs';", r"import fs from 'node:fs';"),
+        (r"const fs = require('fs');", r"const fs = require('node:fs');"),
+        (r"import fs = require('fs');", r"import fs = require('node:fs');"),
+        (r#"import "child_process";"#, r#"import "node:child_process";"#),
+        (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#),
     ];
 
     Tester::new(PreferNodeProtocol::NAME, PreferNodeProtocol::PLUGIN, pass, fail)
