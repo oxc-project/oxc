@@ -287,16 +287,18 @@ fn test() {
         "for(var i = 10; i > 0; i+=-1){}",
         "for(var i = 10; i >= 0; i+=-1){}",
         // test if '+=', '-=' with counter 'i' on the right side of test condition
+        "for(var i = 0n; i > l; i-=1n){}",
+        "for(var i = 0n; i < l; i-=-1n){}",
+        "for(var i = MIN; i <= MAX; i+=true){}",
+        "for(var i = 0; i < 10; i+=+5e-7){}",
+        // "for(var i = 0; i < MAX; i -= ~2);",
+        // "for(var i = 0, n = -1; i < MAX; i += -n);",
         "for(var i = 0; 10 > i; i+=1){}",
         // test if no update.
         "for(var i = 10; i > 0;){}",
         "for(var i = 10; i >= 0;){}",
         "for(var i = 10; i < 0;){}",
         "for(var i = 10; i <= 0;){}",
-        "for(var i = 0; i < 10; i+=0){}",
-        "for(var i = 0; i < 10; i-=0){}",
-        "for(var i = 10; i > 0; i+=0){}",
-        "for(var i = 10; i > 0; i-=0){}",
         "for(var i = 10; i <= 0; j++){}",
         "for(var i = 10; i <= 0; j--){}",
         "for(var i = 10; i >= 0; j++){}",
@@ -309,6 +311,13 @@ fn test() {
         "for(var i = 0; i < MAX; i -= STEP_SIZE);",
         "for(var i = 10; i > 0; i += STEP_SIZE);",
         // other cond-expressions.
+        "for(var i = 10; i >= 0; i += 0);",
+        "for(var i = 10n; i >= 0n; i += 0n);",
+        "for(var i = 10; i >= 0; i += this.step);",
+        "for(var i = 10; i >= 0; i += 'foo');",
+        // "for(var i = 10; i > 0; i += !foo);",
+        "for(var i = MIN; i <= MAX; i -= false);",
+        "for(var i = MIN; i <= MAX; i -= 0/0);",
         "for(var i = 0; i !== 10; i+=1){}",
         "for(var i = 0; i === 10; i+=1){}",
         "for(var i = 0; i == 10; i+=1){}",
@@ -317,8 +326,8 @@ fn test() {
 
     let fail = vec![
         // test if '++', '--'
-        "for (var i = 0; i < 10; i--){}",
-        "for (var i = 0; i <= 10; i--){}",
+        "for(var i = 0; i < 10; i--){}",
+        "for(var i = 0; i <= 10; i--){}",
         "for(var i = 10; i > 10; i++){}",
         "for(var i = 10; i >= 0; i++){}",
         // test if '++', '--' with counter 'i' on the right side of test condition
@@ -336,6 +345,12 @@ fn test() {
         "for(var i = 10; i > 10; i-=-1){}",
         "for(var i = 10; i >= 0; i-=-1){}",
         // test if '+=', '-=' with counter 'i' on the right side of test condition
+        // "for(var i = 0n; i > l; i+=1n){}",
+        "for(var i = 0n; i < l; i+=-1n){}",
+        // "for(var i = MIN; i <= MAX; i-=true){}",
+        "for(var i = 0; i < 10; i-=+5e-7){}",
+        // "for(var i = 0; i < MAX; i += (2 - 3));",
+        // "var n = -2; for(var i = 0; i < 10; i += n);",
         "for(var i = 0; 10 > i; i-=1){}",
     ];
 
