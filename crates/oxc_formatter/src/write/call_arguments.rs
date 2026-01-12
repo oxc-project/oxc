@@ -462,10 +462,10 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
     //     string[][][] => string[]
     let extracted_array_type = match ty {
         TSType::TSArrayType(array) => match &array.element_type {
-            TSType::TSArrayType(inner_array) => Some(&inner_array.element_type),
-            element_type => Some(element_type),
+            TSType::TSArrayType(inner_array) => &inner_array.element_type,
+            element_type => element_type,
         },
-        _ => None,
+        _ => ty,
     };
 
     // Then, extract the first type parameter of a Generic as long as it's the
@@ -473,10 +473,10 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
     //     Foo<number> => number
     //     Foo<number, string> => Foo<number, string>
     let extracted_generic_type = match &extracted_array_type {
-        Some(TSType::TSTypeReference(generic)) => {
+        TSType::TSTypeReference(generic) => {
             if let Some(type_arguments) = &generic.type_arguments {
                 let argument_list = &type_arguments.params;
-                if argument_list.len() == 1 { argument_list.first() } else { extracted_array_type }
+                if argument_list.len() == 1 { &argument_list[0] } else { extracted_array_type }
             } else {
                 extracted_array_type
             }
@@ -484,8 +484,7 @@ fn is_simple_ts_type(ty: &TSType<'_>) -> bool {
         _ => extracted_array_type,
     };
 
-    let resolved_type = extracted_generic_type.unwrap_or(ty);
-    match resolved_type {
+    match extracted_generic_type {
         // Any keyword or literal types
         TSType::TSLiteralType(_)
         | TSType::TSTemplateLiteralType(_)
