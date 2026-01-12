@@ -39,16 +39,43 @@ pub fn read_to_string(path: &Path) -> io::Result<String> {
 }
 
 pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
-    use std::io::{Error, ErrorKind};
-    fn check_for_writer_error(error: Error) -> Result<(), Error> {
-        // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-            Ok(())
-        } else {
-            Err(error)
+    use std::io::ErrorKind;
+
+    const MAX_RETRIES: u32 = 1000;
+
+    let mut bytes = message.as_bytes();
+    let mut retries = 0;
+    while !bytes.is_empty() {
+        match writer.write(bytes) {
+            Ok(0) => break, // EOF
+            Ok(n) => {
+                bytes = &bytes[n..];
+                retries = 0; // Reset on progress
+            }
+            Err(e) if e.kind() == ErrorKind::WouldBlock => {
+                retries += 1;
+                assert!(retries < MAX_RETRIES, "Failed to write: too many WouldBlock retries");
+                // Buffer full, yield and retry
+                std::thread::yield_now();
+            }
+            Err(e) if e.kind() == ErrorKind::Interrupted => {}
+            Err(e) if e.kind() == ErrorKind::BrokenPipe => break,
+            Err(e) => panic!("Failed to write: {e} bytes: {}", bytes.len()),
         }
     }
 
-    writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    writer.flush().unwrap();
+    let mut retries = 0;
+    loop {
+        match writer.flush() {
+            Ok(()) => break,
+            Err(e) if e.kind() == ErrorKind::WouldBlock => {
+                retries += 1;
+                assert!(retries < MAX_RETRIES, "Failed to flush: too many WouldBlock retries");
+                std::thread::yield_now();
+            }
+            Err(e) if e.kind() == ErrorKind::Interrupted => {}
+            Err(e) if e.kind() == ErrorKind::BrokenPipe => break,
+            Err(e) => panic!("Failed to flush: {e}"),
+        }
+    }
 }
