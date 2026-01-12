@@ -32,6 +32,12 @@
     "n/file-extension-in-import": "No need to implement, already implemented by `import/extensions`.",
     "import/enforce-node-protocol-usage": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "import/no-deprecated": "No need to implement, already implemented by `typescript/no-deprecated` via tsgolint.",
+    "n/no-restricted-import": "No need to implement, already implemented by `no-restricted-imports` rule.",
+    "n/no-restricted-require": "No need to implement, already implemented by `no-restricted-imports` rule.",
+
+    "jsdoc/type-formatting": "Experimental rule in the original plugin, may reconsider once stable.",
+    "jsdoc/convert-to-jsdoc-comments": "Experimental rule in the original plugin, may reconsider once stable.",
+    "jsdoc/check-examples": "Deprecated.",
 
     "jest/no-unnecessary-assertion": "Requires type information. Not currently possible to implement in oxlint.",
     "jest/unbound-method": "Requires type information. Not currently possible to implement in oxlint.",
