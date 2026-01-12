@@ -181,7 +181,8 @@ impl TestCase {
 
 fn format_code_snippet(code: &str) -> String {
     let code = if code.contains('\n') {
-        code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
+        // Use 12 space characters after the newline.
+        code.replace('\n', "\n            ").replace('\\', "\\\\").replace('\"', "\\\"")
     } else {
         code.to_string()
     };
@@ -204,11 +205,19 @@ fn format_code_snippet(code: &str) -> String {
     }
 
     // 'import foo from "foo";' => r#"import foo from "foo";"#
-    format!("r#\"{}\"#", code.replace("\\\"", "\""))
-}
+    if code.contains('"') {
+        return format!("r#\"{}\"#", code.replace("\\\"", "\""));
+    }
 
+    // `foo === bar` => `r"foo === bar"`
+    format!("r\"{code}\"")
+}
 // TODO: handle `noFormat`(in typescript-eslint)
 fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
+    // Some test cases use code like this (e.g. no-invalid-regex):
+    // ```js
+    // String.raw`foobar\n\t escapedthing`
+    // ```
     if tag_expr.tag.is_specific_member_access("String", "raw") {
         tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
@@ -1791,7 +1800,7 @@ fn generate_test_block(ctx: &Context) -> String {
         test_block.push_str("    let fix = vec![\n");
         test_block.push_str("        ");
         test_block.push_str(fix_cases);
-        test_block.push_str("\n    ];\n");
+        test_block.push_str("\n    ];\n\n");
         let _ = writeln!(
             test_block,
             "    Tester::new({}::NAME, {}::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();",
@@ -1944,4 +1953,158 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_code_snippet_simple_identifier() {
+        assert_eq!(format_code_snippet("debugger"), "\"debugger\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_simple_expression() {
+        // Simple expression uses regular quotes
+        assert_eq!(format_code_snippet("foo === bar"), "\"foo === bar\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_double_quotes() {
+        // Code containing double quotes uses raw string
+        assert_eq!(
+            format_code_snippet("import foo from \"foo\";"),
+            "r#\"import foo from \"foo\";\"#"
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_hash_in_quotes() {
+        // Code containing "#" with a double-quote, needs raw string with `r##`.
+        assert_eq!(
+            format_code_snippet("document.querySelector(\"#foo\");"),
+            "r##\"document.querySelector(\"#foo\");\"##"
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_multiline() {
+        // Multiline code with newlines gets escaped and indented
+        let input = "const x = 1;\nconst y = 2;";
+        let result = format_code_snippet(input);
+        assert!(result.contains("const x = 1;"));
+        assert!(result.contains("const y = 2;"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_backslash() {
+        // Code containing backslashes uses raw string
+        let input = "\\u1234";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_raw_string_r_quote() {
+        // Already a raw string with r" - returned as-is
+        assert_eq!(format_code_snippet("r\"foobar\""), "r\"foobar\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_raw_string_r_hash_quote() {
+        // Already a raw string with r#" - returned as-is
+        assert_eq!(format_code_snippet("r#\"foobar\"#"), "r#\"foobar\"#");
+    }
+
+    #[test]
+    fn test_format_code_snippet_quoted_string() {
+        // Quoted string as code - contains both quotes and no backslashes
+        let result = format_code_snippet("\"debugger\"");
+        assert!(result.starts_with("r#"));
+        assert!(result.contains("debugger"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_complex_multiline() {
+        // Complex multiline with multiple special characters
+        let input = "function test() {\n  console.log(\"hello\");\n}";
+        let result = format_code_snippet(input);
+        assert!(result.contains("function test()"));
+        assert!(result.contains("console.log("));
+    }
+
+    #[test]
+    fn test_format_code_snippet_empty_string() {
+        // Empty string code
+        assert_eq!(format_code_snippet(""), "\"\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_tab_characters() {
+        // Code containing tab characters (no quotes or backslashes)
+        assert_eq!(
+            format_code_snippet("const x = 1;\tconst y = 2;"),
+            "\"const x = 1;\tconst y = 2;\""
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_multiline_with_quotes() {
+        // Multiline code with double quotes
+        let input = "const msg = \"hello\";\nconsole.log(msg);";
+        let result = format_code_snippet(input);
+        assert!(result.contains("const msg = "));
+        assert!(result.contains("console.log(msg);"));
+        assert!(result.starts_with("r#\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_regex_pattern() {
+        // Regex pattern with backslashes
+        let input = "/\\d+/";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_unicode_escape() {
+        // Unicode escape sequences - has backslash so uses raw string
+        let result = format_code_snippet("\\u0041");
+        assert!(result.starts_with("r\""));
+        assert!(result.contains("u0041"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_mixed_quotes_and_hash() {
+        // Both quotes and # present - needs r##
+        let input = "document.getElementById(\"#id\")";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r##"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_newline_normalization() {
+        // Newline characters get indented with spaces, not tabs
+        let input = "line1\nline2\nline3";
+        let result = format_code_snippet(input);
+        assert!(result.contains("line1"));
+        assert!(result.contains("line2"));
+        assert!(result.contains("line3"));
+        assert!(!result.contains('\t'));
+    }
+
+    #[test]
+    fn test_format_code_snippet_double_backslash() {
+        // Code with escaped backslash
+        let input = "path\\\\to\\\\file";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_single_quotes() {
+        // Single quotes (no double quotes) - treated as regular string
+        assert_eq!(format_code_snippet("const msg = 'hello';"), "\"const msg = 'hello';\"");
+    }
 }
