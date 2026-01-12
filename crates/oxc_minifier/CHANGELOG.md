@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.108.0] - 2026-01-12
+
+### ⚡ Performance
+
+- d5979dc minifier: Do not allocate when checking to convert `const` to `let` (#17730) (camchenry)
+
+### 📚 Documentation
+
+- 120a27c minifier: Add prettier-ignore for js-in-md part (#17687) (leaysgur)
+
 ## [0.107.0] - 2026-01-05
 
 ### 🚀 Features
