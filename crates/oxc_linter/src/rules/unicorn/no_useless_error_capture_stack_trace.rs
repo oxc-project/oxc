@@ -59,7 +59,7 @@ declare_oxc_lint!(
     NoUselessErrorCaptureStackTrace,
     unicorn,
     restriction,
-    pending
+    suggestion
 );
 
 impl Rule for NoUselessErrorCaptureStackTrace {
@@ -93,8 +93,32 @@ impl Rule for NoUselessErrorCaptureStackTrace {
             }
         }
 
-        ctx.diagnostic(no_useless_error_capture_stack_trace_diagnostic(call_expr.span));
+        let diagnostic = no_useless_error_capture_stack_trace_diagnostic(call_expr.span);
+
+        if let Some(delete_span) = get_span_to_remove(node, ctx) {
+            ctx.diagnostic_with_suggestion(diagnostic, |fixer| fixer.delete_range(delete_span));
+        } else {
+            ctx.diagnostic(diagnostic);
+        }
     }
+}
+
+fn get_span_to_remove(node: &AstNode, ctx: &LintContext) -> Option<Span> {
+    let parent = ctx.nodes().parent_node(node.id());
+
+    let expr_stmt_node = if matches!(parent.kind(), AstKind::ChainExpression(_)) {
+        ctx.nodes().parent_node(parent.id())
+    } else {
+        parent
+    };
+
+    if let AstKind::ExpressionStatement(expr_stmt) = expr_stmt_node.kind()
+        && matches!(ctx.nodes().parent_kind(expr_stmt_node.id()), AstKind::FunctionBody(_))
+    {
+        return Some(expr_stmt.span);
+    }
+
+    None
 }
 
 fn get_error_subclass_if_in_constructor<'a>(
@@ -296,11 +320,103 @@ fn test() {
 			)",
     ];
 
+    let fix = vec![
+        (
+            "class MyError extends Error { constructor() { Error.captureStackTrace(this, MyError); } }",
+            "class MyError extends Error { constructor() {  } }",
+        ),
+        (
+            "class MyError extends Error { constructor() { Error.captureStackTrace(this, this.constructor); } }",
+            "class MyError extends Error { constructor() {  } }",
+        ),
+        (
+            "class MyError extends Error { constructor() { Error.captureStackTrace(this, new.target); } }",
+            "class MyError extends Error { constructor() {  } }",
+        ),
+        (
+            "class MyError extends Error { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends Error { constructor() {  } }",
+        ),
+        (
+            "class MyError extends EvalError { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends EvalError { constructor() {  } }",
+        ),
+        (
+            "class MyError extends RangeError { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends RangeError { constructor() {  } }",
+        ),
+        (
+            "class MyError extends ReferenceError { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends ReferenceError { constructor() {  } }",
+        ),
+        (
+            "class MyError extends SyntaxError { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends SyntaxError { constructor() {  } }",
+        ),
+        (
+            "class MyError extends TypeError { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends TypeError { constructor() {  } }",
+        ),
+        (
+            "class MyError extends URIError { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends URIError { constructor() {  } }",
+        ),
+        (
+            "class MyError extends AggregateError { constructor() { Error.captureStackTrace(this, MyError) } }",
+            "class MyError extends AggregateError { constructor() {  } }",
+        ),
+        (
+            "class MyError extends Error {
+                constructor() {
+                    const foo = () => {
+                        Error.captureStackTrace(this, MyError)
+                    }
+                }
+            }",
+            "class MyError extends Error {
+                constructor() {
+                    const foo = () => {
+                        
+                    }
+                }
+            }",
+        ),
+        (
+            "export default class extends Error {
+                constructor() {
+                    Error.captureStackTrace(this, new.target)
+                }
+            }",
+            "export default class extends Error {
+                constructor() {
+                    
+                }
+            }",
+        ),
+        (
+            "export default (
+                class extends Error {
+                    constructor() {
+                        Error.captureStackTrace(this, new.target)
+                    }
+                }
+            )",
+            "export default (
+                class extends Error {
+                    constructor() {
+                        
+                    }
+                }
+            )",
+        ),
+    ];
+
     Tester::new(
         NoUselessErrorCaptureStackTrace::NAME,
         NoUselessErrorCaptureStackTrace::PLUGIN,
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }

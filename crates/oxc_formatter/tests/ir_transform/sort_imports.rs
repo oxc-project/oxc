@@ -1196,6 +1196,135 @@ import { t } from "t";
 }
 
 #[test]
+fn should_sort_with_multiline_comments_attached_to_each_import() {
+    assert_format(
+        r#"
+/*
+ * hi
+ */
+import cn from "classnames"
+import type { Hello } from "pkg"
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+import type { Hello } from "pkg";
+
+/*
+ * hi
+ */
+import cn from "classnames";
+"#,
+    );
+    assert_format(
+        r#"
+/*
+ * hi
+ */
+import cn from "classnames"
+import { Hello } from "pkg"
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+/*
+ * hi
+ */
+import cn from "classnames";
+import { Hello } from "pkg";
+"#,
+    );
+    // Each multiline comment attached to its own import
+    assert_format(
+        r#"
+/*
+ * for b
+ */
+import b from "b"
+/*
+ * for a
+ */
+import a from "a"
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+/*
+ * for a
+ */
+import a from "a";
+/*
+ * for b
+ */
+import b from "b";
+"#,
+    );
+
+    // Consecutive multiline comments before imports
+    // Comments are attached to the immediately following import (import b)
+    assert_format(
+        r#"
+/*
+ * comment1
+ */
+/*
+ * comment2
+ */
+import b from "b"
+import a from "a"
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+import a from "a";
+/*
+ * comment1
+ */
+/*
+ * comment2
+ */
+import b from "b";
+"#,
+    );
+
+    // Multiline comment separated by empty line (partitioned)
+    assert_format(
+        r#"
+/*
+ * comment
+ */
+
+import b from "b"
+import a from "a"
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+/*
+ * comment
+ */
+
+import a from "a";
+import b from "b";
+"#,
+    );
+
+    // Mix of single-line and multiline block comments
+    assert_format(
+        r#"
+/* single */ import b from "b"
+/*
+ * multiline
+ */
+import a from "a"
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+/*
+ * multiline
+ */
+import a from "a";
+/* single */ import b from "b";
+"#,
+    );
+}
+
+#[test]
 fn should_support_newlines_between_option() {
     // Test newlines_between: false (no blank lines between groups)
     assert_format(
@@ -1917,6 +2046,38 @@ import { describe, test } from "node:test";
 import { c } from "c";
 
 import "node:os";
+"#,
+    );
+}
+
+// ---
+
+#[test]
+fn issue_17788() {
+    // Should not panic
+    assert_format(
+        r"
+`/*`
+",
+        r#"{ "experimentalSortImports": {} }"#,
+        r"
+`/*`;
+",
+    );
+    // Should not panic
+    assert_format(
+        r"
+acc[path] = `src/${path
+.split('/')
+.map((s) => s[0].toUpperCase() + s.slice(1))
+.join('/')}/*`;
+",
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+acc[path] = `src/${path
+  .split("/")
+  .map((s) => s[0].toUpperCase() + s.slice(1))
+  .join("/")}/*`;
 "#,
     );
 }

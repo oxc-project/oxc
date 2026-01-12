@@ -9,5 +9,5 @@
     "noUnusedLocals": true
   },
   "include": ["src-js", "test/**/*.ts"],
-  "exclude": ["test/fixtures"]
+  "exclude": ["test/**/fixtures"]
 }

@@ -162,37 +162,22 @@ fn test() {
     ];
 
     let fix = vec![
-        (
-            "window.postMessage(message)",
-            "window.postMessage(message, window.location.origin)",
-            None,
-        ),
-        ("self.postMessage(message)", "self.postMessage(message, self.location.origin)", None),
+        ("window.postMessage(message)", "window.postMessage(message, window.location.origin)"),
+        ("self.postMessage(message)", "self.postMessage(message, self.location.origin)"),
         (
             "globalThis.postMessage(message)",
             "globalThis.postMessage(message, globalThis.location.origin)",
-            None,
         ),
-        ("foo.postMessage(message )", "foo.postMessage(message, foo.location.origin )", None),
-        (
-            "window.postMessage(message,)",
-            "window.postMessage(message, window.location.origin,)",
-            None,
-        ),
+        ("foo.postMessage(message )", "foo.postMessage(message, foo.location.origin )"),
+        ("window.postMessage(message,)", "window.postMessage(message, window.location.origin,)"),
         (
             "window.postMessage(message,                 /** comments */  )",
             "window.postMessage(message, window.location.origin,                 /** comments */  )",
-            None,
         ),
-        (
-            "window?.c.postMessage(message)",
-            "window?.c.postMessage(message, self.location.origin)",
-            None,
-        ),
+        ("window?.c.postMessage(message)", "window?.c.postMessage(message, self.location.origin)"),
         (
             "window?.a?.b.postMessage(message)",
             "window?.a?.b.postMessage(message, self.location.origin)",
-            None,
         ),
     ];
 

@@ -7,10 +7,9 @@ use editorconfig_parser::{
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
-use oxc_formatter::{
-    FormatOptions,
-    oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc},
-};
+use oxc_formatter::FormatOptions;
+
+use super::oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc};
 
 use super::{FormatFileStrategy, utils};
 
@@ -47,10 +46,11 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
 
 /// Resolved options for each file type.
 /// Each variant contains only the options needed for that formatter.
+#[derive(Debug)]
 pub enum ResolvedOptions {
     /// For JS/TS files formatted by oxc_formatter.
     OxcFormatter {
-        format_options: FormatOptions,
+        format_options: Box<FormatOptions>,
         /// For embedded language formatting (e.g., CSS in template literals)
         external_options: Value,
         insert_final_newline: bool,
@@ -64,7 +64,7 @@ pub enum ResolvedOptions {
     #[cfg(feature = "napi")]
     ExternalFormatterPackageJson {
         external_options: Value,
-        sort_package_json: bool,
+        sort_package_json: Option<sort_package_json::SortOptions>,
         insert_final_newline: bool,
     },
 }
@@ -194,11 +194,11 @@ impl ConfigResolver {
                 .expect("`build_and_validate()` must be called before `resolve()`")
         };
 
-        let insert_final_newline = oxfmt_options.insert_final_newline;
+        let OxfmtOptions { sort_package_json, insert_final_newline, .. } = oxfmt_options;
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
-                format_options,
+                format_options: Box::new(format_options),
                 external_options,
                 insert_final_newline,
             },
@@ -214,7 +214,7 @@ impl ConfigResolver {
             FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
                 ResolvedOptions::ExternalFormatterPackageJson {
                     external_options,
-                    sort_package_json: oxfmt_options.sort_package_json,
+                    sort_package_json,
                     insert_final_newline,
                 }
             }

@@ -1,85 +1,45 @@
-use std::fmt::Write;
-
-use itertools::Itertools as _;
-
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_regular_expression::{
     ast::{CapturingGroup, Character, CharacterKind, Pattern},
     visit::{Visit, walk},
 };
-use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::run_on_regex_node};
 
-fn no_control_regex_diagnostic(control_chars: &[Character], span: Span) -> OxcDiagnostic {
+fn no_control_regex_diagnostic(control_chars: &[Character]) -> OxcDiagnostic {
     let count = control_chars.len();
     debug_assert!(count > 0);
 
-    let mut octal_chars = Vec::new();
-    let mut null_chars = Vec::new();
-    let mut other_chars = Vec::new();
-
-    for ch in control_chars {
-        match ch.kind {
-            CharacterKind::Octal1 | CharacterKind::Octal2 | CharacterKind::Octal3 => {
-                octal_chars.push(ch);
-            }
-            CharacterKind::Null => {
-                null_chars.push(ch);
-            }
-            _ => {
-                other_chars.push(ch);
-            }
-        }
-    }
-
-    let mut help = String::new();
-
-    if !other_chars.is_empty() {
-        let regexes = other_chars.iter().join(", ");
-        writeln!(
-            help,
-            "'{regexes}' {} {}control character{}.",
-            if other_chars.len() > 1 { "are" } else { "is" },
-            if other_chars.len() > 1 { "" } else { "a " },
-            if other_chars.len() > 1 { "s" } else { "" },
-        )
-        .unwrap();
-    }
-
-    if !octal_chars.is_empty() {
-        let regexes = octal_chars.iter().join(", ");
-        writeln!(
-            help,
-            "'{regexes}' {} {}control character{}. They look like backreferences, but there {} no corresponding capture group{}.",
-            if octal_chars.len() > 1 { "are" } else { "is" },
-            if octal_chars.len() > 1 { "" } else { "a " },
-            if octal_chars.len() > 1 { "s" } else { "" },
-            if octal_chars.len() > 1 { "are" } else { "is" },
-            if octal_chars.len() > 1 { "s" } else { "" }
-        ).unwrap();
-    }
-
-    if !null_chars.is_empty() {
-        writeln!(help, "'\\0' matches the null character (U+0000), which is a control character.")
-            .unwrap();
-    }
-
-    debug_assert!(!help.is_empty());
-    debug_assert!(help.chars().last().is_some_and(|char| char == '\n'));
-
-    if !help.is_empty() {
-        help.truncate(help.len() - 1);
-    }
+    let labels: Vec<_> = control_chars
+        .iter()
+        .map(|ch| {
+            let label = match ch.kind {
+                CharacterKind::Octal1 | CharacterKind::Octal2 | CharacterKind::Octal3 => {
+                    format!(
+                        "'{ch}' is a control character. It looks like a backreference, but there is no corresponding capture group."
+                    )
+                }
+                CharacterKind::Null => {
+                    "'\\0' matches the null character (U+0000), which is a control character."
+                        .to_string()
+                }
+                _ => {
+                    // Show the code point since the character itself is not printable
+                    let ch = format!("U+{:04X}", ch.value);
+                    format!("'{ch}' is a control character.")
+                }
+            };
+            ch.span.label(label)
+        })
+        .collect();
 
     OxcDiagnostic::warn(if count > 1 {
         "Unexpected control characters"
     } else {
         "Unexpected control character"
     })
-    .with_help(help)
-    .with_label(span)
+    .with_labels(labels)
 }
 #[derive(Debug, Default, Clone)]
 pub struct NoControlRegex;
@@ -128,13 +88,13 @@ declare_oxc_lint!(
 
 impl Rule for NoControlRegex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        run_on_regex_node(node, ctx, |pattern, span| {
-            check_pattern(ctx, pattern, span);
+        run_on_regex_node(node, ctx, |pattern, _span| {
+            check_pattern(ctx, pattern);
         });
     }
 }
 
-fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
+fn check_pattern(context: &LintContext, pattern: &Pattern) {
     let mut finder = ControlCharacterFinder {
         control_chars: Vec::new(),
         num_capture_groups: 0,
@@ -143,7 +103,7 @@ fn check_pattern(context: &LintContext, pattern: &Pattern, span: Span) {
     finder.visit_pattern(pattern);
 
     if !finder.control_chars.is_empty() {
-        context.diagnostic(no_control_regex_diagnostic(&finder.control_chars, span));
+        context.diagnostic(no_control_regex_diagnostic(&finder.control_chars));
     }
 }
 

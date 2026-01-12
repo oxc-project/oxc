@@ -8,7 +8,6 @@ mod options;
 #[cfg(test)]
 mod tests;
 mod tool;
-pub mod utils;
 mod worker;
 
 pub use crate::capabilities::Capabilities;
@@ -22,8 +21,6 @@ pub async fn run_server(
     server_version: String,
     tools: Vec<Box<dyn ToolBuilder>>,
 ) {
-    env_logger::init();
-
     let stdin = tokio::io::stdin();
     let stdout = tokio::io::stdout();
 

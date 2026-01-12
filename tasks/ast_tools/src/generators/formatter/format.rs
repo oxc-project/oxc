@@ -42,6 +42,7 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSConstructorType",
     "TSTypeQuery",
     "TSFunctionType",
+    "TSTypeOperator",
 ];
 
 const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {

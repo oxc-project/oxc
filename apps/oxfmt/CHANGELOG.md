@@ -4,6 +4,52 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.24.0] - 2026-01-12
+
+### 🚀 Features
+
+- 2e03ebf oxfmt/lsp: Use `SourceFormatter` to support non-JS files and napi features (#17655) (leaysgur)
+- 623f7eb oxfmt/sort_package_json: Use `options.sort_scripts` (#17740) (leaysgur)
+- 86c0168 oxfmt/sort_package_json: Handle `oxfmtrc.sort_scripts` option (#17738) (leaysgur)
+- 256636a oxfmt/lsp: Add `.editorconfig` to `get_watcher_patterns` (#17694) (leaysgur)
+- 3f3db39 oxfmt/lsp: Use `ConfigResolver` to align with CLI (#17654) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 9e89389 formatter/tailwindcss: Nested class string doesn't respect `singleQuote: true` (#17838) (Dunqing)
+- f0cedd4 formatter/tailwindcss: Class name is broken after sorting when its contains single quotes with `singleQuote: true` (#17790) (Dunqing)
+- 1864142 oxfmt/tailwindcss: Bundle `prettier/plugins/*` (#17782) (leaysgur)
+- 3a9d43b oxfmt: Ignore explicit positional path which is ignored by directory (#17732) (leaysgur)
+- 0563217 formatter: Classes will be stripped out when both `experimentalTailwindcss` and `experimentalSortImports` are enabled (#17726) (Dunqing)
+
+### 📚 Documentation
+
+- 62b7a01 formatter: Clarify `experimentalTailwindcss` configuration comments (#17898) (Dunqing)
+
+## [0.23.0] - 2026-01-06
+
+### 🚀 Features
+
+- a19cc93 oxfmt: Add debug logging to oxfmt LSP to troubleshoot resolved options at runtime (#17695) (Nicholas Rayburn)
+
+### 🐛 Bug Fixes
+
+- dcfdd41 formatter: Should not set up tailwindcss callback when no tailwindcss configuration is set (#17696) (Dunqing)
+
+## [0.22.0] - 2026-01-05
+
+### 🚀 Features
+
+- 8fd4ea9 oxfmt: `options.embeddedLanguageFormatting` is now `"auto"` by default (#17649) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 174375d oxfmt,oxlint: Disable mimalloc for 32-bit Arm targets (#17473) (Yaksh Bariya)
+
+### ⚡ Performance
+
+- abb28dc oxfmt: Turn of pretty print from sort-package-json (#17452) (Boshen)
+
 ## [0.21.0] - 2025-12-29
 
 ### 🚀 Features

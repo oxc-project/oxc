@@ -1,19 +1,20 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ oxc(no-barrel-file): Barrel file detected, 10 modules are loaded.
-   ╭─[index.ts:1:15]
- 1 │ export * from "./deep/a.js";
+  ⚠ oxc(no-barrel-file): Barrel file detected, 10 modules are loaded which exceeds the threshold of 1.
+   ╭─[index.ts:2:15]
+ 1 │ 
+ 2 │ export * from "./deep/a.js";
    ·               ──────┬──────
    ·                     ╰── 3 modules
- 2 │            export * from "./deep/b.js";
-   ·                          ──────┬──────
-   ·                                ╰── 2 modules
- 3 │            export * from "./deep/c.js";
-   ·                          ──────┬──────
-   ·                                ╰── 1 modules
- 4 │            export * from "./deep/d.js";
+ 3 │ export * from "./deep/b.js";
+   ·               ──────┬──────
+   ·                     ╰── 2 modules
+ 4 │ export * from "./deep/c.js";
+   ·               ──────┬──────
+   ·                     ╰── 1 module
+ 5 │ export * from "./deep/d.js";
    ╰────
-  help: Loading 10 modules is slow for runtimes and bundlers.
-        The configured threshold is 1.
-        See also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>.
+  help: Consider importing directly from the specific modules instead of using `export *` or `import *`.
+        Loading 10 modules may be slow for runtimes and bundlers.
+  note: See: https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7

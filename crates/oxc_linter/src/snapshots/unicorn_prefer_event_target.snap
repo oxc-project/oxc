@@ -23,6 +23,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
 
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
+   ╭─[prefer_event_target.tsx:1:19]
+ 1 │ class Foo extends EventEmitter {
+   ·                   ────────────
+ 2 │                 addListener() {}
+   ╰────
+  help: Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.
+
+  ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
    ╭─[prefer_event_target.tsx:1:5]
  1 │ new EventEmitter
    ·     ────────────

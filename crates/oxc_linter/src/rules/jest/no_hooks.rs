@@ -12,8 +12,8 @@ use crate::{
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, is_type_of_jest_fn_call},
 };
 
-fn unexpected_hook_diagonsitc(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not use setup or teardown hooks").with_label(span)
+fn unexpected_hook_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use setup or teardown hooks.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -134,7 +134,7 @@ impl NoHooks {
         if let Expression::Identifier(ident) = &call_expr.callee {
             let name = CompactStr::from(ident.name.as_str());
             if !self.allow.contains(&name) {
-                ctx.diagnostic(unexpected_hook_diagonsitc(call_expr.callee.span()));
+                ctx.diagnostic(unexpected_hook_diagnostic(call_expr.callee.span()));
             }
         }
     }

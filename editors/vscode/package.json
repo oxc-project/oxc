@@ -1,7 +1,7 @@
 {
   "name": "oxc-vscode",
   "displayName": "Oxc",
-  "version": "1.36.0",
+  "version": "1.39.0",
   "description": "Oxlint and Oxfmt editor integration",
   "categories": [
     "Formatters",
@@ -239,22 +239,22 @@
         "oxc.path.oxlint": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc linter binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc linter binary. Default: auto detection in `node_modules`."
         },
         "oxc.path.oxfmt": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc formatter binary. Default: auto detection in `node_modules`."
         },
         "oxc.path.tsgolint": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc tsgolint binary. Default: auto detection from `oxlint`."
         },
         "oxc.path.node": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to a Node.js binary. Will be added to the language server `PATH` environment."
+          "markdownDescription": "Path to a Node.js binary. Will be added to the `oxfmt` and `oxlint` `PATH` environment."
         }
       }
     },
@@ -284,12 +284,23 @@
   },
   "activationEvents": [
     "onLanguage:astro",
+    "onLanguage:css",
+    "onLanguage:graphql",
+    "onLanguage:handlebars",
+    "onLanguage:html",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
+    "onLanguage:json",
+    "onLanguage:jsonc",
+    "onLanguage:less",
+    "onLanguage:markdown",
+    "onLanguage:scss",
     "onLanguage:svelte",
+    "onLanguage:toml",
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
-    "onLanguage:vue"
+    "onLanguage:vue",
+    "onLanguage:yaml"
   ],
   "icon": "icon.png",
   "engines": {

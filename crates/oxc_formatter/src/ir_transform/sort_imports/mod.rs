@@ -8,8 +8,12 @@ mod source_line;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
-    SortImportsOptions,
-    formatter::format_element::{FormatElement, LineMode, document::Document},
+    JsLabels, SortImportsOptions,
+    formatter::format_element::{
+        FormatElement, LineMode,
+        document::Document,
+        tag::{LabelId, Tag},
+    },
     ir_transform::sort_imports::{
         group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
         source_line::SourceLine,
@@ -32,7 +36,7 @@ impl SortImportsTransform {
         document: &Document<'a>,
         options: &SortImportsOptions,
         allocator: &'a Allocator,
-    ) -> Option<Document<'a>> {
+    ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
         // Early return for empty files
         if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
             return None;
@@ -65,19 +69,56 @@ impl SortImportsTransform {
         //   - If this is the case, we should check `Tag::StartLabelled(JsLabels::ImportDeclaration)`
         let mut lines = vec![];
         let mut current_line_start = 0;
+        // Track if we're inside an alignable block comment (identified by `JsLabels::AlignableBlockComment`)
+        let mut in_alignable_block_comment = false;
+        // Track if current line is a standalone alignable comment (no import on same line)
+        let mut is_standalone_alignable_comment = false;
+
         for (idx, el) in prev_elements.iter().enumerate() {
+            // Check for alignable block comment boundaries.
+            // These comments are split across multiple lines with hard_line_break() between them,
+            // so we need to track when we're inside one to avoid flushing lines prematurely.
+            if let FormatElement::Tag(Tag::StartLabelled(id)) = el {
+                if *id == LabelId::of(JsLabels::AlignableBlockComment) {
+                    in_alignable_block_comment = true;
+                    is_standalone_alignable_comment = true;
+                } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                    // An import on the same line means the comment is attached to it, not standalone
+                    is_standalone_alignable_comment = false;
+                }
+            } else if matches!(el, FormatElement::Tag(Tag::EndLabelled)) {
+                // EndLabelled doesn't carry the label ID, but since AlignableBlockComment
+                // doesn't nest with other labels in practice, we can safely reset here.
+                if in_alignable_block_comment {
+                    in_alignable_block_comment = false;
+                }
+            }
+
             if let FormatElement::Line(mode) = el
                 && matches!(mode, LineMode::Empty | LineMode::Hard)
             {
+                // If we're inside an alignable block comment, don't flush the line yet.
+                // Wait until the comment is closed so the entire comment is treated as one line.
+                if in_alignable_block_comment {
+                    continue;
+                }
+
                 // Flush current line
                 if current_line_start < idx {
-                    lines.push(SourceLine::from_element_range(
-                        prev_elements,
-                        current_line_start..idx,
-                        *mode,
-                    ));
+                    let line = if is_standalone_alignable_comment {
+                        // Standalone alignable comment: directly create CommentOnly
+                        SourceLine::CommentOnly(current_line_start..idx, *mode)
+                    } else {
+                        SourceLine::from_element_range(
+                            prev_elements,
+                            current_line_start..idx,
+                            *mode,
+                        )
+                    };
+                    lines.push(line);
                 }
                 current_line_start = idx + 1;
+                is_standalone_alignable_comment = false;
 
                 // We need this explicitly to detect boundaries later.
                 if matches!(mode, LineMode::Empty) {
@@ -266,6 +307,6 @@ impl SortImportsTransform {
             }
         }
 
-        Some(Document::from(next_elements))
+        Some(next_elements)
     }
 }

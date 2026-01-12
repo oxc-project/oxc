@@ -160,53 +160,46 @@ fn test() {
     // see: https://github.com/eslint/eslint/blob/v9.9.1/tests/lib/rules/no-obj-calls.js
 
     let pass = vec![
-        ("const m = Math;", None),
-        ("let m = foo.Math();", None),
-        ("JSON.parse(\"{}\")", None),
-        ("Math.PI * 2 * (r * r)", None),
-        ("bar.Atomics(foo)", None),
+        "const m = Math;",
+        "let m = foo.Math();",
+        "JSON.parse(\"{}\")",
+        "Math.PI * 2 * (r * r)",
+        "bar.Atomics(foo)",
         // reference test cases
-        (
-            "let j = JSON;
-            function foo() {
-                let j = x => x;
-                return x();
-            }",
-            None,
-        ),
+        "let j = JSON;
+        function foo() {
+            let j = x => x;
+            return x();
+        }",
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
-        ("{const Math = () => {}; {let obj = new Math();}}", None),
-        ("{const {parse} = JSON;parse('{}')}", None),
+        "{const Math = () => {}; {let obj = new Math();}}",
+        "{const {parse} = JSON;parse('{}')}",
         // https://github.com/oxc-project/oxc/issues/4389
-        (
-            r"
-        export const getConfig = getConfig;
+        r"export const getConfig = getConfig;
         getConfig();",
-            None,
-        ),
     ];
 
     let fail = vec![
-        ("let newObj = new JSON();", None),
-        ("let obj = JSON();", None),
-        ("let obj = globalThis.JSON()", None),
-        ("new JSON", None),
-        ("const foo = x => new JSON()", None),
-        ("let newObj = new Math();", None),
-        ("let obj = Math();", None),
-        ("let obj = new Math().foo;", None),
-        ("let obj = new globalThis.Math()", None),
-        ("let newObj = new Atomics();", None),
-        ("let obj = Atomics();", None),
-        ("let newObj = new Intl();", None),
-        ("let obj = Intl();", None),
-        ("let newObj = new Reflect();", None),
-        ("let obj = Reflect();", None),
-        ("function d() { JSON.parse(Atomics()) }", None),
+        "let newObj = new JSON();",
+        "let obj = JSON();",
+        "let obj = globalThis.JSON()",
+        "new JSON",
+        "const foo = x => new JSON()",
+        "let newObj = new Math();",
+        "let obj = Math();",
+        "let obj = new Math().foo;",
+        "let obj = new globalThis.Math()",
+        "let newObj = new Atomics();",
+        "let obj = Atomics();",
+        "let newObj = new Intl();",
+        "let obj = Intl();",
+        "let newObj = new Reflect();",
+        "let obj = Reflect();",
+        "function d() { JSON.parse(Atomics()) }",
         // reference test cases
-        ("let j = JSON; j();", None),
-        ("let a = JSON; let b = a; let c = b; b();", None),
-        ("let m = globalThis.Math; new m();", None),
+        "let j = JSON; j();",
+        "let a = JSON; let b = a; let c = b; b();",
+        "let m = globalThis.Math; new m();",
     ];
 
     Tester::new(NoObjCalls::NAME, NoObjCalls::PLUGIN, pass, fail).test_and_snapshot();

@@ -738,8 +738,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSTypeAssertion<'_>> {
 fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
     #[expect(clippy::match_same_arms)] // for better readability
     match parent {
-        AstNodes::ExportDefaultDeclaration(_)
-        | AstNodes::TSTypeAssertion(_)
+        AstNodes::TSTypeAssertion(_)
         | AstNodes::UnaryExpression(_)
         | AstNodes::AwaitExpression(_)
         | AstNodes::TSNonNullExpression(_)

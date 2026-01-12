@@ -10,7 +10,8 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 
 fn no_img_element_diagnostic(span: Span, src_span: Option<Span>) -> OxcDiagnostic {
     let mut diagnostic = OxcDiagnostic::warn("Using `<img>` could result in slower LCP and higher bandwidth.")
-		.with_help("Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.\nSee https://nextjs.org/docs/messages/no-img-element")
+        .with_help("Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.")
+        .with_note("See https://nextjs.org/docs/messages/no-img-element")
         .with_label(span.label("Use `<Image />` from `next/image` instead."));
     if let Some(src_span) = src_span {
         diagnostic = diagnostic.and_label(src_span.label("Use a static image import instead."));
@@ -112,7 +113,7 @@ fn test() {
 
     let pass = vec![
         r#"import { Image } from 'next/image';
-			
+
 			      export class MyComponent {
 			        render() {
 			          return (

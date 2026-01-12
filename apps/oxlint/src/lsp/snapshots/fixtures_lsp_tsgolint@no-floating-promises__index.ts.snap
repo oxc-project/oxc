@@ -19,7 +19,7 @@ source: Some("oxc")
 tags: None
 
 code: "typescript-eslint(no-floating-promises)"
-code_description.href: "None"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 1, character: 0 }, end: Position { line: 1, character: 8 } }
 related_information[0].message: ""
@@ -30,7 +30,7 @@ source: Some("oxc")
 tags: None
 
 code: "typescript-eslint(no-floating-promises)"
-code_description.href: "None"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 7, character: 0 }, end: Position { line: 7, character: 32 } }
 related_information[0].message: ""
@@ -41,7 +41,7 @@ source: Some("oxc")
 tags: None
 
 code: "typescript-eslint(no-floating-promises)"
-code_description.href: "None"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 9, character: 0 }, end: Position { line: 9, character: 32 } }
 related_information[0].message: ""
@@ -52,7 +52,7 @@ source: Some("oxc")
 tags: None
 
 code: "typescript-eslint(no-floating-promises)"
-code_description.href: "None"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "Promises must be awaited.\nhelp: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator."
 range: Range { start: Position { line: 11, character: 0 }, end: Position { line: 11, character: 34 } }
 related_information[0].message: ""
@@ -63,7 +63,7 @@ source: Some("oxc")
 tags: None
 
 code: "typescript-eslint(no-floating-promises)"
-code_description.href: "None"
+code_description.href: "https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html"
 message: "An array of Promises may be unintentional.\nhelp: Consider handling the promises' fulfillment or rejection with Promise.all or similar, or explicitly marking the expression as ignored with the `void` operator."
 range: Range { start: Position { line: 13, character: 0 }, end: Position { line: 13, character: 34 } }
 related_information[0].message: ""
@@ -147,7 +147,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -160,12 +160,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -178,7 +178,7 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
@@ -219,7 +219,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -232,12 +232,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -250,7 +250,7 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
@@ -291,7 +291,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -304,12 +304,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -322,7 +322,7 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
@@ -363,7 +363,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -376,12 +376,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -394,12 +394,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this line
+Title: Disable typescript/no-floating-promises for this line
 Is Preferred: Some(true)
 TextEdit: TextEdit {
     range: Range {
@@ -412,12 +412,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line no-floating-promises\n",
+    new_text: "// oxlint-disable-next-line typescript/no-floating-promises\n",
 }
 
 
 CodeAction: 
-Title: Disable no-floating-promises for this whole file
+Title: Disable typescript/no-floating-promises for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -430,5 +430,5 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable no-floating-promises\n",
+    new_text: "// oxlint-disable typescript/no-floating-promises\n",
 }

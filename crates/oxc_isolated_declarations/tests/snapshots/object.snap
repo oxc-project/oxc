@@ -48,7 +48,6 @@ declare const Y: {
 	"5": number;
 };
 declare const exoticKeys: {
-	// --- WORKING KEYS ---
 	a: string;
 	é: string;
 	ø: string;
@@ -57,7 +56,6 @@ declare const exoticKeys: {
 	あ: string;
 	한: string;
 	á: string;
-	// --- NON-WORKING KEYS ---
 	"😃": string;
 	"👍🏻": string;
 	"👨‍👩‍👧‍👦": string;

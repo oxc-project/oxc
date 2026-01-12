@@ -2,7 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 
 use crate::{
-    Expand, Format, FormatTrailingCommas,
+    Format, FormatTrailingCommas,
     ast_nodes::AstNode,
     formatter::{Formatter, prelude::*, trivia::format_dangling_comments},
     write,
@@ -29,9 +29,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
         if element_types.is_empty() {
             write!(f, [format_dangling_comments(self.span).with_block_indent()]);
         } else {
-            let should_expand = f.options().expand == Expand::Always;
-
-            write!(f, [group(&soft_block_indent(&element_types)).should_expand(should_expand)]);
+            write!(f, [group(&soft_block_indent(&element_types))]);
         }
 
         write!(f, "]");

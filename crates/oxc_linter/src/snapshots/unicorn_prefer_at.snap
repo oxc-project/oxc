@@ -520,7 +520,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `.at()` for index access
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
-   ╭─[prefer_at.tsx:2:4]
+   ╭─[prefer_at.tsx:2:13]
  1 │ const foo = []
  2 │             _.last([bar])
    ·             ─────────────
@@ -528,7 +528,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `.at()` for index access
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
-   ╭─[prefer_at.tsx:2:4]
+   ╭─[prefer_at.tsx:2:13]
  1 │ const foo = []
  2 │             _.last( new Array )
    ·             ───────────────────
@@ -536,7 +536,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `.at()` for index access
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
-   ╭─[prefer_at.tsx:2:4]
+   ╭─[prefer_at.tsx:2:13]
  1 │ const foo = []
  2 │             _.last( (( new Array )) )
    ·             ─────────────────────────
@@ -561,5 +561,19 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[prefer_at.tsx:1:24]
  1 │ function foo() {return _.last(arguments)}
    ·                        ─────────────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[1]
+   · ────────
+   ╰────
+  help: Use `.at()` for index access
+
+  ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ array[array.length - 1]
+   · ───────────────────────
    ╰────
   help: Use `.at()` for index access

@@ -4,6 +4,51 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.24.0] - 2026-01-12
+
+### 🚀 Features
+
+- 539b350 formatter/sort_imports: Update `NODE_BUILTINS` modules (#17771) (nilptr)
+- 86c0168 oxfmt/sort_package_json: Handle `oxfmtrc.sort_scripts` option (#17738) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fdd1e1e formatter: Don't wrap parenthesis for type assertion when it's an declaration of export default (#17878) (Dunqing)
+- f0813ad formatter: Incorrect type annotation check for short argument (#17877) (Dunqing)
+- 9e89389 formatter/tailwindcss: Nested class string doesn't respect `singleQuote: true` (#17838) (Dunqing)
+- e2f534c formatter/sort_imports: Handle alignable comment with JsLabels (#17791) (leaysgur)
+- f0cedd4 formatter/tailwindcss: Class name is broken after sorting when its contains single quotes with `singleQuote: true` (#17790) (Dunqing)
+- 0563217 formatter: Classes will be stripped out when both `experimentalTailwindcss` and `experimentalSortImports` are enabled (#17726) (Dunqing)
+
+### ⚡ Performance
+
+- d1bc514 formatter: Optimize RegExpLiteral formatting to avoid heap allocations (#17797) (Dunqing)
+
+## [0.23.0] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- 3b4aced formatter: Should not treat multi-type arguments of TSTypeReference as a complex type (#17708) (Dunqing)
+- dcfdd41 formatter: Should not set up tailwindcss callback when no tailwindcss configuration is set (#17696) (Dunqing)
+- 6f65901 formatter: Return original classes when there are no tailwindcss classes sort callback (#17689) (Dunqing)
+
+### ⚡ Performance
+
+- c6a99fd formatter: Don't call `sort_tailwind_classes` if no classes need to be sorted (#17698) (Dunqing)
+
+## [0.22.0] - 2026-01-05
+
+### 🚀 Features
+
+- 8fd4ea9 oxfmt: `options.embeddedLanguageFormatting` is now `"auto"` by default (#17649) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- c9b5d7d formatter/sort_imports: Handle alignable_comment correctly (#17646) (leaysgur)
+- 453222d formatter: Missing comment handling for end-of-line comments in member chains (#17659) (Dunqing)
+- 0805ff2 formatter: Incorrect inline comment placement in try-catch (#17657) (Dunqing)
+- 3a0c782 formatter: Don't move comments into optional call parentheses (#17582) (magic-akari)
+
 ## [0.21.0] - 2025-12-29
 
 ### 🚀 Features

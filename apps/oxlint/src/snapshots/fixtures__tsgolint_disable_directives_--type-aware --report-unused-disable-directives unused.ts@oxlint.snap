@@ -40,7 +40,7 @@ working directory: fixtures/tsgolint_disable_directives
     `----
   help: Consider using this expression or removing it
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited.
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html\typescript-eslint(no-floating-promises)]8;;\: Promises must be awaited.
     ,-[unused.ts:14:1]
  13 | // oxlint-disable-next-line typescript/no-unsafe-assignment
  14 | myPromise

@@ -224,6 +224,25 @@ pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Positi
     Position::new(line, column)
 }
 
+/// Counter part of `oxc_linter::*::plugin_name_to_prefix`.
+fn prefix_to_plugin_name(prefix: &str) -> &str {
+    match prefix {
+        "eslint-plugin-import" => "import",
+        "eslint-plugin-jest" => "jest",
+        "eslint-plugin-jsdoc" => "jsdoc",
+        "eslint-plugin-jsx-a11y" => "jsx_a11y",
+        "eslint-plugin-next" => "nextjs",
+        "eslint-plugin-promise" => "promise",
+        "eslint-plugin-react-perf" => "react_perf",
+        "eslint-plugin-react" => "react",
+        "typescript-eslint" => "typescript",
+        "eslint-plugin-unicorn" => "unicorn",
+        "eslint-plugin-vitest" => "vitest",
+        "eslint-plugin-node" => "node",
+        "eslint-plugin-vue" => "vue",
+        _ => prefix,
+    }
+}
 /// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
 /// These fixes will be added to the end of the existing fixes.
 /// If the existing fixes already contain an "remove unused disable directive" fix,
@@ -242,15 +261,31 @@ fn add_ignore_fixes(
     }
 
     if let Some(rule_name) = code.number.as_ref() {
+        // this conversion is a bit messy, but basically we need to reconstruct the rule name with plugin prefix
+        let rule_name_with_plugin = if let Some(scope) = &code.scope
+            && !scope.is_empty()
+            // eslint does not has a plugin prefix
+            && scope != "eslint"
+        {
+            format!("{}/{rule_name}", prefix_to_plugin_name(scope))
+        } else {
+            rule_name.to_string()
+        };
+
         // TODO: doesn't support disabling multiple rules by name for a given line.
         fixes.push(disable_for_this_line(
-            rule_name,
+            &rule_name_with_plugin,
             error_offset,
             section_offset,
             rope,
             source_text,
         ));
-        fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
+        fixes.push(disable_for_this_section(
+            &rule_name_with_plugin,
+            section_offset,
+            rope,
+            source_text,
+        ));
     }
 }
 
@@ -325,18 +360,30 @@ fn disable_for_this_section(
 /// Get the insert position and content prefix for section-based insertions.
 ///
 /// For framework files (section_offset > 0), this handles proper line break detection.
-/// For regular JS files (section_offset == 0), it returns the offset as-is.
+/// For regular JS files (section_offset == 0), this handles shebang lines.
 ///
 /// Returns (content_prefix, insert_offset) where:
 /// - content_prefix: "\n" if we need to add a line break, "" otherwise
 /// - insert_offset: the byte offset where the content should be inserted
+#[expect(clippy::cast_possible_truncation)]
 fn get_section_insert_position(
     section_offset: u32,
     target_offset: u32,
     bytes: &[u8],
 ) -> (&'static str, u32) {
-    if section_offset == 0 {
-        // Regular JS files - insert at target offset
+    if section_offset == 0 && target_offset == 0 {
+        if bytes.starts_with(b"#!") {
+            // Shebang present, insert after the first line
+            let mut shebang_end = 0;
+            for (i, &byte) in bytes.iter().enumerate() {
+                if byte == b'\n' {
+                    shebang_end = i + 1;
+                    break;
+                }
+            }
+            return ("", shebang_end as u32);
+        }
+        // Regular JS file without shebang, insert at start
         ("", target_offset)
     } else if target_offset == section_offset {
         // Framework files - check for line breaks at section_offset
@@ -431,6 +478,28 @@ mod test {
         let source = "<script>\r\nconsole.log('hello');";
         let rope = Rope::from_str(source);
         let fix = super::disable_for_this_section("no-console", 8, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_with_shebang() {
+        let source = "#!/usr/bin/env node\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_section_with_shebang_crlf() {
+        let source = "#!/usr/bin/env node\r\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_section("no-console", 0, &rope, source);
 
         assert_eq!(fix.code, "// oxlint-disable no-console\n");
         assert_eq!(fix.range.start.line, 1);
@@ -637,6 +706,28 @@ mod test {
         let error_offset = 8; // Error exactly at section offset
         let fix =
             super::disable_for_this_line("no-console", error_offset, section_offset, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_with_shebang() {
+        let source = "#!/usr/bin/env node\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
+
+        assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
+        assert_eq!(fix.range.start.line, 1);
+        assert_eq!(fix.range.start.character, 0);
+    }
+
+    #[test]
+    fn disable_for_this_line_with_shebang_crlf() {
+        let source = "#!/usr/bin/env node\r\nconsole.log('hello');";
+        let rope = Rope::from_str(source);
+        let fix = super::disable_for_this_line("no-console", 0, 0, &rope, source);
 
         assert_eq!(fix.code, "// oxlint-disable-next-line no-console\n");
         assert_eq!(fix.range.start.line, 1);

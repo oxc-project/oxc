@@ -14,13 +14,3 @@ impl<'a> Format<'a> for OptionalSemicolon {
         }
     }
 }
-
-pub struct MaybeOptionalSemicolon(pub bool);
-
-impl<'a> Format<'a> for MaybeOptionalSemicolon {
-    fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        if self.0 {
-            OptionalSemicolon.fmt(f);
-        }
-    }
-}

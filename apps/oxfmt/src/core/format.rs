@@ -61,7 +61,7 @@ impl SourceFormatter {
                     source_text,
                     path,
                     *source_type,
-                    format_options,
+                    *format_options,
                     external_options,
                 ),
                 insert_final_newline,
@@ -92,7 +92,7 @@ impl SourceFormatter {
                     path,
                     parser_name,
                     external_options,
-                    sort_package_json,
+                    sort_package_json.as_ref(),
                 ),
                 insert_final_newline,
             ),
@@ -137,28 +137,24 @@ impl SourceFormatter {
         }
 
         #[cfg(feature = "napi")]
-        let is_embed_off = format_options.embedded_language_formatting.is_off();
+        let external_callbacks = {
+            let external_formatter = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled");
+
+            Some(external_formatter.to_external_callbacks(path, &format_options, external_options))
+        };
+
+        #[cfg(not(feature = "napi"))]
+        let external_callbacks = {
+            let _ = (path, external_options);
+            None
+        };
 
         let base_formatter = Formatter::new(&allocator, format_options);
-
-        #[cfg(feature = "napi")]
-        let formatted = {
-            if is_embed_off {
-                base_formatter.format(&ret.program)
-            } else {
-                let embedded_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter(external_options);
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
-            }
-        };
-        #[cfg(not(feature = "napi"))]
-        let formatted = {
-            let _ = external_options;
-            base_formatter.format(&ret.program)
-        };
+        let formatted =
+            base_formatter.format_with_external_callbacks(&ret.program, external_callbacks);
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -225,12 +221,11 @@ impl SourceFormatter {
         path: &Path,
         parser_name: &str,
         external_options: Value,
-        sort_package_json: bool,
+        sort_options: Option<&sort_package_json::SortOptions>,
     ) -> Result<String, OxcDiagnostic> {
-        let source_text: Cow<'_, str> = if sort_package_json {
-            let options = sort_package_json::SortOptions { sort_scripts: false, pretty: false };
+        let source_text: Cow<'_, str> = if let Some(options) = sort_options {
             Cow::Owned(
-                sort_package_json::sort_package_json_with_options(source_text, &options).map_err(
+                sort_package_json::sort_package_json_with_options(source_text, options).map_err(
                     |err| {
                         OxcDiagnostic::error(format!(
                             "Failed to sort package.json: {}\n{err}",

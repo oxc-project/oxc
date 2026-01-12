@@ -13,7 +13,7 @@ source: crates/oxc_linter/src/tester.rs
  8 │                             alt="Test picture"
    ╰────
   help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
-        See https://nextjs.org/docs/messages/no-img-element
+  note: See https://nextjs.org/docs/messages/no-img-element
 
   ⚠ eslint-plugin-next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
    ╭─[no_img_element.tsx:5:17]
@@ -27,7 +27,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                           alt="Test picture"
    ╰────
   help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
-        See https://nextjs.org/docs/messages/no-img-element
+  note: See https://nextjs.org/docs/messages/no-img-element
 
   ⚠ eslint-plugin-next(no-img-element): Using `<img>` could result in slower LCP and higher bandwidth.
    ╭─[no_img_element.tsx:4:7]
@@ -38,4 +38,4 @@ source: crates/oxc_linter/src/tester.rs
  5 │         );
    ╰────
   help: Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images.
-        See https://nextjs.org/docs/messages/no-img-element
+  note: See https://nextjs.org/docs/messages/no-img-element

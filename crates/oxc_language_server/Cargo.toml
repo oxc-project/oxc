@@ -1,6 +1,6 @@
 [package]
 name = "oxc_language_server"
-version = "1.36.0"
+version = "1.39.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -20,10 +20,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-env_logger = { workspace = true, features = ["humantime"] }
 futures = { workspace = true }
-log = { workspace = true }
 papaya = { workspace = true }
+tracing = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }

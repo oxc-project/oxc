@@ -35,7 +35,7 @@ impl<'a> ObjectLike<'a, '_> {
             // Check if parent is TSTypeAnnotation
             matches!(node.parent, AstNodes::TSTypeAnnotation(type_ann) if {
                 match &type_ann.parent {
-                    AstNodes::FormalParameter(param) => {
+                    AstNodes::FormalParameter(param) if param.initializer.is_none() => {
                         let AstNodes::FormalParameters(parameters) = &param.parent else {
                             unreachable!()
                         };
@@ -90,9 +90,8 @@ impl<'a> Format<'a> for ObjectLike<'a, '_> {
             write!(f, format_dangling_comments(self.span()).with_block_indent());
         } else {
             let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-            let should_expand = (f.options().expand == Expand::Auto
-                && self.members_have_leading_newline(f))
-                || f.options().expand == Expand::Always;
+            let should_expand =
+                f.options().expand == Expand::Auto && self.members_have_leading_newline(f);
 
             // If the object type is the type annotation of the only parameter in a function,
             // try to hug the parameter; we don't create a group and inline the contents here.

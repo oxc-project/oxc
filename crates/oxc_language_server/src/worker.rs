@@ -1,4 +1,3 @@
-use log::debug;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::json;
 use std::sync::Arc;
@@ -11,6 +10,7 @@ use tower_lsp_server::{
         TextEdit, Unregistration, Uri, WatchKind, WorkspaceEdit,
     },
 };
+use tracing::debug;
 
 use crate::{
     ToolRestartChanges,
@@ -59,21 +59,6 @@ impl WorkspaceWorker {
     /// Get the root URI of the worker
     pub fn get_root_uri(&self) -> &Uri {
         &self.root_uri
-    }
-
-    /// Check if the worker is responsible for the given URI
-    /// A worker is responsible for a URI if the URI is a file URI and is located within the root URI of the worker
-    /// e.g. root URI: file:///path/to/root
-    ///      responsible for: file:///path/to/root/file.js
-    ///      not responsible for: file:///path/to/other/file.js
-    ///
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
-    pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
-        if let Some(path) = uri.to_file_path() {
-            return path.starts_with(self.root_uri.to_file_path().unwrap());
-        }
-        false
     }
 
     /// Start all programs (linter, formatter) for the worker.
@@ -205,15 +190,23 @@ impl WorkspaceWorker {
     }
 
     /// Format a file with the current formatter
-    /// - If no file is not formattable or ignored, [`None`] is returned
+    /// - If the file is not formattable or is ignored, an empty vector is returned
     /// - If the file is formattable, but no changes are made, an empty vector is returned
-    pub async fn format_file(&self, uri: &Uri, content: Option<&str>) -> Option<Vec<TextEdit>> {
+    /// - If a tool error occurs, an Err is returned
+    pub async fn format_file(
+        &self,
+        uri: &Uri,
+        content: Option<&str>,
+    ) -> Result<Vec<TextEdit>, String> {
         for tool in self.tools.read().await.iter() {
-            if let Some(edits) = tool.run_format(uri, content) {
-                return Some(edits);
+            let edits = tool.run_format(uri, content)?;
+            // If no edits are made, continue to the next tool
+            if edits.is_empty() {
+                continue;
             }
+            return Ok(edits);
         }
-        None
+        Ok(Vec::new())
     }
 
     /// Shutdown the worker and return any necessary changes to be made after shutdown.
@@ -477,26 +470,6 @@ mod tests {
             WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new([]), false);
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
-    }
-
-    #[test]
-    fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/root").unwrap(),
-            Arc::new([]),
-            false,
-        );
-
-        assert!(
-            worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
-        );
-        assert!(worker.is_responsible_for_uri(
-            &Uri::from_str("file:///path/to/root/folder/file.js").unwrap()
-        ));
-        assert!(
-            !worker
-                .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
-        );
     }
 
     #[tokio::test]

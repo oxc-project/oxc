@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.108.0] - 2026-01-12
+
+### 🐛 Bug Fixes
+
+- 7422b7e parser/trivia: Correctly mark whether a block comment is on a newline (#17754) (camc314)
+- ef7e014 parser: Preserve `@__NO_SIDE_EFFECTS__` annotation with parenthesized expressions (#17711) (camc314)
+- 59a6228 parser: Detect TS1363 error for type-only imports with mixed default and named/namespace bindings (#17712) (Copilot)
+
+### ⚡ Performance
+
+- 3f4429c parser: Do not re-allocate TS interface heritage (#17692) (camchenry)
+
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 6870b64 parser: Add TS1363 error code (#17609) (Sysix)
+- a7e1643 parser: Add TS2528 error code to duplicate_default_export diagnostic (#17558) (camc314)
+
 ## [0.106.0] - 2025-12-29
 
 ### 🚀 Features

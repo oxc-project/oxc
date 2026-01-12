@@ -15,7 +15,7 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-use crate::{IsGlobalReference, builder::SemanticBuilder, diagnostics};
+use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnostics};
 
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
@@ -57,21 +57,48 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                         true
                     };
 
-                is_duplicate = if ctx.source_type.is_typescript() {
+                // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
+                // unless the name is used once for a getter and once for a setter and in no other entries,
+                // and the getter and setter are either both static or both non-static.
+                // For TypeScript, public elements with different static status are allowed (overloads, etc.),
+                // but private identifiers follow the same rules as JavaScript - static and instance
+                // elements cannot share the same private name.
+                is_duplicate = if element.is_private {
+                    is_duplicate
+                } else if ctx.source_type.is_typescript() {
                     element.r#static == prev_element.r#static && is_duplicate
                 } else {
-                    // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
-                    // unless the name is used once for a getter and once for a setter and in no other entries,
-                    // and the getter and setter are either both static or both non-static.
-                    element.is_private && is_duplicate
+                    false
                 };
 
                 if is_duplicate {
-                    ctx.error(diagnostics::redeclaration(
-                        &element.name,
-                        prev_element.span,
-                        element.span,
-                    ));
+                    #[cold]
+                    fn report_duplicate_class_element(
+                        element: &Element,
+                        prev_element: &Element,
+                        ctx: &SemanticBuilder<'_>,
+                    ) {
+                        if element.is_private
+                            && element.r#static != prev_element.r#static
+                            && ctx.source_type.is_typescript()
+                        {
+                            ctx.error(diagnostics::static_and_instance_private_identifier(
+                                &element.name,
+                                prev_element.span,
+                                element.span,
+                            ));
+                        } else {
+                            let span = prev_element.span;
+                            ctx.error(diagnostics::redeclaration(
+                                // `span` includes `#` for private identifiers
+                                span.source_text(ctx.source_text),
+                                span,
+                                element.span,
+                            ));
+                        }
+                    }
+
+                    report_duplicate_class_element(element, prev_element, ctx);
                 }
             }
         }
@@ -133,6 +160,11 @@ fn is_current_node_ambient_binding(symbol_id: Option<SymbolId>, ctx: &SemanticBu
 }
 
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
+    // `.d.ts` files are allowed to use `eval` and `arguments` as binding identifiers
+    if ctx.source_type.is_typescript_definition() {
+        return;
+    }
+
     if ctx.strict_mode() {
         // In strict mode, `eval` and `arguments` are banned as identifiers.
         if matches!(ident.name.as_str(), "eval" | "arguments") {
@@ -157,24 +189,11 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
                     is_declare_function(&ctx.nodes.parent_kind(parent.id()))
-                        || ctx.nodes.ancestor_kinds(parent.id()).nth(1).is_some_and(|node| {
-                            matches!(
-                                node,
-                                AstKind::TSFunctionType(_) | AstKind::TSMethodSignature(_)
-                            )
-                        })
                 }
                 AstKind::BindingRestElement(_) => {
                     let grand_parent = ctx.nodes.parent_node(parent.id());
                     is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
-                        || ctx.nodes.ancestor_kinds(grand_parent.id()).nth(1).is_some_and(|node| {
-                            matches!(
-                                node,
-                                AstKind::TSFunctionType(_) | AstKind::TSMethodSignature(_)
-                            )
-                        })
                 }
-                AstKind::TSTypeAliasDeclaration(_) | AstKind::TSInterfaceDeclaration(_) => true,
                 _ => false,
             };
 
@@ -206,6 +225,11 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
 }
 
 pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBuilder<'_>) {
+    // `.d.ts` files are allowed to use `eval` and `arguments` as identifier references
+    if ctx.source_type.is_typescript_definition() {
+        return;
+    }
+
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {

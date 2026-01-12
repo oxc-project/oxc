@@ -139,7 +139,7 @@ impl RuleTableSection {
         let rows: &Vec<RuleTableRow> = &self.rows;
         let rule_width = self.rule_column_width;
         let plugin_width = self.plugin_column_width;
-        writeln!(s, "## {} ({}):", category, rows.len()).unwrap();
+        writeln!(s, "## {} ({})", category, rows.len()).unwrap();
 
         writeln!(s, "{}", category.description()).unwrap();
 
