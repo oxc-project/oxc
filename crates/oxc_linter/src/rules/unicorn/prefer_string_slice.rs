@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::{Argument, MemberExpression}};
+use oxc_ast::{
+    AstKind,
+    ast::{Argument, MemberExpression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -64,7 +67,7 @@ impl Rule for PreferStringSlice {
                 prefer_string_slice_diagnostic(v.property.span, method_name),
                 |fixer| {
                     let method_fix = fixer.replace(v.property.span, "slice");
-                    
+
                     if !needs_second_arg_fix {
                         return method_fix;
                     }
@@ -93,7 +96,7 @@ impl Rule for PreferStringSlice {
                         second_arg.span(),
                         format!("({first_arg_text} + {second_arg_text})"),
                     );
-                    
+
                     method_fix.extend(arg_fix)
                 },
             );
