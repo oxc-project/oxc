@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.39.0] - 2026-01-12
+
+### 🐛 Bug Fixes
+
+- 49cf66e lsp: Fix workspace worker selection for nested and similar-named workspaces (#17853) (Copilot)
+
 ## [1.36.0] - 2025-12-29
 
 ### 🚀 Features

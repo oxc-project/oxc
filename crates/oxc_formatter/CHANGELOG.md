@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.24.0] - 2026-01-12
+
+### 🚀 Features
+
+- 539b350 formatter/sort_imports: Update `NODE_BUILTINS` modules (#17771) (nilptr)
+- 86c0168 oxfmt/sort_package_json: Handle `oxfmtrc.sort_scripts` option (#17738) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fdd1e1e formatter: Don't wrap parenthesis for type assertion when it's an declaration of export default (#17878) (Dunqing)
+- f0813ad formatter: Incorrect type annotation check for short argument (#17877) (Dunqing)
+- 9e89389 formatter/tailwindcss: Nested class string doesn't respect `singleQuote: true` (#17838) (Dunqing)
+- e2f534c formatter/sort_imports: Handle alignable comment with JsLabels (#17791) (leaysgur)
+- f0cedd4 formatter/tailwindcss: Class name is broken after sorting when its contains single quotes with `singleQuote: true` (#17790) (Dunqing)
+- 0563217 formatter: Classes will be stripped out when both `experimentalTailwindcss` and `experimentalSortImports` are enabled (#17726) (Dunqing)
+
+### ⚡ Performance
+
+- d1bc514 formatter: Optimize RegExpLiteral formatting to avoid heap allocations (#17797) (Dunqing)
+
 ## [0.23.0] - 2026-01-06
 
 ### 🐛 Bug Fixes
