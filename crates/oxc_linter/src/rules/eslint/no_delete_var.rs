@@ -59,9 +59,9 @@ impl Rule for NoDeleteVar {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![("delete x.prop;", None)];
+    let pass = vec!["delete x.prop;"];
 
-    let fail = vec![("delete x", None)];
+    let fail = vec!["delete x"];
 
     Tester::new(NoDeleteVar::NAME, NoDeleteVar::PLUGIN, pass, fail).test_and_snapshot();
 }
