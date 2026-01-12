@@ -163,16 +163,19 @@ impl TestCase {
         self.group_comment.as_deref()
     }
 
-    fn output(&self) -> Option<String> {
+    fn output(&self, need_config: bool) -> Option<String> {
         let code = format_code_snippet(self.code.as_ref()?);
         let output = format_code_snippet(self.output.as_ref()?);
-        let config = self.config.as_ref().map_or_else(
-            || "None".to_string(),
-            |config| format!("Some(serde_json::json!({config}))"),
-        );
 
-        // ("null==null", "null === null", None),
-        Some(format!(r"({code}, {output}, {config})"))
+        if need_config {
+            let config = self.config.as_ref().map_or_else(
+                || "None".to_string(),
+                |config| format!("Some(serde_json::json!({config}))"),
+            );
+            Some(format!(r"({code}, {output}, {config})"))
+        } else {
+            Some(format!(r"({code}, {output})"))
+        }
     }
 }
 
@@ -1477,6 +1480,9 @@ fn main() {
                 let mut codes = vec![];
                 let mut fix_codes = vec![];
                 let mut last_comment = String::new();
+                // Check if any case with output has a config
+                let need_config =
+                    cases.iter().any(|case| case.output.is_some() && case.config.is_some());
                 for case in cases {
                     let current_comment = case.group_comment();
                     let mut code = case.code(has_config, has_settings, has_filename);
@@ -1494,7 +1500,7 @@ fn main() {
                         );
                     }
 
-                    if let Some(output) = case.output() {
+                    if let Some(output) = case.output(need_config) {
                         fix_codes.push(output);
                     }
 
