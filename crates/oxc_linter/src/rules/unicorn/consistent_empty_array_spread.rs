@@ -108,52 +108,72 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"const array = foo ? [b, c] : []",
-        r"const array = foo ? 'bc' : ''",
-        r"const obj = { a, ...(foo ? {d: [b, c]} : {}) }",
-        r"const obj = { a, ...(foo ? {d: 'bc'} : {}) }",
-        r"const array = [ a, ...(foo ? [b, c] : []) ]",
-        r"const array = [ a, ...(foo ? 'bc' : '') ]",
+        "[,,,]",
+        "[...(test ? [] : [a, b])]",
+        "[...(test ? [a, b] : [])]",
+        r#"[...(test ? "" : "ab")]"#,
+        r#"[...(test ? "ab" : "")]"#,
+        r#"[...(test ? "" : unknown)]"#,
+        r#"[...(test ? unknown : "")]"#,
+        "[...(test ? [] : unknown)]",
+        "[...(test ? unknown : [])]",
+        r#"_ = {...(test ? "" : [a, b])}"#,
+        r#"_ = {...(test ? [] : "ab")}"#,
+        r#"call(...(test ? "" : [a, b]))"#,
+        r#"call(...(test ? [] : "ab"))"#,
+        r#"[...(test ? "ab" : [a, b])]"#,
+        r#"const EMPTY_STRING = ""; [...(test ? EMPTY_STRING : [a, b])]"#,
     ];
 
-    let fail: Vec<&str> = vec![
-        r"const array = [ a, ...(foo ? [b, c] : '') ]",
-        r"const array = [ a, ...(foo ? 'bc' : []) ]",
-        r"const array = [ a, ...(foo ? ['str', 'str'] : '') ]",
-        r"const array = [ a, ...(foo ? [1, 2, 3] : '') ]",
-        r"const array = [ {}, ...(foo ? [{}, {}] : '') ]",
+    let fail = vec![
+        r#"[
+                ...(test ? [] : "ab"),
+                ...(test ? "ab" : []),
+            ];"#,
+        // r#"const STRING = "ab";
+        //     [
+        //         ...(test ? [] : STRING),
+        //         ...(test ? STRING : []),
+        //     ];"#,
+        r#"[
+                ...(test ? "" : [a, b]),
+                ...(test ? [a, b] : ""),
+            ];"#,
+        // r#"const ARRAY = ["a", "b"];
+        //     [
+        //         /* hole */,
+        //         ...(test ? "" : ARRAY),
+        //         /* hole */,
+        //         ...(test ? ARRAY : ""),
+        //         /* hole */,
+        //     ];"#,
+        r#"[...(foo ? "" : [])]"#,
     ];
 
     let fix = vec![
         (
             r"const array = [ a, ...(foo ? [b, c] : '') ]",
             r"const array = [ a, ...(foo ? [b, c] : []) ]",
-            None,
         ),
         (
             r"const array = [ a, ...(foo ? 'bc' : []) ]",
             r"const array = [ a, ...(foo ? 'bc' : '') ]",
-            None,
         ),
         (
             r"const array = [ a, ...(foo ? ['str', 'str', 'str'] : '') ]",
             r"const array = [ a, ...(foo ? ['str', 'str', 'str'] : []) ]",
-            None,
         ),
         (
             r"const array = [ a, ...(foo ? [1, 2, 3] : '') ]",
             r"const array = [ a, ...(foo ? [1, 2, 3] : []) ]",
-            None,
         ),
         (
             r"const array = [ {}, ...(foo ? [{}, {}, {}] : '') ]",
             r"const array = [ {}, ...(foo ? [{}, {}, {}] : []) ]",
-            None,
         ),
         (
             r"const array = [ a, ...(foo ? [b, c] : ''), b, ...(foo ? 'bc' : []), c, ...(foo ? [1, 2, 3] : '') ]",
             r"const array = [ a, ...(foo ? [b, c] : []), b, ...(foo ? 'bc' : ''), c, ...(foo ? [1, 2, 3] : []) ]",
-            None,
         ),
     ];
 
