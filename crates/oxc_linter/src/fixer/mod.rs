@@ -185,6 +185,11 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.ctx.find_next_token_from(start, token)
     }
 
+    #[inline]
+    pub fn find_next_token_within(&self, start: u32, end: u32, token: &str) -> Option<u32> {
+        self.ctx.find_next_token_within(start, end, token)
+    }
+
     #[must_use]
     pub fn codegen(self) -> Codegen<'a> {
         Codegen::new()
