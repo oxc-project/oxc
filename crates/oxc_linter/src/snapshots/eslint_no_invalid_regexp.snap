@@ -270,3 +270,45 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─      ─
    ╰────
   help: Duplicate names must be in different alternatives
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated modifier
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?ii:foo)')
+   ·               ──
+   ╰────
+  help: Each modifier can only appear once
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated modifier
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?-ii:foo)')
+   ·               ───
+   ╰────
+  help: Each modifier can only appear once
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?i-i:foo)')
+   ·               ───
+   ╰────
+  help: A modifier cannot be both enabled and disabled
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Empty modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?-:foo)')
+   ·               ─
+   ╰────
+  help: Use `(?:...)` for non-capturing groups or add modifiers
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?g:foo)')
+   ·               ▲
+   ╰────
+  help: Valid modifiers are: i, m, s
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?-u:foo)')
+   ·               ─
+   ╰────
+  help: Valid modifiers are: i, m, s

@@ -535,6 +535,11 @@ fn test() {
                 serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
+        // TODO: Update rule logic to get these tests passing.
+        // ("using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        // ("using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        // ("await using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        // ("await using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
     ];
 
     let fail = vec![
@@ -662,9 +667,9 @@ fn test() {
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
         ("var foo = object.foo;", "var {foo} = object;", None),
         ("var foo = (a, b).foo;", "var {foo} = (a, b);", None),
-        //     ("var length = (() => {}).length;", "var {length} = () => {};", None),
-        //     ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
-        //     ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
+        // ("var length = (() => {}).length;", "var {length} = () => {};", None),
+        // ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
+        // ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
         ("var foo = (f()).foo;", "var {foo} = f();", None),
         ("var foo = object.bar.foo;", "var {foo} = object.bar;", None),
         (
