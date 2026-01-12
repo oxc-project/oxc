@@ -254,14 +254,27 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                                 }
                             }
                             Declaration::VariableDeclaration(var_decl) => {
-                                var_decl.declarations.iter().for_each(|decl| {
-                                    if !decl.kind.is_const() {
-                                        self.ctx.error(namespace_exporting_non_const(decl.span));
-                                    }
-                                });
-                                let stmts =
-                                    Self::handle_variable_declaration(var_decl, &uid_binding, ctx);
-                                new_stmts.extend(stmts);
+                                // Check if any declaration is non-const
+                                let has_non_const =
+                                    var_decl.declarations.iter().any(|decl| !decl.kind.is_const());
+
+                                if has_non_const {
+                                    // Emit error for all non-const declarations
+                                    var_decl.declarations.iter().for_each(|decl| {
+                                        if !decl.kind.is_const() {
+                                            self.ctx
+                                                .error(namespace_exporting_non_const(decl.span));
+                                        }
+                                    });
+                                    // Skip transformation - don't add to new_stmts
+                                } else {
+                                    let stmts = Self::handle_variable_declaration(
+                                        var_decl,
+                                        &uid_binding,
+                                        ctx,
+                                    );
+                                    new_stmts.extend(stmts);
+                                }
                             }
                             Declaration::TSModuleDeclaration(module_decl) => {
                                 self.handle_nested(
