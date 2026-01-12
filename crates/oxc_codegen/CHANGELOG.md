@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.108.0] - 2026-01-12
+
+### 🚀 Features
+
+- 10426af codegen: Print soft space between inline block comments on the same line (#17799) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7422b7e parser/trivia: Correctly mark whether a block comment is on a newline (#17754) (camc314)
+- c32e8d5 codegen: Wrap `TSAsExpression` in parens when used with in/instanceof operators (#17752) (camc314)
+- ef7e014 parser: Preserve `@__NO_SIDE_EFFECTS__` annotation with parenthesized expressions (#17711) (camc314)
+
 ## [0.106.0] - 2025-12-29
 
 ### 🚀 Features
