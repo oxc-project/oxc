@@ -163,6 +163,7 @@ update-rule-tests name plugin='eslint':
   just fmt
 
 # Legacy aliases for backward compatibility
+new-eslint-rule name: (new-rule name "eslint")
 new-jest-rule name: (new-rule name "jest")
 new-ts-rule name: (new-rule name "typescript")
 new-unicorn-rule name: (new-rule name "unicorn")
