@@ -297,7 +297,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
                     f.options()
                         .experimental_tailwindcss
                         .as_ref()
-                        .map(|opts| TailwindContextEntry::new(false, opts.preserve_whitespace))
+                        .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
                 } else {
                     None
                 };
