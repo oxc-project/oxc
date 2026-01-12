@@ -1,7 +1,7 @@
-use oxc_ast::{AstKind, ast::MemberExpression};
+use oxc_ast::{AstKind, ast::{Argument, MemberExpression}};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -50,12 +50,52 @@ impl Rule for PreferStringSlice {
         };
 
         if let MemberExpression::StaticMemberExpression(v) = member_expr {
-            if !matches!(v.property.name.as_str(), "substr" | "substring") {
+            let method_name = v.property.name.as_str();
+            if !matches!(method_name, "substr" | "substring") {
                 return;
             }
+
+            // For substr(start, length), we need to convert the second argument from length to end index
+            // For substring(start, end), the arguments are already correct
+            let is_substr = method_name == "substr";
+            let needs_second_arg_fix = is_substr && call_expr.arguments.len() == 2;
+
             ctx.diagnostic_with_fix(
-                prefer_string_slice_diagnostic(v.property.span, v.property.name.as_str()),
-                |fixer| fixer.replace(v.property.span, "slice"),
+                prefer_string_slice_diagnostic(v.property.span, method_name),
+                |fixer| {
+                    let method_fix = fixer.replace(v.property.span, "slice");
+                    
+                    if !needs_second_arg_fix {
+                        return method_fix;
+                    }
+
+                    // Get the two arguments
+                    let Some(first_arg) = call_expr.arguments.get(0) else {
+                        return method_fix;
+                    };
+                    let Some(second_arg) = call_expr.arguments.get(1) else {
+                        return method_fix;
+                    };
+
+                    // Skip if either argument is a spread element
+                    if matches!(first_arg, Argument::SpreadElement(_))
+                        || matches!(second_arg, Argument::SpreadElement(_))
+                    {
+                        return method_fix;
+                    }
+
+                    // Get the source text for both arguments
+                    let first_arg_text = ctx.source_range(first_arg.span());
+                    let second_arg_text = ctx.source_range(second_arg.span());
+
+                    // Replace second argument: it becomes (first + second)
+                    let arg_fix = fixer.replace(
+                        second_arg.span(),
+                        format!("({first_arg_text} + {second_arg_text})"),
+                    );
+                    
+                    method_fix.extend(arg_fix)
+                },
             );
         }
     }
@@ -140,6 +180,14 @@ fn test() {
         ("foo.bar?.baz?.substr()", "foo.bar?.baz?.slice()"),
         ("foo.bar?.baz.substring()", "foo.bar?.baz.slice()"),
         ("foo.bar.baz?.substr()", "foo.bar.baz?.slice()"),
+        // Test substr with two arguments - second argument should be converted from length to end
+        (r#""foo".substr(1, 2)"#, r#""foo".slice(1, (1 + 2))"#),
+        (r#""foo".substr(11, 8)"#, r#""foo".slice(11, (11 + 8))"#),
+        (r#"str.substr(start, length)"#, r#"str.slice(start, (start + length))"#),
+        (r#""foo".substr(0, 5)"#, r#""foo".slice(0, (0 + 5))"#),
+        // Test substring with two arguments - should remain unchanged except method name
+        (r#""foo".substring(1, 2)"#, r#""foo".slice(1, 2)"#),
+        (r#""foo".substring(1, 3)"#, r#""foo".slice(1, 3)"#),
     ];
 
     Tester::new(PreferStringSlice::NAME, PreferStringSlice::PLUGIN, pass, fail)
