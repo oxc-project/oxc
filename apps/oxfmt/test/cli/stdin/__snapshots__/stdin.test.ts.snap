@@ -24,3 +24,10 @@ exports[`--stdin-filepath > should format TS code from stdin 1`] = `
   "stdout": "const x: number = 1;",
 }
 `;
+
+exports[`--stdin-filepath > should not report \`WouldBlock\` error on large file piped to wc 1`] = `
+{
+  "exitCode": 0,
+  "stderr": "",
+}
+`;

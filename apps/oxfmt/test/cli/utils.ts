@@ -23,6 +23,12 @@ export function runCli(cwd: string, args: string[]) {
   });
 }
 
+export function runCliStdin(input: string, filepath: string, pipe?: string) {
+  let cmd = `node ${CLI_PATH} --stdin-filepath=${filepath}`;
+  if (pipe) cmd += ` | ${pipe}`;
+  return execa({ shell: true, reject: false, input })`${cmd}`;
+}
+
 // Test function for running the CLI with various arguments
 export async function runAndSnapshot(cwd: string, testCases: string[][]): Promise<string> {
   const snapshot = [];
