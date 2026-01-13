@@ -2050,6 +2050,32 @@ import "node:os";
     );
 }
 
+#[test]
+fn should_sort_multiline_import_containing_comment() {
+    // "a" -> "b" -> "c"
+    assert_format(
+        r#"
+import c from "c";
+import b from "b";
+import {
+  type Data,
+  // this comment makes the source of this import become "Data"
+  xyz,
+} from "a";
+"#,
+        r#"{ "experimentalSortImports": {} }"#,
+        r#"
+import {
+  type Data,
+  // this comment makes the source of this import become "Data"
+  xyz,
+} from "a";
+import b from "b";
+import c from "c";
+"#,
+    );
+}
+
 // ---
 
 #[test]
