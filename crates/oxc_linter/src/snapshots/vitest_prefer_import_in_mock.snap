@@ -1,0 +1,62 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock('foo', () => {})
+   ·         ───────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `foo` with `import('foo')`
+
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock("node:fs/promises")
+   ·         ──────────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `node:fs/promises` with `import('node:fs/promises')`
+
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock("./foo.js", () => ({ Foo: vi.fn() }))
+   ·         ────────────────────────────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `./foo.js` with `import('./foo.js')`
+
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:3:36]
+ 2 │                     import { vi as renamedVi } from 'vitest';
+ 3 │                     renamedVi.mock('./foo.js', () => ({ Foo: vi.fn() }))
+   ·                                    ────────────────────────────────────
+ 4 │                   
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `./foo.js` with `import('./foo.js')`
+
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock('foo', () => {})
+   ·         ───────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `foo` with `import('foo')`
+
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock("node:fs/promises")
+   ·         ──────────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `node:fs/promises` with `import('node:fs/promises')`
+
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock("./foo.js", () => ({ Foo: vi.fn() }))
+   ·         ────────────────────────────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `./foo.js` with `import('./foo.js')`
+
+  ⚠ eslint-plugin-vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:3:36]
+ 2 │                     import { vi as renamedVi } from 'vitest';
+ 3 │                     renamedVi.mock('./foo.js', () => ({ Foo: vi.fn() }))
+   ·                                    ────────────────────────────────────
+ 4 │                   
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `./foo.js` with `import('./foo.js')`
