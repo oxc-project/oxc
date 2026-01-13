@@ -39,8 +39,13 @@ fn get_replacement_for_position(position: &str) -> Option<&'static str> {
 }
 
 fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
-    let parent = ctx.nodes().parent_node(node.id());
-    matches!(parent.kind(), AstKind::ExpressionStatement(_))
+    let parent_node = ctx.nodes().parent_node(node.id());
+    let grandparent_node = ctx.nodes().parent_node(parent_node.id());
+    matches!(
+        (parent_node.kind(), grandparent_node.kind()),
+        (AstKind::ExpressionStatement(_), _)
+            | (AstKind::ChainExpression(_), AstKind::ExpressionStatement(_))
+    )
 }
 
 declare_oxc_lint!(
