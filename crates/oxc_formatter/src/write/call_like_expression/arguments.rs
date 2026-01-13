@@ -22,19 +22,16 @@ use crate::{
     },
     write,
     write::{
-        FormatFunctionOptions,
-        arrow_function_expression::is_multiline_template_starting_on_same_line,
+        FormatFunctionOptions, FormatJsArrowFunctionExpression,
+        FormatJsArrowFunctionExpressionOptions,
+        array_element_list::can_concisely_print_array_list,
+        arrow_function_expression::{
+            FunctionCacheMode, GroupedCallArgumentLayout,
+            is_multiline_template_starting_on_same_line,
+        },
+        function::FormatFunction,
+        parameters::has_only_simple_parameters,
     },
-};
-
-use super::{
-    FormatJsArrowFunctionExpression,
-    array_element_list::can_concisely_print_array_list,
-    arrow_function_expression::{
-        FormatJsArrowFunctionExpressionOptions, FunctionCacheMode, GroupedCallArgumentLayout,
-    },
-    function::FormatFunction,
-    parameters::has_only_simple_parameters,
 };
 
 impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {

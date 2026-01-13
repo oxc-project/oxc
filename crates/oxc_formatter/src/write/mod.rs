@@ -7,14 +7,13 @@ mod assignment_pattern_property_list;
 mod binary_like_expression;
 mod binding_property_list;
 mod block_statement;
-mod call_arguments;
+mod call_like_expression;
 mod class;
 mod decorators;
 mod export_declarations;
 mod function;
 mod function_type;
 mod import_declaration;
-mod import_expression;
 mod intersection_type;
 mod jsx;
 mod mapped_type;
@@ -50,7 +49,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting, format_args,
     formatter::{
-        Buffer, Format, Formatter, TailwindContextEntry,
+        Format, Formatter,
         prelude::*,
         separated::FormatSeparatedIter,
         token::number::{NumberFormatOptions, format_number_token},
@@ -64,15 +63,13 @@ use crate::{
     utils::{
         array::write_array_node,
         assignment_like::AssignmentLike,
-        call_expression::is_test_call_expression,
         conditional::ConditionalLike,
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        member_chain::MemberChain,
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        tailwindcss::{is_tailwind_function_call, write_tailwind_string_literal},
+        tailwindcss::write_tailwind_string_literal,
     },
     write,
     write::parameters::can_avoid_parentheses,
@@ -80,9 +77,7 @@ use crate::{
 
 use self::{
     array_expression::FormatArrayExpression,
-    arrow_function_expression::is_multiline_template_starting_on_same_line,
     block_statement::is_empty_block,
-    call_arguments::is_simple_module_import,
     class::format_grouped_parameters_with_return_type_for_method,
     object_like::ObjectLike,
     object_pattern_like::ObjectPatternLike,
@@ -229,110 +224,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectProperty<'a>> {
         } else {
             write!(f, AssignmentLike::ObjectProperty(self));
         }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        let callee = self.callee();
-        let type_arguments = self.type_arguments();
-        let arguments = self.arguments();
-        let optional = self.optional();
-
-        // Check if this is a Tailwind function call (e.g., clsx, cn, tw)
-        let is_tailwind_call = f
-            .options()
-            .experimental_tailwindcss
-            .as_ref()
-            .is_some_and(|opts| is_tailwind_function_call(&self.callee, opts));
-
-        // For nested non-Tailwind calls inside a Tailwind context, disable sorting
-        // to prevent sorting strings inside the nested call's arguments.
-        // (e.g., `classNames("a", x.includes("\n") ? "b" : "c")` - don't sort "\n")
-        let was_disabled =
-            if !is_tailwind_call && let Some(ctx) = f.context_mut().tailwind_context_mut() {
-                let was = ctx.disabled;
-                ctx.disabled = true;
-                Some(was)
-            } else {
-                None
-            };
-
-        let is_template_literal_single_arg = arguments.len() == 1
-            && arguments.first().unwrap().as_expression().is_some_and(|expr| {
-                is_multiline_template_starting_on_same_line(expr, f.source_text())
-            });
-
-        if !is_template_literal_single_arg
-            && matches!(
-                callee.as_ref(),
-                Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
-            )
-            && !is_simple_module_import(self.arguments(), f.comments())
-            && !is_test_call_expression(self)
-        {
-            MemberChain::from_call_expression(self, f).fmt(f);
-        } else {
-            let format_inner = format_with(|f| {
-                // Preserve trailing comments of the callee in the following cases:
-                // `call /**/()`
-                // `call /**/<T>()`
-                if self.type_arguments.is_some() {
-                    write!(f, [callee]);
-                } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(callee)]);
-
-                    if self.arguments.is_empty() {
-                        let callee_trailing_comments = f
-                            .context()
-                            .comments()
-                            .comments_before_character(self.callee.span().end, b'(');
-                        write!(f, FormatTrailingComments::Comments(callee_trailing_comments));
-                    }
-                }
-                write!(f, [optional.then_some("?."), type_arguments]);
-
-                // If this IS a Tailwind function call, push the Tailwind context
-                let tailwind_ctx_to_push = if is_tailwind_call {
-                    f.options()
-                        .experimental_tailwindcss
-                        .as_ref()
-                        .map(|opts| TailwindContextEntry::new(opts.preserve_whitespace))
-                } else {
-                    None
-                };
-
-                // Push Tailwind context before formatting arguments
-                if let Some(ctx) = tailwind_ctx_to_push {
-                    f.context_mut().push_tailwind_context(ctx);
-                }
-
-                write!(f, arguments);
-
-                // Pop Tailwind context after formatting
-                if tailwind_ctx_to_push.is_some() {
-                    f.context_mut().pop_tailwind_context();
-                }
-            });
-            if matches!(callee.as_ref(), Expression::CallExpression(_)) {
-                write!(f, [group(&format_inner)]);
-            } else {
-                write!(f, [format_inner]);
-            }
-        }
-
-        // Restore the previous disabled state
-        if let Some(was) = was_disabled
-            && let Some(ctx) = f.context_mut().tailwind_context_mut()
-        {
-            ctx.disabled = was;
-        }
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, ["new", space(), self.callee(), self.type_arguments(), self.arguments()]);
     }
 }
 

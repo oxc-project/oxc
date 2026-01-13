@@ -197,7 +197,7 @@ pub fn should_group_function_parameters<'a>(
 
 /// A wrapper that formats content and caches the result based on the given cache mode.
 ///
-/// It is useful in cases like in [`super::call_arguments`] because it allows printing a node
+/// It is useful in cases like in arguments of [`super::call_like_expression`] because it allows printing a node
 /// a few times to find a proper layout.
 /// However, the current architecture of the formatter isn't able to do things like this,
 /// because it will cause the comments printed after the first printing to be lost in the
