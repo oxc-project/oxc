@@ -95,8 +95,10 @@ pub async fn run_cli(
             init_miette();
 
             // TODO: `.with_external_formatter()` is not needed, just pass with `new(command, external_formatter)`
-            let result =
-                StdinRunner::new(command).with_external_formatter(Some(external_formatter)).run();
+            let result = StdinRunner::new(command)
+                .with_external_formatter(Some(external_formatter))
+                .run()
+                .await;
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
@@ -104,8 +106,10 @@ pub async fn run_cli(
             init_miette();
             init_rayon(command.runtime_options.threads);
 
-            let result =
-                FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run();
+            let result = FormatRunner::new(command)
+                .with_external_formatter(Some(external_formatter))
+                .run()
+                .await;
 
             ("cli".to_string(), Some(result.exit_code()))
         }

@@ -1,4 +1,6 @@
-use std::{fs, io, io::Write, path::Path};
+use std::{fs, io, path::Path};
+
+use tokio::io::{AsyncWrite, AsyncWriteExt, BufWriter, stderr, stdout};
 
 /// To debug `oxc_formatter`:
 /// `OXC_LOG=oxc_formatter oxfmt`
@@ -38,17 +40,25 @@ pub fn read_to_string(path: &Path) -> io::Result<String> {
     Ok(unsafe { String::from_utf8_unchecked(bytes) })
 }
 
-pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
-    use std::io::{Error, ErrorKind};
-    fn check_for_writer_error(error: Error) -> Result<(), Error> {
-        // Do not panic when the process is killed (e.g. piping into `less`).
-        if matches!(error.kind(), ErrorKind::Interrupted | ErrorKind::BrokenPipe) {
-            Ok(())
-        } else {
-            Err(error)
-        }
-    }
+/// Prints a string to stdout with buffering.
+pub async fn print_stdout(message: &str) {
+    write_buffered(stdout(), message.as_bytes()).await;
+}
 
-    writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
-    writer.flush().unwrap();
+/// Prints a string to stderr with buffering.
+pub async fn print_stderr(message: &str) {
+    write_buffered(stderr(), message.as_bytes()).await;
+}
+
+/// Writes bytes to stderr with buffering.
+pub async fn write_stderr(message: &[u8]) {
+    write_buffered(stderr(), message).await;
+}
+
+async fn write_buffered<W: AsyncWrite + Unpin>(writer: W, message: &[u8]) {
+    // stdio is blocked by `LineWriter`, use a `BufWriter` to reduce syscalls.
+    // See https://github.com/rust-lang/rust/issues/60673
+    let mut writer = BufWriter::new(writer);
+    let _ = writer.write_all(message).await;
+    let _ = writer.flush().await;
 }

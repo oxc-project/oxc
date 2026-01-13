@@ -1,6 +1,6 @@
 use std::{
     env,
-    io::{self, BufWriter, Read},
+    io::{self, Read},
     path::PathBuf,
 };
 
@@ -39,10 +39,7 @@ impl StdinRunner {
         self
     }
 
-    pub fn run(self) -> CliRunResult {
-        let stdout = &mut BufWriter::new(io::stdout());
-        let stderr = &mut BufWriter::new(io::stderr());
-
+    pub async fn run(self) -> CliRunResult {
         let cwd = self.cwd;
         let FormatCommand { mode, config_options, .. } = self.options;
 
@@ -58,7 +55,7 @@ impl StdinRunner {
         // Read source code from stdin
         let mut source_text = String::new();
         if let Err(err) = io::stdin().read_to_string(&mut source_text) {
-            utils::print_and_flush(stderr, &format!("Failed to read from stdin: {err}\n"));
+            utils::print_stderr(&format!("Failed to read from stdin: {err}\n")).await;
             return CliRunResult::InvalidOptionConfig;
         }
 
@@ -72,17 +69,14 @@ impl StdinRunner {
         ) {
             Ok(r) => r,
             Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to load configuration file.\n{err}\n"),
-                );
+                utils::print_stderr(&format!("Failed to load configuration file.\n{err}\n")).await;
                 return CliRunResult::InvalidOptionConfig;
             }
         };
         match config_resolver.build_and_validate() {
             Ok(_) => {}
             Err(err) => {
-                utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
+                utils::print_stderr(&format!("Failed to parse configuration.\n{err}\n")).await;
                 return CliRunResult::InvalidOptionConfig;
             }
         }
@@ -92,17 +86,14 @@ impl StdinRunner {
             // TODO: Plugins support
             Ok(_) => {}
             Err(err) => {
-                utils::print_and_flush(
-                    stderr,
-                    &format!("Failed to setup external formatter.\n{err}\n"),
-                );
+                utils::print_stderr(&format!("Failed to setup external formatter.\n{err}\n")).await;
                 return CliRunResult::InvalidOptionConfig;
             }
         }
 
         // Determine format strategy from filepath
         let Ok(strategy) = FormatFileStrategy::try_from(filepath) else {
-            utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
+            utils::print_stderr("Unsupported file type for stdin-filepath\n").await;
             return CliRunResult::InvalidOptionConfig;
         };
 
@@ -118,12 +109,12 @@ impl StdinRunner {
             source_formatter.format(&strategy, &source_text, resolved_options)
         }) {
             FormatResult::Success { code, .. } => {
-                utils::print_and_flush(stdout, &code);
+                utils::print_stdout(&code).await;
                 CliRunResult::FormatSucceeded
             }
             FormatResult::Error(errors) => {
                 for err in errors {
-                    utils::print_and_flush(stderr, &format!("{err}\n"));
+                    utils::print_stderr(&format!("{err}\n")).await;
                 }
                 CliRunResult::FormatFailed
             }

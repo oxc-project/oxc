@@ -50,7 +50,7 @@ serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 sort-package-json = { workspace = true }
 oxc-toml = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "io-util", "io-std"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 tower-lsp-server = { workspace = true, features = ["proposed"] }

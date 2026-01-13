@@ -14,5 +14,5 @@ async fn main() -> CliRunResult {
     init_tracing();
     init_miette();
     init_rayon(command.runtime_options.threads);
-    FormatRunner::new(command).run()
+    FormatRunner::new(command).run().await
 }
