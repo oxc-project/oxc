@@ -652,6 +652,7 @@ pub use crate::rules::vitest::no_import_node_test::NoImportNodeTest as VitestNoI
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
+pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
@@ -1325,6 +1326,7 @@ pub enum RuleEnum {
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
+    VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
@@ -1997,32 +1999,33 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => 637usize,
             Self::VitestPreferCalledTimes(_) => 638usize,
             Self::VitestPreferDescribeFunctionTitle(_) => 639usize,
-            Self::VitestPreferToBeFalsy(_) => 640usize,
-            Self::VitestPreferToBeObject(_) => 641usize,
-            Self::VitestPreferToBeTruthy(_) => 642usize,
-            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 643usize,
-            Self::VitestWarnTodo(_) => 644usize,
-            Self::NodeGlobalRequire(_) => 645usize,
-            Self::NodeNoExportsAssign(_) => 646usize,
-            Self::NodeNoNewRequire(_) => 647usize,
-            Self::NodeNoProcessEnv(_) => 648usize,
-            Self::VueDefineEmitsDeclaration(_) => 649usize,
-            Self::VueDefinePropsDeclaration(_) => 650usize,
-            Self::VueDefinePropsDestructuring(_) => 651usize,
-            Self::VueMaxProps(_) => 652usize,
-            Self::VueNoArrowFunctionsInWatch(_) => 653usize,
-            Self::VueNoDeprecatedDestroyedLifecycle(_) => 654usize,
-            Self::VueNoExportInScriptSetup(_) => 655usize,
-            Self::VueNoImportCompilerMacros(_) => 656usize,
-            Self::VueNoLifecycleAfterAwait(_) => 657usize,
-            Self::VueNoMultipleSlotArgs(_) => 658usize,
-            Self::VueNoRequiredPropWithDefault(_) => 659usize,
-            Self::VueNoThisInBeforeRouteEnter(_) => 660usize,
-            Self::VuePreferImportFromVue(_) => 661usize,
-            Self::VueRequireDefaultExport(_) => 662usize,
-            Self::VueRequireTypedRef(_) => 663usize,
-            Self::VueValidDefineEmits(_) => 664usize,
-            Self::VueValidDefineProps(_) => 665usize,
+            Self::VitestPreferExpectTypeOf(_) => 640usize,
+            Self::VitestPreferToBeFalsy(_) => 641usize,
+            Self::VitestPreferToBeObject(_) => 642usize,
+            Self::VitestPreferToBeTruthy(_) => 643usize,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 644usize,
+            Self::VitestWarnTodo(_) => 645usize,
+            Self::NodeGlobalRequire(_) => 646usize,
+            Self::NodeNoExportsAssign(_) => 647usize,
+            Self::NodeNoNewRequire(_) => 648usize,
+            Self::NodeNoProcessEnv(_) => 649usize,
+            Self::VueDefineEmitsDeclaration(_) => 650usize,
+            Self::VueDefinePropsDeclaration(_) => 651usize,
+            Self::VueDefinePropsDestructuring(_) => 652usize,
+            Self::VueMaxProps(_) => 653usize,
+            Self::VueNoArrowFunctionsInWatch(_) => 654usize,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => 655usize,
+            Self::VueNoExportInScriptSetup(_) => 656usize,
+            Self::VueNoImportCompilerMacros(_) => 657usize,
+            Self::VueNoLifecycleAfterAwait(_) => 658usize,
+            Self::VueNoMultipleSlotArgs(_) => 659usize,
+            Self::VueNoRequiredPropWithDefault(_) => 660usize,
+            Self::VueNoThisInBeforeRouteEnter(_) => 661usize,
+            Self::VuePreferImportFromVue(_) => 662usize,
+            Self::VueRequireDefaultExport(_) => 663usize,
+            Self::VueRequireTypedRef(_) => 664usize,
+            Self::VueValidDefineEmits(_) => 665usize,
+            Self::VueValidDefineProps(_) => 666usize,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -2749,6 +2752,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
@@ -3543,6 +3547,7 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::CATEGORY,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
@@ -4300,6 +4305,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
@@ -5233,6 +5239,7 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::documentation(),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
@@ -7071,6 +7078,8 @@ impl RuleEnum {
                 VitestPreferDescribeFunctionTitle::config_schema(generator)
                     .or_else(|| VitestPreferDescribeFunctionTitle::schema(generator))
             }
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::config_schema(generator)
+                .or_else(|| VitestPreferExpectTypeOf::schema(generator)),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::config_schema(generator)
                 .or_else(|| VitestPreferToBeFalsy::schema(generator)),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::config_schema(generator)
@@ -7788,6 +7797,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
+            Self::VitestPreferExpectTypeOf(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
@@ -9863,6 +9873,9 @@ impl RuleEnum {
                     VitestPreferDescribeFunctionTitle::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferExpectTypeOf(_) => Ok(Self::VitestPreferExpectTypeOf(
+                VitestPreferExpectTypeOf::from_configuration(value)?,
+            )),
             Self::VitestPreferToBeFalsy(_) => {
                 Ok(Self::VitestPreferToBeFalsy(VitestPreferToBeFalsy::from_configuration(value)?))
             }
@@ -10589,6 +10602,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
+            Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
@@ -11261,6 +11275,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
+            Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
@@ -11931,6 +11946,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
+            Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
@@ -12687,6 +12703,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13359,6 +13376,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
+            Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
@@ -14289,6 +14307,7 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
@@ -15108,6 +15127,7 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
@@ -15782,6 +15802,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
+            Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
@@ -16452,6 +16473,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
+            Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
@@ -17226,6 +17248,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
+        RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
