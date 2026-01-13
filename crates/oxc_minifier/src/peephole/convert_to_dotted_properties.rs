@@ -139,12 +139,12 @@ mod test {
         );
         test(
             "o = {['x']: async function(x) { return await x + 1; }};",
-            "o = {x:async function (x) { return await x + 1; }};",
+            "o = {async x(x) { return await x + 1; }};",
         );
-        test("o = {['x']: function*(x) {}};", "o = {x: function*(x) {}};");
+        test("o = {['x']: function*(x) {}};", "o = {*x(x) {}};");
         test(
             "o = {['x']: async function*(x) { return await x + 1; }};",
-            "o = {x:async function*(x) { return await x + 1; }};",
+            "o = {async *x(x) { return await x + 1; }};",
         );
         test("class C {'x' = 0;  ['y'] = 1;}", "class C { x= 0;y= 1;}");
         test("class C {'m'() {} }", "class C {m() {}}");
