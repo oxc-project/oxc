@@ -14,7 +14,7 @@ use crate::core::{
 pub struct StdinRunner {
     options: FormatCommand,
     cwd: PathBuf,
-    external_formatter: Option<ExternalFormatter>,
+    external_formatter: ExternalFormatter,
 }
 
 impl StdinRunner {
@@ -22,21 +22,12 @@ impl StdinRunner {
     ///
     /// # Panics
     /// Panics if the current working directory cannot be determined.
-    pub fn new(options: FormatCommand) -> Self {
+    pub fn new(options: FormatCommand, external_formatter: ExternalFormatter) -> Self {
         Self {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
-            external_formatter: None,
+            external_formatter,
         }
-    }
-
-    #[must_use]
-    pub fn with_external_formatter(
-        mut self,
-        external_formatter: Option<ExternalFormatter>,
-    ) -> Self {
-        self.external_formatter = external_formatter;
-        self
     }
 
     pub fn run(self) -> CliRunResult {
@@ -48,9 +39,6 @@ impl StdinRunner {
 
         let Mode::Stdin(filepath) = mode else {
             unreachable!("`StdinRunner::run()` called with non-Stdin mode");
-        };
-        let Some(external_formatter) = self.external_formatter else {
-            unreachable!("`StdinRunner::run()` called without `external_formatter`");
         };
         // Single threaded for stdin formatting
         let num_of_threads = 1;
@@ -88,7 +76,7 @@ impl StdinRunner {
         }
 
         // Use `block_in_place()` to avoid nested async runtime access
-        match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
+        match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
             // TODO: Plugins support
             Ok(_) => {}
             Err(err) => {
@@ -110,8 +98,8 @@ impl StdinRunner {
         let resolved_options = config_resolver.resolve(&strategy);
 
         // Create formatter and format
-        let source_formatter =
-            SourceFormatter::new(num_of_threads).with_external_formatter(Some(external_formatter));
+        let source_formatter = SourceFormatter::new(num_of_threads)
+            .with_external_formatter(Some(self.external_formatter));
 
         // Use `block_in_place()` to avoid nested async runtime access
         match tokio::task::block_in_place(|| {

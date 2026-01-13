@@ -194,7 +194,10 @@ impl ConfigResolver {
                 .expect("`build_and_validate()` must be called before `resolve()`")
         };
 
+        #[cfg(feature = "napi")]
         let OxfmtOptions { sort_package_json, insert_final_newline, .. } = oxfmt_options;
+        #[cfg(not(feature = "napi"))]
+        let OxfmtOptions { insert_final_newline, .. } = oxfmt_options;
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
