@@ -27,10 +27,10 @@ pub type JsInitExternalFormatterCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (options, tag_name, code) as separate arguments and returns formatted code.
+/// Takes (options, parser_name, code) as separate arguments and returns formatted code.
 pub type JsFormatEmbeddedCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(Value, String, String)>, // (options, tag_name, code)
+    FnArgs<(Value, String, String)>, // (options, parser_name, code)
     // Return type (what JS function returns)
     Promise<String>,
     // Arguments (repeated)
@@ -67,7 +67,7 @@ pub type JsSortTailwindClassesCb = ThreadsafeFunction<
 >;
 
 /// Callback function type for formatting embedded code with config.
-/// Takes (options, tag_name, code) and returns formatted code or an error.
+/// Takes (options, parser_name, code) and returns formatted code or an error.
 type FormatEmbeddedWithConfigCallback =
     Arc<dyn Fn(&Value, &str, &str) -> Result<String, String> + Send + Sync>;
 
@@ -143,8 +143,20 @@ impl ExternalFormatter {
         let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
             let format_embedded = Arc::clone(&self.format_embedded);
             let options_for_embedded = options.clone();
-            Some(Arc::new(move |tag_name: &str, code: &str| {
-                (format_embedded)(&options_for_embedded, tag_name, code)
+            // TODO: `embedded_kind` will be replaced with an enum in the future
+            Some(Arc::new(move |embedded_kind: &str, code: &str| {
+                let Some(parser_name) = (match embedded_kind {
+                    // Use "scss" parser for CSS-in-JS (same as Prettier)
+                    "css" | "styled" => Some("scss"),
+                    "gql" | "graphql" => Some("graphql"),
+                    "html" => Some("html"),
+                    "md" | "markdown" => Some("markdown"),
+                    _ => None,
+                }) else {
+                    return Err(format!("Unsupported embedded kind: {embedded_kind}"));
+                };
+
+                (format_embedded)(&options_for_embedded, parser_name, code)
             }))
         } else {
             None
@@ -223,20 +235,24 @@ fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFo
 
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
 fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallback {
-    Arc::new(move |options: &Value, tag_name: &str, code: &str| {
+    Arc::new(move |options: &Value, parser_name: &str, code: &str| {
         block_on(async {
             let status = cb
-                .call_async(FnArgs::from((options.clone(), tag_name.to_string(), code.to_string())))
+                .call_async(FnArgs::from((
+                    options.clone(),
+                    parser_name.to_string(),
+                    code.to_string(),
+                )))
                 .await;
             match status {
                 Ok(promise) => match promise.await {
                     Ok(formatted_code) => Ok(formatted_code),
-                    Err(err) => {
-                        Err(format!("JS formatter promise rejected for tag '{tag_name}': {err}"))
-                    }
+                    Err(err) => Err(format!(
+                        "JS formatter promise rejected for parser '{parser_name}': {err}"
+                    )),
                 },
                 Err(err) => Err(format!(
-                    "Failed to call JS formatting callback for tag '{tag_name}': {err}"
+                    "Failed to call JS formatting callback for parser '{parser_name}': {err}"
                 )),
             }
         })

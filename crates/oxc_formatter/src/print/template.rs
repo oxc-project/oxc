@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ExternalCallbacks, IndentWidth,
+    IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
@@ -774,14 +774,10 @@ fn try_format_embedded_template<'a>(
     };
 
     let tag_name = ident.name.as_str();
-    // Check if the tag is supported by the embedded formatter
-    if !ExternalCallbacks::is_supported_tag(tag_name) {
-        return false;
-    }
-
-    // Get the external callbacks from the context
     let template_content = quasi.quasis[0].value.raw.as_str();
 
+    // Pass tag_name as embedded_kind to the external formatter.
+    // The external formatter decides which parser to use based on the kind.
     let Some(Ok(formatted)) =
         f.context().external_callbacks().format_embedded(tag_name, template_content)
     else {
@@ -795,7 +791,7 @@ fn try_format_embedded_template<'a>(
     // - Hard line break (newline before closing backtick)
     // - Closing backtick
     let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
-        let content = f.context().allocator().alloc_str(&formatted);
+        let content = f.context().allocator().alloc_str(formatted.trim_end());
         for line in content.split('\n') {
             write!(f, [text(line), hard_line_break()]);
         }

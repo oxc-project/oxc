@@ -1,16 +1,14 @@
 use std::sync::Arc;
 
 /// Callback function type for formatting embedded code.
-/// Takes (tag_name, code) and returns formatted code or an error.
+/// Takes (embedded_kind, code) and returns formatted code or an error.
+/// In the future, embedded_kind will be replaced with an enum.
 pub type EmbeddedFormatterCallback =
     Arc<dyn Fn(&str, &str) -> Result<String, String> + Send + Sync>;
 
 /// Callback function type for sorting Tailwind CSS classes.
 /// Takes classes and returns the sorted versions.
 pub type TailwindCallback = Arc<dyn Fn(Vec<String>) -> Vec<String> + Send + Sync>;
-
-/// See <apps/oxfmt/src-js/embedded.ts> for supported tags.
-const SUPPORTED_TAGS: &[&str] = &["css", "styled", "gql", "graphql", "html", "md", "markdown"];
 
 /// External callbacks for JS-side functionality.
 ///
@@ -43,23 +41,23 @@ impl ExternalCallbacks {
         self
     }
 
-    /// Check if the given tag name is supported for embedded formatting.
-    pub fn is_supported_tag(tag_name: &str) -> bool {
-        SUPPORTED_TAGS.contains(&tag_name)
-    }
-
-    /// Format embedded code with the given tag name.
+    /// Format embedded code.
     ///
     /// # Arguments
-    /// * `tag_name` - The template tag (e.g., "css", "gql", "html")
+    /// * `embedded_kind` - The kind of embedded code (e.g., "css", "gql", "html").
+    ///   In the future, this will be replaced with an enum.
     /// * `code` - The code to format
     ///
     /// # Returns
     /// * `Some(Ok(String))` - The formatted code
     /// * `Some(Err(String))` - An error message if formatting failed
     /// * `None` - No embedded formatter callback is set
-    pub fn format_embedded(&self, tag_name: &str, code: &str) -> Option<Result<String, String>> {
-        self.embedded_formatter.as_ref().map(|cb| cb(tag_name, code))
+    pub fn format_embedded(
+        &self,
+        embedded_kind: &str,
+        code: &str,
+    ) -> Option<Result<String, String>> {
+        self.embedded_formatter.as_ref().map(|cb| cb(embedded_kind, code))
     }
 
     /// Sort Tailwind CSS classes.

@@ -21,7 +21,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     sourceText,
     options ?? {},
     resolvePlugins,
-    (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
+    (options, parserName, code) => formatEmbeddedCode({ options, parserName, code }),
     (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
     (filepath, options, classes) => sortTailwindClasses({ filepath, classes, options }),
   );
