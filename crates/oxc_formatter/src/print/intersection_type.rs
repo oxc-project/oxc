@@ -5,9 +5,9 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::AstNode,
     formatter::{Formatter, prelude::*},
+    print::FormatWrite,
     utils::typescript::is_object_like_type,
     write,
-    write::FormatWrite,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {

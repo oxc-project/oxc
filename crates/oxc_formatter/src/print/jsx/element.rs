@@ -7,12 +7,12 @@ use crate::{
     best_fitting, format_args,
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
     parentheses::NeedsParentheses,
+    print::jsx::{FormatChildrenResult, FormatOpeningElement},
     utils::{
         jsx::{WrapState, is_meaningful_jsx_text},
         suppressed::FormatSuppressedNode,
     },
     write,
-    write::jsx::{FormatChildrenResult, FormatOpeningElement},
 };
 
 use super::{FormatJsxChildList, JsxChildListLayout};

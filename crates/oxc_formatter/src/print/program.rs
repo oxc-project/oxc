@@ -9,9 +9,9 @@ use crate::{
     Buffer, Format,
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
+    print::semicolon::OptionalSemicolon,
     utils::string::{FormatLiteralStringToken, StringLiteralParentKind},
     write,
-    write::semicolon::OptionalSemicolon,
 };
 
 use super::FormatWrite;

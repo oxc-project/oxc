@@ -9,12 +9,12 @@ use crate::{
         trivia::FormatTrailingComments,
     },
     options::FormatTrailingCommas,
+    print::function::FormatContentWithCacheMode,
     utils::{
         assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     },
     write,
-    write::function::FormatContentWithCacheMode,
 };
 
 use super::{FormatWrite, parameters::has_only_simple_parameters};

@@ -2,8 +2,8 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
+use crate::print::semicolon::OptionalSemicolon;
 use crate::utils::assignment_like::AssignmentLike;
-use crate::write::semicolon::OptionalSemicolon;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,

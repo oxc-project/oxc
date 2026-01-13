@@ -4,9 +4,9 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{Formatter, prelude::*},
+    print::function::should_group_function_parameters,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
-    write::function::should_group_function_parameters,
 };
 
 use super::FormatWrite;

@@ -11,11 +11,11 @@ use crate::{
         separated::FormatSeparatedIter,
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
-    write,
-    write::{
+    print::{
         import_declaration::format_import_and_export_source_with_clause,
         semicolon::OptionalSemicolon,
     },
+    write,
 };
 
 use super::FormatWrite;

@@ -8,13 +8,13 @@ use crate::{
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::FormatTrailingComments,
     },
+    print::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
         object::{format_property_key, write_member_name},
     },
     write,
-    write::{BinaryLikeExpression, FormatJsArrowFunctionExpressionOptions, FormatWrite},
 };
 
 use super::string::{FormatLiteralStringToken, StringLiteralParentKind};

@@ -60,6 +60,7 @@ use crate::{
     },
     options::{FormatTrailingCommas, Semicolons, TrailingSeparator},
     parentheses::NeedsParentheses,
+    print::parameters::can_avoid_parentheses,
     utils::{
         array::write_array_node,
         assignment_like::AssignmentLike,
@@ -72,7 +73,6 @@ use crate::{
         tailwindcss::write_tailwind_string_literal,
     },
     write,
-    write::parameters::can_avoid_parentheses,
 };
 
 use self::{

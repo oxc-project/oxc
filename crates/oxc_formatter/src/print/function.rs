@@ -11,10 +11,10 @@ use crate::{
     ast_nodes::AstNode,
     format_args,
     formatter::{Buffer, Formatter, prelude::*, trivia::FormatLeadingComments},
-    write,
-    write::{
+    print::{
         arrow_function_expression::FormatMaybeCachedFunctionBody, semicolon::OptionalSemicolon,
     },
+    write,
 };
 
 impl<'a> FormatWrite<'a, FormatFunctionOptions> for AstNode<'a, Function<'a>> {

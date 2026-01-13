@@ -9,8 +9,8 @@ use crate::{
         trivia::format_dangling_comments,
     },
     options::Expand,
+    print::parameters::{get_this_param, should_hug_function_parameters},
     write,
-    write::parameters::{get_this_param, should_hug_function_parameters},
 };
 
 #[derive(Clone, Copy)]

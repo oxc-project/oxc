@@ -6,8 +6,8 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{Formatter, prelude::*},
+    print::{ExpressionLeftSide, semicolon::OptionalSemicolon},
     write,
-    write::{ExpressionLeftSide, semicolon::OptionalSemicolon},
 };
 
 use super::FormatWrite;

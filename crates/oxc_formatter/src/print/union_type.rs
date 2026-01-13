@@ -11,9 +11,9 @@ use crate::{
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     parentheses::NeedsParentheses,
+    print::FormatWrite,
     utils::{suppressed::FormatSuppressedNode, typescript::should_hug_type},
     write,
-    write::FormatWrite,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {

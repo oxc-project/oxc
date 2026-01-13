@@ -6,13 +6,13 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::AstNode,
     formatter::{Formatter, TailwindContextEntry, prelude::*, trivia::FormatTrailingComments},
+    print::arrow_function_expression::is_multiline_template_starting_on_same_line,
     utils::{
         call_expression::is_test_call_expression,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::MemberChain, tailwindcss::is_tailwind_function_call,
     },
     write,
-    write::arrow_function_expression::is_multiline_template_starting_on_same_line,
 };
 use arguments::is_simple_module_import;
 

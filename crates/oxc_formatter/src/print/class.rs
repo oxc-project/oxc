@@ -15,13 +15,13 @@ use crate::{
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     parentheses::NeedsParentheses,
+    print::{function::should_group_function_parameters, semicolon::OptionalSemicolon},
     utils::{
         assignment_like::AssignmentLike,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         object::{format_property_key, should_preserve_quote},
     },
     write,
-    write::{function::should_group_function_parameters, semicolon::OptionalSemicolon},
 };
 
 use super::{

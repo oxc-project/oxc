@@ -4,8 +4,8 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{Formatter, prelude::*, trivia::FormatTrailingComments},
+    print::{FormatNodeWithoutTrailingComments, FormatWrite},
     write,
-    write::{FormatNodeWithoutTrailingComments, FormatWrite},
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {

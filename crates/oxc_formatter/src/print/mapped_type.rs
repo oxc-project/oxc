@@ -3,9 +3,9 @@ use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 use crate::{
     ast_nodes::AstNode,
     formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
+    print::semicolon::OptionalSemicolon,
     utils::suppressed::FormatSuppressedNode,
     write,
-    write::semicolon::OptionalSemicolon,
 };
 
 use super::FormatWrite;

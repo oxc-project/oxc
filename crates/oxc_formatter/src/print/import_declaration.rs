@@ -9,11 +9,11 @@ use crate::{
     formatter::{
         Formatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
     },
+    print::semicolon::OptionalSemicolon,
     utils::string::{
         FormatLiteralStringToken, StringLiteralParentKind, is_identifier_name_patched,
     },
     write,
-    write::semicolon::OptionalSemicolon,
 };
 
 use super::FormatWrite;

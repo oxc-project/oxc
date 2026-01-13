@@ -16,12 +16,7 @@ use crate::{
         },
         trivia::format_dangling_comments,
     },
-    utils::{
-        call_expression::is_test_call_expression, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument,
-    },
-    write,
-    write::{
+    print::{
         FormatFunctionOptions, FormatJsArrowFunctionExpression,
         FormatJsArrowFunctionExpressionOptions,
         array_element_list::can_concisely_print_array_list,
@@ -32,6 +27,11 @@ use crate::{
         function::FormatFunction,
         parameters::has_only_simple_parameters,
     },
+    utils::{
+        call_expression::is_test_call_expression, is_long_curried_call,
+        member_chain::simple_argument::SimpleArgument,
+    },
+    write,
 };
 
 impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
