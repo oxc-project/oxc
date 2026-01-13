@@ -17,11 +17,7 @@ use super::{FormatFileStrategy, utils};
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
     // If `--config` is explicitly specified, use that path
     if let Some(config_path) = config_path {
-        return Some(if config_path.is_absolute() {
-            config_path.to_path_buf()
-        } else {
-            cwd.join(config_path)
-        });
+        return Some(utils::normalize_relative_path(cwd, config_path));
     }
 
     // If `--config` is not specified, search the nearest config file from cwd upwards

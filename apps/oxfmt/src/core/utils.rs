@@ -1,4 +1,8 @@
-use std::{fs, io, io::Write, path::Path};
+use std::{
+    fs, io,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 /// To debug `oxc_formatter`:
 /// `OXC_LOG=oxc_formatter oxfmt`
@@ -51,4 +55,14 @@ pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
 
     writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
     writer.flush().unwrap();
+}
+
+/// Normalize a relative path by stripping `./` prefix and joining with `cwd`.
+/// This ensures consistent path format and avoids issues with relative paths.
+pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        return path.to_path_buf();
+    }
+
+    if let Ok(stripped) = path.strip_prefix("./") { cwd.join(stripped) } else { cwd.join(path) }
 }
