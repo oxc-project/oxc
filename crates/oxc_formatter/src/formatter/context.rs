@@ -79,6 +79,12 @@ impl TailwindContextEntry {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum TemplateLiteralContext {
+    CssProp,
+    StyledJsx,
+}
+
 /// Context object storing data relevant when formatting an object.
 pub struct FormatContext<'ast> {
     options: FormatOptions,
@@ -105,6 +111,8 @@ pub struct FormatContext<'ast> {
     /// Stack tracking whether we're inside a Tailwind class context.
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
+
+    template_literal_context_stack: Vec<TemplateLiteralContext>,
 
     external_callbacks: ExternalCallbacks,
 
@@ -144,6 +152,7 @@ impl<'ast> FormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
+            template_literal_context_stack: Vec::new(),
             external_callbacks: external_callbacks.unwrap_or_default(),
             allocator,
         }
@@ -159,6 +168,7 @@ impl<'ast> FormatContext<'ast> {
             quote_needed_stack: Vec::new(),
             tailwind_classes: Vec::new(),
             tailwind_context_stack: Vec::new(),
+            template_literal_context_stack: Vec::new(),
             external_callbacks: ExternalCallbacks::default(),
             allocator,
         }
@@ -272,5 +282,17 @@ impl<'ast> FormatContext<'ast> {
     /// Get a mutable reference to the current Tailwind context, if any.
     pub fn tailwind_context_mut(&mut self) -> Option<&mut TailwindContextEntry> {
         self.tailwind_context_stack.last_mut()
+    }
+
+    pub fn push_template_literal_context(&mut self, context: TemplateLiteralContext) {
+        self.template_literal_context_stack.push(context);
+    }
+
+    pub fn pop_template_literal_context(&mut self) {
+        self.template_literal_context_stack.pop();
+    }
+
+    pub fn template_literal_context(&self) -> Option<TemplateLiteralContext> {
+        self.template_literal_context_stack.last().copied()
     }
 }

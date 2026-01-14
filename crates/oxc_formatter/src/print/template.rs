@@ -11,7 +11,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
     format_args,
     formatter::{
-        Format, FormatElement, Formatter, TailwindContextEntry, VecBuffer,
+        Format, FormatElement, Formatter, TailwindContextEntry, TemplateLiteralContext, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         prelude::{document::Document, *},
         printer::Printer,
@@ -29,6 +29,9 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        if try_format_css_template(self, f) {
+            return;
+        }
         let template = TemplateLike::TemplateLiteral(self);
         write!(f, template);
     }
@@ -804,6 +807,46 @@ fn try_format_embedded_template<'a>(
     // - Indented content (each line will be indented)
     // - Hard line break (newline before closing backtick)
     // - Closing backtick
+    let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
+        let content = f.context().allocator().alloc_str(&formatted);
+        for line in content.split('\n') {
+            write!(f, [text(line), hard_line_break()]);
+        }
+    });
+
+    write!(f, ["`", block_indent(&format_content), "`"]);
+
+    true
+}
+
+/// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
+/// Returns `true` if formatting was attempted, `false` if not applicable.
+fn try_format_css_template<'a>(
+    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let Some(context) = f.context().template_literal_context() else {
+        return false;
+    };
+
+    let quasi = template_literal.quasis();
+    if quasi.len() != 1 {
+        return false;
+    }
+
+    let tag_name = match context {
+        TemplateLiteralContext::CssProp => "css",
+        TemplateLiteralContext::StyledJsx => "styled",
+    };
+
+    let template_content = quasi[0].value.raw.as_str();
+
+    let Some(Ok(formatted)) =
+        f.context().external_callbacks().format_embedded(tag_name, template_content)
+    else {
+        return false;
+    };
+
     let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
         let content = f.context().allocator().alloc_str(&formatted);
         for line in content.split('\n') {

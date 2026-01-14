@@ -19,6 +19,14 @@ const styledLink = styled["a"]`text-decoration:none;color:#007bff;font-weight:bo
 const styledButton = styled(Button)`font-size:16px;color:#333;padding:12px 24px;`;
 
 // ============================================================================
+// Plain template strings within css props or styled-jsx
+// ============================================================================
+
+const cssProp = <div css={`display: flex; align-items: center; justify-content: center; height: 100vh;`}>Hello World</div>;
+
+const styledJsx = <style jsx>{`display: flex; align-items: center; justify-content: center; height: 100vh;`}</style>
+
+// ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
 

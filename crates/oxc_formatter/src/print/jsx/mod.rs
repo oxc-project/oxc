@@ -15,7 +15,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        TailwindContextEntry,
+        TailwindContextEntry, TemplateLiteralContext,
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
     },
@@ -198,7 +198,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 let should_inline = !has_comment(f)
                     && (is_conditional_or_binary || should_inline_jsx_expression(self));
 
+                let styled_jsx_ctx_to_push = is_styled_jsx_template_container(self);
+
                 let format_expression = format_with(|f| {
+                    if styled_jsx_ctx_to_push {
+                        f.context_mut()
+                            .push_template_literal_context(TemplateLiteralContext::StyledJsx);
+                    }
+
                     if should_inline {
                         write!(f, self.expression());
                     } else {
@@ -211,6 +218,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                                 write!(f, [FormatTrailingComments::Comments(comments)]);
                             }))
                         );
+                    }
+
+                    if styled_jsx_ctx_to_push {
+                        f.context_mut().pop_template_literal_context();
                     }
                 });
 
@@ -338,13 +349,65 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXAttribute<'a>> {
                 f.context_mut().push_tailwind_context(ctx);
             }
 
+            let css_ctx_to_push = is_css_prop_template_attribute(self);
+            if css_ctx_to_push {
+                f.context_mut().push_template_literal_context(TemplateLiteralContext::CssProp);
+            }
+
             write!(f, ["=", value]);
+
+            if css_ctx_to_push {
+                f.context_mut().pop_template_literal_context();
+            }
 
             if tailwind_ctx_to_push.is_some() {
                 f.context_mut().pop_tailwind_context();
             }
         }
     }
+}
+
+fn is_css_prop_template_attribute(attribute: &JSXAttribute<'_>) -> bool {
+    let JSXAttributeName::Identifier(name) = &attribute.name else {
+        return false;
+    };
+
+    if name.name.as_str() != "css" {
+        return false;
+    }
+
+    attribute.value.as_ref().is_some_and(|value| match value {
+        JSXAttributeValue::ExpressionContainer(container) => {
+            matches!(&container.expression, JSXExpression::TemplateLiteral(_))
+        }
+        _ => false,
+    })
+}
+
+fn is_styled_jsx_template_container(container: &AstNode<'_, JSXExpressionContainer<'_>>) -> bool {
+    if !matches!(&container.expression, JSXExpression::TemplateLiteral(_)) {
+        return false;
+    }
+
+    let AstNodes::JSXElement(parent) = container.parent else {
+        return false;
+    };
+
+    let JSXElementName::Identifier(name) = &parent.opening_element.name else {
+        return false;
+    };
+
+    if name.name.as_str() != "style" {
+        return false;
+    }
+
+    parent.opening_element.attributes.iter().any(|attr| {
+        let JSXAttributeItem::Attribute(attr) = attr else {
+            return false;
+        };
+
+        matches!(&attr.name, JSXAttributeName::Identifier(name) if name.name.as_str() == "jsx")
+    })
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
