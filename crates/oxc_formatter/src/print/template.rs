@@ -761,10 +761,10 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
     }
 }
 
-fn get_tag_name(expr: &Expression<'_>) -> Option<String> {
+fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
     let expr = expr.get_inner_expression();
     match expr {
-        Expression::Identifier(ident) => Some(ident.name.as_str().to_string()),
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
         Expression::StaticMemberExpression(member) => get_tag_name(&member.object),
         Expression::ComputedMemberExpression(exp) => get_tag_name(&exp.object),
         Expression::CallExpression(call) => get_tag_name(&call.callee),
