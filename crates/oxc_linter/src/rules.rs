@@ -30,6 +30,7 @@ pub(crate) mod import {
     pub mod no_named_default;
     pub mod no_named_export;
     pub mod no_namespace;
+    pub mod no_nodejs_modules;
     pub mod no_relative_parent_imports;
     pub mod no_self_import;
     pub mod no_unassigned_import;
