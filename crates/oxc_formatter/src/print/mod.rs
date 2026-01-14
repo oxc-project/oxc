@@ -631,19 +631,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
         let body = self.body();
         let format_body = FormatStatementBody::new(body);
         if init.is_none() && test.is_none() && update.is_none() {
-            let comments = f.context().comments().comments_before(body.span().start);
-            if !comments.is_empty() {
-                write!(
-                    f,
-                    [
-                        FormatDanglingComments::Comments {
-                            comments,
-                            indent: DanglingIndentMode::None
-                        },
-                        soft_line_break_or_space()
-                    ]
-                );
-            }
             return write!(f, [group(&format_args!("for", space(), "(;;)", format_body))]);
         }
 
@@ -725,7 +712,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
                     "of",
                     space(),
                     right,
-                    FormatCommentForEmptyStatement(body),
                     ")",
                     FormatStatementBody::new(body)
                 ]

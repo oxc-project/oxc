@@ -93,7 +93,15 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
             // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
             let inner = format_with(|f| {
                 if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    write!(f, [format_leading_comments(argument.span()), token("("), argument, token(")")])
+                    write!(
+                        f,
+                        [
+                            format_leading_comments(argument.span()),
+                            token("("),
+                            argument,
+                            token(")")
+                        ]
+                    )
                 } else {
                     write!(f, argument)
                 }
