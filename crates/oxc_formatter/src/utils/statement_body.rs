@@ -5,7 +5,10 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{
         Buffer, Format, Formatter,
-        prelude::{format_once, soft_line_indent_or_space, space},
+        prelude::{
+            expand_parent, format_once, format_with, hard_line_break, line_suffix,
+            soft_line_indent_or_space, space,
+        },
         trivia::FormatTrailingComments,
     },
     print::FormatWrite,
@@ -42,13 +45,36 @@ impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
             }
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
-            write!(f, [space()]);
-            if matches!(self.body.parent, AstNodes::IfStatement(_)) {
-                write!(f, [block]);
-            } else {
-                // Use `write` instead of `format` to avoid printing leading comments of the block.
-                // Those comments should be printed inside the block statement.
+            // Check for own-line LINE comments between the control structure and the block
+            // e.g., `for (x of y) // comment \n {}`
+            // These should be printed as end-of-line comments with the block on a new line
+            // Block comments (`/* */`) don't force a new line
+            let own_line_comments =
+                f.context().comments().own_line_comments_before(block.span.start);
+            let has_line_comment = own_line_comments.iter().any(|c| c.is_line());
+
+            if has_line_comment {
+                // Format comments as end-of-line (on the same line as header, not preserving newlines)
+                for comment in own_line_comments {
+                    f.context_mut().comments_mut().increment_printed_count();
+                    let content = format_with(|f| write!(f, [space(), comment]));
+                    if comment.is_line() {
+                        write!(f, [line_suffix(&content), expand_parent()]);
+                    } else {
+                        write!(f, content);
+                    }
+                }
+                write!(f, [hard_line_break()]);
                 block.write(f);
+            } else {
+                write!(f, [space()]);
+                if matches!(self.body.parent, AstNodes::IfStatement(_)) {
+                    write!(f, [block]);
+                } else {
+                    // Use `write` instead of `format` to avoid printing leading comments of the block.
+                    // Those comments should be printed inside the block statement.
+                    block.write(f);
+                }
             }
         } else if self.force_space {
             write!(f, [space(), self.body]);
