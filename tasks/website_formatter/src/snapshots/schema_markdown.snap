@@ -8,9 +8,7 @@ search: false
 
 # Configuration options for the Oxfmt.
 
-Most options are the same as Prettier's options.
-See also <https://prettier.io/docs/options>
-
+Most options are the same as Prettier's options, but not all of them.
 In addition, some options are our own extensions.
 
 
@@ -19,7 +17,9 @@ In addition, some options are our own extensions.
 type: `"always" | "avoid" | null`
 
 
-Include parentheses around a sole arrow function parameter. (Default: `"always"`)
+Include parentheses around a sole arrow function parameter.
+
+- Default: `"always"`
 
 
 ## bracketSameLine
@@ -27,8 +27,10 @@ Include parentheses around a sole arrow function parameter. (Default: `"always"`
 type: `boolean | null`
 
 
-Put the `>` of a multi-line JSX element at the end of the last line
-instead of being alone on the next line. (Default: `false`)
+Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+instead of being alone on the next line (does not apply to self closing elements).
+
+- Default: `false`
 
 
 ## bracketSpacing
@@ -36,7 +38,9 @@ instead of being alone on the next line. (Default: `false`)
 type: `boolean | null`
 
 
-Print spaces between brackets in object literals. (Default: `true`)
+Print spaces between brackets in object literals.
+
+- Default: `true`
 
 
 ## embeddedLanguageFormatting
@@ -44,8 +48,12 @@ Print spaces between brackets in object literals. (Default: `true`)
 type: `"auto" | "off" | null`
 
 
-Control whether to format embedded parts in the file.
-e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
+Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+
+NOTE: XXX-in-JS support is incomplete.
+JS-in-XXX is fully supported but still be handled by Prettier.
+
+- Default: `"auto"`
 
 
 ## endOfLine
@@ -53,7 +61,12 @@ e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
 type: `"lf" | "crlf" | "cr" | null`
 
 
-Which end of line characters to apply. (Default: `"lf"`)
+Which end of line characters to apply.
+
+NOTE: `"auto"` is not supported.
+
+- Default: `"lf"`
+- Overrides `.editorconfig.end_of_line`
 
 
 ## experimentalSortImports
@@ -61,7 +74,12 @@ Which end of line characters to apply. (Default: `"lf"`)
 type: `object | null`
 
 
-Experimental: Sort import statements. (Default: disabled)
+Experimental: Sort import statements.
+
+Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
+For details, see each field's documentation.
+
+- Default: Disabled
 
 
 ### experimentalSortImports.groups
@@ -69,9 +87,58 @@ Experimental: Sort import statements. (Default: disabled)
 type: `array | null`
 
 
-Custom groups configuration for organizing imports.
-Each array element represents a group, and multiple group names in the same array are treated as one.
-Accepts both `string` and `string[]` as group elements.
+Specifies a list of predefined import groups for sorting.
+
+Each import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).
+The order of items in the `groups` option determines how groups are ordered.
+
+Within a given group, members will be sorted according to the type, order, ignoreCase, etc. options.
+
+Individual groups can be combined together by placing them in an array.
+The order of groups in that array does not matter.
+All members of the groups in the array will be sorted together as if they were part of a single group.
+
+Predefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.
+
+The list of selectors is sorted from most to least important:
+- `type` — TypeScript type imports.
+- `side-effect-style` — Side effect style imports.
+- `side-effect` — Side effect imports.
+- `style` — Style imports.
+- `index` — Main file from the current directory.
+- `sibling` — Modules from the same directory.
+- `parent` — Modules from the parent directory.
+- `subpath` — Node.js subpath imports.
+- `internal` — Your internal modules.
+- `builtin` — Node.js Built-in Modules.
+- `external` — External modules installed in the project.
+- `import` — Any import.
+
+The list of modifiers is sorted from most to least important:
+- `side-effect` — Side effect imports.
+- `type` — TypeScript type imports.
+- `value` — Value imports.
+- `default` — Imports containing the default specifier.
+- `wildcard` — Imports containing the wildcard (`* as`) specifier.
+- `named` — Imports containing at least one named specifier.
+- `multiline` — Imports on multiple lines.
+- `singleline` — Imports on a single line.
+
+See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
+NOTE: `customGroups` is not implemented yet.
+
+- Default: See below
+```json
+[
+"type-import",
+["value-builtin", "value-external"],
+"type-internal",
+"value-internal",
+["type-parent", "type-sibling", "type-index"],
+["value-parent", "value-sibling", "value-index"],
+"unknown",
+]
+```
 
 
 #### experimentalSortImports.groups[n]
@@ -87,7 +154,9 @@ type: `string[]`
 type: `boolean | null`
 
 
-Ignore case when sorting. (Default: `true`)
+Specifies whether sorting should be case-sensitive.
+
+- Default: `true`
 
 
 ### experimentalSortImports.internalPattern
@@ -95,7 +164,11 @@ Ignore case when sorting. (Default: `true`)
 type: `string[]`
 
 
-Glob patterns to identify internal imports.
+Specifies a prefix for identifying internal imports.
+
+This is useful for distinguishing your own modules from external dependencies.
+
+- Default: `["~/", "@/"]`
 
 
 ### experimentalSortImports.newlinesBetween
@@ -103,7 +176,11 @@ Glob patterns to identify internal imports.
 type: `boolean | null`
 
 
-Add newlines between import groups. (Default: `true`)
+Specifies whether to add newlines between groups.
+
+When `false`, no newlines are added between groups.
+
+- Default: `true`
 
 
 ### experimentalSortImports.order
@@ -111,7 +188,9 @@ Add newlines between import groups. (Default: `true`)
 type: `"asc" | "desc" | null`
 
 
-Sort order. (Default: `"asc"`)
+Specifies whether to sort items in ascending or descending order.
+
+- Default: `"asc"`
 
 
 ### experimentalSortImports.partitionByComment
@@ -119,7 +198,18 @@ Sort order. (Default: `"asc"`)
 type: `boolean | null`
 
 
-Partition imports by comments. (Default: `false`)
+Enables the use of comments to separate imports into logical groups.
+
+When `true`, all comments will be treated as delimiters, creating partitions.
+
+```js
+import { b1, b2 } from 'b'
+// PARTITION
+import { a } from 'a'
+import { c } from 'c'
+```
+
+- Default: `false`
 
 
 ### experimentalSortImports.partitionByNewline
@@ -127,7 +217,19 @@ Partition imports by comments. (Default: `false`)
 type: `boolean | null`
 
 
-Partition imports by newlines. (Default: `false`)
+Enables the empty line to separate imports into logical groups.
+
+When `true`, formatter will not sort imports if there is an empty line between them.
+This helps maintain the defined order of logically separated groups of members.
+
+```js
+import { b1, b2 } from 'b'
+
+import { a } from 'a'
+import { c } from 'c'
+```
+
+- Default: `false`
 
 
 ### experimentalSortImports.sortSideEffects
@@ -135,7 +237,11 @@ Partition imports by newlines. (Default: `false`)
 type: `boolean | null`
 
 
-Sort side-effect imports. (Default: `false`)
+Specifies whether side effect imports should be sorted.
+
+By default, sorting side-effect imports is disabled for security reasons.
+
+- Default: `false`
 
 
 ## experimentalSortPackageJson
@@ -143,7 +249,13 @@ Sort side-effect imports. (Default: `false`)
 type: `object | boolean | null`
 
 
-Experimental: Sort `package.json` keys. (Default: `true`)
+Experimental: Sort `package.json` keys.
+
+The algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).
+But we believe it is clearer and easier to navigate.
+For details, see each field's documentation.
+
+- Default: `true`
 
 
 ### experimentalSortPackageJson.sortScripts
@@ -151,7 +263,9 @@ Experimental: Sort `package.json` keys. (Default: `true`)
 type: `boolean | null`
 
 
-Sort the `scripts` field alphabetically. (Default: `false`)
+Sort the `scripts` field alphabetically.
+
+- Default: `false`
 
 
 ## experimentalTailwindcss
@@ -159,14 +273,13 @@ Sort the `scripts` field alphabetically. (Default: `false`)
 type: `object | null`
 
 
-Experimental: Sort Tailwind CSS classes in string literals.
+Experimental: Sort Tailwind CSS classes.
 
-When enabled, `Oxfmt` sorts Tailwind CSS classes using the same algorithm as
-[`prettier-plugin-tailwindcss`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
+For details, see each field's documentation.
 
-See [`TailwindcssConfig`] for available options.
-
-(Default: disabled)
+- Default: Disabled
 
 
 ### experimentalTailwindcss.attributes
@@ -174,13 +287,12 @@ See [`TailwindcssConfig`] for available options.
 type: `string[]`
 
 
-List of attributes that contain Tailwind CSS classes.
+List of attribute prefixes that contain Tailwind CSS classes.
 
-Note: Regex patterns are not yet supported.
+NOTE: Regex patterns are not yet supported.
 
-Example: `["myClassProp", ":class"]`
-
-Default: `["class", "className"]`
+- Default: `["class", "className"]`
+- Example: `["myClassProp", ":class"]`
 
 
 ### experimentalTailwindcss.config
@@ -190,9 +302,9 @@ type: `string | null`
 
 Path to your Tailwind CSS configuration file (v3).
 
-Note: Paths are resolved relative to the Oxfmt configuration file.
+NOTE: Paths are resolved relative to the Oxfmt configuration file.
 
-Default: `"./tailwind.config.js"`
+- Default: Automatically find `"tailwind.config.js"`
 
 
 ### experimentalTailwindcss.functions
@@ -200,13 +312,12 @@ Default: `"./tailwind.config.js"`
 type: `string[]`
 
 
-List of custom function names that contain Tailwind CSS classes.
+List of custom function name prefixes that contain Tailwind CSS classes.
 
-Note: Regex patterns are not yet supported.
+NOTE: Regex patterns are not yet supported.
 
-Example: `["clsx", "cn", "cva", "tw"]`
-
-Default: `[]`
+- Default: `[]`
+- Example: `["clsx", "cn", "cva", "tw"]`
 
 
 ### experimentalTailwindcss.preserveDuplicates
@@ -216,7 +327,7 @@ type: `boolean | null`
 
 Preserve duplicate classes.
 
-Default: `false`
+- Default: `false`
 
 
 ### experimentalTailwindcss.preserveWhitespace
@@ -226,7 +337,7 @@ type: `boolean | null`
 
 Preserve whitespace around classes.
 
-Default: `false`
+- Default: `false`
 
 
 ### experimentalTailwindcss.stylesheet
@@ -236,9 +347,9 @@ type: `string | null`
 
 Path to your Tailwind CSS stylesheet (v4).
 
-Note: Paths are resolved relative to the Oxfmt configuration file.
+NOTE: Paths are resolved relative to the Oxfmt configuration file.
 
-Example: `"./src/app.css"`
+- Default: Installed Tailwind CSS's `theme.css`
 
 
 ## ignorePatterns
@@ -246,7 +357,10 @@ Example: `"./src/app.css"`
 type: `string[]`
 
 
-Ignore files matching these glob patterns. Current working directory is used as the root.
+Ignore files matching these glob patterns.
+Patterns are based on the location of the Oxfmt configuration file.
+
+- Default: `[]`
 
 
 ## insertFinalNewline
@@ -254,7 +368,10 @@ Ignore files matching these glob patterns. Current working directory is used as 
 type: `boolean | null`
 
 
-Whether to insert a final newline at the end of the file. (Default: `true`)
+Whether to insert a final newline at the end of the file.
+
+- Default: `true`
+- Overrides `.editorconfig.insert_final_newline`
 
 
 ## jsxSingleQuote
@@ -262,7 +379,9 @@ Whether to insert a final newline at the end of the file. (Default: `true`)
 type: `boolean | null`
 
 
-Use single quotes instead of double quotes in JSX. (Default: `false`)
+Use single quotes instead of double quotes in JSX.
+
+- Default: `false`
 
 
 ## objectWrap
@@ -270,7 +389,12 @@ Use single quotes instead of double quotes in JSX. (Default: `false`)
 type: `"preserve" | "collapse" | null`
 
 
-How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
+How to wrap object literals when they could fit on one line or span multiple lines.
+
+By default, formats objects as multi-line if there is a newline prior to the first property.
+Authors can use this heuristic to contextually improve readability, though it has some downsides.
+
+- Default: `"preserve"`
 
 
 ## printWidth
@@ -278,7 +402,12 @@ How to wrap object literals when they could fit on one line or span multiple lin
 type: `integer | null`
 
 
-The line length that the printer will wrap on. (Default: `100`)
+Specify the line length that the printer will wrap on.
+
+If you don’t want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
+
+- Default: `100`
+- Overrides `.editorconfig.max_line_length`
 
 
 ## quoteProps
@@ -286,7 +415,9 @@ The line length that the printer will wrap on. (Default: `100`)
 type: `"as-needed" | "consistent" | "preserve" | null`
 
 
-Change when properties in objects are quoted. (Default: `"as-needed"`)
+Change when properties in objects are quoted.
+
+- Default: `"as-needed"`
 
 
 ## semi
@@ -294,7 +425,9 @@ Change when properties in objects are quoted. (Default: `"as-needed"`)
 type: `boolean | null`
 
 
-Print semicolons at the ends of statements. (Default: `true`)
+Print semicolons at the ends of statements.
+
+- Default: `true`
 
 
 ## singleAttributePerLine
@@ -302,7 +435,9 @@ Print semicolons at the ends of statements. (Default: `true`)
 type: `boolean | null`
 
 
-Put each attribute on a new line in JSX. (Default: `false`)
+Enforce single attribute per line in HTML, Vue, and JSX.
+
+- Default: `false`
 
 
 ## singleQuote
@@ -310,7 +445,11 @@ Put each attribute on a new line in JSX. (Default: `false`)
 type: `boolean | null`
 
 
-Use single quotes instead of double quotes. (Default: `false`)
+Use single quotes instead of double quotes.
+
+For JSX, you can set the `jsxSingleQuote` option.
+
+- Default: `false`
 
 
 ## tabWidth
@@ -318,7 +457,10 @@ Use single quotes instead of double quotes. (Default: `false`)
 type: `integer | null`
 
 
-Number of spaces per indentation level. (Default: `2`)
+Specify the number of spaces per indentation-level.
+
+- Default: `2`
+- Overrides `.editorconfig.indent_size`
 
 
 ## trailingComma
@@ -326,7 +468,11 @@ Number of spaces per indentation level. (Default: `2`)
 type: `"all" | "es5" | "none" | null`
 
 
-Print trailing commas wherever possible. (Default: `"all"`)
+Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
+
+A single-line array, for example, never gets trailing commas.
+
+- Default: `"all"`
 
 
 ## useTabs
@@ -334,4 +480,7 @@ Print trailing commas wherever possible. (Default: `"all"`)
 type: `boolean | null`
 
 
-Use tabs for indentation or spaces. (Default: `false`)
+Indent lines with tabs instead of spaces.
+
+- Default: `false`
+- Overrides `.editorconfig.indent_style`

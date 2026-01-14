@@ -11,55 +11,100 @@ use oxc_formatter::{
 
 /// Configuration options for the Oxfmt.
 ///
-/// Most options are the same as Prettier's options.
-/// See also <https://prettier.io/docs/options>
-///
+/// Most options are the same as Prettier's options, but not all of them.
 /// In addition, some options are our own extensions.
 // NOTE: All fields are typed as `Option` to distinguish between user-specified values and defaults.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
-    /// Use tabs for indentation or spaces. (Default: `false`)
+    // ============================================================================================
+    // Prettier compatible options
+    // ============================================================================================
+    /// Indent lines with tabs instead of spaces.
+    ///
+    /// - Default: `false`
+    /// - Overrides `.editorconfig.indent_style`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_tabs: Option<bool>,
-    /// Number of spaces per indentation level. (Default: `2`)
+    /// Specify the number of spaces per indentation-level.
+    ///
+    /// - Default: `2`
+    /// - Overrides `.editorconfig.indent_size`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tab_width: Option<u8>,
-    /// Which end of line characters to apply. (Default: `"lf"`)
+    /// Which end of line characters to apply.
+    ///
+    /// NOTE: `"auto"` is not supported.
+    ///
+    /// - Default: `"lf"`
+    /// - Overrides `.editorconfig.end_of_line`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub end_of_line: Option<EndOfLineConfig>,
-    /// The line length that the printer will wrap on. (Default: `100`)
+    /// Specify the line length that the printer will wrap on.
+    ///
+    /// If you don’t want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
+    ///
+    /// - Default: `100`
+    /// - Overrides `.editorconfig.max_line_length`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub print_width: Option<u16>,
-    /// Use single quotes instead of double quotes. (Default: `false`)
+
+    /// Use single quotes instead of double quotes.
+    ///
+    /// For JSX, you can set the `jsxSingleQuote` option.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_quote: Option<bool>,
-    /// Use single quotes instead of double quotes in JSX. (Default: `false`)
+    /// Use single quotes instead of double quotes in JSX.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jsx_single_quote: Option<bool>,
-    /// Change when properties in objects are quoted. (Default: `"as-needed"`)
+    /// Change when properties in objects are quoted.
+    ///
+    /// - Default: `"as-needed"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quote_props: Option<QuotePropsConfig>,
-    /// Print trailing commas wherever possible. (Default: `"all"`)
+    /// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
+    ///
+    /// A single-line array, for example, never gets trailing commas.
+    ///
+    /// - Default: `"all"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trailing_comma: Option<TrailingCommaConfig>,
-    /// Print semicolons at the ends of statements. (Default: `true`)
+    /// Print semicolons at the ends of statements.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub semi: Option<bool>,
-    /// Include parentheses around a sole arrow function parameter. (Default: `"always"`)
+    /// Include parentheses around a sole arrow function parameter.
+    ///
+    /// - Default: `"always"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arrow_parens: Option<ArrowParensConfig>,
-    /// Print spaces between brackets in object literals. (Default: `true`)
+    /// Print spaces between brackets in object literals.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_spacing: Option<bool>,
-    /// Put the `>` of a multi-line JSX element at the end of the last line
-    /// instead of being alone on the next line. (Default: `false`)
+    /// Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+    /// instead of being alone on the next line (does not apply to self closing elements).
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
-    /// How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
+    /// How to wrap object literals when they could fit on one line or span multiple lines.
+    ///
+    /// By default, formats objects as multi-line if there is a newline prior to the first property.
+    /// Authors can use this heuristic to contextually improve readability, though it has some downsides.
+    ///
+    /// - Default: `"preserve"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub object_wrap: Option<ObjectWrapConfig>,
-    /// Put each attribute on a new line in JSX. (Default: `false`)
+    /// Enforce single attribute per line in HTML, Vue, and JSX.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
 
@@ -67,40 +112,63 @@ pub struct Oxfmtrc {
     // Just be here to report error if they are used.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
-    pub experimental_operator_position: Option<bool>,
+    pub experimental_operator_position: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether to format embedded parts in the file.
-    /// e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
+    /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+    ///
+    /// NOTE: XXX-in-JS support is incomplete.
+    /// JS-in-XXX is fully supported but still be handled by Prettier.
+    ///
+    /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
-    /// Whether to insert a final newline at the end of the file. (Default: `true`)
+    // ============================================================================================
+    // Below are our own extensions
+    // ============================================================================================
+    /// Whether to insert a final newline at the end of the file.
+    ///
+    /// - Default: `true`
+    /// - Overrides `.editorconfig.insert_final_newline`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
-    /// Experimental: Sort import statements. (Default: disabled)
+    /// Experimental: Sort import statements.
+    ///
+    /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
+    /// For details, see each field's documentation.
+    ///
+    /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
 
-    /// Experimental: Sort `package.json` keys. (Default: `true`)
+    /// Experimental: Sort `package.json` keys.
+    ///
+    /// The algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).
+    /// But we believe it is clearer and easier to navigate.
+    /// For details, see each field's documentation.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_package_json: Option<SortPackageJsonUserConfig>,
 
-    /// Experimental: Sort Tailwind CSS classes in string literals.
+    /// Experimental: Sort Tailwind CSS classes.
     ///
-    /// When enabled, `Oxfmt` sorts Tailwind CSS classes using the same algorithm as
-    /// [`prettier-plugin-tailwindcss`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+    /// Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+    /// Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
+    /// For details, see each field's documentation.
     ///
-    /// See [`TailwindcssConfig`] for available options.
-    ///
-    /// (Default: disabled)
+    /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_tailwindcss: Option<TailwindcssConfig>,
 
-    /// Ignore files matching these glob patterns. Current working directory is used as the root.
+    /// Ignore files matching these glob patterns.
+    /// Patterns are based on the location of the Oxfmt configuration file.
+    ///
+    /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_patterns: Option<Vec<String>>,
 }
@@ -155,30 +223,118 @@ pub enum EmbeddedLanguageFormattingConfig {
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortImportsConfig {
-    /// Partition imports by newlines. (Default: `false`)
+    /// Enables the empty line to separate imports into logical groups.
+    ///
+    /// When `true`, formatter will not sort imports if there is an empty line between them.
+    /// This helps maintain the defined order of logically separated groups of members.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    ///
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub partition_by_newline: Option<bool>,
-    /// Partition imports by comments. (Default: `false`)
+    /// Enables the use of comments to separate imports into logical groups.
+    ///
+    /// When `true`, all comments will be treated as delimiters, creating partitions.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    /// // PARTITION
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub partition_by_comment: Option<bool>,
-    /// Sort side-effect imports. (Default: `false`)
+    /// Specifies whether side effect imports should be sorted.
+    ///
+    /// By default, sorting side-effect imports is disabled for security reasons.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_side_effects: Option<bool>,
-    /// Sort order. (Default: `"asc"`)
+    /// Specifies whether to sort items in ascending or descending order.
+    ///
+    /// - Default: `"asc"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order: Option<SortOrderConfig>,
-    /// Ignore case when sorting. (Default: `true`)
+    /// Specifies whether sorting should be case-sensitive.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_case: Option<bool>,
-    /// Add newlines between import groups. (Default: `true`)
+    /// Specifies whether to add newlines between groups.
+    ///
+    /// When `false`, no newlines are added between groups.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub newlines_between: Option<bool>,
-    /// Glob patterns to identify internal imports.
+    /// Specifies a prefix for identifying internal imports.
+    ///
+    /// This is useful for distinguishing your own modules from external dependencies.
+    ///
+    /// - Default: `["~/", "@/"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub internal_pattern: Option<Vec<String>>,
-    /// Custom groups configuration for organizing imports.
-    /// Each array element represents a group, and multiple group names in the same array are treated as one.
-    /// Accepts both `string` and `string[]` as group elements.
+    /// Specifies a list of predefined import groups for sorting.
+    ///
+    /// Each import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).
+    /// The order of items in the `groups` option determines how groups are ordered.
+    ///
+    /// Within a given group, members will be sorted according to the type, order, ignoreCase, etc. options.
+    ///
+    /// Individual groups can be combined together by placing them in an array.
+    /// The order of groups in that array does not matter.
+    /// All members of the groups in the array will be sorted together as if they were part of a single group.
+    ///
+    /// Predefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.
+    ///
+    /// The list of selectors is sorted from most to least important:
+    /// - `type` — TypeScript type imports.
+    /// - `side-effect-style` — Side effect style imports.
+    /// - `side-effect` — Side effect imports.
+    /// - `style` — Style imports.
+    /// - `index` — Main file from the current directory.
+    /// - `sibling` — Modules from the same directory.
+    /// - `parent` — Modules from the parent directory.
+    /// - `subpath` — Node.js subpath imports.
+    /// - `internal` — Your internal modules.
+    /// - `builtin` — Node.js Built-in Modules.
+    /// - `external` — External modules installed in the project.
+    /// - `import` — Any import.
+    ///
+    /// The list of modifiers is sorted from most to least important:
+    /// - `side-effect` — Side effect imports.
+    /// - `type` — TypeScript type imports.
+    /// - `value` — Value imports.
+    /// - `default` — Imports containing the default specifier.
+    /// - `wildcard` — Imports containing the wildcard (`* as`) specifier.
+    /// - `named` — Imports containing at least one named specifier.
+    /// - `multiline` — Imports on multiple lines.
+    /// - `singleline` — Imports on a single line.
+    ///
+    /// See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
+    /// NOTE: `customGroups` is not implemented yet.
+    ///
+    /// - Default: See below
+    /// ```json
+    /// [
+    ///   "type-import",
+    ///   ["value-builtin", "value-external"],
+    ///   "type-internal",
+    ///   "value-internal",
+    ///   ["type-parent", "type-sibling", "type-index"],
+    ///   ["value-parent", "value-sibling", "value-index"],
+    ///   "unknown",
+    /// ]
+    /// ```
     #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "deserialize_groups")]
     pub groups: Option<Vec<Vec<String>>>,
 }
@@ -237,11 +393,6 @@ pub enum SortOrderConfig {
     Desc,
 }
 
-/// User-provided configuration for `package.json` sorting.
-///
-/// - `true`: Enable sorting with default options
-/// - `false`: Disable sorting
-/// - `{ sortScripts: true }`: Enable sorting with custom options
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum SortPackageJsonUserConfig {
@@ -267,11 +418,12 @@ impl SortPackageJsonUserConfig {
     }
 }
 
-/// Configuration for `package.json` sorting.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortPackageJsonConfig {
-    /// Sort the `scripts` field alphabetically. (Default: `false`)
+    /// Sort the `scripts` field alphabetically.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_scripts: Option<bool>,
 }
@@ -286,60 +438,49 @@ impl SortPackageJsonConfig {
     }
 }
 
-/// Configuration for Tailwind CSS class sorting.
-///
-/// Option names omit the `tailwind` prefix used in the original plugin
-/// (e.g., `config` instead of `tailwindConfig`).
-///
-/// See [`prettier-plugin-tailwindcss` options](https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options) for details.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TailwindcssConfig {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
     ///
-    /// Default: `"./tailwind.config.js"`
+    /// - Default: Automatically find `"tailwind.config.js"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config: Option<String>,
-
     /// Path to your Tailwind CSS stylesheet (v4).
     ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
     ///
-    /// Example: `"./src/app.css"`
+    /// - Default: Installed Tailwind CSS's `theme.css`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stylesheet: Option<String>,
 
-    /// List of custom function names that contain Tailwind CSS classes.
+    /// List of custom function name prefixes that contain Tailwind CSS classes.
     ///
-    /// Note: Regex patterns are not yet supported.
+    /// NOTE: Regex patterns are not yet supported.
     ///
-    /// Example: `["clsx", "cn", "cva", "tw"]`
-    ///
-    /// Default: `[]`
+    /// - Default: `[]`
+    /// - Example: `["clsx", "cn", "cva", "tw"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub functions: Option<Vec<String>>,
-
-    /// List of attributes that contain Tailwind CSS classes.
+    /// List of attribute prefixes that contain Tailwind CSS classes.
     ///
-    /// Note: Regex patterns are not yet supported.
+    /// NOTE: Regex patterns are not yet supported.
     ///
-    /// Example: `["myClassProp", ":class"]`
-    ///
-    /// Default: `["class", "className"]`
+    /// - Default: `["class", "className"]`
+    /// - Example: `["myClassProp", ":class"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attributes: Option<Vec<String>>,
 
     /// Preserve whitespace around classes.
     ///
-    /// Default: `false`
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_whitespace: Option<bool>,
-
     /// Preserve duplicate classes.
     ///
-    /// Default: `false`
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_duplicates: Option<bool>,
 }
@@ -693,6 +834,10 @@ impl Oxfmtrc {
         obj.remove("insertFinalNewline");
         obj.remove("experimentalSortImports");
         obj.remove("experimentalSortPackageJson");
+
+        // TODO: Currently, `experimentalTailwindcss` is not removed here.
+        // Instead, they are mapped directly to Prettier's options in JS side.
+        // But in theory, we can also remove and remap them here.
 
         // Any other unknown fields are preserved as-is.
         // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
