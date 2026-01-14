@@ -178,7 +178,7 @@ fn test() {
         (r#"import foo = require("lodash")"#, None),
         // Dynamic imports
         (r#"import("lodash")"#, None),
-        (r#"import(`lodash`)"#, None),
+        (r"import(`lodash`)", None),
         (r#"import("./foo")"#, None),
         (r#"import("@scope/foo")"#, None),
     ];
@@ -189,7 +189,7 @@ fn test() {
         (r#"import fs from "fs""#, None),
         (r#"var path = require("path")"#, None),
         (r#"var fs = require("fs")"#, None),
-        (r#"import(`fs`)"#, None),
+        (r"import(`fs`)", None),
         // With allow option
         (r#"import fs from "fs""#, Some(serde_json::json!([{ "allow": ["path"] }]))),
         (r#"import crypto from "crypto""#, Some(serde_json::json!([{ "allow": ["fs"] }]))),
