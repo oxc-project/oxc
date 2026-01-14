@@ -18,7 +18,7 @@ use oxc_formatter::{
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
     // ============================================================================================
-    // Prettier compatible options
+    // Prettier compatible options, also used by `oxc_formatter` and TOML formatter
     // ============================================================================================
     /// Indent lines with tabs instead of spaces.
     ///
@@ -127,7 +127,30 @@ pub struct Oxfmtrc {
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
     // ============================================================================================
-    // Below are our own extensions
+    // Prettier compatible options and only used by Prettier
+    // ============================================================================================
+    /// How to wrap prose.
+    ///
+    /// By default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.
+    /// To wrap prose to the print width, change this option to "always".
+    /// If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
+    ///
+    /// - Default: `"preserve"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prose_wrap: Option<ProseWrapConfig>,
+    /// Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+    ///
+    /// - Default: `"css"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub html_whitespace_sensitivity: Option<HtmlWhitespaceSensitivityConfig>,
+    /// Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vue_indent_script_and_style: Option<bool>,
+
+    // ============================================================================================
+    // Below are our own extensions, handled by Oxfmt
     // ============================================================================================
     /// Whether to insert a final newline at the end of the file.
     ///
@@ -219,6 +242,26 @@ pub enum EmbeddedLanguageFormattingConfig {
     Auto,
     Off,
 }
+
+// ---
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ProseWrapConfig {
+    Always,
+    Never,
+    Preserve,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum HtmlWhitespaceSensitivityConfig {
+    Css,
+    Strict,
+    Ignore,
+}
+
+// ---
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
@@ -839,8 +882,12 @@ impl Oxfmtrc {
         // Instead, they are mapped directly to Prettier's options in JS side.
         // But in theory, we can also remove and remap them here.
 
-        // Any other unknown fields are preserved as-is.
-        // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
+        // Any other fields are preserved as-is.
+        // - e.g. `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
+        //   - Defined in `Oxfmtrc`, but only used by Prettier
+        // - e.g. `plugins`
+        //   - It does not mean plugin works correctly with Oxfmt
+        //   - Oxfmt still not aware of any plugin-defined languages
         // Other options defined independently by plugins are also left as they are.
     }
 }

@@ -352,6 +352,16 @@ NOTE: Paths are resolved relative to the Oxfmt configuration file.
 - Default: Installed Tailwind CSS's `theme.css`
 
 
+## htmlWhitespaceSensitivity
+
+type: `"css" | "strict" | "ignore" | null`
+
+
+Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+
+- Default: `"css"`
+
+
 ## ignorePatterns
 
 type: `string[]`
@@ -408,6 +418,20 @@ If you don’t want line wrapping when formatting Markdown, you can set the `pro
 
 - Default: `100`
 - Overrides `.editorconfig.max_line_length`
+
+
+## proseWrap
+
+type: `"always" | "never" | "preserve" | null`
+
+
+How to wrap prose.
+
+By default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.
+To wrap prose to the print width, change this option to "always".
+If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
+
+- Default: `"preserve"`
 
 
 ## quoteProps
@@ -484,3 +508,13 @@ Indent lines with tabs instead of spaces.
 
 - Default: `false`
 - Overrides `.editorconfig.indent_style`
+
+
+## vueIndentScriptAndStyle
+
+type: `boolean | null`
+
+
+Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
+
+- Default: `false`

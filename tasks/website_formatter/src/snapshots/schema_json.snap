@@ -29,10 +29,26 @@ expression: json
       ],
       "type": "string"
     },
+    "HtmlWhitespaceSensitivityConfig": {
+      "enum": [
+        "css",
+        "strict",
+        "ignore"
+      ],
+      "type": "string"
+    },
     "ObjectWrapConfig": {
       "enum": [
         "preserve",
         "collapse"
+      ],
+      "type": "string"
+    },
+    "ProseWrapConfig": {
+      "enum": [
+        "always",
+        "never",
+        "preserve"
       ],
       "type": "string"
     },
@@ -315,6 +331,18 @@ expression: json
       "description": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
       "markdownDescription": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
     },
+    "htmlWhitespaceSensitivity": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HtmlWhitespaceSensitivityConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
+      "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`"
+    },
     "ignorePatterns": {
       "description": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`",
       "items": {
@@ -363,6 +391,18 @@ expression: json
         "integer",
         "null"
       ]
+    },
+    "proseWrap": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ProseWrapConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`",
+      "markdownDescription": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`"
     },
     "quoteProps": {
       "anyOf": [
@@ -425,6 +465,14 @@ expression: json
     "useTabs": {
       "description": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`",
       "markdownDescription": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "vueIndentScriptAndStyle": {
+      "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`",
+      "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`",
       "type": [
         "boolean",
         "null"
