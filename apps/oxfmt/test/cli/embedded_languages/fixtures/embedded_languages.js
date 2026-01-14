@@ -80,7 +80,7 @@ const ignoredGql = gql`query GetUser($id:ID!){user(id:$id){name email}}`;
 const normalGql = gql`query GetPosts{posts{title author}}`;
 
 // ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter
+// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
 // ============================================================================
 
 const unknown = customTag`
@@ -110,4 +110,20 @@ const sql = sql`
           
           
                       SELECT * FROM users WHERE id = 1
+`;
+
+// ============================================================================
+// Supported Tags contains invalid syntax - To be left unformatted too
+// ============================================================================
+
+// Value only, key missing
+const invalidCss = css`
+  repeating-linear-gradient(
+    0deg,
+var(--schemas-lines-color),
+var(--schemas-lines-color) 3px,
+    transparent 3px,
+    transparent 5px,
+    var(--schemas-lines-color) 5px
+  );
 `;
