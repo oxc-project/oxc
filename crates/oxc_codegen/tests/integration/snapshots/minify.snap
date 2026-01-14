@@ -122,7 +122,7 @@ declare module "a";
 ########## 28
 a = x!;
 ----------
-a=x! ;
+a=x!;
 ########## 29
 b = (x as y);
 ----------
@@ -130,7 +130,7 @@ b=x as y;
 ########## 30
 c = foo<string>;
 ----------
-c=foo<string> ;
+c=foo<string>;
 ########## 31
 new Map<string, number>();
 ----------

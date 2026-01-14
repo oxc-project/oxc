@@ -59,10 +59,16 @@ fn print_binary_operator(op: BinaryOperator, p: &mut Codegen) {
         p.print_space_before_identifier();
         p.print_str(operator);
     } else {
-        let op: Operator = op.into();
-        p.print_space_before_operator(op);
+        let o: Operator = op.into();
+        p.print_space_before_operator(o);
+        // Avoid `!` + `=` or `==` or `===` forming `!=` or `!==`
+        if matches!(op, BinaryOperator::Equality | BinaryOperator::StrictEquality)
+            && p.last_char() == Some('!')
+        {
+            p.print_hard_space();
+        }
         p.print_str(operator);
-        p.prev_op = Some(op);
+        p.prev_op = Some(o);
         p.prev_op_end = p.code().len();
     }
 }

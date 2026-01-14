@@ -1904,7 +1904,12 @@ impl GenExpr for AssignmentExpression<'_> {
         p.wrap(wrap || precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span);
             self.left.print(p, ctx);
-            p.print_soft_space();
+            // Avoid `!` + `=` forming `!=`
+            if self.operator == AssignmentOperator::Assign && p.last_char() == Some('!') {
+                p.print_hard_space();
+            } else {
+                p.print_soft_space();
+            }
             p.print_str(self.operator.as_str());
             p.print_soft_space();
             self.right.print_expr(p, Precedence::Comma, ctx);
@@ -2292,9 +2297,6 @@ impl GenExpr for TSNonNullExpression<'_> {
             self.expression.print_expr(p, precedence, ctx);
         });
         p.print_ascii_byte(b'!');
-        if p.options.minify {
-            p.print_hard_space();
-        }
     }
 }
 
@@ -2302,9 +2304,6 @@ impl GenExpr for TSInstantiationExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
         self.expression.print_expr(p, precedence, ctx);
         self.type_arguments.print(p, ctx);
-        if p.options.minify {
-            p.print_hard_space();
-        }
     }
 }
 
