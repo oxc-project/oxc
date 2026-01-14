@@ -138,7 +138,7 @@ new Map<string,number>;
 ########## 32
 d = x satisfies y;
 ----------
-d=((x) satisfies y);
+d=x satisfies y;
 ########## 33
 export @x declare abstract class C {}
 ----------

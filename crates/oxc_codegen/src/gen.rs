@@ -2269,20 +2269,13 @@ impl GenExpr for TSAsExpression<'_> {
 
 impl GenExpr for TSSatisfiesExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.print_ascii_byte(b'(');
-        let should_wrap =
-            if let Expression::FunctionExpression(func) = &self.expression.without_parentheses() {
-                // pife is handled on Function side
-                !func.pife
-            } else {
-                true
-            };
-        p.wrap(should_wrap, |p| {
-            self.expression.print_expr(p, precedence, Context::default());
+        let wrap = precedence >= Precedence::Compare;
+
+        p.wrap(wrap, |p| {
+            self.expression.print_expr(p, Precedence::Exponentiation, ctx);
+            p.print_str(" satisfies ");
+            self.type_annotation.print(p, ctx);
         });
-        p.print_str(" satisfies ");
-        self.type_annotation.print(p, ctx);
-        p.print_ascii_byte(b')');
     }
 }
 
