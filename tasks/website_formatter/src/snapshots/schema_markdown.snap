@@ -14,7 +14,7 @@ In addition, some options are our own extensions.
 
 ## arrowParens
 
-type: `"always" | "avoid" | null`
+type: `"always" | "avoid"`
 
 
 Include parentheses around a sole arrow function parameter.
@@ -24,7 +24,7 @@ Include parentheses around a sole arrow function parameter.
 
 ## bracketSameLine
 
-type: `boolean | null`
+type: `boolean`
 
 
 Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
@@ -35,7 +35,7 @@ instead of being alone on the next line (does not apply to self closing elements
 
 ## bracketSpacing
 
-type: `boolean | null`
+type: `boolean`
 
 
 Print spaces between brackets in object literals.
@@ -45,7 +45,7 @@ Print spaces between brackets in object literals.
 
 ## embeddedLanguageFormatting
 
-type: `"auto" | "off" | null`
+type: `"auto" | "off"`
 
 
 Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
@@ -58,7 +58,7 @@ JS-in-XXX is fully supported but still be handled by Prettier.
 
 ## endOfLine
 
-type: `"lf" | "crlf" | "cr" | null`
+type: `"lf" | "crlf" | "cr"`
 
 
 Which end of line characters to apply.
@@ -71,7 +71,7 @@ NOTE: `"auto"` is not supported.
 
 ## experimentalSortImports
 
-type: `object | null`
+type: `object`
 
 
 Experimental: Sort import statements.
@@ -84,7 +84,7 @@ For details, see each field's documentation.
 
 ### experimentalSortImports.groups
 
-type: `array | null`
+type: `array`
 
 
 Specifies a list of predefined import groups for sorting.
@@ -151,7 +151,7 @@ type: `string[]`
 
 ### experimentalSortImports.ignoreCase
 
-type: `boolean | null`
+type: `boolean`
 
 
 Specifies whether sorting should be case-sensitive.
@@ -173,7 +173,7 @@ This is useful for distinguishing your own modules from external dependencies.
 
 ### experimentalSortImports.newlinesBetween
 
-type: `boolean | null`
+type: `boolean`
 
 
 Specifies whether to add newlines between groups.
@@ -185,7 +185,7 @@ When `false`, no newlines are added between groups.
 
 ### experimentalSortImports.order
 
-type: `"asc" | "desc" | null`
+type: `"asc" | "desc"`
 
 
 Specifies whether to sort items in ascending or descending order.
@@ -195,7 +195,7 @@ Specifies whether to sort items in ascending or descending order.
 
 ### experimentalSortImports.partitionByComment
 
-type: `boolean | null`
+type: `boolean`
 
 
 Enables the use of comments to separate imports into logical groups.
@@ -214,7 +214,7 @@ import { c } from 'c'
 
 ### experimentalSortImports.partitionByNewline
 
-type: `boolean | null`
+type: `boolean`
 
 
 Enables the empty line to separate imports into logical groups.
@@ -234,7 +234,7 @@ import { c } from 'c'
 
 ### experimentalSortImports.sortSideEffects
 
-type: `boolean | null`
+type: `boolean`
 
 
 Specifies whether side effect imports should be sorted.
@@ -246,7 +246,7 @@ By default, sorting side-effect imports is disabled for security reasons.
 
 ## experimentalSortPackageJson
 
-type: `object | boolean | null`
+type: `object | boolean`
 
 
 Experimental: Sort `package.json` keys.
@@ -260,7 +260,7 @@ For details, see each field's documentation.
 
 ### experimentalSortPackageJson.sortScripts
 
-type: `boolean | null`
+type: `boolean`
 
 
 Sort the `scripts` field alphabetically.
@@ -270,7 +270,7 @@ Sort the `scripts` field alphabetically.
 
 ## experimentalTailwindcss
 
-type: `object | null`
+type: `object`
 
 
 Experimental: Sort Tailwind CSS classes.
@@ -297,7 +297,7 @@ NOTE: Regex patterns are not yet supported.
 
 ### experimentalTailwindcss.config
 
-type: `string | null`
+type: `string`
 
 
 Path to your Tailwind CSS configuration file (v3).
@@ -322,7 +322,7 @@ NOTE: Regex patterns are not yet supported.
 
 ### experimentalTailwindcss.preserveDuplicates
 
-type: `boolean | null`
+type: `boolean`
 
 
 Preserve duplicate classes.
@@ -332,7 +332,7 @@ Preserve duplicate classes.
 
 ### experimentalTailwindcss.preserveWhitespace
 
-type: `boolean | null`
+type: `boolean`
 
 
 Preserve whitespace around classes.
@@ -342,7 +342,7 @@ Preserve whitespace around classes.
 
 ### experimentalTailwindcss.stylesheet
 
-type: `string | null`
+type: `string`
 
 
 Path to your Tailwind CSS stylesheet (v4).
@@ -354,7 +354,7 @@ NOTE: Paths are resolved relative to the Oxfmt configuration file.
 
 ## htmlWhitespaceSensitivity
 
-type: `"css" | "strict" | "ignore" | null`
+type: `"css" | "strict" | "ignore"`
 
 
 Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
@@ -375,7 +375,7 @@ Patterns are based on the location of the Oxfmt configuration file.
 
 ## insertFinalNewline
 
-type: `boolean | null`
+type: `boolean`
 
 
 Whether to insert a final newline at the end of the file.
@@ -386,7 +386,7 @@ Whether to insert a final newline at the end of the file.
 
 ## jsxSingleQuote
 
-type: `boolean | null`
+type: `boolean`
 
 
 Use single quotes instead of double quotes in JSX.
@@ -396,7 +396,7 @@ Use single quotes instead of double quotes in JSX.
 
 ## objectWrap
 
-type: `"preserve" | "collapse" | null`
+type: `"preserve" | "collapse"`
 
 
 How to wrap object literals when they could fit on one line or span multiple lines.
@@ -409,7 +409,7 @@ Authors can use this heuristic to contextually improve readability, though it ha
 
 ## printWidth
 
-type: `integer | null`
+type: `integer`
 
 
 Specify the line length that the printer will wrap on.
@@ -422,7 +422,7 @@ If you don’t want line wrapping when formatting Markdown, you can set the `pro
 
 ## proseWrap
 
-type: `"always" | "never" | "preserve" | null`
+type: `"always" | "never" | "preserve"`
 
 
 How to wrap prose.
@@ -436,7 +436,7 @@ If you want to force all prose blocks to be on a single line and rely on editor/
 
 ## quoteProps
 
-type: `"as-needed" | "consistent" | "preserve" | null`
+type: `"as-needed" | "consistent" | "preserve"`
 
 
 Change when properties in objects are quoted.
@@ -446,7 +446,7 @@ Change when properties in objects are quoted.
 
 ## semi
 
-type: `boolean | null`
+type: `boolean`
 
 
 Print semicolons at the ends of statements.
@@ -456,7 +456,7 @@ Print semicolons at the ends of statements.
 
 ## singleAttributePerLine
 
-type: `boolean | null`
+type: `boolean`
 
 
 Enforce single attribute per line in HTML, Vue, and JSX.
@@ -466,7 +466,7 @@ Enforce single attribute per line in HTML, Vue, and JSX.
 
 ## singleQuote
 
-type: `boolean | null`
+type: `boolean`
 
 
 Use single quotes instead of double quotes.
@@ -478,7 +478,7 @@ For JSX, you can set the `jsxSingleQuote` option.
 
 ## tabWidth
 
-type: `integer | null`
+type: `integer`
 
 
 Specify the number of spaces per indentation-level.
@@ -489,7 +489,7 @@ Specify the number of spaces per indentation-level.
 
 ## trailingComma
 
-type: `"all" | "es5" | "none" | null`
+type: `"all" | "es5" | "none"`
 
 
 Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
@@ -501,7 +501,7 @@ A single-line array, for example, never gets trailing commas.
 
 ## useTabs
 
-type: `boolean | null`
+type: `boolean`
 
 
 Indent lines with tabs instead of spaces.
@@ -512,7 +512,7 @@ Indent lines with tabs instead of spaces.
 
 ## vueIndentScriptAndStyle
 
-type: `boolean | null`
+type: `boolean`
 
 
 Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
