@@ -403,8 +403,8 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
         AstKind::CallExpression(call) => {
             !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
         }
-        // Callback passed as JSX children or attributes: <Foo>{() => { ... }}</Foo> or <Foo render={() => { ... }} />
-        AstKind::JSXExpressionContainer(_) | AstKind::JSXAttribute(_) => true,
+        // Callback passed as JSX expression: <Foo>{() => { ... }}</Foo> or <Foo render={() => { ... }} />
+        AstKind::JSXExpressionContainer(_) => true,
         _ => false,
     }
 }
