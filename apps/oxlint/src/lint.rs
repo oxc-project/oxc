@@ -1349,6 +1349,10 @@ mod test {
             assert!(rule_obj.contains_key("scope"), "Rule should contain 'scope' field");
             assert!(rule_obj.contains_key("value"), "Rule should contain 'value' field");
             assert!(rule_obj.contains_key("category"), "Rule should contain 'category' field");
+            assert!(rule_obj.contains_key("type_aware"), "Rule should contain 'type_aware' field");
+            assert!(rule_obj.contains_key("fix"), "Rule should contain 'fix' field");
+            assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
+            assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
         }
     }
 
