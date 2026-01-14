@@ -480,6 +480,16 @@ fn expression_statement_needs_semicolon<'a>(
         return !can_avoid_parentheses(arrow, f);
     }
 
+    // Expressions starting with keywords don't need ASI protection
+    if matches!(
+        &stmt.expression,
+        Expression::NewExpression(_)
+            | Expression::AwaitExpression(_)
+            | Expression::YieldExpression(_)
+    ) {
+        return false;
+    }
+
     // First check if the expression itself needs protection
     let expr = stmt.expression();
 
