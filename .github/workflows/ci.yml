@@ -117,10 +117,24 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: s390x-unknown-linux-gnu
           tools: cross
-      - run: cross --version
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
       - run: cross test --workspace --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
+
+  test-32bit:
+    if: ${{ github.ref_name == 'main' }}
+    name: Test 32-bit # armv7-unknown-linux-gnueabihf is a 32-bit target
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: armv7-unknown-linux-gnueabihf
+          tools: cross
+      # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
+      # https://github.com/cross-rs/cross/issues/1703
+      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --target armv7-unknown-linux-gnueabihf
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
