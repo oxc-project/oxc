@@ -371,7 +371,10 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
     while let Some(parent) = ancestors.next() {
         match parent {
             AstNodes::ExpressionStatement(stmt) => {
-                if stmt.is_arrow_function_body() {
+                // Check if we're in an arrow function body (expression or block)
+                // For expression body: () => b in c
+                // For block body: () => { b in c; }
+                if matches!(stmt.parent.parent(), AstNodes::ArrowFunctionExpression(_)) {
                     // Skip `FunctionBody` and `ArrowFunctionExpression`
                     let skipped = ancestors.by_ref().nth(1);
                     debug_assert!(matches!(skipped, Some(AstNodes::ArrowFunctionExpression(_))));

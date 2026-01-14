@@ -1,4 +1,4 @@
-js compatibility: 737/761 (96.85%)
+js compatibility: 738/761 (96.98%)
 
 # Failed
 
@@ -14,8 +14,7 @@ js compatibility: 737/761 (96.85%)
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 68.57% |
 | js/for/9812-unstable.js | 💥 | 45.45% |
 | js/for/9812.js | 💥 | 82.83% |
-| js/for/for-in-with-initializer.js | 💥 | 37.50% |
-| js/for/parentheses.js | 💥 | 97.96% |
+| js/for/for-in-with-initializer.js | 💥 | 31.25% |
 | js/identifier/for-of/let.js | 💥 | 92.31% |
 | js/identifier/parentheses/let.js | 💥💥 | 82.27% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
