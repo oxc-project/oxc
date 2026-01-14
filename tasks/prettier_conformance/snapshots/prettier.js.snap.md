@@ -9,7 +9,7 @@ js compatibility: 737/761 (96.85%)
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
-| js/comments/return-statement.js | 💥💥 | 98.28% |
+| js/comments/return-statement.js | 💥💥 | 98.85% |
 | js/explicit-resource-management/for-await-using-of-comments.js | 💥 | 0.00% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 68.57% |
 | js/for/9812-unstable.js | 💥 | 45.45% |

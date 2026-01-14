@@ -89,7 +89,16 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
         let argument = self.0;
 
         if !argument.is_jsx() && has_argument_leading_comments(argument, f) {
-            write!(f, [token("("), &block_indent(&argument), token(")")]);
+            // When we have leading comments and a sequence expression, we need inner parentheses
+            // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
+            let inner = format_with(|f| {
+                if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
+                    write!(f, [format_leading_comments(argument.span()), token("("), argument, token(")")])
+                } else {
+                    write!(f, argument)
+                }
+            });
+            write!(f, [token("("), &block_indent(&inner), token(")")]);
         } else if argument.is_binaryish() {
             write!(
                 f,
