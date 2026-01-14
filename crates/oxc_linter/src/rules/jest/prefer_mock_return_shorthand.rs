@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression, IdentifierReference, Statement, VariableDeclarationKind},
@@ -104,9 +102,7 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
                 return None;
             }
 
-            let Some(stmt) = arrow_func.body.statements.first() else {
-                return None;
-            };
+            let stmt = arrow_func.body.statements.first()?;
 
             match stmt {
                 Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
@@ -137,9 +133,7 @@ fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Ex
                 return None;
             }
 
-            let Some(stmt) = body.statements.first() else {
-                return None;
-            };
+            let stmt = body.statements.first()?;
 
             match stmt {
                 Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
@@ -189,20 +183,19 @@ impl Rule for PreferMockReturnShorthand {
             return;
         };
 
-        match return_expression {
-            Expression::UpdateExpression(_) => return,
-            _ => {
-                let mut visitor = IdentifierCollectorVisitor::new();
+        if let Expression::UpdateExpression(_) = return_expression {
+            return;
+        }
 
-                visitor.visit_expression(return_expression);
+        let mut visitor = IdentifierCollectorVisitor::new();
 
-                for reference_id in visitor.references {
-                    if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
-                        if self.is_mutable(symbol_id, ctx) {
-                            return;
-                        }
-                    };
-                }
+        visitor.visit_expression(return_expression);
+
+        for reference_id in visitor.references {
+            if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
+                && Self::is_mutable(symbol_id, ctx)
+            {
+                return;
             }
         }
 
@@ -220,7 +213,7 @@ impl Rule for PreferMockReturnShorthand {
                     source
                         .strip_prefix("(")
                         .and_then(|source| source.strip_suffix(")"))
-                        .map_or(source.to_owned(), |normalized_source| normalized_source.to_owned())
+                        .map_or(source.to_owned(), std::borrow::ToOwned::to_owned)
                 };
                 let argument_span = GetSpan::span(expr);
 
@@ -236,7 +229,7 @@ impl Rule for PreferMockReturnShorthand {
 }
 
 impl PreferMockReturnShorthand {
-    fn is_mutable(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
+    fn is_mutable(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
         let scoping = ctx.scoping();
 
         if scoping.symbol_is_mutated(symbol_id) {
@@ -244,10 +237,10 @@ impl PreferMockReturnShorthand {
         }
 
         let decl_node_id = scoping.symbol_declaration(symbol_id);
-        if let AstKind::VariableDeclarator(_) = ctx.nodes().kind(decl_node_id) {
-            if let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(decl_node_id) {
-                return parent.kind != VariableDeclarationKind::Const;
-            }
+        if let AstKind::VariableDeclarator(_) = ctx.nodes().kind(decl_node_id)
+            && let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(decl_node_id)
+        {
+            return parent.kind != VariableDeclarationKind::Const;
         }
 
         false
@@ -260,7 +253,7 @@ struct IdentifierCollectorVisitor {
 
 impl IdentifierCollectorVisitor {
     fn new() -> Self {
-        Self { references: HashSet::default() }
+        Self { references: FxHashSet::default() }
     }
 }
 
