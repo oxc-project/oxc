@@ -173,7 +173,7 @@ export function registerPlugin(
       // ESLint technically only allows `null`, unset, or "code" / "whitespace" for `fixable`. Unfortunately,
       // it doesn't actually enforce this meaningfully, and so some plugins use `false` by accident.
       // So we have to handle `false` as well.
-      if (fixable != null && (fixable as any) != false) {
+      if (fixable != null && (fixable as any) !== false) {
         if (fixable !== "code" && fixable !== "whitespace") {
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
