@@ -186,6 +186,7 @@ fn bigint_literal_from_numeric(raw: &str, base: NumberBase) -> Option<String> {
 #[test]
 fn test() {
     use crate::tester::Tester;
+
     let pass = vec![
         r"1n",
         r"BigInt()",
@@ -209,7 +210,8 @@ fn test() {
         r#"BigInt("1\\\n2")"#,
         r#"String.raw`BigInt("\u{31}")`"#,
     ];
-    let fail: Vec<&str> = vec![
+
+    let fail = vec![
         r#"BigInt("0")"#,
         r#"BigInt("  0  ")"#,
         r#"BigInt("9007199254740993")"#,
@@ -232,6 +234,7 @@ fn test() {
         r"BigInt(9_007_199_254_740_993)",
         r"BigInt(0x20_00_00_00_00_00_01)",
     ];
+
     let fix = vec![
         (r"BigInt('42')", "42n"),
         (r"BigInt('  0xFF  ')", "0xFFn"),

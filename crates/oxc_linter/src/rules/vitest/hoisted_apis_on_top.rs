@@ -14,8 +14,8 @@ use crate::{
 };
 
 fn hoisted_apis_on_top_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Hoisted API can not be used in a runtime location in this file.")
-        .with_help("Move this hoisted API to the top of the file to better reflect its behavior.\nIf it's possible replace `vi.mock()` with `vi.doMock`, which is not hoisted.")
+    OxcDiagnostic::warn("Hoisted API cannot be used in a runtime location in this file.")
+        .with_help("Move this hoisted API to the top of the file to better reflect its behavior.\nIf possible, replace `vi.mock()` with `vi.doMock`, which is not hoisted.")
         .with_label(span)
 }
 
@@ -39,36 +39,38 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// if (condition) {
-    ///  vi.mock('some-module', () => {})
+    ///   vi.mock('some-module', () => {})
     /// }
     /// ```
     ///
     /// ```js
     /// if (condition) {
-    ///  vi.unmock('some-module', () => {})
+    ///   vi.unmock('some-module', () => {})
     /// }
     /// ```
     ///
     /// ```js
     /// if (condition) {
-    ///  vi.hoisted(() => {})
+    ///   vi.hoisted(() => {})
     /// }
     /// ```
     ///
     /// ```js
     /// describe('suite', () => {
-    ///     it('test', async () => {
-    ///         vi.mock('some-module', () => {})
+    ///   it('test', async () => {
+    ///     vi.mock('some-module', () => {})
     ///
-    ///         const sm = await import('some-module')
+    ///     const sm = await import('some-module')
     ///
     ///   })
     /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
+    ///
+    /// ```js
     /// if (condition) {
-    ///  vi.doMock('some-module', () => {})
+    ///   vi.doMock('some-module', () => {})
     /// }
     /// ```
     ///
@@ -76,6 +78,7 @@ declare_oxc_lint!(
     /// vi.mock('some-module', () => {})
     /// if (condition) {}
     /// ```
+    ///
     /// ```js
     /// vi.unmock('some-module', () => {})
     /// if (condition) {}
@@ -89,14 +92,12 @@ declare_oxc_lint!(
     /// ```js
     /// vi.mock('some-module', () => {})
     ///
-    ///
     /// describe('suite', () => {
     ///   it('test', async () => {
     ///     const sm = await import('some-module')
     ///   })
     /// })
     /// ```
-    ///
     HoistedApisOnTop,
     vitest,
     correctness,

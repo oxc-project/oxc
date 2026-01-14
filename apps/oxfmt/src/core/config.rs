@@ -7,10 +7,9 @@ use editorconfig_parser::{
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 
-use oxc_formatter::{
-    FormatOptions,
-    oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc},
-};
+use oxc_formatter::FormatOptions;
+
+use super::oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc};
 
 use super::{FormatFileStrategy, utils};
 
@@ -18,11 +17,7 @@ use super::{FormatFileStrategy, utils};
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
     // If `--config` is explicitly specified, use that path
     if let Some(config_path) = config_path {
-        return Some(if config_path.is_absolute() {
-            config_path.to_path_buf()
-        } else {
-            cwd.join(config_path)
-        });
+        return Some(utils::normalize_relative_path(cwd, config_path));
     }
 
     // If `--config` is not specified, search the nearest config file from cwd upwards
@@ -195,7 +190,10 @@ impl ConfigResolver {
                 .expect("`build_and_validate()` must be called before `resolve()`")
         };
 
+        #[cfg(feature = "napi")]
         let OxfmtOptions { sort_package_json, insert_final_newline, .. } = oxfmt_options;
+        #[cfg(not(feature = "napi"))]
+        let OxfmtOptions { insert_final_newline, .. } = oxfmt_options;
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {

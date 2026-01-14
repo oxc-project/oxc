@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.23.0"
+version = "0.24.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -44,6 +44,7 @@ json-strip-comments = { workspace = true }
 miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 simdutf8 = { workspace = true }
@@ -62,7 +63,6 @@ napi-derive = { workspace = true, optional = true }
 napi-build = { workspace = true }
 
 [dev-dependencies]
-insta = { workspace = true }
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
@@ -85,6 +85,3 @@ default = ["napi"]
 napi = ["dep:napi", "dep:napi-derive"]
 allocator = ["dep:mimalloc-safe"]
 detect_code_removal = ["oxc_formatter/detect_code_removal"]
-
-[package.metadata.cargo-shear]
-ignored-paths = ["test/fixtures/extensions/_test.rs"]

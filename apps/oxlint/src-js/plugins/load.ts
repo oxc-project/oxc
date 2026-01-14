@@ -18,9 +18,7 @@ export interface Plugin {
   meta?: {
     name?: string;
   };
-  rules: {
-    [key: string]: Rule;
-  };
+  rules: Record<string, Rule>;
 }
 
 /**

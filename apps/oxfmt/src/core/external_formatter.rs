@@ -230,7 +230,12 @@ fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallb
                 .await;
             match status {
                 Ok(promise) => match promise.await {
-                    Ok(formatted_code) => Ok(formatted_code),
+                    Ok(mut formatted_code) => {
+                        // Trim trailing newline added by Prettier without allocation
+                        let trimmed_len = formatted_code.trim_end().len();
+                        formatted_code.truncate(trimmed_len);
+                        Ok(formatted_code)
+                    }
                     Err(err) => {
                         Err(format!("JS formatter promise rejected for tag '{tag_name}': {err}"))
                     }

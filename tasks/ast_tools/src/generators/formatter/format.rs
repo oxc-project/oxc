@@ -42,6 +42,7 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSConstructorType",
     "TSTypeQuery",
     "TSFunctionType",
+    "TSTypeOperator",
 ];
 
 const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
@@ -89,7 +90,7 @@ impl Generator for FormatterFormatGenerator {
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
-                write::{FormatWrite #(#options)*},
+                print::{FormatWrite #(#options)*},
             };
 
             #impls

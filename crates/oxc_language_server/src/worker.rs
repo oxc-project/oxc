@@ -61,21 +61,6 @@ impl WorkspaceWorker {
         &self.root_uri
     }
 
-    /// Check if the worker is responsible for the given URI
-    /// A worker is responsible for a URI if the URI is a file URI and is located within the root URI of the worker
-    /// e.g. root URI: file:///path/to/root
-    ///      responsible for: file:///path/to/root/file.js
-    ///      not responsible for: file:///path/to/other/file.js
-    ///
-    /// # Panics
-    /// Panics if the root URI cannot be converted to a file path.
-    pub fn is_responsible_for_uri(&self, uri: &Uri) -> bool {
-        if let Some(path) = uri.to_file_path() {
-            return path.starts_with(self.root_uri.to_file_path().unwrap());
-        }
-        false
-    }
-
     /// Start all programs (linter, formatter) for the worker.
     /// This should be called after the client has sent the workspace configuration.
     pub async fn start_worker(&self, options: serde_json::Value) {
@@ -485,26 +470,6 @@ mod tests {
             WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new([]), false);
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
-    }
-
-    #[test]
-    fn test_is_responsible() {
-        let worker = WorkspaceWorker::new(
-            Uri::from_str("file:///path/to/root").unwrap(),
-            Arc::new([]),
-            false,
-        );
-
-        assert!(
-            worker.is_responsible_for_uri(&Uri::from_str("file:///path/to/root/file.js").unwrap())
-        );
-        assert!(worker.is_responsible_for_uri(
-            &Uri::from_str("file:///path/to/root/folder/file.js").unwrap()
-        ));
-        assert!(
-            !worker
-                .is_responsible_for_uri(&Uri::from_str("file:///path/to/other/file.js").unwrap())
-        );
     }
 
     #[tokio::test]

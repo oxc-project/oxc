@@ -60,7 +60,7 @@ suite('commands', () => {
 
     notEqual(window.activeTextEditor, undefined);
     const { uri } = window.activeTextEditor!.document;
-    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc%20%28Lint%29');
+    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc%20%28Lint%29.log');
 
     await commands.executeCommand('workbench.action.closeActiveEditor');
   });
@@ -71,7 +71,7 @@ suite('commands', () => {
 
     notEqual(window.activeTextEditor, undefined);
     const { uri } = window.activeTextEditor!.document;
-    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc%20%28Fmt%29');
+    strictEqual(uri.toString(), 'output:oxc.oxc-vscode.Oxc%20%28Fmt%29.log');
 
     await commands.executeCommand('workbench.action.closeActiveEditor');
   });

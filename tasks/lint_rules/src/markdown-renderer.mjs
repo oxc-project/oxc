@@ -54,7 +54,7 @@ To get started, run the following command:
 just new-${pluginName}-rule <RULE_NAME>
 \`\`\`
 
-Then register the rule in \`crates/oxc_linter/src/rules.rs\` and also \`declare_all_lint_rules\` at the bottom.
+Then implement the rule and get all the tests passing.
 `;
 
 /**

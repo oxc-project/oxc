@@ -7,6 +7,7 @@ mod options;
 mod server_linter;
 #[cfg(test)]
 mod tester;
+mod utils;
 
 const LINT_CONFIG_FILE: &str = ".oxlintrc.json";
 

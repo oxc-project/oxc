@@ -3639,7 +3639,7 @@ Negative Passed: 124/124 (100.00%)
  3 │ }
    ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
    ╭─[misc/fail/oxc-7582.js:4:9]
  3 │   method() {
  4 │     obj.#x;

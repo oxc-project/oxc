@@ -69,42 +69,64 @@ impl SortImportsTransform {
         //   - If this is the case, we should check `Tag::StartLabelled(JsLabels::ImportDeclaration)`
         let mut lines = vec![];
         let mut current_line_start = 0;
-        // Track if we're inside a multiline block comment (started with `/*` but not yet closed with `*/`)
-        let mut in_multiline_comment = false;
-        // Track if current line is a standalone multiline comment (no import on same line)
-        let mut is_standalone_multiline_comment = false;
+        // Track if we're inside an alignable block comment (identified by `JsLabels::AlignableBlockComment`)
+        let mut in_alignable_block_comment = false;
+        // Track if current line is a standalone alignable comment (no import on same line)
+        let mut is_standalone_alignable_comment = false;
+        // Track if current line is inside a multiline ImportDeclaration
+        let mut inside_multiline_import = false;
 
         for (idx, el) in prev_elements.iter().enumerate() {
-            // Check for multiline comment boundaries
-            if let FormatElement::Text { text, .. } = el {
-                if !in_multiline_comment && text.starts_with("/*") && !text.ends_with("*/") {
-                    in_multiline_comment = true;
-                    is_standalone_multiline_comment = true;
-                } else if in_multiline_comment && text.ends_with("*/") {
-                    in_multiline_comment = false;
+            // Check for alignable block comment boundaries.
+            // These comments are split across multiple lines with hard_line_break() between them,
+            // so we need to track when we're inside one to avoid flushing lines prematurely.
+            if let FormatElement::Tag(Tag::StartLabelled(id)) = el {
+                if *id == LabelId::of(JsLabels::AlignableBlockComment) {
+                    in_alignable_block_comment = true;
+                    is_standalone_alignable_comment = true;
+                } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                    inside_multiline_import = true;
+                    // An import on the same line means the comment is attached to it, not standalone
+                    is_standalone_alignable_comment = false;
                 }
-            }
-
-            // An import on the same line means the comment is attached to it, not standalone
-            if let FormatElement::Tag(Tag::StartLabelled(id)) = el
-                && *id == LabelId::of(JsLabels::ImportDeclaration)
-            {
-                is_standalone_multiline_comment = false;
+            } else if matches!(el, FormatElement::Tag(Tag::EndLabelled)) {
+                // EndLabelled doesn't carry the label ID, but since AlignableBlockComment
+                // doesn't nest with other labels in practice, we can safely reset here.
+                if in_alignable_block_comment {
+                    in_alignable_block_comment = false;
+                } else if inside_multiline_import {
+                    // I'm not sure if ImportDeclaration will nest with other labels,
+                    // but this should be enough for now.
+                    inside_multiline_import = false;
+                }
             }
 
             if let FormatElement::Line(mode) = el
                 && matches!(mode, LineMode::Empty | LineMode::Hard)
             {
-                // If we're inside a multiline comment, don't flush the line yet.
+                // If we're inside an alignable block comment, don't flush the line yet.
                 // Wait until the comment is closed so the entire comment is treated as one line.
-                if in_multiline_comment {
+                if in_alignable_block_comment {
+                    continue;
+                }
+
+                // If the linebreak falls within the body of a multiline ImportDeclaration,
+                // don't fush the line. e.g.
+                // ```
+                // import React {
+                //   useState,
+                //   // this is a comment followed by a FormatElement::Line(LineMode::Hard)
+                //   useEffect,
+                // } from 'react';
+                // ```
+                if inside_multiline_import {
                     continue;
                 }
 
                 // Flush current line
                 if current_line_start < idx {
-                    let line = if is_standalone_multiline_comment {
-                        // Standalone multiline comment: directly create CommentOnly
+                    let line = if is_standalone_alignable_comment {
+                        // Standalone alignable comment: directly create CommentOnly
                         SourceLine::CommentOnly(current_line_start..idx, *mode)
                     } else {
                         SourceLine::from_element_range(
@@ -116,7 +138,9 @@ impl SortImportsTransform {
                     lines.push(line);
                 }
                 current_line_start = idx + 1;
-                is_standalone_multiline_comment = false;
+                is_standalone_alignable_comment = false;
+                // Explicitly reset the state after flushing lines to avoid stale state.
+                inside_multiline_import = false;
 
                 // We need this explicitly to detect boundaries later.
                 if matches!(mode, LineMode::Empty) {
