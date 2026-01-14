@@ -323,7 +323,7 @@ impl CliRunner {
 
                 let table = RuleTable::default();
                 for section in &table.sections {
-                    let md = section.render_markdown_table_cli(None, &enabled);
+                    let md = section.render_markdown_table_cli(&enabled);
                     print_and_flush_stdout(stdout, &md);
                     print_and_flush_stdout(stdout, "\n");
                 }
