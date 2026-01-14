@@ -113,7 +113,13 @@ fn can_quote_numeric_key(source: &str, value: f64) -> bool {
     // Don't quote binary, octal, or hex literals
     if bytes.len() >= 2 && bytes[0] == b'0' {
         let second = bytes[1];
-        if second == b'b' || second == b'B' || second == b'o' || second == b'O' || second == b'x' || second == b'X' {
+        if second == b'b'
+            || second == b'B'
+            || second == b'o'
+            || second == b'O'
+            || second == b'x'
+            || second == b'X'
+        {
             return false;
         }
     }
