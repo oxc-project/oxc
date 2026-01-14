@@ -788,7 +788,7 @@ fn try_format_embedded_template<'a>(
     };
 
     // Check if the tag is supported by the embedded formatter
-    if !ExternalCallbacks::is_supported_tag(&tag_name) {
+    if !ExternalCallbacks::is_supported_tag(tag_name) {
         return false;
     }
 
@@ -796,7 +796,7 @@ fn try_format_embedded_template<'a>(
     let template_content = quasi.quasis[0].value.raw.as_str();
 
     let Some(Ok(formatted)) =
-        f.context().external_callbacks().format_embedded(&tag_name, template_content)
+        f.context().external_callbacks().format_embedded(tag_name, template_content)
     else {
         return false;
     };
