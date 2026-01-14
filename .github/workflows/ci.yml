@@ -122,7 +122,7 @@ jobs:
       - run: cross test --workspace --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
 
   test-32bit:
-    # if: ${{ github.ref_name == 'main' }}
+    if: ${{ github.ref_name == 'main' }}
     name: Test 32-bit # armv7-unknown-linux-gnueabihf is a 32-bit target
     runs-on: ubuntu-latest
     steps:
