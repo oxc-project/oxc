@@ -12,16 +12,14 @@ import {
 void (async () => {
   const args = process.argv.slice(2);
 
-  // Node.js sets `stdio` to non-blocking mode,
+  // Node.js sets non-TTY `stdio` to non-blocking mode,
   // which causes `WouldBlock` errors in Rust when writing large output with `--stdin-filepath`.
-  // Set blocking mode before calling NAPI bindings.
-  // See: https://github.com/napi-rs/napi-rs/issues/1630
+  // https://github.com/oxc-project/oxc/issues/17939 (issue was on macOS)
   //
-  // NOTE: Unlike `yargs/set-blocking` which recommends calling just before `process.exit()`,
-  // we must set blocking mode here because Rust outputs during `runCli()` execution.
-  // See also: https://github.com/yargs/set-blocking
-  (process.stdout as any)._handle?.setBlocking?.(true);
-  (process.stderr as any)._handle?.setBlocking?.(true);
+  // As a workaround, if used with pipe, set blocking mode before calling NAPI bindings.
+  // See: https://github.com/napi-rs/napi-rs/issues/1630
+  // @ts-expect-error: `_handle` is an internal API
+  if (!process.stdout.isTTY) process.stdout._handle?.setBlocking?.(true);
 
   // Call the Rust CLI first, to parse args and determine mode
   // NOTE: If the mode is formatter CLI, it will also perform formatting and return an exit code
