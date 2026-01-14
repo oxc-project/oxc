@@ -29,7 +29,7 @@
   "publisher": "oxc",
   "main": "./out/main.js",
   "scripts": {
-    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
+    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/black-bg-circle.png --output icon.png",
     "build": "pnpm run oxlint:build:release && pnpm run oxfmt:build:release && pnpm run compile && pnpm run package",
     "build:dev": "pnpm run oxlint:build:debug && pnpm run oxfmt:build:debug && pnpm run compile && pnpm run package",
     "compile": "rolldown -c rolldown.config.ts",
