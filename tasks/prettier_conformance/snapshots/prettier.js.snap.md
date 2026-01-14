@@ -1,4 +1,4 @@
-js compatibility: 738/761 (96.98%)
+js compatibility: 739/761 (97.11%)
 
 # Failed
 
@@ -15,8 +15,7 @@ js compatibility: 738/761 (96.98%)
 | js/for/9812-unstable.js | 💥 | 45.45% |
 | js/for/9812.js | 💥 | 82.83% |
 | js/for/for-in-with-initializer.js | 💥 | 31.25% |
-| js/identifier/for-of/let.js | 💥 | 92.31% |
-| js/identifier/parentheses/let.js | 💥💥 | 82.27% |
+| js/identifier/parentheses/let.js | 💥💥 | 83.18% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |

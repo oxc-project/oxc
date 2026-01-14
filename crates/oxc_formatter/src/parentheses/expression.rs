@@ -77,12 +77,19 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                // Walk up ancestors to find the relevant context for `let` keyword
                 for parent in self.ancestors() {
                     match parent {
                         AstNodes::ExpressionStatement(_) => return false,
                         AstNodes::ForOfStatement(stmt) => {
                             return stmt.left.span().contains_inclusive(self.span);
+                        }
+                        AstNodes::ForInStatement(stmt) => {
+                            // For for-in, `let.a` doesn't need parens but `let[a]` does
+                            // because `let[a]` looks like a lexical declaration
+                            if stmt.left.span().contains_inclusive(self.span) {
+                                return !matches!(self.parent, AstNodes::StaticMemberExpression(_));
+                            }
+                            return false;
                         }
                         AstNodes::TSSatisfiesExpression(expr) => {
                             return expr.expression.span() == self.span();
