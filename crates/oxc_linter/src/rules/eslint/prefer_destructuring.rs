@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPattern, Expression, MemberExpression},
+    ast::{
+        AssignmentTarget, BindingPattern, Expression, MemberExpression, VariableDeclarationKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -205,6 +207,13 @@ impl Rule for PreferDestructuring {
                 }
             }
             AstKind::VariableDeclarator(declarator) => {
+                // Skip `using` and `await using` declarations - destructuring doesn't apply to them
+                if matches!(
+                    declarator.kind,
+                    VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
+                ) {
+                    return;
+                }
                 if let Some(init) = &declarator.init
                     && let Some(right) = init.without_parentheses().as_member_expression()
                 {
@@ -535,11 +544,10 @@ fn test() {
                 serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
-        // TODO: Update rule logic to get these tests passing.
-        // ("using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
-        // ("using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
-        // ("await using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
-        // ("await using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        ("using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        ("using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        ("await using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        ("await using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
     ];
 
     let fail = vec![
