@@ -4,7 +4,7 @@ js compatibility: 739/761 (97.11%)
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/comment.js | 💥💥 | 88.89% |
+| js/arrows/comment.js | 💥💥 | 92.59% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/dangling_for.js | 💥💥 | 22.22% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
@@ -20,7 +20,7 @@ js compatibility: 739/761 (97.11%)
 | js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
-| js/sequence-expression/ignored.js | 💥 | 25.00% |
+| js/sequence-expression/ignored.js | 💥 | 50.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | jsx/fbt/test.js | 💥 | 84.06% |

@@ -144,12 +144,14 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
                     return if f.context().comments().has_comment_before(sequence.span().start) {
+                        // Format leading comments before the parentheses, not inside
                         write!(
                             f,
                             [group(&format_args!(
                                 formatted_signature,
                                 group(&format_args!(indent(&format_args!(
                                     hard_line_break(),
+                                    format_leading_comments(sequence.span()),
                                     token("("),
                                     soft_block_indent(&format_body),
                                     token(")")
@@ -564,10 +566,12 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
                 if f.context().comments().has_comment_before(sequence.span().start) {
+                    // Format leading comments before the parentheses, not inside
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(
                             hard_line_break(),
+                            format_leading_comments(sequence.span()),
                             token("("),
                             soft_block_indent(&format_tail_body),
                             token(")")
