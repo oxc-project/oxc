@@ -758,6 +758,17 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
     }
 }
 
+fn get_tag_name(expr: &Expression<'_>) -> Option<String> {
+    let expr = expr.get_inner_expression();
+    match expr {
+        Expression::Identifier(ident) => Some(ident.name.as_str().to_string()),
+        Expression::StaticMemberExpression(member) => get_tag_name(&member.object),
+        Expression::ComputedMemberExpression(exp) => get_tag_name(&exp.object),
+        Expression::CallExpression(call) => get_tag_name(&call.callee),
+        _ => None,
+    }
+}
+
 /// Try to format a tagged template with the embedded formatter if supported.
 /// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
 fn try_format_embedded_template<'a>(
@@ -769,13 +780,12 @@ fn try_format_embedded_template<'a>(
         return false;
     }
 
-    let Expression::Identifier(ident) = &tagged.tag else {
+    let Some(tag_name) = get_tag_name(&tagged.tag) else {
         return false;
     };
 
-    let tag_name = ident.name.as_str();
     // Check if the tag is supported by the embedded formatter
-    if !ExternalCallbacks::is_supported_tag(tag_name) {
+    if !ExternalCallbacks::is_supported_tag(&tag_name) {
         return false;
     }
 
@@ -783,7 +793,7 @@ fn try_format_embedded_template<'a>(
     let template_content = quasi.quasis[0].value.raw.as_str();
 
     let Some(Ok(formatted)) =
-        f.context().external_callbacks().format_embedded(tag_name, template_content)
+        f.context().external_callbacks().format_embedded(&tag_name, template_content)
     else {
         return false;
     };
