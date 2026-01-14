@@ -597,6 +597,37 @@ impl<'a> PeepholeOptimizations {
             result.pop();
             ctx.state.changed = true;
         }
+
+        // Prune empty case clauses before a trailing default
+        // e.g., `switch (x) { case 0: foo(); break; case 1: default: bar() }`
+        // => `switch (x) { case 0: foo(); break; default: bar() }`
+        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
+        if let Some(last_case) = switch_stmt.cases.last()
+            && last_case.test.is_none()
+        {
+            let default_idx = switch_stmt.cases.len() - 1;
+            let mut first_empty_idx = default_idx;
+            // Iterate backward through preceding cases
+            while first_empty_idx > 0 {
+                let case = &switch_stmt.cases[first_empty_idx - 1];
+                // Only remove empty cases with primitive literal tests
+                if case.consequent.is_empty()
+                    && case.test.as_ref().is_some_and(Expression::is_literal)
+                {
+                    first_empty_idx -= 1;
+                } else {
+                    break;
+                }
+            }
+            // If we found cases to remove, keep cases [0..first_empty_idx] + [default]
+            if first_empty_idx < default_idx {
+                let default_case = switch_stmt.cases.pop().unwrap();
+                switch_stmt.cases.truncate(first_empty_idx);
+                switch_stmt.cases.push(default_case);
+                ctx.state.changed = true;
+            }
+        }
+
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
