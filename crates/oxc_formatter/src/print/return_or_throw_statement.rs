@@ -101,9 +101,9 @@ impl<'a> Format<'a> for FormatAdjacentArgument<'a, '_> {
                             argument,
                             token(")")
                         ]
-                    )
+                    );
                 } else {
-                    write!(f, argument)
+                    write!(f, argument);
                 }
             });
             write!(f, [token("("), &block_indent(&inner), token(")")]);

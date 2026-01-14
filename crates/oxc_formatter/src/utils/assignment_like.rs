@@ -277,7 +277,8 @@ impl<'a> AssignmentLike<'a, '_> {
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
                 } else {
-                    let preserve_quotes = property.type_annotation.is_some() && property.value.is_none();
+                    let preserve_quotes =
+                        property.type_annotation.is_some() && property.value.is_none();
                     format_property_key_with_options(property.key(), f, preserve_quotes);
                 }
 

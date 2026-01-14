@@ -149,18 +149,18 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                             // Find the parentheses around the sequence expression
                             let source_text = f.source_text();
                             // Search backward for '('
+                            #[expect(clippy::cast_possible_truncation)]
                             let paren_start = source_text
                                 .slice_to(sequence.span().start)
                                 .rfind('(')
-                                .map(|i| i as u32)
-                                .unwrap_or(sequence.span().start);
+                                .map_or(sequence.span().start, |i| i as u32);
                             // Search forward for ')'
                             let seq_end = sequence.span().end as usize;
+                            #[expect(clippy::cast_possible_truncation)]
                             let paren_end = source_text
                                 .slice_from(sequence.span().end)
                                 .find(')')
-                                .map(|i| (seq_end + i + 1) as u32)
-                                .unwrap_or(sequence.span().end);
+                                .map_or(sequence.span().end, |i| (seq_end + i + 1) as u32);
                             let suppressed_span = Span::new(paren_start, paren_end);
                             write!(
                                 f,
@@ -601,18 +601,18 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                         // Find the parentheses around the sequence expression
                         let source_text = f.source_text();
                         // Search backward for '('
+                        #[expect(clippy::cast_possible_truncation)]
                         let paren_start = source_text
                             .slice_to(sequence.span().start)
                             .rfind('(')
-                            .map(|i| i as u32)
-                            .unwrap_or(sequence.span().start);
+                            .map_or(sequence.span().start, |i| i as u32);
                         // Search forward for ')'
                         let seq_end = sequence.span().end as usize;
+                        #[expect(clippy::cast_possible_truncation)]
                         let paren_end = source_text
                             .slice_from(sequence.span().end)
                             .find(')')
-                            .map(|i| (seq_end + i + 1) as u32)
-                            .unwrap_or(sequence.span().end);
+                            .map_or(sequence.span().end, |i| (seq_end + i + 1) as u32);
                         let suppressed_span = Span::new(paren_start, paren_end);
                         write!(
                             f,
