@@ -420,10 +420,13 @@ pub fn normalize_string(
 /// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
 /// 15.
 /// <https://github.com/oxc-project/unicode-id-start/pull/3>
+///
+/// Also excludes supplementary Unicode characters (codepoints > 0xFFFF) to match ES5 identifier
+/// rules used by Prettier. ES6+ allows these but property keys use ES5 rules for compatibility.
 pub fn is_identifier_name_patched(content: &str) -> bool {
     let mut chars = content.chars();
-    chars.next().is_some_and(is_identifier_start)
-        && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
+    chars.next().is_some_and(|c| is_identifier_start(c) && (c as u32) <= 0xFFFF)
+        && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･' && (c as u32) <= 0xFFFF)
 }
 
 #[cfg(test)]
