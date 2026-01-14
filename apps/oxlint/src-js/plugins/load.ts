@@ -138,6 +138,7 @@ export async function loadPlugin(
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
+ * @throws {TypeError} If the plugin has a rule with an invalid `meta.fixable` value.
  */
 export function registerPlugin(
   plugin: Plugin,
@@ -169,7 +170,10 @@ export function registerPlugin(
       if (typeof ruleMeta !== "object") throw new TypeError("Invalid `rule.meta`");
 
       const { fixable } = ruleMeta;
-      if (fixable != null) {
+      // ESLint technically only allows `null`, unset, or "code" / "whitespace" for `fixable`. Unfortunately,
+      // it doesn't actually enforce this meaningfully, and so some plugins use `false` by accident.
+      // So we have to handle `false` as well.
+      if (fixable != null && (fixable as any) != false) {
         if (fixable !== "code" && fixable !== "whitespace") {
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
