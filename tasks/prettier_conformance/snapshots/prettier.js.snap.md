@@ -1,4 +1,4 @@
-js compatibility: 746/761 (98.03%)
+js compatibility: 748/761 (98.29%)
 
 # Failed
 
@@ -12,8 +12,6 @@ js compatibility: 746/761 (98.03%)
 | js/for/9812-unstable.js | 💥 | 63.64% |
 | js/for/for-in-with-initializer.js | 💥 | 31.25% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
-| js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
-| js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | jsx/fbt/test.js | 💥 | 84.06% |

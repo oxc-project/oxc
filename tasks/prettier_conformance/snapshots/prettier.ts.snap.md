@@ -1,4 +1,4 @@
-ts compatibility: 579/605 (95.70%)
+ts compatibility: 578/605 (95.54%)
 
 # Failed
 
@@ -27,6 +27,7 @@ ts compatibility: 579/605 (95.70%)
 | typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
+| typescript/quote-props/types.ts | 💥✨✨ | 29.63% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/comments/18106.ts | 💥 | 92.68% |
 | typescript/union/single-type/single-type.ts | 💥 | 66.67% |
