@@ -9,22 +9,20 @@ use oxc_span::{ContentEq, Span};
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
 fn eslint_prefer_spread_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Require spread operators instead of .apply()").with_label(span)
+    OxcDiagnostic::warn("Use spread operators instead of `.apply()`.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferSpread;
 
 declare_oxc_lint!(
-    /// This rule is combined 2 rules from `eslint:prefer-spread` and `unicorn:prefer-spread`.
-    ///
     /// ### What it does
     ///
-    /// Require spread operators instead of .apply()
+    /// Require spread operators instead of `.apply()`
     ///
     /// ### Why is this bad?
     ///
-    /// Before ES2015, one must use Function.prototype.apply() to call variadic functions.
+    /// Before ES2015, one must use `Function.prototype.apply()` to call variadic functions.
     /// ```javascript
     /// var args = [1, 2, 3, 4];
     /// Math.max.apply(Math, args);
