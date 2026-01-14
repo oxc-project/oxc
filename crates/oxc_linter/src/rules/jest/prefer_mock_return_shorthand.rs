@@ -1,56 +1,92 @@
+use std::collections::HashSet;
+
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement, VariableDeclarationKind},
+    ast::{Argument, Expression, IdentifierReference, Statement, VariableDeclarationKind},
 };
+use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashSet;
 
-use crate::{
-    AstNode,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-};
+use crate::{AstNode, context::LintContext, rule::Rule};
 
-fn prefer_mock_return_shorthand_diagnostic(span: Span) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+fn prefer_mock_return_shorthand_diagnostic(
+    span: Span,
+    current_property: &str,
+    replacement: &str,
+) -> OxcDiagnostic {
+    let help = format!("Replace `{current_property}` with `{replacement}`.");
+
+    OxcDiagnostic::warn("Mock functions that return simple values should use `mockReturnValue/mockReturnValueOnce`.")
+        .with_help(help)
         .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferMockReturnShorthand;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// When working with mocks of functions that return simple values, Jest provides some API sugar functions to reduce the amount of boilerplate you have to write.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// Not using Jest’s API sugar functions adds unnecessary boilerplate and makes tests harder to read. These helpers clearly express intent
+    /// and reduce errors, keeping tests simple and maintainable.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// jest.fn().mockImplementation(() => 'hello world');
+    ///
+    /// jest
+    ///   .spyOn(fs.promises, 'readFile')
+    ///   .mockImplementationOnce(() => Promise.reject(new Error('oh noes!')));
+    ///
+    /// myFunction
+    ///   .mockImplementationOnce(() => 42)
+    ///   .mockImplementationOnce(() => Promise.resolve(42))
+    ///   .mockReturnValue(0);
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// jest.fn().mockResolvedValue(123);
+    ///
+    /// jest
+    ///   .spyOn(fs.promises, 'readFile')
+    ///   .mockReturnValue(Promise.reject(new Error('oh noes!')));
+    /// jest.spyOn(fs.promises, 'readFile').mockRejectedValue(new Error('oh noes!'));
+    ///
+    /// jest.spyOn(fs, 'readFileSync').mockImplementationOnce(() => {
+    ///   throw new Error('oh noes!');
+    /// });
+    ///
+    /// myFunction
+    ///   .mockResolvedValueOnce(42)
+    ///   .mockResolvedValueOnce(42)
+    ///   .mockReturnValue(0);
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/prefer-mock-return-shorthand.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/prefer-mock-return-shorthand": "error"
+    ///   }
+    /// }
     /// ```
     PreferMockReturnShorthand,
     jest,
     style,
-    pending, // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    fix,
 );
 
 fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
@@ -155,19 +191,47 @@ impl Rule for PreferMockReturnShorthand {
 
         match return_expression {
             Expression::UpdateExpression(_) => return,
-            Expression::Identifier(identifier) => {
-                if let Some(symbol_id) =
-                    ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
-                {
-                    if self.is_mutable(symbol_id, ctx) {
-                        return;
-                    }
-                };
+            _ => {
+                let mut visitor = IdentifierCollectorVisitor::new();
+
+                visitor.visit_expression(return_expression);
+
+                for reference_id in visitor.references {
+                    if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() {
+                        if self.is_mutable(symbol_id, ctx) {
+                            return;
+                        }
+                    };
+                }
             }
-            _ => return,
         }
 
-        ctx.diagnostic(prefer_mock_return_shorthand_diagnostic(property_span));
+        let new_property_name = if is_once { "mockReturnValueOnce" } else { "mockReturnValue" };
+        ctx.diagnostic_with_fix(
+            prefer_mock_return_shorthand_diagnostic(
+                property_span,
+                property_name,
+                new_property_name,
+            ),
+            |fixer| {
+                let return_text = {
+                    let source = ctx.source_range(GetSpan::span(return_expression));
+
+                    source
+                        .strip_prefix("(")
+                        .and_then(|source| source.strip_suffix(")"))
+                        .map_or(source.to_owned(), |normalized_source| normalized_source.to_owned())
+                };
+                let argument_span = GetSpan::span(expr);
+
+                let mut multifixer = fixer.for_multifix().new_fix_with_capacity(2);
+
+                multifixer.push(fixer.replace(property_span, new_property_name));
+                multifixer.push(fixer.replace(argument_span, return_text));
+
+                multifixer.with_message("Replaced successfully")
+            },
+        );
     }
 }
 
@@ -175,13 +239,10 @@ impl PreferMockReturnShorthand {
     fn is_mutable(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
         let scoping = ctx.scoping();
 
-        // CHECK A: Is it ever reassigned anywhere in the code?
-        // Oxc pre-calculates this flag, replacing the need for scope.through traversal.
         if scoping.symbol_is_mutated(symbol_id) {
             return true;
         }
 
-        // CHECK B: Was it declared as 'const'?
         let decl_node_id = scoping.symbol_declaration(symbol_id);
         if let AstKind::VariableDeclarator(_) = ctx.nodes().kind(decl_node_id) {
             if let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(decl_node_id) {
@@ -193,11 +254,28 @@ impl PreferMockReturnShorthand {
     }
 }
 
+struct IdentifierCollectorVisitor {
+    references: FxHashSet<ReferenceId>,
+}
+
+impl IdentifierCollectorVisitor {
+    fn new() -> Self {
+        Self { references: HashSet::default() }
+    }
+}
+
+impl<'a> Visit<'a> for IdentifierCollectorVisitor {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        let id = ident.reference_id();
+        self.references.insert(id);
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         "describe()",
         "it()",
         "describe.skip()",
@@ -488,7 +566,7 @@ fn test() {
             });",
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         r#"jest.fn().mockImplementation(() => "hello sunshine")"#,
         "jest.fn().mockImplementation(() => ({}))",
         "jest.fn().mockImplementation(() => x)",
@@ -707,7 +785,7 @@ fn test() {
             aVariable.mockImplementation(() => true ? true : true ? true : false);",
     ];
 
-    let fix = vec![
+    let mut fix = vec![
         (
             r#"jest.fn().mockImplementation(() => "hello sunshine")"#,
             r#"jest.fn().mockReturnValue("hello sunshine")"#,
@@ -1193,7 +1271,192 @@ fn test() {
         ),
     ];
 
+    let vitest_pass = vec![
+        "describe()",
+        "it()",
+        "describe.skip()",
+        "it.skip()",
+        "test()",
+        "test.skip()",
+        "var appliedOnly = describe.only; appliedOnly.apply(describe)",
+        "var calledOnly = it.only; calledOnly.call(it)",
+        "it.each()()",
+        "it.each`table`()",
+        "test.each()()",
+        "test.each`table`()",
+        "test.concurrent()",
+        "vi.fn().mockReturnValue(42)",
+        "vi.fn(() => Promise.resolve(42))",
+        "vi.fn(() => 42)",
+        "vi.fn(() => ({}))",
+        "aVariable.mockImplementation",
+        "aVariable.mockImplementation()",
+        "jest.fn().mockImplementation(async () => 1);", // { "parserOptions": { "ecmaVersion": 2017 } },
+        "jest.fn().mockImplementation(async function () {});", // { "parserOptions": { "ecmaVersion": 2017 } },
+        "
+                    jest.fn().mockImplementation(async function () {
+                      return 42;
+                    });
+                  ", // { "parserOptions": { "ecmaVersion": 2017 } },
+        "
+                  aVariable.mockImplementation(() => {
+                    if (true) {
+                      return 1;
+                    }
+
+                    return 2;
+                  });
+                ",
+        "aVariable.mockImplementation(() => value++)",
+        "aVariable.mockImplementationOnce(() => --value)",
+        "
+                  const aValue = 0;
+                  aVariable.mockImplementation(() => {
+                    return aValue++;
+                  });
+                ",
+        "
+                  aVariable.mockImplementation(() => {
+                    aValue += 1;
+
+                    return aValue;
+                  });
+                ",
+        "
+                  aVariable.mockImplementation(() => {
+                    aValue++;
+
+                    return aValue;
+                  });
+                ",
+        "aVariable.mockReturnValue()",
+        "aVariable.mockReturnValue(1)",
+        r#"aVariable.mockReturnValue("hello world")"#,
+        "vi.spyOn(Thingy, 'method').mockImplementation(param => param * 2);",
+        "vi.spyOn(Thingy, 'method').mockImplementation(param => true ? param : 0);",
+        "
+                  aVariable.mockImplementation(() => {
+                    const value = new Date();
+
+                    return Promise.resolve(value);
+                  });
+                ",
+        "
+                  aVariable.mockImplementation(() => {
+                    throw new Error('oh noes!');
+                  });
+                ",
+        "aVariable.mockImplementation(() => { /* do something */ });",
+        "
+                  aVariable.mockImplementation(() => {
+                    const x = 1;
+
+                    console.log(x + 2);
+                  });
+                ",
+        "aVariable.mockReturnValue(Promise.all([1, 2, 3]));",
+        "
+                  let currentX = 0;
+                  jest.spyOn(X, getCount).mockImplementation(() => currentX);
+
+                  // stuff happens
+
+                  currentX++;
+
+                  // more stuff happens
+                ",
+        "
+                  let currentX = 0;
+                  jest.spyOn(X, getCount).mockImplementation(() => currentX);
+                ",
+        "
+                  let currentX = 0;
+                  currentX = 0;
+                  jest.spyOn(X, getCount).mockImplementation(() => currentX);
+                ",
+        "
+                  var currentX = 0;
+                  currentX = 0;
+                  jest.spyOn(X, getCount).mockImplementation(() => currentX);
+                ",
+        "
+                  var currentX = 0;
+                  var currentX = 0;
+                  jest.spyOn(X, getCount).mockImplementation(() => currentX);
+                ",
+        "
+                  let doSomething = () => {};
+
+                  jest.spyOn(X, getCount).mockImplementation(() => doSomething);
+                ",
+        "
+                  let currentX = 0;
+                  jest.spyOn(X, getCount).mockImplementation(() => {
+                    currentX += 1;
+
+                    return currentX;
+                  });
+                ",
+        "
+                  const currentX = 0;
+                  jest.spyOn(X, getCount).mockImplementation(() => {
+                    console.log('returning', currentX);
+
+                    return currentX;
+                  });
+                ",
+    ];
+
+    let vitest_fail = vec![
+        r#"vi.fn().mockImplementation(() => "hello sunshine")"#,
+        "vi.fn().mockImplementation(() => ({}))",
+        "vi.fn().mockImplementation(() => x)",
+        "vi.fn().mockImplementation(() => true ? x : y)",
+        r#"vi.fn().mockImplementation(() => "hello world")"#,
+        r#"aVariable.mockImplementation(() => "hello world")"#,
+        r#"vi.fn().mockImplementationOnce(() => "hello world")"#,
+        r#"aVariable.mockImplementationOnce(() => "hello world")"#,
+        "vi.fn().mockImplementation(() => [], xyz)",
+        r#"vi.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))"#,
+    ];
+
+    let vitest_fix = vec![
+        (
+            r#"vi.fn().mockImplementation(() => "hello sunshine")"#,
+            r#"vi.fn().mockReturnValue("hello sunshine")"#,
+        ),
+        ("vi.fn().mockImplementation(() => ({}))", "vi.fn().mockReturnValue({})"),
+        ("vi.fn().mockImplementation(() => x)", "vi.fn().mockReturnValue(x)"),
+        ("vi.fn().mockImplementation(() => true ? x : y)", "vi.fn().mockReturnValue(true ? x : y)"),
+        (
+            r#"vi.fn().mockImplementation(() => "hello world")"#,
+            r#"vi.fn().mockReturnValue("hello world")"#,
+        ),
+        (
+            r#"aVariable.mockImplementation(() => "hello world")"#,
+            r#"aVariable.mockReturnValue("hello world")"#,
+        ),
+        (
+            r#"vi.fn().mockImplementationOnce(() => "hello world")"#,
+            r#"vi.fn().mockReturnValueOnce("hello world")"#,
+        ),
+        (
+            r#"aVariable.mockImplementationOnce(() => "hello world")"#,
+            r#"aVariable.mockReturnValueOnce("hello world")"#,
+        ),
+        ("vi.fn().mockImplementation(() => [], xyz)", "vi.fn().mockReturnValue([], xyz)"),
+        (
+            r#"vi.spyOn(fs, "readFile").mockImplementation(() => new Error("oh noes!"))"#,
+            r#"vi.spyOn(fs, "readFile").mockReturnValue(new Error("oh noes!"))"#,
+        ),
+    ];
+
+    pass.extend(vitest_pass);
+    fail.extend(vitest_fail);
+    fix.extend(vitest_fix);
+
     Tester::new(PreferMockReturnShorthand::NAME, PreferMockReturnShorthand::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .with_jest_plugin(true)
         .with_vitest_plugin(true)
         .test_and_snapshot();
