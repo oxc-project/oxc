@@ -12,11 +12,19 @@ use crate::{
 };
 
 pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
+    format_property_key_with_options(key, f, false);
+}
+
+/// Format a property key with options for preserving quotes.
+/// `preserve_quotes` forces quotes to be preserved regardless of quoteProps setting.
+pub fn format_property_key_with_options<'a>(
+    key: &AstNode<'a, PropertyKey<'a>>,
+    f: &mut Formatter<'_, 'a>,
+    preserve_quotes: bool,
+) {
     if let PropertyKey::StringLiteral(s) = key.as_ref() {
-        // `"constructor"` property in the class should be kept quoted
-        let kind = if matches!(key.parent, AstNodes::PropertyDefinition(_))
-            && matches!(key.as_ref(), PropertyKey::StringLiteral(string) if string.value == "constructor")
-        {
+        // Use Expression kind if quotes should be preserved
+        let kind = if preserve_quotes {
             StringLiteralParentKind::Expression
         } else {
             StringLiteralParentKind::Member

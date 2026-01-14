@@ -12,7 +12,7 @@ use crate::{
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
         member_chain::is_member_call_chain,
-        object::{format_property_key, write_member_name},
+        object::{format_property_key_with_options, write_member_name},
     },
     write,
 };
@@ -272,10 +272,13 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
 
                 // Write the property key
+                // For TypeScript property declarations with type annotations (not value assignments),
+                // preserve quotes on string keys (e.g., `"username": string` stays quoted)
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
                 } else {
-                    format_property_key(property.key(), f);
+                    let preserve_quotes = property.type_annotation.is_some() && property.value.is_none();
+                    format_property_key_with_options(property.key(), f, preserve_quotes);
                 }
 
                 // Write optional, definite, and type annotation
