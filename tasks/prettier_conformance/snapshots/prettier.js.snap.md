@@ -1,10 +1,9 @@
-js compatibility: 743/761 (97.63%)
+js compatibility: 744/761 (97.77%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/comment.js | 💥💥 | 92.59% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |

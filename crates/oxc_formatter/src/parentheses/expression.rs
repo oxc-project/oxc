@@ -79,12 +79,15 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
             "let" => {
                 // `let[a]` at statement start looks like a lexical declaration, needs parens
                 // Only applies when `let` is the object of a computed member expression
-                if !matches!(self.parent, AstNodes::ComputedMemberExpression(m) if m.object.span() == self.span()) {
+                if !matches!(self.parent, AstNodes::ComputedMemberExpression(m) if m.object.span() == self.span())
+                {
                     // Not `let[...]` - check special cases only
                     return self.ancestors().any(|parent| match parent {
                         AstNodes::ForOfStatement(s) => s.left.span().contains_inclusive(self.span),
-                        AstNodes::ForInStatement(s) => s.left.span().contains_inclusive(self.span)
-                            && !matches!(self.parent, AstNodes::StaticMemberExpression(_)),
+                        AstNodes::ForInStatement(s) => {
+                            s.left.span().contains_inclusive(self.span)
+                                && !matches!(self.parent, AstNodes::StaticMemberExpression(_))
+                        }
                         AstNodes::TSSatisfiesExpression(e) => e.expression.span() == self.span(),
                         _ => false,
                     });
@@ -96,8 +99,12 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                     let dominated = match parent {
                         AstNodes::ExpressionStatement(s) => return !s.is_arrow_function_body(),
                         AstNodes::ForStatement(_) => return true,
-                        AstNodes::ForOfStatement(s) => return s.left.span().contains_inclusive(self.span),
-                        AstNodes::ForInStatement(s) => return s.left.span().contains_inclusive(self.span),
+                        AstNodes::ForOfStatement(s) => {
+                            return s.left.span().contains_inclusive(self.span);
+                        }
+                        AstNodes::ForInStatement(s) => {
+                            return s.left.span().contains_inclusive(self.span);
+                        }
                         AstNodes::ComputedMemberExpression(m) => m.object.span() == child_span,
                         AstNodes::StaticMemberExpression(m) => m.object.span() == child_span,
                         AstNodes::CallExpression(c) => c.callee.span() == child_span,
@@ -106,7 +113,9 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                         AstNodes::BinaryExpression(b) => b.left.span() == child_span,
                         AstNodes::LogicalExpression(l) => l.left.span() == child_span,
                         AstNodes::ConditionalExpression(c) => c.test.span() == child_span,
-                        AstNodes::SequenceExpression(s) => s.expressions.first().is_some_and(|e| e.span() == child_span),
+                        AstNodes::SequenceExpression(s) => {
+                            s.expressions.first().is_some_and(|e| e.span() == child_span)
+                        }
                         AstNodes::TaggedTemplateExpression(t) => t.tag.span() == child_span,
                         _ => false,
                     };
