@@ -29,7 +29,7 @@ pub struct NoNodejsModulesConfig {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-pub struct NoNodejsModules(NoNodejsModulesConfig);
+pub struct NoNodejsModules(Box<NoNodejsModulesConfig>);
 
 impl std::ops::Deref for NoNodejsModules {
     type Target = NoNodejsModulesConfig;
