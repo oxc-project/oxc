@@ -249,6 +249,7 @@ pub use crate::rules::jest::prefer_hooks_on_top::PreferHooksOnTop as JestPreferH
 pub use crate::rules::jest::prefer_jest_mocked::PreferJestMocked as JestPreferJestMocked;
 pub use crate::rules::jest::prefer_lowercase_title::PreferLowercaseTitle as JestPreferLowercaseTitle;
 pub use crate::rules::jest::prefer_mock_promise_shorthand::PreferMockPromiseShorthand as JestPreferMockPromiseShorthand;
+pub use crate::rules::jest::prefer_mock_return_shorthand::PreferMockReturnShorthand as JestPreferMockReturnShorthand;
 pub use crate::rules::jest::prefer_spy_on::PreferSpyOn as JestPreferSpyOn;
 pub use crate::rules::jest::prefer_strict_equal::PreferStrictEqual as JestPreferStrictEqual;
 pub use crate::rules::jest::prefer_to_be::PreferToBe as JestPreferToBe;
@@ -674,6 +675,7 @@ pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPref
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
 pub use crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf as VitestPreferExpectTypeOf;
+pub use crate::rules::vitest::prefer_mock_return_shorthand::PreferMockReturnShorthand as VitestPreferMockReturnShorthand;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
@@ -1054,6 +1056,7 @@ pub enum RuleEnum {
     JestPreferJestMocked(JestPreferJestMocked),
     JestPreferLowercaseTitle(JestPreferLowercaseTitle),
     JestPreferMockPromiseShorthand(JestPreferMockPromiseShorthand),
+    JestPreferMockReturnShorthand(JestPreferMockReturnShorthand),
     JestPreferSpyOn(JestPreferSpyOn),
     JestPreferStrictEqual(JestPreferStrictEqual),
     JestPreferToBe(JestPreferToBe),
@@ -1369,6 +1372,7 @@ pub enum RuleEnum {
     VitestPreferCalledTimes(VitestPreferCalledTimes),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
     VitestPreferExpectTypeOf(VitestPreferExpectTypeOf),
+    VitestPreferMockReturnShorthand(VitestPreferMockReturnShorthand),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
@@ -1790,7 +1794,8 @@ const JEST_PREFER_HOOKS_ON_TOP_ID: usize = JEST_PREFER_HOOKS_IN_ORDER_ID + 1usiz
 const JEST_PREFER_JEST_MOCKED_ID: usize = JEST_PREFER_HOOKS_ON_TOP_ID + 1usize;
 const JEST_PREFER_LOWERCASE_TITLE_ID: usize = JEST_PREFER_JEST_MOCKED_ID + 1usize;
 const JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = JEST_PREFER_LOWERCASE_TITLE_ID + 1usize;
-const JEST_PREFER_SPY_ON_ID: usize = JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
+const JEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID + 1usize;
+const JEST_PREFER_SPY_ON_ID: usize = JEST_PREFER_MOCK_RETURN_SHORTHAND_ID + 1usize;
 const JEST_PREFER_STRICT_EQUAL_ID: usize = JEST_PREFER_SPY_ON_ID + 1usize;
 const JEST_PREFER_TO_BE_ID: usize = JEST_PREFER_STRICT_EQUAL_ID + 1usize;
 const JEST_PREFER_TO_CONTAIN_ID: usize = JEST_PREFER_TO_BE_ID + 1usize;
@@ -2142,7 +2147,8 @@ const VITEST_PREFER_CALLED_ONCE_ID: usize = VITEST_NO_IMPORT_NODE_TEST_ID + 1usi
 const VITEST_PREFER_CALLED_TIMES_ID: usize = VITEST_PREFER_CALLED_ONCE_ID + 1usize;
 const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = VITEST_PREFER_CALLED_TIMES_ID + 1usize;
 const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID + 1usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = VITEST_PREFER_EXPECT_TYPE_OF_ID + 1usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID + 1usize;
 const VITEST_PREFER_TO_BE_OBJECT_ID: usize = VITEST_PREFER_TO_BE_FALSY_ID + 1usize;
 const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = VITEST_PREFER_TO_BE_OBJECT_ID + 1usize;
 const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize =
@@ -2586,6 +2592,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JEST_PREFER_JEST_MOCKED_ID,
             Self::JestPreferLowercaseTitle(_) => JEST_PREFER_LOWERCASE_TITLE_ID,
             Self::JestPreferMockPromiseShorthand(_) => JEST_PREFER_MOCK_PROMISE_SHORTHAND_ID,
+            Self::JestPreferMockReturnShorthand(_) => JEST_PREFER_MOCK_RETURN_SHORTHAND_ID,
             Self::JestPreferSpyOn(_) => JEST_PREFER_SPY_ON_ID,
             Self::JestPreferStrictEqual(_) => JEST_PREFER_STRICT_EQUAL_ID,
             Self::JestPreferToBe(_) => JEST_PREFER_TO_BE_ID,
@@ -2939,6 +2946,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(_) => VITEST_PREFER_CALLED_TIMES_ID,
             Self::VitestPreferDescribeFunctionTitle(_) => VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID,
             Self::VitestPreferExpectTypeOf(_) => VITEST_PREFER_EXPECT_TYPE_OF_ID,
+            Self::VitestPreferMockReturnShorthand(_) => VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID,
             Self::VitestPreferToBeFalsy(_) => VITEST_PREFER_TO_BE_FALSY_ID,
             Self::VitestPreferToBeObject(_) => VITEST_PREFER_TO_BE_OBJECT_ID,
             Self::VitestPreferToBeTruthy(_) => VITEST_PREFER_TO_BE_TRUTHY_ID,
@@ -3380,6 +3388,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::NAME,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::NAME,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::NAME,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::NAME,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::NAME,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::NAME,
             Self::JestPreferToBe(_) => JestPreferToBe::NAME,
@@ -3725,6 +3734,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::NAME,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
@@ -4190,6 +4200,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::CATEGORY,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::CATEGORY,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::CATEGORY,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::CATEGORY,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::CATEGORY,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::CATEGORY,
             Self::JestPreferToBe(_) => JestPreferToBe::CATEGORY,
@@ -4555,6 +4566,7 @@ impl RuleEnum {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::CATEGORY,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::CATEGORY,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
@@ -4999,6 +5011,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::FIX,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::FIX,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::FIX,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::FIX,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::FIX,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::FIX,
             Self::JestPreferToBe(_) => JestPreferToBe::FIX,
@@ -5344,6 +5357,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FIX,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
@@ -5878,6 +5892,9 @@ impl RuleEnum {
             Self::JestPreferMockPromiseShorthand(_) => {
                 JestPreferMockPromiseShorthand::documentation()
             }
+            Self::JestPreferMockReturnShorthand(_) => {
+                JestPreferMockReturnShorthand::documentation()
+            }
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::documentation(),
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::documentation(),
             Self::JestPreferToBe(_) => JestPreferToBe::documentation(),
@@ -6323,6 +6340,9 @@ impl RuleEnum {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::documentation(),
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::documentation()
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
@@ -7341,6 +7361,10 @@ impl RuleEnum {
                 JestPreferMockPromiseShorthand::config_schema(generator)
                     .or_else(|| JestPreferMockPromiseShorthand::schema(generator))
             }
+            Self::JestPreferMockReturnShorthand(_) => {
+                JestPreferMockReturnShorthand::config_schema(generator)
+                    .or_else(|| JestPreferMockReturnShorthand::schema(generator))
+            }
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::config_schema(generator)
                 .or_else(|| JestPreferSpyOn::schema(generator)),
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::config_schema(generator)
@@ -8239,6 +8263,10 @@ impl RuleEnum {
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::config_schema(generator)
                 .or_else(|| VitestPreferExpectTypeOf::schema(generator)),
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::config_schema(generator)
+                    .or_else(|| VitestPreferMockReturnShorthand::schema(generator))
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::config_schema(generator)
                 .or_else(|| VitestPreferToBeFalsy::schema(generator)),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::config_schema(generator)
@@ -8663,6 +8691,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => "jest",
             Self::JestPreferLowercaseTitle(_) => "jest",
             Self::JestPreferMockPromiseShorthand(_) => "jest",
+            Self::JestPreferMockReturnShorthand(_) => "jest",
             Self::JestPreferSpyOn(_) => "jest",
             Self::JestPreferStrictEqual(_) => "jest",
             Self::JestPreferToBe(_) => "jest",
@@ -8978,6 +9007,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
             Self::VitestPreferExpectTypeOf(_) => "vitest",
+            Self::VitestPreferMockReturnShorthand(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
@@ -10134,6 +10164,9 @@ impl RuleEnum {
             Self::JestPreferMockPromiseShorthand(_) => Ok(Self::JestPreferMockPromiseShorthand(
                 JestPreferMockPromiseShorthand::from_configuration(value)?,
             )),
+            Self::JestPreferMockReturnShorthand(_) => Ok(Self::JestPreferMockReturnShorthand(
+                JestPreferMockReturnShorthand::from_configuration(value)?,
+            )),
             Self::JestPreferSpyOn(_) => {
                 Ok(Self::JestPreferSpyOn(JestPreferSpyOn::from_configuration(value)?))
             }
@@ -11137,6 +11170,9 @@ impl RuleEnum {
             Self::VitestPreferExpectTypeOf(_) => Ok(Self::VitestPreferExpectTypeOf(
                 VitestPreferExpectTypeOf::from_configuration(value)?,
             )),
+            Self::VitestPreferMockReturnShorthand(_) => Ok(Self::VitestPreferMockReturnShorthand(
+                VitestPreferMockReturnShorthand::from_configuration(value)?,
+            )),
             Self::VitestPreferToBeFalsy(_) => {
                 Ok(Self::VitestPreferToBeFalsy(VitestPreferToBeFalsy::from_configuration(value)?))
             }
@@ -11570,6 +11606,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.to_configuration(),
             Self::JestPreferLowercaseTitle(rule) => rule.to_configuration(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.to_configuration(),
+            Self::JestPreferMockReturnShorthand(rule) => rule.to_configuration(),
             Self::JestPreferSpyOn(rule) => rule.to_configuration(),
             Self::JestPreferStrictEqual(rule) => rule.to_configuration(),
             Self::JestPreferToBe(rule) => rule.to_configuration(),
@@ -11885,6 +11922,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
             Self::VitestPreferExpectTypeOf(rule) => rule.to_configuration(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
@@ -12264,6 +12302,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run(node, ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run(node, ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run(node, ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run(node, ctx),
             Self::JestPreferSpyOn(rule) => rule.run(node, ctx),
             Self::JestPreferStrictEqual(rule) => rule.run(node, ctx),
             Self::JestPreferToBe(rule) => rule.run(node, ctx),
@@ -12579,6 +12618,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run(node, ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
@@ -12956,6 +12996,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run_once(ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run_once(ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_once(ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run_once(ctx),
             Self::JestPreferSpyOn(rule) => rule.run_once(ctx),
             Self::JestPreferStrictEqual(rule) => rule.run_once(ctx),
             Self::JestPreferToBe(rule) => rule.run_once(ctx),
@@ -13271,6 +13312,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_once(ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
@@ -13714,6 +13756,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferSpyOn(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferStrictEqual(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestPreferToBe(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14059,6 +14102,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -14438,6 +14482,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.should_run(ctx),
             Self::JestPreferLowercaseTitle(rule) => rule.should_run(ctx),
             Self::JestPreferMockPromiseShorthand(rule) => rule.should_run(ctx),
+            Self::JestPreferMockReturnShorthand(rule) => rule.should_run(ctx),
             Self::JestPreferSpyOn(rule) => rule.should_run(ctx),
             Self::JestPreferStrictEqual(rule) => rule.should_run(ctx),
             Self::JestPreferToBe(rule) => rule.should_run(ctx),
@@ -14753,6 +14798,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
             Self::VitestPreferExpectTypeOf(rule) => rule.should_run(ctx),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
@@ -15284,6 +15330,9 @@ impl RuleEnum {
             Self::JestPreferMockPromiseShorthand(_) => {
                 JestPreferMockPromiseShorthand::IS_TSGOLINT_RULE
             }
+            Self::JestPreferMockReturnShorthand(_) => {
+                JestPreferMockReturnShorthand::IS_TSGOLINT_RULE
+            }
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::IS_TSGOLINT_RULE,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::IS_TSGOLINT_RULE,
             Self::JestPreferToBe(_) => JestPreferToBe::IS_TSGOLINT_RULE,
@@ -15729,6 +15778,9 @@ impl RuleEnum {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
+            Self::VitestPreferMockReturnShorthand(_) => {
+                VitestPreferMockReturnShorthand::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
@@ -16211,6 +16263,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(_) => JestPreferJestMocked::HAS_CONFIG,
             Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::HAS_CONFIG,
             Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::HAS_CONFIG,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::HAS_CONFIG,
             Self::JestPreferSpyOn(_) => JestPreferSpyOn::HAS_CONFIG,
             Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::HAS_CONFIG,
             Self::JestPreferToBe(_) => JestPreferToBe::HAS_CONFIG,
@@ -16588,6 +16641,7 @@ impl RuleEnum {
                 VitestPreferDescribeFunctionTitle::HAS_CONFIG
             }
             Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::HAS_CONFIG,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
@@ -16969,6 +17023,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.types_info(),
             Self::JestPreferLowercaseTitle(rule) => rule.types_info(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.types_info(),
+            Self::JestPreferMockReturnShorthand(rule) => rule.types_info(),
             Self::JestPreferSpyOn(rule) => rule.types_info(),
             Self::JestPreferStrictEqual(rule) => rule.types_info(),
             Self::JestPreferToBe(rule) => rule.types_info(),
@@ -17284,6 +17339,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.types_info(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
@@ -17661,6 +17717,7 @@ impl RuleEnum {
             Self::JestPreferJestMocked(rule) => rule.run_info(),
             Self::JestPreferLowercaseTitle(rule) => rule.run_info(),
             Self::JestPreferMockPromiseShorthand(rule) => rule.run_info(),
+            Self::JestPreferMockReturnShorthand(rule) => rule.run_info(),
             Self::JestPreferSpyOn(rule) => rule.run_info(),
             Self::JestPreferStrictEqual(rule) => rule.run_info(),
             Self::JestPreferToBe(rule) => rule.run_info(),
@@ -17976,6 +18033,7 @@ impl RuleEnum {
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
             Self::VitestPreferExpectTypeOf(rule) => rule.run_info(),
+            Self::VitestPreferMockReturnShorthand(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
@@ -18437,6 +18495,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestPreferJestMocked(JestPreferJestMocked::default()),
         RuleEnum::JestPreferLowercaseTitle(JestPreferLowercaseTitle::default()),
         RuleEnum::JestPreferMockPromiseShorthand(JestPreferMockPromiseShorthand::default()),
+        RuleEnum::JestPreferMockReturnShorthand(JestPreferMockReturnShorthand::default()),
         RuleEnum::JestPreferSpyOn(JestPreferSpyOn::default()),
         RuleEnum::JestPreferStrictEqual(JestPreferStrictEqual::default()),
         RuleEnum::JestPreferToBe(JestPreferToBe::default()),
@@ -18782,6 +18841,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
         RuleEnum::VitestPreferExpectTypeOf(VitestPreferExpectTypeOf::default()),
+        RuleEnum::VitestPreferMockReturnShorthand(VitestPreferMockReturnShorthand::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),

@@ -361,6 +361,7 @@ pub(crate) mod jest {
     pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;
+    pub mod prefer_mock_return_shorthand;
     pub mod prefer_spy_on;
     pub mod prefer_strict_equal;
     pub mod prefer_to_be;
@@ -704,6 +705,7 @@ pub(crate) mod vitest {
     pub mod prefer_called_times;
     pub mod prefer_describe_function_title;
     pub mod prefer_expect_type_of;
+    pub mod prefer_mock_return_shorthand;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
