@@ -1080,6 +1080,7 @@ impl Gen for ExportSpecifier<'_> {
         if let Some(comments) = p.get_comments(self.local.span().start) {
             p.print_comments(&comments);
             p.print_soft_space();
+            p.print_next_indent_as_space = false;
         }
         self.local.print(p, ctx);
         let local_name = get_module_export_name(&self.local, p);
@@ -1089,6 +1090,7 @@ impl Gen for ExportSpecifier<'_> {
             if let Some(comments) = p.get_comments(self.exported.span().start) {
                 p.print_comments(&comments);
                 p.print_soft_space();
+                p.print_next_indent_as_space = false;
             }
             self.exported.print(p, ctx);
         }
