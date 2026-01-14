@@ -27,6 +27,12 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module fs
    ╭─[no_nodejs_modules.tsx:1:1]
+ 1 │ import(`fs`)
+   · ────────────
+   ╰────
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module fs
+   ╭─[no_nodejs_modules.tsx:1:1]
  1 │ import fs from "fs"
    · ───────────────────
    ╰────

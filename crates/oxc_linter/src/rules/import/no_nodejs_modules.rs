@@ -90,6 +90,9 @@ impl Rule for NoNodejsModules {
         let module_name = match node.kind() {
             AstKind::ImportExpression(import) => match &import.source {
                 Expression::StringLiteral(str_lit) => Some(str_lit.value),
+                Expression::TemplateLiteral(temp_lit) if temp_lit.is_no_substitution_template() => {
+                    temp_lit.single_quasi()
+                }
                 _ => None,
             },
             AstKind::TSImportEqualsDeclaration(import) => match &import.module_reference {
@@ -175,6 +178,7 @@ fn test() {
         (r#"import foo = require("lodash")"#, None),
         // Dynamic imports
         (r#"import("lodash")"#, None),
+        (r#"import(`lodash`)"#, None),
         (r#"import("./foo")"#, None),
         (r#"import("@scope/foo")"#, None),
     ];
@@ -185,6 +189,7 @@ fn test() {
         (r#"import fs from "fs""#, None),
         (r#"var path = require("path")"#, None),
         (r#"var fs = require("fs")"#, None),
+        (r#"import(`fs`)"#, None),
         // With allow option
         (r#"import fs from "fs""#, Some(serde_json::json!([{ "allow": ["path"] }]))),
         (r#"import crypto from "crypto""#, Some(serde_json::json!([{ "allow": ["fs"] }]))),
