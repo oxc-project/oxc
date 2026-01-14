@@ -14,7 +14,7 @@ pub fn render_rules_table(table: &RuleTable, docs_prefix: &str) -> String {
     let body = table
         .sections
         .iter()
-        .map(|s| s.render_markdown_table(Some(docs_prefix)))
+        .map(|s| s.render_markdown_table(Some(docs_prefix), None))
         .collect::<Vec<_>>()
         .join("\n");
 
