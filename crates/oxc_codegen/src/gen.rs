@@ -3346,7 +3346,9 @@ impl Gen for TSTypeParameter<'_> {
             constraint.print(p, ctx);
         }
         if let Some(default) = &self.default {
-            p.print_str(" = ");
+            p.print_soft_space();
+            p.print_ascii_byte(b'=');
+            p.print_soft_space();
             default.print(p, ctx);
         }
     }
@@ -3833,7 +3835,9 @@ impl Gen for TSImportEqualsDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import ");
         self.id.print(p, ctx);
-        p.print_str(" = ");
+        p.print_soft_space();
+        p.print_ascii_byte(b'=');
+        p.print_soft_space();
         self.module_reference.print(p, ctx);
     }
 }
