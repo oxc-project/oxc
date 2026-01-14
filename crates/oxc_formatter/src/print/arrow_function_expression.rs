@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -13,6 +13,7 @@ use crate::{
     utils::{
         assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        suppressed::FormatSuppressedNode,
     },
     write,
 };
@@ -144,20 +145,50 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
                     return if f.context().comments().has_comment_before(sequence.span().start) {
-                        // Format leading comments before the parentheses, not inside
-                        write!(
-                            f,
-                            [group(&format_args!(
-                                formatted_signature,
-                                group(&format_args!(indent(&format_args!(
-                                    hard_line_break(),
-                                    format_leading_comments(sequence.span()),
-                                    token("("),
-                                    soft_block_indent(&format_body),
-                                    token(")")
-                                ))))
-                            ))]
-                        );
+                        if f.context().comments().is_suppressed(sequence.span().start) {
+                            // Find the parentheses around the sequence expression
+                            let source_text = f.source_text();
+                            // Search backward for '('
+                            let paren_start = source_text
+                                .slice_to(sequence.span().start)
+                                .rfind('(')
+                                .map(|i| i as u32)
+                                .unwrap_or(sequence.span().start);
+                            // Search forward for ')'
+                            let seq_end = sequence.span().end as usize;
+                            let paren_end = source_text
+                                .slice_from(sequence.span().end)
+                                .find(')')
+                                .map(|i| (seq_end + i + 1) as u32)
+                                .unwrap_or(sequence.span().end);
+                            let suppressed_span = Span::new(paren_start, paren_end);
+                            write!(
+                                f,
+                                [group(&format_args!(
+                                    formatted_signature,
+                                    group(&format_args!(indent(&format_args!(
+                                        hard_line_break(),
+                                        format_leading_comments(sequence.span()),
+                                        FormatSuppressedNode(suppressed_span)
+                                    ))))
+                                ))]
+                            );
+                        } else {
+                            // Format leading comments before the parentheses, not inside
+                            write!(
+                                f,
+                                [group(&format_args!(
+                                    formatted_signature,
+                                    group(&format_args!(indent(&format_args!(
+                                        hard_line_break(),
+                                        format_leading_comments(sequence.span()),
+                                        token("("),
+                                        soft_block_indent(&format_body),
+                                        token(")")
+                                    ))))
+                                ))]
+                            );
+                        }
                     } else {
                         write!(
                             f,
@@ -566,17 +597,44 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
                 if f.context().comments().has_comment_before(sequence.span().start) {
-                    // Format leading comments before the parentheses, not inside
-                    write!(
-                        f,
-                        [group(&format_args!(indent(&format_args!(
-                            hard_line_break(),
-                            format_leading_comments(sequence.span()),
-                            token("("),
-                            soft_block_indent(&format_tail_body),
-                            token(")")
-                        ))))]
-                    );
+                    if f.context().comments().is_suppressed(sequence.span().start) {
+                        // Find the parentheses around the sequence expression
+                        let source_text = f.source_text();
+                        // Search backward for '('
+                        let paren_start = source_text
+                            .slice_to(sequence.span().start)
+                            .rfind('(')
+                            .map(|i| i as u32)
+                            .unwrap_or(sequence.span().start);
+                        // Search forward for ')'
+                        let seq_end = sequence.span().end as usize;
+                        let paren_end = source_text
+                            .slice_from(sequence.span().end)
+                            .find(')')
+                            .map(|i| (seq_end + i + 1) as u32)
+                            .unwrap_or(sequence.span().end);
+                        let suppressed_span = Span::new(paren_start, paren_end);
+                        write!(
+                            f,
+                            [group(&format_args!(indent(&format_args!(
+                                hard_line_break(),
+                                format_leading_comments(sequence.span()),
+                                FormatSuppressedNode(suppressed_span)
+                            ))))]
+                        );
+                    } else {
+                        // Format leading comments before the parentheses, not inside
+                        write!(
+                            f,
+                            [group(&format_args!(indent(&format_args!(
+                                hard_line_break(),
+                                format_leading_comments(sequence.span()),
+                                token("("),
+                                soft_block_indent(&format_tail_body),
+                                token(")")
+                            ))))]
+                        );
+                    }
                 } else {
                     write!(
                         f,

@@ -1,4 +1,4 @@
-js compatibility: 742/761 (97.50%)
+js compatibility: 743/761 (97.63%)
 
 # Failed
 
@@ -17,7 +17,6 @@ js compatibility: 742/761 (97.50%)
 | js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
-| js/sequence-expression/ignored.js | 💥 | 50.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | js/test-declarations/angularjs_inject.js | 💥💥 | 91.53% |
 | jsx/fbt/test.js | 💥 | 84.06% |

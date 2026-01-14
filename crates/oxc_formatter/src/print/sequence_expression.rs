@@ -3,6 +3,7 @@ use oxc_ast::ast::*;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{Format, Formatter, prelude::*},
+    utils::suppressed::FormatSuppressedNode,
     write,
 };
 
@@ -10,6 +11,10 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        if f.comments().is_suppressed(self.span.start) {
+            return write!(f, FormatSuppressedNode(self.span));
+        }
+
         let format_inner = format_with(|f| {
             let mut expressions = self.expressions().iter();
             let separator = format_with(|f| {
