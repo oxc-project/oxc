@@ -94,23 +94,17 @@ impl Rule for NoUselessAssignment {
 																		symbol_ids.push(symbol_id);
 																	}
 																	AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
-																		match &property.binding {
-																			AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array_target) => {
+																			if let AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array_target) = &property.binding {
 																				for element in &array_target.elements {
-																					match element {
-																						Some(AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(identifier)) => {
+																					if let Some(AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(identifier)) = element {
 																							let ref_id = identifier.reference_id();
 																							let Some(symbol_id) = ctx.scoping().get_reference(ref_id).symbol_id() else {
 																								continue;
 																							};
 																							symbol_ids.push(symbol_id);
 																						}
-																						_ => continue,
-																					}
 																				}
 																			}
-																			_ => continue,
-																		}
 																	}
 															}
                             }
@@ -128,13 +122,13 @@ impl Rule for NoUselessAssignment {
                     let Some(name) = id_name else {
                         continue;
                     };
-                    let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), &name) else {
+                    let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), name) else {
                         continue;
                     };
 
                     analyze(ctx, cfg, node.id(), symbol_id);
                 }
-                _ => continue,
+                _ => {}
             }
         }
     }
@@ -168,7 +162,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
         &|edge_type| match edge_type {
             EdgeType::Error(error) => match error {
                 ErrorEdgeKind::Explicit => None,
-                _ => Some(FoundAssignmentUsage::No),
+                ErrorEdgeKind::Implicit => Some(FoundAssignmentUsage::No),
             },
             EdgeType::Unreachable => Some(FoundAssignmentUsage::Missing),
             _ => None,
@@ -206,9 +200,9 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                 let instr_node = ctx.nodes().get_node(node_id);
 
                 match instr_node.kind() {
-                    AstKind::BlockStatement(_) => continue,
-                    AstKind::IfStatement(_) => continue,
-                    AstKind::TryStatement(_) => continue,
+                    AstKind::BlockStatement(_)
+                    | AstKind::IfStatement(_)
+                    | AstKind::TryStatement(_) => continue,
                     _ => {}
                 }
 
@@ -236,13 +230,12 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                                     FoundAssignmentUsage::MaybeWriteRead,
                                     STOP_WALKING_ON_THIS_PATH,
                                 );
-                            } else {
-                                return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
                             }
+                            return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
                         }
                         if reference.is_write() {
                             // check if the reference is part of a catch block and if state is maybewrite
-                            if node_part_of_catch(ctx, &ref_node_id)
+                            if node_part_of_catch(ctx, ref_node_id)
                                 && matches!(state, FoundAssignmentUsage::MaybeWrite)
                             {
                                 return (
@@ -263,7 +256,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
 
                             // check if the reference is in a try block, i.e. there is an explicit error
                             // edge from this block. If so, mark maybe used.
-                            if write_part_of_error_block(ctx, &ref_node_id) {
+                            if write_part_of_error_block(ctx, ref_node_id) {
                                 return (
                                     FoundAssignmentUsage::MaybeWrite,
                                     KEEP_WALKING_ON_THIS_PATH,
@@ -276,14 +269,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                 }
             }
 
-            (
-                if !matches!(state, FoundAssignmentUsage::Missing) {
-                    state
-                } else {
-                    FoundAssignmentUsage::Missing
-                },
-                KEEP_WALKING_ON_THIS_PATH,
-            )
+            (state, KEEP_WALKING_ON_THIS_PATH)
         },
     );
 
@@ -301,9 +287,9 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
         {
             ctx.diagnostic(no_useless_assignment_diagnostic(start_node.span()));
             return;
-        } else {
-            return;
         }
+
+        return;
     }
 
     // Case: no definite reads found
@@ -352,11 +338,11 @@ fn pre_checks_skip(
         return true;
     }
 
-    if is_assignment_in_different_function(ctx, &start_node_id, &symbol_id) {
+    if is_assignment_in_different_function(ctx, start_node_id, symbol_id) {
         return true;
     }
 
-    return false;
+    false
 }
 
 fn no_references_found(ctx: &LintContext, symbol_id: SymbolId) -> bool {
@@ -398,7 +384,7 @@ fn is_in_unreachable_block(ctx: &LintContext, node_id: NodeId) -> bool {
 
     if cfg.graph().neighbors_directed(cfg_id, Direction::Incoming).count() == 1 {
         let incoming_edge = cfg.graph().edges_directed(cfg_id, Direction::Incoming).next().unwrap();
-        if let EdgeType::Unreachable = incoming_edge.weight() {
+        if matches!(incoming_edge.weight(), EdgeType::Unreachable) {
             return true;
         }
     }
@@ -448,21 +434,17 @@ fn expr_uses_symbol(ctx: &LintContext, expr: &Expression, symbol_id: SymbolId) -
     }
 }
 
-fn write_part_of_error_block(ctx: &LintContext, node_id: &NodeId) -> bool {
-    let basic_block_id = ctx.nodes().cfg_id(*node_id);
+fn write_part_of_error_block(ctx: &LintContext, node_id: NodeId) -> bool {
+    let basic_block_id = ctx.nodes().cfg_id(node_id);
     let cfg = ctx.cfg();
 
     cfg.graph().edges_directed(basic_block_id, Direction::Outgoing).any(|edge| {
-        if matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize) {
-            true
-        } else {
-            false
-        }
+        matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize)
     })
 }
 
-fn node_part_of_catch(ctx: &LintContext, node_id: &NodeId) -> bool {
-    for kind in ctx.nodes().ancestor_kinds(*node_id) {
+fn node_part_of_catch(ctx: &LintContext, node_id: NodeId) -> bool {
+    for kind in ctx.nodes().ancestor_kinds(node_id) {
         if let AstKind::CatchClause(_) = kind {
             return true;
         }
@@ -475,11 +457,11 @@ fn node_part_of_catch(ctx: &LintContext, node_id: &NodeId) -> bool {
 
 fn is_assignment_in_different_function(
     ctx: &LintContext,
-    assignment_node: &NodeId,
-    symbol_id: &SymbolId,
+    assignment_node: NodeId,
+    symbol_id: SymbolId,
 ) -> bool {
-    let assignment_node_scope_id = ctx.nodes().get_node(*assignment_node).scope_id();
-    let decl_node_id = ctx.scoping().symbol_declaration(*symbol_id);
+    let assignment_node_scope_id = ctx.nodes().get_node(assignment_node).scope_id();
+    let decl_node_id = ctx.scoping().symbol_declaration(symbol_id);
     let decl_scope_id = ctx.nodes().get_node(decl_node_id).scope_id();
 
     ctx.scoping().scope_ancestors(assignment_node_scope_id).any(|scope_id| {
@@ -490,15 +472,6 @@ fn is_assignment_in_different_function(
             false
         }
     })
-}
-
-fn _node_part_of_finally(ctx: &LintContext, node_id: &NodeId) -> bool {
-    let basic_block_id = ctx.nodes().cfg_id(*node_id);
-    let cfg = ctx.cfg();
-
-    cfg.graph()
-        .edges_directed(basic_block_id, Direction::Incoming)
-        .any(|edge| if matches!(edge.weight(), EdgeType::Finalize) { true } else { false })
 }
 
 #[test]
