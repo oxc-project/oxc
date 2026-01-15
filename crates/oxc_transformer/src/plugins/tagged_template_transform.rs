@@ -76,6 +76,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
     }
 
     /// Transform a tagged template expression to use the [`Helper::TaggedTemplateLiteral`] helper function.
+    #[cold] // Tagged template expressions are rare
     fn transform_tagged_template(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         debug_assert!(matches!(expr, Expression::TaggedTemplateExpression(_)));
 
