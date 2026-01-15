@@ -51,11 +51,8 @@ declare_oxc_lint!(
     /// ```
     NoUselessAssignment,
     eslint,
-    correctness, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    pending, // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    correctness,
+    suggestion,
 );
 
 impl Rule for NoUselessAssignment {
@@ -203,6 +200,10 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
 
             let basic_block = cfg.basic_block(*basic_block_id);
             let is_start_block = *basic_block_id == start_node_bb_id;
+            let has_outgoing_backedge = cfg
+                .graph()
+                .edges_directed(*basic_block_id, Direction::Outgoing)
+                .any(|edge| matches!(edge.weight(), EdgeType::Backedge));
 
             let mut found_assignment = false;
 
@@ -219,6 +220,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                 let instr_node = ctx.nodes().get_node(node_id);
 
                 match instr_node.kind() {
+                    AstKind::BlockStatement(_) => continue,
                     AstKind::IfStatement(_) => continue,
                     AstKind::TryStatement(_) => continue,
                     _ => {}
@@ -231,7 +233,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                         found_assignment = true;
                         continue;
                     }
-                    if !found_assignment {
+                    if !found_assignment && !has_outgoing_backedge {
                         continue;
                     }
                 }
@@ -397,6 +399,10 @@ fn pre_checks_skip(
         return true;
     }
 
+    if is_assignment_in_different_function(ctx, &start_node_id, &symbol_id) {
+        return true;
+    }
+
     return false;
 }
 
@@ -521,6 +527,25 @@ fn node_part_of_catch(ctx: &LintContext, node_id: &NodeId) -> bool {
     false
 }
 
+fn is_assignment_in_different_function(
+    ctx: &LintContext,
+    assignment_node: &NodeId,
+    symbol_id: &SymbolId,
+) -> bool {
+    let assignment_node_scope_id = ctx.nodes().get_node(*assignment_node).scope_id();
+    let decl_node_id = ctx.scoping().symbol_declaration(*symbol_id);
+    let decl_scope_id = ctx.nodes().get_node(decl_node_id).scope_id();
+
+    ctx.scoping().scope_ancestors(assignment_node_scope_id).any(|scope_id| {
+        let flags = ctx.scoping().scope_flags(scope_id);
+        if flags.is_function() || flags.is_arrow() || flags.is_constructor() {
+            scope_id != decl_scope_id
+        } else {
+            false
+        }
+    })
+}
+
 fn _node_part_of_finally(ctx: &LintContext, node_id: &NodeId) -> bool {
     let basic_block_id = ctx.nodes().cfg_id(*node_id);
     let cfg = ctx.cfg();
@@ -540,7 +565,7 @@ fn _node_part_of_finally(ctx: &LintContext, node_id: &NodeId) -> bool {
 fn test() {
     use crate::tester::Tester;
 
-    let _pass = vec![
+    let pass = vec![
         "let v = 'used';
 			        console.log(v);
 			        v = 'used-2'
@@ -650,7 +675,7 @@ fn test() {
         "v = 'used';
 			        console.log(v);
 			        v = 'unused'",
-        "let v = 'used variable';", // Incorrect test case?
+        "let v = 'used variable';",
         "function foo() {
 			            return;
 
@@ -979,19 +1004,7 @@ fn test() {
 						}", // {  "parserOptions": {  "ecmaFeatures": { "jsx": true },  },  }
     ];
 
-    let pass = vec![
-        "function foo () {
-			            let v = 'used';
-			            console.log(v);
-			            function bar() {
-			                v = 'used in outer scope';
-			            }
-			            bar();
-			            console.log(v);
-			        }",
-    ];
-
-    let _fail = vec![
+    let fail = vec![
         "let v = 'used';
 			            console.log(v);
 			            v = 'unused'",
@@ -1309,8 +1322,6 @@ fn test() {
 			            return <A prop={x} />;
 			            }", // {  "parserOptions": {  "ecmaFeatures": { "jsx": true },  },  }
     ];
-
-    let fail = vec![];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)
         .test_and_snapshot();

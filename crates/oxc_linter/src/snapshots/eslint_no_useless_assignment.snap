@@ -2,11 +2,476 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:3:16]
+ 2 │                         console.log(v);
+ 3 │                         v = 'unused'
+   ·                         ──────┬─────
+   ·                               ╰── This assigned value is not used in subsequent statements.
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:24]
+ 3 │                             if (condition) {
+ 4 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 5 │                                 return
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:6:24]
+ 5 │                             } else {
+ 6 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 7 │                             }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused'
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused'
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:5:24]
+ 4 │                                 console.log(v);
+ 5 │                                 v = 'unused'
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 6 │                             }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:24]
+ 1 │ function foo() {
+ 2 │                             let v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 3 │                             if (condition) {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                             v = 'unused';
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:5:20]
+ 4 │                             v = 'unused';
+ 5 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 6 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                             v = 'used';
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:3:16]
+ 2 │                         let v;
+ 3 │                         v = 'unused';
+   ·                         ──────┬─────
+   ·                               ╰── This assigned value is not used in subsequent statements.
+ 4 │                         if (foo) {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                             v = 'unused';
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:5:20]
+ 4 │                             v = 'unused';
+ 5 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 6 │                             v = 'used';
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:24]
+ 1 │ function foo() {
+ 2 │                             let v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 3 │                             if (condition) {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:24]
+ 3 │                             if (condition) {
+ 4 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 5 │                             } else {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:24]
+ 3 │                             if (condition) {
+ 4 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 5 │                                 v = 'unused';
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:5:24]
+ 4 │                                 v = 'unused';
+ 5 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 6 │                                 v = 'used';
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(a);
+ 4 │                             a++;
+   ·                             ─┬─
+   ·                              ╰── This assigned value is not used in subsequent statements.
+ 5 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(a);
+ 4 │                             a--;
+   ·                             ─┬─
+   ·                              ╰── This assigned value is not used in subsequent statements.
+ 5 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
    ╭─[no_useless_assignment.tsx:4:21]
  3 │                             console.log(a, b, c, d);
  4 │                             ({ a, arr: [b, c,, ...d] } = fn());
    ·                              ────────────────┬───────────────
    ·                                              ╰── This assigned value is not used in subsequent statements.
  5 │                             console.log(c);
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:21]
+ 3 │                             console.log(a, b, c);
+ 4 │                             ({ a = 'unused', foo: b, ...c } = fn());
+   ·                              ──────────────────┬──────────────────
+   ·                                                ╰── This assigned value is not used in subsequent statements.
+ 5 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:5:20]
+ 4 │                             setTimeout(() => v = 42, 1);
+ 5 │                             v = 'unused and variable is only updated in other scopes';
+   ·                             ────────────────────────────┬────────────────────────────
+   ·                                                         ╰── This assigned value is not used in subsequent statements.
+ 6 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+    ╭─[no_useless_assignment.tsx:9:20]
+  8 │                             console.log(v);
+  9 │                             v = 'unused';
+    ·                             ──────┬─────
+    ·                                   ╰── This assigned value is not used in subsequent statements.
+ 10 │                         }
+    ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:5:24]
+ 4 │                                 console.log(v);
+ 5 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 6 │                             } else {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:7:24]
+ 6 │                             } else {
+ 7 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 8 │                             }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                             return;
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:20]
+ 3 │                             console.log(v);
+ 4 │                             v = 'unused';
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 5 │                             throw new Error();
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:5:24]
+ 4 │                             for (let i = 0; i < 10; i++) {
+ 5 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 6 │                                 continue;
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+    ╭─[no_useless_assignment.tsx:14:24]
+ 13 │                             for (let i = 0; i < 10; i++) {
+ 14 │                                 v = 'unused';
+    ·                                 ──────┬─────
+    ·                                       ╰── This assigned value is not used in subsequent statements.
+ 15 │                                 break;
+    ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:6:28]
+ 5 │                                 if (condition) {
+ 6 │                                     v = 'unused';
+   ·                                     ──────┬─────
+   ·                                           ╰── This assigned value is not used in subsequent statements.
+ 7 │                                     break;
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let message = 'unused';
+   ·     ─────────┬────────
+   ·              ╰── This assigned value is not used in subsequent statements.
+ 2 │                         try {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let message = 'unused';
+   ·     ─────────┬────────
+   ·              ╰── This assigned value is not used in subsequent statements.
+ 2 │                         try {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let message = 'unused';
+   ·     ─────────┬────────
+   ·              ╰── This assigned value is not used in subsequent statements.
+ 2 │                         try {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:1:5]
+ 1 │ let v = 'unused';
+   ·     ──────┬─────
+   ·           ╰── This assigned value is not used in subsequent statements.
+ 2 │                         try {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:3:16]
+ 2 │                         var x = 1; // used
+ 3 │                         x = x + 1; // unused
+   ·                         ────┬────
+   ·                             ╰── This assigned value is not used in subsequent statements.
+ 4 │                         x = 5; // used
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:20]
+ 1 │ 
+ 2 │                         var x = 1; // used
+   ·                             ──┬──
+   ·                               ╰── This assigned value is not used in subsequent statements.
+ 3 │                         x = // used
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:4:25]
+ 3 │                             a,
+ 4 │                             b = (a = 2)
+   ·                                  ──┬──
+   ·                                    ╰── This assigned value is not used in subsequent statements.
+ 5 │                         } = obj;
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:20]
+ 1 │ function App() {
+ 2 │                         let A = "unused";
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 3 │                         A = "used";
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:20]
+ 1 │ function App() {
+ 2 │                         let A = "unused";
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 3 │                         A = "used";
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:20]
+ 1 │ function App() {
+ 2 │                         let A = "unused";
+   ·                             ──────┬─────
+   ·                                   ╰── This assigned value is not used in subsequent statements.
+ 3 │                         A = "used";
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:6:18]
+ 5 │                         } else {
+ 6 │                           x = "unused";
+   ·                           ──────┬─────
+   ·                                 ╰── This assigned value is not used in subsequent statements.
+ 7 │                         }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:3:16]
+ 2 │                         let A;
+ 3 │                         A = "unused";
+   ·                         ──────┬─────
+   ·                               ╰── This assigned value is not used in subsequent statements.
+ 4 │                         if (cond) {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:20]
+ 1 │ function App() {
+ 2 │                         let message = 'unused';
+   ·                             ─────────┬────────
+   ·                                      ╰── This assigned value is not used in subsequent statements.
+ 3 │                         try {
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:3:16]
+ 2 │                         let x = 1;
+ 3 │                         x = x + 1;
+   ·                         ────┬────
+   ·                             ╰── This assigned value is not used in subsequent statements.
+ 4 │                         x = 5;
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:20]
+ 1 │ function App() {
+ 2 │                         let x = 1;
+   ·                             ──┬──
+   ·                               ╰── This assigned value is not used in subsequent statements.
+ 3 │                         x = 2;
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:2:20]
+ 1 │ function App() {
+ 2 │                         let x = 0;
+   ·                             ──┬──
+   ·                               ╰── This assigned value is not used in subsequent statements.
+ 3 │                         x = 1;
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:3:16]
+ 2 │                         let x = 0;
+ 3 │                         x = 1;
+   ·                         ──┬──
+   ·                           ╰── This assigned value is not used in subsequent statements.
+ 4 │                         x = 2;
    ╰────
   help: Remove this assignment.
