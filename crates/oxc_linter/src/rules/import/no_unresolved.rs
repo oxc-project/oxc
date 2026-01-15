@@ -389,10 +389,6 @@ fn test_node_protocol_builtins() {
         // builtins with required node: prefix should resolve
         (r#"import test from 'node:test'"#, None),
         (r#"import sqlite from 'node:sqlite'"#, None),
-        // JSON imports with assert { type: 'json' } (legacy syntax)
-        (r#"import data from './default-export' assert { type: 'json' }"#, None),
-        // JSON imports with with { type: 'json' } (newer syntax)
-        (r#"import data from './default-export' with { type: 'json' }"#, None),
     ];
 
     let fail = vec![

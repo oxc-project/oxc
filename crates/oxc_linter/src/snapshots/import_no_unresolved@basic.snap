@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./does-not-exist"
+   ╭─[index.js:1:1]
+ 1 │ import './does-not-exist'
+   · ─────────────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
+
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./does-not-exist"
+   ╭─[index.js:1:19]
+ 1 │ var foo = require('./does-not-exist')
+   ·                   ──────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
+
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./does-not-exist"
+   ╭─[index.js:1:10]
+ 1 │ require(['./does-not-exist'], function() {})
+   ·          ──────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
+
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./ignored-file"
+   ╭─[index.js:1:1]
+ 1 │ import './ignored-file'
+   · ───────────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
+
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./ignored-file"
+   ╭─[index.js:1:1]
+ 1 │ import './ignored-file'
+   · ───────────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
+
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./Default-Export"
+   ╭─[index.js:1:1]
+ 1 │ import './Default-Export'
+   · ─────────────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
+
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./Default-Export"
+   ╭─[index.js:1:1]
+ 1 │ import './Default-Export'
+   · ─────────────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer

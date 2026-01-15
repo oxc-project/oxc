@@ -1,0 +1,17 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "nonexistent-package"
+   ╭─[index.js:1:1]
+ 1 │ import 'nonexistent-package'
+   · ────────────────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
+
+  ⚠ eslint-plugin-import(no-unresolved): Unable to resolve path to module "./does-not-exist"
+   ╭─[index.js:1:1]
+ 1 │ import './does-not-exist'
+   · ─────────────────────────
+   ╰────
+  help: This module could not be found or resolved by the importer
