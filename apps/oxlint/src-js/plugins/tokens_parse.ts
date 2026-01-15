@@ -5,7 +5,8 @@
 import { createRequire } from "node:module";
 import { filePath } from "./context.ts";
 import { getNodeLoc } from "./location.ts";
-import { isJsx, isTypescript, sourceText } from "./source_code.ts";
+import { buffer, sourceText } from "./source_code.ts";
+import { IS_JSX_FLAG_POS, IS_TS_FLAG_POS } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type * as ts from "typescript";
@@ -281,14 +282,15 @@ function isJSXTokenKind(kind: ts.SyntaxKind): boolean {
  * @returns Appropriate ScriptKind for the file
  */
 function getScriptKind(tsModule: typeof import("typescript")): ts.ScriptKind {
-  // Check if this is TypeScript (as opposed to JavaScript)
-  const isTs = isTypescript();
+  debugAssertIsNonNull(buffer);
 
-  // Check if this is JSX/TSX based on SourceType.variant
-  const isJsxSource = isJsx();
+  // Get source type from flags in buffer.
+  // Both flags are `bool`s in Rust, so 0 = false, 1 = true.
+  const isTs = buffer[IS_TS_FLAG_POS] === 1,
+    isJsx = buffer[IS_JSX_FLAG_POS] === 1;
 
   if (isTs) {
-    return isJsxSource ? tsModule.ScriptKind.TSX : tsModule.ScriptKind.TS;
+    return isJsx ? tsModule.ScriptKind.TSX : tsModule.ScriptKind.TS;
   }
-  return isJsxSource ? tsModule.ScriptKind.JSX : tsModule.ScriptKind.JS;
+  return isJsx ? tsModule.ScriptKind.JSX : tsModule.ScriptKind.JS;
 }
