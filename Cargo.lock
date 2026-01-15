@@ -2044,7 +2044,6 @@ dependencies = [
  "oxc_syntax",
  "papaya",
  "phf",
- "project-root",
  "rayon",
  "rust-lapper",
  "rustc-hash",

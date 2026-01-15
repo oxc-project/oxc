@@ -89,7 +89,8 @@ impl<'a> PeepholeOptimizations {
             // "yes" is not missing (and is not an expression)
             if let Some(alternate) = &mut if_stmt.alternate {
                 // "yes" is not missing (and is not an expression) and "no" is not missing
-                if let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
+                if !matches!(alternate, Statement::IfStatement(_))
+                    && let Expression::UnaryExpression(unary_expr) = &mut if_stmt.test
                     && unary_expr.operator.is_not()
                 {
                     // "if (!a) return b; else return c;" => "if (a) return c; else return b;"
@@ -98,6 +99,7 @@ impl<'a> PeepholeOptimizations {
                     Self::wrap_to_avoid_ambiguous_else(if_stmt, ctx);
                     ctx.state.changed = true;
                 }
+                // "if (!a) {} else if (b) {}" => "if (!a) {} if (b) {}" is handled by minimize_statements
                 // "if (a) return b; else {}" => "if (a) return b;" is handled by remove_dead_code
             } else {
                 // "no" is missing
@@ -173,6 +175,19 @@ mod test {
             "function bar() {
               if (!x) {
                 return null;
+              } else {
+                return foo;
+              }
+            }",
+            "function bar() {
+              return x ? foo : null;
+            }",
+        );
+
+        test(
+            "function bar() {
+              if (!x) {
+                return null;
               } else if (y) {
                 return foo;
               } else if (z) {
@@ -180,12 +195,9 @@ mod test {
               }
             }",
             "function bar() {
-              if (x) {
-                if (y)
-                  return foo;
-                if (z)
-                  return bar;
-              } else return null;
+              if (!x) return null;
+              if (y) return foo;
+              if (z) return bar;
             }",
         );
 

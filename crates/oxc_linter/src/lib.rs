@@ -693,25 +693,3 @@ impl RawTransferMetadata {
         Self { data_offset, is_ts: false, _padding: 0 }
     }
 }
-
-#[cfg(test)]
-mod test {
-    use std::fs;
-
-    use project_root::get_project_root;
-
-    use crate::Oxlintrc;
-
-    #[test]
-    fn test_schema_json() {
-        let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
-        let json = Oxlintrc::generate_schema_json();
-        let existing_json = fs::read_to_string(&path).unwrap_or_default();
-        if existing_json.trim() != json.trim() {
-            std::fs::write(&path, &json).unwrap();
-        }
-        insta::with_settings!({ prepend_module_to_snapshot => false }, {
-            insta::assert_snapshot!(json);
-        });
-    }
-}

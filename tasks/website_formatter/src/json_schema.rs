@@ -1,10 +1,10 @@
 use oxfmt::oxfmtrc::Oxfmtrc;
 use schemars::schema_for;
-use website_common::Renderer;
+use website_common::{Renderer, generate_schema_json};
 
 #[expect(clippy::print_stdout)]
 pub fn print_schema_json() {
-    println!("{}", Oxfmtrc::generate_schema_json());
+    println!("{}", generate_schema_json::<Oxfmtrc>());
 }
 
 #[test]
@@ -13,7 +13,7 @@ fn test_schema_json() {
     use std::fs;
 
     let path = get_project_root().unwrap().join("npm/oxfmt/configuration_schema.json");
-    let json = Oxfmtrc::generate_schema_json();
+    let json = generate_schema_json::<Oxfmtrc>();
     let existing_json = fs::read_to_string(&path).unwrap_or_default();
     if existing_json.trim() != json.trim() {
         fs::write(&path, &json).unwrap();

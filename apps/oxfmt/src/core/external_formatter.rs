@@ -6,6 +6,7 @@ use napi::{
     threadsafe_function::ThreadsafeFunction,
 };
 use serde_json::Value;
+use tracing::debug_span;
 
 use oxc_formatter::{
     EmbeddedFormatterCallback, ExternalCallbacks, FormatOptions, TailwindCallback,
@@ -207,16 +208,22 @@ impl ExternalFormatter {
 /// Wrap JS `initExternalFormatter` callback as a normal Rust function.
 fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFormatterCallback {
     Arc::new(move |num_threads: usize| {
-        block_on(async {
-            #[expect(clippy::cast_possible_truncation)]
-            let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
-            match status {
-                Ok(promise) => match promise.await {
-                    Ok(languages) => Ok(languages),
-                    Err(err) => Err(format!("JS initExternalFormatter promise rejected: {err}")),
-                },
-                Err(err) => Err(format!("Failed to call JS initExternalFormatter callback: {err}")),
-            }
+        debug_span!("oxfmt::external::init", num_threads = num_threads).in_scope(|| {
+            block_on(async {
+                #[expect(clippy::cast_possible_truncation)]
+                let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
+                match status {
+                    Ok(promise) => match promise.await {
+                        Ok(languages) => Ok(languages),
+                        Err(err) => {
+                            Err(format!("JS initExternalFormatter promise rejected: {err}"))
+                        }
+                    },
+                    Err(err) => {
+                        Err(format!("Failed to call JS initExternalFormatter callback: {err}"))
+                    }
+                }
+            })
         })
     })
 }
@@ -224,26 +231,32 @@ fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFo
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
 fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallback {
     Arc::new(move |options: &Value, tag_name: &str, code: &str| {
-        block_on(async {
-            let status = cb
-                .call_async(FnArgs::from((options.clone(), tag_name.to_string(), code.to_string())))
-                .await;
-            match status {
-                Ok(promise) => match promise.await {
-                    Ok(mut formatted_code) => {
-                        // Trim trailing newline added by Prettier without allocation
-                        let trimmed_len = formatted_code.trim_end().len();
-                        formatted_code.truncate(trimmed_len);
-                        Ok(formatted_code)
-                    }
-                    Err(err) => {
-                        Err(format!("JS formatter promise rejected for tag '{tag_name}': {err}"))
-                    }
-                },
-                Err(err) => Err(format!(
-                    "Failed to call JS formatting callback for tag '{tag_name}': {err}"
-                )),
-            }
+        debug_span!("oxfmt::external::format_embedded", tag = %tag_name).in_scope(|| {
+            block_on(async {
+                let status = cb
+                    .call_async(FnArgs::from((
+                        options.clone(),
+                        tag_name.to_string(),
+                        code.to_string(),
+                    )))
+                    .await;
+                match status {
+                    Ok(promise) => match promise.await {
+                        Ok(mut formatted_code) => {
+                            // Trim trailing newline added by Prettier without allocation
+                            let trimmed_len = formatted_code.trim_end().len();
+                            formatted_code.truncate(trimmed_len);
+                            Ok(formatted_code)
+                        }
+                        Err(err) => Err(format!(
+                            "JS formatter promise rejected for tag '{tag_name}': {err}"
+                        )),
+                    },
+                    Err(err) => Err(format!(
+                        "Failed to call JS formatting callback for tag '{tag_name}': {err}"
+                    )),
+                }
+            })
         })
     })
 }
@@ -251,26 +264,28 @@ fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallb
 /// Wrap JS `formatFile` callback as a normal Rust function.
 fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
     Arc::new(move |options: &Value, parser_name: &str, file_name: &str, code: &str| {
-        block_on(async {
-            let status = cb
-                .call_async(FnArgs::from((
-                    options.clone(),
-                    parser_name.to_string(),
-                    file_name.to_string(),
-                    code.to_string(),
-                )))
-                .await;
-            match status {
-                Ok(promise) => match promise.await {
-                    Ok(formatted_code) => Ok(formatted_code),
+        debug_span!("oxfmt::external::format_file", parser = %parser_name, file = %file_name).in_scope(|| {
+            block_on(async {
+                let status = cb
+                    .call_async(FnArgs::from((
+                        options.clone(),
+                        parser_name.to_string(),
+                        file_name.to_string(),
+                        code.to_string(),
+                    )))
+                    .await;
+                match status {
+                    Ok(promise) => match promise.await {
+                        Ok(formatted_code) => Ok(formatted_code),
+                        Err(err) => Err(format!(
+                            "JS formatFile promise rejected for file: '{file_name}', parser: '{parser_name}': {err}"
+                        )),
+                    },
                     Err(err) => Err(format!(
-                        "JS formatFile promise rejected for file: '{file_name}', parser: '{parser_name}': {err}"
+                        "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
                     )),
-                },
-                Err(err) => Err(format!(
-                    "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
-                )),
-            }
+                }
+            })
         })
     })
 }
@@ -278,21 +293,26 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
 /// Wrap JS `sortTailwindClasses` callback as a normal Rust function.
 fn wrap_sort_tailwind_classes(cb: JsSortTailwindClassesCb) -> TailwindWithConfigCallback {
     Arc::new(move |filepath: &str, options: &Value, classes: Vec<String>| {
-        block_on(async {
-            let args = FnArgs::from((filepath.to_string(), options.clone(), classes.clone()));
-            match cb.call_async(args).await {
-                Ok(promise) => match promise.await {
-                    Ok(sorted) => sorted,
-                    Err(_) => {
-                        // Return original classes on error
-                        classes
+        debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len()).in_scope(
+            || {
+                block_on(async {
+                    let args =
+                        FnArgs::from((filepath.to_string(), options.clone(), classes.clone()));
+                    match cb.call_async(args).await {
+                        Ok(promise) => match promise.await {
+                            Ok(sorted) => sorted,
+                            Err(_) => {
+                                // Return original classes on error
+                                classes
+                            }
+                        },
+                        Err(_) => {
+                            // Return original classes on error
+                            classes
+                        }
                     }
-                },
-                Err(_) => {
-                    // Return original classes on error
-                    classes
-                }
-            }
-        })
+                })
+            },
+        )
     })
 }
