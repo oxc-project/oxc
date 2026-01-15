@@ -90,7 +90,7 @@ impl ServerLinterBuilder {
 
         let config_builder = ConfigStoreBuilder::from_oxlintrc(
             false,
-            oxlintrc,
+            oxlintrc.clone(),
             self.external_linter.as_ref(),
             &mut external_plugin_store,
         )
@@ -133,12 +133,17 @@ impl ServerLinterBuilder {
             external_plugin_store,
         );
 
+        // This will prioritize the `typeAware` option from the LSP options,
+        // but if that is unset it will use the typeAware option in the config file.
+        let type_aware =
+            options.type_aware.unwrap_or(oxlintrc.linter_options.type_aware.unwrap_or(false));
+
         let isolated_linter = IsolatedLintHandler::new(
             lint_options,
             config_store,
             &IsolatedLintHandlerOptions {
                 use_cross_module,
-                type_aware: options.type_aware,
+                type_aware,
                 fix_kind,
                 root_path: root_path.to_path_buf(),
                 tsconfig_path: options.ts_config_path.as_ref().map(|path| {
@@ -425,7 +430,9 @@ impl Tool for ServerLinter {
             watchers.push(normalize_path(pattern).to_string_lossy().to_string());
         }
 
-        if options.type_aware {
+        // TODO: Should we be watching these regardless of type-aware
+        // rules, since it could impact the cross-module analysis for import rules?
+        if options.type_aware.unwrap_or(false) {
             watchers.push("**/tsconfig*.json".to_string());
         }
 
