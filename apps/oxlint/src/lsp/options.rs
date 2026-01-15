@@ -177,7 +177,7 @@ mod test {
         assert_eq!(options.run, Run::OnType);
         assert_eq!(options.config_path, None);
         assert_eq!(options.unused_disable_directives, UnusedDisableDirectives::Allow);
-        assert_eq!(options.type_aware, Some(false));
+        assert_eq!(options.type_aware, None);
         assert!(!options.disable_nested_config);
         assert_eq!(options.fix_kind, super::LintFixKindFlag::SafeFix);
     }
