@@ -2,6 +2,7 @@
 use std::borrow::Cow;
 use std::path::Path;
 
+use cow_utils::CowUtils;
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
@@ -9,8 +10,8 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use serde_json::Value;
 
-use super::config::JsonFormatterOptions;
 use super::config::Json5FormatterOptions;
+use super::config::JsonFormatterOptions;
 use super::{FormatFileStrategy, ResolvedOptions};
 
 pub enum FormatResult {
@@ -75,11 +76,11 @@ impl SourceFormatter {
             (
                 FormatFileStrategy::OxfmtJson { path },
                 ResolvedOptions::OxfmtJson { json_options, insert_final_newline },
-            ) => (Self::format_by_json(source_text, path, json_options), insert_final_newline),
+            ) => (Self::format_by_json(source_text, path, &json_options), insert_final_newline),
             (
                 FormatFileStrategy::OxfmtJson5 { path },
                 ResolvedOptions::OxfmtJson5 { json5_options, insert_final_newline },
-            ) => (Self::format_by_json5(source_text, path, json5_options), insert_final_newline),
+            ) => (Self::format_by_json5(source_text, path, &json5_options), insert_final_newline),
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatter { path, parser_name },
@@ -195,7 +196,7 @@ impl SourceFormatter {
     fn format_by_json(
         source_text: &str,
         path: &Path,
-        options: JsonFormatterOptions,
+        options: &JsonFormatterOptions,
     ) -> Result<String, OxcDiagnostic> {
         // Parse the JSONC source
         let root = fjson::ast::parse(source_text).map_err(|err| {
@@ -211,7 +212,7 @@ impl SourceFormatter {
 
         // fjson outputs LF by default, convert to CRLF if needed
         if options.crlf {
-            result = result.replace('\n', "\r\n");
+            result = result.cow_replace('\n', "\r\n").into_owned();
         }
 
         Ok(result)
@@ -222,7 +223,7 @@ impl SourceFormatter {
     fn format_by_json5(
         source_text: &str,
         path: &Path,
-        options: Json5FormatterOptions,
+        options: &Json5FormatterOptions,
     ) -> Result<String, OxcDiagnostic> {
         // Parse the JSON5 source
         let value: serde_json::Value = json_five::from_str(source_text).map_err(|err| {
@@ -235,7 +236,8 @@ impl SourceFormatter {
         } else {
             json_five::TrailingComma::NONE
         };
-        let config = json_five::FormatConfiguration::with_indent(options.indent_size, trailing_comma);
+        let config =
+            json_five::FormatConfiguration::with_indent(options.indent_size, trailing_comma);
 
         // Serialize back to formatted JSON5
         json_five::to_string_formatted(&value, config).map_err(|err| {

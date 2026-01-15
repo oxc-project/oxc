@@ -169,10 +169,10 @@ fn is_json_file(file_name: &str, extension: Option<&str>) -> bool {
     }
 
     // Check JSON extensions
-    if let Some(ext) = extension {
-        if JSON_EXTENSIONS.contains(ext) || JSONC_EXTENSIONS.contains(ext) {
-            return true;
-        }
+    if let Some(ext) = extension
+        && (JSON_EXTENSIONS.contains(ext) || JSONC_EXTENSIONS.contains(ext))
+    {
+        return true;
     }
 
     false
