@@ -2,12 +2,14 @@
 use std::borrow::Cow;
 use std::path::Path;
 
+use serde_json::Value;
+use tracing::instrument;
+
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use serde_json::Value;
 
 use super::{FormatFileStrategy, ResolvedOptions};
 
@@ -42,6 +44,7 @@ impl SourceFormatter {
     }
 
     /// Format a file based on its entry type and resolved options.
+    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %entry.path().display()))]
     pub fn format(
         &self,
         entry: &FormatFileStrategy,
@@ -117,6 +120,7 @@ impl SourceFormatter {
     }
 
     /// Format JS/TS source code using oxc_formatter.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter", skip_all)]
     fn format_by_oxc_formatter(
         &self,
         source_text: &str,
@@ -176,6 +180,7 @@ impl SourceFormatter {
     }
 
     /// Format TOML file using `toml`.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_toml", skip_all)]
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
         oxc_toml::format(source_text, options)
     }
@@ -183,6 +188,7 @@ impl SourceFormatter {
     /// Format non-JS/TS file using external formatter (Prettier).
     #[cfg(feature = "napi")]
     #[expect(clippy::needless_pass_by_value)]
+    #[instrument(level = "debug", name = "oxfmt::format::external_formatter", skip_all, fields(parser = %parser_name))]
     fn format_by_external_formatter(
         &self,
         source_text: &str,
@@ -215,6 +221,11 @@ impl SourceFormatter {
 
     /// Format `package.json`: optionally sort then format by external formatter.
     #[cfg(feature = "napi")]
+    #[instrument(
+        level = "debug",
+        name = "oxfmt::format::external_formatter_package_json",
+        skip_all
+    )]
     fn format_by_external_formatter_package_json(
         &self,
         source_text: &str,

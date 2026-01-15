@@ -6,6 +6,7 @@ use editorconfig_parser::{
 };
 use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
+use tracing::instrument;
 
 use oxc_formatter::FormatOptions;
 
@@ -96,6 +97,7 @@ impl ConfigResolver {
     /// Returns error if:
     /// - Config file is specified but not found or invalid
     /// - Config file parsing fails
+    #[instrument(level = "debug", name = "oxfmt::config::from_config_paths", skip_all)]
     pub fn from_config_paths(
         cwd: &Path,
         oxfmtrc_path: Option<&Path>,
@@ -142,6 +144,7 @@ impl ConfigResolver {
     ///
     /// # Errors
     /// Returns error if config deserialization fails.
+    #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
     pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
         let mut oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
             .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
@@ -174,6 +177,7 @@ impl ConfigResolver {
     }
 
     /// Resolve format options for a specific file.
+    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
         let (format_options, oxfmt_options, external_options) = if let Some(editorconfig) =
             &self.editorconfig
@@ -226,6 +230,7 @@ impl ConfigResolver {
 
     /// Resolve format options for a specific file with `.editorconfig` overrides.
     /// This is the slow path, for fast path, see [`ConfigResolver::build_and_validate`].
+    #[instrument(level = "debug", name = "oxfmt::config::resolve_with_overrides", skip_all)]
     fn resolve_with_overrides(
         &self,
         props: &EditorConfigProperties,
