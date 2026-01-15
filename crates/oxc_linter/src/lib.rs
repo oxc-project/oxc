@@ -549,7 +549,9 @@ impl Linter {
         let program_offset = ptr::from_ref(program) as u32;
 
         // Write offset of `Program` in metadata at end of buffer
-        let metadata = RawTransferMetadata::new(program_offset);
+        let is_ts = program.source_type.is_typescript();
+        let is_jsx = program.source_type.is_jsx();
+        let metadata = RawTransferMetadata::new(program_offset, is_ts, is_jsx);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -682,6 +684,8 @@ pub struct RawTransferMetadata2 {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
+    /// `true` if AST is JSX.
+    pub is_jsx: bool,
     /// Padding to pad struct to size 16.
     pub(crate) _padding: u64,
 }
@@ -689,7 +693,7 @@ pub struct RawTransferMetadata2 {
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32) -> Self {
-        Self { data_offset, is_ts: false, _padding: 0 }
+    pub fn new(data_offset: u32, is_ts: bool, is_jsx: bool) -> Self {
+        Self { data_offset, is_ts, is_jsx, _padding: 0 }
     }
 }
