@@ -781,6 +781,17 @@ mod test {
         // test_same("new Map([x])");
         test_same("new Map(x)");
         // test("new Map([[a, b], [c, d]])", "");
+
+        test("new class{}", "");
+        test_same("new class{static {foo();}}");
+        test_same("new class{static a = console.log();}");
+        test_same("new class {constructor(){foo()}}");
+        test("new class extends Error {}", "");
+        test_same("new class extends Error {constructor(){}}");
+        test(
+            r#"new class extends Error{name=`StaleReactionError`;message="The reaction that called `getAbortSignal()` was re-run or destroyed"}"#,
+            "",
+        );
     }
 
     #[test]
