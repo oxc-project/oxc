@@ -4,16 +4,27 @@ use tower_lsp_server::ls_types::{
     WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
 };
 
+#[derive(Debug, Default, PartialEq, Eq, Clone)]
+pub enum DiagnosticMode {
+    Pull,
+    Push,
+    #[default]
+    None,
+}
+
 #[derive(Default)]
 pub struct Capabilities {
     pub workspace_apply_edit: bool,
     pub workspace_configuration: bool,
     pub dynamic_watchers: bool,
     pub show_message: bool,
+    /// The diagnostic mode the server should use, should be overridden by the tool implementation.
+    /// Defaults to `None`.
+    pub diagnostic_mode: DiagnosticMode,
     /// Whether the client supports pull diagnostics.
-    pull_diagnostics: bool,
+    pub pull_diagnostics: bool,
     /// Whether the client supports the `workspace/diagnostic/refresh` request.
-    refresh_diagnostics: bool,
+    pub refresh_diagnostics: bool,
 }
 
 impl From<ClientCapabilities> for Capabilities {
@@ -53,16 +64,8 @@ impl From<ClientCapabilities> for Capabilities {
             show_message,
             pull_diagnostics,
             refresh_diagnostics,
+            diagnostic_mode: DiagnosticMode::None,
         }
-    }
-}
-
-impl Capabilities {
-    /// The server supports pull and push diagnostics.
-    /// Only use push diagnostics if the client does not support pull diagnostics,
-    /// or we cannot ask the client to refresh diagnostics.
-    pub fn use_push_diagnostics(&self) -> bool {
-        !self.pull_diagnostics || !self.refresh_diagnostics
     }
 }
 
@@ -94,37 +97,6 @@ mod test {
     };
 
     use super::Capabilities;
-
-    #[test]
-    fn test_use_push_diagnostics() {
-        let capabilities = Capabilities {
-            pull_diagnostics: true,
-            refresh_diagnostics: true,
-            ..Default::default()
-        };
-        assert!(!capabilities.use_push_diagnostics());
-
-        let capabilities = Capabilities {
-            pull_diagnostics: false,
-            refresh_diagnostics: true,
-            ..Default::default()
-        };
-        assert!(capabilities.use_push_diagnostics());
-
-        let capabilities = Capabilities {
-            pull_diagnostics: true,
-            refresh_diagnostics: false,
-            ..Default::default()
-        };
-        assert!(capabilities.use_push_diagnostics());
-
-        let capabilities = Capabilities {
-            pull_diagnostics: false,
-            refresh_diagnostics: false,
-            ..Default::default()
-        };
-        assert!(capabilities.use_push_diagnostics());
-    }
 
     #[test]
     fn test_workspace_edit_nvim() {
