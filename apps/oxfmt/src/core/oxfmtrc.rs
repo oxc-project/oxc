@@ -758,13 +758,23 @@ fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
 /// Populates the raw config JSON with resolved `FormatOptions` values.
 /// This ensures `external_formatter`(Prettier) receives the same options that `oxc_formatter` uses.
 ///
-/// Roughly the reverse of `into_options()`.
+/// Only options that meet one of these criteria need to be mapped:
+/// - 1. Different defaults between Prettier and oxc_formatter
+///   - e.g. `printWidth`: Prettier: 80, Oxfmt: 100
+/// - 2. Can be set via `.editorconfig` (values won't be in raw config JSON)
+///   - `max_line_length` -> `printWidth`
+///   - `end_of_line` -> `endOfLine`
+///   - `indent_style` -> `useTabs`
+///   - `indent_size` -> `tabWidth`
 pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
 
-    // [Prettier] useTabs: boolean
+    // vs Prettier defaults and `.editorconfig` values
+    obj.insert("printWidth".to_string(), Value::from(options.line_width.value()));
+
+    // vs `.editorconfig` values
     obj.insert(
         "useTabs".to_string(),
         Value::from(match options.indent_style {
@@ -772,110 +782,13 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
             IndentStyle::Space => false,
         }),
     );
-
-    // [Prettier] tabWidth: number
     obj.insert("tabWidth".to_string(), Value::from(options.indent_width.value()));
-
-    // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
-    // NOTE: "auto" is not supported by `oxc_formatter`
     obj.insert(
         "endOfLine".to_string(),
         Value::from(match options.line_ending {
             LineEnding::Lf => "lf",
             LineEnding::Crlf => "crlf",
             LineEnding::Cr => "cr",
-        }),
-    );
-
-    // [Prettier] printWidth: number
-    obj.insert("printWidth".to_string(), Value::from(options.line_width.value()));
-
-    // [Prettier] singleQuote: boolean
-    obj.insert(
-        "singleQuote".to_string(),
-        Value::from(match options.quote_style {
-            QuoteStyle::Single => true,
-            QuoteStyle::Double => false,
-        }),
-    );
-
-    // [Prettier] jsxSingleQuote: boolean
-    obj.insert(
-        "jsxSingleQuote".to_string(),
-        Value::from(match options.jsx_quote_style {
-            QuoteStyle::Single => true,
-            QuoteStyle::Double => false,
-        }),
-    );
-
-    // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
-    obj.insert(
-        "quoteProps".to_string(),
-        Value::from(match options.quote_properties {
-            QuoteProperties::AsNeeded => "as-needed",
-            QuoteProperties::Consistent => "consistent",
-            QuoteProperties::Preserve => "preserve",
-        }),
-    );
-
-    // [Prettier] trailingComma: "all" | "es5" | "none"
-    obj.insert(
-        "trailingComma".to_string(),
-        Value::from(match options.trailing_commas {
-            TrailingCommas::All => "all",
-            TrailingCommas::Es5 => "es5",
-            TrailingCommas::None => "none",
-        }),
-    );
-
-    // [Prettier] semi: boolean
-    obj.insert(
-        "semi".to_string(),
-        Value::from(match options.semicolons {
-            Semicolons::Always => true,
-            Semicolons::AsNeeded => false,
-        }),
-    );
-
-    // [Prettier] arrowParens: "avoid" | "always"
-    obj.insert(
-        "arrowParens".to_string(),
-        Value::from(match options.arrow_parentheses {
-            ArrowParentheses::AsNeeded => "avoid",
-            ArrowParentheses::Always => "always",
-        }),
-    );
-
-    // [Prettier] bracketSpacing: boolean
-    obj.insert("bracketSpacing".to_string(), Value::from(options.bracket_spacing.value()));
-
-    // [Prettier] bracketSameLine: boolean
-    obj.insert("bracketSameLine".to_string(), Value::from(options.bracket_same_line.value()));
-
-    // [Prettier] singleAttributePerLine: boolean
-    obj.insert(
-        "singleAttributePerLine".to_string(),
-        Value::from(match options.attribute_position {
-            AttributePosition::Multiline => true,
-            AttributePosition::Auto => false,
-        }),
-    );
-
-    // [Prettier] objectWrap: "preserve" | "collapse"
-    obj.insert(
-        "objectWrap".to_string(),
-        Value::from(match options.expand {
-            Expand::Auto => "preserve",
-            Expand::Never => "collapse",
-        }),
-    );
-
-    // [Prettier] embeddedLanguageFormatting: "auto" | "off"
-    obj.insert(
-        "embeddedLanguageFormatting".to_string(),
-        Value::from(match options.embedded_language_formatting {
-            EmbeddedLanguageFormatting::Auto => "auto",
-            EmbeddedLanguageFormatting::Off => "off",
         }),
     );
 
