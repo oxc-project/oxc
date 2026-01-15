@@ -1,27 +1,17 @@
-use std::fmt::format;
-
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
     ast::{
         Argument, BindingPattern, Expression, ImportDeclarationSpecifier, ImportOrExportKind,
-        VariableDeclarator,
+        VariableDeclarationKind,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNodes;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
-use oxc_syntax::module_record::RequestedModule;
 
-use crate::{
-    AstNode,
-    ast_util::is_global_require_call,
-    context::LintContext,
-    fixer::{RuleFix, RuleFixer},
-    rule::Rule,
-    rules::ImportNoDefaultExport,
-};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_importing_vitest_globals_diagnostic(spans: &[Span]) -> OxcDiagnostic {
     // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
@@ -61,8 +51,193 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoImportingVitestGlobals {
-    fn run_once(&self, ctx: &LintContext) {
-        NoImportingVitestGlobals::run(ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let mut spans: Vec<Span> = vec![];
+        let mut new_imports: Vec<String> = vec![];
+        let mut span_start_specifiers: u32 = u32::MAX;
+        let mut span_end_specifiers: u32 = u32::MIN;
+
+        match node.kind() {
+            AstKind::VariableDeclaration(variable_declarations) => {
+                let mut new_declarations: Vec<DeclarationRenderType> = vec![];
+                for declaration in &variable_declarations.declarations {
+                    let Some(Expression::CallExpression(call_expr)) = &declaration.init else {
+                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
+                        continue;
+                    };
+
+                    if !call_expr.is_require_call() {
+                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
+
+                        continue;
+                    }
+
+                    let Some(Argument::StringLiteral(require_import)) = call_expr.arguments.first()
+                    else {
+                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
+                        continue;
+                    };
+
+                    if require_import.value.as_str() != "vitest" {
+                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
+                        continue;
+                    }
+
+                    if declaration.id.is_binding_identifier() {
+                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
+                        continue;
+                    }
+
+                    match &declaration.id {
+                        BindingPattern::ObjectPattern(obj) => {
+                            if obj.rest.is_some() {
+                                new_declarations
+                                    .push(DeclarationRenderType::NoVitest(declaration.span));
+                                continue;
+                            }
+
+                            if obj
+                                .properties
+                                .iter()
+                                .any(|property| property.key.is_specific_static_name("default"))
+                            {
+                                new_declarations
+                                    .push(DeclarationRenderType::NoVitest(declaration.span));
+
+                                continue;
+                            }
+
+                            let mut a_spans: Vec<Span> = vec![];
+                            let mut a_new_imports: Vec<String> = vec![];
+
+                            for property in &obj.properties {
+                                span_start_specifiers =
+                                    span_start_specifiers.min(property.span.start);
+                                span_end_specifiers = span_end_specifiers.max(property.span.end);
+
+                                let Some(property_name) = property.key.static_name() else {
+                                    continue;
+                                };
+
+                                if VITEST_GLOBALS.contains(&property_name.as_ref()) {
+                                    a_spans.push(property.span);
+                                } else {
+                                    a_new_imports.push(ctx.source_range(property.span).to_string());
+                                }
+                            }
+
+                            if a_new_imports.len() == 0 {
+                                new_declarations
+                                    .push(DeclarationRenderType::RemoveVitest(declaration.span));
+                            } else {
+                                new_declarations
+                                    .push(DeclarationRenderType::Vitest((a_spans, a_new_imports)));
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+
+                if new_declarations
+                    .iter()
+                    .any(|value| !matches!(value, DeclarationRenderType::NoVitest(_)))
+                {
+                    ctx.diagnostic_with_fix(
+                        no_importing_vitest_globals_diagnostic(spans.as_ref()),
+                        |fixer| {
+                            let variable_modifier = match variable_declarations.kind {
+                                VariableDeclarationKind::Const => "const",
+                                VariableDeclarationKind::Let => "let",
+                                VariableDeclarationKind::Var => "var",
+                                _ => return fixer.noop(),
+                            };
+
+                            let declarations = new_declarations
+                                .iter()
+                                .filter_map(|declaration| match declaration {
+                                    DeclarationRenderType::NoVitest(span) => {
+                                        let source_declaration = ctx.source_range(*span);
+                                        Some(source_declaration.to_string())
+                                    }
+                                    DeclarationRenderType::RemoveVitest(_) => None,
+                                    DeclarationRenderType::Vitest((_, imports)) => {
+                                        let new_vitest_declaration = format!(
+                                            "{{ {} }} = require('vitest')",
+                                            imports.join(", ")
+                                        );
+                                        Some(new_vitest_declaration)
+                                    }
+                                })
+                                .join(", ");
+
+                            if declarations.is_empty() {
+                                return fixer.delete(node);
+                            }
+
+                            let new_declaration = format!("{variable_modifier} {declarations};");
+
+                            fixer.replace(variable_declarations.span, new_declaration)
+                        },
+                    );
+                }
+            }
+            AstKind::ImportDeclaration(import_decl) => {
+                if import_decl.source.value.as_str() != "vitest" {
+                    return;
+                }
+
+                let Some(specifiers) = &import_decl.specifiers else {
+                    return;
+                };
+
+                for import_specifier in specifiers {
+                    match import_specifier {
+                        ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
+                        | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
+                            continue;
+                        }
+                        ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                            span_start_specifiers = span_start_specifiers.min(specifier.span.start);
+                            span_end_specifiers = span_end_specifiers.max(specifier.span.end);
+
+                            if specifier.import_kind == ImportOrExportKind::Type {
+                                new_imports.push(ctx.source_range(specifier.span).to_string());
+                                continue;
+                            }
+
+                            if !specifier.imported.is_identifier() {
+                                continue;
+                            }
+
+                            if VITEST_GLOBALS.contains(&specifier.local.name.as_ref()) {
+                                spans.push(specifier.span);
+                            } else {
+                                new_imports.push(ctx.source_range(specifier.span).to_string());
+                            }
+                        }
+                    }
+                }
+
+                if spans.len() > 0 {
+                    ctx.diagnostic_with_fix(
+                        no_importing_vitest_globals_diagnostic(spans.as_ref()),
+                        |fixer| {
+                            if spans.len() == specifiers.len() {
+                                return fixer.delete(node);
+                            }
+
+                            let import_text = new_imports.join(", ");
+
+                            let specifiers_span =
+                                Span::new(span_start_specifiers, span_end_specifiers);
+
+                            fixer.replace(specifiers_span, import_text)
+                        },
+                    );
+                }
+            }
+            _ => return,
+        }
     }
 }
 
@@ -86,241 +261,11 @@ const VITEST_GLOBALS: [&str; 17] = [
     "onTestFinished",
 ];
 
-impl NoImportingVitestGlobals {
-    fn run(ctx: &LintContext) {
-        for node in ctx.nodes() {
-            let mut spans: Vec<Span> = vec![];
-            let mut new_imports: Vec<&str> = vec![];
-            let mut span_start_specifiers: u32 = u32::MAX;
-            let mut span_end_specifiers: u32 = u32::MIN;
-
-            match node.kind() {
-                AstKind::VariableDeclaration(variable_declarations) => {
-                    let mut new_declarations: Vec<Span> = vec![];
-                    for declaration in &variable_declarations.declarations {
-                        let Some(Expression::CallExpression(call_expr)) = &declaration.init else {
-                            let start_span = {
-                                if new_declarations.len() == 0 {
-                                    variable_declarations.span.start
-                                } else {
-                                    declaration.span.start
-                                }
-                            };
-
-                            new_declarations.push(Span::new(start_span, declaration.span.end));
-                            continue;
-                        };
-
-                        if !call_expr.is_require_call() {
-                            let start_span = {
-                                if new_declarations.len() == 0 {
-                                    variable_declarations.span.start
-                                } else {
-                                    declaration.span.start
-                                }
-                            };
-
-                            new_declarations.push(Span::new(start_span, declaration.span.end));
-
-                            continue;
-                        }
-
-                        let Some(Argument::StringLiteral(require_import)) =
-                            call_expr.arguments.first()
-                        else {
-                            let start_span = {
-                                if new_declarations.len() == 0 {
-                                    variable_declarations.span.start
-                                } else {
-                                    declaration.span.start
-                                }
-                            };
-
-                            new_declarations.push(Span::new(start_span, declaration.span.end));
-                            continue;
-                        };
-
-                        if require_import.value.as_str() != "vitest" {
-                            let start_span = {
-                                if new_declarations.len() == 0 {
-                                    variable_declarations.span.start
-                                } else {
-                                    declaration.span.start
-                                }
-                            };
-
-                            new_declarations.push(Span::new(start_span, declaration.span.end));
-                            continue;
-                        }
-
-                        if declaration.id.is_binding_identifier() {
-                            let start_span = {
-                                if new_declarations.len() == 0 {
-                                    variable_declarations.span.start
-                                } else {
-                                    declaration.span.start
-                                }
-                            };
-
-                            new_declarations.push(Span::new(start_span, declaration.span.end));
-                            continue;
-                        }
-
-                        match &declaration.id {
-                            BindingPattern::ObjectPattern(obj) => {
-                                if obj.rest.is_some() {
-                                    let start_span = {
-                                        if new_declarations.len() == 0 {
-                                            variable_declarations.span.start
-                                        } else {
-                                            declaration.span.start
-                                        }
-                                    };
-
-                                    new_declarations
-                                        .push(Span::new(start_span, declaration.span.end));
-                                    continue;
-                                }
-
-                                if obj
-                                    .properties
-                                    .iter()
-                                    .any(|property| property.key.is_specific_static_name("default"))
-                                {
-                                    let start_span = {
-                                        if new_declarations.len() == 0 {
-                                            variable_declarations.span.start
-                                        } else {
-                                            declaration.span.start
-                                        }
-                                    };
-
-                                    new_declarations
-                                        .push(Span::new(start_span, declaration.span.end));
-                                    continue;
-                                }
-
-                                for property in &obj.properties {
-                                    span_start_specifiers =
-                                        span_start_specifiers.min(property.span.start);
-                                    span_end_specifiers =
-                                        span_end_specifiers.max(property.span.end);
-
-                                    let Some(property_name) = property.key.static_name() else {
-                                        continue;
-                                    };
-
-                                    if VITEST_GLOBALS.contains(&property_name.as_ref()) {
-                                        spans.push(property.span);
-                                    } else {
-                                        new_imports.push(ctx.source_range(property.span));
-                                    }
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                    if spans.len() > 0 {
-                        ctx.diagnostic_with_fix(
-                            no_importing_vitest_globals_diagnostic(spans.as_ref()),
-                            |fixer| {
-                                if new_imports.len() == 0 {
-                                    let suffix_string = {
-                                        if let Some(last_span) = new_declarations.last() {
-                                            if last_span.end == variable_declarations.span.end {
-                                                ""
-                                            } else {
-                                                ctx.source_range(Span::new(
-                                                    variable_declarations.span.end - 1,
-                                                    variable_declarations.span.end,
-                                                ))
-                                            }
-                                        } else {
-                                            ""
-                                        }
-                                    };
-
-                                    let new_declaration_string = new_declarations
-                                        .iter()
-                                        .map(|span_declaration| ctx.source_range(*span_declaration))
-                                        .join(", ");
-
-                                    return fixer.replace(
-                                        variable_declarations.span,
-                                        format!("{new_declaration_string}{suffix_string}"),
-                                    );
-                                }
-
-                                let import_text = new_imports.join(", ");
-
-                                let specifiers_span =
-                                    Span::new(span_start_specifiers, span_end_specifiers);
-
-                                fixer.replace(specifiers_span, import_text)
-                            },
-                        );
-                    }
-                }
-                AstKind::ImportDeclaration(import_decl) => {
-                    if import_decl.source.value.as_str() != "vitest" {
-                        continue;
-                    }
-
-                    let Some(specifiers) = &import_decl.specifiers else {
-                        continue;
-                    };
-
-                    for import_specifier in specifiers {
-                        match import_specifier {
-                            ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
-                            | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                                continue;
-                            }
-                            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                                span_start_specifiers =
-                                    span_start_specifiers.min(specifier.span.start);
-                                span_end_specifiers = span_end_specifiers.max(specifier.span.end);
-
-                                if specifier.import_kind == ImportOrExportKind::Type {
-                                    new_imports.push(ctx.source_range(specifier.span));
-                                    continue;
-                                }
-
-                                if !specifier.imported.is_identifier() {
-                                    continue;
-                                }
-
-                                if VITEST_GLOBALS.contains(&specifier.local.name.as_ref()) {
-                                    spans.push(specifier.span);
-                                } else {
-                                    new_imports.push(ctx.source_range(specifier.span));
-                                }
-                            }
-                        }
-                    }
-
-                    if spans.len() > 0 {
-                        ctx.diagnostic_with_fix(
-                            no_importing_vitest_globals_diagnostic(spans.as_ref()),
-                            |fixer| {
-                                if spans.len() == specifiers.len() {
-                                    return fixer.delete(node);
-                                }
-
-                                let import_text = new_imports.join(", ");
-
-                                let specifiers_span =
-                                    Span::new(span_start_specifiers, span_end_specifiers);
-
-                                fixer.replace(specifiers_span, import_text)
-                            },
-                        );
-                    }
-                }
-                _ => continue,
-            }
-        }
-    }
+#[derive(PartialEq, Eq)]
+enum DeclarationRenderType {
+    NoVitest(Span),
+    Vitest((Vec<Span>, Vec<String>)),
+    RemoveVitest(Span),
 }
 
 /*
