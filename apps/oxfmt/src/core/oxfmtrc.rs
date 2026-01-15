@@ -1,5 +1,5 @@
 use schemars::{JsonSchema, schema_for};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_formatter::{
@@ -378,55 +378,8 @@ pub struct SortImportsConfig {
     ///   "unknown",
     /// ]
     /// ```
-    #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "deserialize_groups")]
-    pub groups: Option<Vec<Vec<String>>>,
-}
-
-/// Custom deserializer for groups field to support both `string` and `string[]` as group elements
-fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<Vec<Vec<String>>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    use serde::de::Error;
-    use serde_json::Value;
-
-    let value: Option<Value> = Option::deserialize(deserializer)?;
-
-    match value {
-        None => Ok(None),
-        Some(Value::Array(arr)) => {
-            let mut groups = Vec::new();
-            for item in arr {
-                match item {
-                    // Single string becomes a single-element group
-                    Value::String(s) => {
-                        groups.push(vec![s]);
-                    }
-                    // Array of strings becomes a group
-                    Value::Array(group_arr) => {
-                        let mut group = Vec::new();
-                        for g in group_arr {
-                            if let Value::String(s) = g {
-                                group.push(s);
-                            } else {
-                                return Err(D::Error::custom(
-                                    "groups array elements must contain only strings",
-                                ));
-                            }
-                        }
-                        groups.push(group);
-                    }
-                    _ => {
-                        return Err(D::Error::custom(
-                            "groups must be an array of strings or arrays of strings",
-                        ));
-                    }
-                }
-            }
-            Ok(Some(groups))
-        }
-        Some(_) => Err(D::Error::custom("groups must be an array")),
-    }
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub groups: Option<Vec<SortGroupItemConfig>>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -435,6 +388,24 @@ pub enum SortOrderConfig {
     Asc,
     Desc,
 }
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortGroupItemConfig {
+    Single(String),
+    Multiple(Vec<String>),
+}
+
+impl SortGroupItemConfig {
+    fn into_vec(self) -> Vec<String> {
+        match self {
+            Self::Single(s) => vec![s],
+            Self::Multiple(v) => v,
+        }
+    }
+}
+
+// ---
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
@@ -480,6 +451,8 @@ impl SortPackageJsonConfig {
         }
     }
 }
+
+// ---
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
@@ -709,7 +682,7 @@ impl Oxfmtrc {
                 sort_imports.internal_pattern = v;
             }
             if let Some(v) = config.groups {
-                sort_imports.groups = v;
+                sort_imports.groups = v.into_iter().map(SortGroupItemConfig::into_vec).collect();
             }
 
             // `partition_by_newline: true` and `newlines_between: true` cannot be used together

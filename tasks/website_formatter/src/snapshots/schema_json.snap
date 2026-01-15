@@ -60,15 +60,25 @@ expression: json
       ],
       "type": "string"
     },
+    "SortGroupItemConfig": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      ]
+    },
     "SortImportsConfig": {
       "properties": {
         "groups": {
           "description": "Specifies a list of predefined import groups for sorting.\n\nEach import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).\nThe order of items in the `groups` option determines how groups are ordered.\n\nWithin a given group, members will be sorted according to the type, order, ignoreCase, etc. options.\n\nIndividual groups can be combined together by placing them in an array.\nThe order of groups in that array does not matter.\nAll members of the groups in the array will be sorted together as if they were part of a single group.\n\nPredefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.\n\nThe list of selectors is sorted from most to least important:\n- `type` — TypeScript type imports.\n- `side-effect-style` — Side effect style imports.\n- `side-effect` — Side effect imports.\n- `style` — Style imports.\n- `index` — Main file from the current directory.\n- `sibling` — Modules from the same directory.\n- `parent` — Modules from the parent directory.\n- `subpath` — Node.js subpath imports.\n- `internal` — Your internal modules.\n- `builtin` — Node.js Built-in Modules.\n- `external` — External modules installed in the project.\n- `import` — Any import.\n\nThe list of modifiers is sorted from most to least important:\n- `side-effect` — Side effect imports.\n- `type` — TypeScript type imports.\n- `value` — Value imports.\n- `default` — Imports containing the default specifier.\n- `wildcard` — Imports containing the wildcard (`* as`) specifier.\n- `named` — Imports containing at least one named specifier.\n- `multiline` — Imports on multiple lines.\n- `singleline` — Imports on a single line.\n\nSee also <https://perfectionist.dev/rules/sort-imports#groups> for details.\nNOTE: `customGroups` is not implemented yet.\n\n- Default: See below\n```json\n[\n\"type-import\",\n[\"value-builtin\", \"value-external\"],\n\"type-internal\",\n\"value-internal\",\n[\"type-parent\", \"type-sibling\", \"type-index\"],\n[\"value-parent\", \"value-sibling\", \"value-index\"],\n\"unknown\",\n]\n```",
           "items": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
+            "$ref": "#/definitions/SortGroupItemConfig"
           },
           "markdownDescription": "Specifies a list of predefined import groups for sorting.\n\nEach import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).\nThe order of items in the `groups` option determines how groups are ordered.\n\nWithin a given group, members will be sorted according to the type, order, ignoreCase, etc. options.\n\nIndividual groups can be combined together by placing them in an array.\nThe order of groups in that array does not matter.\nAll members of the groups in the array will be sorted together as if they were part of a single group.\n\nPredefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.\n\nThe list of selectors is sorted from most to least important:\n- `type` — TypeScript type imports.\n- `side-effect-style` — Side effect style imports.\n- `side-effect` — Side effect imports.\n- `style` — Style imports.\n- `index` — Main file from the current directory.\n- `sibling` — Modules from the same directory.\n- `parent` — Modules from the parent directory.\n- `subpath` — Node.js subpath imports.\n- `internal` — Your internal modules.\n- `builtin` — Node.js Built-in Modules.\n- `external` — External modules installed in the project.\n- `import` — Any import.\n\nThe list of modifiers is sorted from most to least important:\n- `side-effect` — Side effect imports.\n- `type` — TypeScript type imports.\n- `value` — Value imports.\n- `default` — Imports containing the default specifier.\n- `wildcard` — Imports containing the wildcard (`* as`) specifier.\n- `named` — Imports containing at least one named specifier.\n- `multiline` — Imports on multiple lines.\n- `singleline` — Imports on a single line.\n\nSee also <https://perfectionist.dev/rules/sort-imports#groups> for details.\nNOTE: `customGroups` is not implemented yet.\n\n- Default: See below\n```json\n[\n\"type-import\",\n[\"value-builtin\", \"value-external\"],\n\"type-internal\",\n\"value-internal\",\n[\"type-parent\", \"type-sibling\", \"type-index\"],\n[\"value-parent\", \"value-sibling\", \"value-index\"],\n\"unknown\",\n]\n```",
           "type": [

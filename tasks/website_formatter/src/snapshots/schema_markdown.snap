@@ -143,7 +143,15 @@ NOTE: `customGroups` is not implemented yet.
 
 #### experimentalSortImports.groups[n]
 
-type: `string[]`
+type: `array | string`
+
+
+
+
+
+##### experimentalSortImports.groups[n][n]
+
+type: `string`
 
 
 
