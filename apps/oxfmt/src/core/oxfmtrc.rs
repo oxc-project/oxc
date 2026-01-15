@@ -8,6 +8,7 @@ use oxc_formatter::{
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
     TailwindcssOptions, TrailingCommas,
 };
+use oxc_toml::Options as TomlFormatterOptions;
 
 /// Configuration options for the Oxfmt.
 ///
@@ -519,6 +520,7 @@ pub struct TailwindcssConfig {
 #[derive(Debug, Clone)]
 pub struct OxfmtOptions {
     pub format_options: FormatOptions,
+    pub toml_options: TomlFormatterOptions,
     pub sort_package_json: Option<sort_package_json::SortOptions>,
     pub insert_final_newline: bool,
 }
@@ -713,19 +715,43 @@ impl Oxfmtrc {
             format_options
         };
 
-        // Oxfmt-specific formatting options
+        // Currently, there is a no options for TOML formatter
+        let toml_options = build_toml_options(&format_options);
+
         let sort_package_json = user_format_config.experimental_sort_package_json.map_or_else(
             || Some(SortPackageJsonConfig::default().to_sort_options()),
             |c| c.to_sort_options(),
         );
+
         let insert_final_newline = user_format_config.insert_final_newline.unwrap_or(true);
 
+        // Globs will be validated later
         let ignore_patterns = self.ignore_patterns.unwrap_or_default();
 
         Ok((
-            OxfmtOptions { format_options, sort_package_json, insert_final_newline },
+            OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline },
             ignore_patterns,
         ))
+    }
+}
+
+/// Build `toml` formatter options from `FormatOptions`.
+/// Use the same options as `prettier-plugin-toml`.
+/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
+fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
+    TomlFormatterOptions {
+        column_width: format_options.line_width.value() as usize,
+        indent_string: if format_options.indent_style.is_tab() {
+            "\t".to_string()
+        } else {
+            " ".repeat(format_options.indent_width.value() as usize)
+        },
+        array_trailing_comma: !format_options.trailing_commas.is_none(),
+        crlf: format_options.line_ending.is_carriage_return_line_feed(),
+        // NOTE: Need to align with `oxc_formatter` and Prettier defaults,
+        // to make `insertFinalNewline` option work correctly.
+        trailing_newline: true,
+        ..Default::default()
     }
 }
 

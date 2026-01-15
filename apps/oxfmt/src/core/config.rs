@@ -4,11 +4,11 @@ use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
     MaxLineLength,
 };
-use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
 use tracing::instrument;
 
 use oxc_formatter::FormatOptions;
+use oxc_toml::Options as TomlFormatterOptions;
 
 use super::{
     FormatFileStrategy,
@@ -194,10 +194,10 @@ impl ConfigResolver {
         };
 
         #[cfg(feature = "napi")]
-        let OxfmtOptions { format_options, sort_package_json, insert_final_newline } =
+        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
             oxfmt_options;
         #[cfg(not(feature = "napi"))]
-        let OxfmtOptions { format_options, insert_final_newline, .. } = oxfmt_options;
+        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
@@ -205,10 +205,9 @@ impl ConfigResolver {
                 external_options,
                 insert_final_newline,
             },
-            FormatFileStrategy::OxfmtToml { .. } => ResolvedOptions::OxfmtToml {
-                toml_options: build_toml_options(&format_options),
-                insert_final_newline,
-            },
+            FormatFileStrategy::OxfmtToml { .. } => {
+                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
+            }
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => {
                 ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
@@ -345,26 +344,5 @@ fn apply_editorconfig(oxfmtrc: &mut Oxfmtrc, props: &EditorConfigProperties) {
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
         oxfmtrc.format_config.insert_final_newline = Some(v);
-    }
-}
-
-// ---
-
-/// Build `toml` formatter options.
-/// The same as `prettier-plugin-toml`.
-/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
-fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
-    TomlFormatterOptions {
-        column_width: format_options.line_width.value() as usize,
-        indent_string: if format_options.indent_style.is_tab() {
-            "\t".to_string()
-        } else {
-            " ".repeat(format_options.indent_width.value() as usize)
-        },
-        array_trailing_comma: !format_options.trailing_commas.is_none(),
-        crlf: format_options.line_ending.is_carriage_return_line_feed(),
-        // Align with `oxc_formatter` and Prettier default
-        trailing_newline: true,
-        ..Default::default()
     }
 }
