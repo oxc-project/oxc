@@ -36,11 +36,12 @@ const TokenProto = Object.create(Object.prototype, {
 /**
  * Initialize TS-ESLint tokens for current file.
  *
- * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
+ * Caller must ensure `filePath`, `sourceText`, and `buffer` are initialized before calling this function.
  */
 export function parseTokens(): Token[] {
   debugAssertIsNonNull(filePath);
   debugAssertIsNonNull(sourceText);
+  debugAssertIsNonNull(buffer);
 
   // Lazy-load TypeScript.
   // `./typescript.cjs` is path to the bundle in `dist` directory, as well as relative path in `src-js`,
@@ -52,8 +53,18 @@ export function parseTokens(): Token[] {
     tsSyntaxKind = tsModule.SyntaxKind;
   }
 
-  // Determine ScriptKind based on the parsed AST's SourceType
-  const scriptKind = getScriptKind(tsModule);
+  // Get source type from flags in buffer.
+  // Both flags are `bool`s in Rust, so 0 = false, 1 = true.
+  const isTs = buffer[IS_TS_FLAG_POS] === 1,
+    isJsx = buffer[IS_JSX_FLAG_POS] === 1;
+
+  const scriptKind = isTs
+    ? isJsx
+      ? tsModule.ScriptKind.TSX
+      : tsModule.ScriptKind.TS
+    : isJsx
+      ? tsModule.ScriptKind.JSX
+      : tsModule.ScriptKind.JS;
 
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
@@ -269,31 +280,4 @@ function hasJSXAncestor(node: ts.Node | undefined): boolean {
  */
 function isJSXTokenKind(kind: ts.SyntaxKind): boolean {
   return kind >= tsSyntaxKind.JsxElement && kind <= tsSyntaxKind.JsxAttribute;
-}
-
-/**
- * Determine TypeScript ScriptKind based on the parsed AST's SourceType.
- *
- * This reads the JSX flag and TypeScript flag from the buffer to determine
- * the correct ScriptKind for TypeScript's parser. This is more accurate than
- * using file extensions because it reflects what Oxc actually parsed.
- *
- * @param tsModule - TypeScript module
- * @returns Appropriate ScriptKind for the file
- */
-function getScriptKind(tsModule: typeof import("typescript")): ts.ScriptKind {
-  debugAssertIsNonNull(buffer);
-
-  // Get source type from flags in buffer.
-  // Both flags are `bool`s in Rust, so 0 = false, 1 = true.
-  const isTs = buffer[IS_TS_FLAG_POS] === 1,
-    isJsx = buffer[IS_JSX_FLAG_POS] === 1;
-
-  return isTs
-    ? isJsx
-      ? tsModule.ScriptKind.TSX
-      : tsModule.ScriptKind.TS
-    : isJsx
-      ? tsModule.ScriptKind.JSX
-      : tsModule.ScriptKind.JS;
 }
