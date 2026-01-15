@@ -642,6 +642,7 @@ pub use crate::rules::vitest::consistent_vitest_vi::ConsistentVitestVi as Vitest
 pub use crate::rules::vitest::hoisted_apis_on_top::HoistedApisOnTop as VitestHoistedApisOnTop;
 pub use crate::rules::vitest::no_conditional_tests::NoConditionalTests as VitestNoConditionalTests;
 pub use crate::rules::vitest::no_import_node_test::NoImportNodeTest as VitestNoImportNodeTest;
+pub use crate::rules::vitest::no_importing_vitest_globals::NoImportingVitestGlobals as VitestNoImportingVitestGlobals;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
@@ -1312,6 +1313,7 @@ pub enum RuleEnum {
     VitestHoistedApisOnTop(VitestHoistedApisOnTop),
     VitestNoConditionalTests(VitestNoConditionalTests),
     VitestNoImportNodeTest(VitestNoImportNodeTest),
+    VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals),
     VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
@@ -1981,36 +1983,37 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => 630usize,
             Self::VitestNoConditionalTests(_) => 631usize,
             Self::VitestNoImportNodeTest(_) => 632usize,
-            Self::VitestNoUnneededAsyncExpectFunction(_) => 633usize,
-            Self::VitestPreferCalledOnce(_) => 634usize,
-            Self::VitestPreferCalledTimes(_) => 635usize,
-            Self::VitestPreferDescribeFunctionTitle(_) => 636usize,
-            Self::VitestPreferToBeFalsy(_) => 637usize,
-            Self::VitestPreferToBeObject(_) => 638usize,
-            Self::VitestPreferToBeTruthy(_) => 639usize,
-            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 640usize,
-            Self::VitestWarnTodo(_) => 641usize,
-            Self::NodeGlobalRequire(_) => 642usize,
-            Self::NodeNoExportsAssign(_) => 643usize,
-            Self::NodeNoNewRequire(_) => 644usize,
-            Self::NodeNoProcessEnv(_) => 645usize,
-            Self::VueDefineEmitsDeclaration(_) => 646usize,
-            Self::VueDefinePropsDeclaration(_) => 647usize,
-            Self::VueDefinePropsDestructuring(_) => 648usize,
-            Self::VueMaxProps(_) => 649usize,
-            Self::VueNoArrowFunctionsInWatch(_) => 650usize,
-            Self::VueNoDeprecatedDestroyedLifecycle(_) => 651usize,
-            Self::VueNoExportInScriptSetup(_) => 652usize,
-            Self::VueNoImportCompilerMacros(_) => 653usize,
-            Self::VueNoLifecycleAfterAwait(_) => 654usize,
-            Self::VueNoMultipleSlotArgs(_) => 655usize,
-            Self::VueNoRequiredPropWithDefault(_) => 656usize,
-            Self::VueNoThisInBeforeRouteEnter(_) => 657usize,
-            Self::VuePreferImportFromVue(_) => 658usize,
-            Self::VueRequireDefaultExport(_) => 659usize,
-            Self::VueRequireTypedRef(_) => 660usize,
-            Self::VueValidDefineEmits(_) => 661usize,
-            Self::VueValidDefineProps(_) => 662usize,
+            Self::VitestNoImportingVitestGlobals(_) => 633usize,
+            Self::VitestNoUnneededAsyncExpectFunction(_) => 634usize,
+            Self::VitestPreferCalledOnce(_) => 635usize,
+            Self::VitestPreferCalledTimes(_) => 636usize,
+            Self::VitestPreferDescribeFunctionTitle(_) => 637usize,
+            Self::VitestPreferToBeFalsy(_) => 638usize,
+            Self::VitestPreferToBeObject(_) => 639usize,
+            Self::VitestPreferToBeTruthy(_) => 640usize,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 641usize,
+            Self::VitestWarnTodo(_) => 642usize,
+            Self::NodeGlobalRequire(_) => 643usize,
+            Self::NodeNoExportsAssign(_) => 644usize,
+            Self::NodeNoNewRequire(_) => 645usize,
+            Self::NodeNoProcessEnv(_) => 646usize,
+            Self::VueDefineEmitsDeclaration(_) => 647usize,
+            Self::VueDefinePropsDeclaration(_) => 648usize,
+            Self::VueDefinePropsDestructuring(_) => 649usize,
+            Self::VueMaxProps(_) => 650usize,
+            Self::VueNoArrowFunctionsInWatch(_) => 651usize,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => 652usize,
+            Self::VueNoExportInScriptSetup(_) => 653usize,
+            Self::VueNoImportCompilerMacros(_) => 654usize,
+            Self::VueNoLifecycleAfterAwait(_) => 655usize,
+            Self::VueNoMultipleSlotArgs(_) => 656usize,
+            Self::VueNoRequiredPropWithDefault(_) => 657usize,
+            Self::VueNoThisInBeforeRouteEnter(_) => 658usize,
+            Self::VuePreferImportFromVue(_) => 659usize,
+            Self::VueRequireDefaultExport(_) => 660usize,
+            Self::VueRequireTypedRef(_) => 661usize,
+            Self::VueValidDefineEmits(_) => 662usize,
+            Self::VueValidDefineProps(_) => 663usize,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -2730,6 +2733,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::NAME,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::NAME,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::NAME,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::NAME,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::NAME
             }
@@ -3519,6 +3523,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::CATEGORY,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::CATEGORY,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::CATEGORY,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::CATEGORY,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::CATEGORY
             }
@@ -4277,6 +4282,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::FIX,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::FIX,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::FIX,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::FIX,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::FIX
             }
@@ -5205,6 +5211,9 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::documentation(),
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::documentation(),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::documentation(),
+            Self::VitestNoImportingVitestGlobals(_) => {
+                VitestNoImportingVitestGlobals::documentation()
+            }
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::documentation()
             }
@@ -7033,6 +7042,10 @@ impl RuleEnum {
                 .or_else(|| VitestNoConditionalTests::schema(generator)),
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::config_schema(generator)
                 .or_else(|| VitestNoImportNodeTest::schema(generator)),
+            Self::VitestNoImportingVitestGlobals(_) => {
+                VitestNoImportingVitestGlobals::config_schema(generator)
+                    .or_else(|| VitestNoImportingVitestGlobals::schema(generator))
+            }
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::config_schema(generator)
                     .or_else(|| VitestNoUnneededAsyncExpectFunction::schema(generator))
@@ -7755,6 +7768,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => "vitest",
             Self::VitestNoConditionalTests(_) => "vitest",
             Self::VitestNoImportNodeTest(_) => "vitest",
+            Self::VitestNoImportingVitestGlobals(_) => "vitest",
             Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
@@ -9809,6 +9823,9 @@ impl RuleEnum {
             Self::VitestNoImportNodeTest(_) => {
                 Ok(Self::VitestNoImportNodeTest(VitestNoImportNodeTest::from_configuration(value)?))
             }
+            Self::VitestNoImportingVitestGlobals(_) => Ok(Self::VitestNoImportingVitestGlobals(
+                VitestNoImportingVitestGlobals::from_configuration(value)?,
+            )),
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 Ok(Self::VitestNoUnneededAsyncExpectFunction(
                     VitestNoUnneededAsyncExpectFunction::from_configuration(value)?,
@@ -10544,6 +10561,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.to_configuration(),
             Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
             Self::VitestNoImportNodeTest(rule) => rule.to_configuration(),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.to_configuration(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
@@ -11213,6 +11231,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run(node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run(node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run(node, ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run(node, ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
@@ -11880,6 +11899,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run_once(ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_once(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_once(ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run_once(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
@@ -12633,6 +12653,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoConditionalTests(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
@@ -13304,6 +13325,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.should_run(ctx),
             Self::VitestNoConditionalTests(rule) => rule.should_run(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.should_run(ctx),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.should_run(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
@@ -14227,6 +14249,9 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::IS_TSGOLINT_RULE,
             Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::IS_TSGOLINT_RULE,
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::IS_TSGOLINT_RULE,
+            Self::VitestNoImportingVitestGlobals(_) => {
+                VitestNoImportingVitestGlobals::IS_TSGOLINT_RULE
+            }
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
             }
@@ -14902,6 +14927,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.types_info(),
             Self::VitestNoConditionalTests(rule) => rule.types_info(),
             Self::VitestNoImportNodeTest(rule) => rule.types_info(),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.types_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
@@ -15569,6 +15595,7 @@ impl RuleEnum {
             Self::VitestHoistedApisOnTop(rule) => rule.run_info(),
             Self::VitestNoConditionalTests(rule) => rule.run_info(),
             Self::VitestNoImportNodeTest(rule) => rule.run_info(),
+            Self::VitestNoImportingVitestGlobals(rule) => rule.run_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
@@ -16340,6 +16367,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestHoistedApisOnTop(VitestHoistedApisOnTop::default()),
         RuleEnum::VitestNoConditionalTests(VitestNoConditionalTests::default()),
         RuleEnum::VitestNoImportNodeTest(VitestNoImportNodeTest::default()),
+        RuleEnum::VitestNoImportingVitestGlobals(VitestNoImportingVitestGlobals::default()),
         RuleEnum::VitestNoUnneededAsyncExpectFunction(
             VitestNoUnneededAsyncExpectFunction::default(),
         ),
