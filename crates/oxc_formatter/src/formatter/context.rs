@@ -79,12 +79,6 @@ impl TailwindContextEntry {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum TemplateLiteralContext {
-    CssProp,
-    StyledJsx,
-}
-
 /// Context object storing data relevant when formatting an object.
 pub struct FormatContext<'ast> {
     options: FormatOptions,

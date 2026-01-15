@@ -11,7 +11,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
-        Format, FormatElement, Formatter, TailwindContextEntry, TemplateLiteralContext, VecBuffer,
+        Format, FormatElement, Formatter, TailwindContextEntry, VecBuffer,
         buffer::RemoveSoftLinesBuffer,
         prelude::{document::Document, *},
         printer::Printer,
@@ -772,29 +772,11 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
     }
 }
 
-/// Try to format a tagged template with the embedded formatter if supported.
-/// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
-fn try_format_embedded_template<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+fn format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
+    tag_name: &str,
+    template_content: &str,
 ) -> bool {
-    let quasi = &tagged.quasi;
-    if !quasi.is_no_substitution_template() {
-        return false;
-    }
-
-    let Some(tag_name) = get_tag_name(&tagged.tag) else {
-        return false;
-    };
-
-    // Check if the tag is supported by the embedded formatter
-    if !ExternalCallbacks::is_supported_tag(tag_name) {
-        return false;
-    }
-
-    // Get the external callbacks from the context
-    let template_content = quasi.quasis[0].value.raw.as_str();
-
     let Some(Ok(formatted)) =
         f.context().external_callbacks().format_embedded(tag_name, template_content)
     else {
@@ -819,11 +801,35 @@ fn try_format_embedded_template<'a>(
     true
 }
 
-fn get_template_literal_context<'a>(
-    node: &AstNode<'a, TemplateLiteral<'a>>,
-) -> Option<TemplateLiteralContext> {
+/// Try to format a tagged template with the embedded formatter if supported.
+/// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
+fn try_format_embedded_template<'a>(
+    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let quasi = &tagged.quasi;
+    if !quasi.is_no_substitution_template() {
+        return false;
+    }
+
+    let Some(tag_name) = get_tag_name(&tagged.tag) else {
+        return false;
+    };
+
+    // Check if the tag is supported by the embedded formatter
+    if !ExternalCallbacks::is_supported_tag(tag_name) {
+        return false;
+    }
+
+    // Get the external callbacks from the context
+    let template_content = quasi.quasis[0].value.raw.as_str();
+
+    format_embedded_template(f, tag_name, template_content)
+}
+
+fn get_template_literal_context<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
     let AstNodes::JSXExpressionContainer(container) = node.parent else {
-        return None;
+        return false;
     };
 
     match container.parent {
@@ -831,27 +837,22 @@ fn get_template_literal_context<'a>(
             if let JSXAttributeName::Identifier(ident) = &attribute.name
                 && ident.name == "css"
             {
-                return Some(TemplateLiteralContext::CssProp);
+                return true;
             }
         }
         AstNodes::JSXElement(element) => {
             if let JSXElementName::Identifier(ident) = &element.opening_element.name
                 && ident.name == "style"
                 && element.opening_element.attributes.iter().any(|attr| {
-                    if let JSXAttributeItem::Attribute(attr) = attr
-                        && let JSXAttributeName::Identifier(name) = &attr.name
-                    {
-                        return name.name == "jsx";
-                    }
-                    false
+                    matches!(attr.as_attribute().and_then(|a| a.name.as_identifier()), Some(name) if name.name == "jsx")
                 })
             {
-                return Some(TemplateLiteralContext::StyledJsx);
+                return true;
             }
         }
         _ => {}
     }
-    None
+    false
 }
 
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
@@ -865,30 +866,11 @@ fn try_format_css_template<'a>(
         return false;
     }
 
-    let Some(context) = get_template_literal_context(template_literal) else {
+    if !get_template_literal_context(template_literal) {
         return false;
-    };
-
-    let tag_name = match context {
-        TemplateLiteralContext::CssProp | TemplateLiteralContext::StyledJsx => "css",
-    };
+    }
 
     let template_content = quasi[0].value.raw.as_str();
 
-    let Some(Ok(formatted)) =
-        f.context().external_callbacks().format_embedded(tag_name, template_content)
-    else {
-        return false;
-    };
-
-    let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
-        let content = f.context().allocator().alloc_str(&formatted);
-        for line in content.split('\n') {
-            write!(f, [text(line), hard_line_break()]);
-        }
-    });
-
-    write!(f, ["`", block_indent(&format_content), "`"]);
-
-    true
+    format_embedded_template(f, "css", template_content)
 }
