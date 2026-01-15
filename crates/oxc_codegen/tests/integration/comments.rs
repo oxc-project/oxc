@@ -33,6 +33,17 @@ fn unit() {
     test_same("export { parseAst as /** @deprecated */ b };\n");
 }
 
+pub mod misc_comments {
+    use crate::snapshot;
+
+    #[test]
+    fn comment() {
+        let cases = vec!["/** block1 */ /** block2 */\nfunction foo() {}\n"];
+
+        snapshot("misc_comments", &cases);
+    }
+}
+
 pub mod jsdoc {
     use crate::snapshot;
 

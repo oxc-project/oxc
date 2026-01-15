@@ -220,8 +220,11 @@ impl RuleRunner for crate::rules::eslint::no_async_promise_executor::NoAsyncProm
 }
 
 impl RuleRunner for crate::rules::eslint::no_await_in_loop::NoAwaitInLoop {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::AwaitExpression, AstType::ForOfStatement]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AwaitExpression,
+        AstType::ForOfStatement,
+        AstType::VariableDeclaration,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3094,6 +3097,11 @@ impl RuleRunner for crate::rules::typescript::prefer_namespace_keyword::PreferNa
 }
 
 impl RuleRunner for crate::rules::typescript::prefer_nullish_coalescing::PreferNullishCoalescing {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
+}
+
+impl RuleRunner for crate::rules::typescript::prefer_optional_chain::PreferOptionalChain {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Unknown;
 }

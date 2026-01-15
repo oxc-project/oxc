@@ -8,9 +8,9 @@ use crate::{
         prelude::{format_once, soft_line_indent_or_space, space},
         trivia::FormatTrailingComments,
     },
+    print::FormatWrite,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
-    write::FormatWrite,
 };
 
 pub struct FormatStatementBody<'a, 'b> {

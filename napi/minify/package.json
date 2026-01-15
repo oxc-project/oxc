@@ -1,6 +1,6 @@
 {
   "name": "oxc-minify",
-  "version": "0.107.0",
+  "version": "0.108.0",
   "description": "Oxc Minifier Node API",
   "keywords": [
     "minify",

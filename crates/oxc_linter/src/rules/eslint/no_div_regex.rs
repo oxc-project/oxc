@@ -76,7 +76,6 @@ fn test() {
     let fix = vec![(
         "var f = function() { return /=foo/; };",
         "var f = function() { return /[=]foo/; };",
-        None,
     )];
 
     Tester::new(NoDivRegex::NAME, NoDivRegex::PLUGIN, pass, fail)

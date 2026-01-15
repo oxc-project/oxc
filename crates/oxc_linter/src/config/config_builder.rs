@@ -578,6 +578,14 @@ impl ConfigStoreBuilder {
             None
         };
 
+        if let Some(plugin_name) = &plugin_name
+            && LintPlugins::try_from(plugin_name.as_str()).is_ok()
+        {
+            return Err(ConfigBuilderError::ReservedExternalPluginName {
+                plugin_name: plugin_name.clone(),
+            });
+        }
+
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
@@ -598,6 +606,14 @@ impl ConfigStoreBuilder {
             );
             Ok(())
         } else {
+            // TODO: If a plugin with a reserved name reaches this point, it has already been
+            // loaded on the JS/NAPI side but is not registered in `ExternalPluginStore` on
+            // the Rust side. This leaves the NAPI-side rule list longer than the Rust-side
+            // rule list, so a later call to `register_plugin` can hit the offset assertion
+            // because the expected rule count no longer matches. Consider explicitly
+            // unloading or rolling back the plugin here to keep both sides in sync. We
+            // currently avoid this situation in practice by checking for reserved names
+            // before calling `load_plugin` above.
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }

@@ -2,36 +2,26 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
-   ╭─[consistent_empty_array_spread.tsx:1:24]
- 1 │ const array = [ a, ...(foo ? [b, c] : '') ]
-   ·                        ─────────────────
-   ╰────
-  help: Replace `''` with `[]`.
-
-  ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
-   ╭─[consistent_empty_array_spread.tsx:1:24]
- 1 │ const array = [ a, ...(foo ? 'bc' : []) ]
-   ·                        ───────────────
+   ╭─[consistent_empty_array_spread.tsx:3:21]
+ 2 │                 ...(test ? [] : "ab"),
+ 3 │                 ...(test ? "ab" : []),
+   ·                     ────────────────
+ 4 │             ];
    ╰────
   help: Replace `[]` with `''`.
 
   ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
-   ╭─[consistent_empty_array_spread.tsx:1:24]
- 1 │ const array = [ a, ...(foo ? ['str', 'str'] : '') ]
-   ·                        ─────────────────────────
+   ╭─[consistent_empty_array_spread.tsx:3:21]
+ 2 │                 ...(test ? "" : [a, b]),
+ 3 │                 ...(test ? [a, b] : ""),
+   ·                     ──────────────────
+ 4 │             ];
    ╰────
-  help: Replace `''` with `[]`.
+  help: Replace `""` with `[]`.
 
   ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
-   ╭─[consistent_empty_array_spread.tsx:1:24]
- 1 │ const array = [ a, ...(foo ? [1, 2, 3] : '') ]
-   ·                        ────────────────────
+   ╭─[consistent_empty_array_spread.tsx:1:6]
+ 1 │ [...(foo ? "" : [])]
+   ·      ─────────────
    ╰────
-  help: Replace `''` with `[]`.
-
-  ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
-   ╭─[consistent_empty_array_spread.tsx:1:25]
- 1 │ const array = [ {}, ...(foo ? [{}, {}] : '') ]
-   ·                         ───────────────────
-   ╰────
-  help: Replace `''` with `[]`.
+  help: Replace `[]` with `''`.

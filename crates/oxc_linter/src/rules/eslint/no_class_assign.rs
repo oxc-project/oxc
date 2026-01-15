@@ -117,36 +117,36 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("class A { } foo(A);", None),
-        ("let A = class A { }; foo(A);", None),
-        ("class A { b(A) { A = 0; } }", None),
-        ("class A { b() { let A; A = 0; } }", None),
-        ("let A = class { b() { A = 0; } }", None),
-        ("let A = class B { foo() { A = 0; } }", None),
-        ("let A = class A {}; A = 1", None),
-        ("var x = 0; x = 1;", None),
-        ("let x = 0; x = 1;", None),
-        ("const x = 0; x = 1;", None),
-        ("function x() {} x = 1;", None),
-        ("function foo(x) { x = 1; }", None),
-        ("try {} catch (x) { x = 1; }", None),
-        ("if (foo) { class A {} } else { class A {} } A = 1;", None),
+        "class A { } foo(A);",
+        "let A = class A { }; foo(A);",
+        "class A { b(A) { A = 0; } }",
+        "class A { b() { let A; A = 0; } }",
+        "let A = class { b() { A = 0; } }",
+        "let A = class B { foo() { A = 0; } }",
+        "let A = class A {}; A = 1",
+        "var x = 0; x = 1;",
+        "let x = 0; x = 1;",
+        "const x = 0; x = 1;",
+        "function x() {} x = 1;",
+        "function foo(x) { x = 1; }",
+        "try {} catch (x) { x = 1; }",
+        "if (foo) { class A {} } else { class A {} } A = 1;",
         // Sequence expression
-        ("(class A {}, A = 1)", None),
+        "(class A {}, A = 1)",
         // Class expressions
-        ("let A = class { }; A = 1;", None),
-        ("let A = class B { }; A = 1;", None),
+        "let A = class { }; A = 1;",
+        "let A = class B { }; A = 1;",
     ];
 
     let fail = vec![
-        ("class A { } A = 0;", None),
-        ("class A { } ({A} = 0);", None),
-        ("class A { } ({b: A = 0} = {});", None),
-        ("A = 0; class A { }", None),
-        ("class A { b() { A = 0; } }", None),
-        ("let A = class A { b() { A = 0; } }", None),
-        ("class A { } A = 0; A = 1;", None),
-        ("if (foo) { class A {} A = 1; }", None),
+        "class A { } A = 0;",
+        "class A { } ({A} = 0);",
+        "class A { } ({b: A = 0} = {});",
+        "A = 0; class A { }",
+        "class A { b() { A = 0; } }",
+        "let A = class A { b() { A = 0; } }",
+        "class A { } A = 0; A = 1;",
+        "if (foo) { class A {} A = 1; }",
     ];
 
     Tester::new(NoClassAssign::NAME, NoClassAssign::PLUGIN, pass, fail).test_and_snapshot();

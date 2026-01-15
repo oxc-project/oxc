@@ -15,3 +15,8 @@ declare namespace foo2 {
   interface arguments {}
   interface eval {}
 }
+
+declare global {
+	function arguments(...arguments: any[]): typeof arguments;
+	function eval(...eval: any[]): typeof eval;
+}

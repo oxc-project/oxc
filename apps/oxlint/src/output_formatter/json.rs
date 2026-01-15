@@ -1,6 +1,8 @@
 use std::{cell::RefCell, rc::Rc};
 
 use miette::JSONReportHandler;
+use oxc_span::CompactStr;
+use rustc_hash::FxHashSet;
 use serde::Serialize;
 
 use oxc_diagnostics::{
@@ -23,12 +25,36 @@ impl InternalFormatter for JsonOutputFormatter {
             scope: &'a str,
             value: &'a str,
             category: RuleCategory,
+            type_aware: bool,
+            fix: String,
+            default: bool,
+            docs_url: CompactStr,
         }
+
+        // Determine which rules are turned on by default (same logic as RuleTable)
+        let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
+        let default_rules: FxHashSet<&'static str> = RULES
+            .iter()
+            .filter(|rule| {
+                rule.category() == RuleCategory::Correctness
+                    && default_plugin_names.contains(&rule.plugin_name())
+            })
+            .map(oxc_linter::rules::RuleEnum::name)
+            .collect();
 
         let rules_info = RULES.iter().map(|rule| RuleInfoJson {
             scope: rule.plugin_name(),
             value: rule.name(),
             category: rule.category(),
+            type_aware: rule.is_tsgolint_rule(),
+            fix: rule.fix().to_string(),
+            default: default_rules.contains(rule.name()),
+            docs_url: format!(
+                "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
+                rule.plugin_name(),
+                rule.name()
+            )
+            .into(),
         });
 
         Some(

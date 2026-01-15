@@ -188,6 +188,7 @@ fn test() {
         ("a << b", None),
         ("a >> b", None),
         ("a >>> b", None),
+        ("a|0", None),
         ("~a", None),
         ("a ^= b", None),
         ("a |= b", None),

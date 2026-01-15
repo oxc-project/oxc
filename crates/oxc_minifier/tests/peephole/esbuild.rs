@@ -2377,3 +2377,49 @@ fn test_remove_dead_expr_other() {
     test("using x = null, y = z", "using x = null, y = z;");
     test("using x = z, y = undefined", "using x = z, y = void 0;");
 }
+
+// https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
+#[test]
+fn prune_empty_case_before_default() {
+    // Basic case: empty case with literal before default
+    test(
+        "switch (x) { case 0: foo(); break; case 1: default: bar() }",
+        "switch (x) { case 0: foo(); break; default: bar();}",
+    );
+
+    // Multiple empty cases with literals before default
+    test(
+        "switch (x) { case 0: foo(); break; case 1: case 2: case 3: default: bar() }",
+        "switch (x) { case 0: foo(); break; default: bar();}",
+    );
+
+    // Empty case with non-literal (identifier) should NOT be removed
+    test(
+        "switch (x) { case 0: foo(); break; case y: default: bar() }",
+        "switch (x) { case 0: foo(); break; case y: default: bar();}",
+    );
+
+    // Empty default not at end should be preserved
+    test("switch (x) { default: case 1: bar() }", "switch (x) { default: case 1: bar();}");
+
+    // String literals should also be removed
+    test("switch (x) { case 'a': case 'b': default: bar() }", "switch (x) { default: bar();}");
+
+    // null literal (booleans get transformed to !0/!1 before this optimization runs)
+    test("switch (x) { case null: default: bar() }", "switch (x) { default: bar();}");
+
+    // BigInt literals
+    test("switch (x) { case 1n: case 2n: default: bar() }", "switch (x) { default: bar();}");
+
+    // Non-empty case should stop the pruning
+    test(
+        "switch (x) { case 0: case 1: foo(); case 2: case 3: default: bar() }",
+        "switch (x) { case 0: case 1: foo(); default: bar();}",
+    );
+
+    // Only default - nothing to prune
+    test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
+
+    // No default - nothing to prune
+    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); case 1:}");
+}

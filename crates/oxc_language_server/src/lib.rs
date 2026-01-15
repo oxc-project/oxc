@@ -8,7 +8,6 @@ mod options;
 #[cfg(test)]
 mod tests;
 mod tool;
-pub mod utils;
 mod worker;
 
 pub use crate::capabilities::Capabilities;

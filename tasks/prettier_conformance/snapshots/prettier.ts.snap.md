@@ -1,4 +1,4 @@
-ts compatibility: 579/605 (95.70%)
+ts compatibility: 579/607 (95.39%)
 
 # Failed
 
@@ -29,4 +29,6 @@ ts compatibility: 579/605 (95.70%)
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/comments/18106.ts | 💥 | 92.68% |
+| typescript/union/comments/18379.ts | 💥 | 87.27% |
+| typescript/union/comments/18389.ts | 💥 | 51.28% |
 | typescript/union/single-type/single-type.ts | 💥 | 66.67% |

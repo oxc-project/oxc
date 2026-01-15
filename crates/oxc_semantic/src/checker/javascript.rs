@@ -88,9 +88,11 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                                 element.span,
                             ));
                         } else {
+                            let span = prev_element.span;
                             ctx.error(diagnostics::redeclaration(
-                                &element.name,
-                                prev_element.span,
+                                // `span` includes `#` for private identifiers
+                                span.source_text(ctx.source_text),
+                                span,
                                 element.span,
                             ));
                         }
@@ -158,6 +160,11 @@ fn is_current_node_ambient_binding(symbol_id: Option<SymbolId>, ctx: &SemanticBu
 }
 
 pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder<'_>) {
+    // `.d.ts` files are allowed to use `eval` and `arguments` as binding identifiers
+    if ctx.source_type.is_typescript_definition() {
+        return;
+    }
+
     if ctx.strict_mode() {
         // In strict mode, `eval` and `arguments` are banned as identifiers.
         if matches!(ident.name.as_str(), "eval" | "arguments") {
@@ -182,24 +189,11 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                 AstKind::Function(func) => matches!(func.r#type, FunctionType::TSDeclareFunction),
                 AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => {
                     is_declare_function(&ctx.nodes.parent_kind(parent.id()))
-                        || ctx.nodes.ancestor_kinds(parent.id()).nth(1).is_some_and(|node| {
-                            matches!(
-                                node,
-                                AstKind::TSFunctionType(_) | AstKind::TSMethodSignature(_)
-                            )
-                        })
                 }
                 AstKind::BindingRestElement(_) => {
                     let grand_parent = ctx.nodes.parent_node(parent.id());
                     is_declare_function(&ctx.nodes.parent_kind(grand_parent.id()))
-                        || ctx.nodes.ancestor_kinds(grand_parent.id()).nth(1).is_some_and(|node| {
-                            matches!(
-                                node,
-                                AstKind::TSFunctionType(_) | AstKind::TSMethodSignature(_)
-                            )
-                        })
                 }
-                AstKind::TSTypeAliasDeclaration(_) | AstKind::TSInterfaceDeclaration(_) => true,
                 _ => false,
             };
 
@@ -231,6 +225,11 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
 }
 
 pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBuilder<'_>) {
+    // `.d.ts` files are allowed to use `eval` and `arguments` as identifier references
+    if ctx.source_type.is_typescript_definition() {
+        return;
+    }
+
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
     if ctx.strict_mode() && matches!(ident.name.as_str(), "arguments" | "eval") {

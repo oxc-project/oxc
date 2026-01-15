@@ -383,6 +383,17 @@ impl RuleFixMeta {
     }
 }
 
+impl fmt::Display for RuleFixMeta {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::None => write!(f, "none"),
+            Self::FixPending => write!(f, "pending"),
+            Self::Conditional(kind) => write!(f, "conditional_{}", kind.to_string()),
+            Self::Fixable(kind) => write!(f, "fixable_{}", kind.to_string()),
+        }
+    }
+}
+
 impl From<RuleFixMeta> for FixKind {
     fn from(value: RuleFixMeta) -> Self {
         value.fix_kind()

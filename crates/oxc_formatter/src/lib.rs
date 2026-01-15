@@ -7,11 +7,10 @@ mod external_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
-pub mod oxfmtrc;
 mod parentheses;
+mod print;
 mod service;
 mod utils;
-mod write;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
@@ -97,6 +96,10 @@ pub(crate) enum JsLabels {
     MemberChain,
     /// For `ir_transform/sort_imports`
     ImportDeclaration,
+    /// For `ir_transform/sort_imports`
+    /// Marks `alignable_comment` (Block comment where each line starts with `*`)
+    /// to distinguish from other text content like template literals that may contain `/*`.
+    AlignableBlockComment,
 }
 
 impl Label for JsLabels {
@@ -108,6 +111,7 @@ impl Label for JsLabels {
         match self {
             Self::MemberChain => "MemberChain",
             Self::ImportDeclaration => "ImportDeclaration",
+            Self::AlignableBlockComment => "AlignableBlockComment",
         }
     }
 }

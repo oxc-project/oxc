@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.39.0] - 2026-01-12
+
+### 🚀 Features
+
+- af1d0e3 linter/prefer-optional-chain: Add rule (#17831) (camc314)
+- 3567304 linter/vitest: Implement `consistent-each-for` (#17601) (Said Atrahouch)
+- 2bd2d5a linter/vitest: Implement hoisted-apis-on-top (#17658) (Said Atrahouch)
+
+### 🐛 Bug Fixes
+
+- 84f4f3c linter: Add doc url for tsgolint diagnostics (#17879) (Sysix)
+
+### 📚 Documentation
+
+- e81a306 linter: Update the tsconfig flag mention for the import plugin. (#17778) (connorshea)
+
 ## [1.37.0] - 2026-01-05
 
 ### 🚀 Features

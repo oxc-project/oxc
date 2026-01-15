@@ -1,10 +1,8 @@
 #![expect(clippy::print_stderr)]
 mod doc_page;
 mod html;
-mod table;
 
 use std::{
-    borrow::Cow,
     env, fs,
     path::{Path, PathBuf},
 };
@@ -14,27 +12,28 @@ use html::HtmlWriter;
 use oxc_linter::{Oxlintrc, table::RuleTable};
 use pico_args::Arguments;
 use schemars::{SchemaGenerator, r#gen::SchemaSettings};
-use table::render_rules_table;
 
 const HELP: &str = "
 usage: linter-rules [args]
 
 Arguments:
-    -t,--table <path>     Path to file where rule markdown table will be saved.
-    -r,--rule-docs <path> Path to directory where rule doc pages will be saved.
-                          A directory will be created if one doesn't exist.
-    --git-ref <ref>       Git commit, branch, or tag to be used in the generated links.
-                          If not supplied, `main` will be used.
-    -h,--help             Show this help message.
+    -j,--rules-json <path> Path to file where rules json blob will be saved.
+    -r,--rule-docs <path>  Path to directory where rule doc pages will be saved.
+                           A directory will be created if one doesn't exist.
+    -c,--rule-count <path> Path to directory where rule count data file will be saved.
+    --git-ref <ref>        Git commit, branch, or tag to be used in the generated links.
+                           If not supplied, `main` will be used.
+    -h,--help              Show this help message.
 
 ";
 
 /// `print_rules`
 ///
-/// `cargo run -p website linter-rules --table
-/// /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/generated-rules.md
-/// --rule-docs /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/rules
-/// --git-ref dc9dc03872101c15b0d02f05ce45705565665829
+/// `cargo run -p website linter-rules
+///   --rules-json /path/to/oxc/oxc-project.github.io/.vitepress/data/rules.json
+///   --rule-docs /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/rules
+///   --rule-count /path/to/oxc/oxc-project.github.io/src/docs/guide/usage
+///   --git-ref dc9dc03872101c15b0d02f05ce45705565665829
 /// `
 /// <https://oxc.rs/docs/guide/usage/linter/rules.html>
 #[expect(clippy::print_stdout)]
@@ -46,29 +45,19 @@ pub fn print_rules(mut args: Arguments) {
     }
 
     let git_ref: Option<String> = args.opt_value_from_str("--git-ref").unwrap();
-    let table_path = args.opt_value_from_str::<_, PathBuf>(["-t", "--table"]).unwrap();
+    let rules_json_path = args.opt_value_from_str::<_, PathBuf>(["-j", "--rules-json"]).unwrap();
     let rules_dir = args.opt_value_from_str::<_, PathBuf>(["-r", "--rule-docs"]).unwrap();
-
-    let prefix =
-        rules_dir.as_ref().and_then(|p| p.as_os_str().to_str()).map_or(Cow::Borrowed(""), |p| {
-            if p.contains("src/docs") {
-                let split = p.split("src/docs").collect::<Vec<_>>();
-                assert!(split.len() > 1);
-                Cow::Owned("/docs".to_string() + split.last().unwrap())
-            } else {
-                Cow::Borrowed(p)
-            }
-        });
+    let rule_count_dir = args.opt_value_from_str::<_, PathBuf>(["-c", "--rule-count"]).unwrap();
 
     let mut generator = SchemaGenerator::new(SchemaSettings::default());
     let table = RuleTable::new(Some(&mut generator));
 
-    if let Some(table_path) = table_path {
-        let table_path = pwd.join(table_path).canonicalize().unwrap();
+    if let Some(rules_json_path) = rules_json_path {
+        let rules_json_path = pwd.join(rules_json_path).canonicalize().unwrap();
 
-        eprintln!("Rendering rules table...");
-        let rules_table = render_rules_table(&table, prefix.as_ref());
-        fs::write(table_path, rules_table).unwrap();
+        eprintln!("Rendering rules JSON blob...");
+        let rules_json = oxlint::get_all_rules_json();
+        fs::write(rules_json_path, rules_json).unwrap();
     }
 
     if let Some(rules_dir) = &rules_dir {
@@ -82,8 +71,16 @@ pub fn print_rules(mut args: Arguments) {
             !rules_dir.is_file(),
             "Cannot write rule docs to a file. Please specify a directory."
         );
+
         write_rule_doc_pages(generator, &table, &rules_dir);
         write_version_data(&rules_dir, git_ref.unwrap_or("main".to_string()).as_str());
+    }
+
+    if let Some(rule_count_dir) = &rule_count_dir {
+        eprintln!("Generating rule count data...");
+        let rule_count_dir = pwd.join(rule_count_dir).canonicalize().unwrap();
+
+        write_rule_count_data(&rule_count_dir, table.total);
     }
 
     eprintln!(
@@ -109,4 +106,9 @@ fn write_rule_doc_pages(g: SchemaGenerator, table: &RuleTable, outdir: &Path) {
 fn write_version_data(outdir: &Path, git_ref: &str) {
     let data = format!(r#"export default {{ load() {{ return "{git_ref}" }} }} "#);
     fs::write(outdir.join("version.data.js"), data).unwrap();
+}
+
+fn write_rule_count_data(outdir: &Path, rule_count: usize) {
+    let data = format!(r"export default {{ load() {{ return {rule_count} }} }} ");
+    fs::write(outdir.join("rule-count.data.js"), data).unwrap();
 }

@@ -30,6 +30,10 @@ const allTestSuites = new Map([
     {
       ...baseTest,
       files: "out_test/unit/**/*.spec.js",
+      workspaceFolder: multiRootWorkspaceFile,
+      env: {
+        MULTI_FOLDER_WORKSPACE: "true",
+      },
     },
   ],
   [

@@ -12,91 +12,130 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_invalid_regexp.tsx:1:14]
  1 │ RegExp('.', 'z');
    ·              ▲
+   ·              ╰── flag 'z' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:14]
  1 │ RegExp('.', 'a');
    ·              ▲
+   ·              ╰── flag 'a' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:18]
  1 │ new RegExp('.', 'a');
    ·                  ▲
+   ·                  ╰── flag 'a' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:18]
  1 │ new RegExp('.', 'z');
    ·                  ▲
+   ·                  ╰── flag 'z' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:14]
  1 │ RegExp('.', 'a');
    ·              ▲
+   ·              ╰── flag 'a' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:14]
  1 │ RegExp('.', 'A');
    ·              ▲
+   ·              ╰── flag 'A' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:18]
  1 │ new RegExp('.', 'az');
    ·                  ▲
+   ·                  ╰── flag 'a' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
    ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'aa');
    ·                   ▲
+   ·                   ╰── flag 'a' already specified
    ╰────
+  help: Remove the duplicated 'a' flag from the regular expression flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
    ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'aa');
    ·                   ▲
+   ·                   ╰── flag 'a' already specified
    ╰────
+  help: Remove the duplicated 'a' flag from the regular expression flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'aA');
    ·                   ▲
+   ·                   ╰── flag 'A' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
    ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'aaz');
    ·                   ▲
+   ·                   ╰── flag 'a' already specified
    ╰────
+  help: Remove the duplicated 'a' flag from the regular expression flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
    ╭─[no_invalid_regexp.tsx:1:20]
  1 │ new RegExp('.', 'azz');
    ·                    ▲
+   ·                    ╰── flag 'z' already specified
    ╰────
+  help: Remove the duplicated 'z' flag from the regular expression flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
    ╭─[no_invalid_regexp.tsx:1:20]
  1 │ new RegExp('.', 'aga');
    ·                    ▲
+   ·                    ╰── flag 'a' already specified
    ╰────
+  help: Remove the duplicated 'a' flag from the regular expression flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated flag
    ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'uu');
    ·                   ▲
+   ·                   ╰── flag 'u' already specified
    ╰────
+  help: Remove the duplicated 'u' flag from the regular expression flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:18]
  1 │ new RegExp('.', 'ouo');
    ·                  ▲
+   ·                  ╰── flag 'o' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Could not parse the entire pattern
    ╭─[no_invalid_regexp.tsx:1:13]
@@ -165,19 +204,28 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_invalid_regexp.tsx:1:19]
  1 │ RegExp(')' + '', 'a');
    ·                   ▲
+   ·                   ╰── flag 'a' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:23]
  1 │ new RegExp('.' + '', 'az');
    ·                       ▲
+   ·                       ╰── flag 'a' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown flag
    ╭─[no_invalid_regexp.tsx:1:23]
  1 │ new RegExp(pattern, 'az');
    ·                       ▲
+   ·                       ╰── flag 'z' is not a valid regular expression flag
    ╰────
+  note: Valid flags are: d (indices), g (global), i (ignore case), m (multiline),
+                        s (dot all), u (unicode), v (unicode sets), y (sticky)
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unterminated character class
    ╭─[no_invalid_regexp.tsx:1:13]
@@ -190,13 +238,17 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_invalid_regexp.tsx:1:19]
  1 │ new RegExp('.', 'uv');
    ·                   ▲
+   ·                   ╰── the 'v' flag cannot be used when the 'u' flag is specified
    ╰────
+  help: Specify only one of 'u' or 'v' flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: `u` and `v` flags should be used alone
    ╭─[no_invalid_regexp.tsx:1:23]
  1 │ new RegExp(pattern, 'uv');
    ·                       ▲
+   ·                       ╰── the 'v' flag cannot be used when the 'u' flag is specified
    ╰────
+  help: Specify only one of 'u' or 'v' flags
 
   ⚠ eslint(no-invalid-regexp): Invalid regular expression: Character class range out of order
    ╭─[no_invalid_regexp.tsx:1:15]
@@ -218,3 +270,45 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─      ─
    ╰────
   help: Duplicate names must be in different alternatives
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated modifier
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?ii:foo)')
+   ·               ──
+   ╰────
+  help: Each modifier can only appear once
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Duplicated modifier
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?-ii:foo)')
+   ·               ───
+   ╰────
+  help: Each modifier can only appear once
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Invalid modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?i-i:foo)')
+   ·               ───
+   ╰────
+  help: A modifier cannot be both enabled and disabled
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Empty modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?-:foo)')
+   ·               ─
+   ╰────
+  help: Use `(?:...)` for non-capturing groups or add modifiers
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?g:foo)')
+   ·               ▲
+   ╰────
+  help: Valid modifiers are: i, m, s
+
+  ⚠ eslint(no-invalid-regexp): Invalid regular expression: Unknown modifiers
+   ╭─[no_invalid_regexp.tsx:1:15]
+ 1 │ new RegExp('(?-u:foo)')
+   ·               ─
+   ╰────
+  help: Valid modifiers are: i, m, s

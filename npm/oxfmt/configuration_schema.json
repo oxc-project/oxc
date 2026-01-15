@@ -1,89 +1,357 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Oxfmtrc",
+  "description": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options, but not all of them.\nIn addition, some options are our own extensions.",
+  "type": "object",
+  "properties": {
+    "arrowParens": {
+      "description": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ArrowParensConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
+    },
+    "bracketSameLine": {
+      "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`"
+    },
+    "bracketSpacing": {
+      "description": "Print spaces between brackets in object literals.\n\n- Default: `true`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Print spaces between brackets in object literals.\n\n- Default: `true`"
+    },
+    "embeddedLanguageFormatting": {
+      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\nJS-in-XXX is fully supported but still be handled by Prettier.\n\n- Default: `\"auto\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\nJS-in-XXX is fully supported but still be handled by Prettier.\n\n- Default: `\"auto\"`"
+    },
+    "endOfLine": {
+      "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/EndOfLineConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`"
+    },
+    "experimentalSortImports": {
+      "description": "Experimental: Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortImportsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Experimental: Sort import statements.\n\nUsing the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+    },
+    "experimentalSortPackageJson": {
+      "description": "Experimental: Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/SortPackageJsonUserConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Experimental: Sort `package.json` keys.\n\nThe algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).\nBut we believe it is clearer and easier to navigate.\nFor details, see each field's documentation.\n\n- Default: `true`"
+    },
+    "experimentalTailwindcss": {
+      "description": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TailwindcssConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Experimental: Sort Tailwind CSS classes.\n\nUsing the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).\nOption names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).\nFor details, see each field's documentation.\n\n- Default: Disabled"
+    },
+    "htmlWhitespaceSensitivity": {
+      "description": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/HtmlWhitespaceSensitivityConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`"
+    },
+    "ignorePatterns": {
+      "description": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`",
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "string"
+      },
+      "markdownDescription": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`"
+    },
+    "insertFinalNewline": {
+      "description": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`"
+    },
+    "jsxSingleQuote": {
+      "description": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Use single quotes instead of double quotes in JSX.\n\n- Default: `false`"
+    },
+    "objectWrap": {
+      "description": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ObjectWrapConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`"
+    },
+    "printWidth": {
+      "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint16",
+      "minimum": 0.0,
+      "markdownDescription": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`"
+    },
+    "proseWrap": {
+      "description": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/ProseWrapConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "How to wrap prose.\n\nBy default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.\nTo wrap prose to the print width, change this option to \"always\".\nIf you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use \"never\".\n\n- Default: `\"preserve\"`"
+    },
+    "quoteProps": {
+      "description": "Change when properties in objects are quoted.\n\n- Default: `\"as-needed\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/QuotePropsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Change when properties in objects are quoted.\n\n- Default: `\"as-needed\"`"
+    },
+    "semi": {
+      "description": "Print semicolons at the ends of statements.\n\n- Default: `true`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Print semicolons at the ends of statements.\n\n- Default: `true`"
+    },
+    "singleAttributePerLine": {
+      "description": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Enforce single attribute per line in HTML, Vue, and JSX.\n\n- Default: `false`"
+    },
+    "singleQuote": {
+      "description": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+    },
+    "tabWidth": {
+      "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint8",
+      "minimum": 0.0,
+      "markdownDescription": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`"
+    },
+    "trailingComma": {
+      "description": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`",
+      "anyOf": [
+        {
+          "$ref": "#/definitions/TrailingCommaConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "markdownDescription": "Print trailing commas wherever possible in multi-line comma-separated syntactic structures.\n\nA single-line array, for example, never gets trailing commas.\n\n- Default: `\"all\"`"
+    },
+    "useTabs": {
+      "description": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Indent lines with tabs instead of spaces.\n\n- Default: `false`\n- Overrides `.editorconfig.indent_style`"
+    },
+    "vueIndentScriptAndStyle": {
+      "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.\n\n- Default: `false`"
+    }
+  },
   "allowComments": true,
   "allowTrailingCommas": true,
   "definitions": {
     "ArrowParensConfig": {
+      "type": "string",
       "enum": [
         "always",
         "avoid"
-      ],
-      "type": "string"
+      ]
     },
     "EmbeddedLanguageFormattingConfig": {
+      "type": "string",
       "enum": [
         "auto",
         "off"
-      ],
-      "type": "string"
+      ]
     },
     "EndOfLineConfig": {
+      "type": "string",
       "enum": [
         "lf",
         "crlf",
         "cr"
-      ],
-      "type": "string"
+      ]
+    },
+    "HtmlWhitespaceSensitivityConfig": {
+      "type": "string",
+      "enum": [
+        "css",
+        "strict",
+        "ignore"
+      ]
     },
     "ObjectWrapConfig": {
+      "type": "string",
       "enum": [
         "preserve",
         "collapse"
-      ],
-      "type": "string"
+      ]
+    },
+    "ProseWrapConfig": {
+      "type": "string",
+      "enum": [
+        "always",
+        "never",
+        "preserve"
+      ]
     },
     "QuotePropsConfig": {
+      "type": "string",
       "enum": [
         "as-needed",
         "consistent",
         "preserve"
-      ],
-      "type": "string"
+      ]
+    },
+    "SortGroupItemConfig": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ]
     },
     "SortImportsConfig": {
+      "type": "object",
       "properties": {
         "groups": {
-          "description": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
-          "items": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          },
-          "markdownDescription": "Custom groups configuration for organizing imports.\nEach array element represents a group, and multiple group names in the same array are treated as one.\nAccepts both `string` and `string[]` as group elements.",
+          "description": "Specifies a list of predefined import groups for sorting.\n\nEach import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).\nThe order of items in the `groups` option determines how groups are ordered.\n\nWithin a given group, members will be sorted according to the type, order, ignoreCase, etc. options.\n\nIndividual groups can be combined together by placing them in an array.\nThe order of groups in that array does not matter.\nAll members of the groups in the array will be sorted together as if they were part of a single group.\n\nPredefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.\n\nThe list of selectors is sorted from most to least important:\n- `type` — TypeScript type imports.\n- `side-effect-style` — Side effect style imports.\n- `side-effect` — Side effect imports.\n- `style` — Style imports.\n- `index` — Main file from the current directory.\n- `sibling` — Modules from the same directory.\n- `parent` — Modules from the parent directory.\n- `subpath` — Node.js subpath imports.\n- `internal` — Your internal modules.\n- `builtin` — Node.js Built-in Modules.\n- `external` — External modules installed in the project.\n- `import` — Any import.\n\nThe list of modifiers is sorted from most to least important:\n- `side-effect` — Side effect imports.\n- `type` — TypeScript type imports.\n- `value` — Value imports.\n- `default` — Imports containing the default specifier.\n- `wildcard` — Imports containing the wildcard (`* as`) specifier.\n- `named` — Imports containing at least one named specifier.\n- `multiline` — Imports on multiple lines.\n- `singleline` — Imports on a single line.\n\nSee also <https://perfectionist.dev/rules/sort-imports#groups> for details.\nNOTE: `customGroups` is not implemented yet.\n\n- Default: See below\n```json\n[\n\"type-import\",\n[\"value-builtin\", \"value-external\"],\n\"type-internal\",\n\"value-internal\",\n[\"type-parent\", \"type-sibling\", \"type-index\"],\n[\"value-parent\", \"value-sibling\", \"value-index\"],\n\"unknown\",\n]\n```",
           "type": [
             "array",
             "null"
-          ]
+          ],
+          "items": {
+            "$ref": "#/definitions/SortGroupItemConfig"
+          },
+          "markdownDescription": "Specifies a list of predefined import groups for sorting.\n\nEach import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).\nThe order of items in the `groups` option determines how groups are ordered.\n\nWithin a given group, members will be sorted according to the type, order, ignoreCase, etc. options.\n\nIndividual groups can be combined together by placing them in an array.\nThe order of groups in that array does not matter.\nAll members of the groups in the array will be sorted together as if they were part of a single group.\n\nPredefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.\n\nThe list of selectors is sorted from most to least important:\n- `type` — TypeScript type imports.\n- `side-effect-style` — Side effect style imports.\n- `side-effect` — Side effect imports.\n- `style` — Style imports.\n- `index` — Main file from the current directory.\n- `sibling` — Modules from the same directory.\n- `parent` — Modules from the parent directory.\n- `subpath` — Node.js subpath imports.\n- `internal` — Your internal modules.\n- `builtin` — Node.js Built-in Modules.\n- `external` — External modules installed in the project.\n- `import` — Any import.\n\nThe list of modifiers is sorted from most to least important:\n- `side-effect` — Side effect imports.\n- `type` — TypeScript type imports.\n- `value` — Value imports.\n- `default` — Imports containing the default specifier.\n- `wildcard` — Imports containing the wildcard (`* as`) specifier.\n- `named` — Imports containing at least one named specifier.\n- `multiline` — Imports on multiple lines.\n- `singleline` — Imports on a single line.\n\nSee also <https://perfectionist.dev/rules/sort-imports#groups> for details.\nNOTE: `customGroups` is not implemented yet.\n\n- Default: See below\n```json\n[\n\"type-import\",\n[\"value-builtin\", \"value-external\"],\n\"type-internal\",\n\"value-internal\",\n[\"type-parent\", \"type-sibling\", \"type-index\"],\n[\"value-parent\", \"value-sibling\", \"value-index\"],\n\"unknown\",\n]\n```"
         },
         "ignoreCase": {
-          "description": "Ignore case when sorting. (Default: `true`)",
-          "markdownDescription": "Ignore case when sorting. (Default: `true`)",
+          "description": "Specifies whether sorting should be case-sensitive.\n\n- Default: `true`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Specifies whether sorting should be case-sensitive.\n\n- Default: `true`"
         },
         "internalPattern": {
-          "description": "Glob patterns to identify internal imports.",
+          "description": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\"]`",
+          "type": [
+            "array",
+            "null"
+          ],
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Glob patterns to identify internal imports.",
-          "type": [
-            "array",
-            "null"
-          ]
+          "markdownDescription": "Specifies a prefix for identifying internal imports.\n\nThis is useful for distinguishing your own modules from external dependencies.\n\n- Default: `[\"~/\", \"@/\"]`"
         },
         "newlinesBetween": {
-          "description": "Add newlines between import groups. (Default: `true`)",
-          "markdownDescription": "Add newlines between import groups. (Default: `true`)",
+          "description": "Specifies whether to add newlines between groups.\n\nWhen `false`, no newlines are added between groups.\n\n- Default: `true`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Specifies whether to add newlines between groups.\n\nWhen `false`, no newlines are added between groups.\n\n- Default: `true`"
         },
         "order": {
+          "description": "Specifies whether to sort items in ascending or descending order.\n\n- Default: `\"asc\"`",
           "anyOf": [
             {
               "$ref": "#/definitions/SortOrderConfig"
@@ -92,57 +360,53 @@
               "type": "null"
             }
           ],
-          "description": "Sort order. (Default: `\"asc\"`)",
-          "markdownDescription": "Sort order. (Default: `\"asc\"`)"
+          "markdownDescription": "Specifies whether to sort items in ascending or descending order.\n\n- Default: `\"asc\"`"
         },
         "partitionByComment": {
-          "description": "Partition imports by comments. (Default: `false`)",
-          "markdownDescription": "Partition imports by comments. (Default: `false`)",
+          "description": "Enables the use of comments to separate imports into logical groups.\n\nWhen `true`, all comments will be treated as delimiters, creating partitions.\n\n```js\nimport { b1, b2 } from 'b'\n// PARTITION\nimport { a } from 'a'\nimport { c } from 'c'\n```\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Enables the use of comments to separate imports into logical groups.\n\nWhen `true`, all comments will be treated as delimiters, creating partitions.\n\n```js\nimport { b1, b2 } from 'b'\n// PARTITION\nimport { a } from 'a'\nimport { c } from 'c'\n```\n\n- Default: `false`"
         },
         "partitionByNewline": {
-          "description": "Partition imports by newlines. (Default: `false`)",
-          "markdownDescription": "Partition imports by newlines. (Default: `false`)",
+          "description": "Enables the empty line to separate imports into logical groups.\n\nWhen `true`, formatter will not sort imports if there is an empty line between them.\nThis helps maintain the defined order of logically separated groups of members.\n\n```js\nimport { b1, b2 } from 'b'\n\nimport { a } from 'a'\nimport { c } from 'c'\n```\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Enables the empty line to separate imports into logical groups.\n\nWhen `true`, formatter will not sort imports if there is an empty line between them.\nThis helps maintain the defined order of logically separated groups of members.\n\n```js\nimport { b1, b2 } from 'b'\n\nimport { a } from 'a'\nimport { c } from 'c'\n```\n\n- Default: `false`"
         },
         "sortSideEffects": {
-          "description": "Sort side-effect imports. (Default: `false`)",
-          "markdownDescription": "Sort side-effect imports. (Default: `false`)",
+          "description": "Specifies whether side effect imports should be sorted.\n\nBy default, sorting side-effect imports is disabled for security reasons.\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Specifies whether side effect imports should be sorted.\n\nBy default, sorting side-effect imports is disabled for security reasons.\n\n- Default: `false`"
         }
-      },
-      "type": "object"
+      }
     },
     "SortOrderConfig": {
+      "type": "string",
       "enum": [
         "asc",
         "desc"
-      ],
-      "type": "string"
+      ]
     },
     "SortPackageJsonConfig": {
-      "description": "Configuration for `package.json` sorting.",
-      "markdownDescription": "Configuration for `package.json` sorting.",
+      "type": "object",
       "properties": {
         "sortScripts": {
-          "description": "Sort the `scripts` field alphabetically. (Default: `false`)",
-          "markdownDescription": "Sort the `scripts` field alphabetically. (Default: `false`)",
+          "description": "Sort the `scripts` field alphabetically.\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Sort the `scripts` field alphabetically.\n\n- Default: `false`"
         }
-      },
-      "type": "object"
+      }
     },
     "SortPackageJsonUserConfig": {
       "anyOf": [
@@ -152,287 +416,75 @@
         {
           "$ref": "#/definitions/SortPackageJsonConfig"
         }
-      ],
-      "description": "User-provided configuration for `package.json` sorting.\n\n- `true`: Enable sorting with default options\n- `false`: Disable sorting\n- `{ sortScripts: true }`: Enable sorting with custom options",
-      "markdownDescription": "User-provided configuration for `package.json` sorting.\n\n- `true`: Enable sorting with default options\n- `false`: Disable sorting\n- `{ sortScripts: true }`: Enable sorting with custom options"
+      ]
     },
     "TailwindcssConfig": {
-      "description": "Configuration for Tailwind CSS class sorting.\nBased on options from `prettier-plugin-tailwindcss`.\n\nNote: All `tailwind` prefixes have been removed from option names.\nFor example, use `config` instead of `tailwindConfig`.\n\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
-      "markdownDescription": "Configuration for Tailwind CSS class sorting.\nBased on options from `prettier-plugin-tailwindcss`.\n\nNote: All `tailwind` prefixes have been removed from option names.\nFor example, use `config` instead of `tailwindConfig`.\n\nSee <https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options>",
+      "type": "object",
       "properties": {
         "attributes": {
-          "description": "List of attributes that contain Tailwind CSS classes.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "List of attributes that contain Tailwind CSS classes.\n\nExample: `[\"myClassProp\", \":class\"]`\n\nDefault: `[\"class\", \"className\"]`",
+          "description": "List of attribute prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[\"class\", \"className\"]`\n- Example: `[\"myClassProp\", \":class\"]`",
           "type": [
             "array",
             "null"
-          ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of attribute prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[\"class\", \"className\"]`\n- Example: `[\"myClassProp\", \":class\"]`"
         },
         "config": {
-          "description": "Path to your Tailwind CSS configuration file (v3).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nDefault: `\"./tailwind.config.js\"`",
-          "markdownDescription": "Path to your Tailwind CSS configuration file (v3).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nDefault: `\"./tailwind.config.js\"`",
+          "description": "Path to your Tailwind CSS configuration file (v3).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Automatically find `\"tailwind.config.js\"`",
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "markdownDescription": "Path to your Tailwind CSS configuration file (v3).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Automatically find `\"tailwind.config.js\"`"
         },
         "functions": {
-          "description": "List of custom function names that contain Tailwind CSS classes.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
-          "items": {
-            "type": "string"
-          },
-          "markdownDescription": "List of custom function names that contain Tailwind CSS classes.\n\nExample: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`\n\nDefault: `[]`",
+          "description": "List of custom function name prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`",
           "type": [
             "array",
             "null"
-          ]
+          ],
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "List of custom function name prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`"
         },
         "preserveDuplicates": {
-          "description": "Preserve duplicate classes.\n\nDefault: `false`",
-          "markdownDescription": "Preserve duplicate classes.\n\nDefault: `false`",
+          "description": "Preserve duplicate classes.\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Preserve duplicate classes.\n\n- Default: `false`"
         },
         "preserveWhitespace": {
-          "description": "Preserve whitespace around classes.\n\nDefault: `false`",
-          "markdownDescription": "Preserve whitespace around classes.\n\nDefault: `false`",
+          "description": "Preserve whitespace around classes.\n\n- Default: `false`",
           "type": [
             "boolean",
             "null"
-          ]
+          ],
+          "markdownDescription": "Preserve whitespace around classes.\n\n- Default: `false`"
         },
         "stylesheet": {
-          "description": "Path to your Tailwind CSS stylesheet (v4).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nExample: `\"./src/app.css\"`",
-          "markdownDescription": "Path to your Tailwind CSS stylesheet (v4).\n\nNote: Paths are resolved relative to the Oxfmt configuration file.\n\nExample: `\"./src/app.css\"`",
+          "description": "Path to your Tailwind CSS stylesheet (v4).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Installed Tailwind CSS's `theme.css`",
           "type": [
             "string",
             "null"
-          ]
+          ],
+          "markdownDescription": "Path to your Tailwind CSS stylesheet (v4).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Installed Tailwind CSS's `theme.css`"
         }
-      },
-      "type": "object"
+      }
     },
     "TrailingCommaConfig": {
+      "type": "string",
       "enum": [
         "all",
         "es5",
         "none"
-      ],
-      "type": "string"
-    }
-  },
-  "description": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\n\nIn addition, some options are our own extensions.",
-  "markdownDescription": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options.\nSee also <https://prettier.io/docs/options>\n\nIn addition, some options are our own extensions.",
-  "properties": {
-    "arrowParens": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/ArrowParensConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Include parentheses around a sole arrow function parameter. (Default: `\"always\"`)",
-      "markdownDescription": "Include parentheses around a sole arrow function parameter. (Default: `\"always\"`)"
-    },
-    "bracketSameLine": {
-      "description": "Put the `>` of a multi-line JSX element at the end of the last line\ninstead of being alone on the next line. (Default: `false`)",
-      "markdownDescription": "Put the `>` of a multi-line JSX element at the end of the last line\ninstead of being alone on the next line. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "bracketSpacing": {
-      "description": "Print spaces between brackets in object literals. (Default: `true`)",
-      "markdownDescription": "Print spaces between brackets in object literals. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "embeddedLanguageFormatting": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Control whether to format embedded parts in the file.\ne.g. JS-in-Vue, CSS-in-JS, etc. (Default: `\"auto\"`)",
-      "markdownDescription": "Control whether to format embedded parts in the file.\ne.g. JS-in-Vue, CSS-in-JS, etc. (Default: `\"auto\"`)"
-    },
-    "endOfLine": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/EndOfLineConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Which end of line characters to apply. (Default: `\"lf\"`)",
-      "markdownDescription": "Which end of line characters to apply. (Default: `\"lf\"`)"
-    },
-    "experimentalSortImports": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/SortImportsConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Experimental: Sort import statements. (Default: disabled)",
-      "markdownDescription": "Experimental: Sort import statements. (Default: disabled)"
-    },
-    "experimentalSortPackageJson": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/SortPackageJsonUserConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Experimental: Sort `package.json` keys. (Default: `true`)",
-      "markdownDescription": "Experimental: Sort `package.json` keys. (Default: `true`)"
-    },
-    "experimentalTailwindcss": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/TailwindcssConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)",
-      "markdownDescription": "Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.\nWhen enabled, class strings will be collected and passed to a callback for sorting.\nPass `true` or an object with options from `prettier-plugin-tailwindcss`.\n(Default: disabled)"
-    },
-    "ignorePatterns": {
-      "description": "Ignore files matching these glob patterns. Current working directory is used as the root.",
-      "items": {
-        "type": "string"
-      },
-      "markdownDescription": "Ignore files matching these glob patterns. Current working directory is used as the root.",
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "insertFinalNewline": {
-      "description": "Whether to insert a final newline at the end of the file. (Default: `true`)",
-      "markdownDescription": "Whether to insert a final newline at the end of the file. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "jsxSingleQuote": {
-      "description": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
-      "markdownDescription": "Use single quotes instead of double quotes in JSX. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "objectWrap": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/ObjectWrapConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)",
-      "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines. (Default: `\"preserve\"`)"
-    },
-    "printWidth": {
-      "description": "The line length that the printer will wrap on. (Default: `100`)",
-      "format": "uint16",
-      "markdownDescription": "The line length that the printer will wrap on. (Default: `100`)",
-      "minimum": 0.0,
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "quoteProps": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/QuotePropsConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Change when properties in objects are quoted. (Default: `\"as-needed\"`)",
-      "markdownDescription": "Change when properties in objects are quoted. (Default: `\"as-needed\"`)"
-    },
-    "semi": {
-      "description": "Print semicolons at the ends of statements. (Default: `true`)",
-      "markdownDescription": "Print semicolons at the ends of statements. (Default: `true`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "singleAttributePerLine": {
-      "description": "Put each attribute on a new line in JSX. (Default: `false`)",
-      "markdownDescription": "Put each attribute on a new line in JSX. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "singleQuote": {
-      "description": "Use single quotes instead of double quotes. (Default: `false`)",
-      "markdownDescription": "Use single quotes instead of double quotes. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "tabWidth": {
-      "description": "Number of spaces per indentation level. (Default: `2`)",
-      "format": "uint8",
-      "markdownDescription": "Number of spaces per indentation level. (Default: `2`)",
-      "minimum": 0.0,
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "trailingComma": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/TrailingCommaConfig"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Print trailing commas wherever possible. (Default: `\"all\"`)",
-      "markdownDescription": "Print trailing commas wherever possible. (Default: `\"all\"`)"
-    },
-    "useTabs": {
-      "description": "Use tabs for indentation or spaces. (Default: `false`)",
-      "markdownDescription": "Use tabs for indentation or spaces. (Default: `false`)",
-      "type": [
-        "boolean",
-        "null"
       ]
     }
   },
-  "title": "Oxfmtrc",
-  "type": "object"
+  "markdownDescription": "Configuration options for the Oxfmt.\n\nMost options are the same as Prettier's options, but not all of them.\nIn addition, some options are our own extensions."
 }
