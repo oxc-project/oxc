@@ -117,10 +117,11 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             unreachable!();
         };
 
-        let TaggedTemplateExpression { span, tag, quasi, type_arguments } = tagged.unbox();
+        let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments } =
+            tagged.unbox();
 
         let binding = self.create_top_level_binding(ctx);
-        let arguments = self.transform_template_literal(&binding, quasi, ctx);
+        let arguments = self.transform_template_literal(&binding, template_lit, ctx);
         *expr = ctx.ast.expression_call(span, tag, type_arguments, arguments, false);
     }
 
@@ -142,14 +143,14 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
     fn transform_template_literal(
         &self,
         binding: &BoundIdentifier<'a>,
-        quasi: TemplateLiteral<'a>,
+        template_lit: TemplateLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Argument<'a>> {
         // Create cooked array: `[cooked0, cooked1, ...]`
         // Use `void 0` for elements with invalid escape sequences (where cooked is None)
         // Also check if we need to pass the raw array separately
         let mut needs_raw_array = false;
-        let cooked_elements = ctx.ast.vec_from_iter(quasi.quasis.iter().map(|quasi| {
+        let cooked_elements = ctx.ast.vec_from_iter(template_lit.quasis.iter().map(|quasi| {
             let expr = if let Some(cooked) = &quasi.value.cooked {
                 if cooked.as_str() != quasi.value.raw.as_str() {
                     needs_raw_array = true;
@@ -166,7 +167,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
 
         // Add raw array if needed: `[raw0, raw1, ...]`
         let template_arguments = if needs_raw_array {
-            let elements = ctx.ast.vec_from_iter(quasi.quasis.iter().map(|quasi| {
+            let elements = ctx.ast.vec_from_iter(template_lit.quasis.iter().map(|quasi| {
                 let string = ctx.ast.expression_string_literal(SPAN, quasi.value.raw, None);
                 ArrayExpressionElement::from(string)
             }));
@@ -186,7 +187,8 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
         // `(binding || (binding = babelHelpers.taggedTemplateLiteral([<...cooked>], [<...raw>]?)), <...expressions>)`
         ctx.ast.vec_from_iter(
             // Add the template expressions as the remaining arguments
-            iter::once(template_call).chain(quasi.expressions.into_iter().map(Argument::from)),
+            iter::once(template_call)
+                .chain(template_lit.expressions.into_iter().map(Argument::from)),
         )
     }
 
