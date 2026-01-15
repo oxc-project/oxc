@@ -8,4 +8,3 @@ export const IS_TS_FLAG_POS = 2147483612;
 export const IS_JSX_FLAG_POS = 2147483613;
 export const PROGRAM_OFFSET = 0;
 export const SOURCE_LEN_OFFSET = 16;
-export const SOURCE_TYPE_OFFSET = 124;
