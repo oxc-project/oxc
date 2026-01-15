@@ -75,6 +75,27 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
         Self { ctx }
     }
 
+    /// Transform a tagged template expression to use the [`Helper::TaggedTemplateLiteral`] helper function.
+    fn transform_tagged_template(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        debug_assert!(matches!(expr, Expression::TaggedTemplateExpression(_)));
+
+        if !matches!(expr, Expression::TaggedTemplateExpression(tagged) if Self::contains_closing_script_tag(&tagged.quasi))
+        {
+            return;
+        }
+
+        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx.ast) else {
+            unreachable!();
+        };
+
+        let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments } =
+            tagged.unbox();
+
+        let binding = self.create_top_level_binding(ctx);
+        let arguments = self.transform_template_literal(&binding, template_lit, ctx);
+        *expr = ctx.ast.expression_call(span, tag, type_arguments, arguments, false);
+    }
+
     /// Check if the template literal contains a `</script` tag; note it is case-insensitive.
     fn contains_closing_script_tag(quasi: &TemplateLiteral) -> bool {
         quasi.quasis.iter().any(|quasi| {
@@ -104,25 +125,6 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
 
             false
         })
-    }
-
-    /// Transform a tagged template expression to use the [`Helper::TaggedTemplateLiteral`] helper function
-    fn transform_tagged_template(&self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if !matches!(expr, Expression::TaggedTemplateExpression(tagged) if Self::contains_closing_script_tag(&tagged.quasi))
-        {
-            return;
-        }
-
-        let Expression::TaggedTemplateExpression(tagged) = expr.take_in(ctx.ast) else {
-            unreachable!();
-        };
-
-        let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments } =
-            tagged.unbox();
-
-        let binding = self.create_top_level_binding(ctx);
-        let arguments = self.transform_template_literal(&binding, template_lit, ctx);
-        *expr = ctx.ast.expression_call(span, tag, type_arguments, arguments, false);
     }
 
     /// Transform [`TemplateLiteral`] to build the arguments for the tagged template call
