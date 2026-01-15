@@ -283,11 +283,10 @@ fn module_name_case_matches(resolved: &Path, module_name: &CompactStr, strict: b
 }
 
 fn normalize_join(base: &Path, spec: &str) -> std::path::PathBuf {
-    use std::path::PathBuf;
-
     let mut buf = PathBuf::new();
     buf.push(base);
 
+    
     for part in spec.split('/') {
         match part {
             "" | "." => continue,
