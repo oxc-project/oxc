@@ -11,10 +11,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    NodeId, SymbolId,
-    dot::{DebugDot, DebugDotContext},
-};
+use oxc_semantic::{NodeId, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
@@ -52,13 +49,12 @@ declare_oxc_lint!(
     NoUselessAssignment,
     eslint,
     correctness,
-    suggestion,
+    pending,
 );
 
 impl Rule for NoUselessAssignment {
     fn run_once(&self, ctx: &LintContext) {
         let cfg = ctx.cfg();
-        println!("{}", cfg.debug_dot(DebugDotContext::new(ctx.nodes(), true)));
         let nodes = ctx.nodes();
         for node in nodes.iter() {
             match node.kind() {
@@ -73,7 +69,6 @@ impl Rule for NoUselessAssignment {
                     analyze(ctx, cfg, node.id(), symbol_id);
                 }
                 AstKind::AssignmentExpression(assignment) => {
-                    println!("AssignmentExpression left: {:?}", assignment.left);
                     let symbol_ids: Vec<SymbolId> = match &assignment.left {
                         AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                             let reference = ident.reference_id();
@@ -167,12 +162,6 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
         return;
     }
 
-    println!("-------------------------------");
-    println!(
-        "Analyzing assignment at span: {:?}",
-        ctx.nodes().parent_node(start_node_id).span().source_text(ctx.source_text())
-    );
-
     let found_usages = neighbors_filtered_by_edge_weight(
         cfg.graph(),
         start_node_bb_id,
@@ -185,8 +174,6 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
             _ => None,
         },
         &mut |basic_block_id, state| {
-            println!("----- Visiting basic block: {:?}", basic_block_id);
-
             // if the block has only one incoming edge which is an error edge, continue
             let mut incoming_edges =
                 cfg.graph().edges_directed(*basic_block_id, Direction::Incoming);
@@ -194,7 +181,6 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                 && incoming_edges
                     .all(|edge| matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
             {
-                println!("----- Block is only reachable via an error edge, continuing traversal");
                 return (state, KEEP_WALKING_ON_THIS_PATH);
             }
 
@@ -244,27 +230,13 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                     let ref_span = ctx.nodes().get_node(ref_node_id).span();
 
                     if instr_span.contains_inclusive(ref_span) {
-                        println!(
-                            "Found reference at span: {:?}",
-                            ref_span.source_text(ctx.source_text())
-                        );
-                        println!(
-                            "{:?}",
-                            ctx.nodes()
-                                .parent_node(ref_node_id)
-                                .span()
-                                .source_text(ctx.source_text())
-                        );
                         if reference.is_read() {
-                            println!("----- It's a read, returning Yes");
                             if matches!(state, FoundAssignmentUsage::MaybeWrite) {
-                                println!("----- State was MaybeWrite, returning MaybeWriteRead");
                                 return (
                                     FoundAssignmentUsage::MaybeWriteRead,
                                     STOP_WALKING_ON_THIS_PATH,
                                 );
                             } else {
-                                println!("----- Returning Yes, state was {:?}", state);
                                 return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
                             }
                         }
@@ -273,9 +245,6 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                             if node_part_of_catch(ctx, &ref_node_id)
                                 && matches!(state, FoundAssignmentUsage::MaybeWrite)
                             {
-                                println!(
-                                    "----- It's a write in a catch block with MaybeWrite state, returning MaybeWriteWrittenInCatch"
-                                );
                                 return (
                                     FoundAssignmentUsage::MaybeWriteWrittenInCatch,
                                     STOP_WALKING_ON_THIS_PATH,
@@ -288,9 +257,6 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                             if let AstKind::AssignmentExpression(assignment) = parent_node.kind() {
                                 let rhs = &assignment.right;
                                 if expr_uses_symbol(ctx, rhs, symbol_id) {
-                                    println!(
-                                        "----- It's a write that uses the variable on the right side, returning Yes"
-                                    );
                                     return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
                                 }
                             }
@@ -298,23 +264,18 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                             // check if the reference is in a try block, i.e. there is an explicit error
                             // edge from this block. If so, mark maybe used.
                             if write_part_of_error_block(ctx, &ref_node_id) {
-                                println!(
-                                    "----- It's a write in a try/catch block, returning MaybeWrite"
-                                );
                                 return (
                                     FoundAssignmentUsage::MaybeWrite,
                                     KEEP_WALKING_ON_THIS_PATH,
                                 );
                             }
 
-                            println!("----- It's a write, returning No");
                             return (FoundAssignmentUsage::No, STOP_WALKING_ON_THIS_PATH);
                         }
                     }
                 }
             }
 
-            println!("----- No matching read/write found in this block, continuing traversal");
             (
                 if !matches!(state, FoundAssignmentUsage::Missing) {
                     state
@@ -326,17 +287,9 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
         },
     );
 
-    println!("Found usages: {:?}", found_usages);
-
     if found_usages.iter().all(|usage| matches!(usage, FoundAssignmentUsage::Missing)) {
         return;
     }
-
-    println!(
-        "Done analyzing: {:?}",
-        ctx.nodes().parent_node(start_node_id).span().source_text(ctx.source_text())
-    );
-    println!("-------------------------------");
 
     // Case: maybe written and read in catch, but not definitely read
     if found_usages.iter().any(|usage| matches!(usage, FoundAssignmentUsage::MaybeWriteRead))
@@ -454,7 +407,6 @@ fn is_in_unreachable_block(ctx: &LintContext, node_id: NodeId) -> bool {
 }
 
 fn expr_uses_symbol(ctx: &LintContext, expr: &Expression, symbol_id: SymbolId) -> bool {
-    println!("Checking expr: {:?} {}", expr, expr.span().source_text(ctx.source_text()));
     match expr {
         Expression::Identifier(identifier) => {
             let reference = identifier.reference_id();
@@ -500,12 +452,6 @@ fn write_part_of_error_block(ctx: &LintContext, node_id: &NodeId) -> bool {
     let basic_block_id = ctx.nodes().cfg_id(*node_id);
     let cfg = ctx.cfg();
 
-    println!("write_part_of_error_block, edges from block {:?}:", basic_block_id);
-    println!(
-        "{:?}",
-        cfg.graph().edges_directed(basic_block_id, Direction::Outgoing).collect::<Vec<_>>()
-    );
-
     cfg.graph().edges_directed(basic_block_id, Direction::Outgoing).any(|edge| {
         if matches!(edge.weight(), EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize) {
             true
@@ -549,12 +495,6 @@ fn is_assignment_in_different_function(
 fn _node_part_of_finally(ctx: &LintContext, node_id: &NodeId) -> bool {
     let basic_block_id = ctx.nodes().cfg_id(*node_id);
     let cfg = ctx.cfg();
-
-    println!("node_part_of_finally, edges from block {:?}:", basic_block_id);
-    println!(
-        "{:?}",
-        cfg.graph().edges_directed(basic_block_id, Direction::Incoming).collect::<Vec<_>>()
-    );
 
     cfg.graph()
         .edges_directed(basic_block_id, Direction::Incoming)
