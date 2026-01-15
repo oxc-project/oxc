@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     ExternalCallbacks, IndentWidth,
-    ast_nodes::{AstNode, AstNodeIterator},
+    ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
         Format, FormatElement, Formatter, TailwindContextEntry, TemplateLiteralContext, VecBuffer,
@@ -819,24 +819,58 @@ fn try_format_embedded_template<'a>(
     true
 }
 
+fn get_template_literal_context<'a>(
+    node: &AstNode<'a, TemplateLiteral<'a>>,
+) -> Option<TemplateLiteralContext> {
+    let AstNodes::JSXExpressionContainer(container) = node.parent else {
+        return None;
+    };
+
+    match container.parent {
+        AstNodes::JSXAttribute(attribute) => {
+            if let JSXAttributeName::Identifier(ident) = &attribute.name
+                && ident.name == "css"
+            {
+                return Some(TemplateLiteralContext::CssProp);
+            }
+        }
+        AstNodes::JSXElement(element) => {
+            if let JSXElementName::Identifier(ident) = &element.opening_element.name
+                && ident.name == "style"
+                && element.opening_element.attributes.iter().any(|attr| {
+                    if let JSXAttributeItem::Attribute(attr) = attr
+                        && let JSXAttributeName::Identifier(name) = &attr.name
+                    {
+                        return name.name == "jsx";
+                    }
+                    false
+                })
+            {
+                return Some(TemplateLiteralContext::StyledJsx);
+            }
+        }
+        _ => {}
+    }
+    None
+}
+
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
 /// Returns `true` if formatting was attempted, `false` if not applicable.
 fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    let Some(context) = f.context().template_literal_context() else {
-        return false;
-    };
-
     let quasi = template_literal.quasis();
     if quasi.len() != 1 {
         return false;
     }
 
+    let Some(context) = get_template_literal_context(template_literal) else {
+        return false;
+    };
+
     let tag_name = match context {
-        TemplateLiteralContext::CssProp => "css",
-        TemplateLiteralContext::StyledJsx => "styled",
+        TemplateLiteralContext::CssProp | TemplateLiteralContext::StyledJsx => "css",
     };
 
     let template_content = quasi[0].value.raw.as_str();
