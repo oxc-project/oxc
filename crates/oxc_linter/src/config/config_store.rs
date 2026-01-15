@@ -321,6 +321,8 @@ impl ConfigStore {
     }
 
     /// Whether the configuration file has type-aware rules enabled.
+    // TODO: See `test_nested_config_nested_file_without_lsp_config_is_type_aware`, this logic
+    // may need to be revised to make things work correctly.
     pub fn type_aware_enabled(&self) -> bool {
         self.base.base.config.linter_options.type_aware.unwrap_or(false)
     }
