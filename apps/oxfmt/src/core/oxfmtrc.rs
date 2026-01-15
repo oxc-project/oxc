@@ -1,4 +1,4 @@
-use schemars::{JsonSchema, schema_for};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -809,86 +809,6 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
     //   - It does not mean plugin works correctly with Oxfmt
     //   - Oxfmt still not aware of any plugin-defined languages
     // Other options defined independently by plugins are also left as they are.
-}
-
-// ---
-
-impl Oxfmtrc {
-    /// Generates the JSON schema for Oxfmtrc configuration files.
-    ///
-    /// # Panics
-    /// Panics if the schema generation fails.
-    pub fn generate_schema_json() -> String {
-        let mut schema = schema_for!(Oxfmtrc);
-
-        // Allow comments and trailing commas for vscode-json-languageservice
-        // NOTE: This is NOT part of standard JSON Schema specification
-        // https://github.com/microsoft/vscode-json-languageservice/blob/fb83547762901f32d8449d57e24666573016b10c/src/jsonLanguageTypes.ts#L151-L159
-        schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
-        schema
-            .schema
-            .extensions
-            .insert("allowTrailingCommas".to_string(), serde_json::Value::Bool(true));
-
-        // Inject markdownDescription fields for better editor support (e.g., VS Code)
-        let mut json = serde_json::to_value(&schema).unwrap();
-        Self::inject_markdown_descriptions(&mut json);
-
-        // Sort keys for deterministic output across different environments.
-        // Without this, CI and local environments may produce different key orders,
-        // causing snapshot tests to fail.
-        let sorted_json = Self::sort_json_keys(&json);
-
-        serde_json::to_string_pretty(&sorted_json).unwrap()
-    }
-
-    /// Recursively sort all object keys in the JSON value for deterministic output.
-    fn sort_json_keys(value: &serde_json::Value) -> serde_json::Value {
-        match value {
-            serde_json::Value::Object(map) => {
-                let mut sorted: Vec<_> = map.iter().collect();
-                sorted.sort_by(|(a, _), (b, _)| a.cmp(b));
-                serde_json::Value::Object(
-                    sorted.into_iter().map(|(k, v)| (k.clone(), Self::sort_json_keys(v))).collect(),
-                )
-            }
-            serde_json::Value::Array(arr) => {
-                serde_json::Value::Array(arr.iter().map(Self::sort_json_keys).collect())
-            }
-            _ => value.clone(),
-        }
-    }
-
-    /// Recursively inject `markdownDescription` fields into the JSON schema.
-    /// This is a non-standard field that some editors (like VS Code) use to render
-    /// markdown in hover tooltips.
-    fn inject_markdown_descriptions(value: &mut serde_json::Value) {
-        match value {
-            serde_json::Value::Object(map) => {
-                // If this object has a `description` field, copy it to `markdownDescription`
-                if let Some(serde_json::Value::String(desc_str)) = map.get("description") {
-                    map.insert(
-                        "markdownDescription".to_string(),
-                        serde_json::Value::String(desc_str.clone()),
-                    );
-                }
-
-                // Recursively process all values in the object
-                for value in map.values_mut() {
-                    Self::inject_markdown_descriptions(value);
-                }
-            }
-            serde_json::Value::Array(items) => {
-                // Recursively process all items in the array
-                for item in items {
-                    Self::inject_markdown_descriptions(item);
-                }
-            }
-            _ => {
-                // Primitive values don't need processing
-            }
-        }
-    }
 }
 
 // ---
