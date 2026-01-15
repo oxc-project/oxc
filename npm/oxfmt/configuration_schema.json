@@ -379,9 +379,9 @@
       "markdownDescription": "How to wrap object literals when they could fit on one line or span multiple lines.\n\nBy default, formats objects as multi-line if there is a newline prior to the first property.\nAuthors can use this heuristic to contextually improve readability, though it has some downsides.\n\n- Default: `\"preserve\"`"
     },
     "printWidth": {
-      "description": "Specify the line length that the printer will wrap on.\n\nIf you don’t want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
+      "description": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
       "format": "uint16",
-      "markdownDescription": "Specify the line length that the printer will wrap on.\n\nIf you don’t want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
+      "markdownDescription": "Specify the line length that the printer will wrap on.\n\nIf you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.\n\n- Default: `100`\n- Overrides `.editorconfig.max_line_length`",
       "minimum": 0.0,
       "type": [
         "integer",
