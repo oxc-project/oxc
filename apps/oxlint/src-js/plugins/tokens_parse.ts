@@ -289,8 +289,11 @@ function getScriptKind(tsModule: typeof import("typescript")): ts.ScriptKind {
   const isTs = buffer[IS_TS_FLAG_POS] === 1,
     isJsx = buffer[IS_JSX_FLAG_POS] === 1;
 
-  if (isTs) {
-    return isJsx ? tsModule.ScriptKind.TSX : tsModule.ScriptKind.TS;
-  }
-  return isJsx ? tsModule.ScriptKind.JSX : tsModule.ScriptKind.JS;
+  return isTs
+    ? isJsx
+      ? tsModule.ScriptKind.TSX
+      : tsModule.ScriptKind.TS
+    : isJsx
+      ? tsModule.ScriptKind.JSX
+      : tsModule.ScriptKind.JS;
 }
