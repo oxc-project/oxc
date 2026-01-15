@@ -133,6 +133,7 @@ pub struct Oxlintrc {
 }
 
 /// Linter options that control Oxlint behavior.
+// TODO: Maybe split this into an OxlintLinterOptions class?
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema, PartialEq, Eq)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct LinterOptions {
@@ -324,6 +325,7 @@ mod test {
         assert_eq!(config.env, OxlintEnv::default());
         assert_eq!(config.path, PathBuf::default());
         assert_eq!(config.extends, Vec::<PathBuf>::default());
+        assert_eq!(config.linter_options, LinterOptions::default());
     }
 
     #[test]

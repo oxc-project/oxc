@@ -312,6 +312,11 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
+        // Determine whether type-aware rules should be enabled.
+        // CLI flag has precedence; otherwise fall back to configuration file.
+        let effective_type_aware =
+            if self.options.type_aware { true } else { config_store.type_aware_enabled() };
+
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
@@ -382,12 +387,12 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(self.options.type_aware);
+        let number_of_rules = linter.number_of_rules(effective_type_aware);
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
-            .with_type_aware(self.options.type_aware)
+            .with_type_aware(effective_type_aware)
             .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
