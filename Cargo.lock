@@ -1578,6 +1578,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nodejs-built-in-modules"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a5eb86a92577833b75522336f210c49d9ebd7dd55a44d80a92e68c668a75f27c"
+
+[[package]]
 name = "nohash-hasher"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2115,6 +2121,7 @@ dependencies = [
  "lazy-regex",
  "markdown",
  "memchr",
+ "nodejs-built-in-modules",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast",
@@ -2355,14 +2362,15 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.16.0"
+version = "11.16.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82835b74b32841714c1342b1636992d19622d4ec19666b55edb4c654fb6eb719"
+checksum = "f94fecb526e0d5df25cb3ef214e482120f305765e20b2125404cca7083f510c2"
 dependencies = [
  "cfg-if",
  "fast-glob",
  "indexmap",
  "json-strip-comments",
+ "nodejs-built-in-modules",
  "once_cell",
  "papaya",
  "parking_lot",
@@ -3070,9 +3078,9 @@ dependencies = [
 
 [[package]]
 name = "rustix"
-version = "1.1.2"
+version = "1.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd15f8a2c5551a84d56efdc1cd049089e409ac19a3072d5037a17fd70719ff3e"
+checksum = "146c9e247ccc180c1f61615433868c99f3de3ae256a30a43b49f67c2d9171f34"
 dependencies = [
  "bitflags",
  "errno",

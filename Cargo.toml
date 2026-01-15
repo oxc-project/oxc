@@ -162,7 +162,8 @@ javascript-globals = "1.3.4"                                      # JavaScript g
 json-strip-comments = "3.1.0"                                     # Strip JSON comments
 oxc-browserslist = "2.1.4"                                        # Browser compatibility queries
 oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices
-oxc_resolver = "11.15.0"                                          # Module resolution
+oxc_resolver = "11.16.3"                                          # Module resolution
+nodejs-built-in-modules = "1.0.0"                                 # NodeJS builtin modules
 oxc_sourcemap = "6.0.1"                                           # Source map generation
 
 #
