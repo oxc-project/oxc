@@ -123,11 +123,7 @@ impl Rule for NoUnresolved {
         fn is_builtin_or_global(name: &str, ctx: &LintContext) -> bool {
             // Check if it's a builtin, handling both with and without the node: prefix.
             // First check the original name in case a builtin legitimately has "node:" in it.
-            if is_nodejs_builtin_module(name) || ctx.globals().is_enabled(name) {
-                return true;
-            } else {
-                false
-            }
+            is_nodejs_builtin_module(name) || ctx.globals().is_enabled(name)
         }
 
         let module_record = ctx.module_record();
