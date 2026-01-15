@@ -222,6 +222,9 @@ impl LintRunner {
         self.lint_service.run(fs, files.to_owned(), &tx_error);
 
         if let Some(type_aware_linter) = self.type_aware_linter.take() {
+            // TODO: We need to handle the case where rules have `typeAware: true` in one config, and `typeAware: false` in a nested config - or vice versa.
+            // This needs to be updated to filter the files we pass into lint accordingly, based on whether the nearest config has the typeAware
+            // linterOptions setting enabled (also need to handle other things like the LSP setting and so on).
             type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
         } else {
             drop(tx_error);
@@ -241,6 +244,9 @@ impl LintRunner {
         let mut messages = self.lint_service.run_source(file_system, files.to_owned());
 
         if let Some(type_aware_linter) = &self.type_aware_linter {
+            // TODO: We need to handle the case where rules have `typeAware: true` in one config, and `typeAware: false` in a nested config - or vice versa.
+            // This needs to be updated to filter the files we pass into lint_source accordingly, based on whether the nearest config has the typeAware
+            // linterOptions setting enabled.
             let tsgo_messages =
                 type_aware_linter.lint_source(files, file_system, self.directives_store.map())?;
             messages.extend(tsgo_messages);
