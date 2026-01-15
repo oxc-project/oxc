@@ -207,7 +207,7 @@ impl Rule for NoUnresolved {
                             ctx.diagnostic(no_unresolved_diagnostic(span, name));
                         }
                     }
-                    Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
+                    Argument::ArrayExpression(arr_expr) if count == 2 && func_name == "define" && self.amd => {
                         for el in &arr_expr.elements {
                             if let Some(el_expr) = el.as_expression() {
                                 if let Expression::StringLiteral(literal) = el_expr {
@@ -328,6 +328,8 @@ fn test() {
         (r#"var foo = require('./does-not-exist')"#, Some(json!([{ "commonjs": false }]))),
         // AMD: disabled config (should pass)
         (r#"require(['./does-not-exist'], function() {})"#, Some(json!([{ "amd": false }]))),
+        // AMD: require() with array should NOT match AMD check (require is CommonJS, not AMD)
+        (r#"require(['./does-not-exist'], function() {})"#, Some(json!([{ "amd": true }]))),
         // Ignore: simple pattern
         (r#"import './ignored-file'"#, Some(json!([{ "ignore": ["^\\./ignored"] }]))),
         // Ignore: exact match pattern
@@ -349,8 +351,8 @@ fn test() {
         (r#"import './does-not-exist'"#, None),
         // CommonJS: enabled config (should fail)
         (r#"var foo = require('./does-not-exist')"#, Some(json!([{ "commonjs": true }]))),
-        // AMD: enabled config (should fail)
-        (r#"require(['./does-not-exist'], function() {})"#, Some(json!([{ "amd": true }]))),
+        // AMD: enabled config with define() (should fail)
+        (r#"define(['./does-not-exist'], function() {})"#, Some(json!([{ "amd": true }]))),
         // Ignore: no ignore config
         (r#"import './ignored-file'"#, None),
         // Ignore: pattern doesn't match
