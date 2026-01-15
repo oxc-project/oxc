@@ -6,6 +6,15 @@ arguments: -c config-type-aware.json
 working directory: fixtures/tsgolint
 ----------
 
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html\typescript-eslint(no-floating-promises)]8;;\: Promises must be awaited.
+   ,-[no-floating-promises.ts:2:1]
+ 1 | const promise = new Promise((resolve, _reject) => resolve("value"));
+ 2 | promise;
+   : ^^^^^^^^
+ 3 | 
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
+
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[non-tsgolint.ts:1:1]
  1 | debugger;
@@ -13,6 +22,13 @@ working directory: fixtures/tsgolint
  2 | 
    `----
   help: Remove the debugger statement
+
+  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-floating-promises.html\typescript-eslint(no-floating-promises)]8;;\: Promises must be awaited.
+   ,-[prefer-promise-reject-errors.ts:1:1]
+ 1 | Promise.reject('error');
+   : ^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+  help: The promise must end with a call to .catch, or end with a call to .then with a rejection handler, or be explicitly marked as ignored with the `void` operator.
 
   x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
    ,-[test.svelte:2:2]
@@ -23,7 +39,7 @@ working directory: fixtures/tsgolint
    `----
   help: Remove the debugger statement
 
-Found 0 warnings and 2 errors.
+Found 2 warnings and 2 errors.
 Finished in <variable>ms on 46 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
