@@ -1370,10 +1370,13 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    let program_struct = schema.type_by_name("Program").as_struct().unwrap();
-
-    let source_len_offset =
-        program_struct.field_by_name("source_text").offset_64() + STR_LEN_OFFSET;
+    let source_len_offset = schema
+        .type_by_name("Program")
+        .as_struct()
+        .unwrap()
+        .field_by_name("source_text")
+        .offset_64()
+        + STR_LEN_OFFSET;
 
     Constants {
         buffer_size,
