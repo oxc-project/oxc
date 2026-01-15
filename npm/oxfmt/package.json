@@ -18,11 +18,15 @@
   "bin": {
     "oxfmt": "bin/oxfmt"
   },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
   "files": [
     "configuration_schema.json",
     "dist",
     "README.md",
-    "bin/oxfmt"
+    "bin/oxfmt",
+    "scripts/postinstall.js"
   ],
   "type": "module",
   "main": "dist/index.js",
