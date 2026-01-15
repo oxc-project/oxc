@@ -225,6 +225,7 @@ impl LintRunner {
             // TODO: We need to handle the case where rules have `typeAware: true` in one config, and `typeAware: false` in a nested config - or vice versa.
             // This needs to be updated to filter the files we pass into lint accordingly, based on whether the nearest config has the typeAware
             // linterOptions setting enabled (also need to handle other things like the LSP setting and so on).
+            // Can possibly use something similar to LintIgnoreMatcher?
             type_aware_linter.lint(files, self.directives_store.map(), tx_error, fs)?;
         } else {
             drop(tx_error);
