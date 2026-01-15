@@ -4,4 +4,7 @@ source: apps/oxlint/src/lsp/tester.rs
 ########## 
 Linted file: fixtures/lsp/tsgolint/type_aware_config/test-with-lsp-config.ts
 ----------
-Error running diagnostics: Failed to read file: No such file or directory (os error 2)
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/tsgolint/type_aware_config/test-with-lsp-config.ts
+
+########### Code Actions/Commands
