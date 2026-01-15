@@ -148,9 +148,9 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
         template_lit: TemplateLiteral<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Argument<'a>> {
-        // Create cooked array: `[cooked0, cooked1, ...]`
-        // Use `void 0` for elements with invalid escape sequences (where cooked is None)
-        // Also check if we need to pass the raw array separately
+        // Create cooked array: `[cooked0, cooked1, ...]`.
+        // Use `void 0` for elements with invalid escape sequences (where `cooked` is `None`).
+        // Also check if we need to pass the raw array separately.
         let mut needs_raw_array = false;
         let cooked_elements = ctx.ast.vec_from_iter(template_lit.quasis.iter().map(|quasi| {
             let expr = if let Some(cooked) = &quasi.value.cooked {
