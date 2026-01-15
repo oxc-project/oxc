@@ -1,0 +1,8 @@
+{
+  // root config
+  "plugins": ["typescript"],
+  "categories": {
+    "correctness": "off",
+  },
+  "rules": {}
+}
