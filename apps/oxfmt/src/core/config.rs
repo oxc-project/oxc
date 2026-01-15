@@ -53,6 +53,10 @@ pub enum ResolvedOptions {
     },
     /// For TOML files.
     OxfmtToml { toml_options: TomlFormatterOptions, insert_final_newline: bool },
+    /// For JSON/JSONC files formatted by fjson (Pure Rust).
+    OxfmtJson { json_options: JsonFormatterOptions, insert_final_newline: bool },
+    /// For JSON5 files formatted by json-five (Pure Rust).
+    OxfmtJson5 { json5_options: Json5FormatterOptions, insert_final_newline: bool },
     /// For non-JS files formatted by external formatter (Prettier).
     #[cfg(feature = "napi")]
     ExternalFormatter { external_options: Value, insert_final_newline: bool },
@@ -63,6 +67,20 @@ pub enum ResolvedOptions {
         sort_package_json: Option<sort_package_json::SortOptions>,
         insert_final_newline: bool,
     },
+}
+
+/// Options for JSON formatting via fjson.
+#[derive(Debug, Clone)]
+pub struct JsonFormatterOptions {
+    pub indent_string: String,
+    pub crlf: bool,
+}
+
+/// Options for JSON5 formatting via json-five.
+#[derive(Debug, Clone)]
+pub struct Json5FormatterOptions {
+    pub indent_size: usize,
+    pub trailing_comma: bool,
 }
 
 /// Configuration resolver that derives all config values from a single `serde_json::Value`.
@@ -203,6 +221,14 @@ impl ConfigResolver {
             },
             FormatFileStrategy::OxfmtToml { .. } => ResolvedOptions::OxfmtToml {
                 toml_options: build_toml_options(&format_options),
+                insert_final_newline,
+            },
+            FormatFileStrategy::OxfmtJson { .. } => ResolvedOptions::OxfmtJson {
+                json_options: build_json_options(&format_options),
+                insert_final_newline,
+            },
+            FormatFileStrategy::OxfmtJson5 { .. } => ResolvedOptions::OxfmtJson5 {
+                json5_options: build_json5_options(&format_options),
                 insert_final_newline,
             },
             #[cfg(feature = "napi")]
@@ -364,5 +390,30 @@ fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
         // Align with `oxc_formatter` and Prettier default
         trailing_newline: true,
         ..Default::default()
+    }
+}
+
+/// Build JSON formatter options for fjson.
+fn build_json_options(format_options: &FormatOptions) -> JsonFormatterOptions {
+    JsonFormatterOptions {
+        indent_string: if format_options.indent_style.is_tab() {
+            "\t".to_string()
+        } else {
+            " ".repeat(format_options.indent_width.value() as usize)
+        },
+        crlf: format_options.line_ending.is_carriage_return_line_feed(),
+    }
+}
+
+/// Build JSON5 formatter options for json-five.
+fn build_json5_options(format_options: &FormatOptions) -> Json5FormatterOptions {
+    Json5FormatterOptions {
+        indent_size: if format_options.indent_style.is_tab() {
+            // json-five uses number of spaces, so we use a reasonable default for tabs
+            4
+        } else {
+            format_options.indent_width.value() as usize
+        },
+        trailing_comma: !format_options.trailing_commas.is_none(),
     }
 }

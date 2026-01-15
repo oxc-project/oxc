@@ -9,6 +9,8 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 use serde_json::Value;
 
+use super::config::JsonFormatterOptions;
+use super::config::Json5FormatterOptions;
 use super::{FormatFileStrategy, ResolvedOptions};
 
 pub enum FormatResult {
@@ -70,6 +72,14 @@ impl SourceFormatter {
                 FormatFileStrategy::OxfmtToml { .. },
                 ResolvedOptions::OxfmtToml { toml_options, insert_final_newline },
             ) => (Ok(Self::format_by_toml(source_text, toml_options)), insert_final_newline),
+            (
+                FormatFileStrategy::OxfmtJson { path },
+                ResolvedOptions::OxfmtJson { json_options, insert_final_newline },
+            ) => (Self::format_by_json(source_text, path, json_options), insert_final_newline),
+            (
+                FormatFileStrategy::OxfmtJson5 { path },
+                ResolvedOptions::OxfmtJson5 { json5_options, insert_final_newline },
+            ) => (Self::format_by_json5(source_text, path, json5_options), insert_final_newline),
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatter { path, parser_name },
@@ -178,6 +188,59 @@ impl SourceFormatter {
     /// Format TOML file using `toml`.
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
         oxc_toml::format(source_text, options)
+    }
+
+    /// Format JSON/JSONC file using `fjson`.
+    /// Supports C-style comments (`//`, `/* */`) and trailing commas.
+    fn format_by_json(
+        source_text: &str,
+        path: &Path,
+        options: JsonFormatterOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        // Parse the JSONC source
+        let root = fjson::ast::parse(source_text).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to parse JSON: {}\n{err}", path.display()))
+        })?;
+
+        // Format with custom options
+        let fmt_opts = fjson::format::Options::default().with_indent(&options.indent_string);
+        let mut result = String::new();
+        fjson::format::write_jsonc_opts(&mut result, &root, &fmt_opts).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to format JSON: {}\n{err}", path.display()))
+        })?;
+
+        // fjson outputs LF by default, convert to CRLF if needed
+        if options.crlf {
+            result = result.replace('\n', "\r\n");
+        }
+
+        Ok(result)
+    }
+
+    /// Format JSON5 file using `json-five`.
+    /// Supports unquoted keys, single quotes, trailing commas, comments, etc.
+    fn format_by_json5(
+        source_text: &str,
+        path: &Path,
+        options: Json5FormatterOptions,
+    ) -> Result<String, OxcDiagnostic> {
+        // Parse the JSON5 source
+        let value: serde_json::Value = json_five::from_str(source_text).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to parse JSON5: {}\n{err}", path.display()))
+        })?;
+
+        // Configure formatting
+        let trailing_comma = if options.trailing_comma {
+            json_five::TrailingComma::ALL
+        } else {
+            json_five::TrailingComma::NONE
+        };
+        let config = json_five::FormatConfiguration::with_indent(options.indent_size, trailing_comma);
+
+        // Serialize back to formatted JSON5
+        json_five::to_string_formatted(&value, config).map_err(|err| {
+            OxcDiagnostic::error(format!("Failed to format JSON5: {}\n{err}", path.display()))
+        })
     }
 
     /// Format non-JS/TS file using external formatter (Prettier).

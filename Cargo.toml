@@ -158,7 +158,9 @@ syn = { version = "2", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
 
 #
+fjson = "0.3.1" # Fast JSON/JSONC formatting with comments support
 javascript-globals = "1.4.0" # JavaScript global definitions
+json-five = { version = "0.3.1" } # Fast JSON5 formatting
 json-strip-comments = "3.1.0" # Strip JSON comments
 oxc-browserslist = "2.2.0" # Browser compatibility queries
 oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices
