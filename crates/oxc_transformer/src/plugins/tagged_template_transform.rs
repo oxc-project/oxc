@@ -117,19 +117,11 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             unreachable!();
         };
 
-        *expr = self.transform_tagged_template_impl(tagged.unbox(), ctx);
-    }
-
-    fn transform_tagged_template_impl(
-        &self,
-        expr: TaggedTemplateExpression<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let TaggedTemplateExpression { span, tag, quasi, type_arguments } = expr;
+        let TaggedTemplateExpression { span, tag, quasi, type_arguments } = tagged.unbox();
 
         let binding = self.create_top_level_binding(ctx);
         let arguments = self.transform_template_literal(&binding, quasi, ctx);
-        ctx.ast.expression_call(span, tag, type_arguments, arguments, false)
+        *expr = ctx.ast.expression_call(span, tag, type_arguments, arguments, false);
     }
 
     /// Transform [`TemplateLiteral`] to build the arguments for the tagged template call
