@@ -1,0 +1,30 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c config-type-aware.json
+working directory: fixtures/tsgolint
+----------
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[non-tsgolint.ts:1:1]
+ 1 | debugger;
+   : ^^^^^^^^^
+ 2 | 
+   `----
+  help: Remove the debugger statement
+
+  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+   ,-[test.svelte:2:2]
+ 1 | <script>
+ 2 |     debugger;
+   :     ^^^^^^^^^
+ 3 | 
+   `----
+  help: Remove the debugger statement
+
+Found 0 warnings and 2 errors.
+Finished in <variable>ms on 46 files with 1 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------

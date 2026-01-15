@@ -1,0 +1,21 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "linterOptions": {
+    "typeAware": true
+  },
+  "rules": {
+    "typescript/no-floating-promises": "off"
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/*.ts"
+      ],
+      "rules": {
+        "typescript/no-floating-promises": "error"
+      }
+    }
+  ]
+}

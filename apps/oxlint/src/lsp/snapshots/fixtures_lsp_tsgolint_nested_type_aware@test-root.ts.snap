@@ -1,0 +1,7 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+---
+########## 
+Linted file: fixtures/lsp/tsgolint/nested_type_aware/test-root.ts
+----------
+Error running diagnostics: Failed to read file: No such file or directory (os error 2)

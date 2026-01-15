@@ -1392,6 +1392,51 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_via_config_file() {
+        // config file should be able to enable type-aware linting without CLI flag
+        let args = &["-c", "config-type-aware.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_applies_to_overrides() {
+        // top-level typeAware should enable type-aware rules for overrides as well
+        // The fixture sets the rule off globally and turns it on in an override for ts files.
+        let args = &["-c", "config-type-aware-with-overrides.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false() {
+        // When top-level typeAware is false, type-aware rules should be disabled.
+        let args = &["-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_overridden_by_cli_flag() {
+        // If the config file sets `typeAware: false`, the CLI `--type-aware` flag should still
+        // be able to enable type-aware linting.
+        let args =
+            &["--type-aware", "-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_disables_overrides() {
+        // When top-level typeAware is false, type-aware rules should be disabled
+        // even if an override sets the rule to error for *.ts files.
+        let args =
+            &["-c", "config-type-aware-false-with-overrides.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_type_error() {
         let args = &["--type-aware", "--type-check"];
         Tester::new().with_cwd("fixtures/tsgolint_type_error".into()).test_and_snapshot(args);
