@@ -397,28 +397,3 @@ fn build_json5_options(format_options: &FormatOptions) -> Json5FormatterOptions 
         trailing_comma: !format_options.trailing_commas.is_none(),
     }
 }
-
-/// Build JSON formatter options for fjson.
-fn build_json_options(format_options: &FormatOptions) -> JsonFormatterOptions {
-    JsonFormatterOptions {
-        indent_string: if format_options.indent_style.is_tab() {
-            "\t".to_string()
-        } else {
-            " ".repeat(format_options.indent_width.value() as usize)
-        },
-        crlf: format_options.line_ending.is_carriage_return_line_feed(),
-    }
-}
-
-/// Build JSON5 formatter options for json-five.
-fn build_json5_options(format_options: &FormatOptions) -> Json5FormatterOptions {
-    Json5FormatterOptions {
-        indent_size: if format_options.indent_style.is_tab() {
-            // json-five uses number of spaces, so we use a reasonable default for tabs
-            4
-        } else {
-            format_options.indent_width.value() as usize
-        },
-        trailing_comma: !format_options.trailing_commas.is_none(),
-    }
-}
