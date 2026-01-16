@@ -13,12 +13,17 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde_json::Value;
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
-use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    table::RuleTable,
+use indexmap::IndexMap;
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, Error, GraphicalReportHandler, OxcDiagnostic, Severity,
 };
+use oxc_linter::{
+    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, DEFAULT_SUPPRESSIONS_FILE,
+    ExternalLinter, ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
+    LintServiceOptions, Linter, Oxlintrc, RuleSuppression, SuppressedViolations,
+    SuppressionsService, table::RuleTable,
+};
+use std::sync::mpsc;
 
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
@@ -60,14 +65,43 @@ impl CliRunner {
             misc_options,
             disable_nested_config,
             inline_config_options,
+            suppression_options,
             ..
         } = self.options;
+
+        // Validate suppression options
+        if let Err(err) = suppression_options.validate() {
+            print_and_flush_stdout(stdout, &format!("{err}\n"));
+            return CliRunResult::InvalidSuppressionOptions;
+        }
 
         let external_linter = self.external_linter.as_ref();
 
         let mut paths = paths;
         let provided_path_count = paths.len();
         let now = Instant::now();
+
+        // Determine the suppressions file path
+        let suppressions_file_path = suppression_options
+            .suppressions_location
+            .clone()
+            .unwrap_or_else(|| self.cwd.join(DEFAULT_SUPPRESSIONS_FILE));
+
+        // Create the suppressions service
+        let suppressions_service =
+            SuppressionsService::new(suppressions_file_path.clone(), self.cwd.clone());
+
+        // Check if we need an existing suppressions file
+        let needs_existing_file = !suppression_options.is_suppression_operation()
+            && suppression_options.suppressions_location.is_some();
+
+        if needs_existing_file && !suppressions_service.exists() {
+            print_and_flush_stdout(
+                stdout,
+                &format!("Suppressions file not found: {}\n", suppressions_file_path.display()),
+            );
+            return CliRunResult::SuppressionsFileNotFound;
+        }
 
         let filters = match Self::get_filters(filter) {
             Ok(filters) => filters,
@@ -286,6 +320,10 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = config_builder.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
+
+        // Save cwd for use in suppressions (before it's moved)
+        let cwd_for_suppressions = self.cwd.clone();
+
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
 
         let lint_config = match config_builder.build(&mut external_plugin_store) {
@@ -428,19 +466,125 @@ impl CliRunner {
             None
         };
 
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
-            Ok(lint_runner) => {
-                lint_runner.report_unused_directives(report_unused_directives, &tx_error);
-            }
-            Err(err) => {
-                print_and_flush_stdout(stdout, &err);
-                return CliRunResult::TsGoLintError;
-            }
-        }
+        // Determine if we need to collect diagnostics for suppression operations
+        let is_suppression_op = suppression_options.is_suppression_operation();
 
-        drop(tx_error);
+        // If doing a suppression operation, we need to collect all diagnostics first
+        let (collected_errors, diagnostic_result) = if is_suppression_op {
+            // Create a collecting channel
+            let (tx_collector, rx_collector) = mpsc::channel::<Vec<Error>>();
 
-        let diagnostic_result = diagnostic_service.run(stdout);
+            match lint_runner.lint_files(&files_to_lint, tx_collector.clone(), file_system) {
+                Ok(lint_runner) => {
+                    lint_runner.report_unused_directives(report_unused_directives, &tx_collector);
+                }
+                Err(err) => {
+                    print_and_flush_stdout(stdout, &err);
+                    return CliRunResult::TsGoLintError;
+                }
+            }
+
+            drop(tx_collector);
+
+            // Collect all errors
+            let collected: Vec<Vec<Error>> = rx_collector.iter().collect();
+
+            // Build violations map
+            let violations =
+                suppressions_helper::collect_violations(collected, &cwd_for_suppressions);
+
+            // Handle suppress operations
+            if suppression_options.suppress_all || !suppression_options.suppress_rule.is_empty() {
+                // Filter to only requested rules if specified
+                let violations_to_save = if suppression_options.suppress_rule.is_empty() {
+                    violations
+                } else {
+                    let mut filtered = SuppressedViolations::default();
+                    for (file_path, rules) in violations {
+                        for (rule_id, suppression) in rules {
+                            // Check if this rule should be suppressed
+                            if suppression_options.suppress_rule.iter().any(|r| rule_id.contains(r))
+                            {
+                                filtered
+                                    .entry(file_path.clone())
+                                    .or_default()
+                                    .insert(rule_id, suppression);
+                            }
+                        }
+                    }
+                    filtered
+                };
+
+                match suppressions_helper::write_suppressions_file(
+                    &suppressions_service,
+                    &violations_to_save,
+                ) {
+                    Ok(()) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "\nSuppressions file created/updated at: {}\n",
+                                suppressions_file_path.display()
+                            ),
+                        );
+                    }
+                    Err(err) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!("\nError writing suppressions file: {err}\n"),
+                        );
+                        return CliRunResult::SuppressionsFileError;
+                    }
+                }
+
+                return CliRunResult::SuppressionsFileCreated;
+            }
+
+            // Handle prune operation
+            if suppression_options.prune_suppressions {
+                match suppressions_helper::prune_suppressions_file(
+                    &suppressions_service,
+                    &violations,
+                ) {
+                    Ok(()) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "\nPruned suppressions file: {}\n",
+                                suppressions_file_path.display()
+                            ),
+                        );
+                    }
+                    Err(err) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!("\nError pruning suppressions file: {err}\n"),
+                        );
+                        return CliRunResult::SuppressionsFileError;
+                    }
+                }
+
+                return CliRunResult::SuppressionsFilePruned;
+            }
+
+            // This shouldn't be reached, but return default
+            (Vec::<Vec<Error>>::new(), diagnostic_service.run(stdout))
+        } else {
+            // Normal lint flow without suppression operations
+            match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
+                Ok(lint_runner) => {
+                    lint_runner.report_unused_directives(report_unused_directives, &tx_error);
+                }
+                Err(err) => {
+                    print_and_flush_stdout(stdout, &err);
+                    return CliRunResult::TsGoLintError;
+                }
+            }
+
+            drop(tx_error);
+
+            (Vec::<Vec<Error>>::new(), diagnostic_service.run(stdout))
+        };
 
         if let Some(end) = output_formatter.lint_command_info(&LintCommandInfo {
             number_of_files,
@@ -450,6 +594,19 @@ impl CliRunner {
         }) {
             print_and_flush_stdout(stdout, &end);
         }
+
+        // Check for unused suppressions if the file exists (for normal lint runs)
+        if !is_suppression_op
+            && suppressions_service.exists()
+            && !suppression_options.pass_on_unpruned_suppressions
+        {
+            // TODO: Implement filtering of diagnostics based on suppressions file
+            // This requires collecting diagnostics and applying the suppressions,
+            // which will be added in a future update.
+        }
+
+        // Suppress unused variable warning
+        let _ = collected_errors;
 
         if diagnostic_result.errors_count() > 0 {
             CliRunResult::LintFoundErrors
@@ -664,6 +821,139 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
     let mut err = String::new();
     handler.render_report(&mut err, diagnostic).unwrap();
     err
+}
+
+/// Helper module for bulk suppressions support.
+mod suppressions_helper {
+    use super::*;
+
+    /// Extracts the file path from an error's source code.
+    ///
+    /// Note: In oxc-miette, `source_code().name()` returns None, but we can get the name
+    /// via `read_span().name()` which returns the name from SpanContents.
+    pub fn get_file_path(error: &Error) -> Option<String> {
+        error.source_code().and_then(|source| {
+            // Try to get name via read_span (this works in oxc-miette)
+            source
+                .read_span(&miette::SourceSpan::from(0..1), 0, 0)
+                .ok()
+                .and_then(|sc| sc.name().map(ToString::to_string))
+        })
+    }
+
+    /// Extracts the rule ID from an error's code field.
+    /// The code is formatted as "scope(rule)" (e.g., "eslint(no-console)").
+    pub fn get_rule_id(error: &Error) -> Option<String> {
+        error.code().map(|code| code.to_string())
+    }
+
+    /// Collects all errors from a receiver and builds suppression counts.
+    ///
+    /// Returns a map of file paths to their violation counts by rule.
+    pub fn collect_violations(
+        errors: Vec<Vec<Error>>,
+        cwd: &Path,
+    ) -> IndexMap<String, IndexMap<String, RuleSuppression>> {
+        let mut violations: IndexMap<String, IndexMap<String, RuleSuppression>> =
+            IndexMap::default();
+
+        for batch in errors {
+            for error in batch {
+                // Only count errors, not warnings (following ESLint's behavior)
+                if error.severity() != Some(Severity::Error) {
+                    continue;
+                }
+
+                let Some(file_path) = get_file_path(&error) else {
+                    continue;
+                };
+
+                let Some(rule_id) = get_rule_id(&error) else {
+                    continue;
+                };
+
+                // Convert to relative path (POSIX format)
+                let relative_path = Path::new(&file_path)
+                    .strip_prefix(cwd)
+                    .map_or_else(
+                        |_| file_path.cow_replace('\\', "/").into_owned(),
+                        |p| p.to_string_lossy().cow_replace('\\', "/").into_owned(),
+                    );
+
+                violations
+                    .entry(relative_path)
+                    .or_default()
+                    .entry(rule_id)
+                    .or_insert(RuleSuppression { count: 0 })
+                    .count += 1;
+            }
+        }
+
+        violations
+    }
+
+    /// Calculates unused suppressions by comparing current violations against saved suppressions.
+    #[expect(dead_code)] // Will be used when filtering is implemented
+    pub fn calculate_unused_suppressions(
+        violations: &SuppressedViolations,
+        suppressions: &SuppressedViolations,
+    ) -> SuppressedViolations {
+        let mut unused = SuppressedViolations::default();
+
+        for (file_path, rules) in suppressions {
+            for (rule_id, suppression) in rules {
+                let violation_count = violations
+                    .get(file_path)
+                    .and_then(|rules| rules.get(rule_id))
+                    .map_or(0, |s| s.count);
+
+                if violation_count < suppression.count {
+                    unused.entry(file_path.clone()).or_default().insert(
+                        rule_id.clone(),
+                        RuleSuppression { count: suppression.count - violation_count },
+                    );
+                }
+            }
+        }
+
+        unused
+    }
+
+    /// Writes the suppressions to a file.
+    pub fn write_suppressions_file(
+        service: &SuppressionsService,
+        violations: &SuppressedViolations,
+    ) -> std::io::Result<()> {
+        service.save(violations)
+    }
+
+    /// Updates the suppressions file, keeping only the rules that still have violations.
+    pub fn prune_suppressions_file(
+        service: &SuppressionsService,
+        current_violations: &SuppressedViolations,
+    ) -> std::io::Result<()> {
+        let existing = service.load()?;
+        let mut updated = SuppressedViolations::default();
+
+        for (file_path, rules) in &existing {
+            for (rule_id, suppression) in rules {
+                // Keep the suppression if there are still violations
+                if let Some(file_violations) = current_violations.get(file_path)
+                    && let Some(current) = file_violations.get(rule_id) {
+                        // Keep the minimum of existing suppression and current violations
+                        let new_count = suppression.count.min(current.count);
+                        if new_count > 0 {
+                            updated
+                                .entry(file_path.clone())
+                                .or_default()
+                                .insert(rule_id.clone(), RuleSuppression { count: new_count });
+                        }
+                    }
+            }
+        }
+
+        service.save(&updated)
+    }
 }
 
 #[cfg(test)]
@@ -1500,5 +1790,194 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/invalid_config_type_difference".into())
             .test_and_snapshot(&[]);
+    }
+
+    // Suppressions tests
+    mod suppressions_tests {
+        use std::fs;
+        use tempfile::TempDir;
+
+        use super::*;
+
+        fn setup_suppressions_test() -> TempDir {
+            let temp_dir = TempDir::new().unwrap();
+
+            // Copy fixture files to temp directory
+            fs::copy("fixtures/suppressions/debugger.js", temp_dir.path().join("debugger.js"))
+                .unwrap();
+            fs::copy("fixtures/suppressions/console.js", temp_dir.path().join("console.js"))
+                .unwrap();
+            fs::copy(
+                "fixtures/suppressions/.oxlintrc.json",
+                temp_dir.path().join(".oxlintrc.json"),
+            )
+            .unwrap();
+
+            temp_dir
+        }
+
+        #[test]
+        fn test_suppress_all() {
+            let temp_dir = setup_suppressions_test();
+
+            // Run with --suppress-all to create the suppressions file
+            // Enable no-debugger and no-console as errors
+            let args = &["--suppress-all", "-D", "no-debugger", "-D", "no-console", "."];
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+
+            // Verify the suppressions file was created
+            let suppressions_path = temp_dir.path().join("oxlint-suppressions.json");
+            assert!(suppressions_path.exists(), "Suppressions file should be created");
+
+            // Read and validate the content
+            let content = fs::read_to_string(&suppressions_path).unwrap();
+            let suppressions: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+            // Should have entries for both files
+            assert!(suppressions.is_object());
+            let obj = suppressions.as_object().unwrap();
+
+            // Check that debugger.js has no-debugger violations
+            let has_debugger_violations = obj.iter().any(|(file, rules)| {
+                file.contains("debugger.js") && rules.get("eslint(no-debugger)").is_some()
+            });
+            assert!(has_debugger_violations, "Should have no-debugger violations for debugger.js");
+
+            // Check that console.js has no-console violations
+            let has_console_violations = obj.iter().any(|(file, rules)| {
+                file.contains("console.js") && rules.get("eslint(no-console)").is_some()
+            });
+            assert!(has_console_violations, "Should have no-console violations for console.js");
+        }
+
+        #[test]
+        fn test_suppress_rule() {
+            let temp_dir = setup_suppressions_test();
+
+            // Run with --suppress-rule to suppress only no-debugger
+            // Enable both rules as errors
+            let args =
+                &["--suppress-rule", "no-debugger", "-D", "no-debugger", "-D", "no-console", "."];
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+
+            // Verify the suppressions file was created
+            let suppressions_path = temp_dir.path().join("oxlint-suppressions.json");
+            assert!(suppressions_path.exists(), "Suppressions file should be created");
+
+            // Read and validate the content
+            let content = fs::read_to_string(&suppressions_path).unwrap();
+            let suppressions: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+            // Should only have no-debugger entries, not no-console
+            let obj = suppressions.as_object().unwrap();
+
+            let has_debugger =
+                obj.iter().any(|(_, rules)| rules.get("eslint(no-debugger)").is_some());
+            let has_console =
+                obj.iter().any(|(_, rules)| rules.get("eslint(no-console)").is_some());
+
+            assert!(has_debugger, "Should have no-debugger violations");
+            assert!(
+                !has_console,
+                "Should NOT have no-console violations when only suppressing no-debugger"
+            );
+        }
+
+        #[test]
+        fn test_suppressions_location() {
+            let temp_dir = setup_suppressions_test();
+            let custom_path = temp_dir.path().join("custom-suppressions.json");
+
+            // Run with --suppress-all and custom location
+            let args = &[
+                "--suppress-all",
+                "--suppressions-location",
+                custom_path.to_str().unwrap(),
+                "-D",
+                "no-debugger",
+                "-D",
+                "no-console",
+                ".",
+            ];
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+
+            // Verify the custom suppressions file was created
+            assert!(custom_path.exists(), "Custom suppressions file should be created");
+
+            // Default location should NOT exist
+            let default_path = temp_dir.path().join("oxlint-suppressions.json");
+            assert!(!default_path.exists(), "Default suppressions file should NOT be created");
+        }
+
+        #[test]
+        fn test_prune_suppressions() {
+            let temp_dir = setup_suppressions_test();
+            let suppressions_path = temp_dir.path().join("oxlint-suppressions.json");
+
+            // First, create a suppressions file with --suppress-all
+            let args = &["--suppress-all", "-D", "no-debugger", "-D", "no-console", "."];
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+
+            // Verify the suppressions file was created
+            assert!(suppressions_path.exists(), "Suppressions file should be created");
+
+            // Now remove one of the test files to simulate a "fixed" violation
+            fs::remove_file(temp_dir.path().join("debugger.js")).unwrap();
+
+            // Run prune to remove unused suppressions
+            let args = &["--prune-suppressions", "-D", "no-debugger", "-D", "no-console", "."];
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+
+            // Read the pruned suppressions
+            let content = fs::read_to_string(&suppressions_path).unwrap();
+            let suppressions: serde_json::Value = serde_json::from_str(&content).unwrap();
+
+            // Should NOT have debugger.js entries anymore (file was deleted)
+            let obj = suppressions.as_object().unwrap();
+            let has_debugger_file = obj.keys().any(|k| k.contains("debugger.js"));
+            assert!(!has_debugger_file, "Should NOT have debugger.js after pruning (file deleted)");
+
+            // Should still have console.js entries
+            let has_console_file = obj.keys().any(|k| k.contains("console.js"));
+            assert!(has_console_file, "Should still have console.js entries");
+        }
+
+        #[test]
+        fn test_suppress_all_counts_only_errors() {
+            let temp_dir = setup_suppressions_test();
+
+            // Run with --suppress-all, where no-debugger is error and no-console is warn
+            // Only errors should be suppressed
+            let args = &["--suppress-all", "-D", "no-debugger", "-W", "no-console", "."];
+            Tester::new().with_cwd(temp_dir.path().to_path_buf()).test(args);
+
+            // Read the suppressions
+            let suppressions_path = temp_dir.path().join("oxlint-suppressions.json");
+            let content = fs::read_to_string(&suppressions_path).unwrap();
+            let suppressions: serde_json::Value = serde_json::from_str(&content).unwrap();
+            let obj = suppressions.as_object().unwrap();
+
+            // Should have no-debugger (error) but NOT no-console (warning)
+            let has_debugger =
+                obj.iter().any(|(_, rules)| rules.get("eslint(no-debugger)").is_some());
+            let has_console =
+                obj.iter().any(|(_, rules)| rules.get("eslint(no-console)").is_some());
+
+            assert!(has_debugger, "Should have no-debugger violations (error severity)");
+            assert!(!has_console, "Should NOT have no-console violations (warning severity)");
+        }
+
+        #[test]
+        fn test_suppress_invalid_options() {
+            // Test that invalid option combinations are rejected
+            // Cannot use --suppress-all and --prune-suppressions together
+            let args = &["--suppress-all", "--prune-suppressions", "."];
+            let options = crate::cli::lint_command().run_inner(args.as_slice()).unwrap();
+            let result = options.suppression_options.validate();
+            assert!(
+                result.is_err(),
+                "Should reject combining --suppress-all and --prune-suppressions"
+            );
+        }
     }
 }

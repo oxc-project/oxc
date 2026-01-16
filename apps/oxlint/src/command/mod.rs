@@ -7,7 +7,10 @@ use bpaf::Bpaf;
 
 pub use self::{
     ignore::IgnoreOptions,
-    lint::{LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions, lint_command},
+    lint::{
+        LintCommand, OutputOptions, ReportUnusedDirectives, SuppressionOptions, WarningOptions,
+        lint_command,
+    },
 };
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");

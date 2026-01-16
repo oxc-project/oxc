@@ -2538,6 +2538,7 @@ dependencies = [
  "bpaf",
  "cow-utils",
  "ignore",
+ "indexmap",
  "insta",
  "lazy-regex",
  "mimalloc-safe",
