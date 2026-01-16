@@ -19,21 +19,19 @@ This is the linter for Oxc. The currently supported features are listed below.
 - Command to fix all auto-fixable content within the current text editor.
 - Support for `source.fixAll.oxc` as a code action provider. Configure this in your settings `editor.codeActionsOnSave`
   to automatically apply fixes when saving the file.
-- Support for multi root workspaces
+- Support for multi-root workspaces.
+- Support for type-aware linting when the `oxlint-tsgolint` package is installed and the `oxc.typeAware` setting is set to true.
 
 ## Oxfmt
 
 This is the formatter for Oxc. The currently supported features are listed below.
 
-- Experimental formatting with `oxc.fmt.experimental`
-
-To enable it, use a VSCode `settings.json` like:
+To enable it as your default formatter, use a VS Code `settings.json` like:
 
 ```json
 {
-  "oxc.fmt.experimental": true,
   "editor.defaultFormatter": "oxc.oxc-vscode"
-  // Or enable it for specific files:
+  // Or enable it for specific file types:
   // "[javascript]": {
   //   "editor.defaultFormatter": "oxc.oxc-vscode"
   // },
@@ -76,7 +74,6 @@ Following configurations are supported via `settings.json` and can be changed fo
 | `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny`                                                                                   | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.                                 |
 | Deprecated                    |               |                                                                                                               |                                                                                                                                                                              |
 | `oxc.flags`                   | `{}`          | `Record<string, string>`                                                                                      | Specific Oxlint flags to pass to the language server.                                                                                                                        |
-| `oxc.fmt.experimental`        | `true`        | `true` \| `false`                                                                                             | Enable experimental formatting support. This feature is experimental and might not work as expected.                                                                         |
 
 #### FixKind
 
