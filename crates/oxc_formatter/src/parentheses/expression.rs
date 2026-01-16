@@ -77,18 +77,52 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                // Walk up ancestors to find the relevant context for `let` keyword
+                // `let[a]` at statement start looks like a lexical declaration, needs parens
+                // Only applies when `let` is the object of a computed member expression
+                if !matches!(self.parent, AstNodes::ComputedMemberExpression(m) if m.object.span() == self.span())
+                {
+                    // Not `let[...]` - check special cases only
+                    return self.ancestors().any(|parent| match parent {
+                        AstNodes::ForOfStatement(s) => s.left.span().contains_inclusive(self.span),
+                        AstNodes::ForInStatement(s) => {
+                            s.left.span().contains_inclusive(self.span)
+                                && !matches!(self.parent, AstNodes::StaticMemberExpression(_))
+                        }
+                        AstNodes::TSSatisfiesExpression(e) => e.expression.span() == self.span(),
+                        _ => false,
+                    });
+                }
+
+                // Check if `let[...]` is at the leftmost position of a statement
+                let mut child_span = self.span;
                 for parent in self.ancestors() {
-                    match parent {
-                        AstNodes::ExpressionStatement(_) => return false,
-                        AstNodes::ForOfStatement(stmt) => {
-                            return stmt.left.span().contains_inclusive(self.span);
+                    let dominated = match parent {
+                        AstNodes::ExpressionStatement(s) => return !s.is_arrow_function_body(),
+                        AstNodes::ForStatement(_) => return true,
+                        AstNodes::ForOfStatement(s) => {
+                            return s.left.span().contains_inclusive(self.span);
                         }
-                        AstNodes::TSSatisfiesExpression(expr) => {
-                            return expr.expression.span() == self.span();
+                        AstNodes::ForInStatement(s) => {
+                            return s.left.span().contains_inclusive(self.span);
                         }
-                        _ => {}
+                        AstNodes::ComputedMemberExpression(m) => m.object.span() == child_span,
+                        AstNodes::StaticMemberExpression(m) => m.object.span() == child_span,
+                        AstNodes::CallExpression(c) => c.callee.span() == child_span,
+                        AstNodes::ChainExpression(c) => c.expression.span() == child_span,
+                        AstNodes::AssignmentExpression(a) => a.left.span() == child_span,
+                        AstNodes::BinaryExpression(b) => b.left.span() == child_span,
+                        AstNodes::LogicalExpression(l) => l.left.span() == child_span,
+                        AstNodes::ConditionalExpression(c) => c.test.span() == child_span,
+                        AstNodes::SequenceExpression(s) => {
+                            s.expressions.first().is_some_and(|e| e.span() == child_span)
+                        }
+                        AstNodes::TaggedTemplateExpression(t) => t.tag.span() == child_span,
+                        _ => false,
+                    };
+                    if !dominated {
+                        return false;
                     }
+                    child_span = parent.span();
                 }
                 false
             }
