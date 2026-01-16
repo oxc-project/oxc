@@ -2171,13 +2171,13 @@ impl Gen for TemplateLiteral<'_> {
         p.print_ascii_byte(b'`');
         debug_assert_eq!(self.quasis.len(), self.expressions.len() + 1);
         let (first_quasi, remaining_quasis) = self.quasis.split_first().unwrap();
-        p.print_str_escaping_script_close_tag(first_quasi.value.raw.as_str());
+        p.print_template_literal_str(first_quasi.value.raw.as_str());
         for (expr, quasi) in self.expressions.iter().zip(remaining_quasis) {
             p.print_str("${");
             p.print_expression(expr);
             p.print_ascii_byte(b'}');
             p.add_source_mapping(quasi.span);
-            p.print_str_escaping_script_close_tag(quasi.value.raw.as_str());
+            p.print_template_literal_str(quasi.value.raw.as_str());
         }
         p.print_ascii_byte(b'`');
     }
@@ -3278,7 +3278,7 @@ impl Gen for TSTemplateLiteralType<'_> {
                 types.print(p, ctx);
                 p.print_ascii_byte(b'}');
             }
-            p.print_str(item.value.raw.as_str());
+            p.print_template_literal_str(item.value.raw.as_str());
         }
         p.print_ascii_byte(b'`');
     }

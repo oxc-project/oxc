@@ -386,12 +386,99 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    /// Print template literal content, escaping:
+    /// - `` ` `` → `` \` `` (unescaped backticks)
+    /// - `${` → `\${` (unescaped interpolation markers)
+    /// - `</script` → `<\/script` (HTML script close tag)
+    ///
+    /// For backticks and `${`, we only escape if they're not already escaped
+    /// (i.e., not preceded by an odd number of backslashes).
+    pub fn print_template_literal_str(&mut self, s: &str) {
+        let bytes = s.as_bytes();
+        let len = bytes.len();
+        let mut consumed = 0;
+
+        let mut i = 0;
+        while i < len {
+            let byte = bytes[i];
+
+            match byte {
+                b'`' => {
+                    // Check if preceded by odd number of backslashes (already escaped)
+                    if !is_preceded_by_odd_backslashes(bytes, i) {
+                        // Flush bytes up to (not including) the backtick
+                        // SAFETY: `consumed` and `i` are valid indices
+                        unsafe {
+                            self.code.print_bytes_unchecked(bytes.get_unchecked(consumed..i));
+                        }
+                        self.print_str("\\`");
+                        consumed = i + 1;
+                    }
+                }
+                b'$' => {
+                    // Check if followed by `{` and not already escaped
+                    if i + 1 < len
+                        && bytes[i + 1] == b'{'
+                        && !is_preceded_by_odd_backslashes(bytes, i)
+                    {
+                        // Flush bytes up to (not including) the dollar sign
+                        // SAFETY: `consumed` and `i` are valid indices
+                        unsafe {
+                            self.code.print_bytes_unchecked(bytes.get_unchecked(consumed..i));
+                        }
+                        self.print_str("\\$");
+                        consumed = i + 1;
+                    }
+                }
+                b'<' => {
+                    // Check for `</script` (case-insensitive)
+                    if i + 8 <= len && is_script_close_tag(&bytes[i..i + 8]) {
+                        // Flush bytes up to and including `<`, then write `\/`
+                        // SAFETY: `consumed` and `i + 1` are valid indices
+                        unsafe {
+                            self.code.print_bytes_unchecked(bytes.get_unchecked(consumed..=i));
+                        }
+                        self.print_str("\\/");
+                        consumed = i + 2; // Skip past `</`
+                        i += 1; // Extra increment to skip `/`
+                    }
+                }
+                _ => {}
+            }
+
+            i += 1;
+        }
+
+        // Flush remaining bytes
+        // SAFETY: `consumed` is a valid index
+        unsafe {
+            self.code.print_bytes_unchecked(bytes.get_unchecked(consumed..));
+        }
+    }
+
     /// Print a single [`Expression`], adding it to the code generator's
     /// internal buffer. Unlike [`Codegen::build`], this does not consume `self`.
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.print_expr(self, Precedence::Lowest, Context::empty());
     }
+}
+
+/// Returns true if position `i` in `bytes` is preceded by an odd number of backslashes.
+/// This indicates the character at position `i` is escaped.
+#[inline]
+fn is_preceded_by_odd_backslashes(bytes: &[u8], i: usize) -> bool {
+    let mut count = 0;
+    let mut j = i;
+    while j > 0 {
+        j -= 1;
+        if bytes[j] == b'\\' {
+            count += 1;
+        } else {
+            break;
+        }
+    }
+    count % 2 == 1
 }
 
 // Private APIs
@@ -937,4 +1024,100 @@ impl<'a> Codegen<'a> {
     #[cfg(not(feature = "sourcemap"))]
     #[inline]
     fn add_source_mapping_for_name(&mut self, _span: Span, _name: &str) {}
+}
+
+#[cfg(test)]
+mod template_literal_escaping_tests {
+    use super::*;
+
+    fn escape_template_str(input: &str) -> String {
+        let mut codegen = Codegen::new();
+        codegen.print_template_literal_str(input);
+        codegen.into_source_text()
+    }
+
+    #[test]
+    fn test_no_escaping_needed() {
+        // Regular strings should pass through unchanged
+        assert_eq!(escape_template_str("hello world"), "hello world");
+        assert_eq!(escape_template_str("foo bar baz"), "foo bar baz");
+        assert_eq!(escape_template_str(""), "");
+    }
+
+    #[test]
+    fn test_backtick_escaping() {
+        // Unescaped backticks should be escaped
+        assert_eq!(escape_template_str("hello`world"), "hello\\`world");
+        assert_eq!(escape_template_str("`"), "\\`");
+        assert_eq!(escape_template_str("``"), "\\`\\`");
+        assert_eq!(escape_template_str("a`b`c"), "a\\`b\\`c");
+    }
+
+    #[test]
+    fn test_already_escaped_backtick() {
+        // Already escaped backticks (preceded by odd backslashes) should NOT be double-escaped
+        assert_eq!(escape_template_str("hello\\`world"), "hello\\`world");
+        assert_eq!(escape_template_str("\\`"), "\\`");
+        assert_eq!(escape_template_str("a\\`b"), "a\\`b");
+    }
+
+    #[test]
+    fn test_double_backslash_before_backtick() {
+        // Double backslash + backtick: the backslashes escape each other, backtick is NOT escaped
+        // So we need to escape the backtick
+        assert_eq!(escape_template_str("\\\\`"), "\\\\\\`");
+        assert_eq!(escape_template_str("a\\\\`b"), "a\\\\\\`b");
+    }
+
+    #[test]
+    fn test_triple_backslash_before_backtick() {
+        // Triple backslash + backtick: \\ (escaped backslash) + \` (escaped backtick)
+        // The backtick IS already escaped, so no change needed
+        assert_eq!(escape_template_str("\\\\\\`"), "\\\\\\`");
+    }
+
+    #[test]
+    fn test_dollar_brace_escaping() {
+        // Unescaped ${ should be escaped
+        assert_eq!(escape_template_str("hello${world"), "hello\\${world");
+        assert_eq!(escape_template_str("${"), "\\${");
+        assert_eq!(escape_template_str("${foo}${bar}"), "\\${foo}\\${bar}");
+    }
+
+    #[test]
+    fn test_dollar_without_brace() {
+        // $ not followed by { should NOT be escaped
+        assert_eq!(escape_template_str("$"), "$");
+        assert_eq!(escape_template_str("$a"), "$a");
+        assert_eq!(escape_template_str("$ {"), "$ {");
+        assert_eq!(escape_template_str("$}"), "$}");
+    }
+
+    #[test]
+    fn test_already_escaped_dollar_brace() {
+        // Already escaped ${ should NOT be double-escaped
+        assert_eq!(escape_template_str("\\${"), "\\${");
+        assert_eq!(escape_template_str("a\\${b"), "a\\${b");
+    }
+
+    #[test]
+    fn test_double_backslash_before_dollar_brace() {
+        // Double backslash + ${: the backslashes escape each other, ${ is NOT escaped
+        assert_eq!(escape_template_str("\\\\${"), "\\\\\\${");
+    }
+
+    #[test]
+    fn test_script_close_tag_escaping() {
+        // </script should be escaped to <\/script
+        assert_eq!(escape_template_str("</script"), "<\\/script");
+        assert_eq!(escape_template_str("</SCRIPT"), "<\\/SCRIPT");
+        assert_eq!(escape_template_str("</ScRiPt"), "<\\/ScRiPt");
+        assert_eq!(escape_template_str("a</script>b"), "a<\\/script>b");
+    }
+
+    #[test]
+    fn test_combined_escaping() {
+        // Multiple escaping scenarios combined
+        assert_eq!(escape_template_str("a`b${c}</script>d"), "a\\`b\\${c}<\\/script>d");
+    }
 }
