@@ -2,6 +2,7 @@ use std::{borrow::Cow, ops::Deref};
 
 use oxc_span::SourceType;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
+use oxc_syntax::number::ToJsString;
 use unicode_width::UnicodeWidthStr;
 
 use crate::{
@@ -428,8 +429,6 @@ pub fn is_identifier_name_patched(content: &str) -> bool {
 /// - `".1"` → false (parses to 0.1, String(0.1) = "0.1" ≠ ".1")
 /// - `"1.0"` → false (parses to 1, String(1) = "1" ≠ "1.0")
 /// - `"0xf"` → false (not a simple decimal number)
-///
-/// <https://github.com/prettier/prettier/blob/52829385bcc4d785e58ae2602c0b098a643523c9/src/language-js/print/property.js#L42-L82>
 pub fn is_simple_numeric_string(content: &str) -> bool {
     // Only allow simple decimal numbers (digits and at most one dot)
     if content.is_empty()
@@ -439,8 +438,8 @@ pub fn is_simple_numeric_string(content: &str) -> bool {
         return false;
     }
 
-    // Try to parse and check round-trip
-    if let Ok(num) = content.parse::<f64>() { num.to_string() == content } else { false }
+    // Try to parse and check round-trip using JS number-to-string semantics
+    if let Ok(num) = content.parse::<f64>() { num.to_js_string() == content } else { false }
 }
 
 #[cfg(test)]

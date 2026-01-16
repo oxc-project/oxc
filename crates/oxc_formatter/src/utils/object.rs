@@ -41,14 +41,14 @@ pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Forma
         PropertyKey::StaticIdentifier(ident) if should_quote_for_consistency => {
             // Quote the identifier: foo → "foo" or 'foo'
             let quote = f.options().quote_style.as_str();
-            let quoted = std::format!("{quote}{}{quote}", ident.name);
+            let quoted = format!("{quote}{}{quote}", ident.name);
             text(f.context().allocator().alloc_str(&quoted)).fmt(f);
         }
         PropertyKey::NumericLiteral(num) if should_quote_for_consistency => {
             // Check if this is a simple number that can be quoted
             if let Some(value_str) = can_quote_numeric_literal(num, f) {
                 let quote = f.options().quote_style.as_str();
-                let quoted = std::format!("{quote}{value_str}{quote}");
+                let quoted = format!("{quote}{value_str}{quote}");
                 text(f.context().allocator().alloc_str(&quoted)).fmt(f);
             } else {
                 // Complex number representation - don't quote
@@ -90,7 +90,7 @@ pub fn write_member_name<'a>(
         PropertyKey::StaticIdentifier(ident) if should_quote_for_consistency => {
             // Quote the identifier: foo → "foo" or 'foo'
             let quote = f.options().quote_style.as_str();
-            let quoted = std::format!("{quote}{}{quote}", ident.name);
+            let quoted = format!("{quote}{}{quote}", ident.name);
             let width = quoted.len();
             text(f.context().allocator().alloc_str(&quoted)).fmt(f);
             width
@@ -99,7 +99,7 @@ pub fn write_member_name<'a>(
             // Check if this is a simple number that can be quoted
             if let Some(value_str) = can_quote_numeric_literal(num, f) {
                 let quote = f.options().quote_style.as_str();
-                let quoted = std::format!("{quote}{value_str}{quote}");
+                let quoted = format!("{quote}{value_str}{quote}");
                 let width = quoted.len();
                 text(f.context().allocator().alloc_str(&quoted)).fmt(f);
                 width
