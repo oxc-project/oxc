@@ -338,9 +338,7 @@ impl Rule for NoNoninteractiveElementInteractions {
             let role_str = role.value.as_str().cow_to_lowercase();
 
             if let Some(first_role) = role_str.split_whitespace().next() {
-                if INTERACTIVE_ROLES.contains(&first_role)
-                    || ABSTRACT_ROLES.contains(&first_role)
-                {
+                if INTERACTIVE_ROLES.contains(&first_role) || ABSTRACT_ROLES.contains(&first_role) {
                     return;
                 }
                 if NON_INTERACTIVE_ROLES.contains(&first_role) {
