@@ -1472,4 +1472,33 @@ export { redundant };
             &["--type-aware", "-D", "no-unnecessary-type-assertion"],
         );
     }
+
+    #[test]
+    fn test_invalid_config_invalid_config_enum() {
+        Tester::new().with_cwd("fixtures/invalid_config_enum".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_extra_options() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_extra_options".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_in_override() {
+        Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_multiple_rules() {
+        Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_type_difference() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_type_difference".into())
+            .test_and_snapshot(&[]);
+    }
 }

@@ -20,7 +20,7 @@ fn unexpected_hook_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoHooks(Box<NoHooksConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoHooksConfig {
     /// An array of hook function names that are permitted for use.
     allow: Vec<CompactStr>,
@@ -102,9 +102,7 @@ declare_oxc_lint!(
 
 impl Rule for NoHooks {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_on_jest_node<'a, 'c>(
@@ -152,7 +150,6 @@ fn test() {
             "afterEach(() => {}); afterAll(() => {});",
             Some(serde_json::json!([{ "allow": ["afterEach", "afterAll"] }])),
         ),
-        ("test(\"foo\")", Some(serde_json::json!([{ "allow": "undefined" }]))),
     ];
 
     let mut fail = vec![
@@ -183,7 +180,6 @@ fn test() {
             "afterEach(() => {}); afterAll(() => {});",
             Some(serde_json::json!([{ "allow": ["afterEach", "afterAll"] }])),
         ),
-        (r#"test("foo")"#, Some(serde_json::json!([{ "allow": null }]))),
     ];
 
     let fail_vitest = vec![
@@ -191,6 +187,8 @@ fn test() {
         ("beforeEach(() => {})", None),
         ("afterAll(() => {})", None),
         ("afterEach(() => {})", None),
+        ("afterEach(() => {})", Some(serde_json::json!([]))),
+        ("afterEach(() => {})", Some(serde_json::json!([{ "allow": [] }]))),
         (
             "beforeEach(() => {}); afterEach(() => { vi.resetModules() });",
             Some(serde_json::json!([{ "allow": ["afterEach"] }])),
@@ -211,4 +209,18 @@ fn test() {
     Tester::new(NoHooks::NAME, NoHooks::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    // An array with an object that has unknown keys should produce an error
+    let invalid = serde_json::json!([{ "foo": "bar" }]);
+    assert!(NoHooks::from_configuration(invalid).is_err());
+
+    // Configs containing `null` or the string "undefined" should be rejected under strict validation
+    let undefined_allow = serde_json::json!([{ "allow": "undefined" }]);
+    assert!(NoHooks::from_configuration(undefined_allow).is_err());
+
+    let null_allow = serde_json::json!([{ "allow": null }]);
+    assert!(NoHooks::from_configuration(null_allow).is_err());
 }
