@@ -3,9 +3,11 @@
     "checkJs": false,
     "moduleResolution": "node16",
     "module": "node20",
+    "noEmit": true,
     "lib": ["esnext"],
     "target": "esnext",
     "resolveJsonModule": true,
-    "strict": true
+    "strict": true,
+    "allowImportingTsExtensions": true
   }
 }
