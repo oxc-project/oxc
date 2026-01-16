@@ -5,7 +5,7 @@ import { debugAssertIsNonNull } from "./utils/asserts.ts";
 // Using `typeof wrapper` here makes TS check that the function signatures of `loadPlugin` and `loadPluginWrapper`
 // are identical. Ditto `lintFile` and `lintFileWrapper`.
 let loadPlugin: typeof loadPluginWrapper | null = null;
-let setupConfigs: typeof setupConfigsWrapper | null = null;
+let setupRuleConfigs: typeof setupRuleConfigsWrapper | null = null;
 let lintFile: typeof lintFileWrapper | null = null;
 
 /**
@@ -27,7 +27,7 @@ function loadPluginWrapper(
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
-      ({ loadPlugin, lintFile, setupConfigs } = mod);
+      ({ loadPlugin, lintFile, setupRuleConfigs } = mod);
       return loadPlugin(path, pluginName, pluginNameIsAlias);
     });
   }
@@ -38,14 +38,14 @@ function loadPluginWrapper(
 /**
  * Bootstrap configuration options.
  *
- * Delegates to `setupConfigs`, which was lazy-loaded by `loadPluginWrapper`.
+ * Delegates to `setupRuleConfigs`, which was lazy-loaded by `loadPluginWrapper`.
  *
  * @param optionsJSON - Array of all rule options across all configurations, serialized as JSON
  * @returns `null` if success, or error message string
  */
-function setupConfigsWrapper(optionsJSON: string): string | null {
-  debugAssertIsNonNull(setupConfigs);
-  return setupConfigs(optionsJSON);
+function setupRuleConfigsWrapper(optionsJSON: string): string | null {
+  debugAssertIsNonNull(setupRuleConfigs);
+  return setupRuleConfigs(optionsJSON);
 }
 
 /**
@@ -80,8 +80,8 @@ function lintFileWrapper(
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
-// Call Rust, passing `loadPlugin`, `setupConfigs`, and `lintFile` as callbacks, and CLI arguments
-const success = await lint(args, loadPluginWrapper, setupConfigsWrapper, lintFileWrapper);
+// Call Rust, passing `loadPlugin`, `setupRuleConfigs`, and `lintFile` as callbacks, and CLI arguments
+const success = await lint(args, loadPluginWrapper, setupRuleConfigsWrapper, lintFileWrapper);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

@@ -342,7 +342,7 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            let res = config_store.external_plugin_store().setup_rule_configs(external_linter);
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
