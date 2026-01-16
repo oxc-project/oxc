@@ -438,6 +438,70 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b',');
     }
 
+    /// Print a Unicode code point as an escape sequence.
+    /// Uses `\uXXXX` for BMP characters and `\u{XXXXXX}` for non-BMP characters.
+    #[inline]
+    fn print_unicode_escape(&mut self, code_point: u32) {
+        if code_point <= 0xFFFF {
+            // BMP character: use \uXXXX format
+            self.print_str("\\u");
+            self.print_hex4(code_point as u16);
+        } else {
+            // Non-BMP character: use \u{XXXXXX} format
+            self.print_str("\\u{");
+            self.print_hex_upper(code_point);
+            self.print_ascii_byte(b'}');
+        }
+    }
+
+    /// Print a 4-digit uppercase hex number (for \uXXXX escapes).
+    #[inline]
+    fn print_hex4(&mut self, value: u16) {
+        const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
+        let bytes = [
+            HEX_DIGITS[((value >> 12) & 0xF) as usize],
+            HEX_DIGITS[((value >> 8) & 0xF) as usize],
+            HEX_DIGITS[((value >> 4) & 0xF) as usize],
+            HEX_DIGITS[(value & 0xF) as usize],
+        ];
+        self.print_str(unsafe { std::str::from_utf8_unchecked(&bytes) });
+    }
+
+    /// Print a variable-length uppercase hex number (for \u{XXXXXX} escapes).
+    #[inline]
+    fn print_hex_upper(&mut self, value: u32) {
+        const HEX_DIGITS: &[u8; 16] = b"0123456789ABCDEF";
+        // Find the first non-zero nibble
+        let mut started = false;
+        for shift in (0..8).rev() {
+            let nibble = ((value >> (shift * 4)) & 0xF) as usize;
+            if nibble != 0 || started || shift == 0 {
+                self.print_ascii_byte(HEX_DIGITS[nibble]);
+                started = true;
+            }
+        }
+    }
+
+    /// Print a string with non-ASCII characters escaped as Unicode escape sequences.
+    /// This is used for string contents in computed properties.
+    pub(crate) fn print_string_with_ascii_escapes(&mut self, s: &str) {
+        for ch in s.chars() {
+            if ch.is_ascii() {
+                // Handle special characters that need escaping in strings
+                match ch {
+                    '\\' => self.print_str("\\\\"),
+                    '"' => self.print_str("\\\""),
+                    '\n' => self.print_str("\\n"),
+                    '\r' => self.print_str("\\r"),
+                    '\t' => self.print_str("\\t"),
+                    _ => self.print_ascii_byte(ch as u8),
+                }
+            } else {
+                self.print_unicode_escape(ch as u32);
+            }
+        }
+    }
+
     #[inline]
     fn print_space_before_identifier(&mut self) {
         let Some(byte) = self.last_byte() else { return };
@@ -457,6 +521,37 @@ impl<'a> Codegen<'a> {
         self.print_hard_space();
     }
 
+    /// Print an identifier, escaping non-ASCII characters when `ascii_only` is enabled.
+    ///
+    /// For BMP characters (U+0080 to U+FFFF), uses `\uXXXX` format.
+    /// Non-BMP characters cannot be escaped in identifiers (only `\uXXXX` is valid,
+    /// not `\u{XXXXX}`), so they are kept as-is.
+    fn print_identifier(&mut self, name: &str) {
+        if !self.options.ascii_only || name.is_ascii() {
+            self.print_str(name);
+            return;
+        }
+
+        // Escape non-ASCII BMP characters
+        for ch in name.chars() {
+            if ch.is_ascii() {
+                self.print_ascii_byte(ch as u8);
+            } else {
+                let code_point = ch as u32;
+                if code_point <= 0xFFFF {
+                    // BMP character: use \uXXXX format
+                    self.print_str("\\u");
+                    self.print_hex4(code_point as u16);
+                } else {
+                    // Non-BMP character: cannot be escaped in identifiers,
+                    // encode as UTF-8 directly
+                    let mut buf = [0u8; 4];
+                    let s = ch.encode_utf8(&mut buf);
+                    self.print_str(s);
+                }
+            }
+        }
+    }
     #[inline]
     fn last_byte(&self) -> Option<u8> {
         self.code.last_byte()

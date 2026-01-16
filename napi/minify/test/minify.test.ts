@@ -140,6 +140,76 @@ describe("async minify", () => {
   });
 });
 
+describe("ascii_only option", () => {
+  it("escapes non-ASCII characters in strings", () => {
+    const code = 'let x = "中文"';
+    const ret = minifySync("test.js", code, {
+      codegen: { asciiOnly: true },
+    });
+    // Minifier converts strings to template literals
+    expect(ret.code).toBe("let x=`\\u4E2D\\u6587`;");
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it("escapes non-BMP characters with unicode escapes", () => {
+    const code = 'let x = "𐀀"';
+    const ret = minifySync("test.js", code, {
+      codegen: { asciiOnly: true },
+    });
+    // Minifier converts strings to template literals
+    expect(ret.code).toBe("let x=`\\u{10000}`;");
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it("escapes non-ASCII identifiers", () => {
+    const code = "let 中文 = 1";
+    const ret = minifySync("test.js", code, {
+      mangle: false,
+      codegen: { asciiOnly: true },
+    });
+    expect(ret.code).toBe("let \\u4E2D\\u6587=1;");
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it("converts non-BMP property access to computed", () => {
+    const code = "x.𐀀";
+    const ret = minifySync("test.js", code, {
+      codegen: { asciiOnly: true },
+    });
+    expect(ret.code).toBe('x["\\u{10000}"];');
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it("converts non-BMP object keys to strings", () => {
+    const code = "let obj = {𐀀: 1}";
+    const ret = minifySync("test.js", code, {
+      codegen: { asciiOnly: true },
+    });
+    expect(ret.code).toBe('let obj={"\\u{10000}":1};');
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it("does not escape when ascii_only is false", () => {
+    const code = 'let x = "中文"';
+    const ret = minifySync("test.js", code, {
+      codegen: { asciiOnly: false },
+    });
+    // Minifier converts strings to template literals
+    expect(ret.code).toBe("let x=`中文`;");
+    expect(ret.errors.length).toBe(0);
+  });
+
+  it("always escapes BOM character", () => {
+    const code = 'let x = "\uFEFF"';
+    const ret = minifySync("test.js", code, {
+      codegen: { asciiOnly: false },
+    });
+    // Minifier converts strings to template literals, BOM is always escaped
+    expect(ret.code).toBe("let x=`\\uFEFF`;");
+    expect(ret.errors.length).toBe(0);
+  });
+});
+
 describe("worker", () => {
   it("should run", async () => {
     const code = await new Promise((resolve, reject) => {

@@ -15,6 +15,17 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub minify: bool,
 
+    /// Escape non-ASCII characters as `\uXXXX` or `\u{XXXXXX}`.
+    ///
+    /// When enabled, all non-ASCII characters in strings and identifiers will be escaped
+    /// using Unicode escape sequences. This is useful for environments that don't handle
+    /// UTF-8 properly or for ensuring ASCII-only output.
+    ///
+    /// This is equivalent to esbuild's `--charset=ascii` option.
+    ///
+    /// Default is `false`.
+    pub ascii_only: bool,
+
     /// Print comments?
     ///
     /// At present, only some leading comments are preserved.
@@ -50,6 +61,7 @@ impl Default for CodegenOptions {
         Self {
             single_quote: false,
             minify: false,
+            ascii_only: false,
             comments: CommentOptions::default(),
             source_map_path: None,
             indent_char: IndentChar::default(),
@@ -65,6 +77,7 @@ impl CodegenOptions {
         Self {
             single_quote: false,
             minify: true,
+            ascii_only: false,
             comments: CommentOptions::disabled(),
             source_map_path: None,
             indent_char: IndentChar::default(),

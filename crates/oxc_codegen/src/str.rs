@@ -48,16 +48,28 @@ impl Codegen<'_> {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
         let bytes = s.value.as_bytes().iter();
+        let ascii_only = self.options.ascii_only;
         let mut state = PrintStringState {
             chunk_start: bytes.ptr(),
             bytes,
             quote,
             lone_surrogates: s.lone_surrogates,
             allow_backtick,
+            ascii_only,
         };
 
         // Loop through bytes.
         while let Some(b) = state.peek() {
+            // Check for non-ASCII bytes when ascii_only is enabled
+            if b >= 0x80 && state.ascii_only {
+                // Non-ASCII byte in ascii_only mode - escape the UTF-8 character
+                cold_branch(|| {
+                    // SAFETY: We just peeked a byte, so there is a byte ready to consume.
+                    unsafe { print_non_ascii_as_escape(self, &mut state) };
+                });
+                continue;
+            }
+
             // Look up whether byte needs escaping
             let escape = ESCAPES.0[b as usize];
             if escape == Escape::__ {
@@ -101,6 +113,7 @@ struct PrintStringState<'s> {
     quote: Option<Quote>,
     lone_surrogates: bool,
     allow_backtick: bool,
+    ascii_only: bool,
 }
 
 impl PrintStringState<'_> {
@@ -306,6 +319,11 @@ const LOSSY_REPLACEMENT_CHAR_BYTES: [u8; 3] = to_bytes('\u{FFFD}');
 const _: () = assert!(LOSSY_REPLACEMENT_CHAR_BYTES[0] == 0xEF);
 const LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES: [u8; 2] =
     [LOSSY_REPLACEMENT_CHAR_BYTES[1], LOSSY_REPLACEMENT_CHAR_BYTES[2]];
+
+/// BOM (Byte Order Mark, U+FEFF) as UTF-8 bytes.
+const BOM_BYTES: [u8; 3] = to_bytes('\u{FEFF}');
+const _: () = assert!(BOM_BYTES[0] == 0xEF);
+const BOM_LAST_2_BYTES: [u8; 2] = [BOM_BYTES[1], BOM_BYTES[2]];
 
 /// Escape codes.
 ///
@@ -638,67 +656,129 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
     }
 }
 
-// 0xEF - first byte of lossy replacement character (U+FFFD)
+// 0xEF - first byte of lossy replacement character (U+FFFD) or BOM (U+FEFF)
 unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintStringState) {
     debug_assert_eq!(state.peek(), Some(0xEF));
 
-    if state.lone_surrogates {
+    // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
+    // so there must be 2 more bytes available to consume
+    let next2: [u8; 2] = {
+        let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
+        next2.try_into().unwrap()
+    };
+
+    // Check for BOM (U+FEFF) - always escape it
+    if next2 == BOM_LAST_2_BYTES {
+        // SAFETY: 0xEF is always the start of a 3-byte Unicode character
+        unsafe { state.flush_and_consume_bytes(codegen, 3) };
+        codegen.print_str("\\uFEFF");
+        return;
+    }
+
+    if state.lone_surrogates && next2 == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
         // String contains lone surrogates which use the lossy replacement character (U+FFFD)
         // as an escape marker.
         // The lone surrogate is encoded as `\u{FFFD}XXXX` where `XXXX` is the code point as hex.
-        let next2: [u8; 2] = {
-            // SAFETY: 0xEF is always the start of a 3-byte Unicode character,
-            // so there must be 2 more bytes available to consume
-            let next2 = unsafe { state.bytes.as_slice().get_unchecked(1..3) };
-            next2.try_into().unwrap()
-        };
 
-        if next2 == LOSSY_REPLACEMENT_CHAR_LAST_2_BYTES {
-            // Get the 4 hex bytes
-            let bytes = &mut state.bytes;
-            let hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
+        // Get the 4 hex bytes
+        let bytes = &mut state.bytes;
+        let hex: [u8; 4] = bytes.as_slice()[3..7].try_into().unwrap();
 
-            if hex == *b"fffd" {
-                // Actual lossy replacement character.
-                // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-                unsafe { state.consume_bytes_unchecked(3) };
-                state.flush(codegen);
-                // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
-                // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
-                // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-                unsafe { state.consume_bytes_unchecked(4) };
-                // Start next chunk after the 4 hex bytes
-                state.start_chunk();
-                return;
-            }
-
-            // Flush text before the lossy replacement character
+        if hex == *b"fffd" {
+            // Actual lossy replacement character.
+            // Flush up to and including the lossy replacement character, then skip the 4 hex bytes.
+            // SAFETY: 0xEF is always the start of a 3-byte Unicode character
+            unsafe { state.consume_bytes_unchecked(3) };
             state.flush(codegen);
-
-            // Check all 4 hex bytes are ASCII
-            assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
-
-            // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there weren't at least 7 bytes
-            // remaining. First 3 bytes are lossy replacement character, and we just checked that
-            // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
-            unsafe { state.consume_bytes_unchecked(7) };
-
+            // SAFETY: 0xEF is always the start of a 3-byte Unicode character.
+            // `bytes.as_slice()[3..7]` would have panicked if there weren't 4 more bytes after it.
+            // All those bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
+            unsafe { state.consume_bytes_unchecked(4) };
             // Start next chunk after the 4 hex bytes
             state.start_chunk();
-
-            codegen.print_str("\\u");
-            // SAFETY: Just checked all 4 hex bytes are ASCII
-            unsafe { codegen.code.print_bytes_unchecked(&hex) };
-
             return;
         }
+
+        // Flush text before the lossy replacement character
+        state.flush(codegen);
+
+        // Check all 4 hex bytes are ASCII
+        assert_eq!(u32::from_ne_bytes(hex) & 0x8080_8080, 0);
+
+        // SAFETY: `bytes.as_slice()[3..7]` would have panicked if there weren't at least 7 bytes
+        // remaining. First 3 bytes are lossy replacement character, and we just checked that
+        // next 4 bytes are ASCII, so this leaves `bytes` on a UTF-8 char boundary.
+        unsafe { state.consume_bytes_unchecked(7) };
+
+        // Start next chunk after the 4 hex bytes
+        state.start_chunk();
+
+        codegen.print_str("\\u");
+        // SAFETY: Just checked all 4 hex bytes are ASCII
+        unsafe { codegen.code.print_bytes_unchecked(&hex) };
+
+        return;
     }
 
     // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
     // Advance past the character.
     // SAFETY: 0xEF is always the start of a 3-byte Unicode character
     unsafe { state.consume_bytes_unchecked(3) };
+}
+
+/// Print a non-ASCII UTF-8 character as a Unicode escape sequence.
+///
+/// # SAFETY
+///
+/// * There must be at least 1 byte remaining in `bytes` iterator.
+/// * The first byte must be >= 0x80 (non-ASCII).
+unsafe fn print_non_ascii_as_escape(codegen: &mut Codegen, state: &mut PrintStringState) {
+    let first_byte = state.peek().unwrap();
+    debug_assert!(first_byte >= 0x80);
+
+    // Determine UTF-8 character length from first byte
+    let char_len = if first_byte < 0xE0 {
+        2
+    } else if first_byte < 0xF0 {
+        3
+    } else {
+        4
+    };
+
+    // Get all bytes of the character
+    let slice = state.bytes.as_slice();
+
+    // SAFETY: UTF-8 character must have `char_len` bytes
+    let code_point = unsafe {
+        match char_len {
+            2 => {
+                let b0 = first_byte as u32;
+                let b1 = *slice.get_unchecked(1) as u32;
+                ((b0 & 0x1F) << 6) | (b1 & 0x3F)
+            }
+            3 => {
+                let b0 = first_byte as u32;
+                let b1 = *slice.get_unchecked(1) as u32;
+                let b2 = *slice.get_unchecked(2) as u32;
+                ((b0 & 0x0F) << 12) | ((b1 & 0x3F) << 6) | (b2 & 0x3F)
+            }
+            4 => {
+                let b0 = first_byte as u32;
+                let b1 = *slice.get_unchecked(1) as u32;
+                let b2 = *slice.get_unchecked(2) as u32;
+                let b3 = *slice.get_unchecked(3) as u32;
+                ((b0 & 0x07) << 18) | ((b1 & 0x3F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F)
+            }
+            _ => unreachable!(),
+        }
+    };
+
+    // Flush current chunk and consume the UTF-8 character
+    // SAFETY: We determined char_len from the first byte, which determines the number of bytes
+    unsafe { state.flush_and_consume_bytes(codegen, char_len) };
+
+    // Print the Unicode escape
+    codegen.print_unicode_escape(code_point);
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.

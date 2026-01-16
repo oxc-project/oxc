@@ -71,6 +71,20 @@ impl Gen for Directive<'_> {
         p.print_comments_at(self.span.start);
         p.add_source_mapping(self.span);
         p.print_indent();
+
+        // Use print_string_literal when:
+        // 1. ascii_only is enabled (need to escape non-ASCII characters)
+        // 2. The directive value contains BOM (U+FEFF) which should always be escaped
+        let needs_string_literal =
+            p.options.ascii_only || self.expression.value.as_str().contains('\u{FEFF}');
+
+        if needs_string_literal {
+            p.print_string_literal(&self.expression, false);
+            p.print_ascii_byte(b';');
+            p.print_soft_newline();
+            return;
+        }
+
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/v7.26.2/packages/babel-generator/src/generators/base.ts#L64
@@ -1268,7 +1282,7 @@ impl Gen for IdentifierReference<'_> {
         let name = p.get_identifier_reference_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_identifier(name);
     }
 }
 
@@ -1276,7 +1290,7 @@ impl Gen for IdentifierName<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_identifier(self.name.as_str());
     }
 }
 
@@ -1285,7 +1299,7 @@ impl Gen for BindingIdentifier<'_> {
         let name = p.get_binding_identifier_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_identifier(name);
     }
 }
 
@@ -1293,7 +1307,7 @@ impl Gen for LabelIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_identifier(self.name.as_str());
     }
 }
 
@@ -1436,14 +1450,37 @@ impl GenExpr for ComputedMemberExpression<'_> {
 impl GenExpr for StaticMemberExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
         self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
-        if self.optional {
-            p.print_ascii_byte(b'?');
-        } else if p.need_space_before_dot == p.code_len() {
-            // `0.toExponential()` is invalid, add a space before the dot, `0 .toExponential()` is valid
-            p.print_hard_space();
+
+        // Non-BMP characters (U+10000+) MUST always be converted to computed property access
+        // because identifiers can only use \uXXXX escapes (not \u{XXXXXX}).
+        // This applies regardless of ascii_only mode.
+        let name = self.property.name.as_str();
+        let has_non_bmp = name.chars().any(|ch| ch as u32 > 0xFFFF);
+
+        if has_non_bmp {
+            // Convert to computed: x.𐀀 -> x["𐀀"]
+            if self.optional {
+                p.print_str("?.");
+            }
+            p.print_ascii_byte(b'[');
+            p.print_ascii_byte(b'"');
+            if p.options.ascii_only {
+                p.print_string_with_ascii_escapes(name);
+            } else {
+                p.print_str(name);
+            }
+            p.print_ascii_byte(b'"');
+            p.print_ascii_byte(b']');
+        } else {
+            if self.optional {
+                p.print_ascii_byte(b'?');
+            } else if p.need_space_before_dot == p.code_len() {
+                // `0.toExponential()` is invalid, add a space before the dot, `0 .toExponential()` is valid
+                p.print_hard_space();
+            }
+            p.print_ascii_byte(b'.');
+            self.property.print(p, ctx);
         }
-        p.print_ascii_byte(b'.');
-        self.property.print(p, ctx);
     }
 }
 
@@ -1657,12 +1694,16 @@ impl Gen for ObjectProperty<'_> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if key.name == "__proto__" {
-                shorthand = self.shorthand;
-            } else if let Expression::Identifier(ident) = self.value.without_parentheses()
-                && key.name == p.get_identifier_reference_name(ident)
-            {
-                shorthand = true;
+            // Non-BMP characters in keys require string literals, so shorthand is not allowed
+            let has_non_bmp = key.name.chars().any(|ch| ch as u32 > 0xFFFF);
+            if !has_non_bmp {
+                if key.name == "__proto__" {
+                    shorthand = self.shorthand;
+                } else if let Expression::Identifier(ident) = self.value.without_parentheses()
+                    && key.name == p.get_identifier_reference_name(ident)
+                {
+                    shorthand = true;
+                }
             }
         }
 
@@ -1696,7 +1737,24 @@ impl Gen for ObjectProperty<'_> {
 impl Gen for PropertyKey<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::StaticIdentifier(ident) => ident.print(p, ctx),
+            Self::StaticIdentifier(ident) => {
+                // Non-BMP characters (U+10000+) MUST always be converted to string keys
+                // because identifiers can only use \uXXXX escapes (not \u{XXXXXX}).
+                // This applies regardless of ascii_only mode.
+                let name = ident.name.as_str();
+                let has_non_bmp = name.chars().any(|ch| ch as u32 > 0xFFFF);
+                if has_non_bmp {
+                    p.print_ascii_byte(b'"');
+                    if p.options.ascii_only {
+                        p.print_string_with_ascii_escapes(name);
+                    } else {
+                        p.print_str(name);
+                    }
+                    p.print_ascii_byte(b'"');
+                } else {
+                    ident.print(p, ctx);
+                }
+            }
             Self::PrivateIdentifier(ident) => ident.print(p, ctx),
             Self::StringLiteral(s) => p.print_string_literal(s, /* allow_backtick */ false),
             _ => self.to_expression().print_expr(p, Precedence::Comma, Context::empty()),
