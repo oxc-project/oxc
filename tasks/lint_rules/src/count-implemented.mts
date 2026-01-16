@@ -39,7 +39,7 @@ const statsForPlugin = (pluginName: string) => {
 
 // Compute per-plugin and overall stats
 const pluginNames = Array.from(ALL_TARGET_PLUGINS.keys());
-const perPlugin = pluginNames.map((name: string) => statsForPlugin(name));
+const perPlugin = pluginNames.map((name) => statsForPlugin(name));
 
 const overall = perPlugin.reduce(
   (acc, cur) => ({

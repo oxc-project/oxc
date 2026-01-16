@@ -160,7 +160,7 @@ export const updateImplementedStatus = async (ruleEntries: RuleEntries) => {
   const implementedRuleNames = await readAllImplementedRuleNames();
 
   for (const name of implementedRuleNames) {
-    const rule = ruleEntries.get(name as string);
+    const rule = ruleEntries.get(name);
     if (rule) {
       rule.isImplemented = true;
     } else {
