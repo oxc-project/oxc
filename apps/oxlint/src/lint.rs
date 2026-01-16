@@ -873,12 +873,10 @@ mod suppressions_helper {
                 };
 
                 // Convert to relative path (POSIX format)
-                let relative_path = Path::new(&file_path)
-                    .strip_prefix(cwd)
-                    .map_or_else(
-                        |_| file_path.cow_replace('\\', "/").into_owned(),
-                        |p| p.to_string_lossy().cow_replace('\\', "/").into_owned(),
-                    );
+                let relative_path = Path::new(&file_path).strip_prefix(cwd).map_or_else(
+                    |_| file_path.cow_replace('\\', "/").into_owned(),
+                    |p| p.to_string_lossy().cow_replace('\\', "/").into_owned(),
+                );
 
                 violations
                     .entry(relative_path)
@@ -939,16 +937,17 @@ mod suppressions_helper {
             for (rule_id, suppression) in rules {
                 // Keep the suppression if there are still violations
                 if let Some(file_violations) = current_violations.get(file_path)
-                    && let Some(current) = file_violations.get(rule_id) {
-                        // Keep the minimum of existing suppression and current violations
-                        let new_count = suppression.count.min(current.count);
-                        if new_count > 0 {
-                            updated
-                                .entry(file_path.clone())
-                                .or_default()
-                                .insert(rule_id.clone(), RuleSuppression { count: new_count });
-                        }
+                    && let Some(current) = file_violations.get(rule_id)
+                {
+                    // Keep the minimum of existing suppression and current violations
+                    let new_count = suppression.count.min(current.count);
+                    if new_count > 0 {
+                        updated
+                            .entry(file_path.clone())
+                            .or_default()
+                            .insert(rule_id.clone(), RuleSuppression { count: new_count });
                     }
+                }
             }
         }
 
