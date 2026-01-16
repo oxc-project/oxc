@@ -87,10 +87,10 @@ impl<'a> Printer<'a> {
         element: &'a FormatElement,
     ) -> PrintResult<()> {
         use Tag::{
-            EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            EndAlign, EndBestFittingEntry, EndConditionalContent, EndDedent, EndEntry, EndFill,
+            EndGroup, EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            StartBestFittingEntry, StartConditionalContent, StartDedent, StartEntry, StartFill,
+            StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = stack.top();
@@ -244,11 +244,16 @@ impl<'a> Printer<'a> {
                 indent_stack.push_suffix(indent_stack.indention());
                 self.state.line_suffixes.extend(args, queue.iter_content(TagKind::LineSuffix));
             }
-            FormatElement::Tag(tag @ (StartLabelled(_) | StartEntry)) => {
+            FormatElement::Tag(tag @ (StartLabelled(_) | StartEntry | StartBestFittingEntry)) => {
                 stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled
+                | EndEntry
+                | EndBestFittingEntry
+                | EndGroup
+                | EndConditionalContent
+                | EndFill),
             ) => {
                 stack.pop(tag.kind())?;
             }
@@ -336,20 +341,19 @@ impl<'a> Printer<'a> {
 
         if args.mode().is_flat() && self.state.measured_group_fits {
             queue.extend_back(best_fitting.most_flat());
-            self.print_entry(queue, stack, indent_stack, args)
+            self.print_best_fitting_entry(queue, stack, indent_stack, args)
         } else {
             self.state.measured_group_fits = true;
 
-            let (most_expanded, remaining_variants) =
-                best_fitting.split_to_most_expanded_and_flat_variants();
+            // Collect all variants from the iterator
+            let variants: Vec<_> = best_fitting.variants().collect();
 
-            for variant in remaining_variants {
-                // Test if this variant fits and if so, use it. Otherwise try the next
-                // variant.
-
+            // Try all variants except the last (most expanded) one
+            for variant in &variants[..variants.len() - 1] {
                 // Try to fit only the first variant on a single line
-                if !matches!(variant.first(), Some(&FormatElement::Tag(Tag::StartEntry))) {
-                    return invalid_start_tag(TagKind::Entry, variant.first());
+                if !matches!(variant.first(), Some(&FormatElement::Tag(Tag::StartBestFittingEntry)))
+                {
+                    return invalid_start_tag(TagKind::BestFittingEntry, variant.first());
                 }
 
                 let entry_args = args.with_print_mode(PrintMode::Flat);
@@ -359,9 +363,9 @@ impl<'a> Printer<'a> {
                 let content = &variant[1..];
 
                 queue.extend_back(content);
-                stack.push(TagKind::Entry, entry_args);
+                stack.push(TagKind::BestFittingEntry, entry_args);
                 let variant_fits = self.fits(queue, stack, indent_stack)?;
-                stack.pop(TagKind::Entry)?;
+                stack.pop(TagKind::BestFittingEntry)?;
 
                 // Remove the content slice because printing needs the variant WITH the start entry
                 let popped_slice = queue.pop_slice();
@@ -369,14 +373,65 @@ impl<'a> Printer<'a> {
 
                 if variant_fits {
                     queue.extend_back(variant);
-                    return self.print_entry(queue, stack, indent_stack, entry_args);
+                    return self.print_best_fitting_entry(queue, stack, indent_stack, entry_args);
                 }
             }
 
             // No variant fits, take the last (most expanded) as fallback
-            queue.extend_back(most_expanded);
-            self.print_entry(queue, stack, indent_stack, args.with_print_mode(PrintMode::Expanded))
+            if let Some(most_expanded) = variants.last() {
+                queue.extend_back(most_expanded);
+            }
+            self.print_best_fitting_entry(
+                queue,
+                stack,
+                indent_stack,
+                args.with_print_mode(PrintMode::Expanded),
+            )
         }
+    }
+
+    /// Prints a single best fitting entry delimited by `StartBestFittingEntry` and `EndBestFittingEntry` tags.
+    fn print_best_fitting_entry(
+        &mut self,
+        queue: &mut PrintQueue<'a>,
+        stack: &mut PrintCallStack,
+        indent_stack: &mut PrintIndentStack,
+        args: PrintElementArgs,
+    ) -> PrintResult<()> {
+        let start_entry = queue.top();
+
+        if !matches!(start_entry, Some(&FormatElement::Tag(Tag::StartBestFittingEntry))) {
+            return invalid_start_tag(TagKind::BestFittingEntry, start_entry);
+        }
+
+        let mut depth = 0usize;
+
+        while let Some(element) = queue.pop() {
+            match element {
+                FormatElement::Tag(Tag::StartBestFittingEntry) => {
+                    // Handle the start of the first element by pushing the args on the stack.
+                    if depth == 0 {
+                        depth = 1;
+                        stack.push(TagKind::BestFittingEntry, args);
+                    } else {
+                        depth += 1;
+                    }
+                }
+                FormatElement::Tag(Tag::EndBestFittingEntry) => {
+                    depth -= 1;
+                    // Reached the end entry, pop the entry from the stack and return.
+                    if depth == 0 {
+                        stack.pop(TagKind::BestFittingEntry)?;
+                        return Ok(());
+                    }
+                }
+                _ => {
+                    self.print_element(stack, indent_stack, queue, element)?;
+                }
+            }
+        }
+
+        invalid_end_tag(TagKind::BestFittingEntry, stack.top_kind())
     }
 
     /// Tries to fit as much content as possible on a single line.
@@ -959,10 +1014,10 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     /// Tests if the passed element fits on the current line or not.
     fn fits_element(&mut self, element: &'a FormatElement) -> PrintResult<Fits> {
         use Tag::{
-            EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            EndAlign, EndBestFittingEntry, EndConditionalContent, EndDedent, EndEntry, EndFill,
+            EndGroup, EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            StartBestFittingEntry, StartConditionalContent, StartDedent, StartEntry, StartFill,
+            StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         let args = self.stack.top();
@@ -1065,10 +1120,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     PrintMode::Expanded => best_fitting.most_expanded(),
                 };
 
-                if !matches!(slice.first(), Some(FormatElement::Tag(Tag::StartEntry))) {
-                    return invalid_start_tag(TagKind::Entry, slice.first());
+                if !matches!(slice.first(), Some(FormatElement::Tag(Tag::StartBestFittingEntry))) {
+                    return invalid_start_tag(TagKind::BestFittingEntry, slice.first());
                 }
 
+                // Queue the full slice including StartBestFittingEntry/EndBestFittingEntry tags
                 self.queue.extend_back(slice);
             }
 
@@ -1146,11 +1202,18 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
             }
 
-            FormatElement::Tag(tag @ (StartFill | StartLabelled(_) | StartEntry)) => {
+            FormatElement::Tag(
+                tag @ (StartFill | StartLabelled(_) | StartEntry | StartBestFittingEntry),
+            ) => {
                 self.stack.push(tag.kind(), args);
             }
             FormatElement::Tag(
-                tag @ (EndLabelled | EndEntry | EndGroup | EndConditionalContent | EndFill),
+                tag @ (EndLabelled
+                | EndEntry
+                | EndBestFittingEntry
+                | EndGroup
+                | EndConditionalContent
+                | EndFill),
             ) => {
                 self.stack.pop(tag.kind())?;
             }

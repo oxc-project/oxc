@@ -181,10 +181,10 @@ impl std::fmt::Display for Document<'_> {
 impl<'a> Format<'a> for &[FormatElement<'a>] {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         use Tag::{
-            EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            EndAlign, EndBestFittingEntry, EndConditionalContent, EndDedent, EndEntry, EndFill,
+            EndGroup, EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            StartBestFittingEntry, StartConditionalContent, StartDedent, StartEntry, StartFill,
+            StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         write!(f, [ContentArrayStart]);
@@ -278,7 +278,7 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                     ]);
 
                     for variant in best_fitting.variants() {
-                        write!(f, [&**variant, hard_line_break()]);
+                        write!(f, [variant, hard_line_break()]);
                     }
 
                     f.write_elements([
@@ -499,10 +499,10 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(f, [token("fill(")]);
                         }
 
-                        StartEntry => {
+                        StartEntry | StartBestFittingEntry => {
                             // handled after the match for all start tags
                         }
-                        EndEntry => write!(f, [ContentArrayEnd]),
+                        EndEntry | EndBestFittingEntry => write!(f, [ContentArrayEnd]),
 
                         EndFill
                         | EndLabelled

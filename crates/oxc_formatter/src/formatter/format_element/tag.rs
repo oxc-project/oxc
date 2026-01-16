@@ -62,6 +62,11 @@ pub enum Tag {
     /// See [crate::builders::labelled] for documentation.
     StartLabelled(LabelId),
     EndLabelled,
+
+    /// Marks the start of a best fitting variant entry.
+    StartBestFittingEntry,
+    /// Marks the end of a best fitting variant entry.
+    EndBestFittingEntry,
 }
 
 impl Tag {
@@ -79,6 +84,7 @@ impl Tag {
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
                 | Tag::StartLabelled(_)
+                | Tag::StartBestFittingEntry
         )
     }
 
@@ -89,10 +95,10 @@ impl Tag {
 
     pub const fn kind(&self) -> TagKind {
         use Tag::{
-            EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            EndAlign, EndBestFittingEntry, EndConditionalContent, EndDedent, EndEntry, EndFill,
+            EndGroup, EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            StartBestFittingEntry, StartConditionalContent, StartDedent, StartEntry, StartFill,
+            StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         match self {
@@ -106,6 +112,7 @@ impl Tag {
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
+            StartBestFittingEntry | EndBestFittingEntry => TagKind::BestFittingEntry,
         }
     }
 }
@@ -126,6 +133,7 @@ pub enum TagKind {
     LineSuffix,
     Labelled,
     TailwindClass,
+    BestFittingEntry,
 }
 
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]

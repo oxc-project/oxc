@@ -717,11 +717,11 @@ fn write_grouped_arguments<'a>(
     // First write the most expanded variant because it needs `arguments`.
     let most_expanded = {
         let mut buffer = VecBuffer::new(f.state_mut());
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
+        buffer.write_element(FormatElement::Tag(Tag::StartBestFittingEntry));
 
         format_all_elements_broken_out(node, elements.iter().cloned(), true, &mut buffer);
 
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
+        buffer.write_element(FormatElement::Tag(Tag::EndBestFittingEntry));
 
         buffer.into_vec().into_bump_slice()
     };
@@ -796,7 +796,7 @@ fn write_grouped_arguments<'a>(
     let middle_variant = {
         let mut buffer = VecBuffer::new(f.state_mut());
 
-        buffer.write_element(FormatElement::Tag(Tag::StartEntry));
+        buffer.write_element(FormatElement::Tag(Tag::StartBestFittingEntry));
 
         write!(
             buffer,
@@ -830,21 +830,32 @@ fn write_grouped_arguments<'a>(
             ]
         );
 
-        buffer.write_element(FormatElement::Tag(Tag::EndEntry));
+        buffer.write_element(FormatElement::Tag(Tag::EndBestFittingEntry));
 
         buffer.into_vec().into_bump_slice()
     };
 
     // If the grouped content breaks, then we can skip the most_flat variant,
     // since we already know that it won't be fitting on a single line.
+    //
+    // Combine all variants into a single flat buffer with StartBestFittingEntry/EndBestFittingEntry markers.
     let variants = if grouped_breaks {
         write!(f, [expand_parent()]);
-        ArenaVec::from_array_in([middle_variant, most_expanded], f.context().allocator())
+
+        // Create a flat buffer with [middle_variant, most_expanded]
+        let mut buffer = VecBuffer::new(f.state_mut());
+        for element in middle_variant {
+            buffer.write_element(element.clone());
+        }
+        for element in most_expanded {
+            buffer.write_element(element.clone());
+        }
+        buffer.into_vec().into_bump_slice()
     } else {
         // Write the most flat variant with the first or last argument grouped.
         let most_flat = {
             let mut buffer = VecBuffer::new(f.state_mut());
-            buffer.write_element(FormatElement::Tag(Tag::StartEntry));
+            buffer.write_element(FormatElement::Tag(Tag::StartBestFittingEntry));
 
             write!(
                 buffer,
@@ -865,19 +876,28 @@ fn write_grouped_arguments<'a>(
                 ]
             );
 
-            buffer.write_element(FormatElement::Tag(Tag::EndEntry));
+            buffer.write_element(FormatElement::Tag(Tag::EndBestFittingEntry));
 
             buffer.into_vec().into_bump_slice()
         };
 
-        ArenaVec::from_array_in([most_flat, middle_variant, most_expanded], f.context().allocator())
+        // Create a flat buffer with [most_flat, middle_variant, most_expanded]
+        let mut buffer = VecBuffer::new(f.state_mut());
+        for element in most_flat {
+            buffer.write_element(element.clone());
+        }
+        for element in middle_variant {
+            buffer.write_element(element.clone());
+        }
+        for element in most_expanded {
+            buffer.write_element(element.clone());
+        }
+        buffer.into_vec().into_bump_slice()
     };
 
-    // SAFETY: Safe because variants is guaranteed to contain exactly 3 entries:
-    // * most flat
-    // * middle
-    // * most expanded
-    // ... and best fitting only requires the most flat/and expanded.
+    // SAFETY: Safe because variants is guaranteed to contain at least 2 entries
+    // (either [middle, most_expanded] or [most_flat, middle, most_expanded]),
+    // each delimited by StartBestFittingEntry/EndBestFittingEntry tags.
     unsafe {
         f.write_element(FormatElement::BestFitting(
             format_element::BestFittingElement::from_vec_unchecked(variants),

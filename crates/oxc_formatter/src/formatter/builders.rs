@@ -1,12 +1,11 @@
 use std::{cell::Cell, num::NonZeroU8};
 
 use Tag::{
-    EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-    EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign, StartConditionalContent,
-    StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
-    StartLabelled, StartLineSuffix,
+    EndAlign, EndBestFittingEntry, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup,
+    EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+    StartBestFittingEntry, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+    StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
 };
-use oxc_allocator::Vec as ArenaVec;
 use oxc_span::{GetSpan, Span};
 
 use super::{
@@ -2535,18 +2534,13 @@ impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
         let mut buffer = VecBuffer::new(f.state_mut());
         let variants = self.variants.items();
 
-        let mut formatted_variants = Vec::with_capacity(variants.len());
-
         for variant in variants {
-            buffer.write_element(FormatElement::Tag(StartEntry));
+            buffer.write_element(FormatElement::Tag(StartBestFittingEntry));
             buffer.write_fmt(Arguments::from(variant));
-            buffer.write_element(FormatElement::Tag(EndEntry));
-
-            formatted_variants.push(buffer.take_vec().into_bump_slice());
+            buffer.write_element(FormatElement::Tag(EndBestFittingEntry));
         }
 
-        let formatted_variants =
-            ArenaVec::from_iter_in(formatted_variants, f.context().allocator());
+        let formatted_variants = buffer.take_vec().into_bump_slice();
 
         // SAFETY: The constructor guarantees that there are always at least two variants. It's, therefore,
         // safe to call into the unsafe `from_vec_unchecked` function

@@ -319,12 +319,16 @@ impl FormatElements for FormatElement<'_> {
 /// can pick the best fitting variant.
 ///
 /// Best fitting is defined as the variant that takes the most horizontal space but fits on the line.
+///
+/// Variants are stored in a flat slice delimited by `StartBestFittingEntry` and `EndBestFittingEntry`
+/// tags. This avoids per-variant allocations compared to storing `&[&[FormatElement]]`.
 #[derive(Clone, Eq, PartialEq)]
 pub struct BestFittingElement<'a> {
-    /// The different variants for this element.
-    /// The first element is the one that takes up the most space horizontally (the most flat),
-    /// The last element takes up the least space horizontally (but most horizontal space).
-    variants: &'a [&'a [FormatElement<'a>]],
+    /// The different variants for this element, stored as a flat slice.
+    /// Each variant is delimited by `StartBestFittingEntry` and `EndBestFittingEntry` tags.
+    /// The first variant is the one that takes up the most space horizontally (the most flat),
+    /// The last variant takes up the least space horizontally (but most vertical space).
+    variants: &'a [FormatElement<'a>],
 }
 
 impl<'a> BestFittingElement<'a> {
@@ -335,47 +339,97 @@ impl<'a> BestFittingElement<'a> {
     /// You're looking for a way to create a `BestFitting` object, use the `best_fitting![least_expanded, most_expanded]` macro.
     ///
     /// ## Safety
-    /// The slice must contain at least two variants.
+    /// The slice must contain at least two variants delimited by `StartBestFittingEntry` and
+    /// `EndBestFittingEntry` tags.
     #[doc(hidden)]
-    pub unsafe fn from_vec_unchecked(variants: ArenaVec<'a, &'a [FormatElement<'a>]>) -> Self {
+    pub unsafe fn from_vec_unchecked(variants: &'a [FormatElement<'a>]) -> Self {
         debug_assert!(
-            variants.len() >= 2,
+            {
+                let count = variants
+                    .iter()
+                    .filter(|e| matches!(e, FormatElement::Tag(Tag::StartBestFittingEntry)))
+                    .count();
+                count >= 2
+            },
             "Requires at least the least expanded and most expanded variants"
         );
 
-        Self { variants: variants.into_bump_slice() }
+        Self { variants }
     }
 
-    /// Returns the most expanded variant
-    pub fn most_expanded(&self) -> &[FormatElement<'a>] {
-        self.variants.last().expect(
-            "Most contain at least two elements, as guaranteed by the best fitting builder.",
+    /// Returns an iterator over the variants.
+    pub fn variants(&self) -> BestFittingVariantsIter<'a> {
+        BestFittingVariantsIter { elements: self.variants }
+    }
+
+    /// Returns the most expanded variant (the last one).
+    pub fn most_expanded(&self) -> &'a [FormatElement<'a>] {
+        self.variants().last().expect(
+            "Must contain at least two elements, as guaranteed by the best fitting builder.",
         )
     }
 
-    /// Splits the variants into the most expanded and the remaining flat variants
-    pub fn split_to_most_expanded_and_flat_variants(
-        &self,
-    ) -> (&&[FormatElement<'a>], &[&[FormatElement<'a>]]) {
-        // SAFETY: We have already asserted that there are at least two variants for creating this struct.
-        unsafe { self.variants.split_last().unwrap_unchecked() }
-    }
-
-    pub fn variants(&self) -> &[&'a [FormatElement<'a>]] {
-        self.variants
-    }
-
-    /// Returns the least expanded variant
-    pub fn most_flat(&self) -> &[FormatElement<'a>] {
-        self.variants.first().expect(
-            "Most contain at least two elements, as guaranteed by the best fitting builder.",
+    /// Returns the least expanded variant (the first one, most flat).
+    pub fn most_flat(&self) -> &'a [FormatElement<'a>] {
+        self.variants().next().expect(
+            "Must contain at least two elements, as guaranteed by the best fitting builder.",
         )
     }
 }
 
 impl std::fmt::Debug for BestFittingElement<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_list().entries(self.variants).finish()
+        f.debug_list().entries(self.variants()).finish()
+    }
+}
+
+/// Iterator over the variants of a `BestFittingElement`.
+///
+/// Each variant is delimited by `StartBestFittingEntry` and `EndBestFittingEntry` tags.
+pub struct BestFittingVariantsIter<'a> {
+    elements: &'a [FormatElement<'a>],
+}
+
+impl<'a> Iterator for BestFittingVariantsIter<'a> {
+    type Item = &'a [FormatElement<'a>];
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.elements.is_empty() {
+            return None;
+        }
+
+        // Find the StartBestFittingEntry tag
+        let start_index = self.elements.iter().position(|element| {
+            matches!(element, FormatElement::Tag(Tag::StartBestFittingEntry))
+        })?;
+
+        // Find the matching EndBestFittingEntry tag
+        let mut depth = 0usize;
+        let end_index = self.elements[start_index..].iter().position(|element| {
+            match element {
+                FormatElement::Tag(Tag::StartBestFittingEntry) => {
+                    depth += 1;
+                }
+                FormatElement::Tag(Tag::EndBestFittingEntry) => {
+                    depth -= 1;
+                    if depth == 0 {
+                        return true;
+                    }
+                }
+                _ => {}
+            }
+            false
+        })?;
+
+        let end_index = start_index + end_index;
+
+        // The variant includes the start and end tags
+        let variant = &self.elements[start_index..=end_index];
+
+        // Move past the end tag for the next iteration
+        self.elements = &self.elements[end_index + 1..];
+
+        Some(variant)
     }
 }
 
