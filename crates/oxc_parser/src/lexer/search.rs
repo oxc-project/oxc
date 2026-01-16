@@ -452,13 +452,17 @@ macro_rules! byte_search {
                 // So `$pos.add()` in this loop cannot go out of bounds.
                 let batch = unsafe { $pos.slice(crate::lexer::search::SEARCH_BATCH_SIZE) };
                 'inner: loop {
-                    for (i, &byte) in batch.iter().enumerate() {
-                        if $table.matches(byte) {
-                            // SAFETY: Cannot go out of bounds (see above).
-                            // Also see above about UTF-8 character boundaries invariant.
-                            $pos = unsafe { $pos.add(i) };
-                            break 'inner byte;
-                        }
+                    // Use SIMD-accelerated search to find first matching byte.
+                    // SAFETY: `batch` was created from `$pos.slice(SEARCH_BATCH_SIZE)` above,
+                    // so `batch.as_ptr()` points to at least 32 valid bytes.
+                    if let Some(offset) = unsafe {
+                        crate::lexer::simd::find_first_match_in_batch(batch.as_ptr(), &$table)
+                    } {
+                        let byte = batch[offset];
+                        // SAFETY: Cannot go out of bounds (see above).
+                        // Also see above about UTF-8 character boundaries invariant.
+                        $pos = unsafe { $pos.add(offset) };
+                        break 'inner byte;
                     }
                     // No match in batch - search next batch.
                     // SAFETY: Cannot go out of bounds (see above).

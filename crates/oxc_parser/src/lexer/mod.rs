@@ -24,6 +24,7 @@ mod numeric;
 mod punctuation;
 mod regex;
 mod search;
+mod simd;
 mod source;
 mod string;
 mod template;
