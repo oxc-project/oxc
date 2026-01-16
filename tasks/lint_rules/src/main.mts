@@ -75,11 +75,11 @@ void (async () => {
         /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (
           ALL_TARGET_PLUGINS.get(pluginName)
         );
-      const content = renderMarkdown(pluginName, pluginMeta, ruleEntries);
+      const content = renderMarkdown(pluginName, pluginMeta!, ruleEntries);
 
       if (!values.update) return Promise.resolve(content);
       // Requires `env.GITHUB_TOKEN`
-      return updateGitHubIssue(pluginMeta, content);
+      return updateGitHubIssue(pluginMeta!, content);
     }),
   );
   for (const result of results) {
