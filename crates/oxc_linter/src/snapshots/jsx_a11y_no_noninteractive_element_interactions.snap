@@ -3,36 +3,148 @@ source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <li onClick={() => {}} />
-   ·  ──
+ 1 │ <main onClick={() => {}} />
+   ·  ────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <ul contentEditable='false' onClick={() => {}} />
-   ·  ──
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <article contentEditable onClick={() => {}} />
+ 1 │ <address onClick={() => {}} />
    ·  ───────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div contentEditable role='article' onKeyDown={() => {}} />
+ 1 │ <article onClick={() => {}} />
+   ·  ───────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <aside onClick={() => {}} />
+   ·  ─────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <blockquote onClick={() => {}} />
+   ·  ──────────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <br onClick={() => {}} />
+   ·  ──
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <caption onClick={() => {}} />
+   ·  ───────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <code onClick={() => {}} />
+   ·  ────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dd onClick={() => {}} />
+   ·  ──
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <del onClick={() => {}} />
    ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='listitem' onClick={() => {}} />
+ 1 │ <details onClick={() => {}} />
+   ·  ───────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dfn onClick={() => {}} />
    ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dl onClick={() => {}} />
+   ·  ──
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dir onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <dt onClick={() => {}} />
+   ·  ──
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <em onClick={() => {}} />
+   ·  ──
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <fieldset onClick={() => {}} />
+   ·  ────────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <figcaption onClick={() => {}} />
+   ·  ──────────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <figure onClick={() => {}} />
+   ·  ──────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <footer onClick={() => {}} />
+   ·  ──────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <form onClick={() => {}} />
+   ·  ────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
@@ -80,91 +192,91 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <article onClick={() => {}} />
-   ·  ───────
+ 1 │ <hr onClick={() => {}} />
+   ·  ──
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='article' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <header onClick={() => {}} />
-   ·  ──────
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <main onClick={() => {}} />
+ 1 │ <html onClick={() => {}} />
    ·  ────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='main' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <footer onClick={() => {}} />
+ 1 │ <iframe onClick={() => {}} />
    ·  ──────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <section onClick={() => {}} />
-   ·  ───────
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <nav onClick={() => {}} />
+ 1 │ <img onClick={() => {}} />
    ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='navigation' onClick={() => {}} />
+ 1 │ <ins onClick={() => {}} />
    ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <aside onClick={() => {}} />
+ 1 │ <label onClick={() => {}} />
    ·  ─────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='complementary' onClick={() => {}} />
-   ·  ───
+ 1 │ <legend onClick={() => {}} />
+   ·  ──────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <p onClick={() => {}} />
-   ·  ─
+ 1 │ <li onClick={() => {}} />
+   ·  ──
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='paragraph' onClick={() => {}} />
+ 1 │ <mark onClick={() => {}} />
+   ·  ────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <marquee onClick={() => {}} />
+   ·  ───────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <menu onClick={() => {}} />
+   ·  ────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <meter onClick={() => {}} />
+   ·  ─────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <nav onClick={() => {}} />
    ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
@@ -178,14 +290,70 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <ul onClick={() => {}} />
-   ·  ──
+ 1 │ <optgroup onClick={() => {}} />
+   ·  ────────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='list' onClick={() => {}} />
+ 1 │ <output onClick={() => {}} />
+   ·  ──────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <p onClick={() => {}} />
+   ·  ─
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <pre onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <progress onClick={() => {}} />
+   ·  ────────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <ruby onClick={() => {}} />
+   ·  ────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <section onClick={() => {}} />
+   ·  ───────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <strong onClick={() => {}} />
+   ·  ──────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <sub onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <sup onClick={() => {}} />
    ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
@@ -199,98 +367,56 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <figure onClick={() => {}} />
-   ·  ──────
+ 1 │ <tbody onClick={() => {}} />
+   ·  ─────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='figure' onClick={() => {}} />
-   ·  ───
+ 1 │ <tfoot onClick={() => {}} />
+   ·  ─────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <form onClick={() => {}} />
+ 1 │ <thead onClick={() => {}} />
+   ·  ─────
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <time onClick={() => {}} />
    ·  ────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <fieldset onClick={() => {}} />
-   ·  ────────
+ 1 │ <ul onClick={() => {}} />
+   ·  ──
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <blockquote onClick={() => {}} />
-   ·  ──────────
+ 1 │ <ul contentEditable="false" onClick={() => {}} />
+   ·  ──
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='blockquote' onClick={() => {}} />
-   ·  ───
+ 1 │ <article contentEditable onClick={() => {}} />
+   ·  ───────
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <pre onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='img' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='heading' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='banner' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='contentinfo' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='region' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='status' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='log' onClick={() => {}} />
+ 1 │ <div contentEditable role='article' onKeyDown={() => {}} />
    ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
@@ -304,6 +430,55 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='alertdialog' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='application' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='banner' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='cell' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='complementary' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='contentinfo' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='definition' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
  1 │ <div role='dialog' onClick={() => {}} />
    ·  ───
    ╰────
@@ -311,7 +486,252 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='alertdialog' onClick={() => {}} />
+ 1 │ <div role='directory' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='document' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='feed' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='figure' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='form' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='group' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='heading' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='img' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='list' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='listitem' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='log' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='main' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='marquee' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='math' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='navigation' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='note' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='region' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='rowgroup' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='search' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='separator' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='status' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='table' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='tabpanel' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='term' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='timer' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='tooltip' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='article' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='blockquote' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='caption' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='paragraph' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='article' onKeyDown={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='article' onKeyPress={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='article' onKeyUp={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='article' onClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='article' onMouseDown={() => {}} />
+   ·  ───
+   ╰────
+  help: Add an interactive role or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
+   ╭─[no_noninteractive_element_interactions.tsx:1:2]
+ 1 │ <div role='article' onMouseUp={() => {}} />
    ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
@@ -348,96 +768,5 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_noninteractive_element_interactions.tsx:1:2]
  1 │ <li onMouseUp={() => {}} />
    ·  ──
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <dd onClick={() => {}} />
-   ·  ──
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <dt onClick={() => {}} />
-   ·  ──
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <figcaption onClick={() => {}} />
-   ·  ──────────
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <caption onClick={() => {}} />
-   ·  ───────
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='caption' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='definition' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='directory' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='document' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='feed' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='group' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='marquee' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='math' onClick={() => {}} />
-   ·  ───
-   ╰────
-  help: Add an interactive role or use a semantic HTML element instead.
-
-  ⚠ eslint-plugin-jsx-a11y(no-noninteractive-element-interactions): Non-interactive elements should not be assigned mouse or keyboard event listeners.
-   ╭─[no_noninteractive_element_interactions.tsx:1:2]
- 1 │ <div role='note' onClick={() => {}} />
-   ·  ───
    ╰────
   help: Add an interactive role or use a semantic HTML element instead.
