@@ -117,6 +117,20 @@ impl Tester {
         let regex = Regex::new(r#""start_time": \d+\.\d+"#).unwrap();
         let output_string = regex.replace_all(&output_string, r#""start_time": <variable>"#);
 
+        // Remove ANSI color codes and terminal hyperlink sequences so snapshots are stable and
+        // not dependent on terminal capabilities. This mirrors `crates/oxc_linter` which uses
+        // `GraphicalReportHandler::with_links(false).with_theme(GraphicalTheme::unicode_nocolor())`.
+        let esc = '\x1b';
+        // Remove common SGR color sequences like ESC[31m
+        let regex = Regex::new(&format!("{esc}\\[[0-9;?]*[A-Za-z]")).unwrap();
+        let output_string = regex.replace_all(&output_string, "").into_owned();
+        // Remove OSC 8 hyperlink sequences (open and close)
+        let regex = Regex::new(&format!("{esc}\\]8;;.*?{esc}\\\\")).unwrap();
+        let output_string = regex.replace_all(&output_string, "").into_owned();
+        // Also remove escaped literal sequences like "\\x1b[31m" or "\\u001b[31m"
+        let regex = Regex::new(r"\\x1b\[[0-9;]*m|\\u001b\[[0-9;]*m").unwrap();
+        let output_string = regex.replace_all(&output_string, "").into_owned();
+
         // do not output the current working directory, each machine has a different one
         let cwd_string = current_cwd.to_str().unwrap();
         let cwd_string = cwd_string.cow_replace('\\', "/").to_string(); // for windows
