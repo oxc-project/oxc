@@ -455,8 +455,8 @@ impl<'a> Comments<'a> {
         let original_limit = self.view_limit;
 
         // Binary search: find first comment where span.start >= end_pos
-        let relative_index = self.inner[self.printed_count..]
-            .partition_point(|c| c.span.start < end_pos);
+        let relative_index =
+            self.inner[self.printed_count..].partition_point(|c| c.span.start < end_pos);
         let limit_index = self.printed_count + relative_index;
 
         // Only update if we're actually limiting the view
