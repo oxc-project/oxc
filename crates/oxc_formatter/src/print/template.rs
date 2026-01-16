@@ -867,7 +867,7 @@ fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
-    if template_literal.is_no_substitution_template() {
+    if !template_literal.is_no_substitution_template() {
         return false;
     }
 
