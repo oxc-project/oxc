@@ -10,7 +10,7 @@ use crate::{
         trivia::{FormatLeadingComments, FormatTrailingComments},
     },
     options::{FormatTrailingCommas, TrailingSeparator},
-    utils::call_expression::is_test_call_expression,
+    utils::call_expression::{is_angular_test_wrapper, is_test_call_expression},
     write,
 };
 
@@ -52,11 +52,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
         let layout = if !self.has_parameter() && this_param.is_none() {
             ParameterLayout::NoParameters
         } else if can_hug || {
-            // `self`: Function
-            // `self.parent`: Function
+            // `self`: FormalParameters
+            // `self.parent`: ArrowFunctionExpression/Function
             // `self.grand_parent()`: CallExpression
             if let AstNodes::CallExpression(call) = self.grand_parent() {
-                is_test_call_expression(call)
+                // Check if parent is a test call, but exclude angular test wrappers
+                // like `inject`, `async`, `fakeAsync`, `waitForAsync` because their
+                // inner function parameters should still be allowed to break.
+                is_test_call_expression(call) && !is_angular_test_wrapper(call)
             } else {
                 false
             }
