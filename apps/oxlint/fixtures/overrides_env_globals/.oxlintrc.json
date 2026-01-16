@@ -1,9 +1,15 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
   "env": {
     "jquery": true
   },
   "globals": {
     "Foo": "readonly"
+  },
+  "rules": {
+    "no-global-assign": "warn"
   },
   "overrides": [
     {
