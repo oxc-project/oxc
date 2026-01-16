@@ -13,7 +13,9 @@ use oxc_span::{SourceType, Span};
 
 use crate::{
     AllowWarnDeny, FrameworkFlags,
-    config::{LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings},
+    config::{
+        ConfiguredNamespace, LintConfig, LintPlugins, OxlintEnv, OxlintGlobals, OxlintSettings,
+    },
     disable_directives::{DisableDirectives, DisableDirectivesBuilder, RuleCommentType},
     fixer::{Fix, FixKind, Message, PossibleFixes},
     frameworks::{self, FrameworkOptions},
@@ -409,9 +411,22 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Creates a new [`LintContext`] for a specific rule.
-    pub fn spawn(self: Rc<Self>, rule: &RuleEnum, severity: AllowWarnDeny) -> LintContext<'a> {
+    ///
+    /// The `configured_namespace` parameter is the original namespace under which the rule was
+    /// configured. For example, if a user configures `vitest/valid-describe-callback`, the
+    /// `configured_namespace` would be `Some("vitest")` even though the rule is implemented
+    /// by the jest plugin.
+    pub fn spawn(
+        self: Rc<Self>,
+        rule: &RuleEnum,
+        severity: AllowWarnDeny,
+        configured_namespace: ConfiguredNamespace,
+    ) -> LintContext<'a> {
         let rule_name = rule.name();
-        let plugin_name = rule.plugin_name();
+
+        // Use the configured namespace if explicitly set (e.g., vitest/rule-name),
+        // otherwise fall back to the rule's original plugin name.
+        let plugin_name = configured_namespace.unwrap_or_else(|| rule.plugin_name());
 
         LintContext {
             parent: self,
@@ -421,6 +436,7 @@ impl<'a> ContextHost<'a> {
             #[cfg(debug_assertions)]
             current_rule_fix_capabilities: rule.fix(),
             severity: severity.into(),
+            configured_namespace,
         }
     }
 
@@ -435,6 +451,7 @@ impl<'a> ContextHost<'a> {
             #[cfg(debug_assertions)]
             current_rule_fix_capabilities: crate::rule::RuleFixMeta::None,
             severity: oxc_diagnostics::Severity::Warning,
+            configured_namespace: None,
         }
     }
 

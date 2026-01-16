@@ -268,6 +268,9 @@ pub struct Tester {
     snapshot_suffix: Option<&'static str>,
     current_working_directory: Box<Path>,
     plugins: LintPlugins,
+    /// Configured namespace for testing rules that behave differently based on
+    /// the namespace they were configured under (e.g., vitest vs jest).
+    configured_namespace: Option<&'static str>,
 }
 
 impl Tester {
@@ -295,6 +298,7 @@ impl Tester {
             snapshot_suffix: None,
             current_working_directory,
             plugins: LintPlugins::default(),
+            configured_namespace: None,
         }
     }
 
@@ -350,6 +354,15 @@ impl Tester {
 
     pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
         self.plugins.set(LintPlugins::VITEST, yes);
+        self
+    }
+
+    /// Set the configured namespace for testing rules that behave differently
+    /// based on the namespace they were configured under.
+    /// For example, when testing `jest/valid-describe-callback` with vitest behavior,
+    /// call `.with_configured_namespace(Some("vitest"))`.
+    pub fn with_configured_namespace(mut self, namespace: Option<&'static str>) -> Self {
+        self.configured_namespace = namespace;
         self
     }
 
@@ -575,7 +588,7 @@ impl Tester {
                                 panic!("invalid plugin name: {}", self.plugin_name)
                             }),
                     )
-                    .with_rule(rule, AllowWarnDeny::Warn)
+                    .with_rule_and_namespace(rule, AllowWarnDeny::Warn, self.configured_namespace)
                     .build(&mut external_plugin_store)
                     .unwrap(),
                 FxHashMap::default(),

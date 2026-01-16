@@ -164,10 +164,10 @@ impl TsGoLintState {
                                                 resolved_config
                                                     .rules
                                                     .iter()
-                                                    .find(|(rule, _)| {
+                                                    .find(|(rule, _, _)| {
                                                         rule.name() == tsgolint_diagnostic.rule
                                                     })
-                                                    .map(|(_, status)| *status)
+                                                    .map(|(_, status, _)| *status)
                                             })
                                             .or_else(|| {
                                                 debug_assert!(false, "resolved_config should have a matching rule for every diagnostic we received {tsgolint_diagnostic:?}");
@@ -377,14 +377,15 @@ impl TsGoLintState {
                                         continue;
                                     };
 
-                                    let severity =
-                                        resolved_config.rules.iter().find_map(|(rule, status)| {
+                                    let severity = resolved_config.rules.iter().find_map(
+                                        |(rule, status, _)| {
                                             if rule.name() == tsgolint_diagnostic.rule {
                                                 Some(*status)
                                             } else {
                                                 None
                                             }
-                                        });
+                                        },
+                                    );
                                     let Some(severity) = severity else {
                                         // If the severity is not found, we should not report the diagnostic
                                         continue;
@@ -506,7 +507,7 @@ impl TsGoLintState {
                 let rules: BTreeSet<Rule> = resolved_config
                     .rules
                     .iter()
-                    .filter_map(|(rule, status)| {
+                    .filter_map(|(rule, status, _)| {
                         if status.is_warn_deny() && rule.is_tsgolint_rule() {
                             let rule_name = rule.name().to_string();
                             let options = match rule.to_configuration() {

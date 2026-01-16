@@ -19,7 +19,12 @@ use crate::{
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
 
-type RuleSet = FxHashMap<RuleEnum, AllowWarnDeny>;
+/// The namespace under which a rule was configured.
+/// For example, `vitest/valid-describe-callback` would have `ConfiguredNamespace::Vitest`.
+/// This is used to preserve the original namespace when a vitest rule is implemented by a jest rule.
+pub type ConfiguredNamespace = Option<&'static str>;
+
+type RuleSet = FxHashMap<RuleEnum, (AllowWarnDeny, ConfiguredNamespace)>;
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -84,11 +89,21 @@ impl OxlintRules {
                 .collect::<FxHashMap<_, _>>();
 
             for rule_config in rule_configs {
-                let (rule_name, plugin_name) = transform_rule_and_plugin_name(
-                    &rule_config.rule_name,
-                    &rule_config.plugin_name,
-                );
+                // Store the original plugin name before transformation
+                let original_plugin_name = rule_config.plugin_name.as_str();
+                let (rule_name, plugin_name) =
+                    transform_rule_and_plugin_name(&rule_config.rule_name, original_plugin_name);
                 let severity = rule_config.severity;
+
+                // Determine the configured namespace:
+                // If the plugin name was transformed (e.g., vitest -> jest),
+                // store the original plugin name as the configured namespace
+                let configured_namespace: ConfiguredNamespace =
+                    if original_plugin_name == plugin_name {
+                        None
+                    } else {
+                        Some(to_static_str(original_plugin_name))
+                    };
 
                 if LintPlugins::try_from(plugin_name).is_ok() {
                     let rule = rules_map.get(&plugin_name).copied().or_else(|| {
@@ -108,6 +123,7 @@ impl OxlintRules {
                             rule.from_configuration(config)
                                 .expect("failed to parse rule configuration"),
                             severity,
+                            configured_namespace,
                         ));
                     }
                 } else {
@@ -138,12 +154,34 @@ impl OxlintRules {
             }
         }
 
-        for (rule, severity) in rules_to_replace {
+        for (rule, severity, configured_namespace) in rules_to_replace {
             let _ = rules_for_override.remove(&rule);
-            rules_for_override.insert(rule, severity);
+            rules_for_override.insert(rule, (severity, configured_namespace));
         }
 
         Ok(())
+    }
+}
+
+/// Convert a plugin name string to a static str for known plugin names.
+/// This avoids allocations by returning the canonical static string.
+fn to_static_str(plugin_name: &str) -> &'static str {
+    match plugin_name {
+        "vitest" => "vitest",
+        "jest" => "jest",
+        "unicorn" => "unicorn",
+        "typescript" => "typescript",
+        "react" => "react",
+        "jsx_a11y" => "jsx_a11y",
+        "nextjs" => "nextjs",
+        "import" => "import",
+        "jsdoc" => "jsdoc",
+        "node" => "node",
+        "promise" => "promise",
+        "security" => "security",
+        "oxc" => "oxc",
+        // eslint and unknown plugins fallback to eslint
+        _ => "eslint",
     }
 }
 
@@ -466,7 +504,7 @@ mod test {
             r#override(&mut rules, &config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, (severity, _)) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-console", "{config:?}");
             assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
@@ -489,7 +527,7 @@ mod test {
             1,
             "eslint rules should be configurable by their typescript-eslint reimplementations: {config:?}"
         );
-        let (rule, severity) = rules.iter().next().unwrap();
+        let (rule, (severity, _)) = rules.iter().next().unwrap();
         assert_eq!(
             rule.name(),
             "no-console",
@@ -505,10 +543,10 @@ mod test {
     #[test]
     fn test_override_allow() {
         let mut rules = RuleSet::default();
-        rules.insert(RuleEnum::EslintNoConsole(Default::default()), AllowWarnDeny::Deny);
+        rules.insert(RuleEnum::EslintNoConsole(Default::default()), (AllowWarnDeny::Deny, None));
         r#override(&mut rules, &json!({ "eslint/no-console": "off" }));
 
-        assert!(!rules.iter().any(|(_, severity)| severity.is_warn_deny()));
+        assert!(!rules.iter().any(|(_, (severity, _))| severity.is_warn_deny()));
     }
 
     #[test]
@@ -524,18 +562,21 @@ mod test {
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, (severity, _)) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
             assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
 
         for config in &configs {
             let mut rules = RuleSet::default();
-            rules.insert(RuleEnum::EslintNoUnusedVars(Default::default()), AllowWarnDeny::Warn);
+            rules.insert(
+                RuleEnum::EslintNoUnusedVars(Default::default()),
+                (AllowWarnDeny::Warn, None),
+            );
             r#override(&mut rules, config);
 
             assert_eq!(rules.len(), 1, "{config:?}");
-            let (rule, severity) = rules.iter().next().unwrap();
+            let (rule, (severity, _)) = rules.iter().next().unwrap();
             assert_eq!(rule.name(), "no-unused-vars", "{config:?}");
             assert_eq!(severity, &AllowWarnDeny::Deny, "{config:?}");
         }
