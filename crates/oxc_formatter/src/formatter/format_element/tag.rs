@@ -1,6 +1,7 @@
 use std::{cell::Cell, num::NonZeroU8};
 
-use super::super::{GroupId, format_element::PrintMode};
+use super::super::GroupId;
+use super::PrintMode;
 
 /// A Tag marking the start and end of some content to which some special formatting should be applied.
 ///
@@ -62,6 +63,18 @@ pub enum Tag {
     /// See [crate::builders::labelled] for documentation.
     StartLabelled(LabelId),
     EndLabelled,
+
+    /// Parenthesizes the content but only if adding the parentheses and indenting the content
+    /// makes the content fit in the configured line width.
+    ///
+    /// Falls back to the flat layout (without parentheses) if the parenthesized layout
+    /// also exceeds the line width.
+    ///
+    /// See [crate::builders::best_fit_parenthesize] for documentation.
+    StartBestFitParenthesize {
+        id: Option<GroupId>,
+    },
+    EndBestFitParenthesize,
 }
 
 impl Tag {
@@ -79,6 +92,7 @@ impl Tag {
                 | Tag::StartEntry
                 | Tag::StartLineSuffix
                 | Tag::StartLabelled(_)
+                | Tag::StartBestFitParenthesize { .. }
         )
     }
 
@@ -89,10 +103,10 @@ impl Tag {
 
     pub const fn kind(&self) -> TagKind {
         use Tag::{
-            EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            EndAlign, EndBestFitParenthesize, EndConditionalContent, EndDedent, EndEntry, EndFill,
+            EndGroup, EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            StartBestFitParenthesize, StartConditionalContent, StartDedent, StartEntry, StartFill,
+            StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         match self {
@@ -106,6 +120,9 @@ impl Tag {
             StartEntry | EndEntry => TagKind::Entry,
             StartLineSuffix | EndLineSuffix => TagKind::LineSuffix,
             StartLabelled(_) | EndLabelled => TagKind::Labelled,
+            StartBestFitParenthesize { .. } | EndBestFitParenthesize => {
+                TagKind::BestFitParenthesize
+            }
         }
     }
 }
@@ -126,6 +143,7 @@ pub enum TagKind {
     LineSuffix,
     Labelled,
     TailwindClass,
+    BestFitParenthesize,
 }
 
 #[derive(Debug, Copy, Default, Clone, Eq, PartialEq)]

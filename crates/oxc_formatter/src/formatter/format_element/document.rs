@@ -181,10 +181,10 @@ impl std::fmt::Display for Document<'_> {
 impl<'a> Format<'a> for &[FormatElement<'a>] {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         use Tag::{
-            EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
+            EndAlign, EndBestFitParenthesize, EndConditionalContent, EndDedent, EndEntry, EndFill,
+            EndGroup, EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+            StartBestFitParenthesize, StartConditionalContent, StartDedent, StartEntry, StartFill,
+            StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
         };
 
         write!(f, [ContentArrayStart]);
@@ -499,6 +499,25 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                             write!(f, [token("fill(")]);
                         }
 
+                        StartBestFitParenthesize { id } => {
+                            write!(f, [token("best_fit_parenthesize(")]);
+
+                            if let Some(group_id) = id {
+                                write!(
+                                    f,
+                                    [
+                                        text(
+                                            f.context()
+                                                .allocator()
+                                                .alloc_str(&std::format!("\"{group_id:?}\"")),
+                                        ),
+                                        token(","),
+                                        space(),
+                                    ]
+                                );
+                            }
+                        }
+
                         StartEntry => {
                             // handled after the match for all start tags
                         }
@@ -512,7 +531,8 @@ impl<'a> Format<'a> for &[FormatElement<'a>] {
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix
-                        | EndDedent(_) => {
+                        | EndDedent(_)
+                        | EndBestFitParenthesize => {
                             write!(f, [ContentArrayEnd, token(")")]);
                         }
                     }

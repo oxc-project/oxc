@@ -1,10 +1,10 @@
 use std::{cell::Cell, num::NonZeroU8};
 
 use Tag::{
-    EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-    EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign, StartConditionalContent,
-    StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
-    StartLabelled, StartLineSuffix,
+    EndAlign, EndBestFitParenthesize, EndConditionalContent, EndDedent, EndEntry, EndFill,
+    EndGroup, EndIndent, EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign,
+    StartBestFitParenthesize, StartConditionalContent, StartDedent, StartEntry, StartFill,
+    StartGroup, StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix,
 };
 use oxc_allocator::Vec as ArenaVec;
 use oxc_span::{GetSpan, Span};
@@ -2557,5 +2557,95 @@ impl<'ast> Format<'ast> for BestFitting<'_, 'ast> {
         };
 
         f.write_element(element);
+    }
+}
+
+/// Content that may get parenthesized if it exceeds the configured line width
+/// but only if the parenthesized layout doesn't exceed the line width too,
+/// in which case it falls back to the flat layout.
+///
+/// This is an optimized alternative to using `best_fitting!` for the common
+/// pattern of choosing between flat content and parenthesized content:
+///
+/// ```ignore
+/// best_fitting![
+///     content,  // flat layout without parentheses
+///     format_args!(token("("), block_indent(&content), token(")"))  // parenthesized
+/// ]
+/// ```
+///
+/// The advantage of `best_fit_parenthesize` is that it avoids the overhead of
+/// the general `BestFitting` IR while providing identical output behavior for
+/// this specific use case.
+///
+/// # Examples
+///
+/// ```ignore
+/// use oxc_formatter::prelude::*;
+///
+/// # fn example(f: &mut Formatter) {
+/// write!(f, [best_fit_parenthesize(&token("some_long_expression"))]);
+/// # }
+/// ```
+///
+/// With a group ID for conditional content that depends on whether parentheses are used:
+///
+/// ```ignore
+/// use oxc_formatter::prelude::*;
+///
+/// # fn example(f: &mut Formatter) {
+/// let group_id = f.group_id("parens");
+/// write!(f, [
+///     best_fit_parenthesize(&token("expr")).with_group_id(Some(group_id)),
+///     if_group_breaks(&token(" // parenthesized")).with_group_id(Some(group_id)),
+/// ]);
+/// # }
+/// ```
+#[inline]
+#[expect(dead_code)] // Will be used once formatting rules adopt this API
+pub fn best_fit_parenthesize<'a, 'ast, Content>(
+    content: &'a Content,
+) -> BestFitParenthesize<'a, 'ast>
+where
+    Content: Format<'ast>,
+{
+    BestFitParenthesize { content: Argument::new(content), group_id: None }
+}
+
+#[derive(Copy, Clone)]
+pub struct BestFitParenthesize<'a, 'ast> {
+    content: Argument<'a, 'ast>,
+    group_id: Option<GroupId>,
+}
+
+#[expect(dead_code)] // Will be used once formatting rules adopt this API
+impl BestFitParenthesize<'_, '_> {
+    /// Sets an optional ID for the group that can be used by conditional content
+    /// to check whether the parentheses are rendered.
+    ///
+    /// When parentheses are rendered (expanded mode), conditional content with this
+    /// group ID will behave as if the group breaks. When parentheses are not rendered
+    /// (flat mode), conditional content will behave as if the group fits.
+    #[must_use]
+    pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
+        self.group_id = group_id;
+        self
+    }
+}
+
+impl<'ast> Format<'ast> for BestFitParenthesize<'_, 'ast> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast>) {
+        f.write_element(FormatElement::Tag(StartBestFitParenthesize { id: self.group_id }));
+        Arguments::from(&self.content).fmt(f);
+        f.write_element(FormatElement::Tag(EndBestFitParenthesize));
+    }
+}
+
+impl std::fmt::Debug for BestFitParenthesize<'_, '_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BestFitParenthesize")
+            .field("group_id", &self.group_id)
+            .field("content", &"{{content}}")
+            .finish()
     }
 }

@@ -15,7 +15,7 @@ use super::{
     ActualStart, FormatElement, GroupId, InvalidDocumentError, PrintError, PrintResult, Printed,
     format_element::{BestFittingElement, LineMode, PrintMode, tag::Condition},
     prelude::{
-        Tag::EndFill,
+        Tag::{EndBestFitParenthesize, EndFill, StartBestFitParenthesize},
         TextWidth,
         tag::{DedentMode, Tag, TagKind},
     },
@@ -271,6 +271,71 @@ impl<'a> Printer<'a> {
                 }
                 stack.pop(tag.kind())?;
             }
+
+            FormatElement::Tag(StartBestFitParenthesize { id }) => {
+                const OPEN_PAREN: FormatElement = FormatElement::Token { text: "(" };
+                const INDENT: FormatElement = FormatElement::Tag(Tag::StartIndent);
+                const HARD_LINE_BREAK: FormatElement = FormatElement::Line(LineMode::Hard);
+
+                // First test if content fits in flat mode (without parentheses)
+                if let Some(id) = id {
+                    self.state.group_modes.insert_print_mode(*id, PrintMode::Flat);
+                }
+
+                stack.push(TagKind::BestFitParenthesize, args.with_print_mode(PrintMode::Flat));
+                let fits_flat = self.fits(queue, stack, indent_stack)?;
+                stack.pop(TagKind::BestFitParenthesize)?;
+
+                let print_mode = if fits_flat {
+                    PrintMode::Flat
+                } else {
+                    // Test if content fits in expanded mode (with parentheses)
+                    if let Some(id) = id {
+                        self.state.group_modes.insert_print_mode(*id, PrintMode::Expanded);
+                    }
+
+                    stack.push(
+                        TagKind::BestFitParenthesize,
+                        args.with_print_mode(PrintMode::Expanded),
+                    );
+                    // Temporarily add the opening paren, indent, and hard line break to measure
+                    queue.extend_back(&[OPEN_PAREN, INDENT, HARD_LINE_BREAK]);
+                    let fits_expanded = self.fits(queue, stack, indent_stack)?;
+                    queue.pop_slice();
+                    stack.pop(TagKind::BestFitParenthesize)?;
+
+                    // If expanded fits, use it. Otherwise fall back to flat (no parens).
+                    if fits_expanded { PrintMode::Expanded } else { PrintMode::Flat }
+                };
+
+                if let Some(id) = id {
+                    self.state.group_modes.insert_print_mode(*id, print_mode);
+                }
+
+                if print_mode.is_expanded() {
+                    // Add the opening paren, indent, and hard line break to the queue
+                    queue.extend_back(&[OPEN_PAREN, INDENT, HARD_LINE_BREAK]);
+                }
+
+                stack.push(TagKind::BestFitParenthesize, args.with_print_mode(print_mode));
+            }
+
+            FormatElement::Tag(EndBestFitParenthesize) => {
+                if args.mode().is_expanded() {
+                    const HARD_LINE_BREAK: FormatElement = FormatElement::Line(LineMode::Hard);
+                    const CLOSE_PAREN: FormatElement = FormatElement::Token { text: ")" };
+
+                    // Pop the indent that was pushed in StartBestFitParenthesize
+                    stack.pop(TagKind::Indent)?;
+                    indent_stack.pop();
+
+                    // Add hard line break and closing paren
+                    queue.extend_back(&[HARD_LINE_BREAK, CLOSE_PAREN]);
+                }
+
+                stack.pop(TagKind::BestFitParenthesize)?;
+            }
+
             FormatElement::TailwindClass(index) => {
                 if let Some(text) = self.state.sorted_tailwind_classes.get(*index) {
                     let width = TextWidth::from_text(text, self.options.indent_width);
@@ -1172,6 +1237,33 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
                 self.stack.pop(tag.kind())?;
             }
+
+            FormatElement::Tag(StartBestFitParenthesize { id }) => {
+                // During fitting, we record the mode and push to the stack
+                if let Some(id) = id {
+                    self.group_modes_mut().insert_print_mode(*id, args.mode());
+                }
+                self.stack.push(TagKind::BestFitParenthesize, args);
+            }
+
+            FormatElement::Tag(EndBestFitParenthesize) => {
+                // During fitting in expanded mode, we need to account for the closing paren
+                if args.mode().is_expanded() && self.stack.top_kind() == Some(TagKind::Indent) {
+                    self.stack.pop(TagKind::Indent)?;
+                    self.indent_stack.pop();
+
+                    // Reset line width for the closing paren (simulates the hard line break)
+                    self.state.line_width = 0;
+                    self.state.pending_indent = self.indent_stack.indention();
+
+                    // Pop the BestFitParenthesize frame and check if the closing paren fits
+                    self.stack.pop(TagKind::BestFitParenthesize)?;
+                    return Ok(self.fits_text(Text::Token(")")));
+                }
+
+                self.stack.pop(TagKind::BestFitParenthesize)?;
+            }
+
             FormatElement::TailwindClass(index) => {
                 if let Some(text) = self.state.sorted_tailwind_classes.get(*index) {
                     let width = TextWidth::from_text(text, self.options().indent_width);
@@ -1770,5 +1862,88 @@ Group 1 breaks"
                 ))]
             );
         }
+    }
+
+    #[test]
+    fn best_fit_parenthesize_fits_flat() {
+        // When content fits on a single line, no parentheses are added
+        let allocator = Allocator::default();
+        let printed = format(&allocator, &best_fit_parenthesize(&token("short")));
+
+        assert_eq!("short", printed.as_code());
+    }
+
+    #[test]
+    fn best_fit_parenthesize_needs_parens() {
+        // When content doesn't fit flat but fits with parentheses, add parentheses
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            print_width: PrintWidth::new(15),
+            indent_style: IndentStyle::Space,
+            indent_width: 2.try_into().unwrap(),
+            ..PrinterOptions::default()
+        };
+
+        let printed = format_with_options(
+            &allocator,
+            &best_fit_parenthesize(&token("this_is_a_long_expression_that_needs_parens")),
+            options,
+        );
+
+        // With width 15, the expression doesn't fit flat, so parentheses are added
+        assert_eq!("(\n  this_is_a_long_expression_that_needs_parens\n)", printed.as_code());
+    }
+
+    #[test]
+    fn best_fit_parenthesize_expanded_always_when_flat_doesnt_fit() {
+        // When flat doesn't fit, parentheses are always added for visual structure
+        // (even if the content is still too long)
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            print_width: PrintWidth::new(5),
+            indent_style: IndentStyle::Space,
+            indent_width: 2.try_into().unwrap(),
+            ..PrinterOptions::default()
+        };
+
+        let printed = format_with_options(
+            &allocator,
+            &best_fit_parenthesize(&token("this_is_very_long")),
+            options,
+        );
+
+        // With width 5, the flat doesn't fit, so parentheses are added even though
+        // the indented content is still too long - this provides visual structure
+        assert_eq!("(\n  this_is_very_long\n)", printed.as_code());
+    }
+
+    #[test]
+    fn best_fit_parenthesize_with_group_id() {
+        // Test that group_id works for conditional content
+        let allocator = Allocator::default();
+        let options = PrinterOptions {
+            print_width: PrintWidth::new(15),
+            indent_style: IndentStyle::Space,
+            indent_width: 2.try_into().unwrap(),
+            ..PrinterOptions::default()
+        };
+
+        let content = format_with(|f| {
+            let group_id = f.group_id("parens");
+            write!(
+                f,
+                [
+                    best_fit_parenthesize(&token("this_is_a_long_expression"))
+                        .with_group_id(Some(group_id)),
+                    if_group_breaks(&token(" // parenthesized")).with_group_id(Some(group_id)),
+                    if_group_fits_on_line(&token(" // flat")).with_group_id(Some(group_id)),
+                ]
+            );
+        });
+
+        let printed = format_with_options(&allocator, &content, options);
+
+        // The expression needs parentheses, so the "// parenthesized" comment should be printed
+        assert_eq!("(\n  this_is_a_long_expression\n) // parenthesized", printed.as_code());
     }
 }
