@@ -23,11 +23,19 @@ use std::cell::RefCell;
 #[derive(Debug, Clone, Default)]
 pub struct FormatJsxChildList {
     layout: JsxChildListLayout,
+    /// Whether this is a Facebook Translation (`<fbt>`) element.
+    /// FBT elements preserve whitespace structure for translators.
+    is_fbt: bool,
 }
 
 impl FormatJsxChildList {
     pub fn with_options(mut self, options: JsxChildListLayout) -> Self {
         self.layout = options;
+        self
+    }
+
+    pub fn with_fbt(mut self, is_fbt: bool) -> Self {
+        self.is_fbt = is_fbt;
         self
     }
 
@@ -40,7 +48,11 @@ impl FormatJsxChildList {
         let children_meta = Self::children_meta(children, f.context().comments());
         let layout = self.layout(children_meta);
 
-        let multiline_layout = if children_meta.meaningful_text {
+        // For FBT elements, don't use Fill layout because we may skip separators
+        // to preserve the original whitespace structure for translators
+        let multiline_layout = if self.is_fbt {
+            MultilineLayout::NoFill
+        } else if children_meta.meaningful_text {
             MultilineLayout::Fill
         } else {
             MultilineLayout::NoFill
@@ -50,7 +62,7 @@ impl FormatJsxChildList {
         let mut flat = FlatBuilder::new(force_multiline, f.context().allocator());
         let mut multiline = MultilineBuilder::new(multiline_layout, f.context().allocator());
 
-        let mut children = jsx_split_children(children, f.context().comments());
+        let mut children = jsx_split_children(children, f.context().comments(), self.is_fbt);
 
         // Trim trailing new lines
         if let Some(JsxChild::EmptyLine | JsxChild::Newline) = children.last() {
@@ -79,36 +91,48 @@ impl FormatJsxChildList {
             match &child {
                 // A single word: Both `a` and `b` are a word in `a b` because they're separated by JSX Whitespace.
                 JsxChild::Word(word) => {
-                    let separator = match children_iter.peek() {
-                        Some(JsxChild::Word(_)) => {
-                            // Separate words by a space or line break in extended mode
-                            Some(WordSeparator::BetweenWords)
-                        }
-
-                        // Last word or last word before an element without any whitespace in between
-                        Some(JsxChild::NonText(next_child)) => Some(WordSeparator::EndOfText {
-                            is_soft_line_break: !matches!(
-                                next_child.as_ref(),
-                                JSXChild::Element(element) if element.closing_element.is_none()
-                            ) || word.is_single_character(),
-                        }),
-
-                        Some(JsxChild::Newline | JsxChild::Whitespace | JsxChild::EmptyLine) => {
-                            None
-                        }
-
-                        None => None,
-                    };
-
-                    child_breaks = separator.is_some_and(WordSeparator::will_break);
-
-                    flat.write(&format_args!(word, separator), f);
-
-                    if let Some(separator) = separator {
-                        multiline.write_with_separator(word, &separator, f);
-                    } else {
-                        // it's safe to write without a separator because None means that next element is a separator or end of the iterator
+                    // For FBT elements, handle words specially to preserve structure for translators
+                    if self.is_fbt {
+                        let has_next_word = matches!(children_iter.peek(), Some(JsxChild::Word(_)));
+                        flat.write(word, f);
                         multiline.write_content(word, f);
+                        // For FBT: use space between words, not soft line break
+                        if has_next_word {
+                            flat.write(&space(), f);
+                            multiline.write_separator(&space(), f);
+                        }
+                        // No separator for NonText (keep word and element together)
+                    } else {
+                        let separator = match children_iter.peek() {
+                            Some(JsxChild::Word(_)) => {
+                                // Separate words by a space or line break in extended mode
+                                Some(WordSeparator::BetweenWords)
+                            }
+
+                            // Last word or last word before an element without any whitespace in between
+                            Some(JsxChild::NonText(next_child)) => Some(WordSeparator::EndOfText {
+                                is_soft_line_break: !matches!(
+                                    next_child.as_ref(),
+                                    JSXChild::Element(element) if element.closing_element.is_none()
+                                ) || word.is_single_character(),
+                            }),
+
+                            Some(
+                                JsxChild::Newline | JsxChild::Whitespace | JsxChild::EmptyLine,
+                            )
+                            | None => None,
+                        };
+
+                        child_breaks = separator.is_some_and(WordSeparator::will_break);
+
+                        flat.write(&format_args!(word, separator), f);
+
+                        if let Some(separator) = separator {
+                            multiline.write_with_separator(word, &separator, f);
+                        } else {
+                            // it's safe to write without a separator because None means that next element is a separator or end of the iterator
+                            multiline.write_content(word, f);
+                        }
                     }
                 }
 
@@ -142,7 +166,10 @@ impl FormatJsxChildList {
 
                 // A new line between some JSX text and an element
                 JsxChild::Newline => {
-                    let is_soft_break = {
+                    // For FBT elements, always use hard line break to preserve structure for translators
+                    let is_soft_break = if self.is_fbt {
+                        false
+                    } else {
                         // Here we handle the case when we have a newline between a single-character word and a jsx element
                         // We need to use the previous and the next element
                         // [JsxChild::Word, JsxChild::Newline, JsxChild::NonText]
@@ -238,6 +265,10 @@ impl FormatJsxChildList {
                     let mut is_non_text_node_next = false;
                     let line_mode = match children_iter.peek() {
                         Some(JsxChild::Word(word)) => {
+                            // For FBT elements, don't add separator to keep element and word on same line
+                            if self.is_fbt {
+                                None
+                            }
                             // Break if the current or next element is a self closing element
                             // ```javascript
                             // <pre className="h-screen overflow-y-scroll" />adefg
@@ -247,7 +278,7 @@ impl FormatJsxChildList {
                             // <pre className="h-screen overflow-y-scroll" />
                             // adefg
                             // ```
-                            if matches!(non_text.as_ref(), JSXChild::Element(element) if element.closing_element.is_none())
+                            else if matches!(non_text.as_ref(), JSXChild::Element(element) if element.closing_element.is_none())
                                 && !word.is_single_character()
                             {
                                 Some(LineMode::Hard)
@@ -257,9 +288,14 @@ impl FormatJsxChildList {
                         }
 
                         // Add a hard line break if what comes after the element is not a text or is all whitespace
+                        // For FBT elements, don't add any separator to keep elements on the same line
                         Some(JsxChild::NonText(_)) => {
                             is_non_text_node_next = true;
-                            Some(LineMode::Hard)
+                            if self.is_fbt {
+                                None // FBT: no separator between adjacent elements
+                            } else {
+                                Some(LineMode::Hard)
+                            }
                         }
 
                         Some(JsxChild::Newline | JsxChild::Whitespace | JsxChild::EmptyLine) => {

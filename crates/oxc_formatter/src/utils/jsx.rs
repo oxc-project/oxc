@@ -265,6 +265,7 @@ impl FusedIterator for JsxSplitChunksIterator<'_> {}
 pub fn jsx_split_children<'a, 'b>(
     children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
     comments: &Comments<'a>,
+    preserve_newlines: bool,
 ) -> Vec<JsxChild<'a, 'b>> {
     let mut builder = JsxSplitChildrenBuilder::new();
 
@@ -297,6 +298,9 @@ pub fn jsx_split_children<'a, 'b>(
                                     // ```
                                     if newlines > 1 {
                                         builder.entry(JsxChild::EmptyLine);
+                                    } else if preserve_newlines {
+                                        // For FBT elements, preserve single newlines to maintain structure for translators
+                                        builder.entry(JsxChild::Newline);
                                     }
 
                                     continue;

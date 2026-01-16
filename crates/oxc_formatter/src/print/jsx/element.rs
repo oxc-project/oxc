@@ -141,6 +141,7 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
                     let children = self.children();
                     let format_children = FormatJsxChildList::default()
                         .with_options(list_layout)
+                        .with_fbt(self.is_fbt())
                         .fmt_children(children, f);
 
                     match format_children {
@@ -244,6 +245,20 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
 }
 
 impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
+    /// Returns `true` if this is a Facebook Translation (`<fbt>`) element.
+    /// FBT elements have special whitespace handling to preserve structure for translators.
+    fn is_fbt(&self) -> bool {
+        match self {
+            Self::Element(element) => {
+                matches!(
+                    &element.opening_element.name,
+                    oxc_ast::ast::JSXElementName::Identifier(ident) if ident.name == "fbt"
+                )
+            }
+            Self::Fragment(_) => false,
+        }
+    }
+
     fn fmt_opening(&self, f: &mut Formatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
