@@ -130,7 +130,9 @@ mod test_implementation {
 
     impl DiagnosticReporter for GraphicalReporterTester {
         fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none());
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none())
+                // links print ansi escape codes, which makes snapshots harder to read
+                .with_links(false);
             let mut output = String::new();
 
             self.diagnostics.sort_by_cached_key(|diagnostic| {

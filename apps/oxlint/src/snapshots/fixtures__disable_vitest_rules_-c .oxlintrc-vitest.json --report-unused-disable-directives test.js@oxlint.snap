@@ -6,7 +6,7 @@ arguments: -c .oxlintrc-vitest.json --report-unused-disable-directives test.js
 working directory: fixtures/disable_vitest_rules
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jest/no-restricted-jest-methods.html\eslint-plugin-jest(no-restricted-jest-methods)]8;;\: Use of `advanceTimersByTime` is not allowed
+  x eslint-plugin-jest(no-restricted-jest-methods): Use of `advanceTimersByTime` is not allowed
    ,-[test.js:7:6]
  6 | it('calls the callback after 1 second via advanceTimersByTime', () => {
  7 |   vi.advanceTimersByTime(1000);

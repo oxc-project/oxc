@@ -6,7 +6,7 @@ arguments: fixtures/svelte/debugger.svelte
 working directory: 
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
    ,-[fixtures/svelte/debugger.svelte:2:2]
  1 | <script>
  2 |     debugger;
@@ -15,7 +15,7 @@ working directory:
    `----
   help: Remove the debugger statement
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unassigned-vars.html\eslint(no-unassigned-vars)]8;;\: 'title' is always 'undefined' because it's never assigned.
+  ! eslint(no-unassigned-vars): 'title' is always 'undefined' because it's never assigned.
    ,-[fixtures/svelte/debugger.svelte:4:13]
  3 | 
  4 |     export let title;
@@ -24,7 +24,7 @@ working directory:
    `----
   help: Variable declared without assignment. Either assign a value or remove the declaration.
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unassigned-vars.html\eslint(no-unassigned-vars)]8;;\: 'person' is always 'undefined' because it's never assigned.
+  ! eslint(no-unassigned-vars): 'person' is always 'undefined' because it's never assigned.
    ,-[fixtures/svelte/debugger.svelte:5:13]
  4 |     export let title;
  5 |     export let person;

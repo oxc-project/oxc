@@ -6,7 +6,7 @@ arguments:
 working directory: fixtures/dot_folder
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
    ,-[.a_dot_folder/index.ts:1:1]
  1 | debugger;
    : ^^^^^^^^^
