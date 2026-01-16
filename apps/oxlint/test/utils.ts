@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join as pathJoin, sep as pathSep } from "node:path";
 
 import { execa } from "execa";
+import { stripVTControlCharacters } from "node:util";
 import { expect as defaultExpect, type ExpectStatic } from "vitest";
 
 // Replace backslashes with forward slashes on Windows. Do nothing on Mac/Linux.
@@ -251,6 +252,9 @@ function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean)
 
     return [line];
   });
+
+  // Strip ANSI/control characters using Node to avoid noise in snapshot results.
+  lines = lines.map(stripVTControlCharacters);
 
   if (lines.length === 0) return "";
   return lines.join("\n") + "\n";
