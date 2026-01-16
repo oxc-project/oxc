@@ -1,6 +1,6 @@
 semantic_misc Summary:
-AST Parsed     : 58/58 (100.00%)
-Positive Passed: 35/58 (60.34%)
+AST Parsed     : 59/59 (100.00%)
+Positive Passed: 36/59 (61.02%)
 semantic Error: tasks/coverage/misc/pass/commonjs-top-level-new-target.cjs
 Unexpected new.target expression
 

@@ -133,6 +133,13 @@ pub fn import_meta(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn using_declaration_not_allowed_in_script(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'using' declarations are not allowed at the top level of a script")
+        .with_help("Wrap this code in a block or use a module")
+        .with_label(span)
+}
+
+#[cold]
 pub fn function_declaration_strict(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid function declaration")
         .with_help(

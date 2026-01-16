@@ -3,12 +3,8 @@ commit: fc58af40
 parser_babel Summary:
 AST Parsed     : 2222/2234 (99.46%)
 Positive Passed: 2205/2234 (98.70%)
-Negative Passed: 1647/1697 (97.05%)
+Negative Passed: 1649/1697 (97.17%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-using-binding/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
 
@@ -9036,6 +9032,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js:1:8]
+ 1 │ label: await using x = bar();
+   ·        ──────────────────────
+   ╰────
+  help: Wrap this code in a block or use a module
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js:1:1]
+ 1 │ await using x = bar();
+   · ──────────────────────
+   ╰────
+  help: Wrap this code in a block or use a module
+
   × Cannot assign to this expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-using-array-pattern/input.js:2:3]
  1 │ async function f() {
@@ -9379,6 +9389,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ────────────────
    ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-labeled-using-binding/input.js:1:8]
+ 1 │ label: using x = bar();
+   ·        ────────────────
+   ╰────
+  help: Wrap this code in a block or use a module
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-script-top-level-using-binding/input.js:1:1]
+ 1 │ using x = bar();
+   · ────────────────
+   ╰────
+  help: Wrap this code in a block or use a module
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-binding-await-module/input.js:2:9]
