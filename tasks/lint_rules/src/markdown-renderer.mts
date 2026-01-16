@@ -1,5 +1,5 @@
-import { RuleEntry, RuleEntries } from "./oxlint-rules.mjs";
-import { TargetPluginMeta } from "./eslint-rules.mjs";
+import type { RuleEntry, RuleEntries } from "./oxlint-rules.mts";
+import { type TargetPluginMeta } from "./eslint-rules.mts";
 type RuleEntryView = { name: string } & RuleEntry;
 
 const renderIntroduction = (npm: string[]) => `

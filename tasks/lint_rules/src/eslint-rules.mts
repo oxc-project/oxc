@@ -25,6 +25,7 @@ import {
   rules as pluginImportAllRules,
 } from "eslint-plugin-import";
 // https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/index.js
+// @ts-expect-error
 import pluginJSXA11y from "eslint-plugin-jsx-a11y";
 // https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/src/index.ts
 import pluginJest from "eslint-plugin-jest";
@@ -33,10 +34,12 @@ import pluginReact from "eslint-plugin-react";
 // https://github.com/facebook/react/blob/v19.2.0/packages/eslint-plugin-react-hooks/src/index.ts
 import pluginReactHooks from "eslint-plugin-react-hooks";
 // https://github.com/cvazac/eslint-plugin-react-perf/blob/9bfa930661a23218f5460ebd39d35d76ccdb5724/index.js
+// @ts-expect-error: No type definitions
 import pluginReactPerf from "eslint-plugin-react-perf";
 // https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
 import pluginNext from "@next/eslint-plugin-next";
 // https://github.com/eslint-community/eslint-plugin-promise/blob/v7.1.0/index.js
+// @ts-expect-error: No type definitions
 import pluginPromise from "eslint-plugin-promise";
 // https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/src/index.ts
 import pluginVitest from "@vitest/eslint-plugin";
@@ -50,11 +53,7 @@ const { configs: pluginUnicornConfigs, rules: pluginUnicornAllRules } = pluginUn
 const { rules: pluginJSDocAllRules, configs: pluginJSDocConfigs } = pluginJSDoc;
 const { rules: pluginJSXA11yAllRules, configs: pluginJSXA11yConfigs } = pluginJSXA11y;
 const { rules: pluginJestAllRules, configs: pluginJestConfigs } = pluginJest;
-const {
-  // @ts-expect-error: Module has no exported member
-  configs: pluginPromiseConfigs,
-  rules: pluginPromiseRules,
-} = pluginPromise;
+const { configs: pluginPromiseConfigs, rules: pluginPromiseRules } = pluginPromise;
 const { rules: pluginReactAllRules } = pluginReact;
 const { rules: pluginReactHooksAllRules } = pluginReactHooks;
 const { rules: pluginReactPerfAllRules, configs: pluginReactPerfConfigs } = pluginReactPerf;
@@ -206,9 +205,9 @@ const loadPluginReactPerfRules = (linter: Linter) => {
   for (const [name, rule] of Object.entries(pluginReactPerfAllRules)) {
     const prefixedName = `react-perf/${name}`;
 
-    rule.meta.docs.recommended = pluginReactPerfRecommendedRules.has(prefixedName);
+    (rule as any).meta.docs.recommended = pluginReactPerfRecommendedRules.has(prefixedName);
 
-    linter.defineRule(prefixedName, rule);
+    linter.defineRule(prefixedName, rule as any);
   }
 };
 
@@ -260,7 +259,7 @@ const loadPluginVueRules = (linter: Linter) => {
   }
 };
 
-type TargetPluginMeta = {
+export type TargetPluginMeta = {
   npm: string[];
   issueNo: number;
 };
