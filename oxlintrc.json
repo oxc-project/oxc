@@ -12,19 +12,14 @@
     "promise",
     "vitest"
   ],
-  "jsPlugins": [
-    "./plugins/oxlint-plugin.ts"
-  ],
+  "jsPlugins": ["./plugins/oxlint-plugin.ts"],
   "categories": {
     "correctness": "error",
     "perf": "error"
   },
   "rules": {
     "no-console": "error",
-    "curly": [
-      "error",
-      "multi-line"
-    ],
+    "curly": ["error", "multi-line"],
     "prefer-destructuring": [
       "error",
       {
@@ -34,10 +29,7 @@
         }
       }
     ],
-    "typescript/consistent-indexed-object-style": [
-      "error",
-      "record"
-    ],
+    "typescript/consistent-indexed-object-style": ["error", "record"],
     "typescript/ban-ts-comment": [
       "error",
       {
@@ -53,9 +45,7 @@
   },
   "overrides": [
     {
-      "files": [
-        "**/editors/vscode/tests/**/*.spec.ts"
-      ],
+      "files": ["**/editors/vscode/tests/**/*.spec.ts"],
       "rules": {
         // VSCode uses `vscode-test-cli`, which uses `mocha`.
         // Ignore specific rules, instead of copying the plugins array.
@@ -63,9 +53,7 @@
       }
     },
     {
-      "files": [
-        "tasks/e2e/test/*.test.ts"
-      ],
+      "files": ["tasks/e2e/test/*.test.ts"],
       "rules": {
         "vitest/valid-title": [
           "error",
@@ -76,9 +64,7 @@
       }
     },
     {
-      "files": [
-        "apps/oxlint/test/fixtures/**"
-      ],
+      "files": ["apps/oxlint/test/fixtures/**"],
       "rules": {
         "no-restricted-imports": [
           "error",
