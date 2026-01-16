@@ -1037,6 +1037,25 @@ mod test {
         test("/* @__PURE__ */ (() => x)()", "");
         test("/* @__PURE__ */ (() => { return x })()", "");
         test("/* @__PURE__ */ (() => x)(y, z)", "y, z;");
+
+        test(
+            "function foo(x) { if (x) { return /* @__PURE__ */ (() => 42)() } return x }",
+            "function foo(x) { return x && 42 }",
+        );
+        test(
+            "function foo(x) { if (x) { return /* @__PURE__ */ (() => bar())() } return x }",
+            "function foo(x) { return x && bar() }",
+        );
+        test(
+            "function foo(x) { if (x) { return /* @__PURE__ */ (() => { return 42 })() } return x }",
+            "function foo(x) { return x && 42 }",
+        );
+        test("/* @__PURE__ */ (() => 42)()", "");
+        test("function foo() { /* @__PURE__ */ (() => 42)() }", "function foo() {}");
+        test(
+            "function foo(x) { if (x) { return (/* @__PURE__ */ (() => 42)(), foo) } return x }",
+            "function foo(x) { return x && foo }",
+        );
     }
 
     #[test]
