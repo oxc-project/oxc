@@ -3,6 +3,7 @@ use std::fmt::Write as _;
 use std::{
     borrow::Cow,
     fmt::{self, Display, Formatter},
+    fs,
     path::Path,
 };
 
@@ -18,6 +19,7 @@ use oxc_ast::ast::{
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
+use oxc_tasks_common::project_root;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Serialize;
 
@@ -1449,6 +1451,16 @@ fn main() {
         _ => "js",
     };
 
+    // Check whether this rule is marked as unsupported, and bail if it is.
+    if let Some((key, reason)) = find_unsupported_rule(&kebab_rule_name) {
+        eprintln!();
+        eprintln!("Error: This rule is either not planned or not possible to implement in Oxlint.");
+        eprintln!("The rule '{key}' will not be implemented for the following reason:");
+        eprintln!("> {reason}");
+        eprintln!();
+        std::process::exit(1);
+    }
+
     println!("Reading test file from {rule_test_path}");
 
     let test_body = oxc_tasks_common::agent()
@@ -1839,6 +1851,32 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
     }
 }
 
+/// This returns the rule key if it's listed as unsupported (meaning
+/// it isn't possible or isn't planned for support), otherwise it
+/// returns nothing.
+///
+/// See `tasks/lint_rules/src/unsupported-rules.json` for reference.
+fn find_unsupported_rule(kebab_rule: &str) -> Option<(String, String)> {
+    let file_path = project_root().join("tasks/lint_rules/src/unsupported-rules.json");
+    let json = fs::read_to_string(file_path)
+        .expect("Failed to read file")
+        .parse::<serde_json::Value>()
+        .expect("Failed to parse JSON");
+
+    let map = json.get("unsupportedRules")?.as_object()?;
+
+    for (key, val) in map {
+        if key == kebab_rule
+            || key.contains(&format!("eslint/{kebab_rule}"))
+            || key.contains(kebab_rule)
+        {
+            let reason = val.as_str().unwrap_or("").to_string();
+            return Some((key.clone(), reason));
+        }
+    }
+    None
+}
+
 /// Adds a module definition for the given rule to the `rules.rs` file, and adds the rule to the
 /// `declare_all_lint_rules!` macro block.
 fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std::error::Error>> {
@@ -1958,6 +1996,32 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_find_unsupported_rule_matches() {
+        // `eslint/no-dupe-args` should be detected by the helper as it's an unsupported rule.
+        let res = find_unsupported_rule("no-dupe-args");
+        assert!(res.is_some());
+        let (key, reason) = res.unwrap();
+        assert!(key == "eslint/no-dupe-args");
+        assert!(!reason.is_empty());
+    }
+
+    #[test]
+    fn test_find_unsupported_rule_does_not_match() {
+        // This rule is not in the unsupported list, so it should return None.
+        let res = find_unsupported_rule("eslint/foobar");
+        assert!(res.is_none());
+    }
+
+    #[test]
+    fn test_find_unsupported_rule_matches_for_n_rule() {
+        let res = find_unsupported_rule("n/no-hide-core-modules");
+        assert!(res.is_some());
+        let (key, reason) = res.unwrap();
+        assert!(key == "n/no-hide-core-modules");
+        assert!(!reason.is_empty());
+    }
 
     #[test]
     fn test_format_code_snippet_simple_identifier() {
