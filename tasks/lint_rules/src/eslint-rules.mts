@@ -56,7 +56,6 @@ const {
   rules: pluginPromiseRules,
 } = pluginPromise;
 const { rules: pluginReactAllRules } = pluginReact;
-// @ts-expect-error: Module has no exported member
 const { rules: pluginReactHooksAllRules } = pluginReactHooks;
 const { rules: pluginReactPerfAllRules, configs: pluginReactPerfConfigs } = pluginReactPerf;
 const { rules: pluginNextAllRules } = pluginNext;
@@ -64,15 +63,10 @@ const { configs: pluginVitestConfigs, rules: pluginVitestRules } = pluginVitest;
 const { configs: pluginVueConfigs, rules: pluginVueRules } = pluginVue;
 
 export const typescriptTypeCheckRules = new Map(
-  Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
+  Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules as any),
 );
 
-/**
- * @param {import("eslint").Linter} linter
- * @param {boolean} includeTypeCheckRules
- * @returns {void}
- */
-const loadPluginTypeScriptRules = (linter, includeTypeCheckRules = false) => {
+const loadPluginTypeScriptRules = (linter: Linter, includeTypeCheckRules = false) => {
   for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
     if (!includeTypeCheckRules && typescriptTypeCheckRules.has(`@typescript-eslint/${name}`)) {
       continue;
@@ -84,7 +78,7 @@ const loadPluginTypeScriptRules = (linter, includeTypeCheckRules = false) => {
     // - a string describing which configuration it belongs to (recommended, strict, stylistic)
     // - an object with a `recommended` property (ban-ts-comment)
     // - undefined
-    let isRecommended = rule.meta.docs.recommended;
+    let isRecommended: any = rule.meta.docs.recommended;
     if (typeof isRecommended === "object" && isRecommended !== null) {
       isRecommended = isRecommended.recommended === true;
     } else if (typeof isRecommended === "string") {
@@ -94,41 +88,40 @@ const loadPluginTypeScriptRules = (linter, includeTypeCheckRules = false) => {
     }
     rule.meta.docs.recommended = isRecommended;
 
-    linter.defineRule(prefixedName, rule);
+    linter.defineRule(prefixedName, rule as any);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginNRules = (linter) => {
-  for (const [name, rule] of Object.entries(pluginNAllRules)) {
+const loadPluginNRules = (linter: Linter) => {
+  for (const [name, rule] of Object.entries(pluginNAllRules as any)) {
     const prefixedName = `n/${name}`;
 
-    // @ts-expect-error: The types of 'meta.fixable', 'null' is not assignable to type '"code" | "whitespace" | undefined'.
-    linter.defineRule(prefixedName, rule);
+    linter.defineRule(prefixedName, rule as any);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginUnicornRules = (linter) => {
+const loadPluginUnicornRules = (linter: Linter) => {
   const pluginUnicornRecommendedRules = new Map(
-    Object.entries(pluginUnicornConfigs.recommended.rules),
+    Object.entries(pluginUnicornConfigs.recommended.rules as any),
   );
-  for (const [name, rule] of Object.entries(pluginUnicornAllRules)) {
+  for (const [name, rule] of Object.entries(pluginUnicornAllRules as any)) {
     const prefixedName = `unicorn/${name}`;
 
     // If name is presented and value is not "off", it is recommended
     const recommendedValue = pluginUnicornRecommendedRules.get(prefixedName);
-    // @ts-expect-error: `rule.meta.docs` is possibly `undefined`
+    // @ts-expect-error: rule is of type unknown
     rule.meta.docs.recommended = recommendedValue && recommendedValue !== "off";
 
-    linter.defineRule(prefixedName, rule);
+    linter.defineRule(prefixedName, rule as any);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginJSDocRules = (linter) => {
-  const pluginJSDocRecommendedRules = new Map(Object.entries(pluginJSDocConfigs.recommended.rules));
-  for (const [name, rule] of Object.entries(pluginJSDocAllRules)) {
+const loadPluginJSDocRules = (linter: Linter) => {
+  const pluginJSDocRecommendedRules = new Map(
+    // @ts-expect-error: Property 'rules' does not exist on type 'Object'.
+    Object.entries(pluginJSDocConfigs.recommended.rules),
+  );
+  for (const [name, rule] of Object.entries(pluginJSDocAllRules as any)) {
     const prefixedName = `jsdoc/${name}`;
 
     // If name is presented and value is not "off", it is recommended
@@ -136,12 +129,11 @@ const loadPluginJSDocRules = (linter) => {
     // @ts-expect-error: `rule.meta.docs` is possibly `undefined`
     rule.meta.docs.recommended = recommendedValue && recommendedValue !== "off";
 
-    linter.defineRule(prefixedName, rule);
+    linter.defineRule(prefixedName, rule as any);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginImportRules = (linter) => {
+const loadPluginImportRules = (linter: Linter) => {
   const pluginImportRecommendedRules = new Map(
     // @ts-expect-error: Property 'rules' does not exist on type 'Object'.
     Object.entries(pluginImportConfigs.recommended.rules),
@@ -152,32 +144,29 @@ const loadPluginImportRules = (linter) => {
     // @ts-expect-error: Property 'recommended' does not exist on type
     rule.meta.docs.recommended = pluginImportRecommendedRules.has(prefixedName);
 
-    // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginJSXA11yRules = (linter) => {
+const loadPluginJSXA11yRules = (linter: Linter) => {
   const pluginJSXA11yRecommendedRules = new Map(
-    Object.entries(pluginJSXA11yConfigs.recommended.rules),
+    Object.entries(pluginJSXA11yConfigs.recommended.rules as any),
   );
-  for (const [name, rule] of Object.entries(pluginJSXA11yAllRules)) {
+  for (const [name, rule] of Object.entries(pluginJSXA11yAllRules as any)) {
     const prefixedName = `jsx-a11y/${name}`;
 
-    const recommendedValue = pluginJSXA11yRecommendedRules.get(prefixedName);
-    rule.meta.docs.recommended =
+    const recommendedValue: any = pluginJSXA11yRecommendedRules.get(prefixedName);
+    (rule as any).meta.docs.recommended =
       recommendedValue &&
       // Type is `string | [string, opt]`
       recommendedValue !== "off" &&
       recommendedValue[0] !== "off";
 
-    linter.defineRule(prefixedName, rule);
+    linter.defineRule(prefixedName, rule as any);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginJestRules = (linter) => {
+const loadPluginJestRules = (linter: Linter) => {
   const pluginJestRecommendedRules = new Map(
     // @ts-expect-error: Property 'recommended' does not exist on type '{}'.
     Object.entries(pluginJestConfigs.recommended.rules),
@@ -187,14 +176,13 @@ const loadPluginJestRules = (linter) => {
 
     const recommendedValue = pluginJestRecommendedRules.get(prefixedName);
     // Presented but type is `string | undefined`
-    rule.meta.docs.recommended = typeof recommendedValue === "string";
+    rule.meta!.docs!.recommended = typeof recommendedValue === "string";
 
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginReactRules = (linter) => {
+const loadPluginReactRules = (linter: Linter) => {
   for (const [name, rule] of Object.entries(pluginReactAllRules)) {
     const prefixedName = `react/${name}`;
 
@@ -207,13 +195,11 @@ const loadPluginReactRules = (linter) => {
     // (but `react-hooks` plugin has only 2 rules, so it's fine...!)
     const prefixedName = `react/${name}`;
 
-    // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginReactPerfRules = (linter) => {
+const loadPluginReactPerfRules = (linter: Linter) => {
   const pluginReactPerfRecommendedRules = new Map(
     Object.entries(pluginReactPerfConfigs.recommended.rules),
   );
@@ -226,8 +212,7 @@ const loadPluginReactPerfRules = (linter) => {
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginNextRules = (linter) => {
+const loadPluginNextRules = (linter: Linter) => {
   for (const [name, rule] of Object.entries(pluginNextAllRules)) {
     const prefixedName = `nextjs/${name}`;
 
@@ -235,36 +220,34 @@ const loadPluginNextRules = (linter) => {
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginPromiseRules = (linter) => {
+const loadPluginPromiseRules = (linter: Linter) => {
   const pluginPromiseRecommendedRules = new Map(
     Object.entries(pluginPromiseConfigs.recommended.rules),
   );
   for (const [name, rule] of Object.entries(pluginPromiseRules)) {
     const prefixedName = `promise/${name}`;
 
+    // @ts-expect-error: Property 'recommended' does not exist on type.
     rule.meta.docs.recommended = pluginPromiseRecommendedRules.has(prefixedName);
 
-    linter.defineRule(prefixedName, rule);
+    linter.defineRule(prefixedName, rule as any);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginVitestRules = (linter) => {
+const loadPluginVitestRules = (linter: Linter) => {
   const pluginVitestRecommendedRules = new Map(
     Object.entries(pluginVitestConfigs.recommended.rules),
   );
   for (const [name, rule] of Object.entries(pluginVitestRules)) {
     const prefixedName = `vitest/${name}`;
 
-    rule.meta.docs.recommended = pluginVitestRecommendedRules.has(prefixedName);
+    rule.meta!.docs!.recommended = pluginVitestRecommendedRules.has(prefixedName);
 
     linter.defineRule(prefixedName, rule);
   }
 };
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginVueRules = (linter) => {
+const loadPluginVueRules = (linter: Linter) => {
   const pluginVueRecommendedRules = new Map(
     Object.entries(pluginVueConfigs.recommended.rules || {}),
   );
@@ -277,14 +260,12 @@ const loadPluginVueRules = (linter) => {
   }
 };
 
-/**
- * @typedef {{
- *   npm: string[];
- *   issueNo: number;
- * }} TargetPluginMeta
- * @type {Map<string, TargetPluginMeta>}
- */
-export const ALL_TARGET_PLUGINS = new Map([
+type TargetPluginMeta = {
+  npm: string[];
+  issueNo: number;
+};
+
+export const ALL_TARGET_PLUGINS: Map<string, TargetPluginMeta> = new Map([
   ["eslint", { npm: ["eslint"], issueNo: 479 }],
   ["typescript", { npm: ["@typescript-eslint/eslint-plugin"], issueNo: 2180 }],
   ["n", { npm: ["eslint-plugin-n"], issueNo: 493 }],
@@ -307,18 +288,13 @@ export const ALL_TARGET_PLUGINS = new Map([
   ["vue", { npm: ["eslint-plugin-vue"], issueNo: 11440 }],
 ]);
 
-// All rules(including deprecated, recommended) are loaded initially.
+// All rules (including deprecated, recommended) are loaded initially.
 export const createESLintLinter = () =>
   new Linter({
     configType: "eslintrc",
   });
 
-/**
- * @param {import("eslint").Linter} linter
- * @param {boolean} includeTypeCheckRules
- * @returns {void}
- */
-export const loadTargetPluginRules = (linter, includeTypeCheckRules = false) => {
+export const loadTargetPluginRules = (linter: Linter, includeTypeCheckRules = false) => {
   loadPluginTypeScriptRules(linter, includeTypeCheckRules);
   loadPluginNRules(linter);
   loadPluginUnicornRules(linter);
