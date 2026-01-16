@@ -2,7 +2,8 @@
   "name": "lint_rules",
   "version": "0.0.0",
   "private": true,
-  "main": "./src/main.mjs",
+  "type": "module",
+  "main": "./src/main.ts",
   "dependencies": {
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
@@ -19,5 +20,8 @@
     "eslint-plugin-react-perf": "^3.3.3",
     "eslint-plugin-unicorn": "latest",
     "eslint-plugin-vue": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9"
   }
 }
