@@ -26,7 +26,7 @@ await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
 syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
 
 // Helper to gather stats for a plugin
-const statsForPlugin = (pluginName) => {
+const statsForPlugin = (pluginName: string) => {
   const prefix = `${pluginName}/`;
   const entries = Array.from(ruleEntries.entries()).filter(([name]) => name.startsWith(prefix));
   const filtered = entries.filter(([_, e]) => !e.isNotSupported);
@@ -39,7 +39,7 @@ const statsForPlugin = (pluginName) => {
 
 // Compute per-plugin and overall stats
 const pluginNames = Array.from(ALL_TARGET_PLUGINS.keys());
-const perPlugin = pluginNames.map((name) => statsForPlugin(name));
+const perPlugin = pluginNames.map((name: string) => statsForPlugin(name));
 
 const overall = perPlugin.reduce(
   (acc, cur) => ({
