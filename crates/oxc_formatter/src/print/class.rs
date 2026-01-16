@@ -115,6 +115,31 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
             write!(f, "?");
         }
 
+        let is_empty_body = self.r#type().is_abstract()
+            || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression);
+
+        // For empty/abstract method bodies, Prettier moves trailing comments (after `)` but before `;`)
+        // to be between the method name and the opening `(`.
+        // e.g. `bar() /* comment */;` becomes `bar /* comment */();`
+        let dangling_comments_count = if is_empty_body {
+            // Get the end position of the signature (return type or params)
+            let signature_end =
+                value.return_type().map_or_else(|| value.params.span.end, |rt| rt.span.end);
+
+            // Find comments between signature end and method definition end (which includes `;`)
+            let dangling_comments =
+                f.context().comments().comments_in_range(signature_end, self.span().end);
+
+            // Print these comments before the parameters
+            for comment in dangling_comments {
+                write!(f, [space(), comment]);
+            }
+
+            dangling_comments.len()
+        } else {
+            0
+        };
+
         format_grouped_parameters_with_return_type_for_method(
             value.type_parameters(),
             value.this_param.as_deref(),
@@ -126,9 +151,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if let Some(body) = &value.body() {
             write!(f, body);
         }
-        if self.r#type().is_abstract()
-            || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
-        {
+        if is_empty_body {
+            // Skip the dangling comments we already printed, then print the semicolon
+            // This works because at this point, the params/return_type comments have been printed,
+            // so the dangling comments are now at the front of unprinted_comments()
+            f.context_mut().comments_mut().increase_printed_count_by(dangling_comments_count);
             write!(f, OptionalSemicolon);
         }
     }
