@@ -11,7 +11,7 @@ use super::TraverseCtx;
 /// This wrapper type can safely be passed to user code as only ways it can be used are to:
 ///
 /// * Call `traverse_mut_with_ctx`, which maintains safety invariants.
-/// * Unwrap it to [`Scoping`], which discards the sensitive [`TraverseAncestry`] in the process.
+/// * Unwrap it to [`Scoping`] and / or `State`, which discards the sensitive [`TraverseAncestry`] in the process.
 ///
 /// [`TraverseAncestry`]: super::TraverseAncestry
 #[repr(transparent)]
