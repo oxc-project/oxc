@@ -11463,8 +11463,6 @@ pub(crate) const OFFSET_TS_ENUM_DECLARATION_ID: usize = offset_of!(TSEnumDeclara
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_BODY: usize = offset_of!(TSEnumDeclaration, body);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_CONST: usize = offset_of!(TSEnumDeclaration, r#const);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_DECLARE: usize = offset_of!(TSEnumDeclaration, declare);
-pub(crate) const OFFSET_TS_ENUM_DECLARATION_SCOPE_ID: usize =
-    offset_of!(TSEnumDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11494,14 +11492,6 @@ impl<'a, 't> TSEnumDeclarationWithoutId<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
     }
 }
 
@@ -11542,14 +11532,6 @@ impl<'a, 't> TSEnumDeclarationWithoutBody<'a, 't> {
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
     }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for TSEnumDeclarationWithoutBody<'a, 't> {
@@ -11561,6 +11543,7 @@ impl<'a, 't> GetAddress for TSEnumDeclarationWithoutBody<'a, 't> {
 
 pub(crate) const OFFSET_TS_ENUM_BODY_SPAN: usize = offset_of!(TSEnumBody, span);
 pub(crate) const OFFSET_TS_ENUM_BODY_MEMBERS: usize = offset_of!(TSEnumBody, members);
+pub(crate) const OFFSET_TS_ENUM_BODY_SCOPE_ID: usize = offset_of!(TSEnumBody, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11573,6 +11556,14 @@ impl<'a, 't> TSEnumBodyWithoutMembers<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 

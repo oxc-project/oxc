@@ -81,7 +81,7 @@ pub static STRUCTS: phf::Map<&'static str, StructDetails> = ::phf::Map {
         ("SymbolId", StructDetails { field_order: None }),
         ("PrivateIdentifier", StructDetails { field_order: None }),
         ("TSModuleBlock", StructDetails { field_order: None }),
-        ("TSEnumDeclaration", StructDetails { field_order: Some(&[0, 1, 2, 4, 5, 3]) }),
+        ("TSEnumDeclaration", StructDetails { field_order: None }),
         ("JSXNamespacedName", StructDetails { field_order: None }),
         ("TSIntrinsicKeyword", StructDetails { field_order: None }),
         ("BindingRestElement", StructDetails { field_order: None }),

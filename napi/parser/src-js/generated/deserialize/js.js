@@ -2864,8 +2864,8 @@ function deserializeTSEnumDeclaration(pos) {
       type: "TSEnumDeclaration",
       id: null,
       body: null,
-      const: deserializeBool(pos + 76),
-      declare: deserializeBool(pos + 77),
+      const: deserializeBool(pos + 80),
+      declare: deserializeBool(pos + 81),
       start,
       end,
     };
