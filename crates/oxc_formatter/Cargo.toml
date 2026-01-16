@@ -26,7 +26,7 @@ oxc_data_structures = { workspace = true, features = ["stack", "code_buffer"] }
 oxc_parser = { workspace = true }
 oxc_semantic = { workspace = true, optional = true }
 oxc_span = { workspace = true }
-oxc_syntax = { workspace = true }
+oxc_syntax = { workspace = true, features = ["to_js_string"] }
 
 cow-utils = { workspace = true }
 natord = { workspace = true }

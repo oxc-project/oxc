@@ -250,23 +250,13 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 
     fn can_remove_number_quotes_by_file_type(&self, source_type: SourceType) -> bool {
-        let text_to_check = self.raw_content();
-
-        if text_to_check.bytes().next().is_some_and(|b| b.is_ascii_digit()) {
-            if let Ok(parsed) = text_to_check.parse::<f64>() {
-                // In TypeScript, numbers like members have different meaning from numbers.
-                // Hence, if we see a number, we bail straightaway
-                if source_type.is_typescript() {
-                    return false;
-                }
-
-                // Rule out inexact floats and octal literals
-                return parsed.to_string() == text_to_check;
-            }
-
+        // In TypeScript, numeric keys in type literals have different semantics from numbers.
+        // Hence, if we see a number, we bail straightaway
+        if source_type.is_typescript() {
             return false;
         }
-        false
+
+        is_simple_numeric_string(self.raw_content())
     }
 
     fn normalize_type_member(
@@ -424,6 +414,37 @@ pub fn is_identifier_name_patched(content: &str) -> bool {
     let mut chars = content.chars();
     chars.next().is_some_and(is_identifier_start)
         && chars.all(|c| is_identifier_part(c) && c != '・' && c != '･')
+}
+
+/// Check if a string is a simple numeric value that round-trips correctly.
+///
+/// Returns `true` if `content` can be parsed as a number and `String(Number(content)) === content`
+/// in JavaScript semantics. This is used to determine if a quoted numeric string key like `"5"`
+/// can be safely unquoted to `5`.
+///
+/// Examples:
+/// - `"5"` → true (parses to 5, String(5) = "5")
+/// - `"1.5"` → true (parses to 1.5, String(1.5) = "1.5")
+/// - `".1"` → false (parses to 0.1, String(0.1) = "0.1" ≠ ".1")
+/// - `"1.0"` → false (parses to 1, String(1) = "1" ≠ "1.0")
+/// - `"0xf"` → false (not a simple decimal number)
+///
+/// <https://github.com/prettier/prettier/blob/52829385bcc4d785e58ae2602c0b098a643523c9/src/language-js/print/property.js#L42-L82>
+pub fn is_simple_numeric_string(content: &str) -> bool {
+    // Only allow simple decimal numbers (digits and at most one dot)
+    if content.is_empty()
+        || !content.chars().all(|c| c.is_ascii_digit() || c == '.')
+        || content.contains("..")
+    {
+        return false;
+    }
+
+    // Try to parse and check round-trip
+    if let Ok(num) = content.parse::<f64>() {
+        num.to_string() == content
+    } else {
+        false
+    }
 }
 
 #[cfg(test)]
