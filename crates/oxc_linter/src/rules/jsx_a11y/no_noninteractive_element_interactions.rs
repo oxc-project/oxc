@@ -265,12 +265,11 @@ fn is_truly_interactive_element(element_type: &str, jsx_el: &JSXOpeningElement) 
     match element_type {
         "button" | "select" | "textarea" => true,
         "input" => {
-            if let Some(input_type) = has_jsx_prop(jsx_el, "type") {
-                if get_string_literal_prop_value(input_type)
+            if let Some(input_type) = has_jsx_prop(jsx_el, "type")
+                && get_string_literal_prop_value(input_type)
                     .is_some_and(|val| val.eq_ignore_ascii_case("hidden"))
-                {
-                    return false;
-                }
+            {
+                return false;
             }
             true
         }
@@ -334,22 +333,21 @@ impl Rule for NoNoninteractiveElementInteractions {
 
         if let Some(JSXAttributeItem::Attribute(role_attr)) =
             has_jsx_prop_ignore_case(jsx_el, "role")
+            && let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value
         {
-            if let Some(JSXAttributeValue::StringLiteral(role)) = &role_attr.value {
-                let role_str = role.value.as_str().cow_to_lowercase();
+            let role_str = role.value.as_str().cow_to_lowercase();
 
-                if let Some(first_role) = role_str.split_whitespace().next() {
-                    if INTERACTIVE_ROLES.contains(&first_role)
-                        || ABSTRACT_ROLES.contains(&first_role)
-                    {
-                        return;
-                    }
-                    if NON_INTERACTIVE_ROLES.contains(&first_role) {
-                        ctx.diagnostic(no_noninteractive_element_interactions_diagnostic(
-                            jsx_el.name.span(),
-                        ));
-                        return;
-                    }
+            if let Some(first_role) = role_str.split_whitespace().next() {
+                if INTERACTIVE_ROLES.contains(&first_role)
+                    || ABSTRACT_ROLES.contains(&first_role)
+                {
+                    return;
+                }
+                if NON_INTERACTIVE_ROLES.contains(&first_role) {
+                    ctx.diagnostic(no_noninteractive_element_interactions_diagnostic(
+                        jsx_el.name.span(),
+                    ));
+                    return;
                 }
             }
         }
