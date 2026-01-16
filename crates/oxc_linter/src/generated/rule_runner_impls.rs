@@ -1064,7 +1064,7 @@ impl RuleRunner for crate::rules::eslint::no_unused_vars::NoUnusedVars {
 
 impl RuleRunner for crate::rules::eslint::no_useless_assignment::NoUselessAssignment {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::eslint::no_useless_backreference::NoUselessBackreference {
