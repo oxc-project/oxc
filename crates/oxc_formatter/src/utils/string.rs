@@ -147,18 +147,25 @@ impl FormatLiteralStringToken<'_> {
         );
 
         let quoteless = &literal[1..literal.len() - 1];
-        let (chosen_quote_count, alternate_quote_count) = quoteless.bytes().fold(
-            (0u32, 0u32),
-            |(chosen_quote_count, alternate_quote_count), current_character| {
-                if current_character == chosen_quote_byte {
-                    (chosen_quote_count + 1, alternate_quote_count)
-                } else if current_character == alternate_quote_byte {
-                    (chosen_quote_count, alternate_quote_count + 1)
-                } else {
-                    (chosen_quote_count, alternate_quote_count)
-                }
-            },
-        );
+
+        // For JSX, we need to count quotes after decoding HTML entities
+        // because &apos; and &quot; are semantically equivalent to ' and "
+        let (chosen_quote_count, alternate_quote_count) = if self.jsx {
+            count_quotes_jsx(quoteless, chosen_quote_byte, alternate_quote_byte)
+        } else {
+            quoteless.bytes().fold(
+                (0u32, 0u32),
+                |(chosen_quote_count, alternate_quote_count), current_character| {
+                    if current_character == chosen_quote_byte {
+                        (chosen_quote_count + 1, alternate_quote_count)
+                    } else if current_character == alternate_quote_byte {
+                        (chosen_quote_count, alternate_quote_count + 1)
+                    } else {
+                        (chosen_quote_count, alternate_quote_count)
+                    }
+                },
+            )
+        };
 
         let current_quote =
             literal.bytes().next().and_then(QuoteStyle::from_byte).unwrap_or_default();
@@ -173,6 +180,161 @@ impl FormatLiteralStringToken<'_> {
             raw_content_has_quotes: chosen_quote_count > 0 || alternate_quote_count > 0,
         }
     }
+}
+
+/// Counts quotes in JSX attribute string content, treating HTML named entities as their decoded values.
+/// Only `&apos;` counts as single quote and `&quot;` counts as double quote.
+/// Numeric entities (`&#39;`, `&#34;`) are NOT decoded - they are treated as literal text.
+fn count_quotes_jsx(content: &str, chosen_quote_byte: u8, alternate_quote_byte: u8) -> (u32, u32) {
+    let mut chosen_count = 0u32;
+    let mut alternate_count = 0u32;
+    let bytes = content.as_bytes();
+    let mut i = 0;
+
+    while i < bytes.len() {
+        if bytes[i] == b'&' {
+            // Check for named HTML entities only (not numeric)
+            if let Some(remaining) = content.get(i..) {
+                if remaining.starts_with("&apos;") {
+                    // Single quote entity
+                    if b'\'' == chosen_quote_byte {
+                        chosen_count += 1;
+                    } else if b'\'' == alternate_quote_byte {
+                        alternate_count += 1;
+                    }
+                    i += 6;
+                    continue;
+                } else if remaining.starts_with("&quot;") {
+                    // Double quote entity
+                    if b'"' == chosen_quote_byte {
+                        chosen_count += 1;
+                    } else if b'"' == alternate_quote_byte {
+                        alternate_count += 1;
+                    }
+                    i += 6;
+                    continue;
+                }
+            }
+        } else if bytes[i] == chosen_quote_byte {
+            chosen_count += 1;
+        } else if bytes[i] == alternate_quote_byte {
+            alternate_count += 1;
+        }
+        i += 1;
+    }
+
+    (chosen_count, alternate_count)
+}
+
+/// Decodes JSX quote named HTML entities (`&apos;`, `&quot;`) to their character equivalents.
+/// Numeric entities (`&#39;`, `&#34;`) are NOT decoded - they are preserved as literal text.
+fn decode_jsx_quote_entities(content: &str) -> Cow<'_, str> {
+    // Quick check: if there's no '&', nothing to decode
+    if !content.contains('&') {
+        return Cow::Borrowed(content);
+    }
+
+    let mut result = String::new();
+    let mut last_end = 0;
+    let bytes = content.as_bytes();
+    let mut i = 0;
+
+    while i < bytes.len() {
+        if bytes[i] == b'&'
+            && let Some(remaining) = content.get(i..)
+        {
+            if remaining.starts_with("&apos;") {
+                result.push_str(&content[last_end..i]);
+                result.push('\'');
+                i += 6;
+                last_end = i;
+                continue;
+            } else if remaining.starts_with("&quot;") {
+                result.push_str(&content[last_end..i]);
+                result.push('"');
+                i += 6;
+                last_end = i;
+                continue;
+            }
+        }
+        i += 1;
+    }
+
+    if last_end == 0 {
+        // Nothing was decoded
+        Cow::Borrowed(content)
+    } else {
+        result.push_str(&content[last_end..]);
+        Cow::Owned(result)
+    }
+}
+
+/// Encodes double quotes as `&quot;` for JSX attribute strings enclosed in double quotes.
+/// Uses byte-based iteration for efficiency since `"` is an ASCII character.
+/// Reference: Prettier's `get-preferred-quote.js` uses `charCodeAt` for similar optimization.
+fn encode_jsx_double_quotes(content: &str) -> Cow<'_, str> {
+    let bytes = content.as_bytes();
+    let mut i = 0;
+    // Fast path: find first double quote
+    while i < bytes.len() && bytes[i] != b'"' {
+        i += 1;
+    }
+    if i == bytes.len() {
+        return Cow::Borrowed(content);
+    }
+
+    let mut result = String::with_capacity(content.len() + 6); // +6 for potential "&quot;"
+    result.push_str(&content[..i]);
+
+    while i < bytes.len() {
+        if bytes[i] == b'"' {
+            result.push_str("&quot;");
+            i += 1;
+        } else {
+            let start = i;
+            i += 1;
+            // Collect consecutive non-quote bytes
+            while i < bytes.len() && bytes[i] != b'"' {
+                i += 1;
+            }
+            result.push_str(&content[start..i]);
+        }
+    }
+    Cow::Owned(result)
+}
+
+/// Encodes single quotes as `&apos;` for JSX attribute strings enclosed in single quotes.
+/// Uses byte-based iteration for efficiency since `'` is an ASCII character.
+/// Reference: Prettier's `get-preferred-quote.js` uses `charCodeAt` for similar optimization.
+fn encode_jsx_single_quotes(content: &str) -> Cow<'_, str> {
+    let bytes = content.as_bytes();
+    let mut i = 0;
+    // Fast path: find first single quote
+    while i < bytes.len() && bytes[i] != b'\'' {
+        i += 1;
+    }
+    if i == bytes.len() {
+        return Cow::Borrowed(content);
+    }
+
+    let mut result = String::with_capacity(content.len() + 6); // +6 for potential "&apos;"
+    result.push_str(&content[..i]);
+
+    while i < bytes.len() {
+        if bytes[i] == b'\'' {
+            result.push_str("&apos;");
+            i += 1;
+        } else {
+            let start = i;
+            i += 1;
+            // Collect consecutive non-quote bytes
+            while i < bytes.len() && bytes[i] != b'\'' {
+                i += 1;
+            }
+            result.push_str(&content[start..i]);
+        }
+    }
+    Cow::Owned(result)
 }
 
 /// Struct of convenience used to manipulate the string. It saves some state in order to apply
@@ -287,6 +449,13 @@ impl<'a> LiteralStringNormalizer<'a> {
 
     fn normalize_string_literal(&self, string_information: StringInformation) -> Cow<'a, str> {
         let preferred_quote = string_information.preferred_quote;
+
+        // For JSX attribute strings, we need to decode HTML entities and re-encode
+        // only the quote that matches the chosen enclosing quote
+        if self.token.jsx {
+            return self.normalize_jsx_attribute_string(string_information);
+        }
+
         let polished_raw_content = normalize_string(
             self.raw_content(),
             string_information.preferred_quote,
@@ -303,6 +472,46 @@ impl<'a> LiteralStringNormalizer<'a> {
                 Cow::Owned(s)
             }
         }
+    }
+
+    /// Normalizes JSX attribute strings by decoding HTML quote entities and re-encoding
+    /// only the quote character that matches the chosen enclosing quote.
+    ///
+    /// In JSX, `&apos;` and `&quot;` are semantically equivalent to `'` and `"`.
+    /// Prettier decodes these entities, counts the actual quotes, chooses the optimal
+    /// enclosing quote, and re-encodes only the quote that needs escaping.
+    fn normalize_jsx_attribute_string(
+        &self,
+        string_information: StringInformation,
+    ) -> Cow<'a, str> {
+        let raw_content = self.raw_content();
+        let preferred_quote = string_information.preferred_quote;
+
+        // Decode HTML entities to their character equivalents
+        let decoded = decode_jsx_quote_entities(raw_content);
+
+        // Re-encode only the quote that matches the preferred enclosing quote
+        let re_encoded = if preferred_quote == QuoteStyle::Double {
+            encode_jsx_double_quotes(&decoded)
+        } else {
+            encode_jsx_single_quotes(&decoded)
+        };
+
+        let quote_char = preferred_quote.as_char();
+
+        // Check if we can avoid allocation
+        if re_encoded == raw_content
+            && self.token.string.starts_with(quote_char)
+            && self.token.string.ends_with(quote_char)
+        {
+            return Cow::Borrowed(self.token.string);
+        }
+
+        let mut result = String::with_capacity(re_encoded.len() + 2);
+        result.push(quote_char);
+        result.push_str(&re_encoded);
+        result.push(quote_char);
+        Cow::Owned(result)
     }
 
     /// Returns the string without its quotes.
