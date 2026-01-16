@@ -8,7 +8,7 @@ use std::{
 /// `OXC_LOG=oxc_formatter oxfmt`
 /// # Panics
 pub fn init_tracing() {
-    use tracing_subscriber::{filter::Targets, prelude::*};
+    use tracing_subscriber::{filter::Targets, fmt::format::FmtSpan, prelude::*};
 
     // Usage without the `regex` feature.
     // <https://github.com/tokio-rs/tracing/issues/1436#issuecomment-918528013>
@@ -22,6 +22,8 @@ pub fn init_tracing() {
         ))
         .with(
             tracing_subscriber::fmt::layer()
+                .with_thread_names(true)
+                .with_span_events(FmtSpan::CLOSE)
                 // https://github.com/tokio-rs/tracing/issues/2492
                 .with_writer(std::io::stderr),
         )

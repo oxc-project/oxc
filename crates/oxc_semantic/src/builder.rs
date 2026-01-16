@@ -2320,8 +2320,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
-        self.enter_scope(ScopeFlags::empty(), &decl.scope_id);
         self.visit_ts_enum_body(&decl.body);
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_enum_body(&mut self, body: &TSEnumBody<'a>) {
+        let kind = AstKind::TSEnumBody(self.alloc(body));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty(), &body.scope_id);
+        self.visit_ts_enum_members(&body.members);
         self.leave_scope();
         self.leave_node(kind);
     }

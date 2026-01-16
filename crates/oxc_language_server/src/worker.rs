@@ -14,6 +14,7 @@ use tracing::debug;
 
 use crate::{
     ToolRestartChanges,
+    capabilities::DiagnosticMode,
     file_system::LSPFileSystem,
     tool::{DiagnosticResult, Tool, ToolBuilder},
 };
@@ -31,8 +32,8 @@ pub struct WorkspaceWorker {
     // If None, the worker has not been initialized yet
     pub(crate) options: Mutex<Option<serde_json::Value>>,
 
-    // Whether the client is in diagnostic pull mode
-    diagnostic_pull_mode: bool,
+    // Whether the client is in diagnostic pull mode / push mode, or not supporting diagnostics at all
+    diagnostic_mode: DiagnosticMode,
     // Keep track of published diagnostics to clear them on shutdown (only in push mode)
     published_diagnostics: Mutex<FxHashSet<Uri>>,
 }
@@ -44,14 +45,14 @@ impl WorkspaceWorker {
     pub fn new(
         root_uri: Uri,
         builders: Arc<[Box<dyn ToolBuilder>]>,
-        diagnostic_pull_mode: bool,
+        diagnostic_mode: DiagnosticMode,
     ) -> Self {
         Self {
             root_uri,
             tools: RwLock::new(vec![]),
             builders,
             options: Mutex::new(None),
-            diagnostic_pull_mode,
+            diagnostic_mode,
             published_diagnostics: Mutex::new(FxHashSet::default()),
         }
     }
@@ -135,13 +136,7 @@ impl WorkspaceWorker {
         }
 
         // In push mode, keep track of published diagnostics to clear them on shutdown
-        if !self.diagnostic_pull_mode {
-            let new_published_uris: FxHashSet<Uri> = aggregated.keys().cloned().collect();
-            self.published_diagnostics.lock().await.extend(new_published_uris);
-        }
-
-        // In push mode, keep track of published diagnostics to clear them on shutdown
-        if !self.diagnostic_pull_mode {
+        if self.diagnostic_mode == DiagnosticMode::Push {
             let new_published_uris: FxHashSet<Uri> = aggregated.keys().cloned().collect();
             self.published_diagnostics.lock().await.extend(new_published_uris);
         }
@@ -455,27 +450,34 @@ mod tests {
 
     use crate::{
         ToolBuilder,
+        capabilities::DiagnosticMode,
         file_system::LSPFileSystem,
         tests::{FAKE_COMMAND, FakeToolBuilder},
         worker::WorkspaceWorker,
     };
 
     fn create_builders() -> Arc<[Box<dyn ToolBuilder>]> {
-        Arc::new([Box::new(FakeToolBuilder) as Box<dyn ToolBuilder>])
+        Arc::new([Box::new(FakeToolBuilder::default()) as Box<dyn ToolBuilder>])
     }
 
     #[test]
     fn test_get_root_uri() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new([]), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
 
         assert_eq!(worker.get_root_uri(), &Uri::from_str("file:///root/").unwrap());
     }
 
     #[tokio::test]
     async fn test_needs_init_options() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), Arc::new([]), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
         assert!(worker.needs_init_options().await);
         worker.start_worker(serde_json::Value::Null).await;
         assert!(!worker.needs_init_options().await);
@@ -484,16 +486,22 @@ mod tests {
     #[tokio::test]
     async fn test_init_watchers() {
         // with one watcher
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         worker.start_worker(serde_json::Value::Null).await;
         let registrations = worker.init_watchers().await;
         assert_eq!(registrations.len(), 1);
         assert_eq!(registrations[0].id, "watcher-FakeTool-file:///root/");
 
         // with no watchers
-        let worker_no_watchers =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker_no_watchers = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         worker_no_watchers.start_worker(serde_json::json!({"some_option": true})).await;
         let registrations_no_watchers = worker_no_watchers.init_watchers().await;
         assert_eq!(registrations_no_watchers.len(), 0);
@@ -501,8 +509,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_execute_command() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         worker.start_worker(serde_json::Value::Null).await;
 
         // Test command not found
@@ -523,8 +534,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_watched_files_change_notification() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         worker.start_worker(serde_json::Value::Null).await;
 
         let fs = LSPFileSystem::default();
@@ -609,8 +623,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_did_change_configuration() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         worker.start_worker(serde_json::json!({"some_option": true})).await;
 
         let fs = LSPFileSystem::default();
@@ -668,8 +685,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_code_action_collection() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         worker.start_worker(serde_json::Value::Null).await;
 
         let actions = worker
@@ -700,8 +720,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_run_diagnostic() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
 
         worker.start_worker(serde_json::Value::Null).await;
@@ -744,8 +767,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_run_diagnostic_on_change() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
 
         worker.start_worker(serde_json::Value::Null).await;
@@ -788,8 +814,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_run_diagnostic_on_save() {
-        let worker =
-            WorkspaceWorker::new(Uri::from_str("file:///root/").unwrap(), create_builders(), false);
+        let worker = WorkspaceWorker::new(
+            Uri::from_str("file:///root/").unwrap(),
+            create_builders(),
+            DiagnosticMode::None,
+        );
         let uri = Uri::from_str("file:///root/diagnostics.config").unwrap();
         worker.start_worker(serde_json::Value::Null).await;
 

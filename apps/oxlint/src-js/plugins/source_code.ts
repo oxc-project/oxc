@@ -25,7 +25,7 @@ import type { ScopeManager } from "./scope.ts";
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
-let buffer: BufferWithArrays | null = null;
+export let buffer: BufferWithArrays | null = null;
 
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;

@@ -220,8 +220,11 @@ impl RuleRunner for crate::rules::eslint::no_async_promise_executor::NoAsyncProm
 }
 
 impl RuleRunner for crate::rules::eslint::no_await_in_loop::NoAwaitInLoop {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::AwaitExpression, AstType::ForOfStatement]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::AwaitExpression,
+        AstType::ForOfStatement,
+        AstType::VariableDeclaration,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

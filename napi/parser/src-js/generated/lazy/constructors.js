@@ -7677,12 +7677,12 @@ export class TSEnumDeclaration {
 
   get const() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 77, internal.ast);
+    return constructBool(internal.pos + 81, internal.ast);
   }
 
   toJSON() {

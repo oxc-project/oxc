@@ -238,6 +238,10 @@ impl Renderer {
                     // This is a complex object or array - should be expanded
                     object_schemas.push(subschema);
                 } else if let Some(instance_type) = &subschema.instance_type {
+                    // Skip null types from Option<T>
+                    if subschema.has_type(InstanceType::Null) {
+                        continue;
+                    }
                     // Check if this is an enum type
                     if let Some(enum_values) = &subschema.enum_values {
                         // This is an enum - render the enum values instead of just "string"
@@ -429,6 +433,7 @@ impl Renderer {
                 SingleOrVec::Vec(types) => types
                     .iter()
                     .map(|ty| serde_json::to_string(ty).unwrap().replace('"', ""))
+                    .filter(|ty| ty != "null")
                     .join(" | "),
             });
             let key_to_render = if key.is_empty() { None } else { Some(key) };

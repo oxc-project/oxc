@@ -82,7 +82,7 @@ impl ToolBuilder for ServerFormatterBuilder {
     fn server_capabilities(
         &self,
         capabilities: &mut ServerCapabilities,
-        _backend_capabilities: &Capabilities,
+        _backend_capabilities: &mut Capabilities,
     ) {
         capabilities.document_formatting_provider =
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
@@ -390,7 +390,7 @@ mod tests_builder {
         let builder = ServerFormatterBuilder::dummy();
         let mut capabilities = ServerCapabilities::default();
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
     }

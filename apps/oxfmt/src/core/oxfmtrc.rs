@@ -1,5 +1,5 @@
-use schemars::{JsonSchema, schema_for};
-use serde::{Deserialize, Deserializer, Serialize};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_formatter::{
@@ -8,58 +8,120 @@ use oxc_formatter::{
     LineWidth, QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
     TailwindcssOptions, TrailingCommas,
 };
+use oxc_toml::Options as TomlFormatterOptions;
 
 /// Configuration options for the Oxfmt.
 ///
-/// Most options are the same as Prettier's options.
-/// See also <https://prettier.io/docs/options>
-///
+/// Most options are the same as Prettier's options, but not all of them.
 /// In addition, some options are our own extensions.
-// NOTE: All fields are typed as `Option` to distinguish between user-specified values and defaults.
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Oxfmtrc {
-    /// Use tabs for indentation or spaces. (Default: `false`)
+    #[serde(flatten)]
+    pub format_config: FormatConfig,
+
+    /// Ignore files matching these glob patterns.
+    /// Patterns are based on the location of the Oxfmt configuration file.
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ignore_patterns: Option<Vec<String>>,
+}
+
+// ---
+
+// NOTE: All fields are typed as `Option` to distinguish between user-specified values and defaults.
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct FormatConfig {
+    // ============================================================================================
+    // Prettier compatible options, also used by `oxc_formatter` and TOML formatter
+    // ============================================================================================
+    /// Indent lines with tabs instead of spaces.
+    ///
+    /// - Default: `false`
+    /// - Overrides `.editorconfig.indent_style`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_tabs: Option<bool>,
-    /// Number of spaces per indentation level. (Default: `2`)
+    /// Specify the number of spaces per indentation-level.
+    ///
+    /// - Default: `2`
+    /// - Overrides `.editorconfig.indent_size`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tab_width: Option<u8>,
-    /// Which end of line characters to apply. (Default: `"lf"`)
+    /// Which end of line characters to apply.
+    ///
+    /// NOTE: `"auto"` is not supported.
+    ///
+    /// - Default: `"lf"`
+    /// - Overrides `.editorconfig.end_of_line`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub end_of_line: Option<EndOfLineConfig>,
-    /// The line length that the printer will wrap on. (Default: `100`)
+    /// Specify the line length that the printer will wrap on.
+    ///
+    /// If you don't want line wrapping when formatting Markdown, you can set the `proseWrap` option to disable it.
+    ///
+    /// - Default: `100`
+    /// - Overrides `.editorconfig.max_line_length`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub print_width: Option<u16>,
-    /// Use single quotes instead of double quotes. (Default: `false`)
+
+    /// Use single quotes instead of double quotes.
+    ///
+    /// For JSX, you can set the `jsxSingleQuote` option.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_quote: Option<bool>,
-    /// Use single quotes instead of double quotes in JSX. (Default: `false`)
+    /// Use single quotes instead of double quotes in JSX.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub jsx_single_quote: Option<bool>,
-    /// Change when properties in objects are quoted. (Default: `"as-needed"`)
+    /// Change when properties in objects are quoted.
+    ///
+    /// - Default: `"as-needed"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quote_props: Option<QuotePropsConfig>,
-    /// Print trailing commas wherever possible. (Default: `"all"`)
+    /// Print trailing commas wherever possible in multi-line comma-separated syntactic structures.
+    ///
+    /// A single-line array, for example, never gets trailing commas.
+    ///
+    /// - Default: `"all"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub trailing_comma: Option<TrailingCommaConfig>,
-    /// Print semicolons at the ends of statements. (Default: `true`)
+    /// Print semicolons at the ends of statements.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub semi: Option<bool>,
-    /// Include parentheses around a sole arrow function parameter. (Default: `"always"`)
+    /// Include parentheses around a sole arrow function parameter.
+    ///
+    /// - Default: `"always"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub arrow_parens: Option<ArrowParensConfig>,
-    /// Print spaces between brackets in object literals. (Default: `true`)
+    /// Print spaces between brackets in object literals.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_spacing: Option<bool>,
-    /// Put the `>` of a multi-line JSX element at the end of the last line
-    /// instead of being alone on the next line. (Default: `false`)
+    /// Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,
+    /// instead of being alone on the next line (does not apply to self closing elements).
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub bracket_same_line: Option<bool>,
-    /// How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
+    /// How to wrap object literals when they could fit on one line or span multiple lines.
+    ///
+    /// By default, formats objects as multi-line if there is a newline prior to the first property.
+    /// Authors can use this heuristic to contextually improve readability, though it has some downsides.
+    ///
+    /// - Default: `"preserve"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub object_wrap: Option<ObjectWrapConfig>,
-    /// Put each attribute on a new line in JSX. (Default: `false`)
+    /// Enforce single attribute per line in HTML, Vue, and JSX.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_attribute_per_line: Option<bool>,
 
@@ -67,42 +129,81 @@ pub struct Oxfmtrc {
     // Just be here to report error if they are used.
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
-    pub experimental_operator_position: Option<bool>,
+    pub experimental_operator_position: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     #[schemars(skip)]
     pub experimental_ternaries: Option<bool>,
 
-    /// Control whether to format embedded parts in the file.
-    /// e.g. JS-in-Vue, CSS-in-JS, etc. (Default: `"auto"`)
+    /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
+    ///
+    /// NOTE: XXX-in-JS support is incomplete.
+    /// JS-in-XXX is fully supported but still be handled by Prettier.
+    ///
+    /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub embedded_language_formatting: Option<EmbeddedLanguageFormattingConfig>,
 
-    /// Whether to insert a final newline at the end of the file. (Default: `true`)
+    // ============================================================================================
+    // Prettier compatible options and only used by Prettier
+    // ============================================================================================
+    /// How to wrap prose.
+    ///
+    /// By default, formatter will not change wrapping in markdown text since some services use a linebreak-sensitive renderer, e.g. GitHub comments and BitBucket.
+    /// To wrap prose to the print width, change this option to "always".
+    /// If you want to force all prose blocks to be on a single line and rely on editor/viewer soft wrapping instead, you can use "never".
+    ///
+    /// - Default: `"preserve"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub prose_wrap: Option<ProseWrapConfig>,
+    /// Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.
+    ///
+    /// - Default: `"css"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub html_whitespace_sensitivity: Option<HtmlWhitespaceSensitivityConfig>,
+    /// Whether or not to indent the code inside `<script>` and `<style>` tags in Vue files.
+    ///
+    /// - Default: `false`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub vue_indent_script_and_style: Option<bool>,
+
+    // ============================================================================================
+    // Below are our own extensions, handled by Oxfmt
+    // ============================================================================================
+    /// Whether to insert a final newline at the end of the file.
+    ///
+    /// - Default: `true`
+    /// - Overrides `.editorconfig.insert_final_newline`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub insert_final_newline: Option<bool>,
 
-    /// Experimental: Sort import statements. (Default: disabled)
+    /// Experimental: Sort import statements.
+    ///
+    /// Using the similar algorithm as [eslint-plugin-perfectionist/sort-imports](https://perfectionist.dev/rules/sort-imports).
+    /// For details, see each field's documentation.
+    ///
+    /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_imports: Option<SortImportsConfig>,
 
-    /// Experimental: Sort `package.json` keys. (Default: `true`)
+    /// Experimental: Sort `package.json` keys.
+    ///
+    /// The algorithm is NOT compatible with [prettier-plugin-sort-packagejson](https://github.com/matzkoh/prettier-plugin-packagejson).
+    /// But we believe it is clearer and easier to navigate.
+    /// For details, see each field's documentation.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_sort_package_json: Option<SortPackageJsonUserConfig>,
 
-    /// Experimental: Sort Tailwind CSS classes in string literals.
+    /// Experimental: Sort Tailwind CSS classes.
     ///
-    /// When enabled, `Oxfmt` sorts Tailwind CSS classes using the same algorithm as
-    /// [`prettier-plugin-tailwindcss`](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+    /// Using the same algorithm as [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss).
+    /// Option names omit the `tailwind` prefix used in the original plugin (e.g., `config` instead of `tailwindConfig`).
+    /// For details, see each field's documentation.
     ///
-    /// See [`TailwindcssConfig`] for available options.
-    ///
-    /// (Default: disabled)
+    /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_tailwindcss: Option<TailwindcssConfig>,
-
-    /// Ignore files matching these glob patterns. Current working directory is used as the root.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub ignore_patterns: Option<Vec<String>>,
 }
 
 // ---
@@ -152,82 +253,143 @@ pub enum EmbeddedLanguageFormattingConfig {
     Off,
 }
 
+// ---
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ProseWrapConfig {
+    Always,
+    Never,
+    Preserve,
+}
+
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum HtmlWhitespaceSensitivityConfig {
+    Css,
+    Strict,
+    Ignore,
+}
+
+// ---
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortImportsConfig {
-    /// Partition imports by newlines. (Default: `false`)
+    /// Enables the empty line to separate imports into logical groups.
+    ///
+    /// When `true`, formatter will not sort imports if there is an empty line between them.
+    /// This helps maintain the defined order of logically separated groups of members.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    ///
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub partition_by_newline: Option<bool>,
-    /// Partition imports by comments. (Default: `false`)
+    /// Enables the use of comments to separate imports into logical groups.
+    ///
+    /// When `true`, all comments will be treated as delimiters, creating partitions.
+    ///
+    /// ```js
+    /// import { b1, b2 } from 'b'
+    /// // PARTITION
+    /// import { a } from 'a'
+    /// import { c } from 'c'
+    /// ```
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub partition_by_comment: Option<bool>,
-    /// Sort side-effect imports. (Default: `false`)
+    /// Specifies whether side effect imports should be sorted.
+    ///
+    /// By default, sorting side-effect imports is disabled for security reasons.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_side_effects: Option<bool>,
-    /// Sort order. (Default: `"asc"`)
+    /// Specifies whether to sort items in ascending or descending order.
+    ///
+    /// - Default: `"asc"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order: Option<SortOrderConfig>,
-    /// Ignore case when sorting. (Default: `true`)
+    /// Specifies whether sorting should be case-sensitive.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_case: Option<bool>,
-    /// Add newlines between import groups. (Default: `true`)
+    /// Specifies whether to add newlines between groups.
+    ///
+    /// When `false`, no newlines are added between groups.
+    ///
+    /// - Default: `true`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub newlines_between: Option<bool>,
-    /// Glob patterns to identify internal imports.
+    /// Specifies a prefix for identifying internal imports.
+    ///
+    /// This is useful for distinguishing your own modules from external dependencies.
+    ///
+    /// - Default: `["~/", "@/"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub internal_pattern: Option<Vec<String>>,
-    /// Custom groups configuration for organizing imports.
-    /// Each array element represents a group, and multiple group names in the same array are treated as one.
-    /// Accepts both `string` and `string[]` as group elements.
-    #[serde(skip_serializing_if = "Option::is_none", deserialize_with = "deserialize_groups")]
-    pub groups: Option<Vec<Vec<String>>>,
-}
-
-/// Custom deserializer for groups field to support both `string` and `string[]` as group elements
-fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<Vec<Vec<String>>>, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    use serde::de::Error;
-    use serde_json::Value;
-
-    let value: Option<Value> = Option::deserialize(deserializer)?;
-
-    match value {
-        None => Ok(None),
-        Some(Value::Array(arr)) => {
-            let mut groups = Vec::new();
-            for item in arr {
-                match item {
-                    // Single string becomes a single-element group
-                    Value::String(s) => {
-                        groups.push(vec![s]);
-                    }
-                    // Array of strings becomes a group
-                    Value::Array(group_arr) => {
-                        let mut group = Vec::new();
-                        for g in group_arr {
-                            if let Value::String(s) = g {
-                                group.push(s);
-                            } else {
-                                return Err(D::Error::custom(
-                                    "groups array elements must contain only strings",
-                                ));
-                            }
-                        }
-                        groups.push(group);
-                    }
-                    _ => {
-                        return Err(D::Error::custom(
-                            "groups must be an array of strings or arrays of strings",
-                        ));
-                    }
-                }
-            }
-            Ok(Some(groups))
-        }
-        Some(_) => Err(D::Error::custom("groups must be an array")),
-    }
+    /// Specifies a list of predefined import groups for sorting.
+    ///
+    /// Each import will be assigned a single group specified in the groups option (or the `unknown` group if no match is found).
+    /// The order of items in the `groups` option determines how groups are ordered.
+    ///
+    /// Within a given group, members will be sorted according to the type, order, ignoreCase, etc. options.
+    ///
+    /// Individual groups can be combined together by placing them in an array.
+    /// The order of groups in that array does not matter.
+    /// All members of the groups in the array will be sorted together as if they were part of a single group.
+    ///
+    /// Predefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.
+    ///
+    /// The list of selectors is sorted from most to least important:
+    /// - `type` — TypeScript type imports.
+    /// - `side-effect-style` — Side effect style imports.
+    /// - `side-effect` — Side effect imports.
+    /// - `style` — Style imports.
+    /// - `index` — Main file from the current directory.
+    /// - `sibling` — Modules from the same directory.
+    /// - `parent` — Modules from the parent directory.
+    /// - `subpath` — Node.js subpath imports.
+    /// - `internal` — Your internal modules.
+    /// - `builtin` — Node.js Built-in Modules.
+    /// - `external` — External modules installed in the project.
+    /// - `import` — Any import.
+    ///
+    /// The list of modifiers is sorted from most to least important:
+    /// - `side-effect` — Side effect imports.
+    /// - `type` — TypeScript type imports.
+    /// - `value` — Value imports.
+    /// - `default` — Imports containing the default specifier.
+    /// - `wildcard` — Imports containing the wildcard (`* as`) specifier.
+    /// - `named` — Imports containing at least one named specifier.
+    /// - `multiline` — Imports on multiple lines.
+    /// - `singleline` — Imports on a single line.
+    ///
+    /// See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
+    /// NOTE: `customGroups` is not implemented yet.
+    ///
+    /// - Default: See below
+    /// ```json
+    /// [
+    ///   "type-import",
+    ///   ["value-builtin", "value-external"],
+    ///   "type-internal",
+    ///   "value-internal",
+    ///   ["type-parent", "type-sibling", "type-index"],
+    ///   ["value-parent", "value-sibling", "value-index"],
+    ///   "unknown",
+    /// ]
+    /// ```
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub groups: Option<Vec<SortGroupItemConfig>>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -237,11 +399,24 @@ pub enum SortOrderConfig {
     Desc,
 }
 
-/// User-provided configuration for `package.json` sorting.
-///
-/// - `true`: Enable sorting with default options
-/// - `false`: Disable sorting
-/// - `{ sortScripts: true }`: Enable sorting with custom options
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(untagged)]
+pub enum SortGroupItemConfig {
+    Single(String),
+    Multiple(Vec<String>),
+}
+
+impl SortGroupItemConfig {
+    fn into_vec(self) -> Vec<String> {
+        match self {
+            Self::Single(s) => vec![s],
+            Self::Multiple(v) => v,
+        }
+    }
+}
+
+// ---
+
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum SortPackageJsonUserConfig {
@@ -267,11 +442,12 @@ impl SortPackageJsonUserConfig {
     }
 }
 
-/// Configuration for `package.json` sorting.
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct SortPackageJsonConfig {
-    /// Sort the `scripts` field alphabetically. (Default: `false`)
+    /// Sort the `scripts` field alphabetically.
+    ///
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort_scripts: Option<bool>,
 }
@@ -286,498 +462,353 @@ impl SortPackageJsonConfig {
     }
 }
 
-/// Configuration for Tailwind CSS class sorting.
-///
-/// Option names omit the `tailwind` prefix used in the original plugin
-/// (e.g., `config` instead of `tailwindConfig`).
-///
-/// See [`prettier-plugin-tailwindcss` options](https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options) for details.
+// ---
+
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct TailwindcssConfig {
     /// Path to your Tailwind CSS configuration file (v3).
     ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
     ///
-    /// Default: `"./tailwind.config.js"`
+    /// - Default: Automatically find `"tailwind.config.js"`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub config: Option<String>,
-
     /// Path to your Tailwind CSS stylesheet (v4).
     ///
-    /// Note: Paths are resolved relative to the Oxfmt configuration file.
+    /// NOTE: Paths are resolved relative to the Oxfmt configuration file.
     ///
-    /// Example: `"./src/app.css"`
+    /// - Default: Installed Tailwind CSS's `theme.css`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stylesheet: Option<String>,
 
-    /// List of custom function names that contain Tailwind CSS classes.
+    /// List of custom function name prefixes that contain Tailwind CSS classes.
     ///
-    /// Note: Regex patterns are not yet supported.
+    /// NOTE: Regex patterns are not yet supported.
     ///
-    /// Example: `["clsx", "cn", "cva", "tw"]`
-    ///
-    /// Default: `[]`
+    /// - Default: `[]`
+    /// - Example: `["clsx", "cn", "cva", "tw"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub functions: Option<Vec<String>>,
-
-    /// List of attributes that contain Tailwind CSS classes.
+    /// List of attribute prefixes that contain Tailwind CSS classes.
     ///
-    /// Note: Regex patterns are not yet supported.
+    /// NOTE: Regex patterns are not yet supported.
     ///
-    /// Example: `["myClassProp", ":class"]`
-    ///
-    /// Default: `["class", "className"]`
+    /// - Default: `["class", "className"]`
+    /// - Example: `["myClassProp", ":class"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attributes: Option<Vec<String>>,
 
     /// Preserve whitespace around classes.
     ///
-    /// Default: `false`
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_whitespace: Option<bool>,
-
     /// Preserve duplicate classes.
     ///
-    /// Default: `false`
+    /// - Default: `false`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub preserve_duplicates: Option<bool>,
 }
 
 // ---
 
-/// Additional options specific to Oxfmt.
-/// These options are not part of Prettier's configuration,
-/// and `oxc_formatter` also does not use these options.
+/// Resolved format options from `Oxfmtrc`.
+///
+/// Contains `FormatOptions` for `oxc_formatter` plus additional Oxfmt-specific options.
+/// All fields here are subject to per-file overrides.
 #[derive(Debug, Clone)]
 pub struct OxfmtOptions {
-    pub ignore_patterns: Vec<String>,
+    pub format_options: FormatOptions,
+    pub toml_options: TomlFormatterOptions,
     pub sort_package_json: Option<sort_package_json::SortOptions>,
     pub insert_final_newline: bool,
 }
 
-impl Default for OxfmtOptions {
-    fn default() -> Self {
-        Self {
-            ignore_patterns: vec![],
-            sort_package_json: Some(SortPackageJsonConfig::default().to_sort_options()),
-            insert_final_newline: true,
-        }
-    }
-}
-
 // ---
 
 impl Oxfmtrc {
-    /// Converts the `Oxfmtrc` into `FormatOptions` and `OxfmtOptions`.
-    /// With resolving default values for unspecified options.
+    /// Converts the `Oxfmtrc` into `OxfmtOptions` and ignore patterns.
     ///
     /// # Errors
     /// Returns error if any option value is invalid
-    pub fn into_options(self) -> Result<(FormatOptions, OxfmtOptions), String> {
-        // Not yet supported options:
-        // [Prettier] experimentalOperatorPosition: "start" | "end"
-        // [Prettier] experimentalTernaries: boolean
-        if self.experimental_operator_position.is_some() {
-            return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
-        }
-        if self.experimental_ternaries.is_some() {
-            return Err("Unsupported option: `experimentalTernaries`".to_string());
-        }
+    pub fn into_options(self) -> Result<(OxfmtOptions, Vec<String>), String> {
+        let user_format_config = self.format_config;
 
-        // All values are based on defaults from `FormatOptions::default()`
-        let mut format_options = FormatOptions::default();
-
-        // [Prettier] useTabs: boolean
-        if let Some(use_tabs) = self.use_tabs {
-            format_options.indent_style =
-                if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
-        }
-
-        // [Prettier] tabWidth: number
-        if let Some(width) = self.tab_width {
-            format_options.indent_width =
-                IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
-        }
-
-        // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
-        // NOTE: "auto" is not supported
-        if let Some(ending) = self.end_of_line {
-            format_options.line_ending = match ending {
-                EndOfLineConfig::Lf => LineEnding::Lf,
-                EndOfLineConfig::Crlf => LineEnding::Crlf,
-                EndOfLineConfig::Cr => LineEnding::Cr,
-            };
-        }
-
-        // [Prettier] printWidth: number
-        if let Some(width) = self.print_width {
-            format_options.line_width =
-                LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
-        }
-
-        // [Prettier] singleQuote: boolean
-        if let Some(single_quote) = self.single_quote {
-            format_options.quote_style =
-                if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
-        }
-
-        // [Prettier] jsxSingleQuote: boolean
-        if let Some(jsx_single_quote) = self.jsx_single_quote {
-            format_options.jsx_quote_style =
-                if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
-        }
-
-        // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
-        if let Some(props) = self.quote_props {
-            format_options.quote_properties = match props {
-                QuotePropsConfig::AsNeeded => QuoteProperties::AsNeeded,
-                QuotePropsConfig::Consistent => QuoteProperties::Consistent,
-                QuotePropsConfig::Preserve => QuoteProperties::Preserve,
-            };
-        }
-
-        // [Prettier] trailingComma: "all" | "es5" | "none"
-        if let Some(commas) = self.trailing_comma {
-            format_options.trailing_commas = match commas {
-                TrailingCommaConfig::All => TrailingCommas::All,
-                TrailingCommaConfig::Es5 => TrailingCommas::Es5,
-                TrailingCommaConfig::None => TrailingCommas::None,
-            };
-        }
-
-        // [Prettier] semi: boolean
-        if let Some(semi) = self.semi {
-            format_options.semicolons =
-                if semi { Semicolons::Always } else { Semicolons::AsNeeded };
-        }
-
-        // [Prettier] arrowParens: "avoid" | "always"
-        if let Some(parens) = self.arrow_parens {
-            format_options.arrow_parentheses = match parens {
-                ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
-                ArrowParensConfig::Always => ArrowParentheses::Always,
-            };
-        }
-
-        // [Prettier] bracketSpacing: boolean
-        if let Some(spacing) = self.bracket_spacing {
-            format_options.bracket_spacing = BracketSpacing::from(spacing);
-        }
-
-        // [Prettier] bracketSameLine: boolean
-        if let Some(same_line) = self.bracket_same_line {
-            format_options.bracket_same_line = BracketSameLine::from(same_line);
-        }
-
-        // [Prettier] singleAttributePerLine: boolean
-        if let Some(single_attribute_per_line) = self.single_attribute_per_line {
-            format_options.attribute_position = if single_attribute_per_line {
-                AttributePosition::Multiline
-            } else {
-                AttributePosition::Auto
-            };
-        }
-
-        // [Prettier] objectWrap: "preserve" | "collapse"
-        if let Some(object_wrap) = self.object_wrap {
-            format_options.expand = match object_wrap {
-                ObjectWrapConfig::Preserve => Expand::Auto,
-                ObjectWrapConfig::Collapse => Expand::Never,
-            };
-        }
-
-        // [Prettier] embeddedLanguageFormatting: "auto" | "off"
-        if let Some(embedded_language_formatting) = self.embedded_language_formatting {
-            format_options.embedded_language_formatting = match embedded_language_formatting {
-                EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
-                EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
-            };
-        }
-
-        // Below are our own extensions
-
-        if let Some(config) = self.experimental_sort_imports {
-            let mut sort_imports = SortImportsOptions::default();
-
-            if let Some(v) = config.partition_by_newline {
-                sort_imports.partition_by_newline = v;
+        let format_options = {
+            // Not yet supported options:
+            // [Prettier] experimentalOperatorPosition: "start" | "end"
+            // [Prettier] experimentalTernaries: boolean
+            if user_format_config.experimental_operator_position.is_some() {
+                return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
             }
-            if let Some(v) = config.partition_by_comment {
-                sort_imports.partition_by_comment = v;
+            if user_format_config.experimental_ternaries.is_some() {
+                return Err("Unsupported option: `experimentalTernaries`".to_string());
             }
-            if let Some(v) = config.sort_side_effects {
-                sort_imports.sort_side_effects = v;
+
+            // All values are based on defaults from `FormatOptions::default()`
+            let mut format_options = FormatOptions::default();
+
+            // [Prettier] useTabs: boolean
+            if let Some(use_tabs) = user_format_config.use_tabs {
+                format_options.indent_style =
+                    if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
             }
-            if let Some(v) = config.order {
-                sort_imports.order = match v {
-                    SortOrderConfig::Asc => SortOrder::Asc,
-                    SortOrderConfig::Desc => SortOrder::Desc,
+
+            // [Prettier] tabWidth: number
+            if let Some(width) = user_format_config.tab_width {
+                format_options.indent_width =
+                    IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
+            }
+
+            // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
+            // NOTE: "auto" is not supported
+            if let Some(ending) = user_format_config.end_of_line {
+                format_options.line_ending = match ending {
+                    EndOfLineConfig::Lf => LineEnding::Lf,
+                    EndOfLineConfig::Crlf => LineEnding::Crlf,
+                    EndOfLineConfig::Cr => LineEnding::Cr,
                 };
             }
-            if let Some(v) = config.ignore_case {
-                sort_imports.ignore_case = v;
-            }
-            if let Some(v) = config.newlines_between {
-                sort_imports.newlines_between = v;
-            }
-            if let Some(v) = config.internal_pattern {
-                sort_imports.internal_pattern = v;
-            }
-            if let Some(v) = config.groups {
-                sort_imports.groups = v;
+
+            // [Prettier] printWidth: number
+            if let Some(width) = user_format_config.print_width {
+                format_options.line_width =
+                    LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
             }
 
-            // `partition_by_newline: true` and `newlines_between: true` cannot be used together
-            if sort_imports.partition_by_newline && sort_imports.newlines_between {
-                return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
+            // [Prettier] singleQuote: boolean
+            if let Some(single_quote) = user_format_config.single_quote {
+                format_options.quote_style =
+                    if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
             }
 
-            format_options.experimental_sort_imports = Some(sort_imports);
-        }
+            // [Prettier] jsxSingleQuote: boolean
+            if let Some(jsx_single_quote) = user_format_config.jsx_single_quote {
+                format_options.jsx_quote_style =
+                    if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+            }
 
-        // [Oxfmt] experimentalTailwindcss: object | null
-        if let Some(config) = self.experimental_tailwindcss {
-            format_options.experimental_tailwindcss = Some(TailwindcssOptions {
-                config: config.config,
-                stylesheet: config.stylesheet,
-                functions: config.functions.unwrap_or_default(),
-                attributes: config.attributes.unwrap_or_default(),
-                preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
-                preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
-            });
-        }
+            // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
+            if let Some(props) = user_format_config.quote_props {
+                format_options.quote_properties = match props {
+                    QuotePropsConfig::AsNeeded => QuoteProperties::AsNeeded,
+                    QuotePropsConfig::Consistent => QuoteProperties::Consistent,
+                    QuotePropsConfig::Preserve => QuoteProperties::Preserve,
+                };
+            }
 
-        let mut oxfmt_options = OxfmtOptions::default();
+            // [Prettier] trailingComma: "all" | "es5" | "none"
+            if let Some(commas) = user_format_config.trailing_comma {
+                format_options.trailing_commas = match commas {
+                    TrailingCommaConfig::All => TrailingCommas::All,
+                    TrailingCommaConfig::Es5 => TrailingCommas::Es5,
+                    TrailingCommaConfig::None => TrailingCommas::None,
+                };
+            }
 
-        if let Some(patterns) = self.ignore_patterns {
-            oxfmt_options.ignore_patterns = patterns;
-        }
+            // [Prettier] semi: boolean
+            if let Some(semi) = user_format_config.semi {
+                format_options.semicolons =
+                    if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+            }
 
-        if let Some(config) = self.experimental_sort_package_json {
-            oxfmt_options.sort_package_json = config.to_sort_options();
-        }
+            // [Prettier] arrowParens: "avoid" | "always"
+            if let Some(parens) = user_format_config.arrow_parens {
+                format_options.arrow_parentheses = match parens {
+                    ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
+                    ArrowParensConfig::Always => ArrowParentheses::Always,
+                };
+            }
 
-        if let Some(insert_final_newline) = self.insert_final_newline {
-            oxfmt_options.insert_final_newline = insert_final_newline;
-        }
+            // [Prettier] bracketSpacing: boolean
+            if let Some(spacing) = user_format_config.bracket_spacing {
+                format_options.bracket_spacing = BracketSpacing::from(spacing);
+            }
 
-        Ok((format_options, oxfmt_options))
-    }
+            // [Prettier] bracketSameLine: boolean
+            if let Some(same_line) = user_format_config.bracket_same_line {
+                format_options.bracket_same_line = BracketSameLine::from(same_line);
+            }
 
-    /// Populates the raw config JSON with resolved `FormatOptions` values.
-    /// This ensures `external_formatter`(Prettier) receives the same options that `oxc_formatter` uses.
-    /// Roughly the reverse of `into_format_options`.
-    pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
-        let Some(obj) = config.as_object_mut() else {
-            return;
+            // [Prettier] singleAttributePerLine: boolean
+            if let Some(single_attribute_per_line) = user_format_config.single_attribute_per_line {
+                format_options.attribute_position = if single_attribute_per_line {
+                    AttributePosition::Multiline
+                } else {
+                    AttributePosition::Auto
+                };
+            }
+
+            // [Prettier] objectWrap: "preserve" | "collapse"
+            if let Some(object_wrap) = user_format_config.object_wrap {
+                format_options.expand = match object_wrap {
+                    ObjectWrapConfig::Preserve => Expand::Auto,
+                    ObjectWrapConfig::Collapse => Expand::Never,
+                };
+            }
+
+            // [Prettier] embeddedLanguageFormatting: "auto" | "off"
+            if let Some(embedded_language_formatting) =
+                user_format_config.embedded_language_formatting
+            {
+                format_options.embedded_language_formatting = match embedded_language_formatting {
+                    EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
+                    EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
+                };
+            }
+
+            // Below are our own extensions
+
+            if let Some(config) = user_format_config.experimental_sort_imports {
+                let mut sort_imports = SortImportsOptions::default();
+
+                if let Some(v) = config.partition_by_newline {
+                    sort_imports.partition_by_newline = v;
+                }
+                if let Some(v) = config.partition_by_comment {
+                    sort_imports.partition_by_comment = v;
+                }
+                if let Some(v) = config.sort_side_effects {
+                    sort_imports.sort_side_effects = v;
+                }
+                if let Some(v) = config.order {
+                    sort_imports.order = match v {
+                        SortOrderConfig::Asc => SortOrder::Asc,
+                        SortOrderConfig::Desc => SortOrder::Desc,
+                    };
+                }
+                if let Some(v) = config.ignore_case {
+                    sort_imports.ignore_case = v;
+                }
+                if let Some(v) = config.newlines_between {
+                    sort_imports.newlines_between = v;
+                }
+                if let Some(v) = config.internal_pattern {
+                    sort_imports.internal_pattern = v;
+                }
+                if let Some(v) = config.groups {
+                    sort_imports.groups =
+                        v.into_iter().map(SortGroupItemConfig::into_vec).collect();
+                }
+
+                // `partition_by_newline: true` and `newlines_between: true` cannot be used together
+                if sort_imports.partition_by_newline && sort_imports.newlines_between {
+                    return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
+                }
+
+                format_options.experimental_sort_imports = Some(sort_imports);
+            }
+
+            // [Oxfmt] experimentalTailwindcss: object | null
+            if let Some(config) = user_format_config.experimental_tailwindcss {
+                format_options.experimental_tailwindcss = Some(TailwindcssOptions {
+                    config: config.config,
+                    stylesheet: config.stylesheet,
+                    functions: config.functions.unwrap_or_default(),
+                    attributes: config.attributes.unwrap_or_default(),
+                    preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
+                    preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
+                });
+            }
+
+            format_options
         };
 
-        // [Prettier] useTabs: boolean
-        obj.insert(
-            "useTabs".to_string(),
-            Value::from(match options.indent_style {
-                IndentStyle::Tab => true,
-                IndentStyle::Space => false,
-            }),
+        // Currently, there is a no options for TOML formatter
+        let toml_options = build_toml_options(&format_options);
+
+        let sort_package_json = user_format_config.experimental_sort_package_json.map_or_else(
+            || Some(SortPackageJsonConfig::default().to_sort_options()),
+            |c| c.to_sort_options(),
         );
 
-        // [Prettier] tabWidth: number
-        obj.insert("tabWidth".to_string(), Value::from(options.indent_width.value()));
+        let insert_final_newline = user_format_config.insert_final_newline.unwrap_or(true);
 
-        // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
-        // NOTE: "auto" is not supported by `oxc_formatter`
-        obj.insert(
-            "endOfLine".to_string(),
-            Value::from(match options.line_ending {
-                LineEnding::Lf => "lf",
-                LineEnding::Crlf => "crlf",
-                LineEnding::Cr => "cr",
-            }),
-        );
+        // Globs will be validated later
+        let ignore_patterns = self.ignore_patterns.unwrap_or_default();
 
-        // [Prettier] printWidth: number
-        obj.insert("printWidth".to_string(), Value::from(options.line_width.value()));
-
-        // [Prettier] singleQuote: boolean
-        obj.insert(
-            "singleQuote".to_string(),
-            Value::from(match options.quote_style {
-                QuoteStyle::Single => true,
-                QuoteStyle::Double => false,
-            }),
-        );
-
-        // [Prettier] jsxSingleQuote: boolean
-        obj.insert(
-            "jsxSingleQuote".to_string(),
-            Value::from(match options.jsx_quote_style {
-                QuoteStyle::Single => true,
-                QuoteStyle::Double => false,
-            }),
-        );
-
-        // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
-        obj.insert(
-            "quoteProps".to_string(),
-            Value::from(match options.quote_properties {
-                QuoteProperties::AsNeeded => "as-needed",
-                QuoteProperties::Consistent => "consistent",
-                QuoteProperties::Preserve => "preserve",
-            }),
-        );
-
-        // [Prettier] trailingComma: "all" | "es5" | "none"
-        obj.insert(
-            "trailingComma".to_string(),
-            Value::from(match options.trailing_commas {
-                TrailingCommas::All => "all",
-                TrailingCommas::Es5 => "es5",
-                TrailingCommas::None => "none",
-            }),
-        );
-
-        // [Prettier] semi: boolean
-        obj.insert(
-            "semi".to_string(),
-            Value::from(match options.semicolons {
-                Semicolons::Always => true,
-                Semicolons::AsNeeded => false,
-            }),
-        );
-
-        // [Prettier] arrowParens: "avoid" | "always"
-        obj.insert(
-            "arrowParens".to_string(),
-            Value::from(match options.arrow_parentheses {
-                ArrowParentheses::AsNeeded => "avoid",
-                ArrowParentheses::Always => "always",
-            }),
-        );
-
-        // [Prettier] bracketSpacing: boolean
-        obj.insert("bracketSpacing".to_string(), Value::from(options.bracket_spacing.value()));
-
-        // [Prettier] bracketSameLine: boolean
-        obj.insert("bracketSameLine".to_string(), Value::from(options.bracket_same_line.value()));
-
-        // [Prettier] singleAttributePerLine: boolean
-        obj.insert(
-            "singleAttributePerLine".to_string(),
-            Value::from(match options.attribute_position {
-                AttributePosition::Multiline => true,
-                AttributePosition::Auto => false,
-            }),
-        );
-
-        // [Prettier] objectWrap: "preserve" | "collapse"
-        obj.insert(
-            "objectWrap".to_string(),
-            Value::from(match options.expand {
-                Expand::Auto => "preserve",
-                Expand::Never => "collapse",
-            }),
-        );
-
-        // [Prettier] embeddedLanguageFormatting: "auto" | "off"
-        obj.insert(
-            "embeddedLanguageFormatting".to_string(),
-            Value::from(match options.embedded_language_formatting {
-                EmbeddedLanguageFormatting::Auto => "auto",
-                EmbeddedLanguageFormatting::Off => "off",
-            }),
-        );
-
-        // Below are our own extensions, just remove them
-        obj.remove("ignorePatterns");
-        obj.remove("insertFinalNewline");
-        obj.remove("experimentalSortImports");
-        obj.remove("experimentalSortPackageJson");
-
-        // Any other unknown fields are preserved as-is.
-        // e.g. `plugins`, `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
-        // Other options defined independently by plugins are also left as they are.
+        Ok((
+            OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline },
+            ignore_patterns,
+        ))
     }
 }
 
-// ---
-
-impl Oxfmtrc {
-    /// Generates the JSON schema for Oxfmtrc configuration files.
-    ///
-    /// # Panics
-    /// Panics if the schema generation fails.
-    pub fn generate_schema_json() -> String {
-        let mut schema = schema_for!(Oxfmtrc);
-
-        // Allow comments and trailing commas for vscode-json-languageservice
-        // NOTE: This is NOT part of standard JSON Schema specification
-        // https://github.com/microsoft/vscode-json-languageservice/blob/fb83547762901f32d8449d57e24666573016b10c/src/jsonLanguageTypes.ts#L151-L159
-        schema.schema.extensions.insert("allowComments".to_string(), serde_json::Value::Bool(true));
-        schema
-            .schema
-            .extensions
-            .insert("allowTrailingCommas".to_string(), serde_json::Value::Bool(true));
-
-        // Inject markdownDescription fields for better editor support (e.g., VS Code)
-        let mut json = serde_json::to_value(&schema).unwrap();
-        Self::inject_markdown_descriptions(&mut json);
-
-        // Sort keys for deterministic output across different environments.
-        // Without this, CI and local environments may produce different key orders,
-        // causing snapshot tests to fail.
-        let sorted_json = Self::sort_json_keys(&json);
-
-        serde_json::to_string_pretty(&sorted_json).unwrap()
+/// Build `toml` formatter options from `FormatOptions`.
+/// Use the same options as `prettier-plugin-toml`.
+/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
+fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
+    TomlFormatterOptions {
+        column_width: format_options.line_width.value() as usize,
+        indent_string: if format_options.indent_style.is_tab() {
+            "\t".to_string()
+        } else {
+            " ".repeat(format_options.indent_width.value() as usize)
+        },
+        array_trailing_comma: !format_options.trailing_commas.is_none(),
+        crlf: format_options.line_ending.is_carriage_return_line_feed(),
+        // NOTE: Need to align with `oxc_formatter` and Prettier defaults,
+        // to make `insertFinalNewline` option work correctly.
+        trailing_newline: true,
+        ..Default::default()
     }
+}
 
-    /// Recursively sort all object keys in the JSON value for deterministic output.
-    fn sort_json_keys(value: &serde_json::Value) -> serde_json::Value {
-        match value {
-            serde_json::Value::Object(map) => {
-                let mut sorted: Vec<_> = map.iter().collect();
-                sorted.sort_by(|(a, _), (b, _)| a.cmp(b));
-                serde_json::Value::Object(
-                    sorted.into_iter().map(|(k, v)| (k.clone(), Self::sort_json_keys(v))).collect(),
-                )
-            }
-            serde_json::Value::Array(arr) => {
-                serde_json::Value::Array(arr.iter().map(Self::sort_json_keys).collect())
-            }
-            _ => value.clone(),
-        }
-    }
+/// Populates the raw config JSON with resolved `FormatOptions` values.
+/// This ensures `external_formatter`(Prettier) receives the same options that `oxc_formatter` uses.
+///
+/// Only options that meet one of these criteria need to be mapped:
+/// - 1. Different defaults between Prettier and oxc_formatter
+///   - e.g. `printWidth`: Prettier: 80, Oxfmt: 100
+/// - 2. Can be set via `.editorconfig` (values won't be in raw config JSON)
+///   - `max_line_length` -> `printWidth`
+///   - `end_of_line` -> `endOfLine`
+///   - `indent_style` -> `useTabs`
+///   - `indent_size` -> `tabWidth`
+pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
+    let Some(obj) = config.as_object_mut() else {
+        return;
+    };
 
-    /// Recursively inject `markdownDescription` fields into the JSON schema.
-    /// This is a non-standard field that some editors (like VS Code) use to render
-    /// markdown in hover tooltips.
-    fn inject_markdown_descriptions(value: &mut serde_json::Value) {
-        match value {
-            serde_json::Value::Object(map) => {
-                // If this object has a `description` field, copy it to `markdownDescription`
-                if let Some(serde_json::Value::String(desc_str)) = map.get("description") {
-                    map.insert(
-                        "markdownDescription".to_string(),
-                        serde_json::Value::String(desc_str.clone()),
-                    );
-                }
+    // vs Prettier defaults and `.editorconfig` values
+    obj.insert("printWidth".to_string(), Value::from(options.line_width.value()));
 
-                // Recursively process all values in the object
-                for value in map.values_mut() {
-                    Self::inject_markdown_descriptions(value);
-                }
-            }
-            serde_json::Value::Array(items) => {
-                // Recursively process all items in the array
-                for item in items {
-                    Self::inject_markdown_descriptions(item);
-                }
-            }
-            _ => {
-                // Primitive values don't need processing
-            }
-        }
-    }
+    // vs `.editorconfig` values
+    obj.insert(
+        "useTabs".to_string(),
+        Value::from(match options.indent_style {
+            IndentStyle::Tab => true,
+            IndentStyle::Space => false,
+        }),
+    );
+    obj.insert("tabWidth".to_string(), Value::from(options.indent_width.value()));
+    obj.insert(
+        "endOfLine".to_string(),
+        Value::from(match options.line_ending {
+            LineEnding::Lf => "lf",
+            LineEnding::Crlf => "crlf",
+            LineEnding::Cr => "cr",
+        }),
+    );
+
+    // Below are our own extensions, just remove them
+    obj.remove("ignorePatterns");
+    obj.remove("insertFinalNewline");
+    obj.remove("experimentalSortImports");
+    obj.remove("experimentalSortPackageJson");
+
+    // TODO: Currently, `experimentalTailwindcss` is not removed here.
+    // Instead, they are mapped directly to Prettier's options in JS side.
+    // But in theory, we can also remove and remap them here.
+
+    // Any other fields are preserved as-is.
+    // - e.g. `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
+    //   - Defined in `Oxfmtrc`, but only used by Prettier
+    // - e.g. `plugins`
+    //   - It does not mean plugin works correctly with Oxfmt
+    //   - Oxfmt still not aware of any plugin-defined languages
+    // Other options defined independently by plugins are also left as they are.
 }
 
 // ---
@@ -803,15 +834,15 @@ mod tests {
         }"#;
 
         let config: Oxfmtrc = serde_json::from_str(json).unwrap();
-        let (format_options, _) = config.into_options().unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
 
-        assert!(format_options.indent_style.is_tab());
-        assert_eq!(format_options.indent_width.value(), 4);
-        assert_eq!(format_options.line_width.value(), 100);
-        assert!(!format_options.quote_style.is_double());
-        assert!(format_options.semicolons.is_as_needed());
+        assert!(oxfmt_options.format_options.indent_style.is_tab());
+        assert_eq!(oxfmt_options.format_options.indent_width.value(), 4);
+        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
+        assert!(!oxfmt_options.format_options.quote_style.is_double());
+        assert!(oxfmt_options.format_options.semicolons.is_as_needed());
 
-        let sort_imports = format_options.experimental_sort_imports.unwrap();
+        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.partition_by_newline);
         assert!(sort_imports.order.is_desc());
         assert!(!sort_imports.ignore_case);
@@ -827,51 +858,51 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let (format_options, _) = config.into_options().unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
 
         // Should use defaults
-        assert!(format_options.indent_style.is_space());
-        assert_eq!(format_options.indent_width.value(), 2);
-        assert_eq!(format_options.line_width.value(), 100);
-        assert_eq!(format_options.experimental_sort_imports, None);
+        assert!(oxfmt_options.format_options.indent_style.is_space());
+        assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
+        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
+        assert_eq!(oxfmt_options.format_options.experimental_sort_imports, None);
     }
 
     #[test]
     fn test_empty_config() {
         let config: Oxfmtrc = serde_json::from_str("{}").unwrap();
-        let (format_options, _) = config.into_options().unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
 
         // Should use defaults
-        assert!(format_options.indent_style.is_space());
-        assert_eq!(format_options.indent_width.value(), 2);
-        assert_eq!(format_options.line_width.value(), 100);
-        assert_eq!(format_options.experimental_sort_imports, None);
+        assert!(oxfmt_options.format_options.indent_style.is_space());
+        assert_eq!(oxfmt_options.format_options.indent_width.value(), 2);
+        assert_eq!(oxfmt_options.format_options.line_width.value(), 100);
+        assert_eq!(oxfmt_options.format_options.experimental_sort_imports, None);
     }
 
     #[test]
     fn test_arrow_parens_normalization() {
         // Test "avoid" -> "as-needed" normalization
         let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        assert!(format_options.arrow_parentheses.is_as_needed());
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        assert!(oxfmt_options.format_options.arrow_parentheses.is_as_needed());
 
         // Test "always" remains unchanged
         let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        assert!(format_options.arrow_parentheses.is_always());
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        assert!(oxfmt_options.format_options.arrow_parentheses.is_always());
     }
 
     #[test]
     fn test_object_wrap_normalization() {
         // Test "preserve" -> "auto" normalization
         let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        assert_eq!(format_options.expand, Expand::Auto);
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        assert_eq!(oxfmt_options.format_options.expand, Expand::Auto);
 
         // Test "collapse" -> "never" normalization
         let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        assert_eq!(format_options.expand, Expand::Never);
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        assert_eq!(oxfmt_options.format_options.expand, Expand::Never);
     }
 
     #[test]
@@ -882,8 +913,8 @@ mod tests {
         }"#,
         )
         .unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        let sort_imports = format_options.experimental_sort_imports.unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -896,8 +927,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        let sort_imports = format_options.experimental_sort_imports.unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert!(!sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -910,8 +941,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        let sort_imports = format_options.experimental_sort_imports.unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
@@ -924,7 +955,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(config.into_options().is_ok());
+        assert!(Oxfmtrc::into_options(config).is_ok());
         let config: Oxfmtrc = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
@@ -934,7 +965,7 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(config.into_options().is_err_and(|e| e.contains("newlinesBetween")));
+        assert!(Oxfmtrc::into_options(config).is_err_and(|e| e.contains("newlinesBetween")));
 
         let config: Oxfmtrc = serde_json::from_str(
             r#"{
@@ -950,8 +981,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let (format_options, _) = config.into_options().unwrap();
-        let sort_imports = format_options.experimental_sort_imports.unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
         assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
         assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
@@ -963,9 +994,9 @@ mod tests {
         let json_string = r"{}";
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
         let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
-        let (format_options, _) = oxfmtrc.into_options().unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(oxfmtrc).unwrap();
 
-        Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);
+        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
 
         let obj = raw_config.as_object().unwrap();
         assert_eq!(obj.get("printWidth").unwrap(), 100);
@@ -980,9 +1011,9 @@ mod tests {
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
         let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
-        let (format_options, _) = oxfmtrc.into_options().unwrap();
+        let (oxfmt_options, _) = Oxfmtrc::into_options(oxfmtrc).unwrap();
 
-        Oxfmtrc::populate_prettier_config(&format_options, &mut raw_config);
+        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
 
         let obj = raw_config.as_object().unwrap();
         // User-specified value is preserved via FormatOptions

@@ -131,7 +131,12 @@ impl Rule for NoPromiseExecutorReturn {
             return;
         };
 
-        if !new_expr.callee.is_specific_id("Promise") {
+        // Check if the callee is `Promise` and it's a reference to the global `Promise`
+        let Some(ident) = new_expr.callee.get_identifier_reference() else {
+            return;
+        };
+
+        if ident.name != "Promise" || !ctx.is_reference_to_global_variable(ident) {
             return;
         }
 
@@ -262,15 +267,14 @@ fn test() {
         // globals are not supported in tests.
         // ("/* globals Promise:off */ new Promise(function (resolve, reject) { return 1; });", None)
         // ("new Promise((resolve, reject) => { return 1; });", None), // { "globals": { "Promise": "off" } }
-        // TODO: Fix these tests.
-        // ("let Promise; new Promise(function (resolve, reject) { return 1; });", None),
-        // ("function f() { new Promise((resolve, reject) => { return 1; }); var Promise; }", None),
-        // ("function f(Promise) { new Promise((resolve, reject) => 1); }", None),
-        // (
-        //     "if (x) { const Promise = foo(); new Promise(function (resolve, reject) { return 1; }); }",
-        //     None,
-        // ),
-        // ("x = function Promise() { new Promise((resolve, reject) => { return 1; }); }", None),
+        ("let Promise; new Promise(function (resolve, reject) { return 1; });", None),
+        ("function f() { new Promise((resolve, reject) => { return 1; }); var Promise; }", None),
+        ("function f(Promise) { new Promise((resolve, reject) => 1); }", None),
+        (
+            "if (x) { const Promise = foo(); new Promise(function (resolve, reject) { return 1; }); }",
+            None,
+        ),
+        ("x = function Promise() { new Promise((resolve, reject) => { return 1; }); }", None),
         ("new Promise(function (resolve, reject) { return; });", None),
         ("new Promise(function (resolve, reject) { reject(new Error()); return; });", None),
         ("new Promise(function (resolve, reject) { if (foo) { return; } });", None),

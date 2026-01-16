@@ -1,0 +1,9 @@
+{
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // Invalid config, valid values are "except-parens" and "always".
+    "eslint/no-return-assign": ["error", "foobar"]
+  }
+}

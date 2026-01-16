@@ -7,6 +7,26 @@ const styles = css`.button{color:red;background:blue;padding:10px 20px;}.contain
 const styledComponent = styled`background-color:#ffffff;border-radius:4px;padding:8px;`;
 
 // ============================================================================
+// Member Expression Tags - styled.div, styled.button, etc.
+// ============================================================================
+
+const cssGlobal = css.global`.reset{margin:0;padding:0;box-sizing:border-box;}`;
+
+const styledDiv = styled.div`width:100%;height:100vh;background-color:#f0f0f0;`;
+
+const styledLink = styled["a"]`text-decoration:none;color:#007bff;font-weight:bold;`;
+
+const styledButton = styled(Button)`font-size:16px;color:#333;padding:12px 24px;`;
+
+// ============================================================================
+// Plain template strings within css props or styled-jsx
+// ============================================================================
+
+const cssProp = <div css={`display: flex; align-items: center; justify-content: center; height: 100vh;`}>Hello World</div>;
+
+const styledJsx = <style jsx>{`display: flex; align-items: center; justify-content: center; height: 100vh;`}</style>;
+
+// ============================================================================
 // GraphQL - Tagged template literals with gql and graphql tags
 // ============================================================================
 
@@ -41,6 +61,8 @@ npm install package
 // ============================================================================
 
 const mixedStyles = css`.button{color:red;}`;
+
+const mixedStyled = styled.button`padding:10px;`;
 
 const mixedQuery = gql`query{users{name}}`;
 
@@ -80,7 +102,7 @@ const ignoredGql = gql`query GetUser($id:ID!){user(id:$id){name email}}`;
 const normalGql = gql`query GetPosts{posts{title author}}`;
 
 // ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter
+// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
 // ============================================================================
 
 const unknown = customTag`
@@ -110,4 +132,20 @@ const sql = sql`
           
           
                       SELECT * FROM users WHERE id = 1
+`;
+
+// ============================================================================
+// Supported Tags contains invalid syntax - To be left unformatted too
+// ============================================================================
+
+// Value only, key missing
+const invalidCss = css`
+  repeating-linear-gradient(
+    0deg,
+var(--schemas-lines-color),
+var(--schemas-lines-color) 3px,
+    transparent 3px,
+    transparent 5px,
+    var(--schemas-lines-color) 5px
+  );
 `;

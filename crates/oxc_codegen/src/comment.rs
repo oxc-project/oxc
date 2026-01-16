@@ -208,6 +208,8 @@ impl Codegen<'_> {
         match legal_comments {
             LegalComment::Eof => {
                 self.print_hard_newline();
+                // Clear the flag to ensure consistent formatting for all EOF comments
+                self.print_next_indent_as_space = false;
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();

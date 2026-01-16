@@ -8,13 +8,40 @@ use tower_lsp_server::{
     ls_types::*,
 };
 
-use crate::{Tool, ToolBuilder, ToolRestartChanges, backend::Backend, tool::DiagnosticResult};
+use crate::{
+    DiagnosticMode, Tool, ToolBuilder, ToolRestartChanges, backend::Backend, tool::DiagnosticResult,
+};
 
-pub struct FakeToolBuilder;
+#[derive(Default)]
+pub struct FakeToolBuilder {
+    diagnostic_mode: DiagnosticMode,
+}
+
+impl FakeToolBuilder {
+    pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
+        Self { diagnostic_mode }
+    }
+}
 
 impl ToolBuilder for FakeToolBuilder {
     fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(FakeTool)
+    }
+
+    fn server_capabilities(
+        &self,
+        capabilities: &mut ServerCapabilities,
+        backend_capabilities: &mut crate::Capabilities,
+    ) {
+        backend_capabilities.diagnostic_mode = self.diagnostic_mode.clone();
+
+        // tell the client we support pull diagnostics
+        capabilities.diagnostic_provider =
+            if backend_capabilities.diagnostic_mode == DiagnosticMode::Pull {
+                Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
+            } else {
+                None
+            };
     }
 }
 
@@ -550,6 +577,7 @@ mod test_suite {
     };
 
     use crate::{
+        DiagnosticMode,
         backend::Backend,
         tests::{
             FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
@@ -748,7 +776,9 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -798,7 +828,9 @@ mod test_suite {
         let init_options = InitializeRequestOptions { workspace_edit: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -907,7 +939,9 @@ mod test_suite {
     #[tokio::test]
     async fn test_execute_workspace_command_with_no_edit() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -929,7 +963,9 @@ mod test_suite {
     #[tokio::test]
     async fn test_execute_workspace_command_with_invalid_command() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -959,7 +995,9 @@ mod test_suite {
         );
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -984,7 +1022,9 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1011,7 +1051,9 @@ mod test_suite {
             InitializeRequestOptions { workspace_configuration: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1038,7 +1080,9 @@ mod test_suite {
         );
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1063,7 +1107,9 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1082,7 +1128,9 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1093,9 +1141,6 @@ mod test_suite {
             did_change_watched_files(format!("{WORKSPACE}/unknown.file").as_str());
         server.send_request(file_change_notification).await;
 
-        // Since FakeToolBuilder does not know about "unknown.file", no diagnostics or registrations are expected
-        // Thus, no further requests or responses should occur
-
         server.shutdown(3).await;
     }
 
@@ -1104,7 +1149,9 @@ mod test_suite {
         let init_options =
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1128,7 +1175,13 @@ mod test_suite {
         let init_options =
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                )
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1169,7 +1222,13 @@ mod test_suite {
         };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                )
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1196,7 +1255,9 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1217,7 +1278,9 @@ mod test_suite {
             InitializeRequestOptions { dynamic_watchers: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1249,7 +1312,9 @@ mod test_suite {
         };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1272,9 +1337,41 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_did_change_configuration_config_skips_revalidate_diagnostics() {
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::None))],
+                )
+            },
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        // Simulate a configuration change that affects diagnostics
+        let config_change_notification = did_change_configuration(Some(json!([
+            {
+                "workspaceUri": WORKSPACE,
+                "options": 3
+            }
+        ])));
+        server.send_request(config_change_notification).await;
+
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
     async fn test_did_change_configuration_config_revalidate_diagnostics() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                )
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1313,7 +1410,13 @@ mod test_suite {
         let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                )
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1339,7 +1442,9 @@ mod test_suite {
     #[tokio::test]
     async fn test_file_notifications() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1356,7 +1461,9 @@ mod test_suite {
     #[tokio::test]
     async fn test_code_action_no_actions() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1378,7 +1485,9 @@ mod test_suite {
     #[tokio::test]
     async fn test_code_actions_with_actions() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder::default())])
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1403,7 +1512,13 @@ mod test_suite {
     #[tokio::test]
     async fn test_diagnostic_on_open() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                )
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1426,10 +1541,39 @@ mod test_suite {
         server.shutdown_with_diagnostic_clear(4, vec![file.parse().unwrap()]).await;
     }
 
+    /// This test verifies that the tool is not requested to provide diagnostics,
+    /// when ALL tools doe not change diagnostics mode.
+    #[tokio::test]
+    async fn test_diagnostic_on_open_no_backend_capability() {
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::None))],
+                )
+            },
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        let content = "some text";
+        server.send_request(did_open(&file, content)).await;
+
+        server.shutdown(3).await;
+    }
+
     #[tokio::test]
     async fn test_diagnostic_on_change() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                )
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1459,7 +1603,13 @@ mod test_suite {
     #[tokio::test]
     async fn test_diagnostic_on_save() {
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Push))],
+                )
+            },
             initialize_request(InitializeRequestOptions::default()),
         )
         .await;
@@ -1496,7 +1646,13 @@ mod test_suite {
         let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                )
+            },
             initialize_request(init_options),
         )
         .await;
@@ -1514,7 +1670,13 @@ mod test_suite {
         let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
 
         let mut server = TestServer::new_initialized(
-            |client| Backend::new(client, server_info(), vec![Box::new(FakeToolBuilder)]),
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    vec![Box::new(FakeToolBuilder::new(DiagnosticMode::Pull))],
+                )
+            },
             initialize_request(init_options),
         )
         .await;

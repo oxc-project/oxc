@@ -146,6 +146,8 @@ watch-oxlint *args='':
   just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
 
 # oxlint release build for node.js
+# After building, you can run the built version of oxlint with
+# `node apps/oxlint/dist/cli.js`
 oxlint-node:
   pnpm -C apps/oxlint run build
 
@@ -253,7 +255,7 @@ watch-playground:
 # When testing changes to the website documentation, you may also want to run `pnpm run fmt`
 # in the website directory.
 website path:
-  cargo run -p website_linter rules --table {{path}}/src/docs/guide/usage/linter/generated-rules.md --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD) --rule-count {{path}}/src/docs/guide/usage
+  cargo run -p website_linter rules --rules-json {{path}}/.vitepress/data/rules.json --rule-docs {{path}}/src/docs/guide/usage/linter/rules --git-ref $(git rev-parse HEAD) --rule-count {{path}}/src/docs/guide/usage
   cargo run -p website_linter cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website_linter schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
   cargo run -p website_formatter cli > {{path}}/src/docs/guide/usage/formatter/generated-cli.md

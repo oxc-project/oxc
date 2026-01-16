@@ -4,6 +4,7 @@
 src:
   - '.github/generated/ast_changes_watch_list.yml'
   - '.github/workflows/ci.yml'
+  - 'Cargo.toml'
   - 'apps/oxlint/src-js/generated/constants.ts'
   - 'apps/oxlint/src-js/generated/deserialize.d.ts'
   - 'apps/oxlint/src-js/generated/deserialize.js'

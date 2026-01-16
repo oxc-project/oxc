@@ -28,6 +28,17 @@ fn test_inline_single_use_variable() {
     test_same("async function wrapper(arg0, arg1) { await using x = foo; return x}");
     test_same("function wrapper(arg0) { eval('x'); var x = arg0; return x }");
 
+    test("{ let _; eval('_ = () => 1'); _() }", "{ let _; eval('_ = () => 1'), _() }");
+    test("{ let x = 1; eval('x = 2'); log(x) }", "{ let x = 1; eval('x = 2'), log(x) }");
+    test(
+        "function f() { let x; eval('x = 1'); return x }",
+        "function f() { let x; return eval('x = 1'), x }",
+    );
+    test(
+        "function f() { { let y; var x; } eval('x = 1'); return x }",
+        "function f() { { let y; var x; } return eval('x = 1'), x }",
+    );
+
     test(
         "
         class Foo {
