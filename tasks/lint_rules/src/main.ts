@@ -41,7 +41,7 @@ void (async () => {
 
   if (values.help) return console.log(HELP);
 
-  const targetPluginNames = new Set(values.target ?? ALL_TARGET_PLUGINS.keys());
+  const targetPluginNames = new Set<string>(values.target ?? ALL_TARGET_PLUGINS.keys());
   for (const pluginName of targetPluginNames) {
     if (!ALL_TARGET_PLUGINS.has(pluginName)) {
       console.error(`Unknown plugin name: ${String(pluginName)}`);
