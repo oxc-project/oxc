@@ -158,8 +158,10 @@ impl<'a> Comments<'a> {
 
     /// Returns all comments that end before or at the given position.
     pub fn comments_before(&self, pos: u32) -> &'a [Comment] {
-        let index = self.comments_before_iter(pos).count();
-        &self.unprinted_comments()[..index]
+        let comments = self.unprinted_comments();
+        // Binary search: find first comment where span.end > pos
+        let index = comments.partition_point(|c| c.span.end <= pos);
+        &comments[..index]
     }
 
     /// Returns all block comments that end before or at the given position.
@@ -201,14 +203,16 @@ impl<'a> Comments<'a> {
     /// Returns comments that start after the given position (excluding printed ones).
     pub fn comments_after(&self, pos: u32) -> &'a [Comment] {
         let comments = self.unprinted_comments();
-        let start_index = comments.iter().take_while(|c| c.span.end < pos).count();
+        // Binary search: find first comment where span.end >= pos
+        let start_index = comments.partition_point(|c| c.span.end < pos);
         &comments[start_index..]
     }
 
     /// Returns comments that fall between the given start and end positions.
     pub fn comments_in_range(&self, start: u32, end: u32) -> &'a [Comment] {
         let comments = self.comments_after(start);
-        let end_index = comments.iter().take_while(|c| c.span.end <= end).count();
+        // Binary search: find first comment where span.end > end
+        let end_index = comments.partition_point(|c| c.span.end <= end);
         &comments[..end_index]
     }
 
@@ -228,7 +232,11 @@ impl<'a> Comments<'a> {
 
     /// Checks if there are any comments between the given positions.
     pub fn has_comment_in_range(&self, start: u32, end: u32) -> bool {
-        self.comments_before_iter(end).any(|comment| comment.span.end > start)
+        let comments = self.unprinted_comments();
+        // Binary search: find first comment where span.end > start
+        let start_index = comments.partition_point(|c| c.span.end <= start);
+        // Check if that comment ends before or at `end`
+        comments.get(start_index).is_some_and(|c| c.span.end <= end)
     }
 
     /// Checks if there are any comments within the given span.
@@ -446,12 +454,10 @@ impl<'a> Comments<'a> {
         // Save the original limit for restoration
         let original_limit = self.view_limit;
 
-        // Find the index of the first comment that starts at or after end_pos
-        // Using binary search would be more efficient for large comment arrays
-        let limit_index = self.inner[self.printed_count..]
-            .iter()
-            .position(|c| c.span.start >= end_pos)
-            .map_or(self.inner.len(), |idx| self.printed_count + idx);
+        // Binary search: find first comment where span.start >= end_pos
+        let relative_index = self.inner[self.printed_count..]
+            .partition_point(|c| c.span.start < end_pos);
+        let limit_index = self.printed_count + relative_index;
 
         // Only update if we're actually limiting the view
         if limit_index < self.inner.len() {
