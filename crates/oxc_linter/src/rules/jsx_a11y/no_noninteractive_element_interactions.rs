@@ -45,6 +45,7 @@ impl std::ops::Deref for NoNoninteractiveElementInteractions {
 #[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default)]
 pub struct NoNoninteractiveElementInteractionsConfig {
+    /// An array of event handler names that should trigger this rule (e.g., `onClick`, `onKeyDown`).
     handlers: Option<Vec<CompactStr>>,
 }
 
