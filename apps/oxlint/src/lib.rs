@@ -44,3 +44,15 @@ mod js_plugins;
 ))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
+/// Return a JSON blob containing metadata for all available oxlint rules.
+///
+/// This uses the internal JSON output formatter to generate the full list.
+///
+/// # Panics
+/// Panics if the JSON generation fails, which should never happen under normal circumstances.
+pub fn get_all_rules_json() -> String {
+    use crate::output_formatter::{OutputFormat, OutputFormatter};
+
+    OutputFormatter::new(OutputFormat::Json).all_rules().expect("Failed to generate rules JSON")
+}

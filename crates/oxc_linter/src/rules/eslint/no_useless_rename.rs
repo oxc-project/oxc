@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTargetProperty, BindingPattern},
+    ast::{
+        AssignmentTargetMaybeDefault, AssignmentTargetProperty, AssignmentTargetPropertyProperty,
+        BindingPattern, BindingProperty,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -11,6 +14,7 @@ use serde::Deserialize;
 use crate::{
     AstNode,
     context::LintContext,
+    fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
 };
 
@@ -71,7 +75,7 @@ declare_oxc_lint!(
     NoUselessRename,
     eslint,
     correctness,
-    pending,
+    fix,
     config = NoUselessRenameConfig,
 );
 
@@ -112,7 +116,10 @@ impl Rule for NoUselessRename {
                     };
 
                     if key == renamed_key {
-                        ctx.diagnostic(no_useless_rename_diagnostic(property.span));
+                        ctx.diagnostic_with_fix(
+                            no_useless_rename_diagnostic(property.span),
+                            |fixer| fix_object_pattern_property(fixer, property, ctx),
+                        );
                     }
                 }
             }
@@ -135,7 +142,10 @@ impl Rule for NoUselessRename {
                         continue;
                     };
                     if key == renamed_key {
-                        ctx.diagnostic(no_useless_rename_diagnostic(property.span));
+                        ctx.diagnostic_with_fix(
+                            no_useless_rename_diagnostic(property.span),
+                            |fixer| fix_object_assignment_target_property(fixer, property, ctx),
+                        );
                     }
                 }
             }
@@ -144,7 +154,19 @@ impl Rule for NoUselessRename {
                     && import_specifier.imported.span() != import_specifier.local.span
                     && import_specifier.local.name == import_specifier.imported.name()
                 {
-                    ctx.diagnostic(no_useless_rename_diagnostic(import_specifier.local.span));
+                    ctx.diagnostic_with_fix(
+                        no_useless_rename_diagnostic(import_specifier.local.span),
+                        |fixer| {
+                            // Always replace the entire specifier with just the local identifier
+                            // The local identifier is the name that will be used in the code
+                            let local_text = import_specifier
+                                .local
+                                .span
+                                .source_text(ctx.source_text())
+                                .to_string();
+                            fixer.replace(import_specifier.span, local_text)
+                        },
+                    );
                 }
             }
             AstKind::ExportNamedDeclaration(export_named_decl) => {
@@ -155,13 +177,101 @@ impl Rule for NoUselessRename {
                     if specifier.local.span() != specifier.exported.span()
                         && specifier.local.name() == specifier.exported.name()
                     {
-                        ctx.diagnostic(no_useless_rename_diagnostic(specifier.local.span()));
+                        ctx.diagnostic_with_fix(
+                            no_useless_rename_diagnostic(specifier.local.span()),
+                            |fixer| {
+                                // Always replace the entire specifier with just the local part
+                                // The local is what the variable is named inside the module
+                                let local_text = specifier
+                                    .local
+                                    .span()
+                                    .source_text(ctx.source_text())
+                                    .to_string();
+                                fixer.replace(specifier.span, local_text)
+                            },
+                        );
                     }
                 }
             }
             _ => {}
         }
     }
+}
+
+/// Fix for object pattern properties like `{foo: foo}` -> `{foo}`.
+///
+/// For properties with default values like `{foo: foo = 1}`, we produce `{foo = 1}`.
+fn fix_object_pattern_property<'c, 'a: 'c>(
+    fixer: RuleFixer<'c, 'a>,
+    property: &BindingProperty<'a>,
+    ctx: &LintContext<'a>,
+) -> RuleFix {
+    let (ident_span, default_span): (Span, Option<Span>) = match &property.value {
+        BindingPattern::AssignmentPattern(assignment_pattern) => {
+            match &assignment_pattern.left {
+                BindingPattern::BindingIdentifier(binding_ident) => {
+                    // For `{foo: foo = 1}`, we need `{foo = 1}`
+                    // ident_span is `foo`, default is from `=` onwards
+                    let default_start = binding_ident.span.end;
+                    let default_end = assignment_pattern.span.end;
+                    (binding_ident.span, Some(Span::new(default_start, default_end)))
+                }
+                _ => return fixer.noop(),
+            }
+        }
+        BindingPattern::BindingIdentifier(binding_ident) => (binding_ident.span, None),
+        _ => return fixer.noop(),
+    };
+
+    let ident_name: &str = ident_span.source_text(ctx.source_text());
+
+    let replacement = if let Some(default_span) = default_span {
+        let default_text: &str = default_span.source_text(ctx.source_text());
+        format!("{ident_name}{default_text}")
+    } else {
+        ident_name.to_string()
+    };
+
+    fixer.replace(property.span, replacement)
+}
+
+/// Fix for object assignment target properties like `({foo: foo} = obj)` -> `({foo} = obj)`.
+fn fix_object_assignment_target_property<'c, 'a: 'c>(
+    fixer: RuleFixer<'c, 'a>,
+    property: &AssignmentTargetPropertyProperty<'a>,
+    ctx: &LintContext<'a>,
+) -> RuleFix {
+    let (ident_span, default_span): (Span, Option<Span>) = match &property.binding {
+        AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(with_default) => {
+            if with_default.binding.get_identifier_name().is_some() {
+                // For assignment targets, we need to get the span from the binding itself
+                let ident_span = with_default.binding.span();
+                let default_start = ident_span.end;
+                let default_end = with_default.span.end;
+                (ident_span, Some(Span::new(default_start, default_end)))
+            } else {
+                return fixer.noop();
+            }
+        }
+        _ => {
+            if let Some(ident) = property.binding.identifier() {
+                (ident.span, None)
+            } else {
+                return fixer.noop();
+            }
+        }
+    };
+
+    let ident_name: &str = ident_span.source_text(ctx.source_text());
+
+    let replacement = if let Some(default_span) = default_span {
+        let default_text: &str = default_span.source_text(ctx.source_text());
+        format!("{ident_name}{default_text}")
+    } else {
+        ident_name.to_string()
+    };
+
+    fixer.replace(property.span, replacement)
 }
 
 #[test]
@@ -393,8 +503,7 @@ fn test() {
         ),
     ];
 
-    // TODO: Implement the fixer and get these passing.
-    let _fix = vec![
+    let fix = vec![
         ("let {foo: foo} = obj;", "let {foo} = obj;"),
         ("({foo: (foo)} = obj);", "({foo} = obj);"),
         (r"let {\u0061: a} = obj;", "let {a} = obj;"),
@@ -548,5 +657,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoUselessRename::NAME, NoUselessRename::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(NoUselessRename::NAME, NoUselessRename::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

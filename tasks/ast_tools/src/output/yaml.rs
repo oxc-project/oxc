@@ -70,6 +70,7 @@ impl Output {
             // Config files which affect `ast_tools`
             "package.json",
             "oxfmtrc.jsonc",
+            "Cargo.toml",
         ];
 
         // Add additional paths and dependency crate paths to `paths`, and sort

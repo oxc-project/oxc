@@ -1,9 +1,9 @@
-commit: 761c2509
+commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2223/2235 (99.46%)
-Positive Passed: 2203/2235 (98.57%)
-Negative Passed: 1647/1696 (97.11%)
+AST Parsed     : 2222/2234 (99.46%)
+Positive Passed: 2202/2234 (98.57%)
+Negative Passed: 1647/1697 (97.05%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-script-top-level-using-binding/input.js
@@ -81,6 +81,8 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
@@ -13246,7 +13248,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/const/invalid-initializer-ambient-context/input.ts:2:35]
- 1 │ declare module N {
+ 1 │ declare namespace N {
  2 │   export const not_enum = N[not + enum];
    ·                                   ────
  3 │   export const binary_expression = 1 + 2;

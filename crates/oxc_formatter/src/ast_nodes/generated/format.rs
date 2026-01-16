@@ -9,8 +9,8 @@ use crate::{
     ast_nodes::AstNode,
     formatter::{Format, Formatter},
     parentheses::NeedsParentheses,
+    print::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
     utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
-    write::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
 };
 
 impl<'a> Format<'a> for AstNode<'a, Program<'a>> {

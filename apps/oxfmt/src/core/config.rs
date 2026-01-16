@@ -4,24 +4,23 @@ use editorconfig_parser::{
     EditorConfig, EditorConfigProperties, EditorConfigProperty, EndOfLine, IndentStyle,
     MaxLineLength,
 };
-use oxc_toml::Options as TomlFormatterOptions;
 use serde_json::Value;
+use tracing::instrument;
 
 use oxc_formatter::FormatOptions;
+use oxc_toml::Options as TomlFormatterOptions;
 
-use super::oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc};
-
-use super::{FormatFileStrategy, utils};
+use super::{
+    FormatFileStrategy,
+    oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc, populate_prettier_config},
+    utils,
+};
 
 /// Resolve config file path from cwd and optional explicit path.
 pub fn resolve_oxfmtrc_path(cwd: &Path, config_path: Option<&Path>) -> Option<PathBuf> {
     // If `--config` is explicitly specified, use that path
     if let Some(config_path) = config_path {
-        return Some(if config_path.is_absolute() {
-            config_path.to_path_buf()
-        } else {
-            cwd.join(config_path)
-        });
+        return Some(utils::normalize_relative_path(cwd, config_path));
     }
 
     // If `--config` is not specified, search the nearest config file from cwd upwards
@@ -84,7 +83,7 @@ pub struct ConfigResolver {
     /// Cached parsed options after validation.
     /// Used to avoid re-parsing during per-file resolution, if `.editorconfig` is not used.
     /// NOTE: Currently, only `.editorconfig` provides per-file overrides, `.oxfmtrc` does not.
-    cached_options: Option<(FormatOptions, OxfmtOptions, Value)>,
+    cached_options: Option<(OxfmtOptions, Value)>,
 }
 
 impl ConfigResolver {
@@ -100,6 +99,7 @@ impl ConfigResolver {
     /// Returns error if:
     /// - Config file is specified but not found or invalid
     /// - Config file parsing fails
+    #[instrument(level = "debug", name = "oxfmt::config::from_config_paths", skip_all)]
     pub fn from_config_paths(
         cwd: &Path,
         oxfmtrc_path: Option<&Path>,
@@ -146,6 +146,7 @@ impl ConfigResolver {
     ///
     /// # Errors
     /// Returns error if config deserialization fails.
+    #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
     pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
         let mut oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
             .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
@@ -160,27 +161,25 @@ impl ConfigResolver {
         }
 
         // If not specified, default options are resolved here
-        let (format_options, oxfmt_options) = oxfmtrc
+        let (oxfmt_options, ignore_patterns) = oxfmtrc
             .into_options()
             .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
         // Apply our resolved defaults to Prettier options too
         // e.g. set `printWidth: 100` if not specified (= Prettier default: 80)
         let mut external_options = self.raw_config.clone();
-        Oxfmtrc::populate_prettier_config(&format_options, &mut external_options);
-
-        let ignore_patterns_clone = oxfmt_options.ignore_patterns.clone();
+        populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
 
         // NOTE: Save cache for fast path: no per-file overrides
-        self.cached_options = Some((format_options, oxfmt_options, external_options));
+        self.cached_options = Some((oxfmt_options, external_options));
 
-        Ok(ignore_patterns_clone)
+        Ok(ignore_patterns)
     }
 
     /// Resolve format options for a specific file.
+    #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
-        let (format_options, oxfmt_options, external_options) = if let Some(editorconfig) =
-            &self.editorconfig
+        let (oxfmt_options, external_options) = if let Some(editorconfig) = &self.editorconfig
             && let Some(props) = get_editorconfig_overrides(editorconfig, strategy.path())
         {
             self.resolve_with_overrides(&props)
@@ -194,7 +193,11 @@ impl ConfigResolver {
                 .expect("`build_and_validate()` must be called before `resolve()`")
         };
 
-        let OxfmtOptions { sort_package_json, insert_final_newline, .. } = oxfmt_options;
+        #[cfg(feature = "napi")]
+        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
+            oxfmt_options;
+        #[cfg(not(feature = "napi"))]
+        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
 
         match strategy {
             FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
@@ -202,10 +205,9 @@ impl ConfigResolver {
                 external_options,
                 insert_final_newline,
             },
-            FormatFileStrategy::OxfmtToml { .. } => ResolvedOptions::OxfmtToml {
-                toml_options: build_toml_options(&format_options),
-                insert_final_newline,
-            },
+            FormatFileStrategy::OxfmtToml { .. } => {
+                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
+            }
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatter { .. } => {
                 ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
@@ -227,25 +229,23 @@ impl ConfigResolver {
 
     /// Resolve format options for a specific file with `.editorconfig` overrides.
     /// This is the slow path, for fast path, see [`ConfigResolver::build_and_validate`].
-    fn resolve_with_overrides(
-        &self,
-        props: &EditorConfigProperties,
-    ) -> (FormatOptions, OxfmtOptions, Value) {
+    #[instrument(level = "debug", name = "oxfmt::config::resolve_with_overrides", skip_all)]
+    fn resolve_with_overrides(&self, props: &EditorConfigProperties) -> (OxfmtOptions, Value) {
         let mut oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before `resolve()`");
 
         apply_editorconfig(&mut oxfmtrc, props);
 
-        let (format_options, oxfmt_options) = oxfmtrc
+        let (oxfmt_options, _) = oxfmtrc
             .into_options()
             .expect("If this fails, there is an issue with editorconfig insertion above");
 
         // Apply our defaults for Prettier options too
         // e.g. set `printWidth: 100` if not specified (= Prettier default: 80)
         let mut external_options = self.raw_config.clone();
-        Oxfmtrc::populate_prettier_config(&format_options, &mut external_options);
+        populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
 
-        (format_options, oxfmt_options, external_options)
+        (oxfmt_options, external_options)
     }
 }
 
@@ -308,62 +308,41 @@ fn get_editorconfig_overrides(
 /// Only properties checked by [`get_editorconfig_overrides`] are applied here.
 fn apply_editorconfig(oxfmtrc: &mut Oxfmtrc, props: &EditorConfigProperties) {
     #[expect(clippy::cast_possible_truncation)]
-    if oxfmtrc.print_width.is_none()
+    if oxfmtrc.format_config.print_width.is_none()
         && let EditorConfigProperty::Value(MaxLineLength::Number(v)) = props.max_line_length
     {
-        oxfmtrc.print_width = Some(v as u16);
+        oxfmtrc.format_config.print_width = Some(v as u16);
     }
 
-    if oxfmtrc.end_of_line.is_none()
+    if oxfmtrc.format_config.end_of_line.is_none()
         && let EditorConfigProperty::Value(eol) = props.end_of_line
     {
-        oxfmtrc.end_of_line = Some(match eol {
+        oxfmtrc.format_config.end_of_line = Some(match eol {
             EndOfLine::Lf => EndOfLineConfig::Lf,
             EndOfLine::Cr => EndOfLineConfig::Cr,
             EndOfLine::Crlf => EndOfLineConfig::Crlf,
         });
     }
 
-    if oxfmtrc.use_tabs.is_none()
+    if oxfmtrc.format_config.use_tabs.is_none()
         && let EditorConfigProperty::Value(style) = props.indent_style
     {
-        oxfmtrc.use_tabs = Some(match style {
+        oxfmtrc.format_config.use_tabs = Some(match style {
             IndentStyle::Tab => true,
             IndentStyle::Space => false,
         });
     }
 
     #[expect(clippy::cast_possible_truncation)]
-    if oxfmtrc.tab_width.is_none()
+    if oxfmtrc.format_config.tab_width.is_none()
         && let EditorConfigProperty::Value(size) = props.indent_size
     {
-        oxfmtrc.tab_width = Some(size as u8);
+        oxfmtrc.format_config.tab_width = Some(size as u8);
     }
 
-    if oxfmtrc.insert_final_newline.is_none()
+    if oxfmtrc.format_config.insert_final_newline.is_none()
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
-        oxfmtrc.insert_final_newline = Some(v);
-    }
-}
-
-// ---
-
-/// Build `toml` formatter options.
-/// The same as `prettier-plugin-toml`.
-/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
-fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
-    TomlFormatterOptions {
-        column_width: format_options.line_width.value() as usize,
-        indent_string: if format_options.indent_style.is_tab() {
-            "\t".to_string()
-        } else {
-            " ".repeat(format_options.indent_width.value() as usize)
-        },
-        array_trailing_comma: !format_options.trailing_commas.is_none(),
-        crlf: format_options.line_ending.is_carriage_return_line_feed(),
-        // Align with `oxc_formatter` and Prettier default
-        trailing_newline: true,
-        ..Default::default()
+        oxfmtrc.format_config.insert_final_newline = Some(v);
     }
 }

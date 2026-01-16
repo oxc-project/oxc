@@ -6,8 +6,8 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
+    print::{BinaryLikeExpression, should_flatten},
     utils::expression::ExpressionLeftSide,
-    write::{BinaryLikeExpression, should_flatten},
 };
 
 use super::NeedsParentheses;

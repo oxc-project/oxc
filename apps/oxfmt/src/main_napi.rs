@@ -94,9 +94,7 @@ pub async fn run_cli(
         Mode::Stdin(_) => {
             init_miette();
 
-            // TODO: `.with_external_formatter()` is not needed, just pass with `new(command, external_formatter)`
-            let result =
-                StdinRunner::new(command).with_external_formatter(Some(external_formatter)).run();
+            let result = StdinRunner::new(command, external_formatter).run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }

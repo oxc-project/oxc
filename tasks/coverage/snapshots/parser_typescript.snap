@@ -1,9 +1,9 @@
-commit: f3770c9b
+commit: f5ccf434
 
 parser_typescript Summary:
-AST Parsed     : 9840/9841 (99.99%)
-Positive Passed: 9831/9841 (99.90%)
-Negative Passed: 1497/2552 (58.66%)
+AST Parsed     : 9844/9845 (99.99%)
+Positive Passed: 9835/9845 (99.90%)
+Negative Passed: 1496/2549 (58.69%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1387,10 +1387,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/privateIdentifierChain/privateIdentifierChain.1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccess.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessStringIndexSignature.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessStringIndexSignatureNoImplicitAny.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessWidening.ts
 
@@ -5726,7 +5722,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  10 │ declare function foo(x: () => Container<Ref<number>>): void;
     ·                  ─┬─
     ·                   ╰── `foo` has already been declared here
- 11 │ let a: () => Container<Ref<string>>;
+ 11 │ declare let a: () => Container<Ref<string>>;
     ╰────
     ╭─[typescript/tests/cases/compiler/errorElaboration.ts:22:7]
  21 │ 
@@ -6069,175 +6065,95 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ────────────────
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ namespace M {
  2 │     export export var x = 1;
    ·            ──────
  3 │     export export function f() { }
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
- 1 │ namespace M {
- 2 │     export export var x = 1;
-   ·            ──────
- 3 │     export export function f() { }
-   ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
  2 │     export export var x = 1;
  3 │     export export function f() { }
    ·            ──────
  4 │ 
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
- 2 │     export export var x = 1;
- 3 │     export export function f() { }
-   ·            ──────
- 4 │ 
-   ╰────
-  help: Allowed modifiers are: declare, async
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
  4 │ 
  5 │     export export namespace N {
    ·            ──────
  6 │         export export class C { }
    ╰────
+  help: Remove the duplicate modifier.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
  5 │     export export namespace N {
  6 │         export export class C { }
    ·                ──────
  7 │         export export interface I { }
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
- 5 │     export export namespace N {
- 6 │         export export class C { }
-   ·                ──────
- 7 │         export export interface I { }
-   ╰────
-  help: Allowed modifiers are: declare, abstract
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
  6 │         export export class C { }
  7 │         export export interface I { }
    ·                ──────
  8 │     }  
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
- 6 │         export export class C { }
- 7 │         export export interface I { }
-   ·                ──────
- 8 │     }  
-   ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
- 4 │ 
- 5 │     export export namespace N {
-   ·            ──────
- 6 │         export export class C { }
-   ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
  11 │ declare namespace A {
  12 │     export export var x;
     ·            ──────
  13 │     export export function f()
     ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
- 11 │ declare namespace A {
- 12 │     export export var x;
-    ·            ──────
- 13 │     export export function f()
-    ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
  12 │     export export var x;
  13 │     export export function f()
     ·            ──────
  14 │ 
     ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
- 12 │     export export var x;
- 13 │     export export function f()
-    ·            ──────
- 14 │ 
-    ╰────
-  help: Allowed modifiers are: declare, async
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
  14 │ 
  15 │     export export namespace N {
     ·            ──────
  16 │         export export class C { }
     ╰────
+  help: Remove the duplicate modifier.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
  15 │     export export namespace N {
  16 │         export export class C { }
     ·                ──────
  17 │         export export interface I { }
     ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
- 15 │     export export namespace N {
- 16 │         export export class C { }
-    ·                ──────
- 17 │         export export interface I { }
-    ╰────
-  help: Allowed modifiers are: declare, abstract
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
  16 │         export export class C { }
  17 │         export export interface I { }
     ·                ──────
  18 │     }
     ╰────
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
- 16 │         export export class C { }
- 17 │         export export interface I { }
-    ·                ──────
- 18 │     }
-    ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
- 14 │ 
- 15 │     export export namespace N {
-    ·            ──────
- 16 │         export export class C { }
-    ╰────
-  help: Only 'declare' modifier is allowed here.
+  help: Remove the duplicate modifier.
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/exportAssignmentWithDeclareAndExportModifiers.ts:2:16]
@@ -6253,11 +6169,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ──────
    ╰────
 
-  × Unexpected token
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAssignmentWithExportModifier.ts:2:8]
  1 │ var x;
  2 │ export export = x;
    ·        ──────
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/exportAssignmentWithExportModifier.ts:2:15]
+ 1 │ var x;
+ 2 │ export export = x;
+   ·               ─
    ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -8731,24 +8655,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ 000.5;
    ╰────
   help: Try inserting a semicolon here
-
-  × Missing initializer in const declaration
-    ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:86:7]
- 85 │ const isNumber: (x: 0 | 1) => number = (x: 0 | 1) => x;
- 86 │ const zeroOrBigOne: 0 | 1n;
-    ·       ────────────
- 87 │ if (typeof zeroOrBigOne === "bigint") isBigInt(zeroOrBigOne);
-    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Missing initializer in const declaration
-    ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:93:7]
- 92 │ if (zeroOrBigOne) isOne(zeroOrBigOne);
- 93 │ const bigZeroOrOne: 0n | 1;
-    ·       ────────────
- 94 │ if (bigZeroOrOne) isOne(bigZeroOrOne);
-    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
 
   × Identifier `0` has already been declared
    ╭─[typescript/tests/cases/compiler/numericClassMembers1.ts:2:3]
@@ -12193,11 +12099,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/typeAliasDeclareKeywordNewlines.ts:4:8]
- 3 │ // The following is invalid but should declare a type alias named 'T1':
- 4 │ declare type /*unexpected newline*/
+   ╭─[typescript/tests/cases/compiler/typeAliasDeclareKeywordNewlines.ts:5:8]
+ 4 │ // The following is invalid but should declare a type alias named 'T1':
+ 5 │ declare type /*unexpected newline*/
    ·        ▲
- 5 │ T1 = null;
+ 6 │ T1 = null;
    ╰────
   help: Try inserting a semicolon here
 
@@ -13298,7 +13204,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ┬            ┬
    ·                  │            ╰── `,` or `}` expected
    ·                  ╰── Opened here
- 7 │ var x: { foo: string; }
+ 7 │ declare var x: { foo: string; }
    ╰────
 
   × Expected `,` or `}` but found `;`
@@ -16793,7 +16699,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer1.ts:2:9]
- 1 │ var a: number[];
+ 1 │ declare var a: number[];
  2 │ var [...x = a] = a;  // Error, rest element cannot have initializer
    ·         ─────
    ╰────
@@ -19779,7 +19685,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `>` but found `is`
     ╭─[typescript/tests/cases/conformance/expressions/typeAssertions/typeAssertions.ts:44:14]
- 43 │ var str: string;
+ 43 │ declare var str: string;
  44 │ if(<numOrStr is string>(numOrStr === undefined)) { // Error
     ·              ─┬
     ·               ╰── `>` expected
@@ -20572,7 +20478,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × The keyword 'interface' is reserved
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:3:5]
  2 │ 
- 3 │ var interface: number;
+ 3 │ var interface: number = 123;
    ·     ─────────
  4 │ 
    ╰────
@@ -22859,20 +22765,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Only 'declare' modifier is allowed here.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
  1 │ export export interface I {
    ·        ──────
  2 │ }
    ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
- 1 │ export export interface I {
-   ·        ──────
- 2 │ }
-   ╰────
-  help: Only 'declare' modifier is allowed here.
+  help: Remove the duplicate modifier.
 
   × TS(2414): Interface name cannot be 'string'
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts:1:11]
@@ -23383,20 +23282,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
  1 │ export export class Foo {
    ·        ──────
  2 │   public Bar() {
    ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
- 1 │ export export class Foo {
-   ·        ──────
- 2 │   public Bar() {
-   ╰────
-  help: Allowed modifiers are: declare, abstract
+  help: Remove the duplicate modifier.
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser642331.ts:2:18]
@@ -25938,7 +25830,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:34:6]
- 33 │ var a: {
+ 33 │ declare var a: {
  34 │     (x?: number = 1);
     ·      ─
  35 │     foo(x? = 1);

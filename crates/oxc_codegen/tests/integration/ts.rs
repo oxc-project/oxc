@@ -154,3 +154,16 @@ fn ts_as_expression_in_binary_expr() {
         "!(typeof that === 'object' && 'keys' in that && typeof (that as object & { keys: unknown }).keys === 'function')",
     );
 }
+
+#[test]
+fn ts_satisfies_expression() {
+    test_idempotency("d = x satisfies y");
+    test_idempotency("const Foo = (() => {})() satisfies X");
+    test_idempotency("const Bar = (x as Y) satisfies Z");
+    test_idempotency("(x satisfies Y).foo");
+    test_idempotency("(x satisfies Y)[0]");
+    test_idempotency("(x satisfies Y)()");
+    test_idempotency("x satisfies Y || z");
+    test_idempotency("x satisfies Y && z");
+    test_idempotency("x satisfies Y === z");
+}

@@ -90,7 +90,7 @@ impl Generator for FormatterFormatGenerator {
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
-                write::{FormatWrite #(#options)*},
+                print::{FormatWrite #(#options)*},
             };
 
             #impls

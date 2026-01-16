@@ -517,9 +517,18 @@ impl<'a> ParserImpl<'a> {
                     ),
                 }
             }
-            _ => ModuleDeclaration::ExportNamedDeclaration(
-                self.parse_export_named_declaration(span, decorators, stmt_ctx),
-            ),
+            _ => {
+                if self.at(Kind::Export) {
+                    self.error(diagnostics::modifier_already_seen(&Modifier::new(
+                        self.cur_token().span(),
+                        ModifierKind::Export,
+                    )));
+                    self.bump_any();
+                }
+                ModuleDeclaration::ExportNamedDeclaration(
+                    self.parse_export_named_declaration(span, decorators, stmt_ctx),
+                )
+            }
         };
         Statement::from(decl)
     }
