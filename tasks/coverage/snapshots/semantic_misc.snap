@@ -1,6 +1,18 @@
 semantic_misc Summary:
-AST Parsed     : 54/54 (100.00%)
-Positive Passed: 35/54 (64.81%)
+AST Parsed     : 58/58 (100.00%)
+Positive Passed: 35/58 (60.34%)
+semantic Error: tasks/coverage/misc/pass/commonjs-top-level-new-target.cjs
+Unexpected new.target expression
+
+semantic Error: tasks/coverage/misc/pass/commonjs-top-level-new-target.cts
+Unexpected new.target expression
+
+semantic Error: tasks/coverage/misc/pass/commonjs-top-level-return.cjs
+A 'return' statement can only be used within a function body.
+
+semantic Error: tasks/coverage/misc/pass/commonjs-top-level-return.cts
+A 'return' statement can only be used within a function body.
+
 semantic Error: tasks/coverage/misc/pass/declare-let-private.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["private"]

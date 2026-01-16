@@ -538,7 +538,8 @@ impl<'a> ParserImpl<'a> {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
-        if options.allow_return_outside_function {
+        // CommonJS files are wrapped in a function, so return is allowed at top-level
+        if options.allow_return_outside_function || source_type.is_commonjs() {
             ctx = ctx.and_return(true);
         }
         ctx

@@ -1724,7 +1724,7 @@ export interface Span {
   range?: [number, number];
 }
 
-export type ModuleKind = "script" | "module";
+export type ModuleKind = "script" | "module" | "commonjs";
 
 export type Node =
   | Program

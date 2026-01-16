@@ -151,6 +151,8 @@ impl Case for BabelCase {
             source_type = source_type.with_unambiguous(true);
         } else if options.is_module() {
             source_type = source_type.with_module(true);
+        } else if options.is_commonjs() {
+            source_type = source_type.with_commonjs(true);
         }
         let should_fail = Self::determine_should_fail(&path, &options);
         Self { path, code, source_type, options, should_fail, result: TestResult::ToBeRun }

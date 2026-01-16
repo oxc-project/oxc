@@ -12235,6 +12235,8 @@ function constructModuleKind(pos, ast) {
       return "script";
     case 1:
       return "module";
+    case 3:
+      return "commonjs";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleKind`);
   }

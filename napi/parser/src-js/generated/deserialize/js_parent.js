@@ -5285,6 +5285,8 @@ function deserializeModuleKind(pos) {
       return "script";
     case 1:
       return "module";
+    case 3:
+      return "commonjs";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ModuleKind`);
   }
