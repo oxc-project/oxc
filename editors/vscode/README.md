@@ -74,6 +74,7 @@ Following configurations are supported via `settings.json` and can be changed fo
 | `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny`                                                                                   | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.                                 |
 | Deprecated                    |               |                                                                                                               |                                                                                                                                                                              |
 | `oxc.flags`                   | `{}`          | `Record<string, string>`                                                                                      | Specific Oxlint flags to pass to the language server.                                                                                                                        |
+| `oxc.fmt.experimental`        | `true`        | `true` \| `false`                                                                                             | Enable Oxfmt formatting support.                                                                                                                                             |
 
 #### FixKind
 
