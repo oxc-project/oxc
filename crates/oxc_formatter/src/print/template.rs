@@ -827,7 +827,13 @@ fn try_format_embedded_template<'a>(
     format_embedded_template(f, tag_name, template_content)
 }
 
-fn get_template_literal_context<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
+/// Check if the template literal is inside a `css` prop or `<style jsx>` element.
+///
+/// ```jsx
+/// <div css={`color: red;`} />
+/// <style jsx>{`div { color: red; }`}</style>
+/// ```
+fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
     let AstNodes::JSXExpressionContainer(container) = node.parent else {
         return false;
     };
@@ -861,15 +867,15 @@ fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
+    if template_literal.is_no_substitution_template() {
+        return false;
+    }
+
+    if !is_in_css_jsx(template_literal) {
+        return false;
+    }
+
     let quasi = template_literal.quasis();
-    if quasi.len() != 1 {
-        return false;
-    }
-
-    if !get_template_literal_context(template_literal) {
-        return false;
-    }
-
     let template_content = quasi[0].value.raw.as_str();
 
     format_embedded_template(f, "css", template_content)
