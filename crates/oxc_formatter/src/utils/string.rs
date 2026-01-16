@@ -440,11 +440,7 @@ pub fn is_simple_numeric_string(content: &str) -> bool {
     }
 
     // Try to parse and check round-trip
-    if let Ok(num) = content.parse::<f64>() {
-        num.to_string() == content
-    } else {
-        false
-    }
+    if let Ok(num) = content.parse::<f64>() { num.to_string() == content } else { false }
 }
 
 #[cfg(test)]
