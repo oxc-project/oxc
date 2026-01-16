@@ -1166,7 +1166,7 @@ mod test {
         // Root config has no type_aware set
         let base_config = LintConfig::default();
         let nested_lint_config = LintConfig {
-            linter_options: LinterOptions { type_aware: Some(true), ..Default::default() },
+            linter_options: LinterOptions { type_aware: Some(true) },
             ..Default::default()
         };
 
@@ -1200,11 +1200,11 @@ mod test {
     #[test]
     fn test_type_aware_enabled_nested_true_overrides_root_false() {
         let base_config = LintConfig {
-            linter_options: LinterOptions { type_aware: Some(false), ..Default::default() },
+            linter_options: LinterOptions { type_aware: Some(false) },
             ..Default::default()
         };
         let nested_lint_config = LintConfig {
-            linter_options: LinterOptions { type_aware: Some(true), ..Default::default() },
+            linter_options: LinterOptions { type_aware: Some(true) },
             ..Default::default()
         };
 
@@ -1238,7 +1238,7 @@ mod test {
     #[test]
     fn test_type_aware_enabled_false_when_not_enabled_in_any_config() {
         let base_config = LintConfig {
-            linter_options: LinterOptions { type_aware: Some(false), ..Default::default() },
+            linter_options: LinterOptions { type_aware: Some(false) },
             ..Default::default()
         };
 
