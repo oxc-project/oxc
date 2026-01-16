@@ -2324,15 +2324,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_ts_enum_body(&mut self, body: &TSEnumBody<'a>) {
-        let kind = AstKind::TSEnumBody(self.alloc(body));
-        self.enter_node(kind);
-        self.enter_scope(ScopeFlags::empty(), &body.scope_id);
-        self.visit_ts_enum_members(&body.members);
-        self.leave_scope();
-        self.leave_node(kind);
-    }
-
     fn visit_ts_enum_member(&mut self, member: &TSEnumMember<'a>) {
         let kind = AstKind::TSEnumMember(self.alloc(member));
         self.enter_node(kind);
