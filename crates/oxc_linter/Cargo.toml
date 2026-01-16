@@ -77,4 +77,3 @@ url = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true }
 markdown = { workspace = true }
-project-root = { workspace = true }

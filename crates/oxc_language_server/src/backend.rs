@@ -22,7 +22,7 @@ use tracing::{debug, error, info, warn};
 
 use crate::{
     ConcurrentHashMap, ToolBuilder,
-    capabilities::{Capabilities, server_capabilities},
+    capabilities::{Capabilities, DiagnosticMode, server_capabilities},
     file_system::LSPFileSystem,
     options::WorkspaceOption,
     worker::WorkspaceWorker,
@@ -104,7 +104,11 @@ impl LanguageServer for Backend {
             None
         });
 
-        let capabilities = Capabilities::from(params.capabilities);
+        let mut capabilities = Capabilities::from(params.capabilities);
+        let mut server_capabilities = server_capabilities();
+        for tool_builder in self.tool_builders.iter() {
+            tool_builder.server_capabilities(&mut server_capabilities, &mut capabilities);
+        }
 
         info!("initialize: {options:?}");
         info!(
@@ -112,10 +116,7 @@ impl LanguageServer for Backend {
             self.server_info.name,
             self.server_info.version.as_deref().unwrap_or("unknown")
         );
-        debug!(
-            "diagnostic model: {}",
-            if capabilities.use_push_diagnostics() { "push" } else { "pull" }
-        );
+        debug!("diagnostic model: {:?}", capabilities.diagnostic_mode);
 
         // client sent workspace folders
         let workers = if let Some(workspace_folders) = params.workspace_folders {
@@ -129,7 +130,7 @@ impl LanguageServer for Backend {
                     WorkspaceWorker::new(
                         workspace_folder.uri,
                         Arc::clone(&self.tool_builders),
-                        !capabilities.use_push_diagnostics(),
+                        capabilities.diagnostic_mode.clone(),
                     )
                 })
                 .collect()
@@ -140,7 +141,7 @@ impl LanguageServer for Backend {
             vec![WorkspaceWorker::new(
                 root_uri,
                 Arc::clone(&self.tool_builders),
-                !capabilities.use_push_diagnostics(),
+                capabilities.diagnostic_mode.clone(),
             )]
         // client is in single file mode, create no workers
         } else {
@@ -168,11 +169,6 @@ impl LanguageServer for Backend {
         }
 
         *self.workspace_workers.write().await = workers;
-
-        let mut server_capabilities = server_capabilities();
-        for tool_builder in self.tool_builders.iter() {
-            tool_builder.server_capabilities(&mut server_capabilities, &capabilities);
-        }
 
         self.capabilities.set(capabilities).map_err(|err| {
             let message = match err {
@@ -289,7 +285,7 @@ impl LanguageServer for Backend {
         }
 
         // only clear diagnostics when we are using push diagnostics
-        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics)
+        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push)
             && !clearing_diagnostics.is_empty()
         {
             self.clear_diagnostics(clearing_diagnostics).await;
@@ -364,9 +360,13 @@ impl LanguageServer for Backend {
         };
 
         let mut needs_diagnostics_refresh = false;
-        let is_push_diagnostics =
-            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
-        let fs_guard = if is_push_diagnostics { Some(self.file_system.read().await) } else { None };
+        let diagnostic_mode =
+            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+        let fs_guard = if diagnostic_mode == DiagnosticMode::Push {
+            Some(self.file_system.read().await)
+        } else {
+            None
+        };
         let fs_ref = fs_guard.as_deref();
 
         for option in resolved_options {
@@ -388,11 +388,11 @@ impl LanguageServer for Backend {
             adding_registrations.extend(registrations);
         }
 
-        if is_push_diagnostics && !new_diagnostics.is_empty() {
+        if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {
             self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
         }
 
-        if !is_push_diagnostics && needs_diagnostics_refresh {
+        if diagnostic_mode == DiagnosticMode::Pull && needs_diagnostics_refresh {
             // In pull diagnostic model, we ask the client to refresh diagnostics
             if let Err(err) = self.client.workspace_diagnostic_refresh().await {
                 warn!("sending workspace/diagnostic/refresh failed: {err}");
@@ -425,9 +425,13 @@ impl LanguageServer for Backend {
         let mut adding_registrations = vec![];
 
         let mut needs_diagnostics_refresh = false;
-        let is_push_diagnostics =
-            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
-        let fs_guard = if is_push_diagnostics { Some(self.file_system.read().await) } else { None };
+        let diagnostic_mode =
+            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+        let fs_guard = if diagnostic_mode == DiagnosticMode::Push {
+            Some(self.file_system.read().await)
+        } else {
+            None
+        };
         let fs_ref = fs_guard.as_deref();
 
         for file_event in &params.changes {
@@ -448,11 +452,11 @@ impl LanguageServer for Backend {
             adding_registrations.extend(registrations);
         }
 
-        if is_push_diagnostics && !new_diagnostics.is_empty() {
+        if diagnostic_mode == DiagnosticMode::Push && !new_diagnostics.is_empty() {
             self.publish_all_diagnostics(new_diagnostics, ConcurrentHashMap::default()).await;
         }
 
-        if !is_push_diagnostics && needs_diagnostics_refresh {
+        if diagnostic_mode == DiagnosticMode::Pull && needs_diagnostics_refresh {
             // In pull diagnostic model, we ask the client to refresh diagnostics
             if let Err(err) = self.client.workspace_diagnostic_refresh().await {
                 warn!("sending workspace/diagnostic/refresh failed: {err}");
@@ -498,12 +502,12 @@ impl LanguageServer for Backend {
             workers.remove(index);
         }
 
-        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+        let diagnostic_mode =
+            self.capabilities.get().map(|cap| cap.diagnostic_mode.clone()).unwrap_or_default();
+
+        if diagnostic_mode == DiagnosticMode::Push && !cleared_diagnostics.is_empty() {
             self.clear_diagnostics(cleared_diagnostics).await;
         }
-
-        let is_push_diagnostics =
-            self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics);
 
         // client support `workspace/configuration` request
         if self.capabilities.get().is_some_and(|capabilities| capabilities.workspace_configuration)
@@ -518,7 +522,7 @@ impl LanguageServer for Backend {
                 let worker = WorkspaceWorker::new(
                     folder.uri,
                     Arc::clone(&self.tool_builders),
-                    !is_push_diagnostics,
+                    diagnostic_mode.clone(),
                 );
                 // get the configuration from the response and init the linter
                 let options = configurations.get(index).unwrap_or(&serde_json::Value::Null);
@@ -533,7 +537,7 @@ impl LanguageServer for Backend {
                 let worker = WorkspaceWorker::new(
                     folder.uri,
                     Arc::clone(&self.tool_builders),
-                    !is_push_diagnostics,
+                    diagnostic_mode.clone(),
                 );
                 // use default options
                 worker.start_worker(serde_json::Value::Null).await;
@@ -570,7 +574,7 @@ impl LanguageServer for Backend {
             return;
         };
 
-        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_save(&uri, params.text.as_deref()).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
@@ -603,7 +607,7 @@ impl LanguageServer for Backend {
             self.file_system.write().await.set(uri.clone(), content.clone());
         }
 
-        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic_on_change(&uri, content.as_deref()).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
@@ -637,7 +641,7 @@ impl LanguageServer for Backend {
 
         self.file_system.write().await.set(uri.clone(), content.clone());
 
-        if self.capabilities.get().is_some_and(Capabilities::use_push_diagnostics) {
+        if self.capabilities.get().is_some_and(|cap| cap.diagnostic_mode == DiagnosticMode::Push) {
             match worker.run_diagnostic(&uri, Some(&content)).await {
                 Err(err) => {
                     error!("running diagnostics for {} failed: {err}", uri.as_str());
@@ -924,16 +928,19 @@ mod tests {
     use tower_lsp_server::ls_types::Uri;
 
     use super::Backend;
-    use crate::worker::WorkspaceWorker;
+    use crate::{DiagnosticMode, worker::WorkspaceWorker};
 
     #[test]
     fn test_find_worker_for_uri_nested_workspaces() {
-        let workspace =
-            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workspace = WorkspaceWorker::new(
+            "file:///path/to/workspace".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
         let workspace_deeper = WorkspaceWorker::new(
             "file:///path/to/workspace/deeper".parse().unwrap(),
             Arc::new([]),
-            false,
+            DiagnosticMode::None,
         );
         let workers = vec![workspace, workspace_deeper];
 
@@ -957,12 +964,15 @@ mod tests {
 
     #[test]
     fn test_find_worker_for_uri_similar_names() {
-        let workspace =
-            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workspace = WorkspaceWorker::new(
+            "file:///path/to/workspace".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
         let workspace2 = WorkspaceWorker::new(
             "file:///path/to/workspace-2".parse().unwrap(),
             Arc::new([]),
-            false,
+            DiagnosticMode::None,
         );
         let workers = vec![workspace, workspace2];
 
@@ -981,8 +991,11 @@ mod tests {
 
     #[test]
     fn test_find_worker_for_uri_single_workspace() {
-        let workspace =
-            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workspace = WorkspaceWorker::new(
+            "file:///path/to/workspace".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
         let workers = vec![workspace];
 
         // File in workspace should match
@@ -1008,8 +1021,11 @@ mod tests {
 
     #[test]
     fn test_find_worker_for_uri_invalid_uri() {
-        let workspace =
-            WorkspaceWorker::new("file:///path/to/workspace".parse().unwrap(), Arc::new([]), false);
+        let workspace = WorkspaceWorker::new(
+            "file:///path/to/workspace".parse().unwrap(),
+            Arc::new([]),
+            DiagnosticMode::None,
+        );
         let workers = vec![workspace];
 
         // Non-file URI should not match

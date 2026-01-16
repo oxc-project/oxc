@@ -321,6 +321,11 @@ impl<'t> Mangler<'t> {
         let mut reusable_slots = Vec::new_in(temp_allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), temp_allocator);
+        // Reserved names from scopes containing direct eval - these names should not
+        // be used as mangled names to avoid shadowing variables that eval can access.
+        //
+        // TODO: This is conservative, ideally, we would reserve names per-slot.
+        let mut eval_reserved_names: FxHashSet<&str> = FxHashSet::default();
         // Walk down the scope tree and assign a slot number for each symbol.
         // It is possible to do this in a loop over the symbol list,
         // but walking down the scope tree seems to generate a better code.
@@ -328,7 +333,12 @@ impl<'t> Mangler<'t> {
             if bindings.is_empty() {
                 continue;
             }
+            // Scopes with direct eval: collect binding names as reserved (they can be
+            // accessed by eval at runtime) and skip slot assignment (keep original names).
             if scoping.scope_flags(scope_id).contains_direct_eval() {
+                for (&name, _) in bindings {
+                    eval_reserved_names.insert(name);
+                }
                 continue;
             }
 
@@ -453,20 +463,19 @@ impl<'t> Mangler<'t> {
             let name = loop {
                 let name = generate_name(count);
                 count += 1;
-                // Do not mangle keywords and unresolved references.
-                // Note: We don't need to exclude variable names from direct-eval-containing
-                // scopes because those scopes are skipped entirely during slot assignment
-                // (their variables keep original names). Mangled names only apply to scopes
-                // unaffected by eval, so there's no risk of shadowing variables that eval
-                // needs to access.
+                // Do not mangle keywords, unresolved references, and names from eval scopes.
+                // Variables in direct-eval-containing scopes keep their original names
+                // (those scopes are skipped during slot assignment), and we also reserve
+                // those names here to prevent mangled names from shadowing them.
                 let n = name.as_str();
                 if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
                     && !(root_bindings.contains_key(n)
                         && (!self.options.top_level || exported_names.contains(n)))
-                        // TODO: only skip the names that are kept in the current scope
-                        && !keep_name_names.contains(n)
+                    // TODO: only skip the names that are kept in the current scope
+                    && !keep_name_names.contains(n)
+                    && !eval_reserved_names.contains(n)
                 {
                     break name;
                 }

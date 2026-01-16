@@ -2,7 +2,7 @@ commit: fc58af40
 
 semantic_babel Summary:
 AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 1936/2234 (86.66%)
+Positive Passed: 1938/2234 (86.75%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
 Cannot assign to this expression
 
@@ -39,14 +39,10 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/op
 Super calls are not permitted outside constructors or in nested functions inside constructors.
 'super' can only be referenced in members of derived classes or object literal expressions.
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js
-Unexpected new.target expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return/input.js
-A 'return' statement can only be used within a function body.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return-asi/input.js
-A 'return' statement can only be used within a function body.
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-using/input.js
+Symbol flags mismatch for "_usingCtx2":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(Import)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:

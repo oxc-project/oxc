@@ -146,6 +146,8 @@ watch-oxlint *args='':
   just watch 'cargo run -p oxlint -- --disable-nested-config {{args}}'
 
 # oxlint release build for node.js
+# After building, you can run the built version of oxlint with
+# `node apps/oxlint/dist/cli.js`
 oxlint-node:
   pnpm -C apps/oxlint run build
 

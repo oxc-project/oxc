@@ -2025,7 +2025,6 @@ dependencies = [
  "oxc_syntax",
  "papaya",
  "phf",
- "project-root",
  "rayon",
  "rust-lapper",
  "rustc-hash",
@@ -2921,6 +2920,7 @@ dependencies = [
  "proc-macro2",
  "rustc-hash",
  "serde",
+ "serde_json",
  "syn",
 ]
 

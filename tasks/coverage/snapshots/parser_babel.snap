@@ -2,7 +2,7 @@ commit: fc58af40
 
 parser_babel Summary:
 AST Parsed     : 2222/2234 (99.46%)
-Positive Passed: 2202/2234 (98.57%)
+Positive Passed: 2205/2234 (98.70%)
 Negative Passed: 1647/1697 (97.05%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
@@ -156,32 +156,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/o
  1 │ super();
  2 │ super.property;
    · ─────
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js
-
-  × Unexpected new.target expression
-   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js:1:1]
- 1 │ new.target;
-   · ──────────
-   ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return/input.js
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return/input.js:1:1]
- 1 │ return {} / 2
-   · ──────
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return-asi/input.js
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return-asi/input.js:1:1]
- 1 │ return
-   · ──────
- 2 │ {}
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js

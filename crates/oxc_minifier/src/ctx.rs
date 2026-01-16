@@ -12,6 +12,7 @@ use oxc_span::format_atom;
 use oxc_syntax::{
     identifier::{is_identifier_part, is_identifier_start},
     reference::ReferenceId,
+    scope::ScopeFlags,
 };
 use oxc_traverse::Ancestor;
 
@@ -196,9 +197,14 @@ impl<'a> Ctx<'a, '_> {
             }
         }
 
-        let scope_id = self.scoping.current_scope_id();
+        let scope_id = self.scoping().symbol_scope_id(symbol_id);
+        let scope_flags = self.scoping().scope_flags(scope_id);
+
+        let initialized_constant =
+            if scope_flags.contains(ScopeFlags::DirectEval) { None } else { constant };
+
         let symbol_value = SymbolValue {
-            initialized_constant: constant,
+            initialized_constant,
             exported,
             read_references_count,
             write_references_count,

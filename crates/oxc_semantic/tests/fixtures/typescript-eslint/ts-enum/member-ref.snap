@@ -9,7 +9,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/member-
         "children": [],
         "flags": "ScopeFlags(StrictMode)",
         "id": 1,
-        "node": "TSEnumDeclaration(Foo)",
+        "node": "TSEnumBody",
         "symbols": [
           {
             "flags": "SymbolFlags(EnumMember)",

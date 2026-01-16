@@ -216,7 +216,7 @@
           "type": "boolean",
           "scope": "resource",
           "default": true,
-          "markdownDescription": "Enable experimental formatting support. This feature is experimental and might not work as expected.",
+          "markdownDescription": "Enable Oxfmt formatting support.",
           "deprecated": true,
           "markdownDeprecationMessage": "The formatter is now stable, this setting has no effect."
         },

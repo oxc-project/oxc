@@ -1,5 +1,13 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
   "rules": {
-    "no-empty": ["warn", { "allowEmptyCatch": false }]
+    "no-empty": [
+      "warn",
+      {
+        "allowEmptyCatch": false
+      }
+    ]
   }
 }
