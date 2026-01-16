@@ -1,8 +1,8 @@
 // oxlint-disable no-console
 
 import { parseArgs } from "node:util";
-import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mjs";
-import { renderMarkdown } from "./markdown-renderer.mjs";
+import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mts";
+import { renderMarkdown } from "./markdown-renderer.mts";
 import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
@@ -11,8 +11,8 @@ import {
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
-} from "./oxlint-rules.mjs";
-import { updateGitHubIssue } from "./result-reporter.mjs";
+} from "./oxlint-rules.mts";
+import { updateGitHubIssue } from "./result-reporter.mts";
 
 const HELP = `
 Usage:
