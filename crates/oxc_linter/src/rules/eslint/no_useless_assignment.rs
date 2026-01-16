@@ -11,7 +11,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{NodeId, SymbolId};
+use oxc_semantic::{AstNode, NodeId, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
@@ -53,83 +53,99 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessAssignment {
-    fn run_once(&self, ctx: &LintContext) {
-        let cfg = ctx.cfg();
-        let nodes = ctx.nodes();
-        for node in nodes.iter() {
-            match node.kind() {
-                AstKind::VariableDeclarator(declarator) => {
-                    let Some(_) = &declarator.init else {
-                        continue;
-                    };
-                    let Some(identifier) = declarator.id.get_binding_identifier() else {
-                        continue;
-                    };
-                    let symbol_id = identifier.symbol_id();
-                    analyze(ctx, cfg, node.id(), symbol_id);
-                }
-                AstKind::AssignmentExpression(assignment) => {
-                    let symbol_ids: Vec<SymbolId> = match &assignment.left {
-                        AssignmentTarget::AssignmentTargetIdentifier(ident) => {
-                            let reference = ident.reference_id();
-                            match ctx.scoping().get_reference(reference).symbol_id() {
-                                Some(symbol_id) => vec![symbol_id],
-                                None => continue,
-                            }
-                        }
-                        AssignmentTarget::ObjectAssignmentTarget(target) => {
-                            // ({ a = 'unused', foo: b, ...c } = fn());
-                            let mut symbol_ids = Vec::new();
-                            for prop in &target.properties {
-                                match prop {
-																	AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) => {
-																		let Some(_) = &identifier.init else {
-																			continue;
-																		};
+    fn run(&self, node: &AstNode, ctx: &LintContext) {
+        if !matches!(
+            node.kind(),
+            AstKind::VariableDeclarator(_)
+                | AstKind::AssignmentExpression(_)
+                | AstKind::UpdateExpression(_)
+        ) {
+            return;
+        }
 
-																		let ref_id = identifier.binding.reference_id();
-																		let Some(symbol_id) = ctx.scoping().get_reference(ref_id).symbol_id() else {
-																			continue;
-																		};
-																		symbol_ids.push(symbol_id);
-																	}
-																	AssignmentTargetProperty::AssignmentTargetPropertyProperty(property) => {
-																			if let AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array_target) = &property.binding {
-																				for element in &array_target.elements {
-																					if let Some(AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(identifier)) = element {
+        let cfg = ctx.cfg();
+
+        match node.kind() {
+            AstKind::VariableDeclarator(declarator) => {
+                let Some(_) = &declarator.init else {
+                    return;
+                };
+                let Some(identifier) = declarator.id.get_binding_identifier() else {
+                    return;
+                };
+                let symbol_id = identifier.symbol_id();
+                analyze(ctx, cfg, node.id(), symbol_id);
+            }
+            AstKind::AssignmentExpression(assignment) => {
+                let symbol_ids: Vec<SymbolId> = match &assignment.left {
+                    AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                        let reference = ident.reference_id();
+                        match ctx.scoping().get_reference(reference).symbol_id() {
+                            Some(symbol_id) => vec![symbol_id],
+                            None => return,
+                        }
+                    }
+                    AssignmentTarget::ObjectAssignmentTarget(target) => {
+                        // ({ a = 'unused', foo: b, ...c } = fn());
+                        let mut symbol_ids = Vec::new();
+                        for prop in &target.properties {
+                            match prop {
+                                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(
+                                    identifier,
+                                ) => {
+                                    let Some(_) = &identifier.init else {
+                                        continue;
+                                    };
+
+                                    let ref_id = identifier.binding.reference_id();
+                                    let Some(symbol_id) =
+                                        ctx.scoping().get_reference(ref_id).symbol_id()
+                                    else {
+                                        continue;
+                                    };
+                                    symbol_ids.push(symbol_id);
+                                }
+                                AssignmentTargetProperty::AssignmentTargetPropertyProperty(
+                                    property,
+                                ) => {
+                                    if let AssignmentTargetMaybeDefault::ArrayAssignmentTarget(
+                                        array_target,
+                                    ) = &property.binding
+                                    {
+                                        for element in &array_target.elements {
+                                            if let Some(AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(identifier)) = element {
 																							let ref_id = identifier.reference_id();
 																							let Some(symbol_id) = ctx.scoping().get_reference(ref_id).symbol_id() else {
 																								continue;
 																							};
 																							symbol_ids.push(symbol_id);
 																						}
-																				}
-																			}
-																	}
-															}
+                                        }
+                                    }
+                                }
                             }
-
-                            symbol_ids
                         }
-                        _ => continue,
-                    };
-                    for symbol_id in symbol_ids {
-                        analyze(ctx, cfg, node.id(), symbol_id);
-                    }
-                }
-                AstKind::UpdateExpression(update) => {
-                    let id_name = update.argument.get_identifier_name();
-                    let Some(name) = id_name else {
-                        continue;
-                    };
-                    let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), name) else {
-                        continue;
-                    };
 
+                        symbol_ids
+                    }
+                    _ => return,
+                };
+                for symbol_id in symbol_ids {
                     analyze(ctx, cfg, node.id(), symbol_id);
                 }
-                _ => {}
             }
+            AstKind::UpdateExpression(update) => {
+                let id_name = update.argument.get_identifier_name();
+                let Some(name) = id_name else {
+                    return;
+                };
+                let Some(symbol_id) = ctx.scoping().get_binding(node.scope_id(), name) else {
+                    return;
+                };
+
+                analyze(ctx, cfg, node.id(), symbol_id);
+            }
+            _ => {}
         }
     }
 }
