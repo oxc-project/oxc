@@ -75,7 +75,31 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
 
         match layout {
             ParameterLayout::NoParameters => {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
+                // For arrow functions, only LINE comments should be promoted to the body.
+                // Block comments stay inside the parens:
+                //   Input:  `(/* block */) => {}`  -> Output: `(/* block */) => {}`
+                //   Input:  `(// line\n) => {}`    -> Output: `() => // line\n{}`
+                // See: dangling-comment-in-arrow-function.js and empty-paren-comment tests
+                if matches!(self.parent, AstNodes::ArrowFunctionExpression(_)) {
+                    // For arrow functions, only print block comments here.
+                    // Line comments will be promoted to the body.
+                    let comments = f
+                        .context()
+                        .comments()
+                        .comments_in_range(self.span().start, self.span().end);
+                    let block_comments: Vec<_> = comments.iter().filter(|c| c.is_block()).collect();
+                    if !block_comments.is_empty() {
+                        let format_block_comments = format_with(|f| {
+                            for comment in &block_comments {
+                                f.context_mut().comments_mut().increment_printed_count();
+                                write!(f, [comment]);
+                            }
+                        });
+                        write!(f, [group(&soft_block_indent(&format_block_comments))]);
+                    }
+                } else {
+                    write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
+                }
             }
             ParameterLayout::Hug => {
                 write!(f, ParameterList::with_layout(self, this_param, layout));

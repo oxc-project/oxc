@@ -130,7 +130,8 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                     FormatMaybeCachedFunctionBody {
                         body,
                         mode: self.options.cache_mode,
-                        expression: false
+                        expression: false,
+                        params_span: None,
                     }
                 ]
             );

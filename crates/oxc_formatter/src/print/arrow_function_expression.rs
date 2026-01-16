@@ -5,8 +5,10 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{
-        Buffer, Format, Formatter, SourceText, buffer::RemoveSoftLinesBuffer, prelude::*,
-        trivia::FormatTrailingComments,
+        Buffer, Format, Formatter, SourceText,
+        buffer::RemoveSoftLinesBuffer,
+        prelude::*,
+        trivia::{FormatTrailingComments, format_leading_comments},
     },
     options::FormatTrailingCommas,
     print::function::FormatContentWithCacheMode,
@@ -117,10 +119,14 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     );
                 });
 
+                // Pass params_span only if params are empty, to promote dangling comments
+                let params_span =
+                    if !arrow.params.has_parameter() { Some(arrow.params.span) } else { None };
                 let format_body = FormatMaybeCachedFunctionBody {
                     body,
                     expression: arrow.expression(),
                     mode: self.options.cache_mode,
+                    params_span,
                 };
 
                 // With arrays, arrow self and objects, they have a natural line breaking strategy:
@@ -144,14 +150,21 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 if let Some(Expression::SequenceExpression(sequence)) = arrow_expression {
                     return if f.context().comments().has_comment_before(sequence.span().start) {
+                        // When there's a leading comment before a sequence expression body,
+                        // the comment should be printed BEFORE the opening paren.
+                        // Input:  `() => // comment\n(a, b, c)`
+                        // Output: `() =>\n  // comment\n  (a, b, c)`
+                        // Note: The sequence expression is printed on a single line (a, b, c),
+                        // not with soft_block_indent which would break it across multiple lines.
                         write!(
                             f,
                             [group(&format_args!(
                                 formatted_signature,
                                 group(&format_args!(indent(&format_args!(
                                     hard_line_break(),
+                                    format_leading_comments(sequence.span()),
                                     token("("),
-                                    soft_block_indent(&format_body),
+                                    format_body,
                                     token(")")
                                 ))))
                             ))]
@@ -172,8 +185,19 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                     };
                 }
 
-                let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
+                // When there are dangling LINE comments in empty params, treat them as leading
+                // comments that should cause the body to break to a new line with indentation.
+                // Note: Prettier only promotes line comments (//) from empty params, not block
+                // comments (/* */). Block comments stay inside the parens.
+                // We check the source text directly because comments may have already been
+                // marked as printed by prior formatting operations in the call expression.
+                let has_promoted_dangling_comments = params_span.is_some_and(|span| {
+                    let source = f.source_text().slice_range(span.start, span.end);
+                    source.contains("//")
+                });
+
+                let body_has_soft_line_break = !has_promoted_dangling_comments
+                    && arrow_expression.is_none_or(|expression| match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
@@ -554,22 +578,29 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         });
 
         let format_tail_body_inner = format_with(|f| {
+            // Pass params_span only if params are empty, to promote dangling comments
+            let params_span =
+                if !tail.params.has_parameter() { Some(tail.params.span) } else { None };
             let format_tail_body = FormatMaybeCachedFunctionBody {
                 body: tail_body,
                 expression: tail.expression(),
                 mode: self.options.cache_mode,
+                params_span,
             };
 
             // Ensure that the parens of sequence expressions end up on their own line if the
             // body breaks
             if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
                 if f.context().comments().has_comment_before(sequence.span().start) {
+                    // When there's a leading comment before a sequence expression body,
+                    // the comment should be printed BEFORE the opening paren.
                     write!(
                         f,
                         [group(&format_args!(indent(&format_args!(
                             hard_line_break(),
+                            format_leading_comments(sequence.span()),
                             token("("),
-                            soft_block_indent(&format_tail_body),
+                            format_tail_body,
                             token(")")
                         ))))]
                     );
@@ -743,11 +774,36 @@ pub struct FormatMaybeCachedFunctionBody<'a, 'b> {
 
     /// If the body should be cached or if the formatter should try to retrieve it from the cache.
     pub mode: FunctionCacheMode,
+
+    /// Optional params span for arrow functions. When provided and params are empty,
+    /// dangling comments will be promoted to become leading comments of the body.
+    pub params_span: Option<Span>,
 }
 
 impl<'a> Format<'a> for FormatMaybeCachedFunctionBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let content = format_with(|f| {
+            // For arrow functions with empty params, promote only LINE comments to the body.
+            // Block comments stay inside the parens (handled in parameters.rs).
+            // Input:  `foo(( // line comment ) => {})`
+            // Output: `foo(() => // line comment\n{})`
+            // But:
+            // Input:  `foo(( /* block */ ) => {})`
+            // Output: `foo((/* block */) => {})`
+            if let Some(params_span) = self.params_span {
+                let dangling_comments =
+                    f.context().comments().comments_in_range(params_span.start, params_span.end);
+                // Only promote line comments, not block comments
+                let line_comments: Vec<_> =
+                    dangling_comments.iter().filter(|c| c.is_line()).collect();
+                if !line_comments.is_empty() {
+                    for comment in &line_comments {
+                        f.context_mut().comments_mut().increment_printed_count();
+                        write!(f, [comment, hard_line_break()]);
+                    }
+                }
+            }
+
             if self.expression
                 && let AstNodes::ExpressionStatement(s) =
                     &self.body.statements().first().unwrap().as_ast_nodes()

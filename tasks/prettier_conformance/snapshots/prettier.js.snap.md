@@ -1,10 +1,9 @@
-js compatibility: 744/761 (97.77%)
+js compatibility: 746/761 (98.03%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| js/arrows/comment.js | 💥💥 | 88.89% |
 | js/comments/15661.js | 💥💥 | 55.17% |
 | js/comments/empty-statements.js | 💥💥 | 90.91% |
 | js/comments/function-declaration.js | 💥💥 | 92.80% |
@@ -13,11 +12,10 @@ js compatibility: 744/761 (97.77%)
 | js/for/9812-unstable.js | 💥 | 63.64% |
 | js/for/for-in-with-initializer.js | 💥 | 37.50% |
 | js/for/parentheses.js | 💥 | 97.96% |
-| js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/quotes/objects.js | 💥💥 | 80.00% |
-| js/sequence-expression/ignored.js | 💥 | 25.00% |
+| js/sequence-expression/ignored.js | 💥 | 66.67% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
