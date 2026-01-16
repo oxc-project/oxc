@@ -7,7 +7,7 @@
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "@vitest/eslint-plugin": "latest",
-    "eslint": "^9.13.0",
+    "eslint": "^9.39.0",
     "eslint-plugin-import": "latest",
     "eslint-plugin-jest": "latest",
     "eslint-plugin-jsdoc": "latest",
