@@ -110,7 +110,7 @@ impl<'a> TypeScriptEnum<'a> {
         });
 
         let statements = self.transform_ts_enum_members(
-            decl.body.scope_id(),
+            func_scope_id,
             &mut decl.body.members,
             &param_binding,
             ctx,
