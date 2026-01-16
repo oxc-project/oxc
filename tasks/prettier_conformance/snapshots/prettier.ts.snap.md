@@ -1,4 +1,4 @@
-ts compatibility: 579/607 (95.39%)
+ts compatibility: 579/606 (95.54%)
 
 # Failed
 
@@ -24,7 +24,6 @@ ts compatibility: 579/607 (95.39%)
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 68.75% |
-| typescript/multiparser-css/issue-6259.ts | 💥 | 57.14% |
 | typescript/non-null/optional-chain.ts | 💥 | 72.22% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
