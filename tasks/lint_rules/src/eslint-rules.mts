@@ -25,7 +25,7 @@ import {
   rules as pluginImportAllRules,
 } from "eslint-plugin-import";
 // https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/index.js
-// @ts-expect-error
+// @ts-expect-error: No type definitions
 import pluginJSXA11y from "eslint-plugin-jsx-a11y";
 // https://github.com/jest-community/eslint-plugin-jest/blob/v28.9.0/src/index.ts
 import pluginJest from "eslint-plugin-jest";
