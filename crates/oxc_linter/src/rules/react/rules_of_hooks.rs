@@ -1064,7 +1064,8 @@ fn test() {
     // https://github.com/oxc-project/oxc/issues/6651
     r"const MyComponent = makeComponent(() => { useHook(); });",
     r"const MyComponent2 = makeComponent(function () { useHook(); });",
-    r"const MyComponent4 = makeComponent(function InnerComponent() { useHook(); });"
+    r"const MyComponent4 = makeComponent(function InnerComponent() { useHook(); });",
+    r"const Foo = hoc((props) => { if (props.cond) { const [_a, _b] = useState(false); } });"
     ];
 
     let fail = vec![
@@ -1755,6 +1756,7 @@ fn test() {
                 return <Foo render={props => { useCallback(() => {}, []); }} />;
             }
         ",
+        r"const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });",
     ];
 
     Tester::new(RulesOfHooks::NAME, RulesOfHooks::PLUGIN, pass, fail).test_and_snapshot();
