@@ -114,12 +114,12 @@ impl Rule for NoUselessAssignment {
                                     {
                                         for element in &array_target.elements {
                                             if let Some(AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(identifier)) = element {
-																							let ref_id = identifier.reference_id();
-																							let Some(symbol_id) = ctx.scoping().get_reference(ref_id).symbol_id() else {
-																								continue;
-																							};
-																							symbol_ids.push(symbol_id);
-																						}
+                                                let ref_id = identifier.reference_id();
+                                                let Some(symbol_id) = ctx.scoping().get_reference(ref_id).symbol_id() else {
+                                                    continue;
+                                                };
+                                                symbol_ids.push(symbol_id);
+                                            }
                                         }
                                     }
                                 }
@@ -411,45 +411,45 @@ fn is_in_unreachable_block(ctx: &LintContext, node_id: NodeId) -> bool {
 }
 
 fn expr_uses_symbol(ctx: &LintContext, expr: &Expression, symbol_id: SymbolId) -> bool {
-    match expr {
-        Expression::Identifier(identifier) => {
-            let reference = identifier.reference_id();
-            if let Some(id_symbol) = ctx.scoping().get_reference(reference).symbol_id() {
-                return id_symbol == symbol_id;
-            }
-            false
-        }
-        Expression::BinaryExpression(binary_expr) => {
-            expr_uses_symbol(ctx, &binary_expr.left, symbol_id)
-                || expr_uses_symbol(ctx, &binary_expr.right, symbol_id)
-        }
-        Expression::CallExpression(call_expr) => {
-            if expr_uses_symbol(ctx, &call_expr.callee, symbol_id) {
-                return true;
-            }
-            for arg in &call_expr.arguments {
-                match arg {
-                    Argument::SpreadElement(spread) => {
-                        if expr_uses_symbol(ctx, &spread.argument, symbol_id) {
-                            return true;
-                        }
+    let mut stack = vec![expr];
+
+    while let Some(current_expr) = stack.pop() {
+        match current_expr {
+            Expression::Identifier(identifier) => {
+                let reference = identifier.reference_id();
+                if let Some(id_symbol) = ctx.scoping().get_reference(reference).symbol_id() {
+                    if id_symbol == symbol_id {
+                        return true;
                     }
-                    _ => {
-                        if arg.is_expression()
-                            && expr_uses_symbol(ctx, arg.to_expression(), symbol_id)
-                        {
-                            return true;
+                }
+            }
+            Expression::BinaryExpression(binary_expr) => {
+                stack.push(&binary_expr.right);
+                stack.push(&binary_expr.left);
+            }
+            Expression::CallExpression(call_expr) => {
+                stack.push(&call_expr.callee);
+                for arg in call_expr.arguments.iter().rev() {
+                    match arg {
+                        Argument::SpreadElement(spread) => {
+                            stack.push(&spread.argument);
+                        }
+                        _ => {
+                            if arg.is_expression() {
+                                stack.push(arg.to_expression());
+                            }
                         }
                     }
                 }
             }
-            false
+            Expression::UnaryExpression(unary_expr) => {
+                stack.push(&unary_expr.argument);
+            }
+            _ => {}
         }
-        Expression::UnaryExpression(unary_expr) => {
-            expr_uses_symbol(ctx, &unary_expr.argument, symbol_id)
-        }
-        _ => false,
     }
+
+    false
 }
 
 fn write_part_of_error_block(ctx: &LintContext, node_id: NodeId) -> bool {
