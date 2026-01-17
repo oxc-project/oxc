@@ -34,8 +34,6 @@ use oxc_ast::{ast::*, match_expression};
 pub enum SimpleArgument<'a, 'b> {
     Expression(&'b Expression<'a>),
     Assignment(&'b SimpleAssignmentTarget<'a>),
-    // TODO: Not found a use case for this
-    // Name(AnyJsName),
     Spread,
 }
 

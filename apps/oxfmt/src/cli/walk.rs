@@ -5,7 +5,7 @@ use std::{
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
-use crate::core::FormatFileStrategy;
+use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
 
 pub struct Walk {
     inner: ignore::WalkParallel,
@@ -232,6 +232,11 @@ impl Walk {
 fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool, check_ancestors: bool) -> bool {
     for matcher in matchers {
         let matched = if check_ancestors {
+            // `matched_path_or_any_parents()` panics if path is not under matcher's root.
+            // Skip this matcher if the path is outside its scope.
+            if !path.starts_with(matcher.path()) {
+                continue;
+            }
             matcher.matched_path_or_any_parents(path, is_dir)
         } else {
             matcher.matched(path, is_dir)
@@ -248,7 +253,7 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf
     if !ignore_paths.is_empty() {
         let mut result = Vec::with_capacity(ignore_paths.len());
         for path in ignore_paths {
-            let path = if path.is_absolute() { path.clone() } else { cwd.join(path) };
+            let path = normalize_relative_path(cwd, path);
             if !path.exists() {
                 return Err(format!("{}: File not found", path.display()));
             }

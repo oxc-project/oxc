@@ -200,7 +200,9 @@ impl Rule for NoEval {
                     }
 
                     let is_valid = if scope_flags.is_top() {
-                        ctx.semantic().source_type().is_script()
+                        // In scripts and CommonJS, `this` at top level refers to the global object
+                        // In ES modules, `this` at top level is undefined
+                        !ctx.semantic().source_type().is_module()
                     } else {
                         let node = ctx.nodes().get_node(ctx.scoping().get_node_id(scope_id));
                         ast_util::is_default_this_binding(ctx, node, true)

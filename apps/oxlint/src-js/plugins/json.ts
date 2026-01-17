@@ -10,8 +10,6 @@ export type JsonValue = JsonObject | JsonValue[] | string | number | boolean | n
 /**
  * A JSON object.
  */
-// Can't use `Record<string, JsonValue>` here, because of circular reference between `JsonObject` and `JsonValue`
-// oxlint-disable-next-line typescript/consistent-indexed-object-style
 export type JsonObject = { [key: string]: JsonValue };
 
 /**

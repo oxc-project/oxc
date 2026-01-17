@@ -9,7 +9,7 @@
    : ^^^^^^^^^
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
    ,-[files/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^

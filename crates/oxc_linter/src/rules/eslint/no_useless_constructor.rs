@@ -34,7 +34,8 @@ fn no_redundant_super_call(constructor_span: Span, super_span: Span) -> OxcDiagn
             constructor_span.primary_label("This constructor is unnecessary,"),
             super_span.label("because it only passes arguments through to the superclass"),
         ])
-        .with_help("Subclasses automatically use the constructor of their superclass, making this redundant.\nRemove this constructor or add code to it.")
+        .with_note("Subclasses automatically use the constructor of their superclass, making this redundant.")
+        .with_help("Remove this constructor or add code to it.")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,8 +53,10 @@ declare_oxc_lint!(
     /// simply delegates into its parent class.
     ///
     /// ::: warning
-    /// Caveat: This lint rule will report on constructors whose sole purpose is to change visibility of a parent constructor.
-    /// This is because the rule does not have type information to determine if the parent constructor is public, protected, or private.
+    /// Caveat: This lint rule will report on constructors whose sole purpose
+    /// is to change visibility of a parent constructor. This is because the rule
+    /// does not have type information to determine if the parent constructor is
+    /// `public`, `protected`, or `private`.
     /// :::
     ///
     /// ### Examples
@@ -61,14 +64,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class A {
-    ///     constructor () {
-    ///     }
+    ///   constructor() {}
     /// }
     ///
     /// class B extends A {
-    ///     constructor (...args) {
-    ///       super(...args);
-    ///     }
+    ///   constructor(...args) {
+    ///     super(...args);
+    ///   }
     /// }
     /// ```
     ///
@@ -77,22 +79,22 @@ declare_oxc_lint!(
     /// class A { }
     ///
     /// class B {
-    ///     constructor () {
-    ///         doSomething();
-    ///     }
+    ///   constructor() {
+    ///     doSomething();
+    ///   }
     /// }
     ///
     /// class C extends A {
-    ///     constructor() {
-    ///         super('foo');
-    ///     }
+    ///   constructor() {
+    ///     super('foo');
+    ///   }
     /// }
     ///
     /// class D extends A {
-    ///     constructor() {
-    ///         super();
-    ///         doSomething();
-    ///     }
+    ///   constructor() {
+    ///     super();
+    ///     doSomething();
+    ///   }
     /// }
     /// ```
     NoUselessConstructor,

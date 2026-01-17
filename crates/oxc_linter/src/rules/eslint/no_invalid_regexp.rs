@@ -15,17 +15,28 @@ use crate::{
 };
 
 // Use the same prefix with `oxc_regular_expression` crate
-fn duplicated_flag_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Invalid regular expression: Duplicated flag").with_label(span)
+fn duplicated_flag_diagnostic(span: Span, flag: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid regular expression: Duplicated flag")
+        .with_help(
+            format!("Remove the duplicated '{flag}' flag from the regular expression flags",),
+        )
+        .with_label(span.label(format!("flag '{flag}' already specified")))
 }
 
-fn unknown_flag_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Invalid regular expression: Unknown flag").with_label(span)
+fn unknown_flag_diagnostic(span: Span, flag: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid regular expression: Unknown flag")
+        .with_note("Valid flags are: d (indices), g (global), i (ignore case), m (multiline),\n             s (dot all), u (unicode), v (unicode sets), y (sticky)")
+        .with_label(span.label(format!("flag '{flag}' is not a valid regular expression flag")))
 }
 
-fn invalid_unicode_flags_diagnostic(span: Span) -> OxcDiagnostic {
+fn invalid_unicode_flags_diagnostic(span: Span, is_u_specified: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid regular expression: `u` and `v` flags should be used alone")
-        .with_label(span)
+        .with_help("Specify only one of 'u' or 'v' flags")
+        .with_label(span.label(if is_u_specified {
+            "the 'v' flag cannot be used when the 'u' flag is specified"
+        } else {
+            "the 'u' flag cannot be used when the 'v' flag is specified"
+        }))
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -111,29 +122,37 @@ impl Rule for NoInvalidRegexp {
                 // Invalid combination: u+v
                 if ch == 'u' {
                     if v_flag_found {
-                        return ctx
-                            .diagnostic(invalid_unicode_flags_diagnostic(Span::empty(start)));
+                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(
+                            Span::empty(start),
+                            false,
+                        ));
                     }
                     u_flag_found = true;
                 }
                 if ch == 'v' {
                     if u_flag_found {
-                        return ctx
-                            .diagnostic(invalid_unicode_flags_diagnostic(Span::empty(start)));
+                        return ctx.diagnostic(invalid_unicode_flags_diagnostic(
+                            Span::empty(start),
+                            true,
+                        ));
                     }
                     v_flag_found = true;
                 }
 
                 // Duplicated: user defined, invalid or valid
                 if !unique_flags.insert(ch) {
-                    return ctx.diagnostic(duplicated_flag_diagnostic(Span::empty(start)));
+                    return ctx.diagnostic(duplicated_flag_diagnostic(
+                        Span::empty(start),
+                        &ch.to_string(),
+                    ));
                 }
 
                 // Unknown: not valid, not user defined
                 if !(matches!(ch, 'd' | 'g' | 'i' | 'm' | 's' | 'u' | 'v' | 'y')
                     || self.0.allow_constructor_flags.contains(&ch))
                 {
-                    return ctx.diagnostic(unknown_flag_diagnostic(Span::empty(start)));
+                    return ctx
+                        .diagnostic(unknown_flag_diagnostic(Span::empty(start), &ch.to_string()));
                 }
             }
         }
@@ -195,30 +214,30 @@ fn test() {
         ("new RegExp('.')", None),
         ("new RegExp", None),
         ("new RegExp('.', 'im')", None),
-        ("global.RegExp('\\\\')", None),
+        (r"global.RegExp('\\')", None),
         ("new RegExp('.', y)", None),
         ("new RegExp('.', 'y')", None),
         ("new RegExp('.', 'u')", None),
         ("new RegExp('.', 'yu')", None),
         ("new RegExp('/', 'yu')", None),
-        ("new RegExp('\\/', 'yu')", None),
-        ("new RegExp('\\\\u{65}', 'u')", None),
-        ("new RegExp('\\\\u{65}*', 'u')", None),
-        ("new RegExp('[\\\\u{0}-\\\\u{1F}]', 'u')", None),
+        (r"new RegExp('\/', 'yu')", None),
+        (r"new RegExp('\\u{65}', 'u')", None),
+        (r"new RegExp('\\u{65}*', 'u')", None),
+        (r"new RegExp('[\\u{0}-\\u{1F}]', 'u')", None),
         ("new RegExp('.', 's')", None),
         ("new RegExp('(?<=a)b')", None),
         ("new RegExp('(?<!a)b')", None),
-        ("new RegExp('(?<a>b)\\k<a>')", None),
-        ("new RegExp('(?<a>b)\\k<a>', 'u')", None),
-        ("new RegExp('\\\\p{Letter}', 'u')", None),
+        (r"new RegExp('(?<a>b)\k<a>')", None),
+        (r"new RegExp('(?<a>b)\k<a>', 'u')", None),
+        (r"new RegExp('\\p{Letter}', 'u')", None),
         // unknown flags
         ("RegExp('{', flags)", None),
         ("new RegExp('{', flags)", None),
-        ("RegExp('\\\\u{0}*', flags)", None),
-        ("new RegExp('\\\\u{0}*', flags)", None),
+        (r"RegExp('\\u{0}*', flags)", None),
+        (r"new RegExp('\\u{0}*', flags)", None),
         ("RegExp('{', flags)", Some(serde_json::json!([{ "allowConstructorFlags": ["u"] }]))),
         (
-            "RegExp('\\\\u{0}*', flags)",
+            r"RegExp('\\u{0}*', flags)",
             Some(serde_json::json!([{ "allowConstructorFlags": ["a"] }])),
         ),
         // unknown pattern
@@ -227,30 +246,34 @@ fn test() {
         ("new RegExp(pattern, '')", None),
         ("new RegExp(pattern)", None),
         // ES2020
-        ("new RegExp('(?<\\\\ud835\\\\udc9c>.)', 'g')", None),
-        ("new RegExp('(?<\\\\u{1d49c}>.)', 'g')", None),
+        (r"new RegExp('(?<\\ud835\\udc9c>.)', 'g')", None),
+        (r"new RegExp('(?<\\u{1d49c}>.)', 'g')", None),
         ("new RegExp('(?<𝒜>.)', 'g');", None),
-        ("new RegExp('\\\\p{Script=Nandinagari}', 'u');", None),
+        (r"new RegExp('\\p{Script=Nandinagari}', 'u');", None),
         // ES2022
         ("new RegExp('a+(?<Z>z)?', 'd')", None),
-        ("new RegExp('\\\\p{Script=Cpmn}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Cypro_Minoan}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Old_Uyghur}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Ougr}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Tangsa}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Tnsa}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Toto}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Vith}', 'u')", None),
-        ("new RegExp('\\\\p{Script=Vithkuqi}', 'u')", None),
+        (r"new RegExp('\\p{Script=Cpmn}', 'u')", None),
+        (r"new RegExp('\\p{Script=Cypro_Minoan}', 'u')", None),
+        (r"new RegExp('\\p{Script=Old_Uyghur}', 'u')", None),
+        (r"new RegExp('\\p{Script=Ougr}', 'u')", None),
+        (r"new RegExp('\\p{Script=Tangsa}', 'u')", None),
+        (r"new RegExp('\\p{Script=Tnsa}', 'u')", None),
+        (r"new RegExp('\\p{Script=Toto}', 'u')", None),
+        (r"new RegExp('\\p{Script=Vith}', 'u')", None),
+        (r"new RegExp('\\p{Script=Vithkuqi}', 'u')", None),
         // ES2024
         ("new RegExp('[A--B]', 'v')", None),
         ("new RegExp('[A&&B]', 'v')", None),
         ("new RegExp('[A--[0-9]]', 'v')", None),
-        ("new RegExp('[\\\\p{Basic_Emoji}--\\\\q{a|bc|def}]', 'v')", None),
+        (r"new RegExp('[\\p{Basic_Emoji}--\\q{a|bc|def}]', 'v')", None),
         ("new RegExp('[A--B]', flags)", None),
-        ("new RegExp('[[]\\\\u{0}*', flags)", None),
+        (r"new RegExp('[[]\\u{0}*', flags)", None),
         // ES2025
-        // ("new RegExp('((?<k>a)|(?<k>b))')", None),
+        ("new RegExp('((?<k>a)|(?<k>b))')", None),
+        ("new RegExp('(?ims:foo)')", None),
+        ("new RegExp('(?ims-:foo)')", None),
+        ("new RegExp('(?-ims:foo)')", None),
+        ("new RegExp('(?s-i:foo)')", None),
         // allowConstructorFlags
         ("new RegExp('.', 'g')", Some(serde_json::json!([{ "allowConstructorFlags": [] }]))),
         ("new RegExp('.', 'g')", Some(serde_json::json!([{ "allowConstructorFlags": ["a"] }]))),
@@ -297,6 +320,7 @@ fn test() {
         ("RegExp('.', 'A');", Some(serde_json::json!([{ "allowConstructorFlags": ["a"] }]))),
         ("new RegExp('.', 'az');", Some(serde_json::json!([{ "allowConstructorFlags": ["z"] }]))),
         ("new RegExp('.', 'aa');", Some(serde_json::json!([{ "allowConstructorFlags": ["a"] }]))),
+        // Can remove this test once we block duplicate values in this array.
         (
             "new RegExp('.', 'aa');",
             Some(serde_json::json!([{ "allowConstructorFlags": ["a", "a"] }])),
@@ -314,20 +338,17 @@ fn test() {
         ("new RegExp('.', 'uu');", Some(serde_json::json!([{ "allowConstructorFlags": ["u"] }]))),
         ("new RegExp('.', 'ouo');", Some(serde_json::json!([{ "allowConstructorFlags": ["u"] }]))),
         ("new RegExp(')');", None),
-        ("new RegExp('\\\\a', 'u');", None),
+        (r"new RegExp('\\a', 'u');", None),
+        (r"new RegExp('\\a', 'u');", Some(serde_json::json!([{ "allowConstructorFlags": ["u"] }]))),
+        (r"RegExp('\\u{0}*');", None),
+        (r"new RegExp('\\u{0}*');", None),
+        (r"new RegExp('\\u{0}*', '');", None),
         (
-            "new RegExp('\\\\a', 'u');",
-            Some(serde_json::json!([{ "allowConstructorFlags": ["u"] }])),
-        ),
-        ("RegExp('\\\\u{0}*');", None),
-        ("new RegExp('\\\\u{0}*');", None),
-        ("new RegExp('\\\\u{0}*', '');", None),
-        (
-            "new RegExp('\\\\u{0}*', 'a');",
+            r"new RegExp('\\u{0}*', 'a');",
             Some(serde_json::json!([{ "allowConstructorFlags": ["a"] }])),
         ),
-        ("RegExp('\\\\u{0}*');", Some(serde_json::json!([{ "allowConstructorFlags": ["a"] }]))),
-        ("new RegExp('\\\\');", None),
+        (r"RegExp('\\u{0}*');", Some(serde_json::json!([{ "allowConstructorFlags": ["a"] }]))),
+        (r"new RegExp('\\');", None),
         ("RegExp(')' + '', 'a');", None),
         (
             "new RegExp('.' + '', 'az');",
@@ -342,9 +363,15 @@ fn test() {
         ("new RegExp('.', 'uv');", None),
         ("new RegExp(pattern, 'uv');", None),
         ("new RegExp('[A--B]' /* valid only with `v` flag */, 'u')", None),
-        ("new RegExp('[[]\\\\u{0}*' /* valid only with `u` flag */, 'v')", None),
+        (r"new RegExp('[[]\\u{0}*' /* valid only with `u` flag */, 'v')", None),
         // ES2025
         ("new RegExp('(?<k>a)(?<k>b)')", None),
+        ("new RegExp('(?ii:foo)')", None),
+        ("new RegExp('(?-ii:foo)')", None),
+        ("new RegExp('(?i-i:foo)')", None),
+        ("new RegExp('(?-:foo)')", None),
+        ("new RegExp('(?g:foo)')", None),
+        ("new RegExp('(?-u:foo)')", None),
     ];
 
     Tester::new(NoInvalidRegexp::NAME, NoInvalidRegexp::PLUGIN, pass, fail).test_and_snapshot();

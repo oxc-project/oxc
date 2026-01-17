@@ -13,7 +13,7 @@ pub trait ToolBuilder: Send + Sync {
     fn server_capabilities(
         &self,
         _capabilities: &mut ServerCapabilities,
-        _backend_capabilities: &Capabilities,
+        _backend_capabilities: &mut Capabilities,
     ) {
     }
 

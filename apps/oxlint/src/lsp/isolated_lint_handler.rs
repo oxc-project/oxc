@@ -153,6 +153,10 @@ impl IsolatedLintHandler {
             );
         }
 
+        // Clear any stale directives because they are no longer needed.
+        // This prevents using outdated directive spans if the new linting run fails.
+        self.runner.directives_coordinator().remove(path);
+
         Ok(messages)
     }
 

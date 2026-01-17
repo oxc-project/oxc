@@ -6,7 +6,7 @@ arguments: --config extends_rules_config.json console.js
 working directory: fixtures/extends_config
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  x eslint(no-console): Unexpected console statement.
    ,-[console.js:1:1]
  1 | console.log("test");
    : ^^^^^^^^^^^

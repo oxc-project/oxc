@@ -219,6 +219,7 @@ impl Rule for RulesOfHooks {
             }
             // Hooks are allowed inside of unnamed functions used as arguments. As long as they are
             // not used as a callback inside of components or hooks.
+            // This includes JSX render props like <Foo>{() => { ... }}</Foo>
             AstKind::Function(Function { id: None, .. }) | AstKind::ArrowFunctionExpression(_)
                 if is_non_react_func_arg(nodes, parent_func.id()) =>
             {
@@ -390,18 +391,22 @@ fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNod
     nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
 }
 
-/// Checks if the `node_id` is a callback argument,
+/// Checks if the `node_id` is a callback argument (including JSX render props),
 /// And that function isn't a `React.memo` or `React.forwardRef`.
-/// Returns `true` if this node is a function argument and that isn't a React special function.
+/// Returns `true` if this node is a function argument/render prop and that isn't a React special function.
 /// Otherwise it would return `false`.
 fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
     let parent = nodes.parent_node(node_id);
 
-    let AstKind::CallExpression(call) = parent.kind() else {
-        return false;
-    };
-
-    !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
+    match parent.kind() {
+        // Callback passed as argument to a function call
+        AstKind::CallExpression(call) => {
+            !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
+        }
+        // Callback passed as JSX expression: <Foo>{() => { ... }}</Foo> or <Foo render={() => { ... }} />
+        AstKind::JSXExpressionContainer(_) => true,
+        _ => false,
+    }
 }
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
@@ -1059,7 +1064,8 @@ fn test() {
     // https://github.com/oxc-project/oxc/issues/6651
     r"const MyComponent = makeComponent(() => { useHook(); });",
     r"const MyComponent2 = makeComponent(function () { useHook(); });",
-    r"const MyComponent4 = makeComponent(function InnerComponent() { useHook(); });"
+    r"const MyComponent4 = makeComponent(function InnerComponent() { useHook(); });",
+    r"const Foo = hoc((props) => { if (props.cond) { const [_a, _b] = useState(false); } });"
     ];
 
     let fail = vec![
@@ -1727,6 +1733,30 @@ fn test() {
         // " ,
         // https://github.com/oxc-project/oxc/issues/6651
         r"const MyComponent3 = makeComponent(function foo () { useHook(); });",
+        // https://github.com/oxc-project/oxc/issues/17961
+        // Invalid because hooks are called inside JSX children render props
+        r"
+            function Component() {
+                return <Foo>{() => { useState(); }}</Foo>;
+            }
+        ",
+        r"
+            function Component() {
+                return <Foo>{props => { useMemo(() => {}, []); }}</Foo>;
+            }
+        ",
+        // Invalid because hooks are called inside JSX attribute render props
+        r"
+            function Component() {
+                return <Foo render={() => { useState(); }} />;
+            }
+        ",
+        r"
+            function Component() {
+                return <Foo render={props => { useCallback(() => {}, []); }} />;
+            }
+        ",
+        r"const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });",
     ];
 
     Tester::new(RulesOfHooks::NAME, RulesOfHooks::PLUGIN, pass, fail).test_and_snapshot();

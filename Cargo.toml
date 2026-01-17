@@ -103,35 +103,35 @@ multiple_crate_versions = "allow"
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.107.0", path = "crates/oxc" } # Main entry point
-oxc_allocator = { version = "0.107.0", path = "crates/oxc_allocator" } # Memory management
-oxc_ast = { version = "0.107.0", path = "crates/oxc_ast" } # AST definitions
-oxc_ast_macros = { version = "0.107.0", path = "crates/oxc_ast_macros" } # AST proc macros
-oxc_ast_visit = { version = "0.107.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
-oxc_cfg = { version = "0.107.0", path = "crates/oxc_cfg" } # Control flow graph
-oxc_codegen = { version = "0.107.0", path = "crates/oxc_codegen", default-features = false } # Code generation
-oxc_compat = { version = "0.107.0", path = "crates/oxc_compat" } # Browser compatibility
-oxc_data_structures = { version = "0.107.0", path = "crates/oxc_data_structures" } # Shared data structures
-oxc_diagnostics = { version = "0.107.0", path = "crates/oxc_diagnostics" } # Error reporting
-oxc_ecmascript = { version = "0.107.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
-oxc_estree = { version = "0.107.0", path = "crates/oxc_estree" } # ESTree format
-oxc_isolated_declarations = { version = "0.107.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
-oxc_mangler = { version = "0.107.0", path = "crates/oxc_mangler" } # Name mangling
-oxc_minifier = { version = "0.107.0", path = "crates/oxc_minifier" } # Code minification
-oxc_minify_napi = { version = "0.107.0", path = "napi/minify" } # Node.js minifier binding
-oxc_napi = { version = "0.107.0", path = "crates/oxc_napi" } # NAPI utilities
-oxc_parser = { version = "0.107.0", path = "crates/oxc_parser", features = [
+oxc = { version = "0.108.0", path = "crates/oxc" } # Main entry point
+oxc_allocator = { version = "0.108.0", path = "crates/oxc_allocator" } # Memory management
+oxc_ast = { version = "0.108.0", path = "crates/oxc_ast" } # AST definitions
+oxc_ast_macros = { version = "0.108.0", path = "crates/oxc_ast_macros" } # AST proc macros
+oxc_ast_visit = { version = "0.108.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
+oxc_cfg = { version = "0.108.0", path = "crates/oxc_cfg" } # Control flow graph
+oxc_codegen = { version = "0.108.0", path = "crates/oxc_codegen", default-features = false } # Code generation
+oxc_compat = { version = "0.108.0", path = "crates/oxc_compat" } # Browser compatibility
+oxc_data_structures = { version = "0.108.0", path = "crates/oxc_data_structures" } # Shared data structures
+oxc_diagnostics = { version = "0.108.0", path = "crates/oxc_diagnostics" } # Error reporting
+oxc_ecmascript = { version = "0.108.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
+oxc_estree = { version = "0.108.0", path = "crates/oxc_estree" } # ESTree format
+oxc_isolated_declarations = { version = "0.108.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
+oxc_mangler = { version = "0.108.0", path = "crates/oxc_mangler" } # Name mangling
+oxc_minifier = { version = "0.108.0", path = "crates/oxc_minifier" } # Code minification
+oxc_minify_napi = { version = "0.108.0", path = "napi/minify" } # Node.js minifier binding
+oxc_napi = { version = "0.108.0", path = "crates/oxc_napi" } # NAPI utilities
+oxc_parser = { version = "0.108.0", path = "crates/oxc_parser", features = [
   "regular_expression",
 ] } # JS/TS parser
-oxc_parser_napi = { version = "0.107.0", path = "napi/parser" } # Node.js parser binding
-oxc_regular_expression = { version = "0.107.0", path = "crates/oxc_regular_expression" } # Regex parser
-oxc_semantic = { version = "0.107.0", path = "crates/oxc_semantic" } # Semantic analysis
-oxc_span = { version = "0.107.0", path = "crates/oxc_span" } # Source positions
-oxc_syntax = { version = "0.107.0", path = "crates/oxc_syntax" } # Syntax utilities
-oxc_transform_napi = { version = "0.107.0", path = "napi/transform" } # Node.js transformer binding
-oxc_transformer = { version = "0.107.0", path = "crates/oxc_transformer" } # Code transformation
-oxc_transformer_plugins = { version = "0.107.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
-oxc_traverse = { version = "0.107.0", path = "crates/oxc_traverse" } # AST traversal
+oxc_parser_napi = { version = "0.108.0", path = "napi/parser" } # Node.js parser binding
+oxc_regular_expression = { version = "0.108.0", path = "crates/oxc_regular_expression" } # Regex parser
+oxc_semantic = { version = "0.108.0", path = "crates/oxc_semantic" } # Semantic analysis
+oxc_span = { version = "0.108.0", path = "crates/oxc_span" } # Source positions
+oxc_syntax = { version = "0.108.0", path = "crates/oxc_syntax" } # Syntax utilities
+oxc_transform_napi = { version = "0.108.0", path = "napi/transform" } # Node.js transformer binding
+oxc_transformer = { version = "0.108.0", path = "crates/oxc_transformer" } # Code transformation
+oxc_transformer_plugins = { version = "0.108.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
+oxc_traverse = { version = "0.108.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
@@ -158,11 +158,11 @@ syn = { version = "2", default-features = false } # Rust parser for macros
 unicode-id-start = "1" # Unicode identifier validation
 
 #
-javascript-globals = "1.3.4" # JavaScript global definitions
+javascript-globals = "1.4.0" # JavaScript global definitions
 json-strip-comments = "3.1.0" # Strip JSON comments
-oxc-browserslist = "2.1.4" # Browser compatibility queries
+oxc-browserslist = "2.2.0" # Browser compatibility queries
 oxc_index = { version = "4.1.0", features = ["nonmax", "serde"] } # Type-safe indices
-oxc_resolver = "11.15.0" # Module resolution
+oxc_resolver = "11.16.3" # Module resolution
 oxc_sourcemap = "6.0.1" # Source map generation
 
 #
@@ -176,33 +176,33 @@ bpaf = "0.9.20" # CLI parser
 # This is a temporary situation - we'll replace `bumpalo` with our own allocator.
 bumpalo = "=3.19.1" # Bump allocator
 compact_str = "0.9.0" # Compact string type
-console = "0.16.1" # Terminal utilities
+console = "0.16.2" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation
 convert_case = "0.10.0" # Case conversion
 cow-utils = "0.1.3" # Copy-on-write utilities
 criterion2 = { version = "3.0.2", default-features = false } # Benchmarking
-dragonbox_ecma = "0.0.5" # Fast float formatting
+dragonbox_ecma = "0.1.0" # Fast float formatting
 encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
 fast-glob = "1.0.0" # Fast glob matching
-flate2 = "1.1.5" # Compression
+flate2 = "1.1.8" # Compression
 futures = "0.3.31" # Async utilities
-handlebars = "6.3.2" # Template engine
+handlebars = "6.4.0" # Template engine
 hashbrown = { version = "0.16.1", default-features = false } # Fast hash map
 humansize = "2.1.3" # Human-readable sizes
-icu_segmenter = "2.1.1" # Unicode segmentation
+icu_segmenter = "2.1.2" # Unicode segmentation
 ignore = "0.4.25" # Gitignore matching
 insta = "1.43.2" # Snapshot testing
 itertools = "0.14.0" # Iterator utilities
-itoa = "1.0.15" # Integer to string
+itoa = "1.0.17" # Integer to string
 language-tags = "0.3.2" # Language tag parsing
-lazy-regex = "3.4.2" # Lazy regex compilation
+lazy-regex = "3.5.1" # Lazy regex compilation
 markdown = "1.0.0" # Markdown parsing
 memchr = "2.7.6" # Fast byte searching
 miette = { package = "oxc-miette", version = "2.7.0", features = [
   "fancy-no-syscall",
 ] } # Error reporting
-mimalloc-safe = "0.1.55" # Fast allocator
+mimalloc-safe = "0.1.56" # Fast allocator
 nodejs-built-in-modules = "1.0.0" # Node.js built-in modules
 nonmax = "0.5.5" # Non-maximum numbers
 num-bigint = "0.4.6" # Big integers
@@ -220,27 +220,27 @@ ropey = "1.6.1" # Rope text structure
 rust-lapper = "1.2.0" # Interval tree
 saphyr = "0.0.6" # YAML parser
 schemars = { package = "oxc-schemars", version = "0.8.27" } # JSON schema generation
-self_cell = "1.2.1" # Self-referential structs
+self_cell = "1.2.2" # Self-referential structs
 seq-macro = "0.3.6" # Sequence macros
 sha1 = "0.10.6" # SHA-1 hashing
 simdutf8 = { version = "0.1.5", features = ["aarch64_neon"] } # SIMD UTF-8 validation
 similar = "2.7.0" # Text diffing
 similar-asserts = "1.7.0" # Test diff assertions
 smallvec = { version = "1.15.1", features = ["union", "serde"] } # Stack-allocated vectors
-tempfile = "3.23.0" # Temporary files
-tokio = { version = "1.48.0", default-features = false } # Async runtime
-toml = { version = "0.9.8" }
+tempfile = "3.24.0" # Temporary files
+tokio = { version = "1.49.0", default-features = false } # Async runtime
+toml = { version = "0.9.11" }
 tower-lsp-server = "0.23.0" # LSP server framework
-tracing = "0.1.43"
+tracing = "0.1.44"
 tracing-subscriber = "0.3.22" # Tracing implementation
 ureq = { version = "3.1.4", default-features = false } # HTTP client
-url = { version = "2.5.7" } # URL parsing
+url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
 editorconfig-parser = "0.0.3"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }
 sort-package-json = "0.0.8"
-oxc-toml = "0.14.1"
+oxc-toml = "0.14.2"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }
 

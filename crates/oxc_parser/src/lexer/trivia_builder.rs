@@ -17,8 +17,13 @@ pub struct TriviaBuilder {
     /// index of processed comments
     processed: usize,
 
-    /// Saw a newline before this position
+    /// Saw a newline before this position (since last token).
+    /// Used to determine if comments are trailing comments of the previous token.
     saw_newline: bool,
+
+    /// Saw a newline before this position (since last comment or token).
+    /// Used to set `preceded_by_newline` on comments.
+    saw_newline_for_comment: bool,
 
     /// Previous token kind, used to indicates comments are trailing from what kind
     previous_kind: Kind,
@@ -35,6 +40,7 @@ impl Default for TriviaBuilder {
             irregular_whitespaces: vec![],
             processed: 0,
             saw_newline: true,
+            saw_newline_for_comment: true,
             previous_kind: Kind::Undetermined,
             has_pure_comment: false,
             has_no_side_effects_comment: false,
@@ -81,6 +87,7 @@ impl TriviaBuilder {
             }
         }
         self.saw_newline = true;
+        self.saw_newline_for_comment = true;
     }
 
     pub fn handle_token(&mut self, token: Token) {
@@ -95,6 +102,7 @@ impl TriviaBuilder {
             self.processed = len;
         }
         self.saw_newline = false;
+        self.saw_newline_for_comment = false;
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
@@ -137,7 +145,9 @@ impl TriviaBuilder {
         }
 
         // This newly added comment may be preceded by a newline.
-        comment.set_preceded_by_newline(self.saw_newline);
+        // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
+        // not just since the last token.
+        comment.set_preceded_by_newline(self.saw_newline_for_comment);
         if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
@@ -145,6 +155,11 @@ impl TriviaBuilder {
                 self.processed = self.comments.len() + 1; // +1 to include this comment.
             }
             self.saw_newline = true;
+            self.saw_newline_for_comment = true;
+        } else {
+            // Block comments don't end with a newline, so reset saw_newline_for_comment.
+            // If there's a newline after the block comment, `handle_newline` will set it back to true.
+            self.saw_newline_for_comment = false;
         }
 
         self.comments.push(comment);

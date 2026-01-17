@@ -61,7 +61,7 @@ use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
-use crate::write;
+use crate::{JsLabels, write};
 
 use super::prelude::*;
 
@@ -422,6 +422,15 @@ impl<'a> Format<'a> for Comment {
         if self.is_multiline_block() {
             let mut lines = LineTerminatorSplitter::new(content);
             if is_alignable_comment(content) {
+                // Using `write_element` directly instead of `labelled()`
+                // to avoid allocating a `Vec` for `lines` iter
+                let sort_imports_enabled = f.options().experimental_sort_imports.is_some();
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
+                        JsLabels::AlignableBlockComment,
+                    ))));
+                }
+
                 // `unwrap` is safe because `content` contains at least one line.
                 let first_line = lines.next().unwrap();
                 write!(f, [text(first_line.trim_end())]);
@@ -429,6 +438,10 @@ impl<'a> Format<'a> for Comment {
                 // Indent the remaining lines by one space so that all `*` are aligned.
                 for line in lines {
                     write!(f, [hard_line_break(), " ", text(line.trim())]);
+                }
+
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::EndLabelled));
                 }
             } else {
                 // Normalize line endings `\r\n` to `\n`

@@ -24,7 +24,7 @@ jobs:
       oxfmt_version: ${{ steps.oxfmt.outputs.version }}
       oxlint_version: ${{ steps.oxlint.outputs.version }}
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
       - uses: ./.github/actions/check-version
         id: oxfmt
         with:
@@ -91,10 +91,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
 
       - name: Install cross
-        uses: taiki-e/install-action@cc33365ec7e3350bc47bf935f247582cc6f68344 # v2.65.12
+        uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # v2.66.1
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -159,7 +159,7 @@ jobs:
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
@@ -257,10 +257,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
 
       - name: Install cross
-        uses: taiki-e/install-action@cc33365ec7e3350bc47bf935f247582cc6f68344 # v2.65.12
+        uses: taiki-e/install-action@3522286d40783523f9c7880e33f785905b4c20d0 # v2.66.1
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -325,7 +325,7 @@ jobs:
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
@@ -453,7 +453,9 @@ jobs:
       - uses: tsickert/discord-webhook@b217a69502f52803de774ded2b1ab7c282e99645 # v7.0.0
         with:
           webhook-url: ${{ secrets.DISCORD_OXC_RELEASES_CHANNEL }}
-          content: ${{ steps.release.outputs.url }}
+          embed-title: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
+          embed-description: A new release is available! Check the changelog for details.
+          embed-url: ${{ steps.release.outputs.url }}
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
@@ -490,7 +492,7 @@ jobs:
     name: Bump oxlint dependents
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
 
       - name: Bump oxc-project/eslint-plugin-oxlint
         uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4

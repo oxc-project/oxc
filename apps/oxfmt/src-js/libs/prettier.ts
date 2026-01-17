@@ -72,10 +72,12 @@ export async function formatEmbeddedCode({
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   options.parser = parserName;
-  return prettier
-    .format(code, options)
-    .then((formatted) => formatted.trimEnd())
-    .catch(() => code);
+
+  // NOTE: This will throw if:
+  // - Specified parser is not available
+  // - Or, code has syntax errors
+  // In such cases, Rust side will fallback to original code
+  return prettier.format(code, options);
 }
 
 // ---

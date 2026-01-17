@@ -176,6 +176,20 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.new_fix(CompositeFix::Single(fix), message)
     }
 
+    /// Finds the next occurrence of the given token in the source code,
+    /// starting from the specified position, skipping over comments.
+    ///
+    /// Returns the offset from `start` if the token is found, otherwise `None`.
+    #[inline]
+    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
+        self.ctx.find_next_token_from(start, token)
+    }
+
+    #[inline]
+    pub fn find_next_token_within(&self, start: u32, end: u32, token: &str) -> Option<u32> {
+        self.ctx.find_next_token_within(start, end, token)
+    }
+
     #[must_use]
     pub fn codegen(self) -> Codegen<'a> {
         Codegen::new()

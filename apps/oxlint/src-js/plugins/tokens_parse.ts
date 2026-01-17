@@ -5,7 +5,8 @@
 import { createRequire } from "node:module";
 import { filePath } from "./context.ts";
 import { getNodeLoc } from "./location.ts";
-import { sourceText } from "./source_code.ts";
+import { buffer, sourceText } from "./source_code.ts";
+import { IS_JSX_FLAG_POS, IS_TS_FLAG_POS } from "../generated/constants.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type * as ts from "typescript";
@@ -35,11 +36,12 @@ const TokenProto = Object.create(Object.prototype, {
 /**
  * Initialize TS-ESLint tokens for current file.
  *
- * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
+ * Caller must ensure `filePath`, `sourceText`, and `buffer` are initialized before calling this function.
  */
 export function parseTokens(): Token[] {
   debugAssertIsNonNull(filePath);
   debugAssertIsNonNull(sourceText);
+  debugAssertIsNonNull(buffer);
 
   // Lazy-load TypeScript.
   // `./typescript.cjs` is path to the bundle in `dist` directory, as well as relative path in `src-js`,
@@ -50,6 +52,19 @@ export function parseTokens(): Token[] {
     debugAssertIsNonNull(tsModule);
     tsSyntaxKind = tsModule.SyntaxKind;
   }
+
+  // Get source type from flags in buffer.
+  // Both flags are `bool`s in Rust, so 0 = false, 1 = true.
+  const isTs = buffer[IS_TS_FLAG_POS] === 1,
+    isJsx = buffer[IS_JSX_FLAG_POS] === 1;
+
+  const scriptKind = isTs
+    ? isJsx
+      ? tsModule.ScriptKind.TSX
+      : tsModule.ScriptKind.TS
+    : isJsx
+      ? tsModule.ScriptKind.JSX
+      : tsModule.ScriptKind.JS;
 
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
@@ -62,8 +77,7 @@ export function parseTokens(): Token[] {
       setExternalModuleIndicator: undefined,
     },
     true, // `setParentNodes`
-    // TODO: Use `TS` or `TSX` depending on source type
-    tsModule.ScriptKind.TSX,
+    scriptKind,
   );
 
   // Check that TypeScript hasn't altered source text.

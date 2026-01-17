@@ -1,8 +1,8 @@
-commit: 761c2509
+commit: fc58af40
 
 semantic_babel Summary:
-AST Parsed     : 2235/2235 (100.00%)
-Positive Passed: 1936/2235 (86.62%)
+AST Parsed     : 2234/2234 (100.00%)
+Positive Passed: 1938/2234 (86.75%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
 Cannot assign to this expression
 
@@ -39,14 +39,10 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/op
 Super calls are not permitted outside constructors or in nested functions inside constructors.
 'super' can only be referenced in members of derived classes or object literal expressions.
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-new-target/input.js
-Unexpected new.target expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return/input.js
-A 'return' statement can only be used within a function body.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-return-asi/input.js
-A 'return' statement can only be used within a function body.
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-using/input.js
+Symbol flags mismatch for "_usingCtx2":
+after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
+rebuilt        : SymbolId(0): SymbolFlags(Import)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
@@ -714,10 +710,10 @@ Unexpected token
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["C", "M", "N", "_bar", "bar", "f", "foo", "x"]
+after transform: ScopeId(0): ["C", "N", "_bar", "bar", "f", "foo", "x"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/equals/input.ts
@@ -1044,10 +1040,10 @@ Ambient modules cannot be nested in other modules or namespaces.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-declare/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["M", "N"]
+after transform: ScopeId(0): ["N"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/head-export/input.ts
@@ -1055,15 +1051,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["X"]
 rebuilt        : ScopeId(0): []
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(3)]
-rebuilt        : ScopeId(0): []
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-as-or-satisfies-brackets/input.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["as", "satisfies"]
-rebuilt        : ScopeId(0): []
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/namespace-as-or-satisfies-brackets/input.ts
@@ -1241,7 +1229,7 @@ Symbol redeclarations mismatch for "f":
 after transform: SymbolId(0): [Span { start: 9, end: 10 }, Span { start: 32, end: 33 }]
 rebuilt        : SymbolId(0): []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var/input.js
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/namespace-declaration-var/input.js
 Bindings mismatch:
 after transform: ScopeId(0): ["foo"]
 rebuilt        : ScopeId(0): []
@@ -1249,7 +1237,7 @@ Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
 rebuilt        : ScopeId(0): []
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/module-declaration-var-2/input.js
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/namespace-declaration-var-2/input.js
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-interface/input.ts
@@ -1355,10 +1343,10 @@ Symbol flags mismatch for "a":
 after transform: SymbolId(1): SymbolFlags(FunctionScopedVariable | Import)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol span mismatch for "a":
-after transform: SymbolId(1): Span { start: 20, end: 21 }
-rebuilt        : SymbolId(0): Span { start: 31, end: 32 }
+after transform: SymbolId(1): Span { start: 23, end: 24 }
+rebuilt        : SymbolId(0): Span { start: 34, end: 35 }
 Symbol redeclarations mismatch for "a":
-after transform: SymbolId(1): [Span { start: 20, end: 21 }, Span { start: 31, end: 32 }]
+after transform: SymbolId(1): [Span { start: 23, end: 24 }, Span { start: 34, end: 35 }]
 rebuilt        : SymbolId(0): []
 Unresolved references mismatch:
 after transform: ["M"]

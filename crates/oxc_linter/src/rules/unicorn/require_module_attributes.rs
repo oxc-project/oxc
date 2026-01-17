@@ -236,56 +236,48 @@ fn test() {
     ];
 
     let fix = vec![
-        (r#"import "foo" with {}"#, r#"import "foo""#, None),
-        (r#"import foo from "foo" with {}"#, r#"import foo from "foo""#, None),
-        (r#"export {foo} from "foo" with {}"#, r#"export {foo} from "foo""#, None),
-        (r#"export * from "foo" with {}"#, r#"export * from "foo""#, None),
-        (r#"export * from "foo"with{}"#, r#"export * from "foo""#, None),
+        (r#"import "foo" with {}"#, r#"import "foo""#),
+        (r#"import foo from "foo" with {}"#, r#"import foo from "foo""#),
+        (r#"export {foo} from "foo" with {}"#, r#"export {foo} from "foo""#),
+        (r#"export * from "foo" with {}"#, r#"export * from "foo""#),
+        (r#"export * from "foo"with{}"#, r#"export * from "foo""#),
         (
             r#"export * from "foo"/* comment 1 */with/* comment 2 */{/* comment 3 */}/* comment 4 */"#,
             r#"export * from "foo"/* comment 4 */"#,
-            None,
         ),
-        (r#"import("foo", {})"#, r#"import("foo")"#, None),
-        (r#"import("foo", (( {} )))"#, r#"import("foo")"#, None),
-        (r#"import("foo", {},)"#, r#"import("foo",)"#, None),
-        (r#"import("foo", {with:{},},)"#, r#"import("foo",)"#, None),
+        (r#"import("foo", {})"#, r#"import("foo")"#),
+        (r#"import("foo", (( {} )))"#, r#"import("foo")"#),
+        (r#"import("foo", {},)"#, r#"import("foo",)"#),
+        (r#"import("foo", {with:{},},)"#, r#"import("foo",)"#),
         (
             r#"import("foo", {with:{}, unknown:"unknown"},)"#,
             r#"import("foo", {unknown:"unknown"},)"#,
-            None,
         ),
         (
             r#"import("foo", {"with":{}, unknown:"unknown"},)"#,
             r#"import("foo", {unknown:"unknown"},)"#,
-            None,
         ),
         (
             r#"import("foo", {unknown:"unknown", with:{}, },)"#,
             r#"import("foo", {unknown:"unknown", },)"#,
-            None,
         ),
         (
             r#"import("foo", {unknown:"unknown", with:{} },)"#,
             r#"import("foo", {unknown:"unknown" },)"#,
-            None,
         ),
         (
             r#"import("foo", {unknown:"unknown", with:{}, unknown2:"unknown2", },)"#,
             r#"import("foo", {unknown:"unknown", unknown2:"unknown2", },)"#,
-            None,
         ),
         (
             r#"import("foo"/* comment 1 */, /* comment 2 */{/* comment 3 */}/* comment 4 */,/* comment 5 */)"#,
             r#"import("foo"/* comment 4 */,/* comment 5 */)"#,
-            None,
         ),
         (
             r#"import("foo", {/* comment 1 */"with"/* comment 2 */:/* comment 3 */{/* comment 4 */}, }/* comment 5 */,)"#,
             r#"import("foo"/* comment 5 */,)"#,
-            None,
         ),
-        (r#"import("foo", {with: (({}))})"#, r#"import("foo")"#, None),
+        (r#"import("foo", {with: (({}))})"#, r#"import("foo")"#),
     ];
 
     Tester::new(RequireModuleAttributes::NAME, RequireModuleAttributes::PLUGIN, pass, fail)

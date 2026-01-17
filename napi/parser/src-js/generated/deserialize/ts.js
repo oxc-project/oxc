@@ -3123,8 +3123,8 @@ function deserializeTSEnumDeclaration(pos) {
       type: "TSEnumDeclaration",
       id: null,
       body: null,
-      const: deserializeBool(pos + 76),
-      declare: deserializeBool(pos + 77),
+      const: deserializeBool(pos + 80),
+      declare: deserializeBool(pos + 81),
       start,
       end,
     };
@@ -4866,6 +4866,8 @@ function deserializeModuleKind(pos) {
       return "script";
     case 1:
       return "module";
+    case 3:
+      return "commonjs";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for ModuleKind`);
   }

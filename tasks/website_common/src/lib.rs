@@ -1,5 +1,7 @@
+mod schema_json;
 mod schema_markdown;
 
+pub use schema_json::generate_schema_json;
 pub use schema_markdown::{Renderer, Section};
 
 /// Generate CLI documentation from bpaf-generated markdown.

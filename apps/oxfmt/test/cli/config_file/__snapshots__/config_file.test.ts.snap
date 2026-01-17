@@ -1,0 +1,93 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`config_file > auto discovery > nested 1`] = `
+"--------------------
+arguments: --check !*.{json,jsonc}
+working directory: config_file/fixtures/nested
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+deep/test.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`config_file > auto discovery > nested_deep 1`] = `
+"--------------------
+arguments: --check !*.{json,jsonc}
+working directory: config_file/fixtures/nested/deep
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+test.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`config_file > auto discovery > root 1`] = `
+"--------------------
+arguments: --check !*.{json,jsonc}
+working directory: config_file/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+nested/deep/test.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`config_file > explicit config 1`] = `
+"--------------------
+arguments: --check !*.{json,jsonc} --config ./fmt.json
+working directory: config_file/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+nested/deep/test.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --check !*.{json,jsonc} --config ./fmt.jsonc
+working directory: config_file/fixtures
+exit code: 1
+--- STDOUT ---------
+Checking formatting...
+
+nested/deep/test.js (<variable>ms)
+
+Format issues found in above 1 files. Run without \`--check\` to fix.
+Finished in <variable>ms on 1 files using 1 threads.
+--- STDERR ---------
+
+--------------------
+--------------------
+arguments: --check --config NOT_EXISTS.json
+working directory: config_file/fixtures
+exit code: 1
+--- STDOUT ---------
+
+--- STDERR ---------
+Failed to load configuration file.
+Failed to read <cwd>/NOT_EXISTS.json: File not found
+--------------------"
+`;

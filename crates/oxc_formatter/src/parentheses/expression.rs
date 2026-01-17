@@ -6,8 +6,8 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::Formatter,
+    print::{BinaryLikeExpression, should_flatten},
     utils::expression::ExpressionLeftSide,
-    write::{BinaryLikeExpression, should_flatten},
 };
 
 use super::NeedsParentheses;
@@ -77,18 +77,52 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                 matches!(self.parent, AstNodes::ForOfStatement(stmt) if !stmt.r#await && stmt.left.span().contains_inclusive(self.span))
             }
             "let" => {
-                // Walk up ancestors to find the relevant context for `let` keyword
+                // `let[a]` at statement start looks like a lexical declaration, needs parens
+                // Only applies when `let` is the object of a computed member expression
+                if !matches!(self.parent, AstNodes::ComputedMemberExpression(m) if m.object.span() == self.span())
+                {
+                    // Not `let[...]` - check special cases only
+                    return self.ancestors().any(|parent| match parent {
+                        AstNodes::ForOfStatement(s) => s.left.span().contains_inclusive(self.span),
+                        AstNodes::ForInStatement(s) => {
+                            s.left.span().contains_inclusive(self.span)
+                                && !matches!(self.parent, AstNodes::StaticMemberExpression(_))
+                        }
+                        AstNodes::TSSatisfiesExpression(e) => e.expression.span() == self.span(),
+                        _ => false,
+                    });
+                }
+
+                // Check if `let[...]` is at the leftmost position of a statement
+                let mut child_span = self.span;
                 for parent in self.ancestors() {
-                    match parent {
-                        AstNodes::ExpressionStatement(_) => return false,
-                        AstNodes::ForOfStatement(stmt) => {
-                            return stmt.left.span().contains_inclusive(self.span);
+                    let dominated = match parent {
+                        AstNodes::ExpressionStatement(s) => return !s.is_arrow_function_body(),
+                        AstNodes::ForStatement(_) => return true,
+                        AstNodes::ForOfStatement(s) => {
+                            return s.left.span().contains_inclusive(self.span);
                         }
-                        AstNodes::TSSatisfiesExpression(expr) => {
-                            return expr.expression.span() == self.span();
+                        AstNodes::ForInStatement(s) => {
+                            return s.left.span().contains_inclusive(self.span);
                         }
-                        _ => {}
+                        AstNodes::ComputedMemberExpression(m) => m.object.span() == child_span,
+                        AstNodes::StaticMemberExpression(m) => m.object.span() == child_span,
+                        AstNodes::CallExpression(c) => c.callee.span() == child_span,
+                        AstNodes::ChainExpression(c) => c.expression.span() == child_span,
+                        AstNodes::AssignmentExpression(a) => a.left.span() == child_span,
+                        AstNodes::BinaryExpression(b) => b.left.span() == child_span,
+                        AstNodes::LogicalExpression(l) => l.left.span() == child_span,
+                        AstNodes::ConditionalExpression(c) => c.test.span() == child_span,
+                        AstNodes::SequenceExpression(s) => {
+                            s.expressions.first().is_some_and(|e| e.span() == child_span)
+                        }
+                        AstNodes::TaggedTemplateExpression(t) => t.tag.span() == child_span,
+                        _ => false,
+                    };
+                    if !dominated {
+                        return false;
                     }
+                    child_span = parent.span();
                 }
                 false
             }
@@ -593,15 +627,41 @@ impl NeedsParentheses<'_> for AstNode<'_, ChainExpression<'_>> {
             return false;
         }
 
-        match self.parent {
-            AstNodes::NewExpression(new) => new.is_callee_span(self.span),
-            AstNodes::CallExpression(call) => call.is_callee_span(self.span) && !call.optional,
-            AstNodes::StaticMemberExpression(member) => !member.optional,
-            AstNodes::ComputedMemberExpression(member) => {
-                !member.optional && member.object.span() == self.span
-            }
-            _ => false,
+        // When ChainExpression contains TSNonNullExpression as its child,
+        // we handle parentheses manually in write() to print `(a?.b)!` instead of `(a?.b!)`
+        if matches!(self.expression, ChainElement::TSNonNullExpression(_)) {
+            return false;
         }
+
+        // Check if chain expression needs parens based on how it's being accessed
+        chain_expression_needs_parens(self.span, self.parent)
+    }
+}
+
+/// Check if a ChainExpression needs parentheses based on its parent context.
+///
+/// Parentheses are needed when the chain is:
+/// - The callee of a non-optional call expression
+/// - The callee of a new expression
+/// - The object of a non-optional member expression
+/// - The tag of a tagged template expression
+///
+/// For `(a?.b)!.c`, the parent is TSNonNullExpression, so we check the grandparent.
+pub fn chain_expression_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
+    match parent {
+        AstNodes::NewExpression(new) => new.is_callee_span(span),
+        AstNodes::CallExpression(call) => call.is_callee_span(span) && !call.optional,
+        AstNodes::StaticMemberExpression(member) => !member.optional,
+        AstNodes::ComputedMemberExpression(member) => {
+            !member.optional && member.object.span() == span
+        }
+        AstNodes::TaggedTemplateExpression(_) => true,
+        // Handle `(a?.b)!.c` - when ChainExpression is wrapped in TSNonNullExpression.
+        // Use the TSNonNullExpression's span when checking the grandparent.
+        AstNodes::TSNonNullExpression(non_null) => {
+            chain_expression_needs_parens(non_null.span, parent.parent())
+        }
+        _ => false,
     }
 }
 
@@ -738,8 +798,7 @@ impl NeedsParentheses<'_> for AstNode<'_, TSTypeAssertion<'_>> {
 fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
     #[expect(clippy::match_same_arms)] // for better readability
     match parent {
-        AstNodes::ExportDefaultDeclaration(_)
-        | AstNodes::TSTypeAssertion(_)
+        AstNodes::TSTypeAssertion(_)
         | AstNodes::UnaryExpression(_)
         | AstNodes::AwaitExpression(_)
         | AstNodes::TSNonNullExpression(_)

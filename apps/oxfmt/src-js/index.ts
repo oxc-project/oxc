@@ -5,6 +5,7 @@ import {
   formatFile,
   sortTailwindClasses,
 } from "./libs/prettier";
+import type { Options } from "prettier";
 
 // napi-JS `oxfmt` API entry point
 // See also `format()` function in `./src/main_napi.rs`
@@ -102,7 +103,8 @@ export type FormatOptions = {
    * (Default: disabled)
    */
   experimentalTailwindcss?: TailwindcssOptions;
-} & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
+} & Pick<Options, "proseWrap" | "htmlWhitespaceSensitivity" | "vueIndentScriptAndStyle"> &
+  Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
  * Configuration options for sort imports.

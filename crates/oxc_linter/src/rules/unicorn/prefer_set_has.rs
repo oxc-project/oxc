@@ -819,7 +819,6 @@ fn test() {
                     return foo.has(1);
                 }
             ",
-            None,
         ),
         (
             "
@@ -836,7 +835,6 @@ fn test() {
                 }
                 bar.pop();
             ",
-            None,
         ),
         (
             "
@@ -851,7 +849,6 @@ fn test() {
                 	return foo.has(1);
                 }
             ",
-            None,
         ),
         (
             "
@@ -866,7 +863,6 @@ fn test() {
                 	return foo.has(1);
                 }
             ",
-            None,
         ),
         (
             "
@@ -883,7 +879,6 @@ fn test() {
                 	return bar.has(1);
                 }
             ",
-            None,
         ),
         (
             "
@@ -898,7 +893,6 @@ fn test() {
                     return foo.has(1);
                 }
             ",
-            None,
         ),
     ];
 

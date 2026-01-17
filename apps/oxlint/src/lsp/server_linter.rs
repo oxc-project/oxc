@@ -20,8 +20,8 @@ use oxc_linter::{
 };
 
 use oxc_language_server::{
-    Capabilities, ConcurrentHashMap, DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges,
-    utils::normalize_path,
+    Capabilities, ConcurrentHashMap, DiagnosticMode, DiagnosticResult, Tool, ToolBuilder,
+    ToolRestartChanges,
 };
 
 use crate::lsp::{
@@ -35,6 +35,7 @@ use crate::lsp::{
     error_with_position::LinterCodeAction,
     isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
     options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+    utils::normalize_path,
 };
 
 #[derive(Default)]
@@ -56,9 +57,15 @@ impl ServerLinterBuilder {
             }
         };
         let root_path = root_uri.to_file_path().unwrap();
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+
         let mut nested_ignore_patterns = Vec::new();
-        let (nested_configs, mut extended_paths) =
-            Self::create_nested_configs(&root_path, &options, &mut nested_ignore_patterns);
+        let (nested_configs, mut extended_paths) = self.create_nested_configs(
+            &root_path,
+            &options,
+            &mut external_plugin_store,
+            &mut nested_ignore_patterns,
+        );
         let config_path = match options.config_path.as_deref() {
             Some("") | None => LINT_CONFIG_FILE,
             Some(v) => v,
@@ -81,7 +88,6 @@ impl ServerLinterBuilder {
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
 
-        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
         let config_builder = ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc,
@@ -157,7 +163,7 @@ impl ToolBuilder for ServerLinterBuilder {
     fn server_capabilities(
         &self,
         capabilities: &mut ServerCapabilities,
-        backend_capabilities: &Capabilities,
+        backend_capabilities: &mut Capabilities,
     ) {
         let mut code_action_kinds = capabilities
             .code_action_provider
@@ -216,11 +222,22 @@ impl ToolBuilder for ServerLinterBuilder {
             },
         });
 
-        capabilities.diagnostic_provider = if backend_capabilities.use_push_diagnostics() {
-            None
+        // The server supports pull and push diagnostics.
+        // Only use push diagnostics if the client does not support pull diagnostics,
+        // or we cannot ask the client to refresh diagnostics.
+        if !backend_capabilities.pull_diagnostics || !backend_capabilities.refresh_diagnostics {
+            backend_capabilities.diagnostic_mode = DiagnosticMode::Push;
         } else {
-            Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
-        };
+            backend_capabilities.diagnostic_mode = DiagnosticMode::Pull;
+        }
+
+        // tell the client we support pull diagnostics
+        capabilities.diagnostic_provider =
+            if backend_capabilities.diagnostic_mode == DiagnosticMode::Pull {
+                Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
+            } else {
+                None
+            };
     }
 
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
@@ -232,8 +249,10 @@ impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
     fn create_nested_configs(
+        &self,
         root_path: &Path,
         options: &LSPLintOptions,
+        external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> (ConcurrentHashMap<PathBuf, Config>, FxHashSet<PathBuf>) {
         let mut extended_paths = FxHashSet::default();
@@ -258,22 +277,20 @@ impl ServerLinterBuilder {
             };
             // Collect ignore patterns and their root
             nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
-            let mut external_plugin_store = ExternalPluginStore::new(false);
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
-                None,
-                &mut external_plugin_store,
+                self.external_linter.as_ref(),
+                external_plugin_store,
             ) else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
                 continue;
             };
             extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config =
-                config_store_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
-                    warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                    ConfigStoreBuilder::empty().build(&mut external_plugin_store).unwrap()
-                });
+            let config = config_store_builder.build(external_plugin_store).unwrap_or_else(|err| {
+                warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
+                ConfigStoreBuilder::empty().build(external_plugin_store).unwrap()
+            });
             nested_configs.pin().insert(dir_path.to_path_buf(), config);
         }
 
@@ -660,7 +677,7 @@ mod tests_builder {
         ServerCapabilities, WorkDoneProgressOptions,
     };
 
-    use oxc_language_server::{Capabilities, ToolBuilder};
+    use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
 
     use crate::lsp::{
         code_actions::CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, commands::FIX_ALL_COMMAND_ID,
@@ -672,7 +689,7 @@ mod tests_builder {
         let builder = ServerLinterBuilder::default();
         let mut capabilities = ServerCapabilities::default();
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         // Should set code action provider with quickfix and source fix all kinds
         match &capabilities.code_action_provider {
@@ -703,7 +720,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         match &capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(options)) => {
@@ -730,7 +747,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         match &capabilities.code_action_provider {
             Some(CodeActionProviderCapability::Options(options)) => {
@@ -751,7 +768,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         // Should override with options
         match &capabilities.code_action_provider {
@@ -778,7 +795,7 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
         assert!(execute_command_provider.commands.contains(&"existing.command".to_string()));
@@ -801,11 +818,51 @@ mod tests_builder {
             ..Default::default()
         };
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         let execute_command_provider = capabilities.execute_command_provider.as_ref().unwrap();
         assert!(execute_command_provider.commands.contains(&FIX_ALL_COMMAND_ID.to_string()));
         assert_eq!(execute_command_provider.commands.len(), 1);
+    }
+
+    #[test]
+    fn test_server_capabilities_diagnostic_mode() {
+        let builder = ServerLinterBuilder::default();
+        let mut capabilities = Capabilities {
+            pull_diagnostics: true,
+            refresh_diagnostics: true,
+            ..Default::default()
+        };
+        let mut server_capabilities = ServerCapabilities::default();
+        builder.server_capabilities(&mut server_capabilities, &mut capabilities);
+        assert_eq!(capabilities.diagnostic_mode, DiagnosticMode::Pull);
+
+        let mut capabilities = Capabilities {
+            pull_diagnostics: false,
+            refresh_diagnostics: true,
+            ..Default::default()
+        };
+        let mut server_capabilities = ServerCapabilities::default();
+        builder.server_capabilities(&mut server_capabilities, &mut capabilities);
+        assert_eq!(capabilities.diagnostic_mode, DiagnosticMode::Push);
+
+        let mut capabilities = Capabilities {
+            pull_diagnostics: true,
+            refresh_diagnostics: false,
+            ..Default::default()
+        };
+        let mut server_capabilities = ServerCapabilities::default();
+        builder.server_capabilities(&mut server_capabilities, &mut capabilities);
+        assert_eq!(capabilities.diagnostic_mode, DiagnosticMode::Push);
+
+        let mut capabilities = Capabilities {
+            pull_diagnostics: false,
+            refresh_diagnostics: false,
+            ..Default::default()
+        };
+        let mut server_capabilities = ServerCapabilities::default();
+        builder.server_capabilities(&mut server_capabilities, &mut capabilities);
+        assert_eq!(capabilities.diagnostic_mode, DiagnosticMode::Push);
     }
 }
 
@@ -952,6 +1009,7 @@ mod test_watchers {
 mod test {
     use std::path::{Path, PathBuf};
 
+    use oxc_linter::ExternalPluginStore;
     use serde_json::json;
 
     use crate::lsp::{
@@ -963,9 +1021,11 @@ mod test {
     #[test]
     fn test_create_nested_configs_with_disabled_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
-        let (configs, _) = ServerLinterBuilder::create_nested_configs(
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
             Path::new("/root/"),
             &LintOptions { disable_nested_config: true, ..LintOptions::default() },
+            &mut external_plugin_store,
             &mut nested_ignore_patterns,
         );
 
@@ -975,9 +1035,11 @@ mod test {
     #[test]
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
-        let (configs, _) = ServerLinterBuilder::create_nested_configs(
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
             &LintOptions::default(),
+            &mut external_plugin_store,
             &mut nested_ignore_patterns,
         );
         let configs = configs.pin();

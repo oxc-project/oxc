@@ -6,7 +6,7 @@ arguments: -c fixtures/overrides/.oxlintrc.json fixtures/overrides/test.js
 working directory: 
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-var.html\eslint(no-var)]8;;\: Unexpected var, use let or const instead.
+  x eslint(no-var): Unexpected var, use let or const instead.
    ,-[fixtures/overrides/test.js:1:1]
  1 | var msg = "hello";
    : ^^^
@@ -25,7 +25,7 @@ arguments: -c fixtures/overrides/.oxlintrc.json fixtures/overrides/test.ts
 working directory: 
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-var.html\eslint(no-var)]8;;\: Unexpected var, use let or const instead.
+  x eslint(no-var): Unexpected var, use let or const instead.
    ,-[fixtures/overrides/test.ts:1:1]
  1 | var msg = "hello";
    : ^^^
@@ -33,7 +33,7 @@ working directory:
    `----
   help: Replace var with let or const
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  ! eslint(no-console): Unexpected console statement.
    ,-[fixtures/overrides/test.ts:2:1]
  1 | var msg = "hello";
  2 | console.log(msg);
@@ -52,7 +52,7 @@ arguments: -c fixtures/overrides/.oxlintrc.json fixtures/overrides/other.jsx
 working directory: 
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-var.html\eslint(no-var)]8;;\: Unexpected var, use let or const instead.
+  x eslint(no-var): Unexpected var, use let or const instead.
    ,-[fixtures/overrides/other.jsx:1:1]
  1 | var msg = "hello";
    : ^^^

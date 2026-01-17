@@ -4271,34 +4271,6 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
-    /// Build a [`Declaration::TSEnumDeclaration`] with `scope_id`.
-    ///
-    /// This node contains a [`TSEnumDeclaration`] that will be stored in the memory arena.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `id`
-    /// * `body`
-    /// * `const`: `true` for const enums
-    /// * `declare`
-    /// * `scope_id`
-    #[inline]
-    pub fn declaration_ts_enum_with_scope_id(
-        self,
-        span: Span,
-        id: BindingIdentifier<'a>,
-        body: TSEnumBody<'a>,
-        r#const: bool,
-        declare: bool,
-        scope_id: ScopeId,
-    ) -> Declaration<'a> {
-        Declaration::TSEnumDeclaration(
-            self.alloc_ts_enum_declaration_with_scope_id(
-                span, id, body, r#const, declare, scope_id,
-            ),
-        )
-    }
-
     /// Build a [`Declaration::TSModuleDeclaration`].
     ///
     /// This node contains a [`TSModuleDeclaration`] that will be stored in the memory arena.
@@ -9879,7 +9851,7 @@ impl<'a> AstBuilder<'a> {
         r#const: bool,
         declare: bool,
     ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration { span, id, body, r#const, declare, scope_id: Default::default() }
+        TSEnumDeclaration { span, id, body, r#const, declare }
     }
 
     /// Build a [`TSEnumDeclaration`], and store it in the memory arena.
@@ -9905,59 +9877,6 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(self.ts_enum_declaration(span, id, body, r#const, declare), self.allocator)
     }
 
-    /// Build a [`TSEnumDeclaration`] with `scope_id`.
-    ///
-    /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_ts_enum_declaration_with_scope_id`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `id`
-    /// * `body`
-    /// * `const`: `true` for const enums
-    /// * `declare`
-    /// * `scope_id`
-    #[inline]
-    pub fn ts_enum_declaration_with_scope_id(
-        self,
-        span: Span,
-        id: BindingIdentifier<'a>,
-        body: TSEnumBody<'a>,
-        r#const: bool,
-        declare: bool,
-        scope_id: ScopeId,
-    ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration { span, id, body, r#const, declare, scope_id: Cell::new(Some(scope_id)) }
-    }
-
-    /// Build a [`TSEnumDeclaration`] with `scope_id`, and store it in the memory arena.
-    ///
-    /// Returns a [`Box`] containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::ts_enum_declaration_with_scope_id`] instead.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `id`
-    /// * `body`
-    /// * `const`: `true` for const enums
-    /// * `declare`
-    /// * `scope_id`
-    #[inline]
-    pub fn alloc_ts_enum_declaration_with_scope_id(
-        self,
-        span: Span,
-        id: BindingIdentifier<'a>,
-        body: TSEnumBody<'a>,
-        r#const: bool,
-        declare: bool,
-        scope_id: ScopeId,
-    ) -> Box<'a, TSEnumDeclaration<'a>> {
-        Box::new_in(
-            self.ts_enum_declaration_with_scope_id(span, id, body, r#const, declare, scope_id),
-            self.allocator,
-        )
-    }
-
     /// Build a [`TSEnumBody`].
     ///
     /// ## Parameters
@@ -9965,7 +9884,23 @@ impl<'a> AstBuilder<'a> {
     /// * `members`
     #[inline]
     pub fn ts_enum_body(self, span: Span, members: Vec<'a, TSEnumMember<'a>>) -> TSEnumBody<'a> {
-        TSEnumBody { span, members }
+        TSEnumBody { span, members, scope_id: Default::default() }
+    }
+
+    /// Build a [`TSEnumBody`] with `scope_id`.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `members`
+    /// * `scope_id`
+    #[inline]
+    pub fn ts_enum_body_with_scope_id(
+        self,
+        span: Span,
+        members: Vec<'a, TSEnumMember<'a>>,
+        scope_id: ScopeId,
+    ) -> TSEnumBody<'a> {
+        TSEnumBody { span, members, scope_id: Cell::new(Some(scope_id)) }
     }
 
     /// Build a [`TSEnumMember`].

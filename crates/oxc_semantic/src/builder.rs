@@ -2320,9 +2320,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
-        self.enter_scope(ScopeFlags::empty(), &decl.scope_id);
         self.visit_ts_enum_body(&decl.body);
-        self.leave_scope();
         self.leave_node(kind);
     }
 

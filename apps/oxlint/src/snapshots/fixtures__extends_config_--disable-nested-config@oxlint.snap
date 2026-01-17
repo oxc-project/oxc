@@ -6,7 +6,7 @@ arguments: --disable-nested-config
 working directory: fixtures/extends_config
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Variable 'x' is declared but never used. Unused variables should start with a '_'.
+  ! eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
    ,-[overrides/test.ts:1:7]
  1 | const x: any = 3;
    :       |
@@ -14,7 +14,7 @@ working directory: fixtures/extends_config
    `----
   help: Consider removing this declaration.
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-unused-vars.html\eslint(no-unused-vars)]8;;\: Function 'component' is declared but never used.
+  ! eslint(no-unused-vars): Function 'component' is declared but never used.
    ,-[overrides/test.tsx:1:10]
  1 | function component(): any {
    :          ^^^^|^^^^
@@ -23,7 +23,7 @@ working directory: fixtures/extends_config
    `----
   help: Consider removing this declaration.
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
    ,-[overrides_same_directory/config/test.js:1:1]
  1 | debugger;
    : ^^^^^^^^^

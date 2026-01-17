@@ -82,7 +82,7 @@ impl ToolBuilder for ServerFormatterBuilder {
     fn server_capabilities(
         &self,
         capabilities: &mut ServerCapabilities,
-        _backend_capabilities: &Capabilities,
+        _backend_capabilities: &mut Capabilities,
     ) {
         capabilities.document_formatting_provider =
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
@@ -390,7 +390,7 @@ mod tests_builder {
         let builder = ServerFormatterBuilder::dummy();
         let mut capabilities = ServerCapabilities::default();
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
     }
@@ -475,10 +475,7 @@ mod test_watchers {
 
 #[cfg(test)]
 mod tests {
-    use serde_json::json;
-
     use super::compute_minimal_text_edit;
-    use crate::lsp::tester::Tester;
 
     #[test]
     #[should_panic(expected = "assertion failed")]
@@ -559,51 +556,5 @@ mod tests {
 
         let (start, end, replacement) = compute_minimal_text_edit(&src, &formatted);
         assert_eq!((start, end, replacement), (0, 0, "b"));
-    }
-
-    #[test]
-    fn test_formatter() {
-        Tester::new(
-            "test/fixtures/lsp/basic",
-            json!({
-                "fmt.experimental": true
-            }),
-        )
-        .format_and_snapshot_single_file("basic.ts");
-    }
-
-    #[test]
-    fn test_root_config_detection() {
-        Tester::new("test/fixtures/lsp/root_config", json!(null))
-            .format_and_snapshot_single_file("semicolons-as-needed.ts");
-    }
-
-    #[test]
-    fn test_custom_config_path() {
-        Tester::new(
-            "test/fixtures/lsp/custom_config_path",
-            json!({
-                "fmt.configPath": "./format.json",
-            }),
-        )
-        .format_and_snapshot_single_file("semicolons-as-needed.ts");
-    }
-
-    #[test]
-    fn test_ignore_files() {
-        Tester::new("test/fixtures/lsp/ignore-file", json!(null))
-            .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
-    }
-
-    #[test]
-    fn test_ignore_pattern() {
-        Tester::new("test/fixtures/lsp/ignore-pattern", json!(null))
-            .format_and_snapshot_multiple_file(&["ignored.ts", "not-ignored.js"]);
-    }
-
-    #[test]
-    fn test_editorconfig() {
-        Tester::new("test/fixtures/lsp/editorconfig", json!(null))
-            .format_and_snapshot_single_file("editorconfig.ts");
     }
 }

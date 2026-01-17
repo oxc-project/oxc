@@ -6,14 +6,14 @@ arguments: -A no-console
 working directory: fixtures/nested_config
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[debugger.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
   help: Remove the debugger statement
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[package2-no-config/debugger.js:1:1]
  1 | debugger;
    : ^^^^^^^^^

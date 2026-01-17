@@ -1,5 +1,7 @@
 pub mod cli;
 mod core;
+
+pub use core::oxfmtrc;
 #[cfg(feature = "napi")]
 pub mod lsp;
 #[cfg(feature = "napi")]

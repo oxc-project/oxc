@@ -6,284 +6,403 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import { foo } from "./es6/depth-one"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one-reexport"
    ·                     ──────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-one-reexport - fixtures/import/cycles/es6/depth-one-reexport.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-one-reexport (fixtures/import/cycles/es6/depth-one-reexport.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one-reexport"
    ·                     ──────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-one-reexport - fixtures/import/cycles/es6/depth-one-reexport.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-one-reexport (fixtures/import/cycles/es6/depth-one-reexport.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { two } from "./es6/depth-three-star"
    ·                     ────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-star - fixtures/import/cycles/es6/depth-three-star.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-star (fixtures/import/cycles/es6/depth-three-star.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:33]
  1 │ import one, { two, three } from "./es6/depth-three-star"
    ·                                 ────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-star - fixtures/import/cycles/es6/depth-three-star.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-star (fixtures/import/cycles/es6/depth-three-star.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-indirect - fixtures/import/cycles/es6/depth-three-indirect.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-indirect (fixtures/import/cycles/es6/depth-three-indirect.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-indirect - fixtures/import/cycles/es6/depth-three-indirect.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-indirect (fixtures/import/cycles/es6/depth-three-indirect.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one-reexport"
    ·                     ──────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-one-reexport - fixtures/import/cycles/es6/depth-one-reexport.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-one-reexport (fixtures/import/cycles/es6/depth-one-reexport.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { two } from "./es6/depth-three-star"
    ·                     ────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-star - fixtures/import/cycles/es6/depth-three-star.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-star (fixtures/import/cycles/es6/depth-three-star.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:33]
  1 │ import one, { two, three } from "./es6/depth-three-star"
    ·                                 ────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-star - fixtures/import/cycles/es6/depth-three-star.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-star (fixtures/import/cycles/es6/depth-three-star.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-indirect - fixtures/import/cycles/es6/depth-three-indirect.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-indirect (fixtures/import/cycles/es6/depth-three-indirect.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { bar } from "./es6/depth-three-indirect"
    ·                     ────────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-three-indirect - fixtures/import/cycles/es6/depth-three-indirect.js
-        -> ./depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-three-indirect (fixtures/import/cycles/es6/depth-three-indirect.js)
+           │         ⬇ imports
+           │    ./depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-two"
    ·                     ─────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./es6/depth-two - fixtures/import/cycles/es6/depth-two.js
-        -> ./depth-one - fixtures/import/cycles/es6/depth-one.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
+           │         ⬇ imports
+           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./intermediate-ignore"
    ·                     ───────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./intermediate-ignore - fixtures/import/cycles/intermediate-ignore.js
-        -> ./ignore - fixtures/import/cycles/ignore/index.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./intermediate-ignore (fixtures/import/cycles/intermediate-ignore.js)
+           │         ⬇ imports
+           │    ./ignore (fixtures/import/cycles/ignore/index.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./ignore"
    ·                     ──────────
    ╰────
-  help: These paths form a cycle:
-        -> ./ignore - fixtures/import/cycles/ignore/index.js
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./ignore (fixtures/import/cycles/ignore/index.js)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./typescript/ts-types-some-type-imports";
    ·                     ─────────────────────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./typescript/ts-types-some-type-imports - fixtures/import/cycles/typescript/ts-types-some-type-imports.ts
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./typescript/ts-types-some-type-imports (fixtures/import/cycles/typescript/ts-types-some-type-imports.ts)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./typescript/ts-types-re-exporting-type";
    ·                     ─────────────────────────────────────────
    ╰────
-  help: These paths form a cycle:
-        -> ./typescript/ts-types-re-exporting-type - fixtures/import/cycles/typescript/ts-types-re-exporting-type.ts
-        -> ../depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./typescript/ts-types-re-exporting-type (fixtures/import/cycles/typescript/ts-types-re-exporting-type.ts)
+           │         ⬇ imports
+           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
+           ╰─────────╯ imports the current file
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:41]
  1 │ export function Foo() {}; export * from './depth-zero'
-   ·                                         ──────────────
+   ·                                         ───────┬──────
+   ·                                                ╰── this module references itself
    ╰────
-  help: These paths form a cycle:
-        -> ./depth-zero - fixtures/import/cycles/depth-zero.js
+  help: Remove the self-referencing export and consider using a named export instead.
+
+  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
+   ╭─[cycles/depth-zero.js:1:28]
+ 1 │ import * as depthZero from './depth-zero'
+   ·                            ───────┬──────
+   ·                                   ╰── this module references itself
+   ╰────
+  help: Remove the self-referencing import.
