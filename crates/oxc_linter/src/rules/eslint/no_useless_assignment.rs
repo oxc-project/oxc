@@ -173,9 +173,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
     }
 
     // Pre-collect references once before CFG traversal
-    let references: Vec<_> = ctx.scoping()
-        .get_resolved_references(symbol_id)
-        .collect();
+    let references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
 
     let found_usages = neighbors_filtered_by_edge_weight(
         cfg.graph(),
