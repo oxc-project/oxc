@@ -2,7 +2,7 @@
 //! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_printer/js_printer_test.go>
 //! * <https://github.com/evanw/esbuild/blob/v0.24.0/internal/js_parser/js_parser_test.go>
 
-use crate::tester::{test, test_minify};
+use crate::tester::{test, test_ascii, test_minify, test_minify_ascii};
 
 // NOTE: These values are aligned with terser, not esbuild.
 #[test]
@@ -870,54 +870,96 @@ fn minify() {
     test_minify("/*!multi-\nline*/\nthrow 1 + 2", "/*!multi-\nline*/throw 1+2;");
 }
 
+/// ASCII-only mode tests
+/// See: <https://github.com/oxc-project/oxc/issues/17068>
 #[test]
 fn test_ascii_only() {
+    // ==================== Without ascii_only (default UTF-8 mode) ====================
+    // Non-ASCII characters should be preserved as-is
     test("let π = 'π'", "let π = \"π\";\n");
     test("let π_ = 'π'", "let π_ = \"π\";\n");
     test("let _π = 'π'", "let _π = \"π\";\n");
-    // testASCII(t, "let π = 'π'", "let \\u03C0 = \"\\u03C0\";\n");
-    // testASCII(t, "let π_ = 'π'", "let \\u03C0_ = \"\\u03C0\";\n");
-    // testASCII(t, "let _π = 'π'", "let _\\u03C0 = \"\\u03C0\";\n");
 
     test("let 貓 = '🐈'", "let 貓 = \"🐈\";\n");
     test("let 貓abc = '🐈'", "let 貓abc = \"🐈\";\n");
     test("let abc貓 = '🐈'", "let abc貓 = \"🐈\";\n");
-    // testASCII(t, "let 貓 = '🐈'", "let \\u8C93 = \"\\u{1F408}\";\n");
-    // testASCII(t, "let 貓abc = '🐈'", "let \\u8C93abc = \"\\u{1F408}\";\n");
-    // testASCII(t, "let abc貓 = '🐈'", "let abc\\u8C93 = \"\\u{1F408}\";\n");
 
     // Test a character outside the BMP
     test("var 𐀀", "var 𐀀;\n");
     test("var \\u{10000}", "var 𐀀;\n");
-    // testASCII(t, "var 𐀀", "var \\u{10000};\n");
-    // testASCII(t, "var \\u{10000}", "var \\u{10000};\n");
-    // testTargetASCII(t, 2015, "'𐀀'", "\"\\u{10000}\";\n");
-    // testTargetASCII(t, 5, "'𐀀'", "\"\\uD800\\uDC00\";\n");
-    // testTargetASCII(t, 2015, "x.𐀀", "x[\"\\u{10000}\"];\n");
-    // testTargetASCII(t, 5, "x.𐀀", "x[\"\\uD800\\uDC00\"];\n");
 
-    // Escapes should use consistent case
-    // testASCII(
-    // t,
-    // "var \\u{100a} = {\\u100A: '\\u100A'}",
-    // "var \\u100A = { \\u100A: \"\\u100A\" };\n",
-    // );
-    // testASCII(
-    // t,
-    // "var \\u{1000a} = {\\u{1000A}: '\\u{1000A}'}",
-    // "var \\u{1000A} = { \"\\u{1000A}\": \"\\u{1000A}\" };\n",
-    // );
+    // ==================== With ascii_only mode ====================
+    // BMP identifiers should use \uXXXX escapes
+    test_ascii("let π = 'π'", "let \\u03C0 = \"\\u03C0\";\n");
+    test_ascii("let π_ = 'π'", "let \\u03C0_ = \"\\u03C0\";\n");
+    test_ascii("let _π = 'π'", "let _\\u03C0 = \"\\u03C0\";\n");
 
-    // These characters should always be escaped
-    // test( "let x = '\u2028'", "let x = \"\\u2028\";\n");
-    // test( "let x = '\u2029'", "let x = \"\\u2029\";\n");
-    // test( "let x = '\uFEFF'", "let x = \"\\uFEFF\";\n");
+    // Non-BMP characters in strings should use \u{XXXXXX} escapes
+    test_ascii("let 貓 = '🐈'", "let \\u8C93 = \"\\u{1F408}\";\n");
+    test_ascii("let 貓abc = '🐈'", "let \\u8C93abc = \"\\u{1F408}\";\n");
+    test_ascii("let abc貓 = '🐈'", "let abc\\u8C93 = \"\\u{1F408}\";\n");
+
+    // Non-BMP identifiers should use \u{XXXXXX} escapes
+    test_ascii("var 𐀀", "var \\u{10000};\n");
+    test_ascii("var \\u{10000}", "var \\u{10000};\n");
+    test_ascii("'𐀀'", "\"\\u{10000}\";\n");
+
+    // Escapes should use consistent case (uppercase)
+    test_ascii("var \\u{100a} = {\\u100A: '\\u100A'}", "var \\u100A = { \\u100A: \"\\u100A\" };\n");
+    test_ascii(
+        "var \\u{1000a} = {\\u{1000A}: '\\u{1000A}'}",
+        "var \\u{1000A} = { \"\\u{1000A}\": \"\\u{1000A}\" };\n",
+    );
 
     // There should still be a space before "extends"
-    // testASCII(t, "class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {\n}\n");
-    // testASCII(t, "(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {\n});\n");
-    // test_minifyASCII(t, "class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
-    // test_minifyASCII(t, "(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
+    test_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {\n}\n");
+    test_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {\n});\n");
+    test_minify_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
+    test_minify_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
+}
+
+/// Non-BMP property access should always use computed property syntax
+/// because identifiers can only use \uXXXX escapes (not \u{XXXXXX}).
+/// See: <https://github.com/oxc-project/oxc/issues/17068>
+#[test]
+fn test_non_bmp_property_access() {
+    // Without ascii_only: convert to computed but keep raw character
+    test("x.𐀀", "x[\"𐀀\"];\n");
+    test("x?.𐀀", "x?.[\"𐀀\"];\n");
+    test("0 .𐀀", "0[\"𐀀\"];\n");
+    test("0?.𐀀", "0?.[\"𐀀\"];\n");
+
+    // With ascii_only: convert to computed and escape
+    test_ascii("x.𐀀", "x[\"\\u{10000}\"];\n");
+    test_ascii("x?.𐀀", "x?.[\"\\u{10000}\"];\n");
+}
+
+/// Non-BMP object keys should always use string syntax
+/// because identifiers can only use \uXXXX escapes (not \u{XXXXXX}).
+/// See: <https://github.com/oxc-project/oxc/issues/17068>
+#[test]
+fn test_non_bmp_object_keys() {
+    // Without ascii_only: convert to string but keep raw character
+    test("({𐀀: 0})", "({ \"𐀀\": 0 });\n");
+    test("({𐀀})", "({ \"𐀀\": 𐀀 });\n");
+
+    // With ascii_only: convert to string and escape
+    test_ascii("({𐀀: 0})", "({ \"\\u{10000}\": 0 });\n");
+    test_ascii("({𐀀})", "({ \"\\u{10000}\": \\u{10000} });\n");
+}
+
+/// These characters should always be escaped regardless of ascii_only setting:
+/// - U+2028 Line Separator
+/// - U+2029 Paragraph Separator
+/// - U+FEFF BOM (Byte Order Mark)
+#[test]
+fn test_always_escaped_characters() {
+    // Line Separator (U+2028) should always be escaped
+    test("let x = '\u{2028}'", "let x = \"\\u2028\";\n");
+    // Paragraph Separator (U+2029) should always be escaped
+    test("let x = '\u{2029}'", "let x = \"\\u2029\";\n");
+    // BOM (U+FEFF) should always be escaped
+    test("let x = '\u{FEFF}'", "let x = \"\\uFEFF\";\n");
 }
 
 #[test]
@@ -967,33 +1009,35 @@ fn test_jsx() {
     test("<a b={<c/>}/>", "<a b={<c />} />;\n");
     test("<a b={<>c</>}/>", "<a b={<>c</>} />;\n");
     test("<a b={<>{c}</>}/>", "<a b={<>{c}</>} />;\n");
+}
 
-    // These can't be escaped because JSX lacks a syntax for escapes
-    // testJSXASCII(t, "<π/>", "<π />;\n");
-    // testJSXASCII(t, "<π.𐀀/>", "<π.𐀀 />;\n");
-    // testJSXASCII(t, "<𐀀.π/>", "<𐀀.π />;\n");
-    // testJSXASCII(t, "<π>x</π>", "<π>x</π>;\n");
-    // testJSXASCII(t, "<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
-    // testJSXASCII(t, "<a π/>", "<a π />;\n");
-    // testJSXASCII(t, "<a 𐀀/>", "<a 𐀀 />;\n");
+/// JSX ASCII-only mode tests
+/// JSX element names, attribute names, and text content are deliberately NOT escaped
+/// when ascii_only mode is enabled. This is because JSX lacks a syntax for Unicode
+/// escapes in element/attribute names.
+///
+/// See also: <https://github.com/evanw/esbuild/issues/3605>
+#[test]
+fn test_jsx_ascii_only() {
+    // JSX element names and member expressions cannot be escaped
+    test_ascii("<π/>", "<π />;\n");
+    test_ascii("<π.𐀀/>", "<π.𐀀 />;\n");
+    test_ascii("<𐀀.π/>", "<𐀀.π />;\n");
+    test_ascii("<π>x</π>", "<π>x</π>;\n");
+    test_ascii("<𐀀>x</𐀀>", "<𐀀>x</𐀀>;\n");
 
-    // JSX text is deliberately not printed as ASCII when JSX preservation is
-    // enabled. This is because:
-    //
+    // JSX attribute names cannot be escaped
+    test_ascii("<a π/>", "<a π />;\n");
+    test_ascii("<a 𐀀/>", "<a 𐀀 />;\n");
+
+    // JSX attribute values and text content are deliberately NOT escaped
     // a) The JSX specification doesn't say how JSX text is supposed to be interpreted
     // b) Enabling JSX preservation means that JSX will be transformed again anyway
     // c) People do very weird/custom things with JSX that "preserve" shouldn't break
-    //
-    // See also: https://github.com/evanw/esbuild/issues/3605
-    // testJSXASCII(t, "<a b='π'/>", "<a b='π' />;\n");
-    // testJSXASCII(t, "<a b='𐀀'/>", "<a b='𐀀' />;\n");
-    // testJSXASCII(t, "<a>π</a>", "<a>π</a>;\n");
-    // testJSXASCII(t, "<a>𐀀</a>", "<a>𐀀</a>;\n");
-
-    // testJSXMinify(t, "<a b c={x,y} d='true'/>", "<a b c={(x,y)}d='true'/>;");
-    // testJSXMinify(t, "<a><b/><c/></a>", "<a><b/><c/></a>;");
-    // testJSXMinify(t, "<a> x <b/> y </a>", "<a> x <b/> y </a>;");
-    // testJSXMinify(t, "<a>{' x '}{'<b/>'}{' y '}</a>", "<a>{\" x \"}{\"<b/>\"}{\" y \"}</a>;");
+    test_ascii("<a b='π'/>", "<a b=\"π\" />;\n");
+    test_ascii("<a b='𐀀'/>", "<a b=\"𐀀\" />;\n");
+    test_ascii("<a>π</a>", "<a>π</a>;\n");
+    test_ascii("<a>𐀀</a>", "<a>𐀀</a>;\n");
 }
 
 #[test]

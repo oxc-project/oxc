@@ -255,21 +255,34 @@ pub struct CodegenOptions {
     ///
     /// @default true
     pub remove_whitespace: Option<bool>,
+
+    /// Escape non-ASCII characters as `\uXXXX` or `\u{XXXXXX}`.
+    ///
+    /// This is equivalent to esbuild's `--charset=ascii` option.
+    ///
+    /// @default false
+    pub ascii_only: Option<bool>,
 }
 
 impl Default for CodegenOptions {
     fn default() -> Self {
-        Self { remove_whitespace: Some(true) }
+        Self { remove_whitespace: Some(true), ascii_only: Some(false) }
     }
 }
 
 impl From<&CodegenOptions> for oxc_codegen::CodegenOptions {
     fn from(o: &CodegenOptions) -> Self {
-        if o.remove_whitespace.is_some_and(|b| b) {
-            oxc_codegen::CodegenOptions::minify()
+        let minify = o.remove_whitespace.unwrap_or(true);
+        let ascii_only = o.ascii_only.unwrap_or(false);
+        if minify {
+            oxc_codegen::CodegenOptions { ascii_only, ..oxc_codegen::CodegenOptions::minify() }
         } else {
             // Need to remove all comments.
-            oxc_codegen::CodegenOptions { minify: false, ..oxc_codegen::CodegenOptions::minify() }
+            oxc_codegen::CodegenOptions {
+                minify: false,
+                ascii_only,
+                ..oxc_codegen::CodegenOptions::minify()
+            }
         }
     }
 }

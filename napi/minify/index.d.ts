@@ -7,6 +7,14 @@ export interface CodegenOptions {
    * @default true
    */
   removeWhitespace?: boolean
+  /**
+   * Escape non-ASCII characters as `\uXXXX` or `\u{XXXXXX}`.
+   *
+   * This is equivalent to esbuild's `--charset=ascii` option.
+   *
+   * @default false
+   */
+  asciiOnly?: boolean
 }
 
 export interface CompressOptions {
