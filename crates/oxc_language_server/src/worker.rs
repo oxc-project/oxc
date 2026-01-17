@@ -192,9 +192,10 @@ impl WorkspaceWorker {
         &self,
         uri: &Uri,
         content: Option<&str>,
+        range: Option<&Range>,
     ) -> Result<Vec<TextEdit>, String> {
         for tool in self.tools.read().await.iter() {
-            let edits = tool.run_format(uri, content)?;
+            let edits = tool.run_format(uri, content, range)?;
             // If no edits are made, continue to the next tool
             if edits.is_empty() {
                 continue;

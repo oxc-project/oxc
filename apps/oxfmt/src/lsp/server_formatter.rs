@@ -243,7 +243,12 @@ impl Tool for ServerFormatter {
         }
     }
 
-    fn run_format(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<TextEdit>, String> {
+    fn run_format(
+        &self,
+        uri: &Uri,
+        content: Option<&str>,
+        _range: Option<&Range>,
+    ) -> Result<Vec<TextEdit>, String> {
         let Some(path) = uri.to_file_path() else { return Err("Invalid file URI".to_string()) };
 
         if self.is_ignored(&path) {

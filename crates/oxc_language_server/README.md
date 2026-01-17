@@ -189,6 +189,10 @@ The server will lint the file and report the diagnostics back to the client.
 
 Returns a list of [TextEdit](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit)
 
+#### [textDocument/rangeFormatting](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rangeFormatting)
+
+Returns a list of [TextEdit](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textEdit) only specific for the provided range.
+
 ## Optional LSP Specifications from Client
 
 ### Client
