@@ -32,6 +32,7 @@ pub struct Driver {
     pub compress: Option<CompressOptions>,
     pub remove_whitespace: bool,
     pub codegen: bool,
+    pub ascii_only: bool,
     pub check_semantic: bool,
     pub allow_return_outside_function: bool,
     // results
@@ -63,11 +64,13 @@ impl CompilerInterface for Driver {
 
     fn codegen_options(&self) -> Option<CodegenOptions> {
         self.codegen.then(|| {
-            if self.remove_whitespace {
+            let mut options = if self.remove_whitespace {
                 CodegenOptions::minify()
             } else {
                 CodegenOptions::default()
-            }
+            };
+            options.ascii_only = self.ascii_only;
+            options
         })
     }
 

@@ -912,8 +912,8 @@ fn test_ascii_only() {
     );
 
     // There should still be a space before "extends"
-    test_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {\n}\n");
-    test_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {\n});\n");
+    test_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0 {}\n");
+    test_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {});\n");
     test_minify_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
     test_minify_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
 
@@ -921,11 +921,15 @@ fn test_ascii_only() {
     // TODO: Uncomment when ES5 target is supported
     // test_ascii_target_es5("'𐀀'", "\"\\uD800\\uDC00\";\n");
     // test_ascii_target_es5("var 𐀀", "var \\uD800\\uDC00;\n"); // Invalid in ES5, but esbuild outputs this
+
+    // BOM (U+FEFF) should be escaped in ascii_only mode
+    test_ascii("let x = '\u{FEFF}'", "let x = \"\\uFEFF\";\n");
 }
 
-/// Property access with non-ASCII characters.
-/// - BMP characters (U+0000-U+FFFF) can use \uXXXX escapes in identifiers
-/// - Non-BMP characters (U+10000+) must use computed property syntax
+/// Property access with non-ASCII characters in `ascii_only` mode.
+/// - BMP characters (U+0080-U+FFFF) use \uXXXX escapes in identifiers
+/// - Non-BMP characters (U+10000+) use computed property syntax with escaped string
+///
 /// See: <https://github.com/oxc-project/oxc/issues/17068>
 #[test]
 fn test_property_access_ascii() {
@@ -933,11 +937,7 @@ fn test_property_access_ascii() {
     test_ascii("x.π", "x.\\u03C0;\n");
     test_ascii("x?.π", "x?.\\u03C0;\n");
 
-    // Non-BMP property access: must convert to computed syntax
-    // Without ascii_only: convert to computed but keep raw character
-    test("x.𐀀", "x[\"𐀀\"];\n");
-    test("x?.𐀀", "x?.[\"𐀀\"];\n");
-    // With ascii_only: convert to computed and escape
+    // Non-BMP property access: only convert to computed syntax in ascii_only mode
     test_ascii("x.𐀀", "x[\"\\u{10000}\"];\n");
     test_ascii("x?.𐀀", "x?.[\"\\u{10000}\"];\n");
 
@@ -945,9 +945,7 @@ fn test_property_access_ascii() {
     test_ascii("0 .π", "0 .\\u03C0;\n");
     test_ascii("0?.π", "0?.\\u03C0;\n");
 
-    // Number literal property access with non-BMP (must convert to computed)
-    test("0 .𐀀", "0[\"𐀀\"];\n");
-    test("0?.𐀀", "0?.[\"𐀀\"];\n");
+    // Number literal property access with non-BMP: only convert to computed in ascii_only mode
     test_ascii("0 .𐀀", "0[\"\\u{10000}\"];\n");
     test_ascii("0?.𐀀", "0?.[\"\\u{10000}\"];\n");
 
@@ -959,41 +957,39 @@ fn test_property_access_ascii() {
     // test_ascii_target_es5("0?.𐀀", "0 == null ? void 0 : 0[\"\\uD800\\uDC00\"];\n");
 }
 
-/// Object keys with non-ASCII characters.
-/// - BMP characters (U+0000-U+FFFF) can use \uXXXX escapes in identifiers
-/// - Non-BMP characters (U+10000+) must use string syntax
+/// Object keys with non-ASCII characters in `ascii_only` mode.
+/// - BMP characters (U+0080-U+FFFF) use \uXXXX escapes in identifiers
+/// - Non-BMP characters (U+10000+) use string key syntax with escaped string
+///
 /// See: <https://github.com/oxc-project/oxc/issues/17068>
 #[test]
 fn test_object_keys_ascii() {
     // BMP object keys: can use \uXXXX escapes (identifier syntax preserved)
     test_ascii("({π: 0})", "({ \\u03C0: 0 });\n");
     test_ascii("({π})", "({ \\u03C0 });\n");
+    // Minified
+    test_minify_ascii("({π: 1})", "({\\u03C0:1});");
 
-    // Non-BMP object keys: must convert to string syntax
-    // Without ascii_only: convert to string but keep raw character
-    test("({𐀀: 0})", "({ \"𐀀\": 0 });\n");
-    test("({𐀀})", "({ \"𐀀\": 𐀀 });\n");
-    // With ascii_only: convert to string and escape
+    // Non-BMP object keys: only convert to string syntax in ascii_only mode
     test_ascii("({𐀀: 0})", "({ \"\\u{10000}\": 0 });\n");
     test_ascii("({𐀀})", "({ \"\\u{10000}\": \\u{10000} });\n");
+    test_minify_ascii("({𐀀: 1})", "({\"\\u{10000}\":1});");
 
     // ES5 target: non-BMP should use surrogate pairs \uD800\uDC00
     // TODO: Uncomment when ES5 target is supported
     // test_ascii_target_es5("({𐀀: 0})", "({ \"\\uD800\\uDC00\": 0 });\n");
 }
 
-/// These characters should always be escaped regardless of ascii_only setting:
+/// These characters should always be escaped regardless of ascii_only setting
+/// because they are line terminators in JavaScript:
 /// - U+2028 Line Separator
 /// - U+2029 Paragraph Separator
-/// - U+FEFF BOM (Byte Order Mark)
 #[test]
 fn test_always_escaped_characters() {
     // Line Separator (U+2028) should always be escaped
     test("let x = '\u{2028}'", "let x = \"\\u2028\";\n");
     // Paragraph Separator (U+2029) should always be escaped
     test("let x = '\u{2029}'", "let x = \"\\u2029\";\n");
-    // BOM (U+FEFF) should always be escaped
-    test("let x = '\u{FEFF}'", "let x = \"\\uFEFF\";\n");
 }
 
 /// Import/export specifiers with non-ASCII characters.
