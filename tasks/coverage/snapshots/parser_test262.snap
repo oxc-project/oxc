@@ -3,11 +3,7 @@ commit: 6f55d0c2
 parser_test262 Summary:
 AST Parsed     : 46555/46563 (99.98%)
 Positive Passed: 46547/46563 (99.97%)
-Negative Passed: 4579/4581 (99.96%)
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/using/syntax/using-not-allowed-at-top-level-of-script.js
-
+Negative Passed: 4581/4581 (100.00%)
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 
   × Cannot assign to this expression
@@ -27404,6 +27400,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Try inserting a semicolon here
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ await using x = null;
+    · ─────────────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/await-using/syntax/block-scope-syntax-await-using-declarations-mixed-with-without-initializer.js:30:25]
  29 │ async function f() {
@@ -40033,6 +40037,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ }
     ╰────
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/using-not-allowed-at-top-level-of-script.js:23:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ using x = null;
+    · ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/using/syntax/with-initializer-case-expression-statement-list.js:20:28]
  19 │ $DONOTEVALUATE();
@@ -40057,6 +40069,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-do-statement-while-expression.js:17:4]
+ 16 │ $DONOTEVALUATE();
+ 17 │ do using x = 1; while (false)
+    ·    ────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-for-statement.js:17:15]
  16 │ $DONOTEVALUATE();
@@ -40073,6 +40093,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement-else-statement.js:17:19]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) {} else using x = null;
+    ·                   ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement.js:17:11]
  16 │ $DONOTEVALUATE();
@@ -40080,6 +40108,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·           ───────────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement.js:17:11]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) using x = null;
+    ·           ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-label-statement.js:17:8]
@@ -40089,6 +40125,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-label-statement.js:17:8]
+ 16 │ $DONOTEVALUATE();
+ 17 │ label: using x = null;
+    ·        ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-while-expression-statement.js:17:15]
  16 │ $DONOTEVALUATE();
@@ -40096,6 +40140,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·               ───────────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-while-expression-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ while (false) using x = null;
+    ·               ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-do-statement-while-expression.js:17:10]
@@ -40112,6 +40164,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-do-statement-while-expression.js:17:4]
+ 16 │ $DONOTEVALUATE();
+ 17 │ do using x; while (false)
+    ·    ────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/without-initializer-for-statement.js:17:15]
@@ -40137,6 +40197,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement-else-statement.js:17:19]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) {} else using x;
+    ·                   ────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement.js:17:17]
  16 │ $DONOTEVALUATE();
@@ -40152,6 +40220,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·           ────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement.js:17:11]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) using x;
+    ·           ────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-label-statement.js:17:14]
@@ -40169,6 +40245,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-label-statement.js:17:8]
+ 16 │ $DONOTEVALUATE();
+ 17 │ label: using x;
+    ·        ────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-while-expression-statement.js:17:21]
  16 │ $DONOTEVALUATE();
@@ -40184,6 +40268,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·               ────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-while-expression-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ while (false) using x;
+    ·               ────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/12.2.1-1gs.js:18:10]

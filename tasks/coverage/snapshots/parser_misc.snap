@@ -1,7 +1,9 @@
 parser_misc Summary:
-AST Parsed     : 58/58 (100.00%)
-Positive Passed: 54/58 (93.10%)
-Negative Passed: 128/128 (100.00%)
+AST Parsed     : 59/59 (100.00%)
+Positive Passed: 55/59 (93.22%)
+Negative Passed: 128/129 (99.22%)
+Expect Syntax Error: tasks/coverage/misc/fail/script-top-level-using.js
+
 Expect to Parse: tasks/coverage/misc/pass/commonjs-top-level-new-target.cjs
 
   × Unexpected new.target expression

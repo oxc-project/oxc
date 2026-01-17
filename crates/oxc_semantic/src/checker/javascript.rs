@@ -483,6 +483,22 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
     }
 }
 
+/// Check that `using` declarations are not at the top level in script mode.
+/// `using` is allowed:
+/// - At the top level of ES modules
+/// - At the top level of CommonJS modules (wrapped in function scope)
+/// - Inside any block scope in scripts
+///
+/// But NOT at the top level of scripts.
+pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
+    if decl.kind.is_using()
+        && ctx.source_type.is_script()
+        && ctx.current_scope_flags().contains(ScopeFlags::Top)
+    {
+        ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
+    }
+}
+
 pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
     match prop.meta.name.as_str() {
         "import" => {
