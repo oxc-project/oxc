@@ -46,6 +46,8 @@ mod allocator_api2;
 #[cfg(feature = "bitset")]
 mod bitset;
 mod boxed;
+/// Fast bump allocator optimized for oxc.
+pub mod bump;
 mod clone_in;
 mod convert;
 #[cfg(feature = "from_raw_parts")]

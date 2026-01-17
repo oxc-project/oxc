@@ -13,7 +13,7 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use bumpalo::Bump;
+use crate::bump::Bump;
 use rustc_hash::FxBuildHasher;
 
 // Re-export additional types from `hashbrown`
@@ -186,7 +186,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     /// Calling this method produces a compile-time panic.
     ///
     /// This method would be unsound, because [`HashMap`] is `Sync`, and the underlying allocator
-    /// (`bumpalo::Bump`) is not `Sync`.
+    /// ([`Bump`](crate::bump::Bump)) is not `Sync`.
     ///
     /// This method exists only to block access as much as possible to the underlying
     /// `hashbrown::HashMap::allocator` method. That method can still be accessed via explicit `Deref`

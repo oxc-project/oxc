@@ -24,7 +24,7 @@
 //!
 //! You can explicitly create a [`Vec<'a, T>`] with [`new_in`]:
 //!
-//! ```
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
@@ -34,7 +34,7 @@
 //! You can [`push`] values onto the end of a vector (which will grow the vector
 //! as needed):
 //!
-//! ```
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
@@ -46,7 +46,7 @@
 //!
 //! Popping values works in much the same way:
 //!
-//! ```
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
@@ -58,7 +58,7 @@
 //!
 //! Vectors also support indexing (through the [`Index`] and [`IndexMut`] traits):
 //!
-//! ```
+//! ```ignore
 //! use bumpalo::{Bump, collections::Vec};
 //!
 //! let b = Bump::new();
@@ -231,7 +231,7 @@ where
 ///
 /// # Examples
 ///
-/// ```
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// let b = Bump::new();
@@ -255,11 +255,11 @@ where
 ///     println!("{}", x);
 /// }
 /// assert_eq!(vec, [7, 1, 2, 3]);
-/// ```
+/// ```ignore
 ///
 /// Use a `Vec<'a, T>` as an efficient stack:
 ///
-/// ```
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// let b = Bump::new();
@@ -274,21 +274,21 @@ where
 ///     // Prints 3, 2, 1
 ///     println!("{}", top);
 /// }
-/// ```
+/// ```ignore
 ///
 /// # Indexing
 ///
 /// The `Vec` type allows accessing values by index, because it implements the
 /// [`Index`] trait. An example will be more explicit:
 ///
-/// ```
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// let b = Bump::new();
 ///
 /// let v = Vec::from_iter_in([0, 2, 4, 6], &b);
 /// println!("{}", v[1]); // it will display '2'
-/// ```
+/// ```ignore
 ///
 /// However be careful: if you try to access an index which isn't in the `Vec`,
 /// your software will panic! You cannot do this:
@@ -300,7 +300,7 @@ where
 ///
 /// let v = Vec::from_iter_in([0, 2, 4, 6], &b);
 /// println!("{}", v[6]); // it will panic!
-/// ```
+/// ```ignore
 ///
 /// In conclusion: always check if the index you want to get really exists
 /// before doing it.
@@ -310,7 +310,7 @@ where
 /// A `Vec` can be mutable. Slices, on the other hand, are read-only objects.
 /// To get a slice, use `&`. Example:
 ///
-/// ```
+/// ```ignore
 /// use bumpalo::{Bump, collections::Vec};
 ///
 /// fn read_slice(slice: &[usize]) {
@@ -325,7 +325,7 @@ where
 /// // ... and that's all!
 /// // you can also do it like this:
 /// let x : &[usize] = &v;
-/// ```
+/// ```ignore
 ///
 /// In Rust, it's more common to pass slices as arguments rather than vectors
 /// when you just want to provide a read access. The same goes for [`String`] and
@@ -456,7 +456,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// # #![allow(unused_mut)]
     /// use bumpalo::{Bump, collections::Vec};
     ///
@@ -482,7 +482,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -509,7 +509,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     /// use std::iter;
     ///
@@ -550,7 +550,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// use std::ptr;
@@ -593,7 +593,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -622,7 +622,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -661,7 +661,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// use std::ptr;
@@ -680,7 +680,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// In this example, there is a memory leak since the memory locations
     /// owned by the inner vectors were not freed prior to the `set_len` call:
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -697,7 +697,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// but we directly initialize uninitialized memory:
     ///
     // TODO: rely upon `spare_capacity_mut`
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let len = 4;
@@ -736,7 +736,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -763,7 +763,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -787,7 +787,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -814,7 +814,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -833,7 +833,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -854,7 +854,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -876,7 +876,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -913,7 +913,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// Truncating a five element vector to two elements:
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -926,7 +926,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// No truncation occurs when `len` is greater than the vector's current
     /// length:
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -939,7 +939,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// Truncating when `len == 0` is equivalent to calling the [`clear`]
     /// method.
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -967,7 +967,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     /// use std::io::{self, Write};
     ///
@@ -987,7 +987,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     /// use std::io::{self, Read};
     ///
@@ -1014,7 +1014,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let arena = Bump::new();
@@ -1051,7 +1051,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let arena = Bump::new();
@@ -1093,7 +1093,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1128,7 +1128,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1173,7 +1173,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1246,7 +1246,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1368,7 +1368,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::Bump;
     /// use bumpalo::collections::{CollectIn, Vec};
     ///
@@ -1402,7 +1402,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1433,7 +1433,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1463,7 +1463,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1493,7 +1493,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1523,7 +1523,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1584,7 +1584,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::Bump;
     /// use bumpalo::collections::{CollectIn, Vec};
     ///
@@ -1651,7 +1651,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1671,7 +1671,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1699,7 +1699,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1742,7 +1742,7 @@ impl<'a, T> Vec<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec, vec};
     ///
     /// let b = Bump::new();
@@ -1778,7 +1778,7 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1817,7 +1817,7 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1872,7 +1872,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1882,7 +1882,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(vec, [1, 2, 3, 4]);
     /// ```
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1921,7 +1921,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -1931,7 +1931,7 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     /// assert_eq!(vec, [1, 2, 3, 4]);
     /// ```
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2029,7 +2029,7 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2105,7 +2105,7 @@ impl<'a, T: 'a, A: Alloc> IntoIterator for Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2225,7 +2225,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2421,7 +2421,7 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();
@@ -2440,7 +2440,7 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```
+    /// ```ignore
     /// use bumpalo::{Bump, collections::Vec};
     ///
     /// let b = Bump::new();

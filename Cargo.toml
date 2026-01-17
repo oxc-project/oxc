@@ -170,11 +170,6 @@ allocator-api2 = "=0.2.21" # Allocator trait
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.10.0" # Bitflag types
 bpaf = "0.9.20" # CLI parser
-# `bumpalo` must be pinned to exactly version 3.19.0.
-# `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
-# of `bumpalo` which may change in a future version.
-# This is a temporary situation - we'll replace `bumpalo` with our own allocator.
-bumpalo = "=3.19.1" # Bump allocator
 compact_str = "0.9.0" # Compact string type
 console = "0.16.2" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation

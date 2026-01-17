@@ -1,13 +1,12 @@
-// All methods just delegate to `bumpalo`, so all marked `#[inline(always)]`.
-// All have same safety preconditions of `bumpalo` methods of the same name.
+// All methods just delegate to `Bump`, so all marked `#[inline(always)]`.
+// All have same safety preconditions of `Bump` methods of the same name.
 #![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
 
 use std::{alloc::Layout, ptr::NonNull};
 
 use allocator_api2::alloc::{AllocError, Allocator};
 
-/// SAFETY:
-/// <https://github.com/fitzgen/bumpalo/blob/4eeab8847c85d5cde135ca21ae14a54e56b05224/src/lib.rs#L1938>
+/// SAFETY: Bump allocator implementation is safe for use as an Allocator.
 unsafe impl Allocator for &crate::Allocator {
     #[inline(always)]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {

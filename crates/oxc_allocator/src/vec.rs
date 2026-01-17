@@ -14,7 +14,7 @@ use std::{
     slice::SliceIndex,
 };
 
-use bumpalo::Bump;
+use crate::bump::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer as SerdeSerializer};
 

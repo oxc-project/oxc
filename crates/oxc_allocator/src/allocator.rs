@@ -7,7 +7,7 @@ use std::{
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 use std::mem::offset_of;
 
-use bumpalo::Bump;
+use crate::bump::Bump;
 
 use oxc_data_structures::assert_unchecked;
 
@@ -253,7 +253,7 @@ impl Allocator {
     /// [`Vec::new_in`]: crate::Vec::new_in
     /// [`HashMap::new_in`]: crate::HashMap::new_in
     //
-    // `#[inline(always)]` because just delegates to `bumpalo` method
+    // `#[inline(always)]` because just delegates to `Bump` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn new() -> Self {
@@ -268,7 +268,7 @@ impl Allocator {
     ///
     /// See [`Allocator`] docs for more information on efficient use of [`Allocator`].
     //
-    // `#[inline(always)]` because just delegates to `bumpalo` method
+    // `#[inline(always)]` because just delegates to `Bump` method
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn with_capacity(capacity: usize) -> Self {
@@ -506,7 +506,7 @@ impl Allocator {
     /// }
     /// ```
     //
-    // `#[inline(always)]` because it just delegates to `bumpalo`
+    // `#[inline(always)]` because it just delegates to `Bump`
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn reset(&mut self) {
@@ -536,7 +536,7 @@ impl Allocator {
     ///
     /// [`used_bytes`]: Allocator::used_bytes
     //
-    // `#[inline(always)]` because it just delegates to `bumpalo`
+    // `#[inline(always)]` because it just delegates to `Bump`
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn capacity(&self) -> usize {
@@ -576,12 +576,12 @@ impl Allocator {
     /// let capacity = 64 * 1024; // 64 KiB
     /// let mut allocator = Allocator::with_capacity(capacity);
     ///
-    /// allocator.alloc(1u8); // 1 byte with alignment 1
-    /// allocator.alloc(2u8); // 1 byte with alignment 1
-    /// allocator.alloc(3u64); // 8 bytes with alignment 8
+    /// allocator.alloc(1u8); // 1 byte, rounded to 8 (minimum alignment)
+    /// allocator.alloc(2u8); // 1 byte, rounded to 8
+    /// allocator.alloc(3u64); // 8 bytes
     ///
-    /// // Only 10 bytes were allocated, but 16 bytes were used, in order to align `3u64` on 8
-    /// assert_eq!(allocator.used_bytes(), 16);
+    /// // Each allocation is rounded up to 8-byte alignment: 8 + 8 + 8 = 24 bytes
+    /// assert_eq!(allocator.used_bytes(), 24);
     ///
     /// allocator.reset();
     ///
@@ -593,9 +593,10 @@ impl Allocator {
     /// // `vec` has to grow beyond it's initial capacity
     /// vec.extend([1, 2, 3, 4]);
     ///
-    /// // `vec` takes up 32 bytes, and `123u64` takes up 8 bytes = 40 total.
-    /// // But there's an additional 16 bytes consumed for `vec`'s original capacity of 2,
-    /// // which is still using up space
+    /// // `vec` initial capacity: 16 bytes (2 * 8)
+    /// // `123u64`: 8 bytes
+    /// // `vec` grown capacity: 32 bytes (4 * 8)
+    /// // Total: 16 + 8 + 32 = 56 bytes
     /// assert_eq!(allocator.used_bytes(), 56);
     /// ```
     ///
@@ -613,10 +614,10 @@ impl Allocator {
         bytes
     }
 
-    /// Get inner [`bumpalo::Bump`].
+    /// Get inner [`Bump`](crate::bump::Bump).
     ///
     /// This method is not public. We don't want to expose `Bump` to user.
-    /// The fact that we're using `bumpalo` is an internal implementation detail.
+    /// The fact that we're using our own bump allocator is an internal implementation detail.
     //
     // `#[inline(always)]` because it's a no-op
     #[expect(clippy::inline_always)]
@@ -625,7 +626,7 @@ impl Allocator {
         &self.bump
     }
 
-    /// Create [`Allocator`] from a [`bumpalo::Bump`].
+    /// Create [`Allocator`] from a [`Bump`](crate::bump::Bump).
     ///
     /// This method is not public. Only used by [`Allocator::from_raw_parts`].
     //

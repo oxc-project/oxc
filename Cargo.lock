@@ -149,9 +149,6 @@ name = "bumpalo"
 version = "3.19.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510"
-dependencies = [
- "allocator-api2",
-]
 
 [[package]]
 name = "bytes"
@@ -1689,7 +1686,6 @@ name = "oxc_allocator"
 version = "0.108.0"
 dependencies = [
  "allocator-api2",
- "bumpalo",
  "hashbrown 0.16.1",
  "oxc_ast_macros",
  "oxc_data_structures",

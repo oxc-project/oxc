@@ -13,12 +13,12 @@
 //! The 2nd cargo feature `disable_track_allocations` is to ensure that compiling with `--all-features`
 //! will not load this module.
 //!
-//! As soon as we replace `bumpalo` with our own arena allocator, we'll remove the hack from `get_stats_ref`,
+//! TODO: Now that we have our own arena allocator, we can remove the hack from `get_stats_ref`
 //! and make this sound.
 
 use std::{cell::Cell, ptr};
 
-use bumpalo::Bump;
+use crate::bump::Bump;
 
 use crate::{Allocator, allocator::STATS_FIELD_OFFSET};
 
