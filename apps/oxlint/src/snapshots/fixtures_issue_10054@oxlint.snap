@@ -6,7 +6,7 @@ arguments: issue_10054
 working directory: fixtures
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[issue_10054/a.ts:1:19]
  1 | import { b } from "./b";
    :                   ^^^^^
@@ -19,7 +19,7 @@ working directory: fixtures
            │    ./a (fixtures/issue_10054/a.ts)
            ╰─────────╯ imports the current file
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[issue_10054/b.ts:1:8]
  1 | import "./a";
    :        ^^^^^

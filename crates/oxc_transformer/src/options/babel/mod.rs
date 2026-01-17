@@ -189,4 +189,8 @@ impl BabelOptions {
     pub fn is_unambiguous(&self) -> bool {
         self.source_type.as_ref().is_some_and(|s| s.as_str() == "unambiguous")
     }
+
+    pub fn is_commonjs(&self) -> bool {
+        self.source_type.as_ref().is_some_and(|s| s.as_str() == "commonjs")
+    }
 }

@@ -50,7 +50,7 @@ pub enum Language {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[generate_derive(Dummy, ESTree)]
 pub enum ModuleKind {
-    /// Regular JS script or CommonJS file
+    /// Regular JS script
     Script = 0,
     /// ES Module
     Module = 1,
@@ -64,6 +64,16 @@ pub enum ModuleKind {
     /// See <https://babel.dev/docs/options#misc-options>
     #[estree(skip)]
     Unambiguous = 2,
+    /// CommonJS module
+    ///
+    /// CommonJS files are wrapped in a function, which means:
+    /// - Top-level `return` statements are allowed
+    /// - Top-level `new.target` is allowed
+    /// - Top-level `await` is NOT allowed (unlike ES modules)
+    ///
+    /// In ESTree output, this is serialized as `"commonjs"`.
+    #[estree(rename = "commonjs")]
+    CommonJS = 3,
 }
 
 /// JSX for JavaScript and TypeScript
@@ -184,7 +194,7 @@ impl From<FileExtension> for SourceType {
 
         let module_kind = match file_ext {
             Js | Tsx | Ts | Jsx | Mts | Mjs => ModuleKind::Module,
-            Cjs | Cts => ModuleKind::Script,
+            Cjs | Cts => ModuleKind::CommonJS,
         };
 
         let variant = match file_ext {
@@ -362,6 +372,13 @@ impl SourceType {
         self.module_kind == ModuleKind::Unambiguous
     }
 
+    /// Returns `true` if this [`SourceType`] is [commonjs].
+    ///
+    /// [commonjs]: ModuleKind::CommonJS
+    pub fn is_commonjs(self) -> bool {
+        self.module_kind == ModuleKind::CommonJS
+    }
+
     /// What module system is this source type using?
     pub fn module_kind(self) -> ModuleKind {
         self.module_kind
@@ -433,6 +450,18 @@ impl SourceType {
     pub const fn with_unambiguous(mut self, yes: bool) -> Self {
         if yes {
             self.module_kind = ModuleKind::Unambiguous;
+        }
+        self
+    }
+
+    /// Mark this [`SourceType`] as [commonjs] if `yes` is `true`. No change
+    /// will occur if `yes` is `false`.
+    ///
+    /// [commonjs]: ModuleKind::CommonJS
+    #[must_use]
+    pub const fn with_commonjs(mut self, yes: bool) -> Self {
+        if yes {
+            self.module_kind = ModuleKind::CommonJS;
         }
         self
     }
@@ -636,8 +665,13 @@ mod tests {
 
         assert!(!ts.is_script());
         assert!(!mts.is_script());
-        assert!(cts.is_script());
+        assert!(!cts.is_script());
         assert!(!tsx.is_script());
+
+        assert!(!ts.is_commonjs());
+        assert!(!mts.is_commonjs());
+        assert!(cts.is_commonjs());
+        assert!(!tsx.is_commonjs());
 
         assert!(ts.is_strict());
         assert!(mts.is_strict());
@@ -671,7 +705,11 @@ mod tests {
 
         assert!(!dts.is_script());
         assert!(!dmts.is_script());
-        assert!(dcts.is_script());
+        assert!(!dcts.is_script());
+
+        assert!(!dts.is_commonjs());
+        assert!(!dmts.is_commonjs());
+        assert!(dcts.is_commonjs());
 
         assert!(dts.is_strict());
         assert!(dmts.is_strict());
@@ -703,7 +741,7 @@ mod tests {
 
         assert!(js.is_module());
         assert!(mjs.is_module());
-        assert!(cjs.is_script());
+        assert!(!cjs.is_module());
         assert!(jsx.is_module());
 
         assert!(js.is_strict());

@@ -86,6 +86,7 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/module-blocks",
     // embedded
     "js/multiparser",
+    "typescript/multiparser",
     "typescript/angular-component-examples",
     "js/partial-application",
     "js/pipeline-operator",

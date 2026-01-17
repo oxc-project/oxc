@@ -10,7 +10,7 @@ mod tests;
 mod tool;
 mod worker;
 
-pub use crate::capabilities::Capabilities;
+pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::tool::{DiagnosticResult, Tool, ToolBuilder, ToolRestartChanges};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;

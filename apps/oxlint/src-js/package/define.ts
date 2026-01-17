@@ -101,13 +101,10 @@ export function defineRule(rule: Rule): Rule {
   return rule;
 }
 
-// Cached current working directory
-let cwd: string | null = null;
-
 // File context object. Used as prototype for `Context` objects for each rule during `createOnce` call.
 // When running the rules, ESLint's `context` object is switching in as prototype for `Context` objects.
 //
-// Only `cwd` property and `extends` method are available in `createOnce`, so only those are implemented here.
+// Only `extends` method is available in `createOnce`, so only that is implemented here.
 // All other getters/methods throw, same as they do in main implementation.
 //
 // See `FILE_CONTEXT` in `plugins/context.ts` for details of all the getters/methods.
@@ -129,14 +126,11 @@ const FILE_CONTEXT: FileContext = Object.freeze({
   },
 
   get cwd(): string {
-    // Note: We can allow accessing `cwd` in `createOnce`, as it's global
-    if (cwd === null) cwd = process.cwd();
-    return cwd;
+    throw new Error("Cannot access `context.cwd` in `createOnce`");
   },
 
   getCwd(): string {
-    if (cwd === null) cwd = process.cwd();
-    return cwd;
+    throw new Error("Cannot call `context.getCwd` in `createOnce`");
   },
 
   get sourceCode(): SourceCode {
@@ -192,7 +186,7 @@ function createContextAndVisitor(rule: CreateOnceRule): {
   // Call `createOnce` with empty context object.
   // Really, accessing `options` or calling `report` should throw, because they're illegal in `createOnce`.
   // But any such bugs should have been caught when testing the rule in Oxlint, so should be OK to take this shortcut.
-  // `FILE_CONTEXT` prototype provides `cwd` property and `extends` method, which are available in `createOnce`.
+  // `FILE_CONTEXT` prototype provides `extends` method, which is available in `createOnce`.
   const context: Context = Object.create(FILE_CONTEXT, {
     id: { value: "", enumerable: true, configurable: true },
     options: { value: null, enumerable: true, configurable: true },

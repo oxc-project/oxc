@@ -421,7 +421,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        self.expression().fmt(f);
+        // When ChainExpression contains TSNonNullExpression, we print `(a?.b)!` instead of `(a?.b!)`
+        // This normalizes `(a?.b!).c` to `(a?.b)!.c` to match Prettier's output.
+        // See: https://github.com/prettier/prettier/blob/main/src/language-js/clean.js
+        if let AstNodes::TSNonNullExpression(non_null) = self.expression().as_ast_nodes() {
+            let needs_parens =
+                crate::parentheses::chain_expression_needs_parens(self.span, self.parent);
+            if needs_parens {
+                write!(f, "(");
+            }
+            non_null.expression().fmt(f);
+            if needs_parens {
+                write!(f, ")");
+            }
+            write!(f, "!");
+        } else {
+            self.expression().fmt(f);
+        }
     }
 }
 
@@ -478,6 +494,16 @@ fn expression_statement_needs_semicolon<'a>(
     // e.g., `(a) => {}` needs `;(a) => {}` but `a => {}` doesn't need semicolon
     if let Expression::ArrowFunctionExpression(arrow) = &stmt.expression {
         return !can_avoid_parentheses(arrow, f);
+    }
+
+    // Expressions starting with keywords don't need ASI protection
+    if matches!(
+        &stmt.expression,
+        Expression::NewExpression(_)
+            | Expression::AwaitExpression(_)
+            | Expression::YieldExpression(_)
+    ) {
+        return false;
     }
 
     // First check if the expression itself needs protection
@@ -631,19 +657,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForStatement<'a>> {
         let body = self.body();
         let format_body = FormatStatementBody::new(body);
         if init.is_none() && test.is_none() && update.is_none() {
-            let comments = f.context().comments().comments_before(body.span().start);
-            if !comments.is_empty() {
-                write!(
-                    f,
-                    [
-                        FormatDanglingComments::Comments {
-                            comments,
-                            indent: DanglingIndentMode::None
-                        },
-                        soft_line_break_or_space()
-                    ]
-                );
-            }
             return write!(f, [group(&format_args!("for", space(), "(;;)", format_body))]);
         }
 
@@ -725,7 +738,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ForOfStatement<'a>> {
                     "of",
                     space(),
                     right,
-                    FormatCommentForEmptyStatement(body),
                     ")",
                     FormatStatementBody::new(body)
                 ]

@@ -271,8 +271,8 @@ impl StaticBlock<'_> {
     }
 }
 
-impl TSEnumDeclaration<'_> {
-    /// Get [`ScopeId`] of [`TSEnumDeclaration`].
+impl TSEnumBody<'_> {
+    /// Get [`ScopeId`] of [`TSEnumBody`].
     ///
     /// Only use this method on a post-semantic AST where [`ScopeId`]s are always defined.
     ///
@@ -283,7 +283,7 @@ impl TSEnumDeclaration<'_> {
         self.scope_id.get().unwrap()
     }
 
-    /// Set [`ScopeId`] of [`TSEnumDeclaration`].
+    /// Set [`ScopeId`] of [`TSEnumBody`].
     #[inline]
     pub fn set_scope_id(&self, scope_id: ScopeId) {
         self.scope_id.set(Some(scope_id));

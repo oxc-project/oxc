@@ -1,7 +1,9 @@
 parser_misc Summary:
-AST Parsed     : 54/54 (100.00%)
-Positive Passed: 54/54 (100.00%)
-Negative Passed: 124/124 (100.00%)
+AST Parsed     : 59/59 (100.00%)
+Positive Passed: 59/59 (100.00%)
+Negative Passed: 128/129 (99.22%)
+Expect Syntax Error: tasks/coverage/misc/fail/script-top-level-using.js
+
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -49,6 +51,36 @@ Negative Passed: 124/124 (100.00%)
    ·                ────
  8 │ 
    ╰────
+
+  × Cannot use export statement outside a module
+   ╭─[misc/fail/commonjs-export-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow export statements (use module.exports instead)
+ 2 │ export const foo = 1;
+   · ──────
+   ╰────
+
+  × Unexpected import.meta expression
+   ╭─[misc/fail/commonjs-import-meta.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import.meta (only ES modules do)
+ 2 │ import.meta;
+   · ───────────
+   ╰────
+  help: import.meta is only allowed in module code
+
+  × Cannot use import statement outside a module
+   ╭─[misc/fail/commonjs-import-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import statements (use require instead)
+ 2 │ import foo from 'foo';
+   · ──────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/commonjs-top-level-await.cjs:2:1]
+ 1 │ // CommonJS does NOT allow top-level await (only ES modules do)
+ 2 │ await Promise.resolve();
+   · ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]

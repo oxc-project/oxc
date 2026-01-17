@@ -6,28 +6,28 @@ arguments: -c fixtures/overrides/directories-config.json fixtures/overrides
 working directory: 
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[fixtures/overrides/lib/index.ts:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
   help: Remove the debugger statement
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
    ,-[fixtures/overrides/lib/tests/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
   help: Remove the debugger statement
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[fixtures/overrides/src/oxlint.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
   help: Remove the debugger statement
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
    ,-[fixtures/overrides/src/tests/index.js:1:1]
  1 | debugger;
    : ^^^^^^^^^

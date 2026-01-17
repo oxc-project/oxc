@@ -2920,6 +2920,7 @@ dependencies = [
  "proc-macro2",
  "rustc-hash",
  "serde",
+ "serde_json",
  "syn",
 ]
 

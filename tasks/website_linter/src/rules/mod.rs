@@ -9,7 +9,10 @@ use std::{
 
 use doc_page::Context;
 use html::HtmlWriter;
-use oxc_linter::{Oxlintrc, table::RuleTable};
+use oxc_linter::{
+    Oxlintrc,
+    table::{RuleTable, RuleTableRow},
+};
 use pico_args::Arguments;
 use schemars::{SchemaGenerator, r#gen::SchemaSettings};
 
@@ -89,16 +92,26 @@ pub fn print_rules(mut args: Arguments) {
     );
 }
 
-fn write_rule_doc_pages(g: SchemaGenerator, table: &RuleTable, outdir: &Path) {
+fn render_rule_doc_pages(
+    g: SchemaGenerator,
+    table: &RuleTable,
+) -> impl Iterator<Item = (String, String, &RuleTableRow)> + '_ {
     let mut ctx = Context::new::<Oxlintrc>(g);
-    for rule in table.sections.iter().flat_map(|section| &section.rows) {
-        let plugin_path = outdir.join(&rule.plugin);
-        fs::create_dir_all(&plugin_path).unwrap();
-        let page_path = plugin_path.join(format!("{}.md", rule.name));
+    table.sections.iter().flat_map(|section| &section.rows).map(move |rule| {
+        let key = format!("{}/{}.md", rule.plugin, rule.name);
+        let docs = ctx.render_rule_docs_page(rule).unwrap();
+        (key, docs, rule)
+    })
+}
+
+fn write_rule_doc_pages(g: SchemaGenerator, table: &RuleTable, outdir: &Path) {
+    for (key, docs, _) in render_rule_doc_pages(g, table) {
+        let page_path = outdir.join(&key);
+        let plugin_path = page_path.parent().unwrap();
+        fs::create_dir_all(plugin_path).unwrap();
         if page_path.exists() {
             fs::remove_file(&page_path).unwrap();
         }
-        let docs = ctx.render_rule_docs_page(rule).unwrap();
         fs::write(&page_path, docs).unwrap();
     }
 }
@@ -111,4 +124,50 @@ fn write_version_data(outdir: &Path, git_ref: &str) {
 fn write_rule_count_data(outdir: &Path, rule_count: usize) {
     let data = format!(r"export default {{ load() {{ return {rule_count} }} }} ");
     fs::write(outdir.join("rule-count.data.js"), data).unwrap();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use schemars::{SchemaGenerator, r#gen::SchemaSettings};
+
+    // Create a snapshot containing all of the generated rule doc pages
+    #[test]
+    fn test_docs_rule_pages() {
+        let mut generator = SchemaGenerator::new(SchemaSettings::default());
+        let table = RuleTable::new(Some(&mut generator));
+        let pages = render_rule_doc_pages(generator, &table).filter(|(_, _, rule)| {
+            let name_and_plugin = format!("{}/{}", rule.plugin, rule.name);
+            match name_and_plugin.as_str() {
+                // Include only a few rules in the snapshot for brevity
+                "eslint/no-unused-vars"
+                | "import/namespace"
+                | "jest/expect-expect"
+                | "jsdoc/require-returns"
+                | "jsx-a11y/aria-role"
+                | "nextjs/no-duplicate-head"
+                | "oxc/no-barrel-file"
+                | "promise/no-callback-in-promise"
+                | "react/rules-of-hooks"
+                | "typescript/no-floating-promises"
+                | "typescript/no-explicit-any"
+                | "unicorn/prefer-array-find"
+                | "vue/no-lifecycle-after-await" => true,
+                _ => false,
+            }
+        });
+
+        let mut snapshot = String::new();
+        for (key, docs, _) in pages {
+            snapshot.push_str("--- ");
+            snapshot.push_str(&key);
+            snapshot.push_str(" ---\n");
+            snapshot.push_str(&docs);
+            snapshot.push_str("\n\n");
+        }
+
+        insta::with_settings!({ prepend_module_to_snapshot => false }, {
+            insta::assert_snapshot!(snapshot);
+        });
+    }
 }

@@ -20,6 +20,21 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
         .code
 }
 
+fn test(source_text: &str, expected: &str, options: MangleOptions) {
+    let mangled = mangle(source_text, options);
+    let expected = {
+        let allocator = Allocator::default();
+        let source_type = SourceType::mjs();
+        let ret = Parser::new(&allocator, expected, source_type).parse();
+        assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
+        Codegen::new().build(&ret.program).code
+    };
+    assert_eq!(
+        mangled, expected,
+        "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{mangled}"
+    );
+}
+
 #[test]
 fn direct_eval() {
     let options = MangleOptions::default();
@@ -54,6 +69,30 @@ fn direct_eval() {
     let source_text = "function foo() { let SHOULD_MANGLE; (0, eval)('') }";
     let mangled = mangle(source_text, options);
     assert!(!mangled.contains("SHOULD_MANGLE"));
+
+    test(
+        r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
+        r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
+        MangleOptions::default(),
+    );
+
+    test(
+        r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
+        r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
+        MangleOptions { top_level: true, ..MangleOptions::default() },
+    );
+
+    test(
+        r"function outer() { let e = 1; eval(''); function inner() { let longNameToMangle = 2; console.log(e); } }",
+        r#"function outer() { let e = 1; eval(""); function inner() { let t = 2; console.log(e); } }"#,
+        MangleOptions::default(),
+    );
+
+    test(
+        r"function evalScope() { let x = 1; eval(''); } function siblingScope() { let longName = 2; console.log(longName); }",
+        r#"function evalScope() {let x = 1; eval(""); } function siblingScope() { let e = 2; console.log(e); }"#,
+        MangleOptions::default(),
+    );
 }
 
 #[test]

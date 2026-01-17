@@ -1910,7 +1910,6 @@ impl<'a> Dummy<'a> for TSEnumDeclaration<'a> {
             body: Dummy::dummy(allocator),
             r#const: Dummy::dummy(allocator),
             declare: Dummy::dummy(allocator),
-            scope_id: Dummy::dummy(allocator),
         }
     }
 }
@@ -1920,7 +1919,11 @@ impl<'a> Dummy<'a> for TSEnumBody<'a> {
     ///
     /// Does not allocate any data into arena.
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self { span: Dummy::dummy(allocator), members: Dummy::dummy(allocator) }
+        Self {
+            span: Dummy::dummy(allocator),
+            members: Dummy::dummy(allocator),
+            scope_id: Dummy::dummy(allocator),
+        }
     }
 }
 

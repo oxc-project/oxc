@@ -7677,12 +7677,12 @@ export class TSEnumDeclaration {
 
   get const() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 77, internal.ast);
+    return constructBool(internal.pos + 81, internal.ast);
   }
 
   toJSON() {
@@ -12235,6 +12235,8 @@ function constructModuleKind(pos, ast) {
       return "script";
     case 1:
       return "module";
+    case 3:
+      return "commonjs";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for ModuleKind`);
   }

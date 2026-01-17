@@ -2,8 +2,8 @@ commit: f5ccf434
 
 parser_typescript Summary:
 AST Parsed     : 9844/9845 (99.99%)
-Positive Passed: 9835/9845 (99.90%)
-Negative Passed: 1496/2549 (58.69%)
+Positive Passed: 9834/9845 (99.89%)
+Negative Passed: 1497/2549 (58.73%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1954,8 +1954,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral9.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
@@ -2310,6 +2308,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  3 │ }
    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts:1:1]
+ 1 │ using x = {};
+   · ─────────────
+   ╰────
+  help: Wrap this code in a block or use a module
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -24710,6 +24717,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts:1:1]
+ 1 │ await using x = null;
+   · ─────────────────────
+ 2 │ 
+   ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
@@ -24911,6 +24926,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ───────────────
    ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.10.ts:2:8]
+ 1 │ declare var x: any;
+ 2 │ if (x) using a = null;
+   ·        ───────────────
+   ╰────
+  help: Wrap this code in a block or use a module
 
   × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.13.ts:1:8]
