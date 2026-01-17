@@ -25,6 +25,8 @@ impl<'a> ParserImpl<'a> {
     ) -> Declaration<'a> {
         self.bump_any(); // bump `enum`
         let id = self.parse_binding_identifier();
+        // TSEnumDeclaration creates a scope
+        self.stats.add_scope();
         let body = self.parse_ts_enum_body();
         let span = self.end_span(span);
         self.verify_modifiers(
@@ -33,6 +35,7 @@ impl<'a> ParserImpl<'a> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
+        self.stats.add_node();
         self.ast.declaration_ts_enum(
             span,
             id,
@@ -53,17 +56,21 @@ impl<'a> ParserImpl<'a> {
             Self::parse_ts_enum_member,
         );
         self.expect(Kind::RCurly);
+        self.stats.add_node();
         self.ast.ts_enum_body(self.end_span(span), members)
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> TSEnumMember<'a> {
         let span = self.start_span();
         let id = self.parse_ts_enum_member_name();
+        // TSEnumMemberName creates a symbol
+        self.stats.add_symbol();
         let initializer = if self.eat(Kind::Eq) {
             Some(self.parse_assignment_expression_or_higher())
         } else {
             None
         };
+        self.stats.add_node();
         self.ast.ts_enum_member(self.end_span(span), id, initializer)
     }
 
@@ -118,6 +125,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump ':'
         let type_annotation = self.parse_ts_type();
+        self.stats.add_node();
         Some(self.ast.alloc_ts_type_annotation(self.end_span(span), type_annotation))
     }
 
@@ -129,6 +137,8 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Type);
 
         let id = self.parse_binding_identifier();
+        // TSTypeAliasDeclaration creates a scope
+        self.stats.add_scope();
         let params = self.parse_ts_type_parameters();
         self.expect(Kind::Eq);
 
@@ -137,6 +147,8 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             if self.at(Kind::Dot) {
                 // `type something = intrinsic. ...`
+                self.stats.add_reference(); // IdentifierReference
+                self.stats.add_node(); // IdentifierReference
                 let left_name = self.ast.ts_type_name_identifier_reference(
                     intrinsic_token.span(),
                     self.token_source(&intrinsic_token),
@@ -144,13 +156,41 @@ impl<'a> ParserImpl<'a> {
                 let type_name =
                     self.parse_ts_qualified_type_name(intrinsic_token.start(), left_name);
                 let type_parameters = self.parse_type_arguments_of_type_reference();
+                self.stats.add_node(); // TSTypeReference
                 self.ast.ts_type_type_reference(
                     self.end_span(intrinsic_token.start()),
                     type_name,
                     type_parameters,
                 )
+            } else if self.at(Kind::LBrack) || self.at(Kind::LAngle) {
+                // `type something = intrinsic[...]` or `type something = intrinsic<...>`
+                self.stats.add_reference(); // IdentifierReference
+                self.stats.add_node(); // IdentifierReference
+                let left_name = self.ast.ts_type_name_identifier_reference(
+                    intrinsic_token.span(),
+                    self.token_source(&intrinsic_token),
+                );
+                let type_parameters = self.parse_type_arguments_of_type_reference();
+                self.stats.add_node(); // TSTypeReference
+                let ty = self.ast.ts_type_type_reference(
+                    self.end_span(intrinsic_token.start()),
+                    left_name,
+                    type_parameters,
+                );
+                // Parse indexed access type: intrinsic["foo"]
+                if self.at(Kind::LBrack) {
+                    let span = intrinsic_token.start();
+                    self.bump_any(); // bump `[`
+                    let index_type = self.parse_ts_type();
+                    self.expect(Kind::RBrack);
+                    self.stats.add_node(); // TSIndexedAccessType
+                    self.ast.ts_type_indexed_access_type(self.end_span(span), ty, index_type)
+                } else {
+                    ty
+                }
             } else {
                 // `type something = intrinsic`
+                self.stats.add_node(); // TSIntrinsicKeyword
                 self.ast.ts_type_intrinsic_keyword(intrinsic_token.span())
             }
         } else {
@@ -168,6 +208,7 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
+        self.stats.add_node();
         self.ast.declaration_ts_type_alias(span, id, params, ty, modifiers.contains_declare())
     }
 
@@ -179,6 +220,8 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
+        // TSInterfaceDeclaration creates a scope
+        self.stats.add_scope();
         let type_parameters = self.parse_ts_type_parameters();
         let (extends, implements) = self.parse_heritage_clause();
         let body = self.parse_ts_interface_body();
@@ -200,6 +243,7 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::interface_extend(extend.span));
             }
         }
+        self.stats.add_node();
         self.ast.declaration_ts_interface(
             self.end_span(span),
             id,
@@ -214,6 +258,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let body_list =
             self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature);
+        self.stats.add_node();
         self.ast.alloc_ts_interface_body(self.end_span(span), body_list)
     }
 
@@ -320,6 +365,8 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::StringLiteral(self.parse_literal_string());
+        // TSModuleDeclaration always creates a scope (even without body)
+        self.stats.add_scope();
         let body = if self.at(Kind::LCurly) {
             let block = self.parse_ts_module_block();
             Some(TSModuleDeclarationBody::TSModuleBlock(block))
@@ -333,6 +380,7 @@ impl<'a> ParserImpl<'a> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
+        self.stats.add_node(); // TSModuleDeclaration
         self.ast.alloc_ts_module_declaration(
             self.end_span(span),
             id,
@@ -344,10 +392,13 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_ts_module_block(&mut self) -> Box<'a, TSModuleBlock<'a>> {
         let span = self.start_span();
+        // Note: scope is NOT added here because it's added by the parent declaration
+        // (TSModuleDeclaration, TSGlobalDeclaration)
         self.expect(Kind::LCurly);
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ false);
         self.expect(Kind::RCurly);
+        self.stats.add_node(); // TSModuleBlock
         self.ast.alloc_ts_module_block(self.end_span(span), directives, statements)
     }
 
@@ -358,6 +409,8 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
         let id = TSModuleDeclarationName::Identifier(self.parse_binding_identifier());
+        // TSModuleDeclaration creates a scope
+        self.stats.add_scope();
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
             let decl = self.parse_module_or_namespace_declaration(span, kind, &Modifiers::empty());
@@ -372,6 +425,7 @@ impl<'a> ParserImpl<'a> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
+        self.stats.add_node(); // TSModuleDeclaration
         self.ast.alloc_ts_module_declaration(
             self.end_span(span),
             id,
@@ -389,6 +443,8 @@ impl<'a> ParserImpl<'a> {
         let keyword_span_start = self.start_span();
         self.expect(Kind::Global);
         let keyword_span = self.end_span(keyword_span_start);
+        // TSGlobalDeclaration creates a scope
+        self.stats.add_scope();
 
         let body = self.parse_ts_module_block().unbox();
 
@@ -399,6 +455,7 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
+        self.stats.add_node(); // TSGlobalDeclaration
         self.ast.alloc_ts_global_declaration(
             self.end_span(span),
             keyword_span,
@@ -551,6 +608,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RAngle);
         let lhs_span = self.start_span();
         let expression = self.parse_simple_unary_expression(lhs_span);
+        self.stats.add_node(); // TSTypeAssertion
         self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
     }
 
@@ -567,6 +625,7 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::LParen);
             let expression = self.parse_literal_string();
             self.expect(Kind::RParen);
+            self.stats.add_node(); // TSExternalModuleReference
             self.ast.ts_module_reference_external_module_reference(
                 self.end_span(reference_span),
                 expression,
@@ -584,6 +643,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::import_equals_can_only_be_used_in_typescript_files(span));
         }
 
+        self.stats.add_node(); // TSImportEqualsDeclaration
         self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)
     }
 
@@ -593,6 +653,7 @@ impl<'a> ParserImpl<'a> {
         let this_span = self.end_span(span);
 
         let type_annotation = self.parse_ts_type_annotation();
+        self.stats.add_node(); // TSThisParameter
         self.ast.ts_this_parameter(self.end_span(span), this_span, type_annotation)
     }
 

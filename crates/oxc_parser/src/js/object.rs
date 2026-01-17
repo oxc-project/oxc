@@ -32,6 +32,7 @@ impl<'a> ParserImpl<'a> {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
         self.expect(Kind::RCurly);
+        self.stats.add_node();
         self.ast.alloc_object_expression(self.end_span(span), object_expression_properties)
     }
 
@@ -76,6 +77,7 @@ impl<'a> ParserImpl<'a> {
                 asterisk_token,
                 FunctionKind::ObjectMethod,
             );
+            self.stats.add_node();
             return self.ast.alloc_object_property(
                 self.end_span(span),
                 PropertyKind::Init,
@@ -98,6 +100,8 @@ impl<'a> ParserImpl<'a> {
 
         if is_shorthand_property_assignment {
             if let PropertyKey::StaticIdentifier(identifier_name) = key {
+                self.stats.add_reference();
+                self.stats.add_node();
                 let identifier_reference =
                     self.ast.identifier_reference(identifier_name.span, identifier_name.name);
                 let value = Expression::Identifier(self.alloc(identifier_reference.clone()));
@@ -115,6 +119,7 @@ impl<'a> ParserImpl<'a> {
                     );
                     self.state.cover_initialized_name.insert(span, expr);
                 }
+                self.stats.add_node();
                 self.ast.alloc_object_property(
                     self.end_span(span),
                     PropertyKind::Init,
@@ -138,6 +143,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
         let argument = self.parse_assignment_expression_or_higher();
+        self.stats.add_node(); // SpreadElement
         self.ast.alloc_spread_element(self.end_span(span), argument)
     }
 
@@ -151,6 +157,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Box<'a, ObjectProperty<'a>> {
         self.expect(Kind::Colon);
         let value = self.parse_assignment_expression_or_higher();
+        self.stats.add_node();
         self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Init,
@@ -215,6 +222,7 @@ impl<'a> ParserImpl<'a> {
             true,
             diagnostics::modifier_cannot_be_used_here,
         );
+        self.stats.add_node();
         self.ast.alloc_object_property(
             self.end_span(span),
             kind,

@@ -13,7 +13,7 @@ use oxc::{
     codegen::{CodegenOptions, CodegenReturn},
     diagnostics::OxcDiagnostic,
     minifier::CompressOptions,
-    parser::{ParseOptions, ParserReturn},
+    parser::{ParseOptions, ParserReturn, Stats},
     regular_expression::{LiteralParser, Options},
     semantic::SemanticBuilderReturn,
     span::{ContentEq, SourceType, Span},
@@ -104,11 +104,12 @@ impl CompilerInterface for Driver {
     fn after_transform(
         &mut self,
         program: &mut Program<'_>,
+        stats: Stats,
         transformer_return: &mut TransformerReturn,
     ) -> ControlFlow<()> {
         if self.check_semantic
             && let Some(errors) =
-                check_semantic_after_transform(&transformer_return.scoping, program)
+                check_semantic_after_transform(&transformer_return.scoping, program, stats)
         {
             self.errors.extend(errors);
             return ControlFlow::Break(());

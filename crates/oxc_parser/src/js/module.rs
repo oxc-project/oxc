@@ -54,6 +54,7 @@ impl<'a> ParserImpl<'a> {
             return self.fatal_error(error);
         }
         self.ctx = self.ctx.and_in(has_in);
+        self.stats.add_node(); // ImportExpression
         let expr =
             self.ast.alloc_import_expression(self.end_span(span), expression, arguments, phase);
         self.module_record_builder.visit_import_expression(&expr);
@@ -204,6 +205,7 @@ impl<'a> ParserImpl<'a> {
                 match identifier_after_import {
                     Some(identifier_after_import) => {
                         // Special case: `import type from 'source'` where we already consumed `type` and `from`
+                        self.stats.add_node(); // ImportDefaultSpecifier
                         Some(self.ast.vec1(
                             self.ast.import_declaration_specifier_import_default_specifier(
                                 identifier_after_import.span,
@@ -232,6 +234,7 @@ impl<'a> ParserImpl<'a> {
         self.asi();
         let span = self.end_span(span);
 
+        self.stats.add_node(); // ImportDeclaration
         let import_decl = self.ast.alloc_import_declaration(
             span,
             specifiers,
@@ -265,6 +268,7 @@ impl<'a> ParserImpl<'a> {
 
         if let Some(default_specifier) = default_specifier {
             let default_span = default_specifier.span;
+            self.stats.add_node(); // ImportDefaultSpecifier
             specifiers.push(self.ast.import_declaration_specifier_import_default_specifier(
                 default_specifier.span,
                 default_specifier,
@@ -324,6 +328,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::As);
         let local = self.parse_binding_identifier();
         let span = self.end_span(span);
+        self.stats.add_node(); // ImportNamespaceSpecifier
         self.ast.import_declaration_specifier_import_namespace_specifier(span, local)
     }
 
@@ -375,6 +380,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
+        self.stats.add_node(); // WithClause
         Some(self.ast.with_clause(self.end_span(span), keyword, with_entries))
     }
 
@@ -391,6 +397,7 @@ impl<'a> ParserImpl<'a> {
             ));
         }
         let value = self.parse_literal_string();
+        self.stats.add_node(); // ImportAttribute
         self.ast.import_attribute(self.end_span(span), key, value)
     }
 
@@ -440,6 +447,7 @@ impl<'a> ParserImpl<'a> {
                 // being created. It's an export not an import.
                 let stmt = self.parse_import_declaration(import_span, false);
                 if stmt.is_declaration() {
+                    self.stats.add_node(); // ExportNamedDeclaration
                     let export_named_decl = self.ast.alloc_export_named_declaration(
                         self.end_span(span),
                         Some(stmt.into_declaration()),
@@ -469,6 +477,7 @@ impl<'a> ParserImpl<'a> {
                 let modifiers = self.parse_modifiers(false, false);
                 let class_decl = self.parse_class_declaration(class_span, &modifiers, decorators);
                 let decl = Declaration::ClassDeclaration(class_decl);
+                self.stats.add_node(); // ExportNamedDeclaration
                 let export_named_decl = self.ast.alloc_export_named_declaration(
                     self.end_span(span),
                     Some(decl),
@@ -593,6 +602,8 @@ impl<'a> ParserImpl<'a> {
                         }
 
                         // `local` becomes a reference for `export { local }`.
+                        self.stats.add_reference();
+                        self.stats.add_node();
                         specifier.local = ModuleExportName::IdentifierReference(
                             self.ast.identifier_reference(ident.span, ident.name.as_str()),
                         );
@@ -605,6 +616,7 @@ impl<'a> ParserImpl<'a> {
 
         self.asi();
         let span = self.end_span(span);
+        self.stats.add_node(); // ExportNamedDeclaration
         let export_named_decl = self.ast.alloc_export_named_declaration(
             span,
             None,
@@ -639,6 +651,7 @@ impl<'a> ParserImpl<'a> {
             ImportOrExportKind::Value
         };
         self.ctx = reserved_ctx;
+        self.stats.add_node(); // ExportNamedDeclaration
         let export_named_decl = self.ast.alloc_export_named_declaration(
             self.end_span(span),
             Some(declaration),
@@ -666,6 +679,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_remap(Kind::Default);
         let declaration = self.parse_export_default_declaration_kind(decorators);
         let span = self.end_span(span);
+        self.stats.add_node(); // ExportDefaultDeclaration
         let export_default_decl = self.ast.alloc_export_default_declaration(span, declaration);
         if stmt_ctx.is_top_level() {
             self.module_record_builder
@@ -809,6 +823,7 @@ impl<'a> ParserImpl<'a> {
         let with_clause = self.parse_import_attributes();
         self.asi();
         let span = self.end_span(span);
+        self.stats.add_node(); // ExportAllDeclaration
         let export_all_decl =
             self.ast.alloc_export_all_declaration(span, exported, source, with_clause, export_kind);
         if stmt_ctx.is_top_level() {
@@ -905,6 +920,9 @@ impl<'a> ParserImpl<'a> {
                 // { type something ...? }
                 // { type "something" ...? }
                 kind = ImportOrExportKind::Type;
+                // The `type` keyword was parsed as an IdentifierName on line 840 but is being
+                // discarded since it's a type modifier, not an actual import/export name.
+                self.stats.subtract_node();
                 check_identifier_token = self.cur_token();
                 name = self.parse_module_export_name();
             }
@@ -938,6 +956,18 @@ impl<'a> ParserImpl<'a> {
                     ));
                 }
 
+                self.stats.add_symbol();
+                self.stats.add_node(); // ImportSpecifier
+                self.stats.add_node(); // BindingIdentifier for local
+                // When property_name exists and name is an identifier, the IdentifierName in name
+                // was counted when parsed but is NOT placed in the AST (only used to create
+                // BindingIdentifier). We need to subtract that count.
+                // When property_name is None, name.clone() is used for imported, but the original
+                // name is still only used for creating BindingIdentifier (not placed in AST),
+                // so no adjustment is needed.
+                if property_name.is_some() && name.is_identifier() {
+                    self.stats.subtract_node();
+                }
                 ImportOrExportSpecifier::Import(self.ast.import_specifier(
                     self.end_span(specifier_span),
                     property_name.unwrap_or_else(|| name.clone()),
@@ -955,8 +985,14 @@ impl<'a> ParserImpl<'a> {
 
                 let exported = match property_name {
                     Some(property_name) => property_name,
-                    None => name.clone(),
+                    None => {
+                        // Cloning creates a copy of the IdentifierName/StringLiteral that will be
+                        // visited separately by the visitor, so we need to count it.
+                        self.stats.add_node();
+                        name.clone()
+                    }
                 };
+                self.stats.add_node(); // ExportSpecifier
                 ImportOrExportSpecifier::Export(self.ast.export_specifier(
                     self.end_span(specifier_span),
                     exported,

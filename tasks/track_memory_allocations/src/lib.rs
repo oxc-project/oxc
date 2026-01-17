@@ -149,13 +149,18 @@ pub fn run() -> Result<(), io::Error> {
         assert!(parsed.errors.is_empty());
 
         // Transform TypeScript to ESNext before minifying (minifier only works on esnext)
-        let scoping = SemanticBuilder::new().build(&parsed.program).semantic.into_scoping();
+        let scoping =
+            SemanticBuilder::new().build(&parsed.program, parsed.stats).semantic.into_scoping();
         let transform_options = TransformOptions::from_target("esnext").unwrap();
         let _ =
             Transformer::new(&allocator, std::path::Path::new(&file.file_name), &transform_options)
                 .build_with_scoping(scoping, &mut parsed.program);
 
-        Minifier::new(minifier_options.clone()).minify(&allocator, &mut parsed.program);
+        Minifier::new(minifier_options.clone()).minify(
+            &allocator,
+            &mut parsed.program,
+            parsed.stats,
+        );
     }
 
     for file in files.files() {
@@ -181,7 +186,7 @@ pub fn run() -> Result<(), io::Error> {
         ));
 
         let (scoping, semantic_stats) = record_stats_in(&allocator, || {
-            SemanticBuilder::new().build(&parsed.program).semantic.into_scoping()
+            SemanticBuilder::new().build(&parsed.program, parsed.stats).semantic.into_scoping()
         });
 
         semantic_out.push_str(&format_table_row(
@@ -199,7 +204,7 @@ pub fn run() -> Result<(), io::Error> {
                 .build_with_scoping(scoping, &mut parsed.program);
 
         let ((), minifier_stats) = record_stats_in(&allocator, || {
-            Minifier::new(minifier_options).minify(&allocator, &mut parsed.program);
+            Minifier::new(minifier_options).minify(&allocator, &mut parsed.program, parsed.stats);
         });
 
         minifier_out.push_str(&format_table_row(

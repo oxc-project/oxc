@@ -254,10 +254,10 @@ mod test {
 
     fn collect(opts: MangleOptionsKeepNames, source_text: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-        assert!(!ret.panicked, "{source_text}");
-        assert!(ret.errors.is_empty(), "{source_text}");
-        let ret = SemanticBuilder::new().build(&ret.program);
+        let parser_ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+        assert!(!parser_ret.panicked, "{source_text}");
+        assert!(parser_ret.errors.is_empty(), "{source_text}");
+        let ret = SemanticBuilder::new().build(&parser_ret.program, parser_ret.stats);
         assert!(ret.errors.is_empty(), "{source_text}");
         let semantic = ret.semantic;
         let symbols = collect_name_symbols(opts, semantic.scoping(), semantic.nodes());

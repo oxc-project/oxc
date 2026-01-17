@@ -68,6 +68,8 @@ impl<'a> ParserImpl<'a> {
         }
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.stats.add_reference();
+        self.stats.add_node();
         self.ast.identifier_reference(span, name)
     }
 
@@ -85,6 +87,8 @@ impl<'a> ParserImpl<'a> {
         }
         self.check_identifier(cur, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.stats.add_symbol();
+        self.stats.add_node();
         self.ast.binding_identifier(span, name)
     }
 
@@ -95,6 +99,7 @@ impl<'a> ParserImpl<'a> {
         }
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.stats.add_node();
         self.ast.label_identifier(span, name)
     }
 
@@ -103,12 +108,14 @@ impl<'a> ParserImpl<'a> {
             return self.unexpected();
         }
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        self.stats.add_node();
         self.ast.identifier_name(span, name)
     }
 
     /// Parse keyword kind as identifier
     pub(crate) fn parse_keyword_identifier(&mut self, kind: Kind) -> IdentifierName<'a> {
         let (span, name) = self.parse_identifier_kind(kind);
+        self.stats.add_node();
         self.ast.identifier_name(span, name)
     }
 
@@ -150,6 +157,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.cur_token().span();
         let name = Atom::from(self.cur_string());
         self.bump_any();
+        self.stats.add_node();
         self.ast.private_identifier(span, name)
     }
 
@@ -250,6 +258,7 @@ impl<'a> ParserImpl<'a> {
         let mut expression = if expressions.len() == 1 {
             expressions.remove(0)
         } else {
+            self.stats.add_node();
             self.ast.expression_sequence(expr_span, expressions)
         };
 
@@ -270,6 +279,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         if self.options.preserve_parens {
+            self.stats.add_node();
             self.ast.expression_parenthesized(self.end_span(span), expression)
         } else {
             expression
@@ -280,6 +290,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_this_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         self.bump_any();
+        self.stats.add_node();
         self.ast.expression_this(self.end_span(span))
     }
 
@@ -320,12 +331,14 @@ impl<'a> ParserImpl<'a> {
             _ => return self.unexpected(),
         };
         self.bump_any();
+        self.stats.add_node();
         self.ast.boolean_literal(self.end_span(span), value)
     }
 
     pub(crate) fn parse_literal_null(&mut self) -> NullLiteral {
         let span = self.cur_token().span();
         self.bump_any(); // bump `null`
+        self.stats.add_node();
         self.ast.null_literal(span)
     }
 
@@ -364,6 +377,7 @@ impl<'a> ParserImpl<'a> {
             _ => return self.unexpected(),
         };
         self.bump_any();
+        self.stats.add_node();
         self.ast.numeric_literal(span, value, Some(Atom::from(src)), base)
     }
 
@@ -384,6 +398,7 @@ impl<'a> ParserImpl<'a> {
         let value = parse_big_int(src, number_kind, has_separator, self.ast.allocator);
 
         self.bump_any();
+        self.stats.add_node();
         self.ast.big_int_literal(span, value, Some(Atom::from(raw)), base)
     }
 
@@ -419,6 +434,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::reg_exp_flag_u_and_v(span));
         }
 
+        self.stats.add_node();
         self.ast.reg_exp_literal(span, RegExp { pattern, flags }, Some(Atom::from(raw)))
     }
 
@@ -456,6 +472,7 @@ impl<'a> ParserImpl<'a> {
         let value = self.cur_string();
         let lone_surrogates = self.cur_token().lone_surrogates();
         self.bump_any();
+        self.stats.add_node();
         self.ast.string_literal_with_lone_surrogates(span, value, Some(raw), lone_surrogates)
     }
 
@@ -480,6 +497,7 @@ impl<'a> ParserImpl<'a> {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
         self.expect(Kind::RBrack);
+        self.stats.add_node();
         self.ast.expression_array(self.end_span(span), elements)
     }
 
@@ -494,7 +512,8 @@ impl<'a> ParserImpl<'a> {
     /// Elision :
     ///     ,
     ///    Elision ,
-    pub(crate) fn parse_elision(&self) -> ArrayExpressionElement<'a> {
+    pub(crate) fn parse_elision(&mut self) -> ArrayExpressionElement<'a> {
+        self.stats.add_node();
         self.ast.array_expression_element_elision(self.cur_token().span())
     }
 
@@ -545,6 +564,7 @@ impl<'a> ParserImpl<'a> {
             _ => unreachable!("parse_template_literal"),
         };
 
+        self.stats.add_node();
         self.ast.template_literal(self.end_span(span), quasis, expressions)
     }
 
@@ -570,6 +590,7 @@ impl<'a> ParserImpl<'a> {
         if in_optional_chain {
             self.error(diagnostics::optional_chain_tagged_template(quasi.span));
         }
+        self.stats.add_node();
         self.ast.expression_tagged_template(span, lhs, type_arguments, quasi)
     }
 
@@ -614,6 +635,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
+        self.stats.add_node();
         self.ast.template_element_with_lone_surrogates(
             span,
             TemplateElementValue { raw, cooked },
@@ -635,6 +657,7 @@ impl<'a> ParserImpl<'a> {
                         let property = self.parse_keyword_identifier(Kind::Meta);
                         let span = self.end_span(span);
                         self.module_record_builder.visit_import_meta(span);
+                        self.stats.add_node();
                         self.ast.expression_meta_property(span, meta, property)
                     }
                     // `import.source(expr)`
@@ -676,6 +699,7 @@ impl<'a> ParserImpl<'a> {
             )
         });
         self.expect(Kind::RParen);
+        self.stats.add_node(); // V8IntrinsicExpression
         self.ast.expression_v_8_intrinsic(self.end_span(span), name, arguments)
     }
 
@@ -713,7 +737,8 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn map_to_chain_expression(&self, span: Span, expr: Expression<'a>) -> Expression<'a> {
+    fn map_to_chain_expression(&mut self, span: Span, expr: Expression<'a>) -> Expression<'a> {
+        self.stats.add_node();
         match expr {
             match_member_expression!(Expression) => {
                 let member_expr = expr.into_member_expression();
@@ -760,6 +785,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::unexpected_super(span));
         }
 
+        self.stats.add_node();
         self.ast.expression_super(span)
     }
 
@@ -831,6 +857,7 @@ impl<'a> ParserImpl<'a> {
 
             if !question_dot && self.is_ts {
                 if !self.cur_token().is_on_new_line() && self.eat(Kind::Bang) {
+                    self.stats.add_node();
                     lhs = self.ast.expression_ts_non_null(self.end_span(lhs_span), lhs);
                     continue;
                 }
@@ -839,6 +866,7 @@ impl<'a> ParserImpl<'a> {
                     && let Some(arguments) =
                         self.try_parse(Self::parse_type_arguments_in_expression)
                 {
+                    self.stats.add_node();
                     lhs = self.ast.expression_ts_instantiation(
                         self.end_span(lhs_span),
                         lhs,
@@ -860,6 +888,7 @@ impl<'a> ParserImpl<'a> {
         lhs: Expression<'a>,
         optional: bool,
     ) -> Expression<'a> {
+        self.stats.add_node();
         Expression::from(if self.cur_kind() == Kind::PrivateIdentifier {
             let private_ident = self.parse_private_identifier();
             self.ast.member_expression_private_field_expression(
@@ -886,17 +915,24 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `[`
         let property = self.context_add(Context::In, Self::parse_expr);
         self.expect(Kind::RBrack);
+        self.stats.add_node();
         self.ast.member_expression_computed(self.end_span(lhs_span), lhs, property, optional).into()
     }
 
     /// [NewExpression](https://tc39.es/ecma262/#sec-new-operator)
     fn parse_new_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
-        let identifier = self.parse_keyword_identifier(Kind::New);
+        // Don't parse the `new` keyword as IdentifierName yet - only do it if parsing new.target
+        let new_span = self.cur_token().span();
+        self.bump_any(); // bump `new`
 
         if self.eat(Kind::Dot) {
+            // Now we need the IdentifierName for `new`
+            self.stats.add_node();
+            let identifier = self.ast.identifier_name(new_span, Atom::from("new"));
             return if self.at(Kind::Target) {
                 let property = self.parse_keyword_identifier(Kind::Target);
+                self.stats.add_node();
                 self.ast.expression_meta_property(self.end_span(span), identifier, property)
             } else {
                 self.bump_any();
@@ -959,6 +995,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::new_optional_chain(span));
         }
 
+        self.stats.add_node();
         self.ast.expression_new(span, callee, type_arguments, arguments)
     }
 
@@ -1040,6 +1077,7 @@ impl<'a> ParserImpl<'a> {
             )
         });
         self.expect(Kind::RParen);
+        self.stats.add_node();
         self.ast.expression_call(
             self.end_span(lhs_span),
             lhs,
@@ -1066,6 +1104,7 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             let argument = self.parse_unary_expression_or_higher(lhs_span);
             let argument = SimpleAssignmentTarget::cover(argument, self);
+            self.stats.add_node();
             return self.ast.expression_update(self.end_span(lhs_span), operator, true, argument);
         }
 
@@ -1081,6 +1120,7 @@ impl<'a> ParserImpl<'a> {
             let operator = map_update_operator(post_kind);
             self.bump_any();
             let lhs = SimpleAssignmentTarget::cover(lhs, self);
+            self.stats.add_node();
             return self.ast.expression_update(self.end_span(span), operator, false, lhs);
         }
         lhs
@@ -1130,6 +1170,7 @@ impl<'a> ParserImpl<'a> {
         if has_pure_comment {
             Self::set_pure_on_call_or_new_expr(&mut argument);
         }
+        self.stats.add_node();
         self.ast.expression_unary(self.end_span(span), operator, argument)
     }
 
@@ -1149,6 +1190,7 @@ impl<'a> ParserImpl<'a> {
                 let error = diagnostics::private_in_private(private_in_expr.span);
                 return self.fatal_error(error);
             }
+            self.stats.add_node();
             self.ast.expression_private_in(self.end_span(lhs_span), left, right)
         } else {
             let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
@@ -1204,6 +1246,7 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 let type_annotation = self.parse_ts_type();
                 let span = self.end_span(lhs_span);
+                self.stats.add_node();
                 lhs = if kind == Kind::As {
                     if !self.is_ts {
                         self.error(diagnostics::as_in_ts(span));
@@ -1243,6 +1286,7 @@ impl<'a> ParserImpl<'a> {
                         self.error(diagnostics::mixed_coalesce(span));
                     }
                 }
+                self.stats.add_node();
                 self.ast.expression_logical(span, lhs, op, rhs)
             } else if kind.is_binary_operator() {
                 let span = self.end_span(lhs_span);
@@ -1257,6 +1301,7 @@ impl<'a> ParserImpl<'a> {
                 {
                     self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                 }
+                self.stats.add_node();
                 self.ast.expression_binary(span, lhs, op, rhs)
             } else {
                 break;
@@ -1288,6 +1333,7 @@ impl<'a> ParserImpl<'a> {
         self.expect_conditional_alternative(question_span);
         let alternate =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+        self.stats.add_node();
         self.ast.expression_conditional(self.end_span(lhs_span), lhs, consequent, alternate)
     }
 
@@ -1441,6 +1487,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         let right =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+        self.stats.add_node();
         self.ast.expression_assignment(self.end_span(span), operator, left, right)
     }
 
@@ -1455,6 +1502,7 @@ impl<'a> ParserImpl<'a> {
             let expression = self.parse_assignment_expression_or_higher();
             expressions.push(expression);
         }
+        self.stats.add_node();
         self.ast.expression_sequence(self.end_span(span), expressions)
     }
 
@@ -1468,6 +1516,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         let argument =
             self.context_add(Context::Await, |p| p.parse_simple_unary_expression(lhs_span));
+        self.stats.add_node();
         self.ast.expression_await(self.end_span(span), argument)
     }
 
@@ -1502,6 +1551,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump @
         let expr = self.context_add(Context::Decorator, Self::parse_lhs_expression_or_higher);
+        self.stats.add_node();
         self.ast.decorator(self.end_span(span), expr)
     }
 
