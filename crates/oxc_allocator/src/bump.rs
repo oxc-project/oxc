@@ -828,7 +828,7 @@ mod tests {
     #[test]
     fn test_overaligned() {
         #[repr(align(64))]
-        struct Aligned64(#[allow(dead_code)] [u8; 64]);
+        struct Aligned64(#[expect(dead_code)] [u8; 64]);
 
         let bump = Bump::new();
         let x = bump.alloc(Aligned64([42; 64]));
