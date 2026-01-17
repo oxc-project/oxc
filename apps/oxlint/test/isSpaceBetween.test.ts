@@ -1,7 +1,8 @@
 import assert from "node:assert";
 import { describe, it, expect, beforeEach } from "vitest";
 import { parse as parseRaw } from "../src-js/package/parse.ts";
-import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";import { buffers } from "../src-js/plugins/lint.ts";
+import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
+import { buffers } from "../src-js/plugins/lint.ts";
 import {
   ast,
   initAst,
