@@ -248,7 +248,8 @@ impl Bump {
         unsafe {
             let ptr = *self.ptr.get();
             let start = *self.start.get();
-            let size = round_up_to(layout.size(), ALIGN);
+            // Round size up to alignment so that `aligned_ptr - size` remains aligned
+            let size = round_up_to(layout.size(), layout.align());
 
             // Try to fit in current chunk if we have one
             if !ptr.is_null() {
