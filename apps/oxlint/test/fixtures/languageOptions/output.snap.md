@@ -4,9 +4,9 @@
 # stdout
 ```
   x language-options-plugin(lang): languageOptions:
-  | sourceType: script
+  | sourceType: commonjs
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"script"}
+  | parserOptions: {"sourceType":"commonjs"}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.cjs:1:1]

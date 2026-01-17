@@ -194,7 +194,7 @@ impl From<FileExtension> for SourceType {
 
         let module_kind = match file_ext {
             Js | Tsx | Ts | Jsx | Mts | Mjs => ModuleKind::Module,
-            Cjs | Cts => ModuleKind::Script,
+            Cjs | Cts => ModuleKind::CommonJS,
         };
 
         let variant = match file_ext {
@@ -665,8 +665,13 @@ mod tests {
 
         assert!(!ts.is_script());
         assert!(!mts.is_script());
-        assert!(cts.is_script());
+        assert!(!cts.is_script());
         assert!(!tsx.is_script());
+
+        assert!(!ts.is_commonjs());
+        assert!(!mts.is_commonjs());
+        assert!(cts.is_commonjs());
+        assert!(!tsx.is_commonjs());
 
         assert!(ts.is_strict());
         assert!(mts.is_strict());
@@ -700,7 +705,11 @@ mod tests {
 
         assert!(!dts.is_script());
         assert!(!dmts.is_script());
-        assert!(dcts.is_script());
+        assert!(!dcts.is_script());
+
+        assert!(!dts.is_commonjs());
+        assert!(!dmts.is_commonjs());
+        assert!(dcts.is_commonjs());
 
         assert!(dts.is_strict());
         assert!(dmts.is_strict());

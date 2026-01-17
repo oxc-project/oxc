@@ -316,7 +316,10 @@ mod test {
         let cases = [
             ("<script>debugger</script>", Some(SourceType::mjs())),
             ("<script lang = 'tsx' >debugger</script>", Some(SourceType::tsx())),
-            (r#"<script lang = "cjs" >debugger</script>"#, Some(SourceType::cjs())),
+            (
+                r#"<script lang = "cjs" >debugger</script>"#,
+                Some(SourceType::from_extension("cjs").unwrap()),
+            ),
             ("<script lang=tsx>debugger</script>", Some(SourceType::tsx())),
             ("<script lang = 'xxx'>debugger</script>", None),
             (r#"<script lang = "xxx">debugger</script>"#, None),

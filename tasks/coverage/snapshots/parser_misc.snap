@@ -1,46 +1,8 @@
 parser_misc Summary:
 AST Parsed     : 59/59 (100.00%)
-Positive Passed: 55/59 (93.22%)
+Positive Passed: 59/59 (100.00%)
 Negative Passed: 128/129 (99.22%)
 Expect Syntax Error: tasks/coverage/misc/fail/script-top-level-using.js
-
-Expect to Parse: tasks/coverage/misc/pass/commonjs-top-level-new-target.cjs
-
-  × Unexpected new.target expression
-   ╭─[misc/pass/commonjs-top-level-new-target.cjs:2:1]
- 1 │ // CommonJS allows top-level new.target because the file is wrapped in a function
- 2 │ new.target;
-   · ──────────
-   ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-Expect to Parse: tasks/coverage/misc/pass/commonjs-top-level-new-target.cts
-
-  × Unexpected new.target expression
-   ╭─[misc/pass/commonjs-top-level-new-target.cts:2:1]
- 1 │ // TypeScript CommonJS allows top-level new.target
- 2 │ new.target;
-   · ──────────
-   ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-Expect to Parse: tasks/coverage/misc/pass/commonjs-top-level-return.cjs
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-   ╭─[misc/pass/commonjs-top-level-return.cjs:2:1]
- 1 │ // CommonJS allows top-level return because the file is wrapped in a function
- 2 │ return 42;
-   · ──────
-   ╰────
-
-Expect to Parse: tasks/coverage/misc/pass/commonjs-top-level-return.cts
-
-  × TS(1108): A 'return' statement can only be used within a function body.
-   ╭─[misc/pass/commonjs-top-level-return.cts:2:1]
- 1 │ // TypeScript CommonJS allows top-level return
- 2 │ return 42;
-   · ──────
-   ╰────
 
 
   × Cannot assign to 'arguments' in strict mode
