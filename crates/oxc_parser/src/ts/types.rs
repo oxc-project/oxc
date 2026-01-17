@@ -898,12 +898,34 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
-        let (elements, _) = self.parse_delimited_list(
-            Kind::RBrack,
-            Kind::Comma,
-            opening_span,
-            Self::parse_tuple_element,
-        );
+
+        let mut has_rest_type = false;
+        let (elements, _) =
+            self.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |me| {
+                let tuple = me.parse_tuple_element();
+                if matches!(tuple, TSTupleElement::TSRestType(_)) {
+                    has_rest_type = true;
+                } else {
+                    // check for array type, because unknown types can be destructed, example of valid code:
+                    // type C<T extends unknown[]> = [...string[], ...T];
+                    // example of invalid code:
+                    // type C<T extends unknown[]> = [...string[], ...T[]];
+                    let is_array_or_rest_array = match &tuple {
+                        TSTupleElement::TSArrayType(_) => true,
+                        TSTupleElement::TSRestType(rest) => {
+                            matches!(rest.type_annotation, TSType::TSArrayType(_))
+                        }
+                        _ => false,
+                    };
+                    if has_rest_type && is_array_or_rest_array {
+                        me.error(diagnostics::rest_element_cannot_follow_another_rest_element(
+                            tuple.span(),
+                        ));
+                    }
+                }
+
+                tuple
+            });
         self.expect(Kind::RBrack);
         self.ast.ts_type_tuple_type(self.end_span(span), elements)
     }

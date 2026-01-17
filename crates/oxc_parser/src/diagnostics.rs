@@ -302,14 +302,6 @@ pub fn class_declaration(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// A class member cannot have the 'const' keyword. ts(1248)
-#[cold]
-pub fn const_class_member(span: Span) -> OxcDiagnostic {
-    ts_error("1248", "A class member cannot have the 'const' keyword.")
-        .with_help("Did you mean `readonly`?")
-        .with_label(span)
-}
-
 // 'extends' clause already seen. ts(1172)
 #[cold]
 pub fn extends_clause_already_seen(span: Span) -> OxcDiagnostic {
@@ -341,6 +333,20 @@ pub fn implements_clause_already_seen(span: Span, seen_span: Span) -> OxcDiagnos
     ts_error("1175", "'implements' clause already seen")
         .with_labels([seen_span, span])
         .with_help("Merge the two 'implements' clauses into one by a ','")
+}
+
+/// A class member cannot have the 'const' keyword. ts(1248)
+#[cold]
+pub fn const_class_member(span: Span) -> OxcDiagnostic {
+    ts_error("1248", "A class member cannot have the 'const' keyword.")
+        .with_help("Did you mean `readonly`?")
+        .with_label(span)
+}
+
+/// A rest element cannot follow another rest element. ts(1265)
+#[cold]
+pub fn rest_element_cannot_follow_another_rest_element(span: Span) -> OxcDiagnostic {
+    ts_error("1265", "A rest element cannot follow another rest element.").with_label(span)
 }
 
 // A type-only import can specify a default import or named bindings, but not both. ts(1363)
