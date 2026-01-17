@@ -296,7 +296,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn can_case_be_inlined(case: &SwitchCase<'a>, ctx: &Ctx<'a, '_>) -> bool {
+    fn can_case_be_inlined(case: &SwitchCase<'a>, ctx: &Ctx<'a, '_>) -> bool {
         if case.test.as_ref().is_some_and(|test| test.may_have_side_effects(ctx)) {
             return false;
         }
