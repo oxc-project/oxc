@@ -12,7 +12,7 @@ use std::ptr::NonNull;
 
 use crate::{
     Allocator,
-    bump::{Bump, ChunkFooter, ALIGN, FOOTER_SIZE},
+    bump::{ALIGN, Bump, ChunkFooter, FOOTER_SIZE},
 };
 
 impl Allocator {
