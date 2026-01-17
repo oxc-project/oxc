@@ -10,6 +10,9 @@ use allocator_api2::alloc::{AllocError, Allocator};
 unsafe impl Allocator for &crate::Allocator {
     #[inline(always)]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_allocation();
+
         self.bump().allocate(layout)
     }
 
@@ -27,6 +30,9 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_reallocation();
+
         unsafe { self.bump().shrink(ptr, old_layout, new_layout) }
     }
 
@@ -37,6 +43,9 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_reallocation();
+
         unsafe { self.bump().grow(ptr, old_layout, new_layout) }
     }
 
@@ -47,6 +56,9 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_reallocation();
+
         unsafe { self.bump().grow_zeroed(ptr, old_layout, new_layout) }
     }
 }
