@@ -328,5 +328,6 @@ fn test() {
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .test_and_snapshot();
 }

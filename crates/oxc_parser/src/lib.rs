@@ -369,6 +369,13 @@ struct ParserImpl<'a> {
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
 
+    /// Errors that are only valid if the file is determined to be a Script (not a Module).
+    /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
+    /// until we know whether the file is ESM or Script.
+    /// If resolved to Module → discard these errors.
+    /// If resolved to Script → emit these errors.
+    deferred_script_errors: Vec<OxcDiagnostic>,
+
     fatal_error: Option<FatalError>,
 
     /// The current parsing token
@@ -412,6 +419,7 @@ impl<'a> ParserImpl<'a> {
             source_type,
             source_text,
             errors: vec![],
+            deferred_script_errors: vec![],
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
@@ -477,11 +485,14 @@ impl<'a> ParserImpl<'a> {
 
         let source_type = program.source_type;
         if source_type.is_unambiguous() {
-            program.source_type = if module_record.has_module_syntax {
-                source_type.with_module(true)
+            if module_record.has_module_syntax {
+                // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
+                program.source_type = source_type.with_module(true);
             } else {
-                source_type.with_script(true)
-            };
+                // Resolved to Script - emit deferred script errors
+                program.source_type = source_type.with_script(true);
+                errors.extend(self.deferred_script_errors);
+            }
         }
 
         ParserReturn {

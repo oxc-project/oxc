@@ -102,7 +102,7 @@ describe("parse", () => {
           declare: false,
         },
       ],
-      sourceType: "module",
+      sourceType: "script",
       hashbang: null,
     };
 
@@ -132,7 +132,7 @@ describe("parse", () => {
           kind: "let",
         },
       ],
-      sourceType: "module",
+      sourceType: "script",
       hashbang: null,
     };
 

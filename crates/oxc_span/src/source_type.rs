@@ -193,7 +193,11 @@ impl From<FileExtension> for SourceType {
         };
 
         let module_kind = match file_ext {
-            Js | Tsx | Ts | Jsx | Mts | Mjs => ModuleKind::Module,
+            // Ambiguous extensions need content-based detection (import/export → ESM, otherwise Script)
+            Js | Jsx | Ts | Tsx => ModuleKind::Unambiguous,
+            // Explicit ESM extensions
+            Mts | Mjs => ModuleKind::Module,
+            // Explicit CommonJS extensions
             Cjs | Cts => ModuleKind::CommonJS,
         };
 
@@ -656,27 +660,19 @@ mod tests {
             assert!(!ty.is_javascript());
         }
 
-        assert_eq!(SourceType::ts(), ts);
-
-        assert!(ts.is_module());
+        // .ts and .tsx use Unambiguous (content-based detection)
+        assert!(ts.is_unambiguous());
+        assert!(tsx.is_unambiguous());
+        // .mts is explicit ESM
         assert!(mts.is_module());
-        assert!(!cts.is_module());
-        assert!(tsx.is_module());
-
-        assert!(!ts.is_script());
-        assert!(!mts.is_script());
-        assert!(!cts.is_script());
-        assert!(!tsx.is_script());
-
-        assert!(!ts.is_commonjs());
-        assert!(!mts.is_commonjs());
+        // .cts is explicit CommonJS
         assert!(cts.is_commonjs());
-        assert!(!tsx.is_commonjs());
 
-        assert!(ts.is_strict());
+        // Only explicit modules are strict
+        assert!(!ts.is_strict()); // Unambiguous is not strict until resolved
         assert!(mts.is_strict());
         assert!(!cts.is_strict());
-        assert!(tsx.is_strict());
+        assert!(!tsx.is_strict()); // Unambiguous is not strict until resolved
 
         assert!(!ts.is_jsx());
         assert!(!mts.is_jsx());
@@ -697,21 +693,16 @@ mod tests {
             assert!(!ty.is_javascript());
         }
 
-        assert_eq!(SourceType::d_ts(), dts);
-
-        assert!(dts.is_module());
+        // .d.ts uses Unambiguous (content-based detection)
+        assert!(dts.is_unambiguous());
+        assert!(arbitrary.is_unambiguous());
+        // .d.mts is explicit ESM
         assert!(dmts.is_module());
-        assert!(!dcts.is_module());
-
-        assert!(!dts.is_script());
-        assert!(!dmts.is_script());
-        assert!(!dcts.is_script());
-
-        assert!(!dts.is_commonjs());
-        assert!(!dmts.is_commonjs());
+        // .d.cts is explicit CommonJS
         assert!(dcts.is_commonjs());
 
-        assert!(dts.is_strict());
+        // Only explicit modules are strict
+        assert!(!dts.is_strict());
         assert!(dmts.is_strict());
         assert!(!dcts.is_strict());
 
@@ -736,18 +727,21 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::mjs(), js);
-        assert_eq!(SourceType::jsx().with_module(true), jsx);
+        assert_eq!(SourceType::mjs(), mjs);
 
-        assert!(js.is_module());
+        // .js and .jsx use Unambiguous (content-based detection)
+        assert!(js.is_unambiguous());
+        assert!(jsx.is_unambiguous());
+        // .mjs is explicit ESM
         assert!(mjs.is_module());
+        // .cjs is explicit CommonJS
         assert!(!cjs.is_module());
-        assert!(jsx.is_module());
 
-        assert!(js.is_strict());
+        // Only explicit modules are strict
+        assert!(!js.is_strict()); // Unambiguous is not strict until resolved
         assert!(mjs.is_strict());
         assert!(!cjs.is_strict());
-        assert!(jsx.is_strict());
+        assert!(!jsx.is_strict()); // Unambiguous is not strict until resolved
 
         assert!(js.is_javascript());
         assert!(mjs.is_javascript());

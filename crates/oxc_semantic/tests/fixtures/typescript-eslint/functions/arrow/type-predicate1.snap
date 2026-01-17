@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
+        "flags": "ScopeFlags(Function | Arrow)",
         "id": 1,
         "node": "ArrowFunctionExpression",
         "symbols": [
@@ -28,7 +28,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

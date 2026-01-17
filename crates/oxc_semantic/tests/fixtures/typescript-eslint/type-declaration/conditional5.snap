@@ -13,7 +13,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 "children": [
                   {
                     "children": [],
-                    "flags": "ScopeFlags(StrictMode)",
+                    "flags": "ScopeFlags(0x0)",
                     "id": 4,
                     "node": "TSFunctionType",
                     "symbols": [
@@ -27,7 +27,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                     ]
                   }
                 ],
-                "flags": "ScopeFlags(StrictMode)",
+                "flags": "ScopeFlags(0x0)",
                 "id": 3,
                 "node": "TSFunctionType",
                 "symbols": [
@@ -41,7 +41,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
                 ]
               }
             ],
-            "flags": "ScopeFlags(StrictMode | TsConditional)",
+            "flags": "ScopeFlags(TsConditional)",
             "id": 2,
             "node": "TSConditionalType",
             "symbols": [
@@ -62,7 +62,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             ]
           }
         ],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "TSTypeAliasDeclaration",
         "symbols": [
@@ -83,7 +83,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [

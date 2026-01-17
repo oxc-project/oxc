@@ -239,7 +239,7 @@ fn test() {
 			import foo from 'bar';
 			vi.unmock(baz);
 			    ",
-        "const foo = await vi.hoisted(async () => {});",
+        "import 'vi';\nconst foo = await vi.hoisted(async () => {});",
     ];
 
     let fail = vec![
@@ -409,6 +409,7 @@ vi.mock(import('something'), () => bar);
     ];
 
     Tester::new(HoistedApisOnTop::NAME, HoistedApisOnTop::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .expect_fix(fix)
         .with_vitest_plugin(true)
         .test_and_snapshot();

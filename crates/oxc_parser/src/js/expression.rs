@@ -1460,7 +1460,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_await_expression(&mut self, lhs_span: u32) -> Expression<'a> {
         let span = self.start_span();
         if !self.ctx.has_await() {
-            self.error(diagnostics::await_expression(self.cur_token().span()));
+            // For `ModuleKind::Unambiguous`, defer the error until we know whether
+            // this is a Module (where top-level await is valid) or Script.
+            self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
         }
         self.bump_any();
         let argument =
@@ -1556,6 +1558,13 @@ impl<'a> ParserImpl<'a> {
 
         let token = self.cur_token();
         let kind = token.kind();
+
+        // For `await /regex/`, treat `/` as regex start (not division).
+        // In `await` context, `/` should always start a regex since `await` expects an expression.
+        if is_await && kind == Kind::Slash {
+            return !token.is_on_new_line();
+        }
+
         !token.is_on_new_line() && kind.is_after_await_or_yield()
     }
 }

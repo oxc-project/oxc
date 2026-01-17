@@ -1,4 +1,4 @@
-ts compatibility: 584/606 (96.37%)
+ts compatibility: 581/606 (95.87%)
 
 # Failed
 
@@ -6,6 +6,7 @@ ts compatibility: 584/606 (96.37%)
 | :-------- | :--------------: | :---------: |
 | jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
+| jsx/top-level-await/test.jsx | 💥 | 0.00% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
@@ -21,6 +22,8 @@ ts compatibility: 584/606 (96.37%)
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/mapped-type/break-mode/break-mode.ts | 💥 | 68.75% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
+| typescript/top-level-await/test.ts | 💥 | 0.00% |
+| typescript/top-level-await/test.tsx | 💥 | 0.00% |
 | typescript/union/union-parens.ts | 💥 | 92.59% |
 | typescript/union/comments/18106.ts | 💥 | 92.68% |
 | typescript/union/comments/18379.ts | 💥 | 87.27% |

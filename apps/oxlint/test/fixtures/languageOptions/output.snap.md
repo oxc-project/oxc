@@ -792,9 +792,9 @@
    `----
 
   x language-options-plugin(lang): languageOptions:
-  | sourceType: module
+  | sourceType: script
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"module"}
+  | parserOptions: {"sourceType":"script"}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.js:1:1]

@@ -2,7 +2,7 @@ commit: f5ccf434
 
 semantic_typescript Summary:
 AST Parsed     : 6167/6167 (100.00%)
-Positive Passed: 2665/6167 (43.21%)
+Positive Passed: 2666/6167 (43.23%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -733,19 +733,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayFlatMap.ts
 Unresolved references mismatch:
 after transform: ["ReadonlyArray"]
 rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayLiteralContextualType.ts
 Scope children mismatch:

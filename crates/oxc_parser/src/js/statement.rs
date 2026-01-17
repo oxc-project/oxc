@@ -295,7 +295,9 @@ impl<'a> ParserImpl<'a> {
         // [+Await]
         let r#await = if self.at(Kind::Await) {
             if !self.ctx.has_await() {
-                self.error(diagnostics::await_expression(self.cur_token().span()));
+                // For `ModuleKind::Unambiguous`, defer the error until we know whether
+                // this is a Module (where for-await is valid at top-level) or Script.
+                self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
             }
             self.bump_any();
             true
