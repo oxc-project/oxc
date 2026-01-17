@@ -172,6 +172,11 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
         return;
     }
 
+    // Pre-collect references once before CFG traversal
+    let references: Vec<_> = ctx.scoping()
+        .get_resolved_references(symbol_id)
+        .collect();
+
     let found_usages = neighbors_filtered_by_edge_weight(
         cfg.graph(),
         start_node_bb_id,
@@ -234,8 +239,7 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                     }
                 }
 
-                let references = ctx.scoping().get_resolved_references(symbol_id);
-                for reference in references {
+                for reference in &references {
                     let ref_node_id = reference.node_id();
                     let ref_span = ctx.nodes().get_node(ref_node_id).span();
 
