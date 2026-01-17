@@ -34,6 +34,11 @@ impl<'a> ModuleRecordBuilder<'a> {
         (self.module_record, errors)
     }
 
+    /// Returns true if the file contains module syntax (import/export declarations or import.meta).
+    pub fn has_module_syntax(&self) -> bool {
+        self.module_record.has_module_syntax
+    }
+
     pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
         let mut errors = vec![];
 

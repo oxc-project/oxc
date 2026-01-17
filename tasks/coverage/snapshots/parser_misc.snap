@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 57/57 (100.00%)
-Positive Passed: 57/57 (100.00%)
-Negative Passed: 131/131 (100.00%)
+AST Parsed     : 59/59 (100.00%)
+Positive Passed: 59/59 (100.00%)
+Negative Passed: 130/130 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -49,14 +49,6 @@ Negative Passed: 131/131 (100.00%)
    ·                ────
  8 │ 
    ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[misc/fail/babel-16776-s.js:1:1]
- 1 │ await /x.y/g;
-   · ─────
- 2 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Cannot use export statement outside a module
    ╭─[misc/fail/commonjs-export-statement.cjs:2:1]

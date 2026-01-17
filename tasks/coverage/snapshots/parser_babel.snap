@@ -2,7 +2,7 @@ commit: fc58af40
 
 parser_babel Summary:
 AST Parsed     : 2222/2234 (99.46%)
-Positive Passed: 2204/2234 (98.66%)
+Positive Passed: 2205/2234 (98.70%)
 Negative Passed: 1649/1697 (97.17%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
@@ -242,16 +242,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
  5 │     }
    ╰────
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/ambiguous-script/input.js
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/ambiguous-script/input.js:8:1]
- 7 │ await [ 0 ]
- 8 │ await / 0 /u
-   · ─────
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 
   × `await` is only allowed within async functions and at the top levels of modules
@@ -259,14 +249,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
  1 │ await 0
    · ─────
  2 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js:7:1]
- 6 │ await [ 0 ]
- 7 │ await / 0 /u
-   · ─────
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 

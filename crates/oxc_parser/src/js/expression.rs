@@ -1561,7 +1561,9 @@ impl<'a> ParserImpl<'a> {
 
         // For `await /regex/`, treat `/` as regex start (not division).
         // In `await` context, `/` should always start a regex since `await` expects an expression.
-        if is_await && kind == Kind::Slash {
+        // EXCEPTION: In unambiguous mode, don't do this. TypeScript initially parses `await` as
+        // identifier when `/` follows (treating `/` as division), then reparses if ESM is detected.
+        if is_await && kind == Kind::Slash && !self.source_type.is_unambiguous() {
             return !token.is_on_new_line();
         }
 
