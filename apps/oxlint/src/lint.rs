@@ -1486,13 +1486,24 @@ export { redundant };
     }
 
     #[test]
+    // Ensure the config validation works with vitest/no-hooks, which
+    // is an alias of jest/no-hooks.
+    fn test_invalid_config_invalid_config_with_rule_alias() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_with_rule_alias".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_invalid_config_in_override() {
         Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_multiple_rules() {
-        Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_multiple_rules".into())
+            .test_and_snapshot(&[]);
     }
 
     #[test]

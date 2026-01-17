@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/invalid_config_multiple_rules
+----------
+Failed to parse oxlint configuration file.
+
+  x Invalid configuration for rule `jest/no-hooks`: unknown field `foo`, expected `allow`, received `{ "foo": "bar" }`
+  | Invalid configuration for rule `no-return-assign`: unknown variant `foobar`, expected `always` or `except-parens`, received `"foobar"`
+
+----------
+CLI result: InvalidOptionConfig
+----------
