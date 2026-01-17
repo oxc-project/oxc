@@ -916,36 +916,70 @@ fn test_ascii_only() {
     test_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0 {\n});\n");
     test_minify_ascii("class 𐀀 extends π {}", "class \\u{10000} extends \\u03C0{}");
     test_minify_ascii("(class 𐀀 extends π {})", "(class \\u{10000} extends \\u03C0{});");
+
+    // ES5 target: non-BMP should use surrogate pairs \uD800\uDC00
+    // TODO: Uncomment when ES5 target is supported
+    // test_ascii_target_es5("'𐀀'", "\"\\uD800\\uDC00\";\n");
+    // test_ascii_target_es5("var 𐀀", "var \\uD800\\uDC00;\n"); // Invalid in ES5, but esbuild outputs this
 }
 
-/// Non-BMP property access should always use computed property syntax
-/// because identifiers can only use \uXXXX escapes (not \u{XXXXXX}).
+/// Property access with non-ASCII characters.
+/// - BMP characters (U+0000-U+FFFF) can use \uXXXX escapes in identifiers
+/// - Non-BMP characters (U+10000+) must use computed property syntax
 /// See: <https://github.com/oxc-project/oxc/issues/17068>
 #[test]
-fn test_non_bmp_property_access() {
+fn test_property_access_ascii() {
+    // BMP property access: can use \uXXXX escapes (identifier syntax preserved)
+    test_ascii("x.π", "x.\\u03C0;\n");
+    test_ascii("x?.π", "x?.\\u03C0;\n");
+
+    // Non-BMP property access: must convert to computed syntax
     // Without ascii_only: convert to computed but keep raw character
     test("x.𐀀", "x[\"𐀀\"];\n");
     test("x?.𐀀", "x?.[\"𐀀\"];\n");
-    test("0 .𐀀", "0[\"𐀀\"];\n");
-    test("0?.𐀀", "0?.[\"𐀀\"];\n");
-
     // With ascii_only: convert to computed and escape
     test_ascii("x.𐀀", "x[\"\\u{10000}\"];\n");
     test_ascii("x?.𐀀", "x?.[\"\\u{10000}\"];\n");
+
+    // Number literal property access with BMP
+    test_ascii("0 .π", "0 .\\u03C0;\n");
+    test_ascii("0?.π", "0?.\\u03C0;\n");
+
+    // Number literal property access with non-BMP (must convert to computed)
+    test("0 .𐀀", "0[\"𐀀\"];\n");
+    test("0?.𐀀", "0?.[\"𐀀\"];\n");
+    test_ascii("0 .𐀀", "0[\"\\u{10000}\"];\n");
+    test_ascii("0?.𐀀", "0?.[\"\\u{10000}\"];\n");
+
+    // ES5 target: non-BMP should use surrogate pairs \uD800\uDC00
+    // TODO: Uncomment when ES5 target is supported
+    // test_ascii_target_es5("x.𐀀", "x[\"\\uD800\\uDC00\"];\n");
+    // test_ascii_target_es5("x?.𐀀", "x == null ? void 0 : x[\"\\uD800\\uDC00\"];\n");
+    // test_ascii_target_es5("0 .𐀀", "0[\"\\uD800\\uDC00\"];\n");
+    // test_ascii_target_es5("0?.𐀀", "0 == null ? void 0 : 0[\"\\uD800\\uDC00\"];\n");
 }
 
-/// Non-BMP object keys should always use string syntax
-/// because identifiers can only use \uXXXX escapes (not \u{XXXXXX}).
+/// Object keys with non-ASCII characters.
+/// - BMP characters (U+0000-U+FFFF) can use \uXXXX escapes in identifiers
+/// - Non-BMP characters (U+10000+) must use string syntax
 /// See: <https://github.com/oxc-project/oxc/issues/17068>
 #[test]
-fn test_non_bmp_object_keys() {
+fn test_object_keys_ascii() {
+    // BMP object keys: can use \uXXXX escapes (identifier syntax preserved)
+    test_ascii("({π: 0})", "({ \\u03C0: 0 });\n");
+    test_ascii("({π})", "({ \\u03C0 });\n");
+
+    // Non-BMP object keys: must convert to string syntax
     // Without ascii_only: convert to string but keep raw character
     test("({𐀀: 0})", "({ \"𐀀\": 0 });\n");
     test("({𐀀})", "({ \"𐀀\": 𐀀 });\n");
-
     // With ascii_only: convert to string and escape
     test_ascii("({𐀀: 0})", "({ \"\\u{10000}\": 0 });\n");
     test_ascii("({𐀀})", "({ \"\\u{10000}\": \\u{10000} });\n");
+
+    // ES5 target: non-BMP should use surrogate pairs \uD800\uDC00
+    // TODO: Uncomment when ES5 target is supported
+    // test_ascii_target_es5("({𐀀: 0})", "({ \"\\uD800\\uDC00\": 0 });\n");
 }
 
 /// These characters should always be escaped regardless of ascii_only setting:
@@ -960,6 +994,55 @@ fn test_always_escaped_characters() {
     test("let x = '\u{2029}'", "let x = \"\\u2029\";\n");
     // BOM (U+FEFF) should always be escaped
     test("let x = '\u{FEFF}'", "let x = \"\\uFEFF\";\n");
+}
+
+/// Import/export specifiers with non-ASCII characters.
+/// See: <https://github.com/oxc-project/oxc/issues/17068>
+#[test]
+fn test_import_export_ascii() {
+    // Import string literals
+    test_ascii("import 'π'", "import \"\\u03C0\";\n");
+    test_ascii("import '𐀀'", "import \"\\u{10000}\";\n");
+
+    // Import namespace
+    test_ascii("import * as π from 'path'", "import * as \\u03C0 from \"path\";\n");
+    test_ascii("import * as 𐀀 from 'path'", "import * as \\u{10000} from \"path\";\n");
+
+    // Import named
+    test_ascii("import {π} from 'path'", "import { \\u03C0 } from \"path\";\n");
+    test_ascii("import {𐀀} from 'path'", "import { \\u{10000} } from \"path\";\n");
+
+    // Import named with alias
+    test_ascii("import {π as x} from 'path'", "import { \\u03C0 as x } from \"path\";\n");
+    test_ascii("import {𐀀 as x} from 'path'", "import { \\u{10000} as x } from \"path\";\n");
+    test_ascii("import {x as π} from 'path'", "import { x as \\u03C0 } from \"path\";\n");
+    test_ascii("import {x as 𐀀} from 'path'", "import { x as \\u{10000} } from \"path\";\n");
+
+    // Export namespace
+    test_ascii("export * as π from 'path'", "export * as \\u03C0 from \"path\";\n");
+    test_ascii("export * as 𐀀 from 'path'", "export * as \\u{10000} from \"path\";\n");
+
+    // Export named from
+    test_ascii("export {π} from 'path'", "export { \\u03C0 } from \"path\";\n");
+    test_ascii("export {𐀀} from 'path'", "export { \\u{10000} } from \"path\";\n");
+
+    // Export named with alias
+    test_ascii("export {π as x} from 'path'", "export { \\u03C0 as x } from \"path\";\n");
+    test_ascii("export {𐀀 as x} from 'path'", "export { \\u{10000} as x } from \"path\";\n");
+    test_ascii("export {x as π} from 'path'", "export { x as \\u03C0 } from \"path\";\n");
+    test_ascii("export {x as 𐀀} from 'path'", "export { x as \\u{10000} } from \"path\";\n");
+
+    // Export local
+    test_ascii("var π; export {π}", "var \\u03C0;\nexport { \\u03C0 };\n");
+    test_ascii("var 𐀀; export {𐀀}", "var \\u{10000};\nexport { \\u{10000} };\n");
+
+    // Export declaration
+    test_ascii("export var π", "export var \\u03C0;\n");
+    test_ascii("export var 𐀀", "export var \\u{10000};\n");
+
+    // ES5 target: non-BMP should use surrogate pairs \uD800\uDC00
+    // TODO: Uncomment when ES5 target is supported
+    // test_ascii_target_es5("import '𐀀'", "import \"\\uD800\\uDC00\";\n");
 }
 
 #[test]

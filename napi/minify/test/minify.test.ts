@@ -184,8 +184,14 @@ describe("asciiOnly option", () => {
       // Non-BMP identifiers (\u{XXXXXX})
       { input: "var 𐀀", expected: "var \\u{10000};", description: "Non-BMP identifier" },
 
+      // BMP property access (identifier syntax preserved with \uXXXX)
+      { input: "x.π", expected: "x.\\u03C0;", description: "BMP property access" },
+
       // Non-BMP property access -> computed syntax
       { input: "x.𐀀", expected: 'x["\\u{10000}"];', description: "Non-BMP property access" },
+
+      // BMP object keys (identifier syntax preserved with \uXXXX)
+      { input: "({π: 1})", expected: "({\\u03C0:1});", description: "BMP object key" },
 
       // Non-BMP object keys -> string keys
       { input: "({𐀀: 1})", expected: '({"\\u{10000}":1});', description: "Non-BMP object key" },
