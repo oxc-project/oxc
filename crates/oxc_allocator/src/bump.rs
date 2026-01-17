@@ -143,8 +143,11 @@ impl Bump {
     pub fn new() -> Self {
         Self {
             chunk: UnsafeCell::new(EmptyChunk::get()),
+            // For empty allocator: ptr = 0, start = usize::MAX
+            // This ensures `ptr.wrapping_sub(size) >= start` is always false,
+            // eliminating the need for a null check on the hot path.
             ptr: UnsafeCell::new(ptr::null_mut()),
-            start: UnsafeCell::new(ptr::null_mut()),
+            start: UnsafeCell::new(ptr::without_provenance_mut(usize::MAX)),
             _marker: PhantomData,
         }
     }
@@ -183,7 +186,10 @@ impl Bump {
     /// This is the core allocation method, optimized for minimal instructions.
     #[inline(always)]
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
-        // SAFETY: Single-threaded access guaranteed by !Sync
+        // SAFETY: Single-threaded access guaranteed by !Sync.
+        // We use wrapping_sub to avoid UB from out-of-bounds pointer arithmetic.
+        // The sentinel value (start = usize::MAX for empty allocator) ensures
+        // the comparison fails correctly without needing a null check.
         unsafe {
             let ptr = *self.ptr.get();
             let start = *self.start.get();
@@ -191,16 +197,14 @@ impl Bump {
             // Round size up to alignment (compile-time for known sizes)
             let size = round_up_to(layout.size(), ALIGN);
 
-            // Fast path: have a chunk, fits, and alignment <= 8
-            // Check available space using usize arithmetic BEFORE ptr.sub() to avoid UB.
-            // ptr.sub(size) where size > available would create out-of-bounds pointer (UB).
-            if likely(layout.align() <= ALIGN && !ptr.is_null()) {
-                let available = (ptr as usize) - (start as usize);
-                if available >= size {
-                    let new_ptr = ptr.sub(size);
-                    *self.ptr.get() = new_ptr;
-                    return NonNull::new_unchecked(new_ptr);
-                }
+            // Fast path: compute new pointer and check bounds in one comparison.
+            // Using wrapping_sub avoids UB when ptr - size would underflow.
+            // For empty allocator: ptr=0, start=MAX, so new_ptr wraps to huge value < MAX = fail.
+            // For normal case: new_ptr >= start means we have enough space.
+            let new_ptr = ptr.wrapping_sub(size);
+            if likely(new_ptr >= start && layout.align() <= ALIGN) {
+                *self.ptr.get() = new_ptr;
+                return NonNull::new_unchecked(new_ptr);
             }
 
             // Slow path
@@ -251,17 +255,13 @@ impl Bump {
             // Round size up to alignment so that `aligned_ptr - size` remains aligned
             let size = round_up_to(layout.size(), layout.align());
 
-            // Try to fit in current chunk if we have one
-            if !ptr.is_null() {
-                // Align ptr down to required alignment
-                let aligned_ptr = round_down_to_ptr(ptr, layout.align());
-                // Check available space using usize arithmetic BEFORE sub() to avoid UB
-                let available = (aligned_ptr as usize) - (start as usize);
-                if available >= size {
-                    let new_ptr = aligned_ptr.sub(size);
-                    *self.ptr.get() = new_ptr;
-                    return NonNull::new_unchecked(new_ptr);
-                }
+            // Try to fit in current chunk if we have one.
+            // Use wrapping arithmetic like the hot path.
+            let aligned_ptr = round_down_to_ptr(ptr, layout.align());
+            let new_ptr = aligned_ptr.wrapping_sub(size);
+            if new_ptr >= start {
+                *self.ptr.get() = new_ptr;
+                return NonNull::new_unchecked(new_ptr);
             }
 
             // Need new chunk with enough space + alignment padding
@@ -270,10 +270,10 @@ impl Bump {
 
             self.alloc_chunk(new_capacity);
 
-            // Allocate with alignment
+            // Allocate with alignment from fresh chunk
             let ptr = *self.ptr.get();
             let aligned_ptr = round_down_to_ptr(ptr, layout.align());
-            let new_ptr = aligned_ptr.sub(size);
+            let new_ptr = aligned_ptr.wrapping_sub(size);
             *self.ptr.get() = new_ptr;
             NonNull::new_unchecked(new_ptr)
         }
@@ -580,42 +580,35 @@ unsafe impl AllocatorTrait for Bump {
     ) -> Result<NonNull<[u8]>, AllocError> {
         debug_assert!(new_layout.size() >= old_layout.size());
 
-        // Try to grow in place if this is the last allocation
-        let old_size = old_layout.size();
-        let new_size = new_layout.size();
-
+        // Try to grow in place if this is the last allocation.
         // SAFETY: Caller guarantees ptr was allocated by this allocator with old_layout.
         // Single-threaded access guaranteed by !Sync.
         unsafe {
             let cursor = *self.ptr.get();
+            let old_size = old_layout.size();
             let old_end = ptr.as_ptr().add(old_size);
 
             // Check if this allocation ends at the current cursor
             // (i.e., it's the most recent allocation)
             if old_end == cursor {
-                let additional = new_size - old_size;
+                let additional = new_layout.size() - old_size;
                 let start = *self.start.get();
-                // Check available space using usize arithmetic BEFORE sub() to avoid UB
-                let available = (cursor as usize) - (start as usize);
-                if available >= additional {
+                // Use wrapping arithmetic like the hot path
+                let new_cursor = cursor.wrapping_sub(additional);
+                if new_cursor >= start {
                     // Can grow in place
-                    let new_cursor = cursor.sub(additional);
                     *self.ptr.get() = new_cursor;
-                    let slice = NonNull::slice_from_raw_parts(ptr, new_size);
+                    let slice = NonNull::slice_from_raw_parts(ptr, new_layout.size());
                     return Ok(slice);
                 }
             }
-        }
 
-        // Can't grow in place - allocate new and copy
-        let new_ptr = self.alloc_layout(new_layout);
-        // SAFETY: old_ptr is valid for old_size bytes, new_ptr is freshly allocated
-        // with new_size >= old_size, no overlap possible with fresh allocation.
-        unsafe {
+            // Can't grow in place - allocate new and copy
+            let new_ptr = self.alloc_layout(new_layout);
             ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), old_size);
+            let slice = NonNull::slice_from_raw_parts(new_ptr, new_layout.size());
+            Ok(slice)
         }
-        let slice = NonNull::slice_from_raw_parts(new_ptr, new_size);
-        Ok(slice)
     }
 
     #[inline(always)]
