@@ -91,13 +91,19 @@ pub trait Tool: Send + Sync {
 
     /// Format the content of the given URI.
     /// If `content` is `None`, the tool should read the content from the file system.
+    /// If `range` is `Some`, the tool should format only the specified range.
     /// Returns a vector of `TextEdit` representing the formatting changes.
     ///
     /// Not all tools will implement formatting, so the default implementation returns empty vector.
     ///
     /// # Errors
     /// Return [`Err`] when an error occurs, ignoring formatting should return [`Ok`] with an empty vector.
-    fn run_format(&self, _uri: &Uri, _content: Option<&str>) -> Result<Vec<TextEdit>, String> {
+    fn run_format(
+        &self,
+        _uri: &Uri,
+        _content: Option<&str>,
+        _range: Option<&Range>,
+    ) -> Result<Vec<TextEdit>, String> {
         Ok(Vec::new())
     }
 

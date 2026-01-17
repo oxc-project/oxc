@@ -13,9 +13,9 @@ use tower_lsp_server::{
         DidChangeWorkspaceFoldersParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams,
         DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport,
         DocumentDiagnosticReportKind, DocumentDiagnosticReportResult, DocumentFormattingParams,
-        ExecuteCommandParams, FullDocumentDiagnosticReport, InitializeParams, InitializeResult,
-        InitializedParams, MessageType, RelatedFullDocumentDiagnosticReport, ServerInfo, TextEdit,
-        Uri,
+        DocumentRangeFormattingParams, ExecuteCommandParams, FullDocumentDiagnosticReport,
+        InitializeParams, InitializeResult, InitializedParams, MessageType,
+        RelatedFullDocumentDiagnosticReport, ServerInfo, TextEdit, Uri,
     },
 };
 use tracing::{debug, error, info, warn};
@@ -800,7 +800,40 @@ impl LanguageServer for Backend {
         let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
             return Ok(None);
         };
-        match worker.format_file(uri, self.file_system.read().await.get(uri).as_deref()).await {
+        match worker.format_file(uri, self.file_system.read().await.get(uri).as_deref(), None).await
+        {
+            Ok(edits) => {
+                if edits.is_empty() {
+                    return Ok(None);
+                }
+                Ok(Some(edits))
+            }
+            Err(err) => {
+                Err(Error { code: ErrorCode::ServerError(1), message: Cow::Owned(err), data: None })
+            }
+        }
+    }
+
+    /// It will return text edits to format the document if formatting is enabled for the workspace.
+    ///
+    /// See: <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_rangeFormatting>
+    async fn range_formatting(
+        &self,
+        params: DocumentRangeFormattingParams,
+    ) -> Result<Option<Vec<TextEdit>>> {
+        let uri = &params.text_document.uri;
+        let workers = self.workspace_workers.read().await;
+        let Some(worker) = Self::find_worker_for_uri(&workers, uri) else {
+            return Ok(None);
+        };
+        match worker
+            .format_file(
+                uri,
+                self.file_system.read().await.get(uri).as_deref(),
+                Some(&params.range),
+            )
+            .await
+        {
             Ok(edits) => {
                 if edits.is_empty() {
                     return Ok(None);
