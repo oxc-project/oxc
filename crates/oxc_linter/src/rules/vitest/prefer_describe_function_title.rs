@@ -97,6 +97,16 @@ impl PreferDescribeFunctionTitle {
                     return;
                 };
 
+                let Some(test_vitest_fn) =
+                    parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
+                else {
+                    return;
+                };
+
+                if test_vitest_fn.kind != JestFnKind::General(JestGeneralFnKind::Describe) {
+                    return;
+                }
+
                 if title_expression.property.name == "name"
                     && !imported_entries.contains(identifier.name.as_ref())
                 {
@@ -160,6 +170,24 @@ fn test() {
 			        import { myFunction } from "./myFunction"
 			        describe()
 			      "#,
+            None,
+            None,
+            Some(PathBuf::from("myFunction.test.ts")),
+        ),
+        (
+            r#"
+            import { DocumentBuilder } from "@nestjs/swagger";
+
+            beforeEach(() => {
+                mocks = {
+                  DocumentBuilder: {
+                    setTitle: vi.spyOn(DocumentBuilder.prototype, "setTitle").mockReturnThis(),
+                    setDescription: vi.spyOn(DocumentBuilder.prototype, "setDescription").mockReturnThis(),
+                    setVersion: vi.spyOn(DocumentBuilder.prototype, "setVersion").mockReturnThis(),
+                    build: vi.spyOn(DocumentBuilder.prototype, "build").mockReturnValue({} as Omit<OpenAPIObject, "paths">),
+                  },
+                };
+              });"#,
             None,
             None,
             Some(PathBuf::from("myFunction.test.ts")),
