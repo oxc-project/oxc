@@ -30,7 +30,9 @@ To enable it as your default formatter, use a VS Code `settings.json` like:
 
 ```json
 {
-  "editor.defaultFormatter": "oxc.oxc-vscode"
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file" // tell oxfmt to format the whole file, not only the modified lines
   // Or enable it for specific file types:
   // "[javascript]": {
   //   "editor.defaultFormatter": "oxc.oxc-vscode"
