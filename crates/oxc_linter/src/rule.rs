@@ -78,14 +78,16 @@ pub trait Rule: Sized + Default + fmt::Debug {
 /// the actual rule configuration. This type automatically extracts and deserializes
 /// that first element. If the array is empty, it uses the default value.
 ///
+/// If the configuration is invalid (e.g. does not match the expected type, has a
+/// field that does not exist), it will return a deserialization error that is
+/// handled by the linter and reported to the user.
+///
 /// # Examples
 ///
 /// ```ignore
 /// impl Rule for MyRule {
 ///     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-///         Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-///             .unwrap_or_default()
-///             .into_inner())
+///         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
 ///     }
 /// }
 /// ```

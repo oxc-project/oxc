@@ -91,7 +91,7 @@ mod tests {
         .with_fix_cases("(\"fixed\")".to_string())
         .with_rule_config(
             r#"#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ConfigObject {
     pub foo: String,
     pub bar: Option<i32>,
