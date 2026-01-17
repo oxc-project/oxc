@@ -79,12 +79,13 @@ impl EmptyChunk {
     fn get() -> *mut ChunkFooter {
         // We use a well-aligned dangling pointer as sentinel.
         // This is never dereferenced for actual allocation.
-        ALIGN as *mut ChunkFooter
+        // Use `without_provenance_mut` to avoid Miri's strict provenance warnings.
+        ptr::without_provenance_mut(ALIGN)
     }
 
     #[inline]
     fn is_empty(ptr: *mut ChunkFooter) -> bool {
-        ptr as usize == ALIGN
+        ptr.addr() == ALIGN
     }
 }
 
@@ -191,11 +192,12 @@ impl Bump {
             let size = round_up_to(layout.size(), ALIGN);
 
             // Fast path: have a chunk, fits, and alignment <= 8
-            // Note: if ptr is null (no chunk), ptr.sub() would be UB, so check ptr > start
-            // which is false when both are null
+            // Check available space using usize arithmetic BEFORE ptr.sub() to avoid UB.
+            // ptr.sub(size) where size > available would create out-of-bounds pointer (UB).
             if likely(layout.align() <= ALIGN && !ptr.is_null()) {
-                let new_ptr = ptr.sub(size);
-                if new_ptr >= start {
+                let available = (ptr as usize) - (start as usize);
+                if available >= size {
+                    let new_ptr = ptr.sub(size);
                     *self.ptr.get() = new_ptr;
                     return NonNull::new_unchecked(new_ptr);
                 }
@@ -252,9 +254,10 @@ impl Bump {
             if !ptr.is_null() {
                 // Align ptr down to required alignment
                 let aligned_ptr = round_down_to_ptr(ptr, layout.align());
-                let new_ptr = aligned_ptr.sub(size);
-
-                if new_ptr >= start {
+                // Check available space using usize arithmetic BEFORE sub() to avoid UB
+                let available = (aligned_ptr as usize) - (start as usize);
+                if available >= size {
+                    let new_ptr = aligned_ptr.sub(size);
                     *self.ptr.get() = new_ptr;
                     return NonNull::new_unchecked(new_ptr);
                 }
@@ -591,10 +594,11 @@ unsafe impl AllocatorTrait for Bump {
             if old_end == cursor {
                 let additional = new_size - old_size;
                 let start = *self.start.get();
-                let new_cursor = cursor.sub(additional);
-
-                if new_cursor >= start {
+                // Check available space using usize arithmetic BEFORE sub() to avoid UB
+                let available = (cursor as usize) - (start as usize);
+                if available >= additional {
                     // Can grow in place
+                    let new_cursor = cursor.sub(additional);
                     *self.ptr.get() = new_cursor;
                     let slice = NonNull::slice_from_raw_parts(ptr, new_size);
                     return Ok(slice);
@@ -809,8 +813,8 @@ mod tests {
         assert_eq!(*c, 3);
 
         // Verify backward allocation (addresses decrease)
-        assert!(b as *const _ < a as *const _);
-        assert!(c as *const _ < b as *const _);
+        assert!(ptr::from_ref(b) < ptr::from_ref(a));
+        assert!(ptr::from_ref(c) < ptr::from_ref(b));
     }
 
     #[test]
@@ -818,17 +822,17 @@ mod tests {
         let bump = Bump::new();
         let _byte = bump.alloc(1u8);
         let num = bump.alloc(42u64);
-        assert_eq!((num as *const _ as usize) % 8, 0);
+        assert_eq!(ptr::from_ref(num).addr() % 8, 0);
     }
 
     #[test]
     fn test_overaligned() {
         #[repr(align(64))]
-        struct Aligned64([u8; 64]);
+        struct Aligned64(#[allow(dead_code)] [u8; 64]);
 
         let bump = Bump::new();
         let x = bump.alloc(Aligned64([42; 64]));
-        assert_eq!((x as *const _ as usize) % 64, 0);
+        assert_eq!(ptr::from_ref(x).addr() % 64, 0);
     }
 
     #[test]
@@ -842,8 +846,8 @@ mod tests {
     fn test_reset() {
         let mut bump = Bump::new();
 
-        for i in 0..1000 {
-            bump.alloc(i as u64);
+        for i in 0u64..1000 {
+            bump.alloc(i);
         }
 
         let _cap_before = bump.allocated_bytes();
@@ -882,8 +886,8 @@ mod tests {
         let bump = Bump::new();
 
         // Force multiple chunk allocations
-        for i in 0..100 {
-            bump.alloc([i as u8; 1000]);
+        for i in 0u8..100 {
+            bump.alloc([i; 1000]);
         }
 
         assert!(bump.allocated_bytes() >= 100_000);
@@ -894,6 +898,7 @@ mod tests {
         let bump = Bump::with_capacity(1024);
 
         // Calculate used bytes before any allocations
+        // SAFETY: No concurrent allocations during iteration.
         let used_before = unsafe {
             let mut total = 0;
             for (_, size) in bump.iter_allocated_chunks_raw() {
@@ -906,6 +911,7 @@ mod tests {
         // Allocate one u64 (8 bytes)
         let _ = bump.alloc(42u64);
 
+        // SAFETY: No concurrent allocations during iteration.
         let used_after = unsafe {
             let mut total = 0;
             for (_, size) in bump.iter_allocated_chunks_raw() {
@@ -925,6 +931,7 @@ mod tests {
         bump.alloc(2u8); // 1 byte with alignment 1
         bump.alloc(3u64); // 8 bytes with alignment 8
 
+        // SAFETY: No concurrent allocations during iteration.
         let used = unsafe {
             let mut total = 0;
             for (_, size) in bump.iter_allocated_chunks_raw() {
