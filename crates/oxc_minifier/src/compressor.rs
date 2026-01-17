@@ -5,7 +5,7 @@ use oxc_traverse::ReusableTraverseCtx;
 
 use crate::{
     CompressOptions,
-    peephole::{DeadCodeElimination, Normalize, NormalizeOptions, PeepholeOptimizations},
+    peephole::{Normalize, NormalizeOptions, PeepholeOptimizations},
     state::MinifierState,
 };
 
@@ -63,6 +63,6 @@ impl<'a> Compressor<'a> {
             remove_unnecessary_use_strict: false,
         };
         Normalize::new(normalize_options).build(program, &mut ctx);
-        DeadCodeElimination::new(max_iterations).run_in_loop(program, &mut ctx)
+        PeepholeOptimizations::new_dce(max_iterations).run_in_loop(program, &mut ctx)
     }
 }
