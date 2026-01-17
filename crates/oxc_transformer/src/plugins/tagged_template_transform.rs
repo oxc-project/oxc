@@ -89,7 +89,7 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
             unreachable!();
         };
 
-        let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments } =
+        let TaggedTemplateExpression { span, tag, quasi: template_lit, type_arguments, .. } =
             tagged.unbox();
 
         let binding = self.create_top_level_binding(ctx);

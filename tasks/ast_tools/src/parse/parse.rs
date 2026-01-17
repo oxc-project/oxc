@@ -259,6 +259,7 @@ impl<'c> Parser<'c> {
             "Atom" => primitive("Atom"),
             "Ident" => primitive("Ident"),
             "NonMaxU32" => primitive("NonMaxU32"),
+            "NodeId" => primitive("NodeId"),
             // TODO: Remove the need for this by adding
             // `#[cfg_attr(target_pointer_width = "64", repr(align(8)))]` to all AST types
             "PointerAlign" => primitive("PointerAlign"),
