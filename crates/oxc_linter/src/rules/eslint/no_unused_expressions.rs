@@ -274,7 +274,7 @@ fn test() {
         ),
         (
             "
-			      module Foo {
+			      namespace Foo {
 			        'use strict';
 			      }
 			    ",
@@ -477,7 +477,7 @@ fn test() {
         ),
         (
             "
-			module Foo {
+			namespace Foo {
 			  const foo = true;
 			  'use strict';
 			}
