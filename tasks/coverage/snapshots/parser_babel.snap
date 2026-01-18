@@ -1,8 +1,8 @@
 commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2224/2232 (99.64%)
-Positive Passed: 2207/2232 (98.88%)
+AST Parsed     : 2224/2230 (99.73%)
+Positive Passed: 2207/2230 (98.97%)
 Negative Passed: 1648/1697 (97.11%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
@@ -234,16 +234,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js:1:17]
- 1 │ const m = module {
-   ·                 ▲
- 2 │   await using foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
 
   × Keywords cannot contain escape characters
@@ -275,16 +265,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026
    ·     │                  ╰── `)` expected
    ·     ╰── Opened here
    ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js:1:7]
- 1 │ module {
-   ·       ▲
- 2 │   using foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 
