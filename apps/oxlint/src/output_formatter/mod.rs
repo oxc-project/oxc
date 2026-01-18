@@ -153,6 +153,7 @@ mod test {
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
 
+    #[cfg(not(target_endian = "big"))] // Apparently the fingerprint hash is different on big-endian systems.
     #[test]
     fn test_output_formatter_diagnostic_gitlab() {
         let args = &["--format=gitlab", "test.js"];
