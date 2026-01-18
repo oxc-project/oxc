@@ -203,6 +203,9 @@ interface EcmaFeatures {
  */
 type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
 
+// Empty language options
+const EMPTY_LANGUAGE_OPTIONS: LanguageOptionsInternal = {};
+
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
 let sharedConfig: Config = {};
 
@@ -1027,8 +1030,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
-  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  if (languageOptions == null) return parseOptions;
+  let languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  if (languageOptions == null) languageOptions = EMPTY_LANGUAGE_OPTIONS;
 
   // Throw error if custom parser is provided
   if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
@@ -1059,6 +1062,9 @@ function getParseOptions(test: TestCase): ParseOptions {
     }
 
     parseOptions.sourceType = sourceType;
+  } else if (test.eslintCompat === true) {
+    // ESLint defaults to `module` if no source type is specified
+    parseOptions.sourceType = "module";
   }
 
   // Handle `languageOptions.parserOptions`

@@ -941,21 +941,61 @@ describe("RuleTester", () => {
 
   describe("parsing options", () => {
     describe("sourceType", () => {
-      it("default (unambiguous)", () => {
-        const tester = new RuleTester();
-        tester.run("no-foo", simpleRule, {
-          // with (obj) {} - no ESM syntax, parsed as script, `with` is allowed
-          // import x from 'foo'; - has ESM syntax, parsed as module
-          valid: ["with (obj) {}", "import x from 'foo';"],
-          invalid: [],
+      describe("default", () => {
+        const reportSourceTypeRule: Rule = {
+          create(context) {
+            return {
+              Program(node) {
+                context.report({
+                  message: `sourceType: ${context.languageOptions.sourceType}`,
+                  node,
+                });
+              },
+            };
+          },
+        };
+
+        it("unambiguous without ESLint compatibility mode", () => {
+          const tester = new RuleTester();
+          tester.run("source-type", reportSourceTypeRule, {
+            valid: [],
+            invalid: [
+              // No ESM syntax, parsed as script, so `with` is allowed
+              {
+                code: "with (obj) {}",
+                errors: ["sourceType: script"],
+              },
+              // Has ESM syntax, parsed as module
+              {
+                code: "import x from 'foo';",
+                errors: ["sourceType: module"],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null, null]);
         });
 
-        expect(runCases()).toMatchInlineSnapshot(`
-          [
-            null,
-            null,
-          ]
-        `);
+        it("module with ESLint compatibility mode", () => {
+          const tester = new RuleTester({ eslintCompat: true });
+          tester.run("source-type", reportSourceTypeRule, {
+            // Parsed as module, `with` is not allowed, so parse error
+            valid: ["with (obj) {}"],
+            // Has ESM syntax, successfully parsed as module
+            invalid: [
+              {
+                code: "import x from 'foo';",
+                errors: ["sourceType: module"],
+              },
+            ],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
       });
 
       describe("module", () => {
