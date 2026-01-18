@@ -182,6 +182,10 @@ impl BabelOptions {
         self.plugins.syntax_typescript.is_some_and(|o| o.dts)
     }
 
+    pub fn has_disallow_ambiguous_jsx_like(&self) -> bool {
+        self.plugins.syntax_typescript.is_some_and(|o| o.disallow_ambiguous_jsx_like)
+    }
+
     pub fn is_module(&self) -> bool {
         self.source_type.as_ref().is_some_and(|s| s.as_str() == "module")
     }

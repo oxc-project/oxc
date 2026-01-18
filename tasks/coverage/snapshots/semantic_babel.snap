@@ -1,8 +1,8 @@
 commit: fc58af40
 
 semantic_babel Summary:
-AST Parsed     : 2230/2230 (100.00%)
-Positive Passed: 1939/2230 (86.95%)
+AST Parsed     : 2229/2229 (100.00%)
+Positive Passed: 1938/2229 (86.94%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }

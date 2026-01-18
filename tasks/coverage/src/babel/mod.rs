@@ -194,6 +194,7 @@ impl Case for BabelCase {
         has_not_supported_plugins
             || self.options.allow_await_outside_function
             || self.options.allow_undeclared_exports
+            || self.options.has_disallow_ambiguous_jsx_like()
     }
 
     fn run(&mut self) {
