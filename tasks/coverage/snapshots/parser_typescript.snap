@@ -3,7 +3,7 @@ commit: f5ccf434
 parser_typescript Summary:
 AST Parsed     : 9844/9845 (99.99%)
 Positive Passed: 9836/9845 (99.91%)
-Negative Passed: 1495/2549 (58.65%)
+Negative Passed: 1496/2549 (58.69%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -2075,8 +2075,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tup
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/unionsOfTupleTypes1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/intrinsicKeyword.ts
 
@@ -26504,6 +26502,56 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  12 │ type T33 = readonly Array<string>;  // Error
     ·            ────────
  13 │ 
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
+ 6 │ 
+ 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
+   ·                     ─────┬─────  ──────┬─────
+   ·                          │             ╰── Second rest element here
+   ·                          ╰── First seen here
+ 8 │ type V11 = [number, ...string[], boolean?];  // Error
+   ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
+ 10 │ 
+ 11 │ type V15 = [...string[], ...number[]];  // Error
+    ·             ─────┬─────  ─────┬─────
+    ·                  │            ╰── Second rest element here
+    ·                  ╰── First seen here
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:12:13]
+ 11 │ type V15 = [...string[], ...number[]];  // Error
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+    ·             ─────┬─────  ────────┬───────
+    ·                  │               ╰── Second rest element here
+    ·                  ╰── First seen here
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:13:13]
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+    ·             ────────┬───────  ─────┬─────
+    ·                     │              ╰── Second rest element here
+    ·                     ╰── First seen here
+ 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:14:13]
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+ 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
+    ·             ────────┬───────  ────────┬───────
+    ·                     │                 ╰── Second rest element here
+    ·                     ╰── First seen here
+ 15 │ 
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
