@@ -18,9 +18,7 @@
 
 use std::{cell::Cell, ptr};
 
-use bumpalo::Bump;
-
-use crate::{Allocator, allocator::STATS_FIELD_OFFSET};
+use crate::{Allocator, allocator::STATS_FIELD_OFFSET, bump::Bump};
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
 #[derive(Default)]

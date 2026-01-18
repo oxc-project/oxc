@@ -14,14 +14,13 @@ use std::{
     slice::SliceIndex,
 };
 
-use bumpalo::Bump;
 #[cfg(any(feature = "serialize", test))]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, vec2::Vec as InnerVecGeneric};
+use crate::{Allocator, Box, bump::Bump, vec2::Vec as InnerVecGeneric};
 
 type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 

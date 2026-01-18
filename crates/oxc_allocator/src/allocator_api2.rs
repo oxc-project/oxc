@@ -1,23 +1,22 @@
-// All methods just delegate to `bumpalo`, so all marked `#[inline(always)]`.
-// All have same safety preconditions of `bumpalo` methods of the same name.
+// All methods just delegate to `Bump`, so all marked `#[inline(always)]`.
+// All have same safety preconditions of `Bump` methods of the same name.
 #![expect(clippy::inline_always, clippy::undocumented_unsafe_blocks)]
 
 use std::{alloc::Layout, ptr::NonNull};
 
 use allocator_api2::alloc::{AllocError, Allocator};
 
-/// SAFETY:
-/// <https://github.com/fitzgen/bumpalo/blob/4eeab8847c85d5cde135ca21ae14a54e56b05224/src/lib.rs#L1938>
+/// SAFETY: See `bump.rs` for the implementation of `Allocator` for `&Bump`.
 unsafe impl Allocator for &crate::Allocator {
     #[inline(always)]
     fn allocate(&self, layout: Layout) -> Result<NonNull<[u8]>, AllocError> {
-        self.bump().allocate(layout)
+        Allocator::allocate(&self.bump(), layout)
     }
 
     #[inline(always)]
     unsafe fn deallocate(&self, ptr: NonNull<u8>, layout: Layout) {
         unsafe {
-            self.bump().deallocate(ptr, layout);
+            Allocator::deallocate(&self.bump(), ptr, layout);
         }
     }
 
@@ -28,7 +27,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { self.bump().shrink(ptr, old_layout, new_layout) }
+        unsafe { Allocator::shrink(&self.bump(), ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -38,7 +37,7 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { self.bump().grow(ptr, old_layout, new_layout) }
+        unsafe { Allocator::grow(&self.bump(), ptr, old_layout, new_layout) }
     }
 
     #[inline(always)]
@@ -48,6 +47,6 @@ unsafe impl Allocator for &crate::Allocator {
         old_layout: Layout,
         new_layout: Layout,
     ) -> Result<NonNull<[u8]>, AllocError> {
-        unsafe { self.bump().grow_zeroed(ptr, old_layout, new_layout) }
+        unsafe { Allocator::grow_zeroed(&self.bump(), ptr, old_layout, new_layout) }
     }
 }

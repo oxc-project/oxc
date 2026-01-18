@@ -873,7 +873,7 @@ fn handle_error(error: AllocError) -> ! {
 
 #[cfg(test)]
 mod tests {
-    use bumpalo::Bump;
+    use crate::bump::Bump;
 
     use super::*;
 

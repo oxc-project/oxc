@@ -7,7 +7,7 @@ use std::{
 #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
 use std::mem::offset_of;
 
-use bumpalo::Bump;
+use crate::bump::Bump;
 
 use oxc_data_structures::assert_unchecked;
 
@@ -613,7 +613,7 @@ impl Allocator {
         bytes
     }
 
-    /// Get inner [`bumpalo::Bump`].
+    /// Get inner [`Bump`].
     ///
     /// This method is not public. We don't want to expose `Bump` to user.
     /// The fact that we're using `bumpalo` is an internal implementation detail.
@@ -625,7 +625,7 @@ impl Allocator {
         &self.bump
     }
 
-    /// Create [`Allocator`] from a [`bumpalo::Bump`].
+    /// Create [`Allocator`] from a [`Bump`].
     ///
     /// This method is not public. Only used by [`Allocator::from_raw_parts`].
     //
