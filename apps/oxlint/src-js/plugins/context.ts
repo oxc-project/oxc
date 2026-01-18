@@ -141,7 +141,6 @@ const PARSER_OPTIONS = Object.freeze({
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
@@ -157,7 +156,6 @@ const LANGUAGE_OPTIONS = {
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
