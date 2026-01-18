@@ -133,26 +133,15 @@ mod test {
     const TEST_CWD: &str = "fixtures/output_formatter_diagnostic";
 
     #[test]
-    fn test_output_formatter_diagnostic_default() {
-        let args = &["--format=default", "test.js"];
-
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
-
-    /// disabled for windows
-    /// json will output the offset which will be different for windows
-    /// when there are multiple lines (`\r\n` vs `\n`)
-    #[cfg(all(test, not(target_os = "windows")))]
-    #[test]
-    fn test_output_formatter_diagnostic_json() {
-        let args = &["--format=json", "test.js"];
-
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
-
-    #[test]
     fn test_output_formatter_diagnostic_checkstyle() {
         let args = &["--format=checkstyle", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_output_formatter_diagnostic_default() {
+        let args = &["--format=default", "test.js"];
 
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
@@ -171,6 +160,24 @@ mod test {
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
 
+    /// disabled for windows
+    /// json will output the offset which will be different for windows
+    /// when there are multiple lines (`\r\n` vs `\n`)
+    #[cfg(all(test, not(target_os = "windows")))]
+    #[test]
+    fn test_output_formatter_diagnostic_json() {
+        let args = &["--format=json", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_output_formatter_diagnostic_junit() {
+        let args = &["--format=junit", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
     #[test]
     fn test_output_formatter_diagnostic_stylish() {
         let args = &["--format=stylish", "test.js"];
@@ -179,8 +186,8 @@ mod test {
     }
 
     #[test]
-    fn test_output_formatter_diagnostic_junit() {
-        let args = &["--format=junit", "test.js"];
+    fn test_output_formatter_diagnostic_unix() {
+        let args = &["--format=unix", "test.js"];
 
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
