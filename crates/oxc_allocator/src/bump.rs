@@ -591,7 +591,17 @@ unsafe impl AllocatorTrait for Bump {
             // With backward allocation, the most recent allocation STARTS at cursor.
             // Check if ptr equals cursor (i.e., this is the most recent allocation).
             if ptr.as_ptr() == cursor {
-                let additional = new_size - old_size;
+                // Round sizes to ALIGN for correct cursor arithmetic.
+                // This ensures the cursor remains aligned even when growing small types like u8.
+                let additional = round_up_to(new_size, ALIGN) - round_up_to(old_size, ALIGN);
+
+                // If both sizes round to the same value, no additional space needed.
+                // The existing allocation already has enough aligned space.
+                if additional == 0 {
+                    let slice = NonNull::slice_from_raw_parts(ptr, new_size);
+                    return Ok(slice);
+                }
+
                 let start = *self.start.get();
                 // Use wrapping arithmetic like the hot path
                 let new_cursor = cursor.wrapping_sub(additional);
@@ -943,5 +953,50 @@ mod tests {
         // With our 8-byte alignment: 8 + 8 + 8 = 24 bytes
         // (each allocation is rounded up to 8)
         assert_eq!(used, 24, "Three allocations should use 24 bytes (8-byte aligned)");
+    }
+
+    #[test]
+    fn test_grow_alignment() {
+        use allocator_api2::vec::Vec;
+        let bump = Bump::new();
+
+        // Create a Vec<u8> with capacity that's not a multiple of 8.
+        // This tests that grow() maintains cursor alignment when growing
+        // allocations with sizes not aligned to ALIGN.
+        let mut v: Vec<u8, _> = Vec::with_capacity_in(3, &bump);
+        v.extend_from_slice(&[1, 2, 3]);
+
+        // Grow to capacity 6 (additional = 3, which is not a multiple of 8).
+        // Without the fix, this would make the cursor misaligned.
+        v.push(4);
+
+        // This should still work - cursor should remain 8-byte aligned.
+        let x = bump.alloc(42u64);
+        assert_eq!(*x, 42);
+        assert_eq!(ptr::from_ref(x).addr() % 8, 0, "u64 allocation must be 8-byte aligned");
+
+        // Verify the Vec data is intact
+        assert_eq!(&v[..], &[1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_grow_within_same_aligned_block() {
+        use allocator_api2::vec::Vec;
+        let bump = Bump::new();
+
+        // Create a Vec<u8> with capacity 1
+        let mut v: Vec<u8, _> = Vec::with_capacity_in(1, &bump);
+        v.push(1);
+
+        // Save the current ptr to check if grow happens in place
+        let ptr_before = v.as_ptr();
+
+        // Grow to capacity within the same 8-byte aligned block (e.g., 1 -> 4).
+        // Since round_up_to(1, 8) == round_up_to(4, 8) == 8, no new space needed.
+        v.reserve(3); // Total capacity will be at least 4
+
+        // Data should still be at the same location (grow in place)
+        assert_eq!(v.as_ptr(), ptr_before, "grow within same block should be in place");
+        assert_eq!(v[0], 1);
     }
 }
