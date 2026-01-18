@@ -1,12 +1,12 @@
-// Test module to namespace conversion
-export module Foo {
+// Test namespace declarations
+export namespace Foo {
     export var a = 2;
     export function bar(): void {}
 }
 
-// Nested modules
-export module Outer {
-    export module Inner {
+// Nested namespaces
+export namespace Outer {
+    export namespace Inner {
         export var x = 1;
     }
 }

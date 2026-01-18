@@ -20,12 +20,12 @@ declare module "foo" {
 }
 
 // should not be emitted
-module baz {
+namespace baz {
   interface Baz {}
   const baz = 42;
 }
 
-declare module x {
+declare namespace x {
   interface Qux {}
   const qux = 42;
 }
