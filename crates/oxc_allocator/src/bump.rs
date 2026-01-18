@@ -316,9 +316,20 @@ impl<E: Display> Display for AllocOrInitError<E> {
 /// errors due to resource exhaustion.
 
 #[derive(Debug)]
+#[repr(C)]
 pub struct Bump {
-    // The current chunk we are bump allocating within.
+    /// Bump allocation pointer - points to next free byte (grows downward).
+    /// This is a copy of `current_chunk_footer.ptr` cached for fast access.
+    ptr: Cell<NonNull<u8>>,
+
+    /// Start of the current chunk's allocatable region.
+    /// This is a copy of `current_chunk_footer.data` cached for fast access.
+    chunk_start: Cell<NonNull<u8>>,
+
+    /// The current chunk we are bump allocating within.
     current_chunk_footer: Cell<NonNull<ChunkFooter>>,
+
+    /// Optional allocation limit.
     allocation_limit: Cell<Option<usize>>,
 }
 
@@ -564,8 +575,14 @@ impl Bump {
     /// ```text
     pub fn try_with_capacity(capacity: usize) -> Result<Self, AllocErr> {
         if capacity == 0 {
+            let empty_footer = EMPTY_CHUNK.get();
+            // For empty chunk, ptr and chunk_start both point to the footer itself,
+            // which means any allocation attempt will fail the bounds check.
+            let empty_ptr = unsafe { empty_footer.as_ref().ptr.get() };
             return Ok(Bump {
-                current_chunk_footer: Cell::new(EMPTY_CHUNK.get()),
+                ptr: Cell::new(empty_ptr),
+                chunk_start: Cell::new(empty_ptr),
+                current_chunk_footer: Cell::new(empty_footer),
                 allocation_limit: Cell::new(None),
             });
         }
@@ -581,7 +598,15 @@ impl Bump {
             .ok_or(AllocErr)?
         };
 
+        // Cache the ptr and chunk_start from the new chunk for fast access
+        let (ptr, chunk_start) = unsafe {
+            let footer = chunk_footer.as_ref();
+            (footer.ptr.get(), footer.data)
+        };
+
         Ok(Bump {
+            ptr: Cell::new(ptr),
+            chunk_start: Cell::new(chunk_start),
             current_chunk_footer: Cell::new(chunk_footer),
             allocation_limit: Cell::new(None),
         })
@@ -774,18 +799,22 @@ impl Bump {
         // Takes `&mut self` so `self` must be unique and there can't be any
         // borrows active that would get invalidated by resetting.
         unsafe {
-            if self.current_chunk_footer.get().as_ref().is_empty() {
+            let mut cur_chunk = self.current_chunk_footer.get();
+            if cur_chunk.as_ref().is_empty() {
                 return;
             }
-
-            let mut cur_chunk = self.current_chunk_footer.get();
 
             // Deallocate all chunks except the current one
             let prev_chunk = cur_chunk.as_ref().prev.replace(EMPTY_CHUNK.get());
             dealloc_chunk_list(prev_chunk);
 
             // Reset the bump finger to the end of the chunk.
-            cur_chunk.as_ref().ptr.set(cur_chunk.cast());
+            let end_ptr = cur_chunk.cast();
+            cur_chunk.as_ref().ptr.set(end_ptr);
+
+            // Update our cached ptr as well
+            self.ptr.set(end_ptr);
+            // chunk_start stays the same - it's still the start of this chunk
 
             // Reset the allocated size of the chunk.
             cur_chunk.as_mut().allocated_bytes = cur_chunk.as_ref().layout.size();
@@ -988,7 +1017,8 @@ impl Bump {
         F: FnOnce() -> Result<T, E>,
     {
         let rewind_footer = self.current_chunk_footer.get();
-        let rewind_ptr = unsafe { rewind_footer.as_ref() }.ptr.get();
+        // Use our cached ptr instead of reading from footer
+        let rewind_ptr = self.ptr.get();
         let mut inner_result_ptr = NonNull::from(self.alloc_with(f));
         match unsafe { inner_result_ptr.as_mut() } {
             Ok(t) => Ok(unsafe {
@@ -1013,13 +1043,12 @@ impl Bump {
                 // this result.
                 if self.is_last_allocation(inner_result_ptr.cast()) {
                     let current_footer_p = self.current_chunk_footer.get();
-                    let current_ptr = &current_footer_p.as_ref().ptr;
                     if current_footer_p == rewind_footer {
                         // It's still the same chunk, so reset the bump pointer
                         // to its original value upon entry to this method
                         // (reclaiming any alignment padding we may have
                         // added).
-                        current_ptr.set(rewind_ptr);
+                        self.ptr.set(rewind_ptr);
                     } else {
                         // We allocated a new chunk for this result.
                         //
@@ -1036,7 +1065,7 @@ impl Bump {
                         // Because this is the only allocation in this chunk,
                         // we can reset the chunk's bump finger to the start of
                         // the chunk.
-                        current_ptr.set(current_footer_p.as_ref().data);
+                        self.ptr.set(current_footer_p.as_ref().data);
                     }
                 }
                 //SAFETY:
@@ -1096,7 +1125,8 @@ impl Bump {
         F: FnOnce() -> Result<T, E>,
     {
         let rewind_footer = self.current_chunk_footer.get();
-        let rewind_ptr = unsafe { rewind_footer.as_ref() }.ptr.get();
+        // Use our cached ptr instead of reading from footer
+        let rewind_ptr = self.ptr.get();
         let mut inner_result_ptr = NonNull::from(self.try_alloc_with(f)?);
         match unsafe { inner_result_ptr.as_mut() } {
             Ok(t) => Ok(unsafe {
@@ -1121,13 +1151,12 @@ impl Bump {
                 // this result.
                 if self.is_last_allocation(inner_result_ptr.cast()) {
                     let current_footer_p = self.current_chunk_footer.get();
-                    let current_ptr = &current_footer_p.as_ref().ptr;
                     if current_footer_p == rewind_footer {
                         // It's still the same chunk, so reset the bump pointer
                         // to its original value upon entry to this method
                         // (reclaiming any alignment padding we may have
                         // added).
-                        current_ptr.set(rewind_ptr);
+                        self.ptr.set(rewind_ptr);
                     } else {
                         // We allocated a new chunk for this result.
                         //
@@ -1144,7 +1173,7 @@ impl Bump {
                         // Because this is the only allocation in this chunk,
                         // we can reset the chunk's bump finger to the start of
                         // the chunk.
-                        current_ptr.set(current_footer_p.as_ref().data);
+                        self.ptr.set(current_footer_p.as_ref().data);
                     }
                 }
                 //SAFETY:
@@ -1425,12 +1454,9 @@ impl Bump {
         // modulo alignment. This keeps the fast path optimized for non-ZSTs,
         // which are much more common.
         unsafe {
-            let footer = self.current_chunk_footer.get();
-            let footer = footer.as_ref();
-            let ptr = footer.ptr.get().as_ptr();
-            let start = footer.data.as_ptr();
-            debug_assert!(start <= ptr);
-            debug_assert!(ptr as *const u8 <= footer as *const _ as *const u8);
+            // Use cached ptr and chunk_start for fast access (no pointer indirection)
+            let ptr = self.ptr.get().as_ptr();
+            let start = self.chunk_start.get().as_ptr();
 
             if (ptr as usize) < layout.size() {
                 return None;
@@ -1441,7 +1467,8 @@ impl Bump {
 
             if aligned_ptr >= start {
                 let aligned_ptr = NonNull::new_unchecked(aligned_ptr);
-                footer.ptr.set(aligned_ptr);
+                // Update only our cached ptr - this is the fast path optimization
+                self.ptr.set(aligned_ptr);
                 Some(aligned_ptr)
             } else {
                 None
@@ -1462,10 +1489,8 @@ impl Bump {
     /// assert!(capacity >= 100);
     /// ```text
     pub fn chunk_capacity(&self) -> usize {
-        let current_footer = self.current_chunk_footer.get();
-        let current_footer = unsafe { current_footer.as_ref() };
-
-        current_footer.ptr.get().as_ptr() as usize - current_footer.data.as_ptr() as usize
+        // Use cached ptr and chunk_start for fast access
+        self.ptr.get().as_ptr() as usize - self.chunk_start.get().as_ptr() as usize
     }
 
     /// Slow path allocation for when we need to allocate a new chunk from the
@@ -1480,6 +1505,12 @@ impl Bump {
             // Get a new chunk from the global allocator.
             let current_footer = self.current_chunk_footer.get();
             let current_layout = current_footer.as_ref().layout;
+
+            // Sync the current chunk's footer ptr with our cached ptr before switching chunks.
+            // This ensures iter_allocated_chunks sees correct data.
+            if !current_footer.as_ref().is_empty() {
+                current_footer.as_ref().ptr.set(self.ptr.get());
+            }
 
             // By default, we want our new chunk to be about twice as big
             // as the previous chunk. If the global allocator refuses it,
@@ -1531,7 +1562,11 @@ impl Bump {
             ptr = round_mut_ptr_down_to(ptr, layout.align());
             debug_assert!(ptr as *const _ <= new_footer, "{:p} <= {:p}", ptr, new_footer);
             let ptr = NonNull::new_unchecked(ptr);
+
+            // Update both the footer and our cached fields
             new_footer.ptr.set(ptr);
+            self.ptr.set(ptr);
+            self.chunk_start.set(new_footer.data);
 
             // Return a pointer to the freshly allocated region in this chunk.
             Some(ptr)
@@ -1645,7 +1680,13 @@ impl Bump {
     /// In addition, all of the caveats when reading the chunk data from
     /// [`iter_allocated_chunks()`](Bump::iter_allocated_chunks) still apply.
     pub unsafe fn iter_allocated_chunks_raw(&self) -> ChunkRawIter<'_> {
-        ChunkRawIter { footer: self.current_chunk_footer.get(), bump: PhantomData }
+        // Sync the current chunk's footer ptr with our cached ptr before iteration.
+        // This ensures the iterator sees the correct allocation boundaries.
+        let footer = self.current_chunk_footer.get();
+        if !footer.as_ref().is_empty() {
+            footer.as_ref().ptr.set(self.ptr.get());
+        }
+        ChunkRawIter { footer, bump: PhantomData }
     }
 
     /// Calculates the number of bytes currently allocated across all chunks in
@@ -1688,9 +1729,8 @@ impl Bump {
 
     #[inline]
     unsafe fn is_last_allocation(&self, ptr: NonNull<u8>) -> bool {
-        let footer = self.current_chunk_footer.get();
-        let footer = footer.as_ref();
-        footer.ptr.get() == ptr
+        // Use cached ptr for fast access
+        self.ptr.get() == ptr
     }
 
     #[inline]
@@ -1698,9 +1738,11 @@ impl Bump {
         // If the pointer is the last allocation we made, we can reuse the bytes,
         // otherwise they are simply leaked -- at least until somebody calls reset().
         if self.is_last_allocation(ptr) {
-            let ptr = self.current_chunk_footer.get().as_ref().ptr.get();
-            let ptr = NonNull::new_unchecked(ptr.as_ptr().add(layout.size()));
-            self.current_chunk_footer.get().as_ref().ptr.set(ptr);
+            let new_ptr = NonNull::new_unchecked(self.ptr.get().as_ptr().add(layout.size()));
+            // Update our cached ptr
+            self.ptr.set(new_ptr);
+            // Note: We don't update footer.ptr here for performance.
+            // It will be synced on slow path or iteration if needed.
         }
     }
 
@@ -1772,13 +1814,11 @@ impl Bump {
                 // up to avoid this issue.
                 && delta >= (old_size + 1) / 2
         {
-            let footer = self.current_chunk_footer.get();
-            let footer = footer.as_ref();
-
             // NB: new_ptr is aligned, because ptr *has to* be aligned, and we
             // made sure delta is aligned.
-            let new_ptr = NonNull::new_unchecked(footer.ptr.get().as_ptr().add(delta));
-            footer.ptr.set(new_ptr);
+            let new_ptr = NonNull::new_unchecked(self.ptr.get().as_ptr().add(delta));
+            // Update our cached ptr
+            self.ptr.set(new_ptr);
 
             // NB: we know it is non-overlapping because of the size check
             // in the `if` condition.
