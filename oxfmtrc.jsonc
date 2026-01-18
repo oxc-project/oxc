@@ -1,13 +1,15 @@
 {
   "$schema": "./npm/oxfmt/configuration_schema.json",
   "ignorePatterns": [
-    "**/dist/**",
+    // ignore `tests` directories except for `editors/vscode/tests`
     "**/tests/**",
-    "**/generated/**",
+    "!editors/vscode/tests/**",
     // Ignore `fixtures` directories except for `apps/oxlint/test/fixtures`
     "**/fixtures/**",
-    "**/CHANGELOG.md",
     "!apps/oxlint/test/fixtures/**",
+    "**/dist/**",
+    "**/generated/**",
+    "**/CHANGELOG.md",
     "**/*.snap.md",
     "apps/oxlint/conformance/snapshot.md",
     "tasks/coverage/node-compat-table",

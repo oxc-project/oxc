@@ -106,6 +106,19 @@ suite("ConfigService", () => {
   });
 
   suite("getOxlintServerBinPath", () => {
+    test("falls back to node resolving when server path is not set", async () => {
+      const service = new ConfigService();
+      const oxlintPath = (await service.getOxlintServerBinPath())!;
+      const cwd = process.cwd().replace("/editors/vscode", "");
+      // it targets the oxc project's oxlint/bin/oxlint path
+      strictEqual(oxlintPath.startsWith(cwd), true, "path should start with cwd");
+      strictEqual(
+        oxlintPath.endsWith("oxlint/bin/oxlint"),
+        true,
+        "path should end with oxlint/bin/oxlint",
+      );
+    });
+
     test("resolves relative server path with workspace folder", async () => {
       const service = new ConfigService();
       const workspace_path = getWorkspaceFolderPlatformSafe();
