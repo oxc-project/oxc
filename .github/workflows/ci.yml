@@ -26,7 +26,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --workspace --all-features
+      - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-ubuntu-aarch64:
@@ -41,7 +41,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm-aarch64
       - run: cargo ck
-      - run: cargo test --workspace --all-features
+      - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-mac: # Separate job to save a job on PRs
@@ -56,7 +56,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --workspace --all-features
+      - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
@@ -101,7 +101,7 @@ jobs:
       - name: Run tests
         # No need for `cargo ck` because it's already checked in linux
         # Run `website` tests separately to avoid feature unification problems with `oxlint`
-        run: cargo test --workspace --all-features
+        run: cargo test --all-features
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
 
@@ -119,7 +119,7 @@ jobs:
           tools: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      - run: cross test --workspace --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
+      - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
 
   test-32bit:
     if: ${{ github.ref_name == 'main' }}
@@ -134,7 +134,7 @@ jobs:
           tools: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
+      - run: cross test --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
