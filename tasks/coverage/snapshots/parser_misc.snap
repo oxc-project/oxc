@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 61/61 (100.00%)
-Positive Passed: 61/61 (100.00%)
+AST Parsed     : 62/62 (100.00%)
+Positive Passed: 62/62 (100.00%)
 Negative Passed: 130/130 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode

@@ -3,7 +3,7 @@ commit: fc58af40
 parser_babel Summary:
 AST Parsed     : 2224/2230 (99.73%)
 Positive Passed: 2207/2230 (98.97%)
-Negative Passed: 1650/1697 (97.23%)
+Negative Passed: 1651/1697 (97.29%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
@@ -95,8 +95,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 
@@ -14377,6 +14375,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·         ───┬───  ───┬──
    ·            │        ╰── Required element here
    ·            ╰── Optional element seen here
+   ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts:1:11]
+ 1 │ type T = [x?: A, y: B];
+   ·           ──┬──  ──┬─
+   ·             │      ╰── Required element here
+   ·             ╰── Optional element seen here
    ╰────
 
   × TS(1273): 'public' modifier cannot be used on a type parameter.

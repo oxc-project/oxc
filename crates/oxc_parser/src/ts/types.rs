@@ -928,10 +928,11 @@ impl<'a> ParserImpl<'a> {
                     seen_rest_span = Some(tuple.span());
                 }
 
-                if !matches!(
-                    tuple,
-                    TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_)
-                ) && let Some(seen_optional_span) = seen_optional_span
+                if !match &tuple {
+                    TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_) => true,
+                    TSTupleElement::TSNamedTupleMember(named) => named.optional,
+                    _ => false,
+                } && let Some(seen_optional_span) = seen_optional_span
                 {
                     me.error(diagnostics::required_element_cannot_follow_optional_element(
                         tuple.span(),
@@ -939,7 +940,11 @@ impl<'a> ParserImpl<'a> {
                     ));
                 }
 
-                if matches!(tuple, TSTupleElement::TSOptionalType(_)) {
+                if match &tuple {
+                    TSTupleElement::TSOptionalType(_) => true,
+                    TSTupleElement::TSNamedTupleMember(named) => named.optional,
+                    _ => false,
+                } {
                     if let Some(seen_rest_span) = seen_rest_span {
                         me.error(diagnostics::optional_element_cannot_follow_rest_element(
                             tuple.span(),
