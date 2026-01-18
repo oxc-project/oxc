@@ -1,16 +1,16 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(no-caller): Do not use `arguments.callee`
+  ⚠ eslint(no-caller): Do not use `arguments.callee`.
    ╭─[no_caller.tsx:1:19]
  1 │ var x = arguments.callee
    ·                   ──────
    ╰────
-  help: 'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them.
+  help: `caller`, `callee`, and `arguments` properties may not be accessed on strict mode functions or the arguments objects for calls to them.
 
-  ⚠ eslint(no-caller): Do not use `arguments.caller`
+  ⚠ eslint(no-caller): Do not use `arguments.caller`.
    ╭─[no_caller.tsx:1:19]
  1 │ var x = arguments.caller
    ·                   ──────
    ╰────
-  help: 'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them.
+  help: `caller`, `callee`, and `arguments` properties may not be accessed on strict mode functions or the arguments objects for calls to them.

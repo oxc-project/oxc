@@ -456,5 +456,6 @@ fn test() {
     ];
 
     Tester::new(PreferTopLevelAwait::NAME, PreferTopLevelAwait::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .test_and_snapshot();
 }

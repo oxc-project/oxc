@@ -6,28 +6,34 @@ arguments: issue_10054
 working directory: fixtures
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[issue_10054/a.ts:1:19]
  1 | import { b } from "./b";
    :                   ^^^^^
  2 | 
    `----
-  help: These paths form a cycle:
-        -> ./b - fixtures/issue_10054/b.ts
-        -> ./a - fixtures/issue_10054/a.ts
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./b (fixtures/issue_10054/b.ts)
+           │         ⬇ imports
+           │    ./a (fixtures/issue_10054/a.ts)
+           ╰─────────╯ imports the current file
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[issue_10054/b.ts:1:8]
  1 | import "./a";
    :        ^^^^^
  2 | 
    `----
-  help: These paths form a cycle:
-        -> ./a - fixtures/issue_10054/a.ts
-        -> ./b - fixtures/issue_10054/b.ts
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./a (fixtures/issue_10054/a.ts)
+           │         ⬇ imports
+           │    ./b (fixtures/issue_10054/b.ts)
+           ╰─────────╯ imports the current file
 
 Found 0 warnings and 2 errors.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 90 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

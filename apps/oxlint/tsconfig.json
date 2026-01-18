@@ -7,7 +7,8 @@
     "allowImportingTsExtensions": true,
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "noUnusedLocals": true
   },
   "exclude": ["node_modules", "fixtures", "test/fixtures/*/files", "conformance/submodules"]
 }

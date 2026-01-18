@@ -117,6 +117,29 @@ impl FixKind {
             }
         }
     }
+
+    /// Returns a string representation of the fix kind.
+    ///
+    /// This method returns a lowercase, underscore-separated string
+    /// representing all possible fix kind combinations.
+    pub fn to_string(self) -> &'static str {
+        if self.is_empty() {
+            return "none";
+        }
+        match self {
+            Self::Fix => "fix",
+            Self::Suggestion => "suggestion",
+            Self::Dangerous => "dangerous",
+            Self::SafeFixOrSuggestion => "safe_fix_or_suggestion",
+            Self::DangerousFix => "dangerous_fix",
+            Self::DangerousSuggestion => "dangerous_suggestion",
+            Self::DangerousFixOrSuggestion => "dangerous_fix_or_suggestion",
+            _ => {
+                debug_assert!(false, "Unhandled FixKind combination: {self:?}");
+                "unknown"
+            }
+        }
+    }
 }
 
 // TODO: rename
@@ -126,7 +149,7 @@ pub struct RuleFix {
     kind: FixKind,
     /// A suggestion message. Will be shown in editors via code actions.
     message: Option<Cow<'static, str>>,
-    /// The actual that will be applied to the source code.
+    /// The actual fix that will be applied to the source code.
     ///
     /// See: [`Fix`]
     fix: CompositeFix,
@@ -757,5 +780,31 @@ mod test {
     )]
     fn test_emojis_invalid() {
         FixKind::Dangerous.emoji();
+    }
+
+    #[test]
+    fn test_to_string() {
+        let tests = vec![
+            (FixKind::None, "none"),
+            (FixKind::Fix, "fix"),
+            (FixKind::Suggestion, "suggestion"),
+            (FixKind::Dangerous, "dangerous"),
+            (FixKind::SafeFixOrSuggestion, "safe_fix_or_suggestion"),
+            (FixKind::DangerousFix, "dangerous_fix"),
+            (FixKind::DangerousSuggestion, "dangerous_suggestion"),
+            (FixKind::DangerousFixOrSuggestion, "dangerous_fix_or_suggestion"),
+        ];
+
+        for (kind, expected) in tests {
+            assert_eq!(
+                kind.to_string(),
+                expected,
+                "Expected {kind:?} to have string '{expected}'."
+            );
+        }
+
+        // Test that aliases work correctly
+        assert_eq!(FixKind::SafeFix.to_string(), "fix"); // SafeFix is an alias for Fix
+        assert_eq!(FixKind::All.to_string(), "dangerous_fix_or_suggestion"); // All is an alias for DangerousFixOrSuggestion
     }
 }

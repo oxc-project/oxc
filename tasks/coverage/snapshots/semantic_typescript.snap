@@ -1,8 +1,8 @@
-commit: f3770c9b
+commit: f5ccf434
 
 semantic_typescript Summary:
-AST Parsed     : 6164/6164 (100.00%)
-Positive Passed: 2664/6164 (43.22%)
+AST Parsed     : 6167/6167 (100.00%)
+Positive Passed: 2666/6167 (43.23%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -733,19 +733,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayFlatMap.ts
 Unresolved references mismatch:
 after transform: ["ReadonlyArray"]
 rebuilt        : []
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
-`await` is only allowed within async functions and at the top levels of modules
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayLiteralContextualType.ts
 Scope children mismatch:
@@ -40718,6 +40705,9 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["g", "o"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/identifiers/scopeResolutionIdentifiers.ts
+Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/newOperator/newOperatorConformance.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C0", "C1", "T", "a", "anyCtor", "anyCtor1", "c1", "d", "fnVoid", "n", "nested", "newFn1", "newFn2", "t"]
@@ -42128,6 +42118,35 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4", "o5", "o6"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessStringIndexSignature.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["empty", "flags"]
+rebuilt        : ScopeId(0): []
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2)]
+rebuilt        : ScopeId(0): []
+Reference symbol mismatch for "flags":
+after transform: SymbolId(1) "flags"
+rebuilt        : <None>
+Reference symbol mismatch for "flags":
+after transform: SymbolId(1) "flags"
+rebuilt        : <None>
+Reference symbol mismatch for "flags":
+after transform: SymbolId(1) "flags"
+rebuilt        : <None>
+Reference symbol mismatch for "flags":
+after transform: SymbolId(1) "flags"
+rebuilt        : <None>
+Reference symbol mismatch for "empty":
+after transform: SymbolId(3) "empty"
+rebuilt        : <None>
+Reference symbol mismatch for "empty":
+after transform: SymbolId(3) "empty"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["empty", "flags"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeAssertions/constAssertionOnEnum.ts
 Bindings mismatch:
@@ -45603,10 +45622,16 @@ rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2)]
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxSpreadChildrenInvalidType.tsx
 Bindings mismatch:
 after transform: ScopeId(0): ["JSX", "React", "Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
-rebuilt        : ScopeId(0): ["Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime", "x"]
+rebuilt        : ScopeId(0): ["Todo", "TodoList", "TodoListNoError", "_jsxFileName", "_objectSpread", "_reactJsxRuntime"]
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3)]
+Reference symbol mismatch for "x":
+after transform: SymbolId(12) "x"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["require"]
+rebuilt        : ["require", "x"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponentOverload6.tsx
 Scope children mismatch:

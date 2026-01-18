@@ -1725,7 +1725,7 @@ export type UnaryOperator = "+" | "-" | "!" | "~" | "typeof" | "void" | "delete"
 
 export type UpdateOperator = "++" | "--";
 
-export type ModuleKind = "script" | "module";
+export type ModuleKind = "script" | "module" | "commonjs";
 
 export type Node =
   | Program

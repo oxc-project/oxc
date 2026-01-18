@@ -1,0 +1,20 @@
+{
+  "plugins": ["jest"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // Valid config
+    "jest/no-hooks": "error"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.js"],
+      "rules": {
+        // Invalid config, `allow` should only have string values. Ensure that the error
+        // for a rule defined in an override is properly reported.
+        "jest/no-hooks": ["error", { "allow": [true, false] }]
+      }
+    }
+  ]
+}

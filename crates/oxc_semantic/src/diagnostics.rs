@@ -16,6 +16,16 @@ pub fn redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     ])
 }
 
+/// TS(2804): Duplicate identifier '#x'. Static and instance elements cannot share the same private name.
+#[cold]
+pub fn static_and_instance_private_identifier(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    ts_error(
+        "2804",
+        format!("Duplicate identifier `#{x0}`. Static and instance elements cannot share the same private name."),
+    )
+    .with_labels([span1.label(format!("`#{x0}` has already been declared here")), span2.label("It can not be redeclared here")])
+}
+
 #[cold]
 pub fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Export '{x0}' is not defined")).with_label(span1)
@@ -59,7 +69,7 @@ pub fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Private field '{x0}' must be declared in an enclosing class"))
+    OxcDiagnostic::error(format!("Private field '#{x0}' must be declared in an enclosing class"))
         .with_label(span1)
 }
 
@@ -119,6 +129,13 @@ pub fn new_target(span: Span) -> OxcDiagnostic {
 pub fn import_meta(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected import.meta expression")
         .with_help("import.meta is only allowed in module code")
+        .with_label(span)
+}
+
+#[cold]
+pub fn using_declaration_not_allowed_in_script(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'using' declarations are not allowed at the top level of a script")
+        .with_help("Wrap this code in a block or use a module")
         .with_label(span)
 }
 

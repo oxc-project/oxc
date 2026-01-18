@@ -6,30 +6,36 @@ arguments:
 working directory: fixtures/cross_module_extended_config
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[dep-a.ts:2:19]
  1 | // should report cycle detected
  2 | import { b } from './dep-b.ts';
    :                   ^^^^^^^^^^^^
  3 | 
    `----
-  help: These paths form a cycle:
-        -> ./dep-b.ts - fixtures/cross_module_extended_config/dep-b.ts
-        -> ./dep-a.ts - fixtures/cross_module_extended_config/dep-a.ts
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./dep-b.ts (fixtures/cross_module_extended_config/dep-b.ts)
+           │         ⬇ imports
+           │    ./dep-a.ts (fixtures/cross_module_extended_config/dep-a.ts)
+           ╰─────────╯ imports the current file
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[dep-b.ts:2:8]
  1 | // this file is also included in dep-a.ts and dep-a.ts should report a no-cycle diagnostic
  2 | import './dep-a.ts';
    :        ^^^^^^^^^^^^
  3 | 
    `----
-  help: These paths form a cycle:
-        -> ./dep-a.ts - fixtures/cross_module_extended_config/dep-a.ts
-        -> ./dep-b.ts - fixtures/cross_module_extended_config/dep-b.ts
+  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
+  note: These paths form a cycle:
+           ╭──▶ ./dep-a.ts (fixtures/cross_module_extended_config/dep-a.ts)
+           │         ⬇ imports
+           │    ./dep-b.ts (fixtures/cross_module_extended_config/dep-b.ts)
+           ╰─────────╯ imports the current file
 
 Found 0 warnings and 2 errors.
-Finished in <variable>ms on 2 files using 1 threads.
+Finished in <variable>ms on 2 files with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -99,8 +99,7 @@ fn test() {
         "number.toFixed(2)",
         "number.toFixed(1,2,3)",
         "number[toFixed]()",
-        "number[\"toFixed\"]()",
-        "number?.toFixed()",
+        r#"number["toFixed"]()"#,
         "number.toFixed?.()",
         "number.notToFixed();",
         "new BigNumber(1).toFixed()",
@@ -109,6 +108,7 @@ fn test() {
 
     let fail = vec![
         "const string = number.toFixed();",
+        // r#"const string = number?.toFixed() ?? "";"#,
         "const string = number.toFixed( /* comment */ );",
         "Number(1).toFixed()",
         "const bigNumber = new BigNumber(1); const string = bigNumber.toFixed();",

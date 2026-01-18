@@ -1,0 +1,275 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onMouseDown={() => {}} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onMouseUp={() => {}} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onKeyPress={() => {}} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onKeyDown={() => {}} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onKeyUp={() => {}} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <section onClick={() => {}} />;
+   ·  ───────
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <main onClick={() => {}} />;
+   ·  ────
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <article onClick={() => {}} />;
+   ·  ───────
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <header onClick={() => {}} />;
+   ·  ──────
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <footer onClick={() => {}} />;
+   ·  ──────
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='article' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='navigation' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='main' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} aria-hidden={false} />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <a onClick={() => {}} />;
+   ·  ─
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <a tabIndex="0" onClick={() => {}} />
+   ·  ─
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role={ROLE} />
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role={isButton ? "button" : "link"} />
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onDblClick={() => {}} />
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <span onClick={() => {}} />;
+   ·  ────
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='document' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='list' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='listitem' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='heading' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='img' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='form' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='region' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='banner' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='contentinfo' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='complementary' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='status' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='log' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='timer' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='alert' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='dialog' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='alertdialog' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='tabpanel' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.
+
+  ⚠ eslint-plugin-jsx-a11y(no-static-element-interactions): Static HTML elements with event handlers require a role.
+   ╭─[no_static_element_interactions.tsx:1:2]
+ 1 │ <div onClick={() => {}} role='tooltip' />;
+   ·  ───
+   ╰────
+  help: Add a role attribute to this element, or use a semantic HTML element instead.

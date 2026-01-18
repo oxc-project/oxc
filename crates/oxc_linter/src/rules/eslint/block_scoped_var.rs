@@ -421,5 +421,7 @@ fn test() {
         ",
     ];
 
-    Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
+        .test_and_snapshot();
 }

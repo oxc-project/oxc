@@ -2,7 +2,7 @@ use javascript_globals::GLOBALS;
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{ModuleKind, Span};
+use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -122,8 +122,8 @@ impl Rule for NoRedeclare {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        // Modules run in their own scope, and don't conflict with existing globals
-        ctx.source_type().module_kind() == ModuleKind::Script
+        // ES modules run in their own scope, and don't conflict with existing globals
+        !ctx.source_type().is_module()
     }
 }
 

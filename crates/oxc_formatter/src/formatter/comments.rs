@@ -182,7 +182,7 @@ impl<'a> Comments<'a> {
 
     /// Returns end-of-line comments that are after the given position (excluding printed ones).
     pub fn end_of_line_comments_after(&self, mut pos: u32) -> &'a [Comment] {
-        let comments = self.unprinted_comments();
+        let comments = self.comments_after(pos);
         for (index, comment) in comments.iter().enumerate() {
             if self.source_text.all_bytes_match(pos, comment.span.start, |b| {
                 matches!(b, b'\t' | b' ' | b'=' | b':')
@@ -246,6 +246,10 @@ impl<'a> Comments<'a> {
     /// Checks if there are any leading own-line comments before the given position.
     pub fn has_leading_own_line_comment(&self, start: u32) -> bool {
         self.comments_before_iter(start).any(|comment| comment.followed_by_newline())
+    }
+
+    pub fn has_end_of_line_comment_after(&self, pos: u32) -> bool {
+        !self.end_of_line_comments_after(pos).is_empty()
     }
 
     /// **Critical method**: Advances the printed cursor by one.
@@ -365,14 +369,17 @@ impl<'a> Comments<'a> {
         &[]
     }
 
-    /// Checks if the node has a suppression comment (prettier-ignore).
+    /// Checks if the node has a suppression comment.
     pub fn is_suppressed(&self, start: u32) -> bool {
         self.comments_before(start).iter().any(|comment| self.is_suppression_comment(comment))
     }
 
+    /// Checks if a comment is a suppression comment (`oxfmt-ignore`).
+    ///
+    /// `prettier-ignore` is also supported for compatibility.
     pub fn is_suppression_comment(&self, comment: &Comment) -> bool {
-        // TODO: Consider using `oxfmt-ignore` instead of `prettier-ignore`
-        self.source_text.text_for(&comment.content_span()).trim() == "prettier-ignore"
+        let text = self.source_text.text_for(&comment.content_span()).trim();
+        matches!(text, "oxfmt-ignore" | "prettier-ignore")
     }
 
     /// Checks if a comment is a type cast comment containing `@type` or `@satisfies`.

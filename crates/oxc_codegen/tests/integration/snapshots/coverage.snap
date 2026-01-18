@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 /* v8 ignore next */ x
@@ -126,7 +126,7 @@ catch (err) /* c8 ignore next */ /* istanbul ignore next */ { handle(err); }
 ----------
 try {
 	something();
-} catch (err) /* c8 ignore next *//* istanbul ignore next */ {
+} catch (err) /* c8 ignore next */ /* istanbul ignore next */ {
 	handle(err);
 }
 
@@ -140,4 +140,3 @@ try {
 } catch (err) {
 	handle(err);
 }
-

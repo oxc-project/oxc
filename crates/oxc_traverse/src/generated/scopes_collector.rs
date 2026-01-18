@@ -1464,12 +1464,12 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_ts_enum_declaration(&mut self, it: &TSEnumDeclaration<'a>) {
-        self.add_scope(&it.scope_id);
+        self.visit_ts_enum_body(&it.body);
     }
 
     #[inline]
     fn visit_ts_enum_body(&mut self, it: &TSEnumBody<'a>) {
-        self.visit_ts_enum_members(&it.members);
+        self.add_scope(&it.scope_id);
     }
 
     #[inline]

@@ -8,9 +8,9 @@ use crate::{
         prelude::{format_once, soft_line_indent_or_space, space},
         trivia::FormatTrailingComments,
     },
+    print::FormatWrite,
     utils::format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
     write,
-    write::FormatWrite,
 };
 
 pub struct FormatStatementBody<'a, 'b> {
@@ -34,6 +34,12 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 impl<'a> Format<'a> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         if let AstNodes::EmptyStatement(empty) = self.body.as_ast_nodes() {
+            // Add space before empty statement if it has leading comments
+            // e.g., `for (x of y) /*comment*/ ;`
+            let has_leading_comments = f.context().comments().has_comment_before(empty.span.start);
+            if has_leading_comments {
+                write!(f, [space()]);
+            }
             write!(f, empty);
         } else if let AstNodes::BlockStatement(block) = self.body.as_ast_nodes() {
             write!(f, [space()]);

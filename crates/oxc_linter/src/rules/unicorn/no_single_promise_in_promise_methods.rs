@@ -293,6 +293,7 @@ fn test() {
         pass,
         fail,
     )
+    .change_rule_path_extension("mts")
     .expect_fix(fix)
     .test_and_snapshot();
 }

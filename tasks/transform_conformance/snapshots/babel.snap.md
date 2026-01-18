@@ -1,6 +1,6 @@
-commit: 761c2509
+commit: fc58af40
 
-Passed: 697/1170
+Passed: 697/1168
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1362,7 +1362,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (49/159)
+# babel-plugin-transform-typescript (49/157)
 * cast/as-expression/input.ts
 Unresolved references mismatch:
 after transform: ["T", "x"]
@@ -1765,34 +1765,34 @@ rebuilt        : SymbolId(2): []
 
 * exports/declared-types/input.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "M", "N", "f", "foo", "x"]
+after transform: ScopeId(0): ["BB", "BB2", "C", "C2", "E", "N", "f", "foo", "x"]
 rebuilt        : ScopeId(0): ["BB", "BB2", "C2", "foo"]
 Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17), ScopeId(18)]
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10), ScopeId(11), ScopeId(12), ScopeId(13), ScopeId(14), ScopeId(15), ScopeId(16), ScopeId(17)]
 rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(5)]
 Bindings mismatch:
-after transform: ScopeId(12): ["BB", "K"]
+after transform: ScopeId(11): ["BB", "K"]
 rebuilt        : ScopeId(2): ["BB"]
 Scope flags mismatch:
-after transform: ScopeId(12): ScopeFlags(StrictMode)
+after transform: ScopeId(11): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(2): ScopeFlags(StrictMode | Function)
 Bindings mismatch:
-after transform: ScopeId(13): ["BB", "L"]
+after transform: ScopeId(12): ["BB", "L"]
 rebuilt        : ScopeId(3): ["BB"]
 Scope flags mismatch:
-after transform: ScopeId(13): ScopeFlags(StrictMode)
+after transform: ScopeId(12): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(3): ScopeFlags(StrictMode | Function)
 Scope flags mismatch:
-after transform: ScopeId(16): ScopeFlags(StrictMode)
+after transform: ScopeId(15): ScopeFlags(StrictMode)
 rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
 Symbol flags mismatch for "BB":
-after transform: SymbolId(11): SymbolFlags(RegularEnum)
+after transform: SymbolId(10): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(1): SymbolFlags(FunctionScopedVariable)
 Symbol redeclarations mismatch for "BB":
-after transform: SymbolId(11): [Span { start: 479, end: 481 }, Span { start: 495, end: 497 }]
+after transform: SymbolId(10): [Span { start: 445, end: 447 }, Span { start: 461, end: 463 }]
 rebuilt        : SymbolId(1): []
 Symbol flags mismatch for "BB2":
-after transform: SymbolId(16): SymbolFlags(RegularEnum)
+after transform: SymbolId(15): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(4): SymbolFlags(FunctionScopedVariable)
 
 * exports/default-function/input.ts
@@ -2424,46 +2424,6 @@ rebuilt        : ScopeId(0): []
 Scope children mismatch:
 after transform: ScopeId(0): [ScopeId(1)]
 rebuilt        : ScopeId(0): []
-
-* namespace/module-nested/input.ts
-Symbol flags mismatch for "src":
-after transform: SymbolId(0): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "src":
-after transform: SymbolId(0): Span { start: 7, end: 10 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns1":
-after transform: SymbolId(1): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns1":
-after transform: SymbolId(1): Span { start: 32, end: 35 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns2":
-after transform: SymbolId(3): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns2":
-after transform: SymbolId(3): Span { start: 113, end: 116 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
-
-* namespace/module-nested-export/input.ts
-Symbol flags mismatch for "src":
-after transform: SymbolId(0): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "src":
-after transform: SymbolId(0): Span { start: 14, end: 17 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns1":
-after transform: SymbolId(1): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns1":
-after transform: SymbolId(1): Span { start: 39, end: 42 }
-rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
-Symbol flags mismatch for "ns2":
-after transform: SymbolId(3): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ns2":
-after transform: SymbolId(3): Span { start: 120, end: 123 }
-rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 
 * namespace/multiple/input.ts
 Symbol flags mismatch for "N":

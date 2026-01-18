@@ -199,11 +199,11 @@ fn test_enums() {
         program.scope_id(),
         "Expected `enum A` to be created in the top-level scope."
     );
-    let enum_decl_scope_id = enum_decl.scope_id.get().expect("Enum declaration has no scope id");
+    let enum_body_scope_id = enum_decl.body.scope_id.get().expect("Enum body has no scope id");
     assert_ne!(
         enum_node.scope_id(),
-        enum_decl_scope_id,
-        "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in."
+        enum_body_scope_id,
+        "Enum body nodes should contain the scope ID they create, not the scope ID they're created in."
     );
     assert_eq!(enum_decl.body.members.len(), 3);
 }

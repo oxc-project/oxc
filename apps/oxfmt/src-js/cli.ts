@@ -1,11 +1,25 @@
 import { runCli } from "./bindings";
-import { initExternalFormatter, formatEmbeddedCode, formatFile } from "./cli/worker-proxy";
+import {
+  initExternalFormatter,
+  formatEmbeddedCode,
+  formatFile,
+  sortTailwindClasses,
+} from "./cli/worker-proxy";
 
 // napi-JS `oxfmt` CLI entry point
 // See also `run_cli()` function in `./src/main_napi.rs`
 
 void (async () => {
   const args = process.argv.slice(2);
+
+  // Node.js sets non-TTY `stdio` to non-blocking mode,
+  // which causes `WouldBlock` errors in Rust when writing large output with `--stdin-filepath`.
+  // https://github.com/oxc-project/oxc/issues/17939 (issue was on macOS)
+  //
+  // As a workaround, if used with pipe, set blocking mode before calling NAPI bindings.
+  // See: https://github.com/napi-rs/napi-rs/issues/1630
+  // @ts-expect-error: `_handle` is an internal API
+  if (!process.stdout.isTTY) process.stdout._handle?.setBlocking?.(true);
 
   // Call the Rust CLI first, to parse args and determine mode
   // NOTE: If the mode is formatter CLI, it will also perform formatting and return an exit code
@@ -14,6 +28,7 @@ void (async () => {
     initExternalFormatter,
     formatEmbeddedCode,
     formatFile,
+    sortTailwindClasses,
   );
 
   // Migration modes are handled by JS

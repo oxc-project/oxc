@@ -85,7 +85,7 @@ impl<'a> TypeScriptEnum<'a> {
         let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
 
         let enum_name = decl.id.name;
-        let func_scope_id = decl.scope_id();
+        let func_scope_id = decl.body.scope_id();
         let param_binding =
             ctx.generate_binding(enum_name, func_scope_id, SymbolFlags::FunctionScopedVariable);
 
@@ -110,7 +110,7 @@ impl<'a> TypeScriptEnum<'a> {
         });
 
         let statements = self.transform_ts_enum_members(
-            decl.scope_id(),
+            func_scope_id,
             &mut decl.body.members,
             &param_binding,
             ctx,

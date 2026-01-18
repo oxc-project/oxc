@@ -3,6 +3,8 @@ use std::fmt::Write as _;
 use std::{
     borrow::Cow,
     fmt::{self, Display, Formatter},
+    fs,
+    path::Path,
 };
 
 use convert_case::{Case, Casing};
@@ -17,6 +19,7 @@ use oxc_ast::ast::{
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
+use oxc_tasks_common::project_root;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Serialize;
 
@@ -87,9 +90,9 @@ const VITEST_RULES_PATH: &str =
     "https://raw.githubusercontent.com/vitest-dev/eslint-plugin-vitest/main/src/rules";
 
 const VUE_TEST_PATH: &str =
-    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules/";
+    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/tests/lib/rules";
 const VUE_RULES_PATH: &str =
-    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/lib/rules/";
+    "https://raw.githubusercontent.com/vuejs/eslint-plugin-vue/master/lib/rules";
 
 struct TestCase {
     source_text: String,
@@ -162,22 +165,26 @@ impl TestCase {
         self.group_comment.as_deref()
     }
 
-    fn output(&self) -> Option<String> {
+    fn output(&self, need_config: bool) -> Option<String> {
         let code = format_code_snippet(self.code.as_ref()?);
         let output = format_code_snippet(self.output.as_ref()?);
-        let config = self.config.as_ref().map_or_else(
-            || "None".to_string(),
-            |config| format!("Some(serde_json::json!({config}))"),
-        );
 
-        // ("null==null", "null === null", None),
-        Some(format!(r"({code}, {output}, {config})"))
+        if need_config {
+            let config = self.config.as_ref().map_or_else(
+                || "None".to_string(),
+                |config| format!("Some(serde_json::json!({config}))"),
+            );
+            Some(format!(r"({code}, {output}, {config})"))
+        } else {
+            Some(format!(r"({code}, {output})"))
+        }
     }
 }
 
 fn format_code_snippet(code: &str) -> String {
     let code = if code.contains('\n') {
-        code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
+        // Use 12 space characters after the newline.
+        code.replace('\n', "\n            ").replace('\\', "\\\\").replace('\"', "\\\"")
     } else {
         code.to_string()
     };
@@ -200,11 +207,19 @@ fn format_code_snippet(code: &str) -> String {
     }
 
     // 'import foo from "foo";' => r#"import foo from "foo";"#
-    format!("r#\"{}\"#", code.replace("\\\"", "\""))
-}
+    if code.contains('"') {
+        return format!("r#\"{}\"#", code.replace("\\\"", "\""));
+    }
 
+    // `foo === bar` => `r"foo === bar"`
+    format!("r\"{code}\"")
+}
 // TODO: handle `noFormat`(in typescript-eslint)
 fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
+    // Some test cases use code like this (e.g. no-invalid-regex):
+    // ```js
+    // String.raw`foobar\n\t escapedthing`
+    // ```
     if tag_expr.tag.is_specific_member_access("String", "raw") {
         tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
@@ -718,7 +733,7 @@ impl RuleConfigOutput {
                 output.push_str(
                     "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                 );
-                output.push_str("#[schemars(untagged, rename_all = \"camelCase\")]\n");
+                output.push_str("#[serde(untagged, rename_all = \"camelCase\")]\n");
                 let _ = writeln!(output, "enum {enum_name} {{");
                 let mut unlabeled_enum_value_count = 0;
                 let mut added_default = false;
@@ -783,7 +798,7 @@ impl RuleConfigOutput {
                             if !schemars_tags.is_empty() {
                                 let _ = writeln!(
                                     enum_fields,
-                                    "    #[schemars({})]",
+                                    "    #[serde({})]",
                                     schemars_tags.join(", ")
                                 );
                             }
@@ -827,7 +842,9 @@ impl RuleConfigOutput {
                 let mut output = String::from(
                     "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                 );
-                output.push_str("#[schemars(rename_all = \"camelCase\")]\n");
+                output.push_str(
+                    "#[serde(rename_all = \"camelCase\", default, deny_unknown_fields)]\n",
+                );
                 let _ = writeln!(output, "struct {struct_name} {{");
                 let mut fields_output = String::new();
                 for (raw_key, value) in hash_map {
@@ -1390,6 +1407,8 @@ fn main() {
     let rule_kind = args.next().map_or(RuleKind::ESLint, |kind| {
         RuleKind::try_from(kind.as_str()).expect("Invalid `RuleKind`")
     });
+
+    let update_tests_only = std::env::args().any(|arg| arg == "--update-tests");
     let kebab_rule_name = rule_name.to_case(Case::Kebab);
     let camel_rule_name = rule_name.to_case(Case::Camel);
 
@@ -1434,6 +1453,16 @@ fn main() {
         _ => "js",
     };
 
+    // Check whether this rule is marked as unsupported, and bail if it is.
+    if let Some((key, reason)) = find_unsupported_rule(&kebab_rule_name) {
+        eprintln!();
+        eprintln!("Error: This rule is either not planned or not possible to implement in Oxlint.");
+        eprintln!("The rule '{key}' will not be implemented for the following reason:");
+        eprintln!("> {reason}");
+        eprintln!();
+        std::process::exit(1);
+    }
+
     println!("Reading test file from {rule_test_path}");
 
     let test_body = oxc_tasks_common::agent()
@@ -1474,6 +1503,9 @@ fn main() {
                 let mut codes = vec![];
                 let mut fix_codes = vec![];
                 let mut last_comment = String::new();
+                // Check if any case with output has a config
+                let need_config =
+                    cases.iter().any(|case| case.output.is_some() && case.config.is_some());
                 for case in cases {
                     let current_comment = case.group_comment();
                     let mut code = case.code(has_config, has_settings, has_filename);
@@ -1491,7 +1523,7 @@ fn main() {
                         );
                     }
 
-                    if let Some(output) = case.output() {
+                    if let Some(output) = case.output(need_config) {
                         fix_codes.push(output);
                     }
 
@@ -1582,17 +1614,24 @@ fn main() {
     }
 
     let rule_name = &context.kebab_rule_name;
-    let template = template::Template::with_context(&context);
-    if let Err(err) = template.render(rule_kind) {
-        eprintln!("failed to render {rule_name} rule template: {err}");
-    }
 
-    if let Err(err) = add_rules_entry(&context, rule_kind) {
-        eprintln!("failed to add {rule_name} to rules file: {err}");
-    }
+    if update_tests_only {
+        if let Err(err) = update_test_block(&context, rule_kind) {
+            eprintln!("failed to update test block for {rule_name}: {err}");
+        }
+    } else {
+        let template = template::Template::with_context(&context);
+        if let Err(err) = template.render(rule_kind) {
+            eprintln!("failed to render {rule_name} rule template: {err}");
+        }
 
-    if let Err(err) = generate_rule_runner_impl() {
-        eprintln!("failed to generate RuleRunner impl for {rule_name}: {err}");
+        if let Err(err) = add_rules_entry(&context, rule_kind) {
+            eprintln!("failed to add {rule_name} to rules file: {err}");
+        }
+
+        if let Err(err) = generate_rule_runner_impl() {
+            eprintln!("failed to generate RuleRunner impl for {rule_name}: {err}");
+        }
     }
 }
 
@@ -1613,6 +1652,187 @@ fn generate_rule_runner_impl() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Updates only the test block in an existing rule file, preserving the rule implementation.
+fn update_test_block(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std::error::Error>> {
+    use std::process::Command;
+
+    let path = get_rule_path(rule_kind);
+    let rule_file_path = path.join(format!("{}.rs", ctx.snake_rule_name));
+
+    if !rule_file_path.exists() {
+        return Err(format!(
+            "Rule file '{}' does not exist. Use rulegen without --update-tests to create it first.",
+            rule_file_path.display()
+        )
+        .into());
+    }
+
+    let existing_content = std::fs::read_to_string(&rule_file_path)?;
+
+    // Find the test function in the existing file using syn parser
+    let (test_start, test_end) = find_test_function_range(&existing_content)
+        .ok_or("Could not find '#[test] fn test()' in the existing rule file")?;
+
+    // Generate the new test block
+    let new_test_block = generate_test_block(ctx);
+
+    // Replace the old test block with the new one
+    let mut new_content = String::with_capacity(existing_content.len());
+    new_content.push_str(&existing_content[..test_start]);
+    new_content.push_str(&new_test_block);
+    new_content.push_str(&existing_content[test_end..]);
+
+    std::fs::write(&rule_file_path, new_content)?;
+    println!("Updated test block in {}", rule_file_path.display());
+
+    // Format the file
+    let res = Command::new("cargo")
+        .arg("fmt")
+        .arg("--")
+        .arg(&rule_file_path)
+        .spawn()
+        .map(|mut child| child.wait().expect("failed to format"));
+
+    match res {
+        Ok(exit_status) if exit_status.success() => println!("Formatted rule file"),
+        Ok(exit_status) => println!("Failed to format rule file: exited with {exit_status}"),
+        Err(e) => println!("Failed to format rule file: {e}"),
+    }
+
+    Ok(())
+}
+
+/// Returns the path to the rules directory for a given rule kind.
+fn get_rule_path(rule_kind: RuleKind) -> &'static Path {
+    match rule_kind {
+        RuleKind::ESLint => Path::new("crates/oxc_linter/src/rules/eslint"),
+        RuleKind::Jest => Path::new("crates/oxc_linter/src/rules/jest"),
+        RuleKind::Typescript => Path::new("crates/oxc_linter/src/rules/typescript"),
+        RuleKind::Unicorn => Path::new("crates/oxc_linter/src/rules/unicorn"),
+        RuleKind::Import => Path::new("crates/oxc_linter/src/rules/import"),
+        RuleKind::React => Path::new("crates/oxc_linter/src/rules/react"),
+        RuleKind::ReactPerf => Path::new("crates/oxc_linter/src/rules/react_perf"),
+        RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),
+        RuleKind::Oxc => Path::new("crates/oxc_linter/src/rules/oxc"),
+        RuleKind::NextJS => Path::new("crates/oxc_linter/src/rules/nextjs"),
+        RuleKind::JSDoc => Path::new("crates/oxc_linter/src/rules/jsdoc"),
+        RuleKind::Node => Path::new("crates/oxc_linter/src/rules/node"),
+        RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
+        RuleKind::Vitest => Path::new("crates/oxc_linter/src/rules/vitest"),
+        RuleKind::Vue => Path::new("crates/oxc_linter/src/rules/vue"),
+    }
+}
+
+/// Finds the byte range (start, end) of the `#[test] fn test()` function in the content.
+/// Uses `syn` to properly parse the Rust source code.
+fn find_test_function_range(content: &str) -> Option<(usize, usize)> {
+    use syn::spanned::Spanned;
+
+    let file = syn::parse_file(content).ok()?;
+
+    for item in &file.items {
+        if let syn::Item::Fn(item_fn) = item {
+            // Check if function is named "test" and has #[test] attribute
+            if item_fn.sig.ident == "test" {
+                let has_test_attr = item_fn.attrs.iter().any(|attr| attr.path().is_ident("test"));
+                if has_test_attr {
+                    let span = item_fn.span();
+                    let start = span.start();
+                    let end = span.end();
+
+                    // Convert line/column to byte offset
+                    let start_offset = line_col_to_offset(content, start.line, start.column)?;
+                    let end_offset = line_col_to_offset(content, end.line, end.column)?;
+
+                    return Some((start_offset, end_offset));
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// Converts a 1-based line number and 0-based column to a byte offset.
+fn line_col_to_offset(content: &str, line: usize, column: usize) -> Option<usize> {
+    let mut current_line = 1;
+    let mut line_start = 0;
+
+    for (i, c) in content.char_indices() {
+        if current_line == line {
+            // Found the line, now advance by column (in bytes for the chars)
+            let line_content = &content[line_start..];
+            let col_offset: usize = line_content.chars().take(column).map(char::len_utf8).sum();
+            return Some(line_start + col_offset);
+        }
+        if c == '\n' {
+            current_line += 1;
+            line_start = i + 1;
+        }
+    }
+
+    // Handle last line
+    if current_line == line {
+        let line_content = &content[line_start..];
+        let col_offset: usize = line_content.chars().take(column).map(char::len_utf8).sum();
+        return Some(line_start + col_offset);
+    }
+
+    None
+}
+
+/// Generates the test block content from the context.
+fn generate_test_block(ctx: &Context) -> String {
+    let mut test_block = String::new();
+
+    test_block.push_str("#[test]\nfn test() {\n");
+    test_block.push_str("    use crate::tester::Tester;\n");
+
+    if ctx.has_filename {
+        test_block.push_str("    use std::path::PathBuf;\n");
+    }
+
+    test_block.push_str("\n    let pass = vec![\n");
+    if !ctx.pass_cases.is_empty() {
+        test_block.push_str("        ");
+        test_block.push_str(&ctx.pass_cases);
+        test_block.push('\n');
+    }
+    test_block.push_str("    ];\n");
+
+    test_block.push_str("\n    let fail = vec![\n");
+    if !ctx.fail_cases.is_empty() {
+        test_block.push_str("        ");
+        test_block.push_str(&ctx.fail_cases);
+        test_block.push('\n');
+    }
+    test_block.push_str("    ];\n\n");
+
+    if let Some(fix_cases) = &ctx.fix_cases
+        && !fix_cases.is_empty()
+    {
+        test_block.push_str("    let fix = vec![\n");
+        test_block.push_str("        ");
+        test_block.push_str(fix_cases);
+        test_block.push_str("\n    ];\n\n");
+        let _ = writeln!(
+            test_block,
+            "    Tester::new({}::NAME, {}::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();",
+            ctx.pascal_rule_name, ctx.pascal_rule_name
+        );
+    } else {
+        let _ = writeln!(
+            test_block,
+            "    Tester::new({}::NAME, {}::PLUGIN, pass, fail).test_and_snapshot();",
+            ctx.pascal_rule_name, ctx.pascal_rule_name
+        );
+    }
+
+    test_block.push_str("}\n");
+
+    test_block
+}
+
 fn get_mod_name(rule_kind: RuleKind) -> String {
     match rule_kind {
         RuleKind::ESLint => "eslint".into(),
@@ -1631,6 +1851,32 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
         RuleKind::Node => "node".into(),
         RuleKind::Vue => "vue".into(),
     }
+}
+
+/// This returns the rule key if it's listed as unsupported (meaning
+/// it isn't possible or isn't planned for support), otherwise it
+/// returns nothing.
+///
+/// See `tasks/lint_rules/src/unsupported-rules.json` for reference.
+fn find_unsupported_rule(kebab_rule: &str) -> Option<(String, String)> {
+    let file_path = project_root().join("tasks/lint_rules/src/unsupported-rules.json");
+    let json = fs::read_to_string(file_path)
+        .expect("Failed to read file")
+        .parse::<serde_json::Value>()
+        .expect("Failed to parse JSON");
+
+    let map = json.get("unsupportedRules")?.as_object()?;
+
+    for (key, val) in map {
+        if key == kebab_rule
+            || key.contains(&format!("eslint/{kebab_rule}"))
+            || key.contains(kebab_rule)
+        {
+            let reason = val.as_str().unwrap_or("").to_string();
+            return Some((key.clone(), reason));
+        }
+    }
+    None
 }
 
 /// Adds a module definition for the given rule to the `rules.rs` file, and adds the rule to the
@@ -1747,4 +1993,184 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_unsupported_rule_matches() {
+        // `eslint/no-dupe-args` should be detected by the helper as it's an unsupported rule.
+        let res = find_unsupported_rule("no-dupe-args");
+        assert!(res.is_some());
+        let (key, reason) = res.unwrap();
+        assert!(key == "eslint/no-dupe-args");
+        assert!(!reason.is_empty());
+    }
+
+    #[test]
+    fn test_find_unsupported_rule_does_not_match() {
+        // This rule is not in the unsupported list, so it should return None.
+        let res = find_unsupported_rule("eslint/foobar");
+        assert!(res.is_none());
+    }
+
+    #[test]
+    fn test_find_unsupported_rule_matches_for_n_rule() {
+        let res = find_unsupported_rule("n/no-hide-core-modules");
+        assert!(res.is_some());
+        let (key, reason) = res.unwrap();
+        assert!(key == "n/no-hide-core-modules");
+        assert!(!reason.is_empty());
+    }
+
+    #[test]
+    fn test_format_code_snippet_simple_identifier() {
+        assert_eq!(format_code_snippet("debugger"), "\"debugger\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_simple_expression() {
+        // Simple expression uses regular quotes
+        assert_eq!(format_code_snippet("foo === bar"), "\"foo === bar\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_double_quotes() {
+        // Code containing double quotes uses raw string
+        assert_eq!(
+            format_code_snippet("import foo from \"foo\";"),
+            "r#\"import foo from \"foo\";\"#"
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_hash_in_quotes() {
+        // Code containing "#" with a double-quote, needs raw string with `r##`.
+        assert_eq!(
+            format_code_snippet("document.querySelector(\"#foo\");"),
+            "r##\"document.querySelector(\"#foo\");\"##"
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_multiline() {
+        // Multiline code with newlines gets escaped and indented
+        let input = "const x = 1;\nconst y = 2;";
+        let result = format_code_snippet(input);
+        assert!(result.contains("const x = 1;"));
+        assert!(result.contains("const y = 2;"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_backslash() {
+        // Code containing backslashes uses raw string
+        let input = "\\u1234";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_raw_string_r_quote() {
+        // Already a raw string with r" - returned as-is
+        assert_eq!(format_code_snippet("r\"foobar\""), "r\"foobar\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_raw_string_r_hash_quote() {
+        // Already a raw string with r#" - returned as-is
+        assert_eq!(format_code_snippet("r#\"foobar\"#"), "r#\"foobar\"#");
+    }
+
+    #[test]
+    fn test_format_code_snippet_quoted_string() {
+        // Quoted string as code - contains both quotes and no backslashes
+        let result = format_code_snippet("\"debugger\"");
+        assert!(result.starts_with("r#"));
+        assert!(result.contains("debugger"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_complex_multiline() {
+        // Complex multiline with multiple special characters
+        let input = "function test() {\n  console.log(\"hello\");\n}";
+        let result = format_code_snippet(input);
+        assert!(result.contains("function test()"));
+        assert!(result.contains("console.log("));
+    }
+
+    #[test]
+    fn test_format_code_snippet_empty_string() {
+        // Empty string code
+        assert_eq!(format_code_snippet(""), "\"\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_tab_characters() {
+        // Code containing tab characters (no quotes or backslashes)
+        assert_eq!(
+            format_code_snippet("const x = 1;\tconst y = 2;"),
+            "\"const x = 1;\tconst y = 2;\""
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_multiline_with_quotes() {
+        // Multiline code with double quotes
+        let input = "const msg = \"hello\";\nconsole.log(msg);";
+        let result = format_code_snippet(input);
+        assert!(result.contains("const msg = "));
+        assert!(result.contains("console.log(msg);"));
+        assert!(result.starts_with("r#\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_regex_pattern() {
+        // Regex pattern with backslashes
+        let input = "/\\d+/";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_unicode_escape() {
+        // Unicode escape sequences - has backslash so uses raw string
+        let result = format_code_snippet("\\u0041");
+        assert!(result.starts_with("r\""));
+        assert!(result.contains("u0041"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_mixed_quotes_and_hash() {
+        // Both quotes and # present - needs r##
+        let input = "document.getElementById(\"#id\")";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r##"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_newline_normalization() {
+        // Newline characters get indented with spaces, not tabs
+        let input = "line1\nline2\nline3";
+        let result = format_code_snippet(input);
+        assert!(result.contains("line1"));
+        assert!(result.contains("line2"));
+        assert!(result.contains("line3"));
+        assert!(!result.contains('\t'));
+    }
+
+    #[test]
+    fn test_format_code_snippet_double_backslash() {
+        // Code with escaped backslash
+        let input = "path\\\\to\\\\file";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_single_quotes() {
+        // Single quotes (no double quotes) - treated as regular string
+        assert_eq!(format_code_snippet("const msg = 'hello';"), "\"const msg = 'hello';\"");
+    }
 }

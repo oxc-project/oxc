@@ -47,7 +47,7 @@ pub use self::comments::Comments;
 use self::printer::Printer;
 pub use self::{
     arguments::{Argument, Arguments},
-    context::FormatContext,
+    context::{FormatContext, TailwindContextEntry},
     diagnostics::{ActualStart, FormatError, InvalidDocumentError, PrintError},
     formatter::Formatter,
     source_text::SourceText,
@@ -56,7 +56,7 @@ pub use self::{
 };
 use self::{format_element::document::Document, group_id::UniqueGroupIdBuilder, prelude::TagKind};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Formatted<'a> {
     document: Document<'a>,
     context: FormatContext<'a>,
@@ -88,18 +88,20 @@ impl<'a> Formatted<'a> {
 }
 
 impl Formatted<'_> {
-    pub fn print(&self) -> PrintResult<Printed> {
+    pub fn print(self) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-
-        let printed = Printer::new(print_options).print(&self.document)?;
-
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes).print(elements)?;
         Ok(printed)
     }
 
-    pub fn print_with_indent(&self, indent: u16) -> PrintResult<Printed> {
+    pub fn print_with_indent(self, indent: u16) -> PrintResult<Printed> {
         let print_options = self.context.options().as_print_options();
-        let printed = Printer::new(print_options).print_with_indent(&self.document, indent)?;
-
+        let (elements, sorted_tailwind_classes) =
+            self.document.into_elements_and_tailwind_classes();
+        let printed = Printer::new(print_options, &sorted_tailwind_classes)
+            .print_with_indent(elements, indent)?;
         Ok(printed)
     }
 }
@@ -322,8 +324,16 @@ pub fn format<'ast>(
 
     buffer.write_fmt(arguments);
 
-    let document = Document::from(buffer.into_vec());
+    let elements = buffer.into_vec();
+    let mut context = state.into_context();
+
+    let tailwind_classes = context.take_tailwind_classes();
+    let sorted_tailwind_classes =
+        context.external_callbacks().sort_tailwind_classes(tailwind_classes);
+
+    let document = Document::new(elements, sorted_tailwind_classes);
+
     document.propagate_expand();
 
-    Formatted::new(document, state.into_context())
+    Formatted::new(document, context)
 }

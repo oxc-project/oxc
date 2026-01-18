@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, ops::Deref};
 
 use oxc_span::SourceType;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
@@ -63,6 +63,14 @@ impl<'a> FormatLiteralStringToken<'a> {
 
 pub struct CleanedStringLiteralText<'a> {
     text: Cow<'a, str>,
+}
+
+impl Deref for CleanedStringLiteralText<'_> {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        &self.text
+    }
 }
 
 impl CleanedStringLiteralText<'_> {

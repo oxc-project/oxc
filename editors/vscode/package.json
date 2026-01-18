@@ -1,7 +1,7 @@
 {
   "name": "oxc-vscode",
   "displayName": "Oxc",
-  "version": "1.36.0",
+  "version": "1.39.0",
   "description": "Oxlint and Oxfmt editor integration",
   "categories": [
     "Formatters",
@@ -29,7 +29,7 @@
   "publisher": "oxc",
   "main": "./out/main.js",
   "scripts": {
-    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
+    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/black-bg-circle.png --output icon.png",
     "build": "pnpm run oxlint:build:release && pnpm run oxfmt:build:release && pnpm run compile && pnpm run package",
     "build:dev": "pnpm run oxlint:build:debug && pnpm run oxfmt:build:debug && pnpm run compile && pnpm run package",
     "compile": "rolldown -c rolldown.config.ts",
@@ -41,6 +41,7 @@
     "oxfmt:build:debug": "pnpm -C ../../apps/oxfmt build-napi-test && pnpm -C ../../apps/oxfmt build-js",
     "oxfmt:build:release": "pnpm -C ../../apps/oxfmt build-napi && pnpm -C ../../apps/oxfmt build-js",
     "test": "cross-env TEST=true pnpm run compile && vscode-test",
+    "test:unit": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=unit vscode-test",
     "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
     "test:oxlint-multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp-multi-root vscode-test",
     "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test"
@@ -215,7 +216,7 @@
           "type": "boolean",
           "scope": "resource",
           "default": true,
-          "markdownDescription": "Enable experimental formatting support. This feature is experimental and might not work as expected.",
+          "markdownDescription": "Enable Oxfmt formatting support.",
           "deprecated": true,
           "markdownDeprecationMessage": "The formatter is now stable, this setting has no effect."
         },
@@ -238,22 +239,22 @@
         "oxc.path.oxlint": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc linter binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc linter binary. Default: auto detection in `node_modules`."
         },
         "oxc.path.oxfmt": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc formatter binary. Default: auto detection in `node_modules`."
         },
         "oxc.path.tsgolint": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one."
+          "markdownDescription": "Path to an Oxc tsgolint binary. Default: auto detection from `oxlint`."
         },
         "oxc.path.node": {
           "type": "string",
           "scope": "window",
-          "markdownDescription": "Path to a Node.js binary. Will be added to the language server `PATH` environment."
+          "markdownDescription": "Path to a Node.js binary. Will be added to the `oxfmt` and `oxlint` `PATH` environment."
         }
       }
     },
@@ -283,12 +284,23 @@
   },
   "activationEvents": [
     "onLanguage:astro",
+    "onLanguage:css",
+    "onLanguage:graphql",
+    "onLanguage:handlebars",
+    "onLanguage:html",
     "onLanguage:javascript",
     "onLanguage:javascriptreact",
+    "onLanguage:json",
+    "onLanguage:jsonc",
+    "onLanguage:less",
+    "onLanguage:markdown",
+    "onLanguage:scss",
     "onLanguage:svelte",
+    "onLanguage:toml",
     "onLanguage:typescript",
     "onLanguage:typescriptreact",
-    "onLanguage:vue"
+    "onLanguage:vue",
+    "onLanguage:yaml"
   ],
   "icon": "icon.png",
   "engines": {

@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::UnaryOperator;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -55,7 +56,7 @@ declare_oxc_lint!(
     PreferGlobalThis,
     unicorn,
     style,
-    pending
+    suggestion
 );
 
 impl Rule for PreferGlobalThis {
@@ -100,8 +101,26 @@ impl Rule for PreferGlobalThis {
             }
         }
 
-        ctx.diagnostic(prefer_global_this_diagnostic(ident.span));
+        ctx.diagnostic_with_suggestion(prefer_global_this_diagnostic(ident.span), |fixer| {
+            let is_typeof = is_typeof_legacy_global(node, ctx);
+            let replacement = if is_typeof {
+                format!("globalThis.{}", ident.name)
+            } else {
+                "globalThis".to_string()
+            };
+            fixer.replace(ident.span, replacement)
+        });
     }
+}
+
+fn is_typeof_legacy_global(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    if let AstKind::UnaryExpression(unary) = ctx.nodes().parent_kind(node.id())
+        && unary.operator == UnaryOperator::Typeof
+        && let Expression::Identifier(arg_ident) = &unary.argument
+    {
+        return arg_ident.span == node.span();
+    }
+    false
 }
 
 /// `window[foo]`, `self[bar]`, etc. are allowed.
@@ -367,5 +386,184 @@ fn test() {
         "self.self_did_not_declare_in_language_options",
     ];
 
-    Tester::new(PreferGlobalThis::NAME, PreferGlobalThis::PLUGIN, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("global", "globalThis"),
+        ("self", "globalThis"),
+        ("window", "globalThis"),
+        ("window.foo", "globalThis.foo"),
+        ("window.foo()", "globalThis.foo()"),
+        ("window > 10", "globalThis > 10"),
+        ("10 > window", "10 > globalThis"),
+        ("window ?? 10", "globalThis ?? 10"),
+        ("10 ?? window", "10 ?? globalThis"),
+        ("window.foo = 123", "globalThis.foo = 123"),
+        ("window = 123", "globalThis = 123"),
+        ("obj.a = window", "obj.a = globalThis"),
+        (
+            "function* gen() {
+			  yield window
+			}",
+            "function* gen() {
+			  yield globalThis
+			}",
+        ),
+        (
+            "async function gen() {
+			  await window
+			}",
+            "async function gen() {
+			  await globalThis
+			}",
+        ),
+        ("window ? foo : bar", "globalThis ? foo : bar"),
+        ("foo ? window : bar", "foo ? globalThis : bar"),
+        ("foo ? bar : window", "foo ? bar : globalThis"),
+        (
+            "function foo() {
+			  return window
+			}",
+            "function foo() {
+			  return globalThis
+			}",
+        ),
+        ("new window()", "new globalThis()"),
+        (
+            "const obj = {
+				foo: window.foo,
+				bar: window.bar,
+				window: window
+			}",
+            "const obj = {
+				foo: globalThis.foo,
+				bar: globalThis.bar,
+				window: globalThis
+			}",
+        ),
+        (
+            "function sequenceTest() {
+				let x, y;
+				x = (y = 10, y + 5, window);
+				console.log(x, y);
+			}",
+            "function sequenceTest() {
+				let x, y;
+				x = (y = 10, y + 5, globalThis);
+				console.log(x, y);
+			}",
+        ),
+        ("window`Hello ${42} World`", "globalThis`Hello ${42} World`"),
+        ("tag`Hello ${window.foo} World`", "tag`Hello ${globalThis.foo} World`"),
+        ("var str = `hello ${window.foo} world!`", "var str = `hello ${globalThis.foo} world!`"),
+        ("delete window.foo", "delete globalThis.foo"),
+        ("++window", "++globalThis"),
+        ("++window.foo", "++globalThis.foo"),
+        (
+            "for (var attr in window) {
+			}",
+            "for (var attr in globalThis) {
+			}",
+        ),
+        (
+            "for (window.foo = 0; i < 10; window.foo++) {
+			}",
+            "for (globalThis.foo = 0; i < 10; globalThis.foo++) {
+			}",
+        ),
+        (
+            "for (const item of window.foo) {
+			}",
+            "for (const item of globalThis.foo) {
+			}",
+        ),
+        (
+            "for (const item of window) {
+			}",
+            "for (const item of globalThis) {
+			}",
+        ),
+        ("switch (window) {}", "switch (globalThis) {}"),
+        (
+            "switch (true) {
+				case window:
+					break;
+			}",
+            "switch (true) {
+				case globalThis:
+					break;
+			}",
+        ),
+        (
+            "switch (true) {
+				case window.foo:
+					break;
+			}",
+            "switch (true) {
+				case globalThis.foo:
+					break;
+			}",
+        ),
+        (
+            "while (window) {
+			}",
+            "while (globalThis) {
+			}",
+        ),
+        ("do {} while (window) {}", "do {} while (globalThis) {}"),
+        ("if (window) {}", "if (globalThis) {}"),
+        ("throw window", "throw globalThis"),
+        ("var foo = window", "var foo = globalThis"),
+        (
+            "function foo (name = window) {
+			}",
+            "function foo (name = globalThis) {
+			}",
+        ),
+        ("self.innerWidth", "globalThis.innerWidth"),
+        ("self.innerHeight", "globalThis.innerHeight"),
+        ("window.crypto", "globalThis.crypto"),
+        (
+            r#"window.addEventListener("play", () => {})"#,
+            r#"globalThis.addEventListener("play", () => {})"#,
+        ),
+        ("window.onplay = function () {}", "globalThis.onplay = function () {}"),
+        (
+            "function greet({ name = window.foo }) {}",
+            "function greet({ name = globalThis.foo }) {}",
+        ),
+        ("({ foo: window.foo } =  {})", "({ foo: globalThis.foo } =  {})"),
+        ("[window.foo] = []", "[globalThis.foo] = []"),
+        ("foo[window]", "foo[globalThis]"),
+        ("foo[window.foo]", "foo[globalThis.foo]"),
+        (r#"typeof window !== "undefined""#, r#"typeof globalThis.window !== "undefined""#),
+        (r#"typeof self !== "undefined""#, r#"typeof globalThis.self !== "undefined""#),
+        (r#"typeof global !== "undefined""#, r#"typeof globalThis.global !== "undefined""#),
+        (
+            r#"typeof window.something === "function""#,
+            r#"typeof globalThis.something === "function""#,
+        ),
+        (
+            r#"typeof self.something === "function""#,
+            r#"typeof globalThis.something === "function""#,
+        ),
+        (
+            r#"typeof global.something === "function""#,
+            r#"typeof globalThis.something === "function""#,
+        ),
+        (
+            "global.global_did_not_declare_in_language_options",
+            "globalThis.global_did_not_declare_in_language_options",
+        ),
+        (
+            "window.window_did_not_declare_in_language_options",
+            "globalThis.window_did_not_declare_in_language_options",
+        ),
+        (
+            "self.self_did_not_declare_in_language_options",
+            "globalThis.self_did_not_declare_in_language_options",
+        ),
+    ];
+
+    Tester::new(PreferGlobalThis::NAME, PreferGlobalThis::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

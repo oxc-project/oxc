@@ -206,30 +206,21 @@ fn test() {
     ];
 
     let fix = vec![
-        ("document.getElementsByTagName('foo');", "document.querySelectorAll('foo');", None),
-        (
-            "document.getElementsByClassName(`foo bar`);",
-            "document.querySelectorAll(`.foo .bar`);",
-            None,
-        ),
-        ("document.getElementsByClassName(null);", "document.querySelectorAll(null);", None),
-        ("document.getElementsByTagName(`   `);", "document.querySelectorAll(`   `);", None),
-        ("document.getElementById(123);", "document.getElementById(123);", None),
-        ("document.getElementById(`id`);", "document.querySelector(`#id`);", None),
-        ("document.getElementById(obj.id);", "document.getElementById(obj.id);", None),
-        ("document.getElementById(getId());", "document.getElementById(getId());", None),
-        ("document.getElementById(`${foo}`);", "document.getElementById(`${foo}`);", None),
-        (
-            "document.getElementById(searchInputId);",
-            "document.querySelector(`#${searchInputId}`);",
-            None,
-        ),
+        ("document.getElementsByTagName('foo');", "document.querySelectorAll('foo');"),
+        ("document.getElementsByClassName(`foo bar`);", "document.querySelectorAll(`.foo .bar`);"),
+        ("document.getElementsByClassName(null);", "document.querySelectorAll(null);"),
+        ("document.getElementsByTagName(`   `);", "document.querySelectorAll(`   `);"),
+        ("document.getElementById(123);", "document.getElementById(123);"),
+        ("document.getElementById(`id`);", "document.querySelector(`#id`);"),
+        ("document.getElementById(obj.id);", "document.getElementById(obj.id);"),
+        ("document.getElementById(getId());", "document.getElementById(getId());"),
+        ("document.getElementById(`${foo}`);", "document.getElementById(`${foo}`);"),
+        ("document.getElementById(searchInputId);", "document.querySelector(`#${searchInputId}`);"),
         (
             "document.getElementsByClassName(foo + \"bar\");",
             "document.getElementsByClassName(foo + \"bar\");",
-            None,
         ),
-        ("document.getElementsByClassName(fn());", "document.getElementsByClassName(fn());", None),
+        ("document.getElementsByClassName(fn());", "document.getElementsByClassName(fn());"),
     ];
 
     Tester::new(PreferQuerySelector::NAME, PreferQuerySelector::PLUGIN, pass, fail)

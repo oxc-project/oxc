@@ -1,5 +1,11 @@
 import { format as napiFormat } from "./bindings";
-import { resolvePlugins, formatEmbeddedCode, formatFile } from "./libs/prettier";
+import {
+  resolvePlugins,
+  formatEmbeddedCode,
+  formatFile,
+  sortTailwindClasses,
+} from "./libs/prettier";
+import type { Options } from "prettier";
 
 // napi-JS `oxfmt` API entry point
 // See also `format()` function in `./src/main_napi.rs`
@@ -18,6 +24,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     resolvePlugins,
     (options, tagName, code) => formatEmbeddedCode({ options, tagName, code }),
     (options, parserName, fileName, code) => formatFile({ options, parserName, fileName, code }),
+    (filepath, options, classes) => sortTailwindClasses({ filepath, classes, options }),
   );
 }
 
@@ -79,9 +86,8 @@ export type FormatOptions = {
   bracketSameLine?: boolean;
   /**
    * How to wrap object literals when they could fit on one line or span multiple lines. (Default: `"preserve"`)
-   * NOTE: In addition to Prettier's `"preserve"` and `"collapse"`, we also support `"always"`.
    */
-  objectWrap?: "preserve" | "collapse" | "always";
+  objectWrap?: "preserve" | "collapse";
   /** Put each attribute on a new line in JSX. (Default: `false`) */
   singleAttributePerLine?: boolean;
   /** Control whether formats quoted code embedded in the file. (Default: `"auto"`) */
@@ -92,7 +98,13 @@ export type FormatOptions = {
   experimentalSortImports?: SortImportsOptions;
   /** Experimental: Sort `package.json` keys. (Default: `true`) */
   experimentalSortPackageJson?: boolean;
-} & Record<string, unknown>; // Also allow additional options for we don't have typed yet.
+  /**
+   * Experimental: Enable Tailwind CSS class sorting in JSX class/className attributes.
+   * (Default: disabled)
+   */
+  experimentalTailwindcss?: TailwindcssOptions;
+} & Pick<Options, "proseWrap" | "htmlWhitespaceSensitivity" | "vueIndentScriptAndStyle"> &
+  Record<string, unknown>; // Also allow additional options for we don't have typed yet.
 
 /**
  * Configuration options for sort imports.
@@ -118,4 +130,23 @@ export type SortImportsOptions = {
    * Accepts both `string` and `string[]` as group elements.
    */
   groups?: (string | string[])[];
+};
+
+/**
+ * Configuration options for Tailwind CSS class sorting.
+ * See https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
+ */
+export type TailwindcssOptions = {
+  /** Path to Tailwind config file (v3). e.g., `"./tailwind.config.js"` */
+  config?: string;
+  /** Path to Tailwind stylesheet (v4). e.g., `"./src/app.css"` */
+  stylesheet?: string;
+  /** List of custom function names whose arguments should be sorted. e.g., `["clsx", "cva", "tw"]` */
+  functions?: string[];
+  /** List of additional HTML/JSX attributes to sort (beyond `class` and `className`). e.g., `["myClassProp", ":class"]` */
+  attributes?: string[];
+  /** Preserve whitespace around classes. (Default: `false`) */
+  preserveWhitespace?: boolean;
+  /** Preserve duplicate classes. (Default: `false`) */
+  preserveDuplicates?: boolean;
 };

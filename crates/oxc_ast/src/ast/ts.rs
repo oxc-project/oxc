@@ -76,18 +76,15 @@ pub struct TSThisParameter<'a> {
 /// ## Reference
 /// * [TypeScript Handbook - Enums](https://www.typescriptlang.org/docs/handbook/enums.html)
 #[ast(visit)]
-#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    #[scope(enter_before)]
     pub body: TSEnumBody<'a>,
     /// `true` for const enums
     pub r#const: bool,
     pub declare: bool,
-    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// Enum Body
@@ -103,11 +100,13 @@ pub struct TSEnumDeclaration<'a> {
 ///   ^^^^^
 /// ```
 #[ast(visit)]
+#[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSEnumBody<'a> {
     pub span: Span,
     pub members: Vec<'a, TSEnumMember<'a>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// Enum Member

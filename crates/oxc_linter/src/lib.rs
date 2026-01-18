@@ -61,7 +61,7 @@ pub use crate::{
     context::{ContextSubHost, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetupConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -94,6 +94,9 @@ fn size_asserts() {
     // See codspeed in https://github.com/oxc-project/oxc/pull/1783
     assert_eq!(size_of::<RuleEnum>(), 16);
 }
+
+/// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
+const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
 
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
@@ -546,7 +549,9 @@ impl Linter {
         let program_offset = ptr::from_ref(program) as u32;
 
         // Write offset of `Program` in metadata at end of buffer
-        let metadata = RawTransferMetadata::new(program_offset);
+        let is_ts = program.source_type.is_typescript();
+        let is_jsx = program.source_type.is_jsx();
+        let metadata = RawTransferMetadata::new(program_offset, is_ts, is_jsx);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -679,6 +684,8 @@ pub struct RawTransferMetadata2 {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
+    /// `true` if AST is JSX.
+    pub is_jsx: bool,
     /// Padding to pad struct to size 16.
     pub(crate) _padding: u64,
 }
@@ -686,29 +693,7 @@ pub struct RawTransferMetadata2 {
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32) -> Self {
-        Self { data_offset, is_ts: false, _padding: 0 }
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use std::fs;
-
-    use project_root::get_project_root;
-
-    use crate::Oxlintrc;
-
-    #[test]
-    fn test_schema_json() {
-        let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
-        let json = Oxlintrc::generate_schema_json();
-        let existing_json = fs::read_to_string(&path).unwrap_or_default();
-        if existing_json.trim() != json.trim() {
-            std::fs::write(&path, &json).unwrap();
-        }
-        insta::with_settings!({ prepend_module_to_snapshot => false }, {
-            insta::assert_snapshot!(json);
-        });
+    pub fn new(data_offset: u32, is_ts: bool, is_jsx: bool) -> Self {
+        Self { data_offset, is_ts, is_jsx, _padding: 0 }
     }
 }

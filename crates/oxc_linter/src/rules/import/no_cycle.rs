@@ -1,4 +1,8 @@
-use std::{ffi::OsStr, path::Component, sync::Arc};
+use std::{
+    ffi::OsStr,
+    path::{Component, Path, PathBuf},
+    sync::Arc,
+};
 
 use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
@@ -14,10 +18,47 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
+fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+    let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
-        .with_help(format!("These paths form a cycle: \n{paths}"))
+        .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
+        .with_note(format!("These paths form a cycle:\n{cycle_description}"))
         .with_label(span)
+}
+
+fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Dependency cycle detected")
+        .with_help(if is_import {
+            "Remove the self-referencing import."
+        } else {
+            "Remove the self-referencing export and consider using a named export instead."
+        })
+        .with_label(span.primary_label("this module references itself"))
+}
+
+fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+    let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
+
+    for (i, (specifier, path)) in stack.iter().enumerate() {
+        let relative_path = path
+            .strip_prefix(cwd)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .cow_replace('\\', "/")
+            .into_owned();
+
+        if i == 0 {
+            lines.push(format!("╭──▶ {specifier} ({relative_path})"));
+        } else {
+            lines.push("│         ⬇ imports".to_string());
+            lines.push(format!("│    {specifier} ({relative_path})"));
+        }
+    }
+
+    // Close the cycle - it imports back to the original file
+    lines.push("╰─────────╯ imports the current file".to_string());
+
+    lines.join("\n")
 }
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
@@ -183,21 +224,13 @@ impl Rule for NoCycle {
             });
 
         if visitor_result.result {
-            let span = module_record.requested_modules[&stack[0].0][0].span;
-            let help = stack
-                .iter()
-                .map(|(specifier, path)| {
-                    format!(
-                        "-> {specifier} - {}",
-                        path.strip_prefix(&cwd)
-                            .unwrap_or(path)
-                            .to_string_lossy()
-                            .cow_replace('\\', "/")
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-            ctx.diagnostic(no_cycle_diagnostic(span, &help));
+            let requested_module = module_record.requested_modules[&stack[0].0][0];
+            let span = requested_module.span;
+            if stack.len() == 1 {
+                ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
+            } else {
+                ctx.diagnostic(no_cycle_diagnostic(span, &stack, &cwd));
+            }
         }
     }
 }
@@ -382,6 +415,7 @@ fn test() {
             Some(json!([{"ignoreTypes":false}])),
         ),
         (r"export function Foo() {}; export * from './depth-zero'", None),
+        (r"import * as depthZero from './depth-zero'", None),
     ];
 
     Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)

@@ -941,16 +941,18 @@ describe("RuleTester", () => {
 
   describe("parsing options", () => {
     describe("sourceType", () => {
-      it("default (module)", () => {
+      it("default (unambiguous)", () => {
         const tester = new RuleTester();
         tester.run("no-foo", simpleRule, {
+          // with (obj) {} - no ESM syntax, parsed as script, `with` is allowed
+          // import x from 'foo'; - has ESM syntax, parsed as module
           valid: ["with (obj) {}", "import x from 'foo';"],
           invalid: [],
         });
 
         expect(runCases()).toMatchInlineSnapshot(`
           [
-            [Error: Parsing failed],
+            null,
             null,
           ]
         `);
@@ -1416,6 +1418,7 @@ describe("RuleTester", () => {
         const tester = new RuleTester();
         tester.run("no-foo", simpleRule, {
           valid: [
+            // Default is now unambiguous: no ESM syntax -> script -> with is allowed
             "with (obj) {}",
             {
               code: "with (obj) {}",
@@ -1447,7 +1450,7 @@ describe("RuleTester", () => {
 
         expect(runCases()).toMatchInlineSnapshot(`
           [
-            [Error: Parsing failed],
+            null,
             null,
             null,
             [Error: Parsing failed],
@@ -2557,8 +2560,13 @@ describe("RuleTester", () => {
     });
 
     describe("ignoreNonFatalErrors", () => {
+      // Note: `function f(x, x) {}` is only an error in strict/module mode.
+      // With unambiguous parsing, we need to explicitly set sourceType: "module"
+      // to trigger the duplicate parameter error.
       it("default (off)", () => {
-        const tester = new RuleTester();
+        const tester = new RuleTester({
+          languageOptions: { sourceType: "module" },
+        });
         tester.run("no-foo", simpleRule, {
           valid: ["function f(x, x) {}"],
           invalid: [],
@@ -2574,7 +2582,10 @@ describe("RuleTester", () => {
       describe("disabled", () => {
         it("set globally", () => {
           RuleTester.setDefaultConfig({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: false },
+            },
           });
 
           const tester = new RuleTester();
@@ -2592,7 +2603,10 @@ describe("RuleTester", () => {
 
         it("set in `RuleTester` options", () => {
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: false },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
@@ -2608,11 +2622,17 @@ describe("RuleTester", () => {
 
         it("set in `RuleTester` options, overriding global setting", () => {
           RuleTester.setDefaultConfig({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
 
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: false },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
@@ -2632,7 +2652,10 @@ describe("RuleTester", () => {
             valid: [
               {
                 code: "function f(x, x) {}",
-                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+                languageOptions: {
+                  sourceType: "module",
+                  parserOptions: { ignoreNonFatalErrors: false },
+                },
               },
             ],
             invalid: [],
@@ -2647,7 +2670,10 @@ describe("RuleTester", () => {
 
         it("set in individual test cases, overriding global setting", () => {
           RuleTester.setDefaultConfig({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
 
           const tester = new RuleTester();
@@ -2655,7 +2681,10 @@ describe("RuleTester", () => {
             valid: [
               {
                 code: "function f(x, x) {}",
-                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+                languageOptions: {
+                  sourceType: "module",
+                  parserOptions: { ignoreNonFatalErrors: false },
+                },
               },
             ],
             invalid: [],
@@ -2670,13 +2699,19 @@ describe("RuleTester", () => {
 
         it("set in individual test cases, overriding `RuleTester` options", () => {
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: [
               {
                 code: "function f(x, x) {}",
-                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+                languageOptions: {
+                  sourceType: "module",
+                  parserOptions: { ignoreNonFatalErrors: false },
+                },
               },
             ],
             invalid: [],
@@ -2786,7 +2821,11 @@ describe("RuleTester", () => {
       });
 
       it("mixed across test cases", () => {
-        const tester = new RuleTester();
+        // Note: duplicate params are only an error in strict/module mode.
+        // Need to set sourceType: "module" to trigger the error.
+        const tester = new RuleTester({
+          languageOptions: { sourceType: "module" },
+        });
         tester.run("no-foo", simpleRule, {
           valid: [
             "function f(x, x) {}",

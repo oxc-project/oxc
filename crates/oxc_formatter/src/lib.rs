@@ -3,20 +3,21 @@
 mod ast_nodes;
 #[cfg(feature = "detect_code_removal")]
 mod detect_code_removal;
-mod embedded_formatter;
+mod external_formatter;
 mod formatter;
 mod ir_transform;
 mod options;
-pub mod oxfmtrc;
 mod parentheses;
+mod print;
 mod service;
 mod utils;
-mod write;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::*;
 
-pub use crate::embedded_formatter::{EmbeddedFormatter, EmbeddedFormatterCallback};
+pub use crate::external_formatter::{
+    EmbeddedFormatterCallback, ExternalCallbacks, TailwindCallback,
+};
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::service::*;
@@ -48,22 +49,14 @@ impl<'a> Formatter<'a> {
 
     #[inline]
     pub fn format(self, program: &'a Program<'a>) -> Formatted<'a> {
-        self.format_impl(program, None)
+        self.format_with_external_callbacks(program, None)
     }
 
     #[inline]
-    pub fn format_with_embedded(
+    pub fn format_with_external_callbacks(
         self,
         program: &'a Program<'a>,
-        embedded_formatter: EmbeddedFormatter,
-    ) -> Formatted<'a> {
-        self.format_impl(program, Some(embedded_formatter))
-    }
-
-    pub fn format_impl(
-        self,
-        program: &'a Program<'a>,
-        embedded_formatter: Option<EmbeddedFormatter>,
+        external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
         let parent = self.allocator.alloc(AstNodes::Dummy());
         let program_node = AstNode::new(program, parent, self.allocator);
@@ -74,7 +67,7 @@ impl<'a> Formatter<'a> {
             &program.comments,
             self.allocator,
             self.options,
-            embedded_formatter,
+            external_callbacks,
         );
 
         let mut formatted = formatter::format(
@@ -85,13 +78,13 @@ impl<'a> Formatter<'a> {
         // Basic formatting and `document.propagate_expand()` are already done here.
         // Now apply additional transforms if enabled.
         if let Some(sort_imports_options) = &formatted.context().options().experimental_sort_imports
-            && let Some(transformed_document) = SortImportsTransform::transform(
+            && let Some(transformed_elements) = SortImportsTransform::transform(
                 formatted.document(),
                 sort_imports_options,
                 self.allocator,
             )
         {
-            *formatted.document_mut() = transformed_document;
+            formatted.document_mut().replace_elements(transformed_elements);
         }
 
         formatted
@@ -103,6 +96,10 @@ pub(crate) enum JsLabels {
     MemberChain,
     /// For `ir_transform/sort_imports`
     ImportDeclaration,
+    /// For `ir_transform/sort_imports`
+    /// Marks `alignable_comment` (Block comment where each line starts with `*`)
+    /// to distinguish from other text content like template literals that may contain `/*`.
+    AlignableBlockComment,
 }
 
 impl Label for JsLabels {
@@ -114,6 +111,7 @@ impl Label for JsLabels {
         match self {
             Self::MemberChain => "MemberChain",
             Self::ImportDeclaration => "ImportDeclaration",
+            Self::AlignableBlockComment => "AlignableBlockComment",
         }
     }
 }

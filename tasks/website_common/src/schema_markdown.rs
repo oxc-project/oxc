@@ -206,17 +206,59 @@ impl Renderer {
             let mut object_schemas: Vec<&SchemaObject> = vec![];
             let mut primitive_types: Vec<String> = vec![];
 
+            // Collect schemas, flattening nested anyOf from $ref
+            let mut flattened_schemas: Vec<&SchemaObject> = vec![];
             for subschema in schemas {
                 let subschema = Self::get_schema_object(subschema);
                 let subschema = self.get_referenced_schema(subschema);
 
-                if subschema.object.is_some() || subschema.array.is_some() {
+                // If the resolved schema has its own anyOf, flatten it
+                if let Some(nested_subschemas) = &subschema.subschemas
+                    && let Some(nested_any_of) = &nested_subschemas.any_of
+                {
+                    for nested in nested_any_of {
+                        let nested = Self::get_schema_object(nested);
+                        let nested = self.get_referenced_schema(nested);
+                        flattened_schemas.push(nested);
+                    }
+                    continue;
+                }
+                flattened_schemas.push(subschema);
+            }
+
+            for subschema in flattened_schemas {
+                // Check if this is an object/array type by either:
+                // 1. Having object/array validation fields, or
+                // 2. Having instance_type set to Object/Array
+                let is_object =
+                    subschema.object.is_some() || subschema.has_type(InstanceType::Object);
+                let is_array = subschema.array.is_some() || subschema.has_type(InstanceType::Array);
+
+                if is_object || is_array {
                     // This is a complex object or array - should be expanded
                     object_schemas.push(subschema);
                 } else if let Some(instance_type) = &subschema.instance_type {
-                    // This is a primitive type
-                    primitive_types
-                        .push(serde_json::to_string(instance_type).unwrap().replace('"', ""));
+                    // Skip null types from Option<T>
+                    if subschema.has_type(InstanceType::Null) {
+                        continue;
+                    }
+                    // Check if this is an enum type
+                    if let Some(enum_values) = &subschema.enum_values {
+                        // This is an enum - render the enum values instead of just "string"
+                        let enum_type = enum_values
+                            .iter()
+                            .map(|v| v.as_str().unwrap())
+                            .map(|s| format!(r#""{s}""#))
+                            .collect::<Vec<_>>()
+                            .join(" | ");
+                        if !enum_type.is_empty() {
+                            primitive_types.push(enum_type);
+                        }
+                    } else {
+                        // This is a primitive type
+                        primitive_types
+                            .push(serde_json::to_string(instance_type).unwrap().replace('"', ""));
+                    }
                 }
             }
 
@@ -391,6 +433,7 @@ impl Renderer {
                 SingleOrVec::Vec(types) => types
                     .iter()
                     .map(|ty| serde_json::to_string(ty).unwrap().replace('"', ""))
+                    .filter(|ty| ty != "null")
                     .join(" | "),
             });
             let key_to_render = if key.is_empty() { None } else { Some(key) };

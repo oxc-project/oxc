@@ -20,6 +20,10 @@ pub fn init_tracing() {
                 Targets::from_str(&env_var).unwrap()
             },
         ))
-        .with(tracing_subscriber::fmt::layer())
+        .with(
+            tracing_subscriber::fmt::layer()
+                // https://github.com/tokio-rs/tracing/issues/2492
+                .with_writer(std::io::stderr),
+        )
         .init();
 }

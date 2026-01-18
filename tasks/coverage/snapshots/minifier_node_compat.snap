@@ -2,7 +2,7 @@ commit: 499beb6f
 
 minifier_node_compat Summary:
 AST Parsed     : 938/938 (100.00%)
-Positive Passed: 930/938 (99.15%)
+Positive Passed: 931/938 (99.25%)
 execution_result: tasks/coverage/ES2015/built-ins›Proxy›"getOwnPropertyDescriptor" handler invariants
 
 execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›HasBinding
@@ -13,8 +13,6 @@ execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›Str
 
 execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'ownKeys' calls›TestIntegrityLevel
 
-Expect to Parse: tasks/coverage/ES2018/features›RegExp Unicode Property Escapes›Unicode 17.0
-Failed to minify code
 execution_result: tasks/coverage/ES2018/misc›Proxy "ownKeys" handler, duplicate keys for non-extensible targets
 
 execution_result: tasks/coverage/ES2022/features›Object.hasOwn›ToObject called before ToPropertyKey

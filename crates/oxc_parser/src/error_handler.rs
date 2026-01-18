@@ -57,6 +57,20 @@ impl<'a> ParserImpl<'a> {
         self.errors.push(error);
     }
 
+    /// Defer an error that is only valid if the file is a Script (not a Module).
+    ///
+    /// For `ModuleKind::Unambiguous`, we don't know the module type until parsing is complete.
+    /// Errors like "await outside async function" are only valid if the file ends up being
+    /// a Script. If ESM syntax is found, the file becomes a Module and these errors are discarded.
+    #[cold]
+    pub(crate) fn error_on_script(&mut self, error: OxcDiagnostic) {
+        if self.source_type.is_unambiguous() {
+            self.deferred_script_errors.push(error);
+        } else {
+            self.errors.push(error);
+        }
+    }
+
     /// Count of all parser and lexer errors.
     pub(crate) fn errors_count(&self) -> usize {
         self.errors.len() + self.lexer.errors.len()

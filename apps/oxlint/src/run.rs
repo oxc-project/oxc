@@ -64,7 +64,7 @@ pub type JsLintFileCb = ThreadsafeFunction<
 
 /// JS callback to setup configs.
 #[napi]
-pub type JsSetupConfigsCb = ThreadsafeFunction<
+pub type JsSetupRuleConfigsCb = ThreadsafeFunction<
     // Arguments
     String, // Options array, as JSON string
     // Return value
@@ -82,7 +82,7 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
 /// JS side passes in:
 /// 1. `args`: Command line arguments (process.argv.slice(2))
 /// 2. `load_plugin`: Load a JS plugin from a file path.
-/// 3. `setup_configs`: Setup configuration options.
+/// 3. `setup_rule_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
@@ -92,17 +92,17 @@ pub type JsSetupConfigsCb = ThreadsafeFunction<
 pub async fn lint(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
-    setup_configs: JsSetupConfigsCb,
+    setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_configs, lint_file).await.report() == ExitCode::SUCCESS
+    lint_impl(args, load_plugin, setup_rule_configs, lint_file).await.report() == ExitCode::SUCCESS
 }
 
 /// Run the linter.
 async fn lint_impl(
     args: Vec<String>,
     load_plugin: JsLoadPluginCb,
-    setup_configs: JsSetupConfigsCb,
+    setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
@@ -123,13 +123,15 @@ async fn lint_impl(
         }
     };
 
+    // Both LSP and CLI use `tracing` for logging
+    init_tracing();
+
     // If --lsp flag is set, run the language server
     if command.lsp {
         crate::lsp::run_lsp().await;
         return CliRunResult::LintSucceeded;
     }
 
-    init_tracing();
     init_miette();
 
     command.handle_threads();
@@ -137,10 +139,10 @@ async fn lint_impl(
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     let external_linter =
-        Some(crate::js_plugins::create_external_linter(load_plugin, setup_configs, lint_file));
+        Some(crate::js_plugins::create_external_linter(load_plugin, setup_rule_configs, lint_file));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _, _) = (load_plugin, setup_configs, lint_file);
+        let (_, _, _) = (load_plugin, setup_rule_configs, lint_file);
         None
     };
 

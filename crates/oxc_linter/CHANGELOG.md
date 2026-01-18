@@ -4,6 +4,88 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.39.0] - 2026-01-12
+
+### 🚀 Features
+
+- 9699a1b linter/prefer-global-this: Add suggestion (#17873) (Mikhail Baev)
+- 51c2815 linter/no-invalid-regexp: Add labels and help text to flag diagnostics (#17865) (camchenry)
+- 344d77d linter/no-ex-assign: Improve diagnostic with more detail (#17864) (camchenry)
+- 7d280e0 linter: Add fixer for `unicorn/no-useless-error-capture-stack-trace` rule (#17839) (Mikhail Baev)
+- af1d0e3 linter/prefer-optional-chain: Add rule (#17831) (camc314)
+- c7f0848 linte/rno-required-prop-with-default: Implement suggestion (#17747) (Minsu Lee)
+- 0e8127e linter/vue: Implement no-lifecycle-after-await (#17701) (yefan)
+- 3567304 linter/vitest: Implement `consistent-each-for` (#17601) (Said Atrahouch)
+- 883e156 linter: Add fixer for `unicorn/no-useless-collection-argument` rule (#17594) (Mikhail Baev)
+- 4eb335c linter/vitest: Implemented prefer-called-once (#17674) (Said Atrahouch)
+- 2bd2d5a linter/vitest: Implement hoisted-apis-on-top (#17658) (Said Atrahouch)
+- cfb2bcc linter/vue: Implement no-arrow-functions-in-watch (#17672) (yefan)
+- a68208a linter/eslint-plugin-vitest: Implements `prefer-describe-function-title` (#17677) (Said Atrahouch)
+- efa029f linter/vitest: Implement no-unneeded-async-expect-function (#17494) (Minsu Lee)
+
+### 🐛 Bug Fixes
+
+- 84f4f3c linter: Add doc url for tsgolint diagnostics (#17879) (Sysix)
+- 76c903f linter/consistent-indexed-object-style: Skip fixing default exported interface (#17874) (Copilot)
+- 7e87d16 linter/tabindex-no-positive: Improve diagnostic phrasing (#17849) (connorshea)
+- 8ca2cd2 linter: Move jsx-a11y/no-static-element-interactions rule to nursery. (#17818) (connorshea)
+- dc9fdd6 linter/consistent-indexed-object-style: Re-port test cases and fix some bugs (#17802) (camc314)
+- 7bbd880 linter: Update prefer-destructuring rule metadata (#17642) (Hamir Mahal)
+- 3c45185 linter/consistent-indexed-object-style: False positive with circular reference (#17789) (heygsc)
+- 3e0dff7 linter/no-hooks: Add punctuation to diagnostic message (#17751) (camc314)
+- 6ae21f9 linter/prefer-called-once: Avoid panic on trailing comma (#17735) (Said Atrahouch)
+- 32c3901 oxlint: Do not panic on invalid `no-unused-vars` configuration (#17719) (Sysix)
+- 59a6228 parser: Detect TS1363 error for type-only imports with mixed default and named/namespace bindings (#17712) (Copilot)
+
+### ⚡ Performance
+
+- f87a1e2 linter: Check for giving reserved plugin name before calling `load_plugin` on napi side (#17841) (Sysix)
+
+### 📚 Documentation
+
+- a2b3a24 linter/no-caller: Improve docs and diagnostic for rule. (#17890) (connorshea)
+- aa48247 linter/no-unsafe-finally: Improve rule docs. (#17891) (connorshea)
+- 1b0bdee linter: Tweak docs for no-useless-constructor and hoisted-apis-on-top (#17888) (connorshea)
+
+## [1.37.0] - 2026-01-05
+
+### 🚀 Features
+
+- 659c23e linter: Init note field boilerplate  (#17589) (Shrey Sudhir)
+- 6870b64 parser: Add TS1363 error code (#17609) (Sysix)
+- 6154c8c linter/eslint-plugin-vitest: Implemented vitest/warn-todo rule (#17228) (Said Atrahouch)
+- 0043cd6 linter/eslint-plugin-vitest: Implement consistent-vitest-vi rule (#17389) (Said Atrahouch)
+- a6d773d linter: Add full TS support to eslint/no-useless-constructor (#17592) (camc314)
+- f02c0e7 linter/eslint: Implement complexity (#17569) (Nguyen Tran)
+- bc7aae7 linter/no-unused-vars: Add fixer to remove unused catch bindings (#17567) (Don Isaac)
+- 9e8ec78 linter/only-throw-error rule: Add `allowRethrowing` option for  (#17554) (camc314)
+- b67e819 linter: Add fixer for `unicorn/prefer-response-static-json` rule (#17559) (Mikhail Baev)
+- 44b0361 linter/vue: Implement no-this-in-before-route-enter (#17525) (yefan)
+- ee34716 linter/react: Implement no-will-update-set-state (#17530) (Kenzo Wada)
+- 3088e1d linter/react: Implement no-this-in-sfc (#17535) (Kenzo Wada)
+- 29a2868 linter/jsx-a11y: Implement no-static-element-interactions (#17538) (Kenzo Wada)
+- eadf057 linter: Enable tsconfig auto discovery by default (#17489) (Boshen)
+- 12a7d6e website_linter: Add a count of rules with fixes available to rules table. (#17476) (Connor Shea)
+
+### 🐛 Bug Fixes
+
+- 19fdfb6 linter: Panic in `sort-keys` rule with Unicode numeric characters (#17629) (Adel Rodríguez)
+- be39906 linter/aria-proptypes: Allow template literals with expressions for string-type ARIA props (#17460) (Jökull Sólberg Auðunsson)
+- 529901c linter: Include JS plugin rules when calculating total rule count (#17520) (connorshea)
+- 96ef2cc linter: Print total rule # when using a single nested config (#17517) (connorshea)
+- ff70fe9 linter/no-standalone-expect: Allows expect in wrapper functions passed to test blocks (#17427) (Copilot)
+- dab232f linter/catch-or-return: Handle arrow functions with implicit returns correctly (#17440) (Copilot)
+- a38892a linter: Update no-unnecessary-template-expression docs and test case (#17453) (camc314)
+
+### 📚 Documentation
+
+- 884fb63 linter/react: Improve docs for jsx-curly-brace-presence (#17579) (connorshea)
+- 1d3ee07 linter: Improve rule explanation for `vue/no-this-in-before-route-enter`. (#17581) (connorshea)
+- 5f189f8 linter/arrow-body-style: Correctly document default mode option (#17566) (Rägnar O'ock)
+- bb2e8e4 linter: Add a note to the `typescript/no-var-requires` rule about the missing `allow` option (#17551) (connorshea)
+- 655afc1 linter: Improve docs for `import/extensions` and add a few more tests (#17539) (connorshea)
+- 7e5fc90 linter: Update list of plugins that are reserved. (#17516) (connorshea)
+
 ## [1.36.0] - 2025-12-29
 
 ### 🚀 Features

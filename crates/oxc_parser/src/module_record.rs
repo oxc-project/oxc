@@ -9,15 +9,17 @@ use crate::diagnostics;
 
 pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
+    source_type: SourceType,
     module_record: ModuleRecord<'a>,
     export_entries: Vec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
         Self {
             allocator,
+            source_type,
             module_record: ModuleRecord::new(allocator),
             export_entries: Vec::new_in(allocator),
             exported_bindings_duplicated: Vec::new_in(allocator),
@@ -32,35 +34,46 @@ impl<'a> ModuleRecordBuilder<'a> {
         (self.module_record, errors)
     }
 
+    /// Returns true if the file contains module syntax (import/export declarations or import.meta).
+    pub fn has_module_syntax(&self) -> bool {
+        self.module_record.has_module_syntax
+    }
+
     pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
         let module_record = &self.module_record;
 
-        // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
-        for name_span in &self.exported_bindings_duplicated {
-            let old_span = module_record.exported_bindings[&name_span.name];
-            errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
+        // Skip checking for exports in TypeScript
+        if !self.source_type.is_typescript() {
+            // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
+            for name_span in &self.exported_bindings_duplicated {
+                let old_span = module_record.exported_bindings[&name_span.name];
+                errors.push(diagnostics::duplicate_export(
+                    &name_span.name,
+                    name_span.span,
+                    old_span,
+                ));
+            }
+
+            // Multiple default exports
+            // `export default foo`
+            // `export { default }`
+            let default_exports = module_record
+                .local_export_entries
+                .iter()
+                .filter_map(|export_entry| export_entry.export_name.default_export_span())
+                .chain(
+                    module_record
+                        .indirect_export_entries
+                        .iter()
+                        .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+                );
+            if default_exports.clone().count() > 1 {
+                errors.push(diagnostics::duplicate_default_export(default_exports));
+            }
         }
 
-        // Multiple default exports
-        // `export default foo`
-        // `export { default }`
-        let default_exports = module_record
-            .local_export_entries
-            .iter()
-            .filter_map(|export_entry| export_entry.export_name.default_export_span())
-            .chain(
-                module_record
-                    .indirect_export_entries
-                    .iter()
-                    .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            );
-        if default_exports.clone().count() > 1 {
-            errors.push(
-                OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
-            );
-        }
         errors
     }
 

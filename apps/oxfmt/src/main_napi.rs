@@ -7,10 +7,11 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon, init_tracing},
+    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon},
     core::{
         ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
-        JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, SourceFormatter,
+        JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
+        SourceFormatter, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -24,6 +25,7 @@ use crate::{
 /// 2. `init_external_formatter_cb`: Callback to initialize external formatter
 /// 3. `format_embedded_cb`: Callback to format embedded code in templates
 /// 4. `format_file_cb`: Callback to format files
+/// 5. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
 ///
 /// Returns a tuple of `[mode, exitCode]`:
 /// - `mode`: If main logic will run in JS side, use this to indicate which mode
@@ -43,11 +45,15 @@ pub async fn run_cli(
         ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
+    #[napi(
+        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
+    )]
+    sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
 ) -> (String, Option<u8>) {
-    // Convert String args to OsString for compatibility with bpaf
+    // Convert `String` args to `OsString` for compatibility with `bpaf`
     let args: Vec<OsString> = args.into_iter().map(OsString::from).collect();
 
-    // Use `run_inner()` to report errors instead of panicking.
+    // Use `run_inner()` to report errors instead of panicking
     let command = match format_command().run_inner(&*args) {
         Ok(cmd) => cmd,
         Err(e) => {
@@ -58,44 +64,50 @@ pub async fn run_cli(
         }
     };
 
+    // Early return for modes that handle everything in JS side
     match command.mode {
-        Mode::Init => ("init".to_string(), None),
-        Mode::Migrate(_) => ("migrate:prettier".to_string(), None),
+        Mode::Init => {
+            return ("init".to_string(), None);
+        }
+        Mode::Migrate(_) => {
+            return ("migrate:prettier".to_string(), None);
+        }
+        _ => {}
+    }
+
+    // Otherwise, handle modes that require Rust side processing
+
+    let external_formatter = ExternalFormatter::new(
+        init_external_formatter_cb,
+        format_embedded_cb,
+        format_file_cb,
+        sort_tailwindcss_classes_cb,
+    );
+
+    utils::init_tracing();
+    match command.mode {
         Mode::Lsp => {
-            run_lsp().await;
+            run_lsp(external_formatter).await;
+
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
-            init_tracing();
             init_miette();
 
-            let result = StdinRunner::new(command)
-                // Create external formatter from JS callback
-                .with_external_formatter(Some(ExternalFormatter::new(
-                    init_external_formatter_cb,
-                    format_embedded_cb,
-                    format_file_cb,
-                )))
-                .run();
+            let result = StdinRunner::new(command, external_formatter).run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
         Mode::Cli(_) => {
-            init_tracing();
             init_miette();
             init_rayon(command.runtime_options.threads);
 
-            let result = FormatRunner::new(command)
-                // Create external formatter from JS callback
-                .with_external_formatter(Some(ExternalFormatter::new(
-                    init_external_formatter_cb,
-                    format_embedded_cb,
-                    format_file_cb,
-                )))
-                .run();
+            let result =
+                FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run();
 
             ("cli".to_string(), Some(result.exit_code()))
         }
+        _ => unreachable!("All other modes must have been handled above match arm"),
     }
 }
 
@@ -129,11 +141,19 @@ pub async fn format(
         ts_arg_type = "(options: Record<string, any>, parserName: string, fileName: string, code: string) => Promise<string>"
     )]
     format_file_cb: JsFormatFileCb,
+    #[napi(
+        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
+    )]
+    sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> FormatResult {
     let num_of_threads = 1;
 
-    let external_formatter =
-        ExternalFormatter::new(init_external_formatter_cb, format_embedded_cb, format_file_cb);
+    let external_formatter = ExternalFormatter::new(
+        init_external_formatter_cb,
+        format_embedded_cb,
+        format_file_cb,
+        sort_tailwind_classes_cb,
+    );
 
     // Create resolver from options and resolve format options
     let mut config_resolver = ConfigResolver::from_value(options.unwrap_or_default());

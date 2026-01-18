@@ -178,7 +178,7 @@ impl CliRunner {
             paths.sort_unstable();
         }
 
-        let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -323,7 +323,7 @@ impl CliRunner {
 
                 let table = RuleTable::default();
                 for section in &table.sections {
-                    let md = section.render_markdown_table_cli(None, &enabled);
+                    let md = section.render_markdown_table_cli(&enabled);
                     print_and_flush_stdout(stdout, &md);
                     print_and_flush_stdout(stdout, "\n");
                 }
@@ -342,7 +342,7 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            let res = config_store.external_plugin_store().setup_rule_configs(external_linter);
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
@@ -1349,6 +1349,10 @@ mod test {
             assert!(rule_obj.contains_key("scope"), "Rule should contain 'scope' field");
             assert!(rule_obj.contains_key("value"), "Rule should contain 'value' field");
             assert!(rule_obj.contains_key("category"), "Rule should contain 'category' field");
+            assert!(rule_obj.contains_key("type_aware"), "Rule should contain 'type_aware' field");
+            assert!(rule_obj.contains_key("fix"), "Rule should contain 'fix' field");
+            assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
+            assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
         }
     }
 
@@ -1467,5 +1471,45 @@ export { redundant };
 ",
             &["--type-aware", "-D", "no-unnecessary-type-assertion"],
         );
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_enum() {
+        Tester::new().with_cwd("fixtures/invalid_config_enum".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_extra_options() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_extra_options".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    // Ensure the config validation works with vitest/no-hooks, which
+    // is an alias of jest/no-hooks.
+    fn test_invalid_config_invalid_config_with_rule_alias() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_with_rule_alias".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_in_override() {
+        Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_multiple_rules() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_multiple_rules".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_type_difference() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_type_difference".into())
+            .test_and_snapshot(&[]);
     }
 }

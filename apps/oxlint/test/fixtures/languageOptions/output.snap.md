@@ -4,9 +4,9 @@
 # stdout
 ```
   x language-options-plugin(lang): languageOptions:
-  | sourceType: script
+  | sourceType: commonjs
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"script"}
+  | parserOptions: {"sourceType":"commonjs"}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.cjs:1:1]
@@ -792,9 +792,9 @@
    `----
 
   x language-options-plugin(lang): languageOptions:
-  | sourceType: module
+  | sourceType: script
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"module"}
+  | parserOptions: {"sourceType":"script"}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.js:1:1]
@@ -814,7 +814,7 @@
    `----
 
 Found 0 warnings and 4 errors.
-Finished in Xms on 3 files using X threads.
+Finished in Xms on 3 files with 1 rules using X threads.
 ```
 
 # stderr

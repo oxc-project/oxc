@@ -1,4 +1,7 @@
 {
+  "categories": {
+    "correctness": "off"
+  },
   "plugins": [
     "import"
   ],

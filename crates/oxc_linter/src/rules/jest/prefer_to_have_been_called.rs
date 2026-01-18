@@ -170,6 +170,13 @@ fn test() {
             None,
         ),
         (
+            "expect(method).toHaveBeenCalledTimes(
+            0,
+            );",
+            "expect(method).not.toHaveBeenCalled();",
+            None,
+        ),
+        (
             "expect(method).not.toHaveBeenCalledTimes(0);",
             "expect(method).toHaveBeenCalled();",
             None,
@@ -186,6 +193,26 @@ fn test() {
         ),
         (
             "expect(method).rejects.not.toHaveBeenCalledTimes(0);",
+            "expect(method).rejects.toHaveBeenCalled();",
+            None,
+        ),
+        (
+            "expect(method).rejects.not.toHaveBeenCalledTimes(0,);",
+            "expect(method).rejects.toHaveBeenCalled();",
+            None,
+        ),
+        (
+            "expect(method).rejects.not.toHaveBeenCalledTimes(
+            0,
+            );",
+            "expect(method).rejects.toHaveBeenCalled();",
+            None,
+        ),
+        (
+            "expect(method).rejects.not.toHaveBeenCalledTimes(
+                /* call this zero times (because I said so) */
+                0,
+            );",
             "expect(method).rejects.toHaveBeenCalled();",
             None,
         ),

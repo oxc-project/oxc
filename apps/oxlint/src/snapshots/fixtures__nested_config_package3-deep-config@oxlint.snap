@@ -6,7 +6,7 @@ arguments: package3-deep-config
 working directory: fixtures/nested_config
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  x eslint(no-console): Unexpected console statement.
    ,-[package3-deep-config/src/components/component.js:2:3]
  1 | export function Component() {
  2 |   console.log("hello");

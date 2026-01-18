@@ -21,7 +21,7 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: cwd: <fixture>
+  x create-once-plugin(always-run): createOnce: cwd error: Cannot access `context.cwd` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -45,7 +45,7 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: getCwd(): <fixture>
+  x create-once-plugin(always-run): createOnce: getCwd() error: Cannot call `context.getCwd` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -195,7 +195,7 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: cwd: <fixture>
+  x create-once-plugin(always-run): createOnce: cwd error: Cannot access `context.cwd` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -219,7 +219,7 @@
    : ^
    `----
 
-  x create-once-plugin(always-run): createOnce: getCwd(): <fixture>
+  x create-once-plugin(always-run): createOnce: getCwd() error: Cannot call `context.getCwd` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
@@ -352,7 +352,7 @@
    `----
 
 Found 0 warnings and 58 errors.
-Finished in Xms on 2 files using X threads.
+Finished in Xms on 2 files with 6 rules using X threads.
 ```
 
 # stderr

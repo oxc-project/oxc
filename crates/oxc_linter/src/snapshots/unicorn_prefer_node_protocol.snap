@@ -105,9 +105,9 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──
    ╰────
 
-  ⚠ eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.
-   ╭─[prefer_node_protocol.tsx:1:14]
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[prefer_node_protocol.tsx:1:1]
  1 │ await import('assert/strict')
-   ·              ───────────────
+   · ─────
    ╰────
-  help: Prefer `node:assert/strict` over `assert/strict`.
+  help: Either remove this `await` or add the `async` keyword to the enclosing function

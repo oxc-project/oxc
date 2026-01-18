@@ -1042,21 +1042,21 @@ const _: () = {
     assert!(offset_of!(TSThisParameter, this_span) == 8);
     assert!(offset_of!(TSThisParameter, type_annotation) == 16);
 
-    // Padding: 2 bytes
-    assert!(size_of::<TSEnumDeclaration>() == 80);
+    // Padding: 6 bytes
+    assert!(size_of::<TSEnumDeclaration>() == 88);
     assert!(align_of::<TSEnumDeclaration>() == 8);
     assert!(offset_of!(TSEnumDeclaration, span) == 0);
     assert!(offset_of!(TSEnumDeclaration, id) == 8);
     assert!(offset_of!(TSEnumDeclaration, body) == 40);
-    assert!(offset_of!(TSEnumDeclaration, r#const) == 76);
-    assert!(offset_of!(TSEnumDeclaration, declare) == 77);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 72);
+    assert!(offset_of!(TSEnumDeclaration, r#const) == 80);
+    assert!(offset_of!(TSEnumDeclaration, declare) == 81);
 
-    // Padding: 0 bytes
-    assert!(size_of::<TSEnumBody>() == 32);
+    // Padding: 4 bytes
+    assert!(size_of::<TSEnumBody>() == 40);
     assert!(align_of::<TSEnumBody>() == 8);
     assert!(offset_of!(TSEnumBody, span) == 0);
     assert!(offset_of!(TSEnumBody, members) == 8);
+    assert!(offset_of!(TSEnumBody, scope_id) == 32);
 
     // Padding: 0 bytes
     assert!(size_of::<TSEnumMember>() == 40);
@@ -2671,13 +2671,13 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(TSEnumDeclaration, body) == 28);
     assert!(offset_of!(TSEnumDeclaration, r#const) == 56);
     assert!(offset_of!(TSEnumDeclaration, declare) == 57);
-    assert!(offset_of!(TSEnumDeclaration, scope_id) == 52);
 
     // Padding: 0 bytes
-    assert!(size_of::<TSEnumBody>() == 24);
+    assert!(size_of::<TSEnumBody>() == 28);
     assert!(align_of::<TSEnumBody>() == 4);
     assert!(offset_of!(TSEnumBody, span) == 0);
     assert!(offset_of!(TSEnumBody, members) == 8);
+    assert!(offset_of!(TSEnumBody, scope_id) == 24);
 
     // Padding: 0 bytes
     assert!(size_of::<TSEnumMember>() == 24);

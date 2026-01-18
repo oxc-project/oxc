@@ -3,13 +3,11 @@
   "oxc.typeAware": true,
   "oxc.configPath": "oxlintrc.json",
   "oxc.unusedDisableDirectives": "deny",
-
   // "oxc.path.oxfmt": "apps/oxfmt/dist/cli.js", // debug with local oxfmt build
   "oxc.fmt.configPath": "oxfmtrc.jsonc",
-  "[javascript]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
-  "[typescript]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode"
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
   }
 }

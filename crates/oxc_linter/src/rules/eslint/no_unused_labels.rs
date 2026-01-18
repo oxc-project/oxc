@@ -74,47 +74,69 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("A: break A;", None),
-        ("A: { foo(); break A; bar(); }", None),
-        ("A: if (a) { foo(); if (b) break A; bar(); }", None),
-        ("A: for (var i = 0; i < 10; ++i) { foo(); if (a) break A; bar(); }", None),
-        ("A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue A; bar(); }", None),
-        (
-            "A: { B: break B; C: for (var i = 0; i < 10; ++i) { foo(); if (a) break A; if (c) continue C; bar(); } }",
-            None,
-        ),
-        ("A: { var A = 0; console.log(A); break A; console.log(A); }", None),
-        (
-            "label: while (true) { f = function() { label: while (true) { break label; } }; break label; }",
-            None,
-        ),
-        ("outer: { function f() { inner: { break inner; } } break outer; }", None),
-        ("A: { const f = () => { B: { break B; } }; break A; }", None),
+        "A: break A;",
+        "A: { foo(); break A; bar(); }",
+        "A: if (a) { foo(); if (b) break A; bar(); }",
+        "A: for (var i = 0; i < 10; ++i) { foo(); if (a) break A; bar(); }",
+        "A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue A; bar(); }",
+        "A: { B: break B; C: for (var i = 0; i < 10; ++i) { foo(); if (a) break A; if (c) continue C; bar(); } }",
+        "A: { var A = 0; console.log(A); break A; console.log(A); }",
+        "label: while (true) { f = function() { label: while (true) { break label; } }; break label; }",
+        "outer: { function f() { inner: { break inner; } } break outer; }",
+        "A: { const f = () => { B: { break B; } }; break A; }",
     ];
 
     let fail = vec![
-        ("A: var foo = 0;", None),
-        ("A: { foo(); bar(); }", None),
-        ("A: if (a) { foo(); bar(); }", None),
-        ("A: for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }", None),
-        ("A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }", None),
-        ("A: for (var i = 0; i < 10; ++i) { B: break A; }", None),
-        ("A: { var A = 0; console.log(A); }", None),
-        ("A: /* comment */ foo", None),
-        ("A /* comment */: foo", None),
+        "A: var foo = 0;",
+        "A: { foo(); bar(); }",
+        "A: if (a) { foo(); bar(); }",
+        "A: for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }",
+        "A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }",
+        "A: for (var i = 0; i < 10; ++i) { B: break A; }",
+        "A: { var A = 0; console.log(A); }",
+        "A: /* comment */ foo",
+        "A /* comment */: foo",
+        r#"A: "use strict""#,
+        r#""use strict"; foo: "bar""#,
+        r#"A: ("use strict")"#,
+        "A: `use strict`", // { "ecmaVersion": 6 },
+        "if (foo) { bar: 'baz' }",
+        "A: B: 'foo'",
+        "A: B: C: 'foo'",
+        "A: B: C: D: 'foo'",
+        "A: B: C: D: E: 'foo'",
+        "A: 42",
         // Ensure inner label in function is still marked as unused when not used
-        ("A: { function f() { B: { } } break A; }", None),
-        ("label: while (true) { (() => { label: while (false) {} })(); }", None),
+        "A: { function f() { B: { } } break A; }",
+        "label: while (true) { (() => { label: while (false) {} })(); }",
     ];
+
     let fix = vec![
-        ("A: var foo = 0;", "var foo = 0;", None),
-        ("A: /* comment */ foo", "foo", None),
-        ("A /* comment */: foo", "foo", None),
+        ("A: var foo = 0;", "var foo = 0;"),
+        ("A: /* comment */ foo", "foo"),
+        ("A /* comment */: foo", "foo"),
+        ("A: { foo(); bar(); }", "{ foo(); bar(); }"),
+        ("A: if (a) { foo(); bar(); }", "if (a) { foo(); bar(); }"),
+        (
+            "A: for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }",
+            "for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }",
+        ),
+        (
+            "A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }",
+            "for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }",
+        ),
         (
             "A: for (var i = 0; i < 10; ++i) { B: break A; }",
             "A: for (var i = 0; i < 10; ++i) { break A; }",
-            None,
         ),
+        ("A: { var A = 0; console.log(A); }", "{ var A = 0; console.log(A); }"),
+        ("if (foo) { bar: 'baz' }", "if (foo) { 'baz' }"),
+        ("A: B: 'foo'", "B: 'foo'"),
+        ("A: B: C: 'foo'", "B: C: 'foo'"),
+        // TODO: Fix the rule fixer to allow these.
+        // ("A: B: C: D: 'foo'", "B: D: 'foo'"),
+        // ("A: B: C: D: E: 'foo'", "B: D: E: 'foo'"),
+        ("A: 42", "42"),
     ];
 
     Tester::new(NoUnusedLabels::NAME, NoUnusedLabels::PLUGIN, pass, fail)

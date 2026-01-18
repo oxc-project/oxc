@@ -96,7 +96,7 @@ fn is_angular_test_wrapper_expression(expression: &Expression) -> bool {
     matches!(expression, Expression::CallExpression(call) if is_angular_test_wrapper(call))
 }
 
-fn is_angular_test_wrapper(call: &CallExpression) -> bool {
+pub fn is_angular_test_wrapper(call: &CallExpression) -> bool {
     matches!(&call.callee,
         Expression::Identifier(ident) if
         matches!(ident.name.as_str(), "async" | "inject" | "fakeAsync" | "waitForAsync")

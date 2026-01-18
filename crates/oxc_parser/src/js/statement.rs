@@ -42,12 +42,32 @@ impl<'a> ParserImpl<'a> {
             StatementContext::StatementList
         };
 
+        // Check if we need to track potential await reparsing.
+        // This is only needed in unambiguous mode at top level when not in await context.
+        let track_await_reparse =
+            is_top_level && self.source_type.is_unambiguous() && !self.ctx.has_await();
+
         let mut expecting_directives = true;
         while !self.has_fatal_error() {
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
             }
+
+            // In unambiguous mode, check if this statement might need reparsing.
+            // We need to track statements where `await` is followed by `/` on the same line,
+            // because if ESM is detected later, we need to reparse them.
+            let checkpoint = if track_await_reparse && self.needs_await_reparse_tracking() {
+                Some((statements.len(), self.checkpoint()))
+            } else {
+                None
+            };
+
             let stmt = self.parse_statement_list_item(stmt_ctx);
+
+            // If we took a checkpoint and this might need reparsing, store it.
+            if let Some((stmt_index, checkpoint)) = checkpoint {
+                self.state.potential_await_reparse.push((stmt_index, checkpoint));
+            }
 
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
@@ -72,6 +92,20 @@ impl<'a> ParserImpl<'a> {
         }
 
         (directives, statements)
+    }
+
+    /// Check if the current position might need await reparse tracking.
+    /// Returns true if we're at `await` followed by `/` on the same line.
+    fn needs_await_reparse_tracking(&mut self) -> bool {
+        if !self.at(Kind::Await) {
+            return false;
+        }
+        // Check if the next token is `/` on the same line
+        self.lookahead(|p| {
+            p.bump_any(); // bump `await`
+            let token = p.cur_token();
+            token.kind() == Kind::Slash && !token.is_on_new_line()
+        })
     }
 
     /// `StatementListItem`[Yield, Await, Return] :
@@ -295,7 +329,9 @@ impl<'a> ParserImpl<'a> {
         // [+Await]
         let r#await = if self.at(Kind::Await) {
             if !self.ctx.has_await() {
-                self.error(diagnostics::await_expression(self.cur_token().span()));
+                // For `ModuleKind::Unambiguous`, defer the error until we know whether
+                // this is a Module (where for-await is valid at top-level) or Script.
+                self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
             }
             self.bump_any();
             true
@@ -375,11 +411,23 @@ impl<'a> ParserImpl<'a> {
         }
 
         // [+Using] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
-        if self.at(Kind::Using) && {
-            let token = self.lexer.peek_token();
-            let kind = token.kind();
-            !token.is_on_new_line() && kind != Kind::Of && kind.is_binding_identifier()
-        } {
+        if self.at(Kind::Using)
+            && self.lookahead(|p| {
+                p.bump_any(); // bump `using`
+                let token = p.cur_token();
+                if token.is_on_new_line() {
+                    return false;
+                }
+                let kind = token.kind();
+                // `for (using of` is only a using declaration if followed by `=`, `;`, or `:`
+                // to distinguish from `for (using of collection)` which is a for-of loop
+                if kind == Kind::Of {
+                    p.bump_any(); // bump `of`
+                    return matches!(p.cur_kind(), Kind::Eq | Kind::Semicolon | Kind::Colon);
+                }
+                kind.is_binding_identifier()
+            })
+        {
             return self.parse_using_declaration_for_statement(
                 span,
                 parenthesis_opening_span,

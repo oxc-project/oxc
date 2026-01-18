@@ -52,9 +52,6 @@ mod peephole;
 mod state;
 mod symbol_value;
 
-#[cfg(test)]
-mod tester;
-
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_index::IndexVec;

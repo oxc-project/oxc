@@ -215,6 +215,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_parenthesized_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
+        // Capture annotation flags before bumping `(` since bump resets them
+        let has_no_side_effects_comment =
+            self.lexer.trivia_builder.previous_token_has_no_side_effects_comment();
         self.bump_any(); // `bump` `(`
         let expr_span = self.start_span();
         let (mut expressions, comma_span) = self.context(Context::In, Context::Decorator, |p| {
@@ -251,8 +254,18 @@ impl<'a> ParserImpl<'a> {
         };
 
         match &mut expression {
-            Expression::ArrowFunctionExpression(arrow_expr) => arrow_expr.pife = true,
-            Expression::FunctionExpression(func_expr) => func_expr.pife = true,
+            Expression::ArrowFunctionExpression(arrow_expr) => {
+                arrow_expr.pife = true;
+                if has_no_side_effects_comment {
+                    arrow_expr.pure = true;
+                }
+            }
+            Expression::FunctionExpression(func_expr) => {
+                func_expr.pife = true;
+                if has_no_side_effects_comment {
+                    func_expr.pure = true;
+                }
+            }
             _ => {}
         }
 
@@ -1447,7 +1460,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_await_expression(&mut self, lhs_span: u32) -> Expression<'a> {
         let span = self.start_span();
         if !self.ctx.has_await() {
-            self.error(diagnostics::await_expression(self.cur_token().span()));
+            // For `ModuleKind::Unambiguous`, defer the error until we know whether
+            // this is a Module (where top-level await is valid) or Script.
+            self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
         }
         self.bump_any();
         let argument =
@@ -1543,6 +1558,15 @@ impl<'a> ParserImpl<'a> {
 
         let token = self.cur_token();
         let kind = token.kind();
+
+        // For `await /regex/`, treat `/` as regex start (not division).
+        // In `await` context, `/` should always start a regex since `await` expects an expression.
+        // EXCEPTION: In unambiguous mode, don't do this. TypeScript initially parses `await` as
+        // identifier when `/` follows (treating `/` as division), then reparses if ESM is detected.
+        if is_await && kind == Kind::Slash && !self.source_type.is_unambiguous() {
+            return !token.is_on_new_line();
+        }
+
         !token.is_on_new_line() && kind.is_after_await_or_yield()
     }
 }

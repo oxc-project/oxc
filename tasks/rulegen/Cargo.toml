@@ -26,6 +26,13 @@ handlebars = { workspace = true }
 lazy-regex = { workspace = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+syn = { workspace = true, features = ["full", "parsing", "printing"] }
+proc-macro2 = { workspace = true, features = ["span-locations"] }
 
 [dev-dependencies]
 insta = { workspace = true }
+
+
+[package.metadata.cargo-shear]
+ignored = ["proc-macro2"]
