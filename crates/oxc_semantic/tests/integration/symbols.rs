@@ -402,12 +402,7 @@ fn test_module_like_declarations() {
         .contains_flags(SymbolFlags::ValueModule)
         .test();
 
-    SemanticTester::ts("module A { export const x = 1; }")
-        .has_root_symbol("A")
-        .contains_flags(SymbolFlags::ValueModule)
-        .test();
-
-    SemanticTester::ts("module A { export type x = 1; }")
+    SemanticTester::ts("namespace A { export type x = 1; }")
         .has_root_symbol("A")
         .contains_flags(SymbolFlags::NamespaceModule)
         .test();

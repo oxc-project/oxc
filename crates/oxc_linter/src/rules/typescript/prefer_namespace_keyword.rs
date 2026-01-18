@@ -58,10 +58,13 @@ declare_oxc_lint!(
     /// ```typescript
     /// namespace Example {}
     /// ```
+    ///
+    /// Note: This rule is largely superseded by the parser's TS1540 error which
+    /// now reports when `module` keyword is used with identifier names.
     PreferNamespaceKeyword,
     typescript,
-    correctness,
-    fix,
+    style,
+    pending,
     version = "0.7.0",
 );
 
@@ -100,6 +103,9 @@ impl Rule for PreferNamespaceKeyword {
 fn test() {
     use crate::tester::Tester;
 
+    // Note: Most test cases were removed because the parser now reports TS1540
+    // for using `module` keyword with identifier names. The rule is now largely
+    // superseded by the parser's error handling.
     let pass = vec![
         "declare module 'foo';",
         "declare module 'foo' {}",
@@ -108,61 +114,8 @@ fn test() {
         "declare global {}",
     ];
 
-    let fail = vec![
-        "module foo {}",
-        "module A.B {}",
-        "declare module foo {}",
-        "
-        declare module foo {
-          declare module bar {}
-        }
-        ",
-        "
-        declare global {
-            module foo {}
-        }
-        ",
-    ];
-
-    let fix = vec![
-        ("module foo {}", "namespace foo {}", None),
-        ("module A.B {}", "namespace A.B {}", None),
-        (
-            "
-            module A {
-              module B {}
-            }
-            ",
-            "
-            namespace A {
-              namespace B {}
-            }
-            ",
-            None,
-        ),
-        ("declare module foo {}", "declare namespace foo {}", None),
-        (
-            "
-            declare module foo {
-              declare module bar {}
-            }
-            ",
-            "
-            declare namespace foo {
-              declare namespace bar {}
-            }
-            ",
-            None,
-        ),
-        ("declare /* module */ module foo {}", "declare /* module */ namespace foo {}", None),
-        (
-            "declare module X.Y.module { x = 'module'; }",
-            "declare namespace X.Y.module { x = 'module'; }",
-            None,
-        ),
-    ];
+    let fail: Vec<&str> = vec![];
 
     Tester::new(PreferNamespaceKeyword::NAME, PreferNamespaceKeyword::PLUGIN, pass, fail)
-        .expect_fix(fix)
         .test_and_snapshot();
 }

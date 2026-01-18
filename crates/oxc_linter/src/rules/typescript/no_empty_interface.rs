@@ -244,7 +244,7 @@ fn test() {
         ),
         (
             "
-            declare module FooBar {
+            declare namespace FooBar {
               type Baz = typeof baz;
               export interface Bar extends Baz {}
             }
