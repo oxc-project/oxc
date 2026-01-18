@@ -1,16 +1,12 @@
 commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2223/2229 (99.73%)
-Positive Passed: 2206/2229 (98.97%)
-Negative Passed: 1651/1695 (97.40%)
+AST Parsed     : 2221/2227 (99.73%)
+Positive Passed: 2206/2227 (99.06%)
+Negative Passed: 1647/1689 (97.51%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/satisfies-const-error/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -91,40 +87,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
-
-  × Unexpected new.target expression
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js:1:11]
- 1 │ const x = new.target;
-   ·           ──────────
- 2 │ const y = () => new.target;
-   ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js:2:17]
- 1 │ const x = new.target;
- 2 │ const y = () => new.target;
-   ·                 ──────────
-   ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js:1:1]
- 1 │ super();
-   · ───────
- 2 │ super.property;
-   ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js:2:1]
- 1 │ super();
- 2 │ super.property;
-   · ─────
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 
@@ -1003,46 +965,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │     return 0;
    ·     ──────
  4 │   }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-class-field-initializer/input.js:2:14]
- 1 │ class Derived extends Base {
- 2 │   property = super();
-   ·              ───────
- 3 │ }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body/input.js:2:3]
- 1 │ function f() {
- 2 │   super();
-   ·   ───────
- 3 │   super.property;
-   ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body/input.js:3:3]
- 2 │   super();
- 3 │   super.property;
-   ·   ─────
- 4 │ }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-non-constructor-method/input.js:3:5]
- 2 │   method() {
- 3 │     super();
-   ·     ───────
- 4 │   }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-static-block/input.js:3:5]
- 2 │   static {
- 3 │     super();
-   ·     ───────
- 4 │     super.property;
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.

@@ -54,6 +54,12 @@ pub struct BabelOptions {
     #[serde(default)]
     pub allow_undeclared_exports: bool,
 
+    #[serde(default)]
+    pub allow_new_target_outside_function: bool,
+
+    #[serde(default)]
+    pub allow_super_outside_method: bool,
+
     #[serde(default = "default_as_true")]
     pub external_helpers: bool,
 }

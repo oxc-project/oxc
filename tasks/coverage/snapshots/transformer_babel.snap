@@ -1,8 +1,8 @@
 commit: fc58af40
 
 transformer_babel Summary:
-AST Parsed     : 2229/2229 (100.00%)
-Positive Passed: 2226/2229 (99.87%)
+AST Parsed     : 2227/2227 (100.00%)
+Positive Passed: 2224/2227 (99.87%)
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowYieldOutsideFunction-true-2/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/ambiguous-script/input.js
