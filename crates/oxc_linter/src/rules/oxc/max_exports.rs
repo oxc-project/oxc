@@ -212,5 +212,6 @@ fn test() {
 
     Tester::new(MaxExports::NAME, MaxExports::PLUGIN, pass, fail)
         .change_rule_path("index.ts")
+        .with_import_plugin(true)
         .test_and_snapshot();
 }
