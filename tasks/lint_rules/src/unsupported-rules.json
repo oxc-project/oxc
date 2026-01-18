@@ -105,6 +105,7 @@
     "typescript/sort-type-constituents": "Deprecated, replaced by `perfectionist/sort-intersection-types` and `perfectionist/sort-union-types` rules.",
     "typescript/no-type-alias": "Deprecated, replaced by `typescript-eslint/consistent-type-definitions` rule.",
     "typescript/typedef": "Deprecated.",
+    "typescript/prefer-namespace-keyword": "Deprecated, will be reported by `oxc_parser` itself.",
 
     "eslint/array-bracket-newline": "Deprecated stylistic rule, can be used via the stylistic eslint plugin as a JS Plugin if necessary.",
     "eslint/array-bracket-spacing": "Deprecated stylistic rule, can be used via the stylistic eslint plugin as a JS Plugin if necessary.",
