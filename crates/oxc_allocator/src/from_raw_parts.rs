@@ -17,7 +17,7 @@ use std::{
 
 use crate::{Allocator, bump::Bump};
 
-/// Minimum alignment for allocator chunks. This is hard-coded on `bumpalo`.
+/// Minimum alignment for allocator chunks.
 const MIN_ALIGN: usize = 16;
 
 const CHUNK_FOOTER_SIZE: usize = size_of::<ChunkFooter>();
@@ -35,21 +35,14 @@ impl Allocator {
 
     /// Construct a static-sized [`Allocator`] from an existing memory allocation.
     ///
-    /// **IMPORTANT: WE MUST NOT CHANGE THE VERSION OF BUMPALO DEPENDENCY**.
-    ///
-    /// This code only remains sound as long as the code in version of `bumpalo` we're using matches
-    /// the duplicate of `bumpalo`'s internals contained in this file.
-    ///
-    /// `bumpalo` is pinned to version `=3.19.0` in `Cargo.toml`.
+    /// This code relies on specific internal layout of the arena allocator.
+    /// Changes to `Bump` internals may break this code.
     ///
     /// The [`Allocator`] which is returned takes ownership of the memory allocation,
     /// and the allocation will be freed if the `Allocator` is dropped.
     /// If caller wishes to prevent that happening, they must wrap the `Allocator` in `ManuallyDrop`.
     ///
     /// The [`Allocator`] returned by this function cannot grow.
-    ///
-    /// This hack is all very inadvisable!
-    /// Only implemented as a temporary stopgap until we replace `bumpalo` with our own allocator.
     ///
     /// # SAFETY
     ///
@@ -61,7 +54,7 @@ impl Allocator {
     ///
     /// # Panics
     ///
-    /// Panics if cannot determine layout of Bumpalo's `Bump` type, or on a big endian system.
+    /// Panics if cannot determine layout of `Bump` type, or on a big endian system.
     ///
     /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
     /// [`RAW_MIN_SIZE`]: Self::RAW_MIN_SIZE
@@ -128,7 +121,7 @@ impl Allocator {
     ///
     /// Returns a pointer to the start of an uninitialized section of `bytes` bytes.
     ///
-    /// Note: [`alloc_layout`] allocates at *end* of the current chunk, because `bumpalo` bumps downwards,
+    /// Note: [`alloc_layout`] allocates at *end* of the current chunk, because the arena allocator bumps downwards,
     /// hence the need for this method, to allocate at *start* of current chunk.
     ///
     /// This method is dangerous, and should not ordinarily be used.
@@ -343,10 +336,7 @@ impl Allocator {
 
 /// Allocator chunk footer.
 ///
-/// Copied exactly from `bumpalo` v3.19.0.
-///
-/// This type is not exposed by `bumpalo` crate, but the type is `#[repr(C)]`, so we can rely on our
-/// duplicate here having the same layout, as long as we don't change the version of `bumpalo` we use.
+/// This type must match the layout of `ChunkFooter` in `bump.rs`.
 #[repr(C)]
 #[derive(Debug)]
 struct ChunkFooter {

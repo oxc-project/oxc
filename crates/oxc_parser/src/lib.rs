@@ -22,7 +22,7 @@
 //! # Performance
 //!
 //! The following optimization techniques are used:
-//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+//! * AST is allocated in a memory arena ([oxc_allocator](https://docs.rs/oxc_allocator)) for fast AST drop
 //! * [`oxc_span::Span`] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)

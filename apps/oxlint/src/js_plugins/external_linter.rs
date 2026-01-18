@@ -147,8 +147,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             // `AllocatorPool::new_fixed_size`, so all `Allocator`s are created via `FixedSizeAllocator`.
             // This is somewhat sketchy, as we don't have a type-level guarantee of this invariant,
             // but it does hold at present.
-            // When we replace `bumpalo` with a custom allocator, we can close this soundness hole.
-            // TODO: Do that.
+            // TODO: Close this soundness hole with type-level guarantees.
             let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
 
             // Send data to JS

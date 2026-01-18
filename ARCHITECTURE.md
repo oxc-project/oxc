@@ -227,7 +227,7 @@ Source Text → Arena Allocator → AST Nodes → Visitors → Results
 
 #### Parser Performance Implementation
 
-- AST is allocated in a memory arena ([bumpalo](https://crates.io/crates/bumpalo)) for fast AST memory allocation and deallocation
+- AST is allocated in a memory arena (oxc_allocator) for fast AST memory allocation and deallocation
 - Short strings are inlined by [CompactString](https://crates.io/crates/compact_str)
 - No other heap allocations are done except the above two
 - Scope binding, symbol resolution and some syntax errors are not done in the parser, they are delegated to the semantic analyzer

@@ -183,7 +183,7 @@ unsafe fn parse_raw_impl(
     // Get offsets and size of data region to be managed by arena allocator.
     // Leave space for source before it, and space for metadata after it.
     // Metadata actually only takes 5 bytes, but round everything up to multiple of 16,
-    // as `bumpalo` requires that alignment.
+    // as the arena allocator requires that alignment.
     const RAW_METADATA_SIZE: usize = size_of::<RawTransferMetadata>();
     const {
         assert!(RAW_METADATA_SIZE >= BUMP_ALIGN);
