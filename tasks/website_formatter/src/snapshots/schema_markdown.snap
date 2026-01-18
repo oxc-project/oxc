@@ -87,7 +87,7 @@ For details, see each field's documentation.
 type: `array`
 
 
-Define your own groups and use regex for matching very specific imports
+Define your own groups for matching very specific imports
 
 
 #### experimentalSortImports.customGroups[n]
