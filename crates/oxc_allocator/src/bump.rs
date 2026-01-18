@@ -203,12 +203,12 @@ impl Bump {
             // For empty allocator: ptr=0, start=MAX, so new_ptr wraps to huge value < MAX = fail.
             // For normal case: new_ptr >= start means we have enough space.
             let new_ptr = ptr.wrapping_sub(size);
-            if likely(new_ptr >= start && layout.align() <= ALIGN) {
+            if new_ptr >= start && layout.align() <= ALIGN {
                 *self.ptr.get() = new_ptr;
                 return NonNull::new_unchecked(new_ptr);
             }
 
-            // Slow path
+            // Slow path - #[cold] on alloc_slow tells LLVM this branch is unlikely
             self.alloc_slow(layout, size)
         }
     }
@@ -783,20 +783,6 @@ fn round_down_to_ptr(ptr: *mut u8, align: usize) -> *mut u8 {
     let addr = ptr as usize;
     (addr & !(align - 1)) as *mut u8
 }
-
-/// Branch hint - likely to be true.
-#[inline(always)]
-const fn likely(b: bool) -> bool {
-    if !b {
-        cold_path();
-    }
-    b
-}
-
-/// Hint that this path is cold.
-#[inline(always)]
-#[cold]
-const fn cold_path() {}
 
 // ============================================================================
 // Tests

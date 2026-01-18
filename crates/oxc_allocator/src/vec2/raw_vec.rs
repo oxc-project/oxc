@@ -791,9 +791,11 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
         let new_ptr = match self.current_layout() {
             Some(layout) => unsafe {
-                // Marking this function as `#[cold]` and `#[inline(never)]` because grow method is
-                // relatively expensive and we want to avoid inlining it into the caller.
-                #[cold]
+                // Note: We deliberately don't use `#[cold]` here because the grow path is
+                // frequently hit when multiple Vecs grow interleaved (e.g., in tally_slot_frequencies).
+                // The `#[cold]` attribute would cause LLVM to deprioritize this code path,
+                // hurting performance in those cases. We keep `#[inline(never)]` to avoid
+                // bloating the caller's code size, but allow LLVM to optimize this path normally.
                 #[inline(never)]
                 unsafe fn grow<T, A: Alloc>(
                     alloc: &A,
