@@ -44,7 +44,7 @@ impl<'a> ParserImpl<'a> {
 
         // Check if we need to track potential await reparsing.
         // This is only needed in unambiguous mode at top level when not in await context.
-        let track_await_reparse =
+        let mut track_await_reparse =
             is_top_level && self.source_type.is_unambiguous() && !self.ctx.has_await();
 
         let mut expecting_directives = true;
@@ -53,10 +53,18 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
-            // In unambiguous mode, check if this statement might need reparsing.
-            // We need to track statements where `await` is followed by `/` on the same line,
-            // because if ESM is detected later, we need to reparse them.
-            let checkpoint = if track_await_reparse && self.needs_await_reparse_tracking() {
+            // Once ESM syntax is detected, enable await context for remaining statements
+            // and stop tracking (we'll reparse earlier statements at the end)
+            if track_await_reparse && self.module_record_builder.has_module_syntax() {
+                track_await_reparse = false;
+                self.ctx = self.ctx.and_await(true);
+            }
+
+            // Take checkpoint for every statement when tracking await reparse.
+            // We reset the flag and only store the checkpoint if an await identifier
+            // was actually encountered during parsing.
+            let checkpoint = if track_await_reparse {
+                self.state.encountered_await_identifier = false;
                 Some((statements.len(), self.checkpoint()))
             } else {
                 None
@@ -64,8 +72,10 @@ impl<'a> ParserImpl<'a> {
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
 
-            // If we took a checkpoint and this might need reparsing, store it.
-            if let Some((stmt_index, checkpoint)) = checkpoint {
+            // Store checkpoint only if await identifier was encountered
+            if let Some((stmt_index, checkpoint)) = checkpoint
+                && self.state.encountered_await_identifier
+            {
                 self.state.potential_await_reparse.push((stmt_index, checkpoint));
             }
 
@@ -92,20 +102,6 @@ impl<'a> ParserImpl<'a> {
         }
 
         (directives, statements)
-    }
-
-    /// Check if the current position might need await reparse tracking.
-    /// Returns true if we're at `await` followed by `/` on the same line.
-    fn needs_await_reparse_tracking(&mut self) -> bool {
-        if !self.at(Kind::Await) {
-            return false;
-        }
-        // Check if the next token is `/` on the same line
-        self.lookahead(|p| {
-            p.bump_any(); // bump `await`
-            let token = p.cur_token();
-            token.kind() == Kind::Slash && !token.is_on_new_line()
-        })
     }
 
     /// `StatementListItem`[Yield, Await, Return] :

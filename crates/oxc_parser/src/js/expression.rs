@@ -66,6 +66,10 @@ impl<'a> ParserImpl<'a> {
         if !kind.is_identifier_reference(false, false) {
             return self.unexpected();
         }
+        // Track await identifier for potential reparsing in unambiguous mode
+        if kind == Kind::Await && !self.ctx.has_await() {
+            self.state.encountered_await_identifier = true;
+        }
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.ast.identifier_reference(span, name)

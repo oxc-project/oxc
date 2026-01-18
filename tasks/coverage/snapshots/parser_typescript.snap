@@ -19688,109 +19688,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·            ╰── `as` expected
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:1]
+  × Parenthesized expressions may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:9]
  3 │ // reparse call as invalid await should error
  4 │ await (1,);
-   · ─────
+   ·         ─
  5 │ await <number, string>(1);
    ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:5:1]
- 4 │ await (1,);
- 5 │ await <number, string>(1);
-   · ─────
- 6 │ 
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:8:1]
- 7 │ // reparse tagged template as invalid await should error
- 8 │ await <number, string> ``;
-   · ─────
- 9 │ 
-   ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:11:17]
- 10 │ // reparse class extends clause should fail
- 11 │ class C extends await<string> {
-    ·                 ─────
- 12 │ }
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:15:3]
- 14 │ // await in class decorators should fail
- 15 │ @(await)
-    ·   ─────
- 16 │ class C1 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:18:2]
- 17 │ 
- 18 │ @await(x)
-    ·  ─────
- 19 │ class C2 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:21:2]
- 20 │ 
- 21 │ @await
-    ·  ─────
- 22 │ class C3 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:26:6]
- 25 │ class C4 {
- 26 │     @await
-    ·      ─────
- 27 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:30:6]
- 29 │ class C5 {
- 30 │     @await(1)
-    ·      ─────
- 31 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:34:7]
- 33 │ class C6 {
- 34 │     @(await)
-    ·       ─────
- 35 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:40:14]
- 39 │ class C7 {
- 40 │     method1(@await [x]) {}
-    ·              ─────
- 41 │     method2(@await(1) [x]) {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:41:14]
- 40 │     method1(@await [x]) {}
- 41 │     method2(@await(1) [x]) {}
-    ·              ─────
- 42 │     method3(@(await) [x]) {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:42:15]
- 41 │     method2(@await(1) [x]) {}
- 42 │     method3(@(await) [x]) {}
-    ·               ─────
- 43 │ }
-    ╰────
+  help: Remove the trailing comma here
 
   × Identifier expected. 'await' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.10.ts:2:19]
@@ -19820,11 +19725,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·        ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
+ 4 │ // await disallowed in import=namespace when in a module
+ 5 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
  5 │ import await = foo.await;
    ·        ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
+ 3 │ // reparse variable name as await should fail
+ 4 │ var await = 1;
+   ·     ─────
    ╰────
 
   × The keyword 'await' is reserved
@@ -19834,10 +19753,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·     ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
  3 │ // reparse binding pattern as await should fail
  4 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var [await] = [1];
    ·      ─────
    ╰────
 
@@ -24105,6 +24038,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │     *constructor() {}
    ·      ───────────
  3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:3:7]
+ 2 │ export default 13
+ 3 │ const await = 1
+   ·       ─────
+ 4 │ const yield = 2
    ╰────
 
   × Cannot use `await` as an identifier in an async context
