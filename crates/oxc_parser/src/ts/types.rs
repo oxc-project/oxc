@@ -926,6 +926,15 @@ impl<'a> ParserImpl<'a> {
                     }
                     seen_type_span = Some(tuple.span());
                 }
+
+                if let Some(seen_rest_span) = seen_type_span
+                    && matches!(tuple, TSTupleElement::TSOptionalType(_))
+                {
+                    me.error(diagnostics::optional_element_cannot_follow_rest_element(
+                        tuple.span(),
+                        seen_rest_span,
+                    ));
+                }
                 tuple
             });
         self.expect(Kind::RBrack);

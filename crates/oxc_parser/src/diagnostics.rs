@@ -353,6 +353,15 @@ pub fn rest_element_cannot_follow_another_rest_element(
         .with_labels([span.label("Second rest element here"), seen_span.label("First seen here")])
 }
 
+/// An optional element cannot follow a rest element. ts(1266)
+#[cold]
+pub fn optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) -> OxcDiagnostic {
+    ts_error("1266", "An optional element cannot follow a rest element.").with_labels([
+        span.label("Optional element here"),
+        rest_span.label("Rest element seen here"),
+    ])
+}
+
 // A type-only import can specify a default import or named bindings, but not both. ts(1363)
 #[cold]
 pub fn type_only_import_default_and_named(specifier_span: Span) -> OxcDiagnostic {

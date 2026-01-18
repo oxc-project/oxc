@@ -26514,6 +26514,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │ type V11 = [number, ...string[], boolean?];  // Error
    ╰────
 
+  × TS(1266): An optional element cannot follow a rest element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:8:21]
+ 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
+ 8 │ type V11 = [number, ...string[], boolean?];  // Error
+   ·                     ─────┬─────  ────┬───
+   ·                          │           ╰── Optional element here
+   ·                          ╰── Rest element seen here
+ 9 │ type V12 = [number, string?, boolean];  // Error
+   ╰────
+
   × TS(1265): A rest element cannot follow another rest element.
     ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
  10 │ 
