@@ -357,188 +357,6 @@ describe("parse", () => {
       });
     });
 
-    describe("`ImportDeclaration`", () => {
-      describe("import defer", () => {
-        it("ESTree", () => {
-          const ret = parseSync("test.js", 'import defer * as ns from "x";');
-          expect(ret.errors.length).toBe(0);
-          expect(ret.program.body.length).toBe(1);
-          expect(ret.program.body[0]).toEqual({
-            type: "ImportDeclaration",
-            start: 0,
-            end: 30,
-            specifiers: [
-              {
-                type: "ImportNamespaceSpecifier",
-                start: 13,
-                end: 20,
-                local: { type: "Identifier", start: 18, end: 20, name: "ns" },
-              },
-            ],
-            source: { type: "Literal", start: 26, end: 29, value: "x", raw: '"x"' },
-            attributes: [],
-            phase: "defer",
-          });
-        });
-
-        it("TS-ESTree", () => {
-          const ret = parseSync("test.ts", 'import defer * as ns from "x";');
-          expect(ret.errors.length).toBe(0);
-          expect(ret.program.body.length).toBe(1);
-          expect(ret.program.body[0]).toEqual({
-            type: "ImportDeclaration",
-            start: 0,
-            end: 30,
-            specifiers: [
-              {
-                type: "ImportNamespaceSpecifier",
-                start: 13,
-                end: 20,
-                local: {
-                  type: "Identifier",
-                  start: 18,
-                  end: 20,
-                  decorators: [],
-                  name: "ns",
-                  optional: false,
-                  typeAnnotation: null,
-                },
-              },
-            ],
-            source: { type: "Literal", start: 26, end: 29, value: "x", raw: '"x"' },
-            attributes: [],
-            phase: "defer",
-            importKind: "value",
-          });
-        });
-      });
-
-      describe("import source", () => {
-        it("ESTree", () => {
-          const ret = parseSync("test.js", 'import source src from "x";');
-          expect(ret.errors.length).toBe(0);
-          expect(ret.program.body.length).toBe(1);
-          expect(ret.program.body[0]).toEqual({
-            type: "ImportDeclaration",
-            start: 0,
-            end: 27,
-            specifiers: [
-              {
-                type: "ImportDefaultSpecifier",
-                start: 14,
-                end: 17,
-                local: { type: "Identifier", start: 14, end: 17, name: "src" },
-              },
-            ],
-            source: { type: "Literal", start: 23, end: 26, value: "x", raw: '"x"' },
-            attributes: [],
-            phase: "source",
-          });
-        });
-
-        it("TS-ESTree", () => {
-          const ret = parseSync("test.ts", 'import source src from "x";');
-          expect(ret.errors.length).toBe(0);
-          expect(ret.program.body.length).toBe(1);
-          expect(ret.program.body[0]).toEqual({
-            type: "ImportDeclaration",
-            start: 0,
-            end: 27,
-            specifiers: [
-              {
-                type: "ImportDefaultSpecifier",
-                start: 14,
-                end: 17,
-                local: {
-                  type: "Identifier",
-                  start: 14,
-                  end: 17,
-                  decorators: [],
-                  name: "src",
-                  optional: false,
-                  typeAnnotation: null,
-                },
-              },
-            ],
-            source: { type: "Literal", start: 23, end: 26, value: "x", raw: '"x"' },
-            attributes: [],
-            phase: "source",
-            importKind: "value",
-          });
-        });
-      });
-
-      describe("`ImportExpression`", () => {
-        describe("import.defer()", () => {
-          it("ESTree", () => {
-            const ret = parseSync("test.js", 'import.defer("x");');
-            expect(ret.errors.length).toBe(0);
-            expect(ret.program.body.length).toBe(1);
-            // @ts-expect-error - ignore
-            expect(ret.program.body[0].expression).toEqual({
-              type: "ImportExpression",
-              start: 0,
-              end: 17,
-              source: { type: "Literal", start: 13, end: 16, value: "x", raw: '"x"' },
-              options: null,
-              phase: "defer",
-            });
-          });
-
-          // This does *not* align with TS-ESLint.
-          // See https://github.com/oxc-project/oxc/pull/11193.
-          it("TS-ESTree", () => {
-            const ret = parseSync("test.ts", 'import.defer("x");');
-            expect(ret.errors.length).toBe(0);
-            expect(ret.program.body.length).toBe(1);
-            // @ts-expect-error - ignore
-            expect(ret.program.body[0].expression).toEqual({
-              type: "ImportExpression",
-              start: 0,
-              end: 17,
-              source: { type: "Literal", start: 13, end: 16, value: "x", raw: '"x"' },
-              options: null,
-              phase: "defer",
-            });
-          });
-        });
-
-        describe("import.source()", () => {
-          it("ESTree", () => {
-            const ret = parseSync("test.js", 'import.source("x");');
-            expect(ret.errors.length).toBe(0);
-            expect(ret.program.body.length).toBe(1);
-            // @ts-expect-error - ignore
-            expect(ret.program.body[0].expression).toEqual({
-              type: "ImportExpression",
-              start: 0,
-              end: 18,
-              source: { type: "Literal", start: 14, end: 17, value: "x", raw: '"x"' },
-              options: null,
-              phase: "source",
-            });
-          });
-
-          // This does *not* align with TS-ESLint.
-          // See https://github.com/oxc-project/oxc/pull/11193.
-          it("TS-ESTree", () => {
-            const ret = parseSync("test.ts", 'import.source("x");');
-            expect(ret.errors.length).toBe(0);
-            expect(ret.program.body.length).toBe(1);
-            // @ts-expect-error - ignore
-            expect(ret.program.body[0].expression).toEqual({
-              type: "ImportExpression",
-              start: 0,
-              end: 18,
-              source: { type: "Literal", start: 14, end: 17, value: "x", raw: '"x"' },
-              options: null,
-              phase: "source",
-            });
-          });
-        });
-      });
-    });
-
     it("lossy replacement character", () => {
       const ret = parseSync("test.js", "`�\\u{FFFD}${x}�\\u{FFFD}`;");
       expect(ret.errors.length).toBe(0);
@@ -628,6 +446,188 @@ describe("parse", () => {
             },
           ],
         },
+      });
+    });
+  });
+
+  describe("`ImportDeclaration`", () => {
+    describe("import defer", () => {
+      it("ESTree", () => {
+        const ret = parseSync("test.js", 'import defer * as ns from "x";');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        expect(ret.program.body[0]).toEqual({
+          type: "ImportDeclaration",
+          start: 0,
+          end: 30,
+          specifiers: [
+            {
+              type: "ImportNamespaceSpecifier",
+              start: 13,
+              end: 20,
+              local: { type: "Identifier", start: 18, end: 20, name: "ns" },
+            },
+          ],
+          source: { type: "Literal", start: 26, end: 29, value: "x", raw: '"x"' },
+          attributes: [],
+          phase: "defer",
+        });
+      });
+
+      it("TS-ESTree", () => {
+        const ret = parseSync("test.ts", 'import defer * as ns from "x";');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        expect(ret.program.body[0]).toEqual({
+          type: "ImportDeclaration",
+          start: 0,
+          end: 30,
+          specifiers: [
+            {
+              type: "ImportNamespaceSpecifier",
+              start: 13,
+              end: 20,
+              local: {
+                type: "Identifier",
+                start: 18,
+                end: 20,
+                decorators: [],
+                name: "ns",
+                optional: false,
+                typeAnnotation: null,
+              },
+            },
+          ],
+          source: { type: "Literal", start: 26, end: 29, value: "x", raw: '"x"' },
+          attributes: [],
+          phase: "defer",
+          importKind: "value",
+        });
+      });
+    });
+
+    describe("import source", () => {
+      it("ESTree", () => {
+        const ret = parseSync("test.js", 'import source src from "x";');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        expect(ret.program.body[0]).toEqual({
+          type: "ImportDeclaration",
+          start: 0,
+          end: 27,
+          specifiers: [
+            {
+              type: "ImportDefaultSpecifier",
+              start: 14,
+              end: 17,
+              local: { type: "Identifier", start: 14, end: 17, name: "src" },
+            },
+          ],
+          source: { type: "Literal", start: 23, end: 26, value: "x", raw: '"x"' },
+          attributes: [],
+          phase: "source",
+        });
+      });
+
+      it("TS-ESTree", () => {
+        const ret = parseSync("test.ts", 'import source src from "x";');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        expect(ret.program.body[0]).toEqual({
+          type: "ImportDeclaration",
+          start: 0,
+          end: 27,
+          specifiers: [
+            {
+              type: "ImportDefaultSpecifier",
+              start: 14,
+              end: 17,
+              local: {
+                type: "Identifier",
+                start: 14,
+                end: 17,
+                decorators: [],
+                name: "src",
+                optional: false,
+                typeAnnotation: null,
+              },
+            },
+          ],
+          source: { type: "Literal", start: 23, end: 26, value: "x", raw: '"x"' },
+          attributes: [],
+          phase: "source",
+          importKind: "value",
+        });
+      });
+    });
+  });
+
+  describe("`ImportExpression`", () => {
+    describe("import.defer()", () => {
+      it("ESTree", () => {
+        const ret = parseSync("test.js", 'import.defer("x");');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        // @ts-expect-error - ignore
+        expect(ret.program.body[0].expression).toEqual({
+          type: "ImportExpression",
+          start: 0,
+          end: 17,
+          source: { type: "Literal", start: 13, end: 16, value: "x", raw: '"x"' },
+          options: null,
+          phase: "defer",
+        });
+      });
+
+      // This does *not* align with TS-ESLint.
+      // See https://github.com/oxc-project/oxc/pull/11193.
+      it("TS-ESTree", () => {
+        const ret = parseSync("test.ts", 'import.defer("x");');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        // @ts-expect-error - ignore
+        expect(ret.program.body[0].expression).toEqual({
+          type: "ImportExpression",
+          start: 0,
+          end: 17,
+          source: { type: "Literal", start: 13, end: 16, value: "x", raw: '"x"' },
+          options: null,
+          phase: "defer",
+        });
+      });
+    });
+
+    describe("import.source()", () => {
+      it("ESTree", () => {
+        const ret = parseSync("test.js", 'import.source("x");');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        // @ts-expect-error - ignore
+        expect(ret.program.body[0].expression).toEqual({
+          type: "ImportExpression",
+          start: 0,
+          end: 18,
+          source: { type: "Literal", start: 14, end: 17, value: "x", raw: '"x"' },
+          options: null,
+          phase: "source",
+        });
+      });
+
+      // This does *not* align with TS-ESLint.
+      // See https://github.com/oxc-project/oxc/pull/11193.
+      it("TS-ESTree", () => {
+        const ret = parseSync("test.ts", 'import.source("x");');
+        expect(ret.errors.length).toBe(0);
+        expect(ret.program.body.length).toBe(1);
+        // @ts-expect-error - ignore
+        expect(ret.program.body[0].expression).toEqual({
+          type: "ImportExpression",
+          start: 0,
+          end: 18,
+          source: { type: "Literal", start: 14, end: 17, value: "x", raw: '"x"' },
+          options: null,
+          phase: "source",
+        });
       });
     });
   });
