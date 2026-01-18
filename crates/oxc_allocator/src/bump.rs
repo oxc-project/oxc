@@ -603,10 +603,8 @@ unsafe impl AllocatorTrait for Bump {
                     // These regions overlap, so use ptr::copy.
                     *self.ptr.get() = new_cursor;
                     ptr::copy(ptr.as_ptr(), new_cursor, old_size);
-                    let slice = NonNull::slice_from_raw_parts(
-                        NonNull::new_unchecked(new_cursor),
-                        new_size,
-                    );
+                    let slice =
+                        NonNull::slice_from_raw_parts(NonNull::new_unchecked(new_cursor), new_size);
                     return Ok(slice);
                 }
             }
