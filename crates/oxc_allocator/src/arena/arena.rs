@@ -137,7 +137,7 @@ impl<Config: ArenaConfigExt> Arena<Config> {
         let footer = ChunkFooter {
             start: ptr,
             // Cursor starts at end of the range
-            cursor: footer_ptr.cast::<u8>(),
+            cursor: Cell::new(footer_ptr.cast::<u8>()),
             previous_chunk: ChunkFooter::EMPTY,
             alignment: layout.align(),
         };
@@ -287,24 +287,19 @@ impl<Config: ArenaConfigExt> Arena<Config> {
         // The pointer will be bumped by zero bytes, modulo alignment.
         // This keeps the fast path optimized for non-ZSTs, which are much more common.
         // Note: ZSTs includes zero-length slices and strings.
+        //
+        // `EMPTY_CHUNK` uses `Cell` for the cursor field so that it's placed in writable memory.
+        // This allows ZST allocations to write to the cursor without causing SIGBUS.
+        // The write is idempotent (writing the same value back) so it's safe.
 
         // SAFETY: TODO
         unsafe {
             let mut footer_ptr = self.current_chunk_footer.get();
-
-            // Fast path exit if this is the empty chunk.
-            // `EMPTY_CHUNK` is a static, so we must not write to it.
-            // This is also important for ZST allocations where `aligned_size == 0`,
-            // which would not be caught by the `aligned_size > free_bytes()` check below.
-            if footer_ptr == ChunkFooter::EMPTY {
-                return None;
-            }
-
             let chunk = footer_ptr.as_mut();
 
-            debug_assert!(chunk.start <= chunk.cursor);
-            debug_assert!(chunk.cursor <= footer_ptr.cast::<u8>());
-            debug_assert!(is_multiple_of(chunk.cursor.as_ptr() as usize, Config::MIN_ALIGN));
+            debug_assert!(chunk.start <= chunk.cursor.get());
+            debug_assert!(chunk.cursor.get() <= footer_ptr.cast::<u8>());
+            debug_assert!(is_multiple_of(chunk.cursor.get().as_ptr() as usize, Config::MIN_ALIGN));
 
             // This `match` should be boiled away by LLVM. `MIN_ALIGN` is a constant and the layout's
             // alignment is also constant in practice after inlining
@@ -317,7 +312,7 @@ impl<Config: ArenaConfigExt> Arena<Config> {
                     if aligned_size > chunk.free_bytes() {
                         return None;
                     }
-                    chunk.cursor.sub(aligned_size)
+                    chunk.cursor.get().sub(aligned_size)
                 }
                 Ordering::Equal => {
                     // `Layout` guarantees that rounding the size up to its align cannot overflow.
@@ -348,7 +343,7 @@ impl<Config: ArenaConfigExt> Arena<Config> {
                     if aligned_size > chunk.free_bytes() {
                         return None;
                     }
-                    chunk.cursor.sub(aligned_size)
+                    chunk.cursor.get().sub(aligned_size)
                 }
                 Ordering::Greater => {
                     // `Layout` guarantees that rounding the size up to its align cannot overflow.
@@ -356,7 +351,7 @@ impl<Config: ArenaConfigExt> Arena<Config> {
                     // which is why we need to do this rounding.
                     let aligned_size = layout.size().next_multiple_of(layout.align());
 
-                    let cursor_ptr = chunk.cursor.as_ptr();
+                    let cursor_ptr = chunk.cursor.get().as_ptr();
                     let start_ptr = chunk.start.as_ptr();
                     // Must use `wrapping_sub` because `layout.align()` could be very large (e.g. `1 << 63`),
                     // so this could go out of bounds, or even wrap around the address space
@@ -375,9 +370,9 @@ impl<Config: ArenaConfigExt> Arena<Config> {
 
             debug_assert!(is_multiple_of(value_ptr.as_ptr() as usize, layout.align()));
             debug_assert!(is_multiple_of(value_ptr.as_ptr() as usize, Config::MIN_ALIGN));
-            debug_assert!(value_ptr >= chunk.start && value_ptr <= chunk.cursor);
+            debug_assert!(value_ptr >= chunk.start && value_ptr <= chunk.cursor.get());
 
-            chunk.cursor = value_ptr;
+            chunk.cursor.set(value_ptr);
 
             Some(value_ptr)
         }
@@ -543,7 +538,7 @@ impl<Config: ArenaConfigExt> Arena<Config> {
     fn cursor_ptr(&self) -> NonNull<u8> {
         // SAFETY: TODO
         let chunk_footer = unsafe { self.current_chunk_footer.get().as_ref() };
-        chunk_footer.cursor
+        chunk_footer.cursor.get()
     }
 
     /// Get pointer to end of the data region of this [`Arena`]'s current chunk
@@ -589,7 +584,7 @@ impl<Config: ArenaConfigExt> Arena<Config> {
             let footer = ChunkFooter {
                 start: start_ptr,
                 // Cursor starts at end of the range
-                cursor: footer_ptr.cast::<u8>(),
+                cursor: Cell::new(footer_ptr.cast::<u8>()),
                 previous_chunk: previous_chunk_ptr,
                 alignment,
             };
@@ -642,7 +637,7 @@ impl<Config: ArenaConfigExt> Arena<Config> {
             let last_chunk = unsafe { last_chunk_ptr.as_mut() };
 
             // Reset cursor of last chunk
-            last_chunk.cursor = last_chunk_ptr.cast::<u8>();
+            last_chunk.cursor.set(last_chunk_ptr.cast::<u8>());
 
             // If only one chunk, exit
             let previous_chunk_ptr = last_chunk.previous_chunk;

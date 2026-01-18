@@ -1,5 +1,6 @@
 use std::{
     alloc::Layout,
+    cell::Cell,
     ptr::{self, NonNull},
 };
 
@@ -10,12 +11,17 @@ use super::constants::CHUNK_ALIGN;
 /// Chunk footer.
 ///
 /// Each chunk contains `ChunkFooter` at the very end of the chunk.
+///
+/// `cursor` uses `Cell` to allow interior mutability. This is necessary so that
+/// `EMPTY_CHUNK` static is placed in writable memory, allowing ZST allocations
+/// to write to the cursor without causing SIGBUS.
 #[repr(C)]
 pub struct ChunkFooter {
     /// Pointer to the start of this chunk.
     pub start: NonNull<u8>,
     /// Bump allocation cursor that is always in the range `self.start..=self`.
-    pub cursor: NonNull<u8>,
+    /// Uses `Cell` for interior mutability so `EMPTY_CHUNK` can be in writable memory.
+    pub cursor: Cell<NonNull<u8>>,
     /// Link to the previous chunk.
     ///
     /// The last node in the `prev` linked list is the canonical empty chunk [`EMPTY_CHUNK`],
@@ -35,23 +41,23 @@ pub const _: () = assert!(align_of::<ChunkFooter>() <= CHUNK_ALIGN);
 ///
 /// For the canonical empty chunk to be `static`, its type must be `Sync`,
 /// which is the purpose of this wrapper type.
-/// This is safe because the empty chunk is immutable and never actually modified.
+/// This is safe because the `Cell` fields use interior mutability which is `Sync`-safe
+/// when properly synchronized (we only write the same value back for ZST allocations).
 #[repr(transparent)]
 struct EmptyChunkFooter(ChunkFooter);
 
-// SAFETY: `EmptyChunkFooter` is never mutated (see last comment above)
+// SAFETY: `EmptyChunkFooter` only contains `Cell` for mutable fields, which is safe
+// because writes to EMPTY_CHUNK are idempotent (writing the same value back for ZSTs).
 unsafe impl Sync for EmptyChunkFooter {}
 
 // SAFETY: References cannot have null pointers, so `NonNull::new_unchecked` is sound.
-// Creating a `NonNull` from a `&` reference (not `&mut` reference) is allowed,
-// but the `NonNull` must never be used for writing.
 const EMPTY_CHUNK_PTR: NonNull<ChunkFooter> =
     unsafe { NonNull::new_unchecked(ptr::from_ref(&EMPTY_CHUNK).cast::<ChunkFooter>().cast_mut()) };
 
 static EMPTY_CHUNK: EmptyChunkFooter = EmptyChunkFooter(ChunkFooter {
     start: EMPTY_CHUNK_PTR.cast::<u8>(),
     previous_chunk: EMPTY_CHUNK_PTR,
-    cursor: EMPTY_CHUNK_PTR.cast::<u8>(),
+    cursor: Cell::new(EMPTY_CHUNK_PTR.cast::<u8>()),
     alignment: CHUNK_ALIGN,
 });
 
@@ -70,14 +76,14 @@ impl ChunkFooter {
     #[inline]
     pub fn used_bytes(&self) -> usize {
         // SAFETY: `self.cursor` is always before `self`, and both are within same allocation
-        unsafe { ptr::from_ref(self).cast::<u8>().offset_from_usize(self.cursor.as_ptr()) }
+        unsafe { ptr::from_ref(self).cast::<u8>().offset_from_usize(self.cursor.get().as_ptr()) }
     }
 
     /// Get number of bytes remaining which are free to store data in this chunk.
     #[inline]
     pub fn free_bytes(&self) -> usize {
         // SAFETY: `self.start` is always before `self.cursor`, and both are within same allocation
-        unsafe { self.cursor.offset_from_usize(self.start) }
+        unsafe { self.cursor.get().offset_from_usize(self.start) }
     }
 
     /// Get pointer to start of chunk's allocation, and its [`Layout`].
