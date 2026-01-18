@@ -2,12 +2,10 @@ commit: 499beb6f
 
 minifier_node_compat Summary:
 AST Parsed     : 938/938 (100.00%)
-Positive Passed: 931/938 (99.25%)
+Positive Passed: 932/938 (99.36%)
 execution_result: tasks/coverage/ES2015/built-ins›Proxy›"getOwnPropertyDescriptor" handler invariants
 
 execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›HasBinding
-
-execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›RegExp constructor
 
 execution_result: tasks/coverage/ES2015/misc›Proxy, internal 'get' calls›String.raw
 

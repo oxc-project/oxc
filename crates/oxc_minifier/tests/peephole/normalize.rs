@@ -79,6 +79,7 @@ fn pure_constructors() {
     test("new Object", "");
     test("new RangeError", "");
     test("new ReferenceError", "");
+    // RegExp with no arguments is valid (returns /(?:)/) and can be removed
     test("new RegExp", "");
     test("new Set", "");
     test("new String", "");
@@ -100,7 +101,8 @@ fn pure_constructors() {
     test("new Object(null)", "");
     test("new RangeError(null)", "");
     test("new ReferenceError(null)", "");
-    test("new RegExp(null)", "");
+    // null is not a string literal, can't statically validate
+    test("new RegExp(null)", "RegExp(null)");
     test("new Set(null)", "");
     test("new String(null)", "");
     test("new SyntaxError(null)", "");
@@ -121,7 +123,8 @@ fn pure_constructors() {
     test("new Object(undefined)", "");
     test("new RangeError(undefined)", "");
     test("new ReferenceError(undefined)", "");
-    test("new RegExp(undefined)", "");
+    // undefined is not a string literal, can't statically validate
+    test("new RegExp(undefined)", "RegExp(void 0)");
     test("new Set(undefined)", "");
     test("new String(undefined)", "");
     test("new SyntaxError(undefined)", "");
@@ -142,7 +145,8 @@ fn pure_constructors() {
     test("new Object(0)", "");
     test("new RangeError(0)", "");
     test("new ReferenceError(0)", "");
-    test("new RegExp(0)", "");
+    // 0 is not a string literal, can't statically validate
+    test("new RegExp(0)", "RegExp(0)");
     test_same("new Set(0)");
     test("new String(0)", "");
     test("new SyntaxError(0)", "");
@@ -163,7 +167,8 @@ fn pure_constructors() {
     test("new Object(10n)", "");
     test("new RangeError(10n)", "");
     test("new ReferenceError(10n)", "");
-    test("new RegExp(10n)", "");
+    // 10n is not a string literal, can't statically validate
+    test("new RegExp(10n)", "RegExp(10n)");
     test_same("new Set(10n)");
     test("new String(10n)", "");
     test("new SyntaxError(10n)", "");
@@ -184,6 +189,7 @@ fn pure_constructors() {
     test("new Object('')", "");
     test("new RangeError('')", "");
     test("new ReferenceError('')", "");
+    // Empty string is a valid pattern (matches everything)
     test("new RegExp('')", "");
     test("new Set('')", "");
     test("new String('')", "");
@@ -205,7 +211,8 @@ fn pure_constructors() {
     test("new Object(!0)", "");
     test("new RangeError(!0)", "");
     test("new ReferenceError(!0)", "");
-    test("new RegExp(!0)", "");
+    // !0 is not a string literal, can't statically validate
+    test("new RegExp(!0)", "RegExp(!0)");
     test_same("new Set(!0)");
     test("new String(!0)", "");
     test("new SyntaxError(!0)", "");
@@ -226,7 +233,8 @@ fn pure_constructors() {
     test("new Object([])", "");
     test("new RangeError([])", "");
     test("new ReferenceError([])", "");
-    test("new RegExp([])", "");
+    // Array arguments are object type, so conversion doesn't happen
+    test_same("new RegExp([])");
     test("new Set([])", "");
     test("new String([])", "");
     test("new SyntaxError([])", "");

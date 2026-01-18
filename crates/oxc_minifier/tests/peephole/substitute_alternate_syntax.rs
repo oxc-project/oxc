@@ -228,13 +228,20 @@ fn test_fold_new_expressions() {
     test("new Function('a', 'b', 'console.log(a, b)')", "Function('a', 'b', 'console.log(a, b)')");
     test_same("var Function; new Function()");
 
-    test("new RegExp()", "");
-    test("new RegExp('a')", "");
-    test("new RegExp(0)", "");
-    test("new RegExp(null)", "");
-    test("x = new RegExp('a', 'g')", "x = RegExp('a', 'g')");
-    test_same("new RegExp(foo)");
+    // RegExp is validated using the regex parser to determine if it's pure.
+    // Valid patterns can be removed, invalid patterns must be kept.
+    // https://github.com/oxc-project/oxc/issues/18050
+    test("new RegExp()", ""); // Valid: empty pattern
+    test("new RegExp('a')", ""); // Valid: simple pattern
+    test("new RegExp(0)", "RegExp(0)"); // Can't validate non-string literal
+    test("new RegExp(null)", "RegExp(null)"); // Can't validate non-string literal
+    test("x = new RegExp('a', 'g')", "x = /* @__PURE__ */ RegExp('a', 'g')"); // Valid pattern, marked as pure
+    test_same("new RegExp(foo)"); // Can't validate variable
+    // RegExp literal is always valid
     test("new RegExp(/foo/)", "");
+    // Invalid patterns and flags must not be removed (they throw SyntaxError at runtime)
+    test_same("RegExp('[')");
+    test_same("RegExp('a', 'xyz')");
 }
 
 #[test]
