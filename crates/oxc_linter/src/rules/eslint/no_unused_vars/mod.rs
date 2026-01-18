@@ -338,6 +338,8 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
+            // Mapped type keys are always used within the type definition
+            AstKind::TSMappedType(_) => {}
             AstKind::CatchParameter(catch) => {
                 // NOTE: these are safe suggestions as deleting unused catch
                 // bindings wont have any side effects.

@@ -2351,6 +2351,24 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
+        let kind = AstKind::TSMappedType(self.alloc(it));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.key);
+        self.visit_ts_type(&it.constraint);
+        if let Some(name_type) = &it.name_type {
+            self.visit_ts_type(name_type);
+        }
+        if let Some(type_annotation) = &it.type_annotation {
+            self.visit_ts_type(type_annotation);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         let kind = AstKind::IdentifierReference(self.alloc(ident));
         self.enter_node(kind);

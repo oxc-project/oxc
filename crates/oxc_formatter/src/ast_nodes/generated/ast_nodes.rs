@@ -8798,7 +8798,18 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
 
 impl<'a> AstNode<'a, TSMappedType<'a>> {
     #[inline]
-    pub fn type_parameter(&self) -> &AstNode<'a, TSTypeParameter<'a>> {
+    pub fn key(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+        let following_span = Some(self.inner.constraint.span());
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.key,
+            allocator: self.allocator,
+            parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
+            following_span,
+        })
+    }
+
+    #[inline]
+    pub fn constraint(&self) -> &AstNode<'a, TSType<'a>> {
         let following_span = self
             .inner
             .name_type
@@ -8807,7 +8818,7 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
             .or_else(|| self.inner.type_annotation.as_ref().map(GetSpan::span))
             .or(self.following_span);
         self.allocator.alloc(AstNode {
-            inner: self.inner.type_parameter.as_ref(),
+            inner: &self.inner.constraint,
             allocator: self.allocator,
             parent: self.allocator.alloc(AstNodes::TSMappedType(transmute_self(self))),
             following_span,
