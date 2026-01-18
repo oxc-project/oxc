@@ -23,7 +23,7 @@ impl GroupName {
     /// - "value-builtin" -> modifiers: Value, selector: Builtin
     /// - "side-effect-import" -> modifiers: SideEffect, selector: Import
     /// - "side-effect-type-external" -> modifiers: SideEffect, Type, selector: External
-    /// - "named-side-effect-type-builtin" -> modifiers: SideEffect, Type, Named, selector: External
+    /// - "named-side-effect-type-builtin" -> modifiers: SideEffect, Type, Named, selector: Builtin
     pub fn parse(s: &str) -> Option<Self> {
         // Try to parse as a selector without modifiers first
         if let Some(selector) = ImportSelector::parse(s) {
