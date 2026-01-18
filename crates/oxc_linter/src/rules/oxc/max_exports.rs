@@ -47,13 +47,15 @@ impl Default for MaxExportsConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Limits the number of exports from a single module.
+    /// Limits the number of exports from a single module. This includes local exports,
+    /// re-exports (`export { foo } from`), and star exports (`export * from`).
     ///
     /// ### Why is this bad?
     ///
     /// Modules with many exports are harder to understand and maintain, and often indicate that
     /// the module is doing too much. Splitting such modules improves cohesion and makes imports
-    /// more intentional.
+    /// more intentional. Re-exports are counted because they contribute to the module's public API
+    /// surface.
     ///
     /// ### Examples
     ///
@@ -158,7 +160,9 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Single export - always OK with default max of 10
         (r"export const a = 1;", None),
+        // Exactly at limit
         (
             r"
             export const a = 1;
@@ -166,6 +170,7 @@ fn test() {
             ",
             Some(json!([{ "max": 2 }])),
         ),
+        // Type exports ignored
         (
             r"
             export type Foo = { a: string };
@@ -180,9 +185,19 @@ fn test() {
             ",
             Some(json!([{ "max": 1, "ignoreTypeExports": true }])),
         ),
+        // Default export counts as 1
+        (r"export default function foo() {}", Some(json!([{ "max": 1 }]))),
+        // CommonJS - no module syntax, should pass
+        (r"module.exports = { a: 1 };", Some(json!([{ "max": 0 }]))),
+        // Export interface (type)
+        (
+            r"export interface Foo { a: string }",
+            Some(json!([{ "max": 0, "ignoreTypeExports": true }])),
+        ),
     ];
 
     let fail = vec![
+        // Shorthand config syntax
         (
             r"
             export const a = 1;
@@ -190,6 +205,7 @@ fn test() {
             ",
             Some(json!([1])),
         ),
+        // Object config syntax
         (
             r"
             export const a = 1;
@@ -198,6 +214,15 @@ fn test() {
             ",
             Some(json!([{ "max": 2 }])),
         ),
+        // Type exports count when ignoreTypeExports is false (default)
+        (
+            r"
+            export type Foo = { a: string };
+            export const a = 1;
+            ",
+            Some(json!([{ "max": 1 }])),
+        ),
+        // ignoreTypeExports: true, but still too many value exports
         (
             r"
             export type Foo = { a: string };
@@ -206,8 +231,22 @@ fn test() {
             ",
             Some(json!([{ "max": 1, "ignoreTypeExports": true }])),
         ),
+        // Star re-export counts as 1 export
         (r"export * from './mod';", Some(json!([{ "max": 0 }]))),
+        // Named re-export
         (r"export { foo } from './mod';", Some(json!([{ "max": 0 }]))),
+        // Namespace re-export
+        (r"export * as ns from './mod';", Some(json!([{ "max": 0 }]))),
+        // Default export exceeds limit
+        (r"export default 42;", Some(json!([{ "max": 0 }]))),
+        // Mixed local and re-exports
+        (
+            r"
+            export const a = 1;
+            export { foo } from './mod';
+            ",
+            Some(json!([{ "max": 1 }])),
+        ),
     ];
 
     Tester::new(MaxExports::NAME, MaxExports::PLUGIN, pass, fail)
