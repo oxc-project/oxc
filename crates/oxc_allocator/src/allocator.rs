@@ -636,6 +636,50 @@ impl Allocator {
     }
 }
 
+// Implement `Alloc` trait for `Allocator` to enable tracking through Vec operations.
+// All methods delegate to the inner `Arena` but add tracking when the feature is enabled.
+impl crate::alloc::Alloc for Allocator {
+    #[inline(always)]
+    fn alloc(&self, layout: Layout) -> NonNull<u8> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_allocation();
+
+        self.arena.alloc_layout(layout)
+    }
+
+    #[inline(always)]
+    unsafe fn dealloc(&self, ptr: NonNull<u8>, layout: Layout) {
+        // No-op. Arena allocators don't reclaim memory.
+        let _ = (ptr, layout);
+    }
+
+    #[inline(always)]
+    unsafe fn shrink(
+        &self,
+        ptr: NonNull<u8>,
+        _old_layout: Layout,
+        _new_layout: Layout,
+    ) -> NonNull<u8> {
+        // No-op. Arena allocators don't reclaim memory.
+        ptr
+    }
+
+    #[inline(always)]
+    unsafe fn grow(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> NonNull<u8> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_reallocation();
+
+        // Allocate new layout
+        let new_ptr = self.arena.alloc_layout(new_layout);
+
+        // Copy data from old allocation to new one
+        // SAFETY: Caller guarantees ptr points to valid memory of old_layout size
+        unsafe { ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), old_layout.size()) };
+
+        new_ptr
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::Allocator;
