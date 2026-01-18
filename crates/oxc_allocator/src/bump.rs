@@ -580,25 +580,33 @@ unsafe impl AllocatorTrait for Bump {
     ) -> Result<NonNull<[u8]>, AllocError> {
         debug_assert!(new_layout.size() >= old_layout.size());
 
-        // Try to grow in place if this is the last allocation.
+        let old_size = old_layout.size();
+        let new_size = new_layout.size();
+
         // SAFETY: Caller guarantees ptr was allocated by this allocator with old_layout.
         // Single-threaded access guaranteed by !Sync.
         unsafe {
             let cursor = *self.ptr.get();
-            let old_size = old_layout.size();
-            let old_end = ptr.as_ptr().add(old_size);
 
-            // Check if this allocation ends at the current cursor
-            // (i.e., it's the most recent allocation)
-            if old_end == cursor {
-                let additional = new_layout.size() - old_size;
+            // With backward allocation, the most recent allocation STARTS at cursor.
+            // Check if ptr equals cursor (i.e., this is the most recent allocation).
+            if ptr.as_ptr() == cursor {
+                let additional = new_size - old_size;
                 let start = *self.start.get();
                 // Use wrapping arithmetic like the hot path
                 let new_cursor = cursor.wrapping_sub(additional);
                 if new_cursor >= start {
-                    // Can grow in place
+                    // Can grow in place by allocating the delta.
+                    // With backward allocation, new space is at [new_cursor, cursor).
+                    // Old data at [cursor, cursor + old_size) must be copied to
+                    // [new_cursor, new_cursor + old_size).
+                    // These regions overlap, so use ptr::copy.
                     *self.ptr.get() = new_cursor;
-                    let slice = NonNull::slice_from_raw_parts(ptr, new_layout.size());
+                    ptr::copy(ptr.as_ptr(), new_cursor, old_size);
+                    let slice = NonNull::slice_from_raw_parts(
+                        NonNull::new_unchecked(new_cursor),
+                        new_size,
+                    );
                     return Ok(slice);
                 }
             }
@@ -606,7 +614,7 @@ unsafe impl AllocatorTrait for Bump {
             // Can't grow in place - allocate new and copy
             let new_ptr = self.alloc_layout(new_layout);
             ptr::copy_nonoverlapping(ptr.as_ptr(), new_ptr.as_ptr(), old_size);
-            let slice = NonNull::slice_from_raw_parts(new_ptr, new_layout.size());
+            let slice = NonNull::slice_from_raw_parts(new_ptr, new_size);
             Ok(slice)
         }
     }
