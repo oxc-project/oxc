@@ -138,6 +138,7 @@ impl<'a> TransformCtx<'a> {
 
         let assignment = ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             temp_var_binding.create_target(ReferenceFlags::Write, ctx),
             expr,

@@ -504,6 +504,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         let target = binding.create_write_target(ctx);
         let assignment = ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             target,
             serialized_type,
@@ -511,10 +512,10 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         let type_of = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, assignment);
         let right = ctx.ast.expression_string_literal(SPAN, "function", None);
         let operator = BinaryOperator::StrictEquality;
-        let test = ctx.ast.expression_binary(SPAN, type_of, operator, right);
+        let test = ctx.ast.expression_binary(SPAN, 0, type_of, operator, right);
         let consequent = binding.create_read_expression(ctx);
         let alternate = Self::global_object(ctx);
-        ctx.ast.expression_conditional(SPAN, test, consequent, alternate)
+        ctx.ast.expression_conditional(SPAN, 0, 0, test, consequent, alternate)
     }
 
     /// Serializes an entity name which may not exist at runtime, but whose access shouldn't throw
@@ -558,6 +559,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     // `(_a = A.B)`
                     let right = ctx.ast.expression_assignment(
                         SPAN,
+                        0,
                         AssignmentOperator::Assign,
                         binding.create_write_target(ctx),
                         right,
@@ -565,6 +567,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     // `(_a = A.B) !== void 0`
                     logical.right = ctx.ast.expression_binary(
                         SPAN,
+                        0,
                         right,
                         BinaryOperator::StrictInequality,
                         ctx.ast.void_0(SPAN),
@@ -572,7 +575,7 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
 
                     let object = binding.create_read_expression(ctx);
                     let member = create_property_access(SPAN, object, &qualified.right.name, ctx);
-                    Some(ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member))
+                    Some(ctx.ast.expression_logical(SPAN, 0, left, LogicalOperator::And, member))
                 }
             }
             TSTypeName::ThisExpression(_) => None,
@@ -760,8 +763,8 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         let operator = BinaryOperator::StrictInequality;
         let undefined = ctx.ast.expression_string_literal(SPAN, "undefined", None);
         let typeof_left = ctx.ast.expression_unary(SPAN, UnaryOperator::Typeof, left);
-        let left_check = ctx.ast.expression_binary(SPAN, typeof_left, operator, undefined);
-        ctx.ast.expression_logical(SPAN, left_check, LogicalOperator::And, right)
+        let left_check = ctx.ast.expression_binary(SPAN, 0, typeof_left, operator, undefined);
+        ctx.ast.expression_logical(SPAN, 0, left_check, LogicalOperator::And, right)
     }
 
     // `_metadata(key, value)

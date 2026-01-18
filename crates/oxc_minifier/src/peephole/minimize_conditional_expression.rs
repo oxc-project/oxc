@@ -18,7 +18,7 @@ impl<'a> PeepholeOptimizations {
         alternate: Expression<'a>,
         ctx: &mut Ctx<'a, '_>,
     ) -> Expression<'a> {
-        let mut cond_expr = ctx.ast.conditional_expression(span, test, consequent, alternate);
+        let mut cond_expr = ctx.ast.conditional_expression(span, 0, 0, test, consequent, alternate);
         Self::minimize_conditional_expression(&mut cond_expr, ctx)
             .unwrap_or_else(|| Expression::ConditionalExpression(ctx.ast.alloc(cond_expr)))
     }
@@ -109,6 +109,8 @@ impl<'a> PeepholeOptimizations {
         {
             return Some(ctx.ast.expression_conditional(
                 expr.span,
+                0,
+                0,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::And,
@@ -127,6 +129,8 @@ impl<'a> PeepholeOptimizations {
         {
             return Some(ctx.ast.expression_conditional(
                 expr.span,
+                0,
+                0,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::Or,
@@ -186,6 +190,7 @@ impl<'a> PeepholeOptimizations {
         {
             return Some(ctx.ast.expression_logical(
                 expr.span,
+                0,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::And,
@@ -205,6 +210,7 @@ impl<'a> PeepholeOptimizations {
         {
             return Some(ctx.ast.expression_logical(
                 expr.span,
+                0,
                 Self::join_with_left_associative_op(
                     expr.test.span(),
                     LogicalOperator::Or,
@@ -259,6 +265,8 @@ impl<'a> PeepholeOptimizations {
                         expr.span,
                         ctx.ast.expression_conditional(
                             expr.test.span(),
+                            0,
+                            0,
                             expr.test.take_in(ctx.ast),
                             consequent_first_arg,
                             alternate_first_arg,
@@ -336,6 +344,7 @@ impl<'a> PeepholeOptimizations {
                     if maybe_same_id_expr.is_specific_id(&target_id_name) {
                         return Some(ctx.ast.expression_logical(
                             expr.span,
+                            0,
                             value_expr.take_in(ctx.ast),
                             LogicalOperator::Coalesce,
                             if is_negate {
@@ -448,6 +457,7 @@ impl<'a> PeepholeOptimizations {
         );
         Some(ctx.ast.expression_assignment(
             expr.span,
+            0,
             consequent.operator,
             alternate.left.take_in(ctx.ast),
             cond_expr,

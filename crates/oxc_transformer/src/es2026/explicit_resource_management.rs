@@ -676,7 +676,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
 
         let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
         let finally = Self::create_finally_block(&using_ctx, current_scope_id, needs_await, ctx);
-        *stmt = ctx.ast.statement_try(SPAN, block, Some(catch), Some(finally));
+        *stmt = ctx.ast.statement_try(SPAN, Some(0), Some(0), block, Some(catch), Some(finally));
     }
 
     /// Transforms:
@@ -794,7 +794,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
     ) -> Statement<'a> {
         let catch = Self::create_catch_clause(using_ctx, parent_scope_id, ctx);
         let finally = Self::create_finally_block(using_ctx, parent_scope_id, needs_await, ctx);
-        ctx.ast.statement_try(SPAN, body, Some(catch), Some(finally))
+        ctx.ast.statement_try(SPAN, Some(0), Some(0), body, Some(catch), Some(finally))
     }
 
     /// `catch (_) { _usingCtx.e = _; }`
@@ -825,6 +825,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
             SPAN,
             ctx.ast.expression_assignment(
                 SPAN,
+                0,
                 AssignmentOperator::Assign,
                 AssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,

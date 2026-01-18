@@ -209,7 +209,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::StaticMemberExpression(member) = left else { unreachable!() };
         let property =
             ctx.ast.expression_string_literal(member.property.span, member.property.name, None);
@@ -237,7 +237,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
         let Expression::AssignmentExpression(assign_expr) = expr.take_in(ctx.ast) else {
             unreachable!()
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr.unbox();
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr.unbox();
         let AssignmentTarget::ComputedMemberExpression(member) = left else { unreachable!() };
         let property = member.unbox().expression.into_inner_expression();
         *expr =
@@ -273,7 +273,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 let get_call = self.create_super_prop_get(SPAN, property2, false, ctx);
 
                 // `_superPropGet(_Class, prop, _Class) + value`
-                let value = ctx.ast.expression_binary(SPAN, get_call, operator, value);
+                let value = ctx.ast.expression_binary(SPAN, 0, get_call, operator, value);
 
                 // `_superPropSet(_Class, prop, _superPropGet(_Class, prop, _Class) + value, 1)`
                 self.create_super_prop_set(span, property1, value, ctx)
@@ -288,7 +288,7 @@ impl<'a> ClassPropertiesSuperConverter<'a, '_, '_> {
                 let set_call = self.create_super_prop_set(span, property2, value, ctx);
 
                 // `_superPropGet(_Class, prop, _Class) && _superPropSet(_Class, prop, value, _Class, 1)`
-                ctx.ast.expression_logical(span, get_call, operator, set_call)
+                ctx.ast.expression_logical(span, 0, get_call, operator, set_call)
             } else {
                 // The above covers all types of `AssignmentOperator`
                 unreachable!();

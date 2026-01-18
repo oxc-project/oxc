@@ -305,6 +305,7 @@ impl<'a> ClassProperties<'a, '_> {
         // `(..._args) => (super(..._args), <inits>, this)`
         let super_func = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
             SPAN,
+            0,
             true,
             false,
             NONE,

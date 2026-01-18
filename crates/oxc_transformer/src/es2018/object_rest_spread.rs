@@ -247,6 +247,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         if let Some(expr) = reference_builder.expr.take() {
             expressions.push(ctx.ast.expression_assignment(
                 SPAN,
+                0,
                 op,
                 reference_builder.maybe_bound_identifier.create_write_target(ctx),
                 expr,
@@ -256,6 +257,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         // Insert `{} = _foo`
         expressions.push(ctx.ast.expression_assignment(
             SPAN,
+            0,
             op,
             assign_expr.left.take_in(ctx.ast),
             reference_builder.create_read_expression(ctx),
@@ -270,7 +272,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 ctx,
             );
             if let BindingPatternOrAssignmentTarget::AssignmentTarget(lhs) = lhs {
-                expressions.push(ctx.ast.expression_assignment(SPAN, op, lhs, rhs));
+                expressions.push(ctx.ast.expression_assignment(SPAN, 0, op, lhs, rhs));
             }
         }
 
@@ -445,6 +447,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
                 decls.push(ctx.ast.variable_declarator(SPAN, kind, id, NONE, None, false));
                 exprs.push(ctx.ast.expression_assignment(
                     SPAN,
+                    0,
                     AssignmentOperator::Assign,
                     pat.take_in(ctx.ast),
                     bound_identifier.create_read_expression(ctx),
@@ -670,7 +673,7 @@ impl<'a> ObjectRestSpread<'a, '_> {
         };
         let operator = AssignmentOperator::Assign;
         let right = bound_identifier.create_read_expression(ctx);
-        let expr = ctx.ast.expression_assignment(SPAN, operator, assign_left, right);
+        let expr = ctx.ast.expression_assignment(SPAN, 0, operator, assign_left, right);
         let stmt = ctx.ast.statement_expression(SPAN, expr);
         block.body.insert(0, stmt);
     }

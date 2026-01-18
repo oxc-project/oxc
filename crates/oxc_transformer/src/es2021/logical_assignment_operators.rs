@@ -130,9 +130,9 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
 
         let assign_op = AssignmentOperator::Assign;
         let right = assignment_expr.right.take_in(ctx.ast);
-        let right = ctx.ast.expression_assignment(SPAN, assign_op, assign_target, right);
+        let right = ctx.ast.expression_assignment(SPAN, 0, assign_op, assign_target, right);
 
-        let logical_expr = ctx.ast.expression_logical(SPAN, left_expr, operator, right);
+        let logical_expr = ctx.ast.expression_logical(SPAN, 0, left_expr, operator, right);
 
         *expr = logical_expr;
     }

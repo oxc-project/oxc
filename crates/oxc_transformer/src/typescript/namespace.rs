@@ -379,7 +379,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                 let assign_right = ctx.ast.expression_object(SPAN, ctx.ast.vec());
                 let op = AssignmentOperator::Assign;
                 let assign_expr =
-                    ctx.ast.expression_assignment(SPAN, op, assign_left, assign_right);
+                    ctx.ast.expression_assignment(SPAN, 0, op, assign_left, assign_right);
                 ctx.ast.expression_parenthesized(SPAN, assign_expr)
             };
 
@@ -395,15 +395,21 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                         false,
                     );
                     let op = LogicalOperator::Or;
-                    ctx.ast.expression_logical(SPAN, logical_left.into(), op, logical_right)
+                    ctx.ast.expression_logical(SPAN, 0, logical_left.into(), op, logical_right)
                 };
                 let op = AssignmentOperator::Assign;
-                logical_right = ctx.ast.expression_assignment(SPAN, op, assign_left, assign_right);
+                logical_right =
+                    ctx.ast.expression_assignment(SPAN, 0, op, assign_left, assign_right);
                 logical_right = ctx.ast.expression_parenthesized(SPAN, logical_right);
             }
 
-            let expr =
-                ctx.ast.expression_logical(SPAN, logical_left, LogicalOperator::Or, logical_right);
+            let expr = ctx.ast.expression_logical(
+                SPAN,
+                0,
+                logical_left,
+                LogicalOperator::Or,
+                logical_right,
+            );
             ctx.ast.vec1(Argument::from(expr))
         };
 
@@ -437,7 +443,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
         let left = AssignmentTarget::from(left);
         let right = value_binding.create_read_expression(ctx);
         let op = AssignmentOperator::Assign;
-        ctx.ast.expression_assignment(SPAN, op, left, right)
+        ctx.ast.expression_assignment(SPAN, 0, op, left, right)
     }
 
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
@@ -460,6 +466,7 @@ impl<'a> TypeScriptNamespace<'a, '_> {
                     declarator.init = Some(
                         ctx.ast.expression_assignment(
                             SPAN,
+                            0,
                             AssignmentOperator::Assign,
                             SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
                                 SPAN,

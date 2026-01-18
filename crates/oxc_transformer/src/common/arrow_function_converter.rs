@@ -950,7 +950,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             let left = SimpleAssignmentTarget::from(init.into_member_expression());
             let left = AssignmentTarget::from(left);
             let right = param_binding.create_read_expression(ctx);
-            init = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
+            init = ctx.ast.expression_assignment(SPAN, 0, AssignmentOperator::Assign, left, right);
         }
 
         let params = ctx.ast.formal_parameters(
@@ -962,7 +962,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         let statements = ctx.ast.vec1(ctx.ast.statement_expression(SPAN, init));
         let body = ctx.ast.function_body(SPAN, ctx.ast.vec(), statements);
         let init = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
-            SPAN, true, false, NONE, params, NONE, body, scope_id, false, false,
+            SPAN, 0, true, false, NONE, params, NONE, body, scope_id, false, false,
         );
         ctx.ast.variable_declarator(
             SPAN,
@@ -1122,11 +1122,12 @@ impl<'a> ArrowFunctionConverter<'a> {
             let undefined_literal = ctx.ast.expression_string_literal(SPAN, "undefined", None);
             let test = ctx.ast.expression_binary(
                 SPAN,
+                0,
                 typeof_arguments,
                 BinaryOperator::StrictEquality,
                 undefined_literal,
             );
-            init = ctx.ast.expression_conditional(SPAN, test, ctx.ast.void_0(SPAN), init);
+            init = ctx.ast.expression_conditional(SPAN, 0, 0, test, ctx.ast.void_0(SPAN), init);
         }
 
         Some(ctx.ast.variable_declarator(
@@ -1333,6 +1334,7 @@ impl<'a> ConstructorBodyThisAfterSuperInserter<'a, '_> {
     fn create_assignment_to_this_temp_var(&mut self) -> Expression<'a> {
         self.ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             self.this_var_binding.create_write_target(self.ctx),
             self.ctx.ast.expression_this(SPAN),

@@ -198,13 +198,13 @@ impl<'a> OptionalChaining<'a, '_> {
         } else {
             BinaryOperator::StrictEquality
         };
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.expression_null_literal(SPAN))
+        ctx.ast.expression_binary(SPAN, 0, left, operator, ctx.ast.expression_null_literal(SPAN))
     }
 
     /// Return `left === void 0`
     fn wrap_void0_check(left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
         let operator = BinaryOperator::StrictEquality;
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.void_0(SPAN))
+        ctx.ast.expression_binary(SPAN, 0, left, operator, ctx.ast.void_0(SPAN))
     }
 
     /// Return `left1 === null || left2 === void 0`
@@ -225,7 +225,7 @@ impl<'a> OptionalChaining<'a, '_> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_logical(SPAN, left, LogicalOperator::Or, right)
+        ctx.ast.expression_logical(SPAN, 0, left, LogicalOperator::Or, right)
     }
 
     /// Return `left ? void 0 : alternative`
@@ -243,7 +243,7 @@ impl<'a> OptionalChaining<'a, '_> {
         } else {
             ctx.ast.void_0(SPAN)
         };
-        ctx.ast.expression_conditional(SPAN, test, consequent, alternate)
+        ctx.ast.expression_conditional(SPAN, 0, 0, test, consequent, alternate)
     }
 
     /// Convert chain expression to expression
@@ -276,7 +276,7 @@ impl<'a> OptionalChaining<'a, '_> {
         right: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right)
+        ctx.ast.expression_assignment(SPAN, 0, AssignmentOperator::Assign, left, right)
     }
 
     /// Transform chain expression

@@ -1144,13 +1144,14 @@ impl<'a> ParserImpl<'a> {
         // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
             let left = self.parse_private_identifier();
+            let in_pos = self.cur_token().start();
             self.expect(Kind::In);
             let right = self.parse_binary_expression_or_higher(Precedence::Compare);
             if let Expression::PrivateInExpression(private_in_expr) = right {
                 let error = diagnostics::private_in_private(private_in_expr.span);
                 return self.fatal_error(error);
             }
-            self.ast.expression_private_in(self.end_span(lhs_span), left, right)
+            self.ast.expression_private_in(self.end_span(lhs_span), in_pos, left, right)
         } else {
             let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
             let mut expr = self.parse_unary_expression_or_higher(lhs_span);
@@ -1202,6 +1203,7 @@ impl<'a> ParserImpl<'a> {
                 if self.cur_token().is_on_new_line() {
                     break;
                 }
+                let keyword_pos = self.cur_token().start();
                 self.bump_any();
                 let type_annotation = self.parse_ts_type();
                 let span = self.end_span(lhs_span);
@@ -1209,16 +1211,17 @@ impl<'a> ParserImpl<'a> {
                     if !self.is_ts {
                         self.error(diagnostics::as_in_ts(span));
                     }
-                    self.ast.expression_ts_as(span, lhs, type_annotation)
+                    self.ast.expression_ts_as(span, keyword_pos, lhs, type_annotation)
                 } else {
                     if !self.is_ts {
                         self.error(diagnostics::satisfies_in_ts(span));
                     }
-                    self.ast.expression_ts_satisfies(span, lhs, type_annotation)
+                    self.ast.expression_ts_satisfies(span, keyword_pos, lhs, type_annotation)
                 };
                 continue;
             }
 
+            let operator_pos = self.cur_token().start();
             self.bump_any(); // bump operator
             let rhs_parenthesized = self.at(Kind::LParen);
             let rhs = self.parse_binary_expression_or_higher(left_precedence);
@@ -1244,7 +1247,7 @@ impl<'a> ParserImpl<'a> {
                         self.error(diagnostics::mixed_coalesce(span));
                     }
                 }
-                self.ast.expression_logical(span, lhs, op, rhs)
+                self.ast.expression_logical(span, operator_pos, lhs, op, rhs)
             } else if kind.is_binary_operator() {
                 let span = self.end_span(lhs_span);
                 let op = map_binary_operator(kind);
@@ -1258,7 +1261,7 @@ impl<'a> ParserImpl<'a> {
                 {
                     self.error(diagnostics::unexpected_exponential(key, lhs.span()));
                 }
-                self.ast.expression_binary(span, lhs, op, rhs)
+                self.ast.expression_binary(span, operator_pos, lhs, op, rhs)
             } else {
                 break;
             };
@@ -1278,6 +1281,7 @@ impl<'a> ParserImpl<'a> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let question_span = self.token.span();
+        let question_pos = question_span.start;
         if !self.eat(Kind::Question) {
             return lhs;
         }
@@ -1286,10 +1290,18 @@ impl<'a> ParserImpl<'a> {
                 /* allow_return_type_in_arrow_function */ false,
             )
         });
+        let colon_pos = self.cur_token().start();
         self.expect_conditional_alternative(question_span);
         let alternate =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
-        self.ast.expression_conditional(self.end_span(lhs_span), lhs, consequent, alternate)
+        self.ast.expression_conditional(
+            self.end_span(lhs_span),
+            question_pos,
+            colon_pos,
+            lhs,
+            consequent,
+            alternate,
+        )
     }
 
     /// `AssignmentExpression`[In, Yield, Await] :
@@ -1425,6 +1437,7 @@ impl<'a> ParserImpl<'a> {
         left_parenthesized_span: Option<Span>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        let operator_pos = self.cur_token().start();
         let operator = map_assignment_operator(self.cur_kind());
         // 13.15.5 Destructuring Assignment
         // LeftHandSideExpression = AssignmentExpression
@@ -1442,7 +1455,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         let right =
             self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
-        self.ast.expression_assignment(self.end_span(span), operator, left, right)
+        self.ast.expression_assignment(self.end_span(span), operator_pos, operator, left, right)
     }
 
     /// Section 13.16 Sequence Expression

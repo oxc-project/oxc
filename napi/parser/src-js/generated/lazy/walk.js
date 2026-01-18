@@ -5175,10 +5175,10 @@ function walkVecSwitchCase(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 48;
+  const endPos = pos + uint32[pos32 + 2] * 56;
   while (pos < endPos) {
     walkSwitchCase(pos, ast, visitors);
-    pos += 48;
+    pos += 56;
   }
 }
 

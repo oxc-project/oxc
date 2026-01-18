@@ -102,13 +102,16 @@ impl<'a> ParserImpl<'a> {
                     self.ast.identifier_reference(identifier_name.span, identifier_name.name);
                 let value = Expression::Identifier(self.alloc(identifier_reference.clone()));
                 // CoverInitializedName ({ foo = bar })
-                if self.eat(Kind::Eq) {
+                if self.at(Kind::Eq) {
+                    let operator_pos = self.cur_token().start();
+                    self.bump_any();
                     let right = self.parse_assignment_expression_or_higher();
                     let left = AssignmentTarget::AssignmentTargetIdentifier(
                         self.alloc(identifier_reference),
                     );
                     let expr = self.ast.assignment_expression(
                         self.end_span(span),
+                        operator_pos,
                         AssignmentOperator::Assign,
                         left,
                         right,

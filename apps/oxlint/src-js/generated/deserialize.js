@@ -957,7 +957,7 @@ function deserializeBinaryExpression(pos) {
       __proto__: NodeProto,
       type: "BinaryExpression",
       left: null,
-      operator: deserializeBinaryOperator(pos + 40),
+      operator: deserializeBinaryOperator(pos + 44),
       right: null,
       start,
       end,
@@ -1000,7 +1000,7 @@ function deserializeLogicalExpression(pos) {
       __proto__: NodeProto,
       type: "LogicalExpression",
       left: null,
-      operator: deserializeLogicalOperator(pos + 40),
+      operator: deserializeLogicalOperator(pos + 44),
       right: null,
       start,
       end,
@@ -1042,7 +1042,7 @@ function deserializeAssignmentExpression(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "AssignmentExpression",
-      operator: deserializeAssignmentOperator(pos + 40),
+      operator: deserializeAssignmentOperator(pos + 44),
       left: null,
       right: null,
       start,
@@ -1917,7 +1917,7 @@ function deserializeForOfStatement(pos) {
     node = (parent = {
       __proto__: NodeProto,
       type: "ForOfStatement",
-      await: deserializeBool(pos + 60),
+      await: deserializeBool(pos + 64),
       left: null,
       right: null,
       body: null,
@@ -2534,7 +2534,7 @@ function deserializeFunctionBody(pos) {
 }
 
 function deserializeArrowFunctionExpression(pos) {
-  let expression = deserializeBool(pos + 44),
+  let expression = deserializeBool(pos + 48),
     start = deserializeU32(pos),
     end = deserializeU32(pos + 4),
     previousParent = parent,
@@ -2542,7 +2542,7 @@ function deserializeArrowFunctionExpression(pos) {
       __proto__: NodeProto,
       type: "ArrowFunctionExpression",
       expression,
-      async: deserializeBool(pos + 45),
+      async: deserializeBool(pos + 49),
       typeParameters: null,
       params: null,
       returnType: null,
@@ -5441,7 +5441,7 @@ function deserializeTSMappedType(pos) {
       nameType: null,
       typeAnnotation: null,
       optional: null,
-      readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 53),
+      readonly: deserializeOptionTSMappedTypeModifierOperator(pos + 57),
       start,
       end,
       range: [start, end],
@@ -5452,7 +5452,7 @@ function deserializeTSMappedType(pos) {
   key.parent = parent;
   let { constraint } = typeParameter;
   constraint !== null && (constraint.parent = parent);
-  let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 52);
+  let optional = deserializeOptionTSMappedTypeModifierOperator(pos + 56);
   optional === null && (optional = false);
   node.key = key;
   node.constraint = constraint;
@@ -6481,10 +6481,10 @@ function deserializeVecSwitchCase(pos) {
   let arr = [],
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  let endPos = pos + uint32[pos32 + 2] * 48;
+  let endPos = pos + uint32[pos32 + 2] * 56;
   for (; pos !== endPos; ) {
     arr.push(deserializeSwitchCase(pos));
-    pos += 48;
+    pos += 56;
   }
   return arr;
 }

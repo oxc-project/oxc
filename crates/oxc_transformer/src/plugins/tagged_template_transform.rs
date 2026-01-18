@@ -204,11 +204,12 @@ impl<'a, 'ctx> TaggedTemplateTransform<'a, 'ctx> {
         let left = binding.create_read_expression(ctx);
         let right = ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
             expr,
         );
-        ctx.ast.expression_logical(SPAN, left, LogicalOperator::Or, right)
+        ctx.ast.expression_logical(SPAN, 0, left, LogicalOperator::Or, right)
     }
 
     /// Creates a `var binding;` variable declaration at the top level and returns the binding

@@ -562,6 +562,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
         // Add new reference `_name = name` to `temp_var_inits`
         temp_var_inits.push(ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
             expr,

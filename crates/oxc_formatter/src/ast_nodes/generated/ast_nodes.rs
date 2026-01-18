@@ -1978,6 +1978,11 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
 
 impl<'a> AstNode<'a, BinaryExpression<'a>> {
     #[inline]
+    pub fn operator_pos(&self) -> u32 {
+        self.inner.operator_pos
+    }
+
+    #[inline]
     pub fn left(&self) -> &AstNode<'a, Expression<'a>> {
         let following_span = Some(self.inner.right.span());
         self.allocator.alloc(AstNode {
@@ -2015,6 +2020,11 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
 
 impl<'a> AstNode<'a, PrivateInExpression<'a>> {
     #[inline]
+    pub fn in_pos(&self) -> u32 {
+        self.inner.in_pos
+    }
+
+    #[inline]
     pub fn left(&self) -> &AstNode<'a, PrivateIdentifier<'a>> {
         let following_span = Some(self.inner.right.span());
         self.allocator.alloc(AstNode {
@@ -2046,6 +2056,11 @@ impl<'a> AstNode<'a, PrivateInExpression<'a>> {
 }
 
 impl<'a> AstNode<'a, LogicalExpression<'a>> {
+    #[inline]
+    pub fn operator_pos(&self) -> u32 {
+        self.inner.operator_pos
+    }
+
     #[inline]
     pub fn left(&self) -> &AstNode<'a, Expression<'a>> {
         let following_span = Some(self.inner.right.span());
@@ -2083,6 +2098,16 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
 }
 
 impl<'a> AstNode<'a, ConditionalExpression<'a>> {
+    #[inline]
+    pub fn question_pos(&self) -> u32 {
+        self.inner.question_pos
+    }
+
+    #[inline]
+    pub fn colon_pos(&self) -> u32 {
+        self.inner.colon_pos
+    }
+
     #[inline]
     pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
         let following_span = Some(self.inner.consequent.span());
@@ -2126,6 +2151,11 @@ impl<'a> AstNode<'a, ConditionalExpression<'a>> {
 }
 
 impl<'a> AstNode<'a, AssignmentExpression<'a>> {
+    #[inline]
+    pub fn operator_pos(&self) -> u32 {
+        self.inner.operator_pos
+    }
+
     #[inline]
     pub fn operator(&self) -> AssignmentOperator {
         self.inner.operator
@@ -3111,6 +3141,11 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
 
 impl<'a> AstNode<'a, IfStatement<'a>> {
     #[inline]
+    pub fn else_pos(&self) -> Option<u32> {
+        self.inner.else_pos
+    }
+
+    #[inline]
     pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
         let following_span = Some(self.inner.consequent.span());
         self.allocator.alloc(AstNode {
@@ -3155,6 +3190,11 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
 }
 
 impl<'a> AstNode<'a, DoWhileStatement<'a>> {
+    #[inline]
+    pub fn while_pos(&self) -> u32 {
+        self.inner.while_pos
+    }
+
     #[inline]
     pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
         let following_span = Some(self.inner.test.span());
@@ -3316,6 +3356,11 @@ impl<'a> AstNode<'a, ForStatementInit<'a>> {
 
 impl<'a> AstNode<'a, ForInStatement<'a>> {
     #[inline]
+    pub fn in_pos(&self) -> u32 {
+        self.inner.in_pos
+    }
+
+    #[inline]
     pub fn left(&self) -> &AstNode<'a, ForStatementLeft<'a>> {
         let following_span = Some(self.inner.right.span());
         self.allocator.alloc(AstNode {
@@ -3387,6 +3432,11 @@ impl<'a> AstNode<'a, ForStatementLeft<'a>> {
 }
 
 impl<'a> AstNode<'a, ForOfStatement<'a>> {
+    #[inline]
+    pub fn of_pos(&self) -> u32 {
+        self.inner.of_pos
+    }
+
     #[inline]
     pub fn r#await(&self) -> bool {
         self.inner.r#await
@@ -3569,6 +3619,11 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
 
 impl<'a> AstNode<'a, SwitchCase<'a>> {
     #[inline]
+    pub fn keyword_pos(&self) -> u32 {
+        self.inner.keyword_pos
+    }
+
+    #[inline]
     pub fn test(&self) -> Option<&AstNode<'a, Expression<'a>>> {
         let following_span =
             self.inner.consequent.first().map(GetSpan::span).or(self.following_span);
@@ -3656,6 +3711,16 @@ impl<'a> AstNode<'a, ThrowStatement<'a>> {
 }
 
 impl<'a> AstNode<'a, TryStatement<'a>> {
+    #[inline]
+    pub fn catch_pos(&self) -> Option<u32> {
+        self.inner.catch_pos
+    }
+
+    #[inline]
+    pub fn finally_pos(&self) -> Option<u32> {
+        self.inner.finally_pos
+    }
+
     #[inline]
     pub fn block(&self) -> &AstNode<'a, BlockStatement<'a>> {
         let following_span = self
@@ -4317,6 +4382,11 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
 }
 
 impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
+    #[inline]
+    pub fn arrow_pos(&self) -> u32 {
+        self.inner.arrow_pos
+    }
+
     #[inline]
     pub fn expression(&self) -> bool {
         self.inner.expression
@@ -6918,6 +6988,21 @@ impl<'a> AstNode<'a, TSType<'a>> {
 
 impl<'a> AstNode<'a, TSConditionalType<'a>> {
     #[inline]
+    pub fn extends_pos(&self) -> u32 {
+        self.inner.extends_pos
+    }
+
+    #[inline]
+    pub fn question_pos(&self) -> u32 {
+        self.inner.question_pos
+    }
+
+    #[inline]
+    pub fn colon_pos(&self) -> u32 {
+        self.inner.colon_pos
+    }
+
+    #[inline]
     pub fn check_type(&self) -> &AstNode<'a, TSType<'a>> {
         let following_span = Some(self.inner.extends_type.span());
         self.allocator.alloc(AstNode {
@@ -8798,6 +8883,11 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
 
 impl<'a> AstNode<'a, TSMappedType<'a>> {
     #[inline]
+    pub fn in_pos(&self) -> u32 {
+        self.inner.in_pos
+    }
+
+    #[inline]
     pub fn type_parameter(&self) -> &AstNode<'a, TSTypeParameter<'a>> {
         let following_span = self
             .inner
@@ -8894,6 +8984,11 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
 
 impl<'a> AstNode<'a, TSAsExpression<'a>> {
     #[inline]
+    pub fn as_pos(&self) -> u32 {
+        self.inner.as_pos
+    }
+
+    #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
         let following_span = Some(self.inner.type_annotation.span());
         self.allocator.alloc(AstNode {
@@ -8925,6 +9020,11 @@ impl<'a> AstNode<'a, TSAsExpression<'a>> {
 }
 
 impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
+    #[inline]
+    pub fn satisfies_pos(&self) -> u32 {
+        self.inner.satisfies_pos
+    }
+
     #[inline]
     pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
         let following_span = Some(self.inner.type_annotation.span());

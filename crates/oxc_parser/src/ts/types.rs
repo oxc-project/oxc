@@ -20,19 +20,26 @@ impl<'a> ParserImpl<'a> {
         let ty = self.parse_union_type_or_higher();
         if !self.ctx.has_disallow_conditional_types()
             && !self.cur_token().is_on_new_line()
-            && self.eat(Kind::Extends)
+            && self.at(Kind::Extends)
         {
+            let extends_pos = self.cur_token().start();
+            self.bump_any();
             let extends_type =
                 self.context_add(Context::DisallowConditionalTypes, Self::parse_ts_type);
             let question_span = self.token.span();
+            let question_pos = question_span.start;
             self.expect(Kind::Question);
             let true_type =
                 self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
+            let colon_pos = self.cur_token().start();
             self.expect_conditional_alternative(question_span);
             let false_type =
                 self.context_remove(Context::DisallowConditionalTypes, Self::parse_ts_type);
             return self.ast.ts_type_conditional_type(
                 self.end_span(span),
+                extends_pos,
+                question_pos,
+                colon_pos,
                 ty,
                 extends_type,
                 true_type,
@@ -605,6 +612,7 @@ impl<'a> ParserImpl<'a> {
             return self.unexpected();
         }
         let name = self.parse_binding_identifier();
+        let in_pos = self.cur_token().start();
         self.expect(Kind::In);
         let constraint = self.parse_ts_type();
         let type_parameter = self.alloc(self.ast.ts_type_parameter(
@@ -644,6 +652,7 @@ impl<'a> ParserImpl<'a> {
 
         self.ast.ts_type_mapped_type(
             self.end_span(span),
+            in_pos,
             type_parameter,
             name_type,
             type_annotation,

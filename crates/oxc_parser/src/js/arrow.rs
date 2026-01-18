@@ -12,6 +12,7 @@ struct ArrowFunctionHead<'a> {
     return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     r#async: bool,
     span: u32,
+    arrow_pos: u32,
 }
 
 impl<'a> ParserImpl<'a> {
@@ -237,10 +238,18 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
 
+        let arrow_pos = self.cur_token().start();
         self.expect(Kind::Arrow);
 
         self.parse_arrow_function_expression_body(
-            ArrowFunctionHead { type_parameters: None, params, return_type: None, r#async, span },
+            ArrowFunctionHead {
+                type_parameters: None,
+                params,
+                return_type: None,
+                r#async,
+                span,
+                arrow_pos,
+            },
             allow_return_type_in_arrow_function,
         )
     }
@@ -272,9 +281,10 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::lineterminator_before_arrow(self.cur_token().span()));
         }
 
+        let arrow_pos = self.cur_token().start();
         self.expect(Kind::Arrow);
 
-        ArrowFunctionHead { type_parameters, params, return_type, r#async, span }
+        ArrowFunctionHead { type_parameters, params, return_type, r#async, span, arrow_pos }
     }
 
     /// [ConciseBody](https://tc39.es/ecma262/#prod-ConciseBody)
@@ -287,7 +297,7 @@ impl<'a> ParserImpl<'a> {
         arrow_function_head: ArrowFunctionHead<'a>,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let ArrowFunctionHead { type_parameters, params, return_type, r#async, span } =
+        let ArrowFunctionHead { type_parameters, params, return_type, r#async, span, arrow_pos } =
             arrow_function_head;
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
@@ -308,6 +318,7 @@ impl<'a> ParserImpl<'a> {
 
         self.ast.expression_arrow_function(
             self.end_span(span),
+            arrow_pos,
             expression,
             r#async,
             type_parameters,

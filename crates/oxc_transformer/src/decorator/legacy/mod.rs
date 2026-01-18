@@ -842,7 +842,7 @@ impl<'a> LegacyDecorator<'a, '_> {
         let operator = AssignmentOperator::Assign;
         let left = class_binding.create_write_target(ctx);
         let right = Self::get_class_initializer(helper, class_alias_binding, ctx);
-        let assignment = ctx.ast.expression_assignment(SPAN, operator, left, right);
+        let assignment = ctx.ast.expression_assignment(SPAN, 0, operator, left, right);
         ctx.ast.statement_expression(SPAN, assignment)
     }
 
@@ -1020,7 +1020,7 @@ impl<'a> LegacyDecorator<'a, '_> {
     ) -> Expression<'a> {
         if let Some(class_alias_binding) = class_alias_binding {
             let left = class_alias_binding.create_write_target(ctx);
-            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, expr)
+            ctx.ast.expression_assignment(SPAN, 0, AssignmentOperator::Assign, left, expr)
         } else {
             expr
         }
@@ -1110,7 +1110,7 @@ impl<'a> LegacyDecorator<'a, '_> {
                 let operator = AssignmentOperator::Assign;
                 let left = binding.create_read_write_target(ctx);
                 let right = key.to_expression_mut().take_in(ctx.ast);
-                let key_expr = ctx.ast.expression_assignment(SPAN, operator, left, right);
+                let key_expr = ctx.ast.expression_assignment(SPAN, 0, operator, left, right);
                 *key = PropertyKey::from(key_expr);
                 binding.create_read_expression(ctx)
             }

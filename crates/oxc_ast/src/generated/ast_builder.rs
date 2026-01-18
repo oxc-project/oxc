@@ -330,6 +330,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `arrow_pos`: Position of the `=>` arrow.
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
@@ -340,6 +341,7 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_arrow_function<T1, T2, T3, T4>(
         self,
         span: Span,
+        arrow_pos: u32,
         expression: bool,
         r#async: bool,
         type_parameters: T1,
@@ -355,6 +357,7 @@ impl<'a> AstBuilder<'a> {
     {
         Expression::ArrowFunctionExpression(self.alloc_arrow_function_expression(
             span,
+            arrow_pos,
             expression,
             r#async,
             type_parameters,
@@ -370,6 +373,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `arrow_pos`: Position of the `=>` arrow.
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
@@ -383,6 +387,7 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_arrow_function_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
+        arrow_pos: u32,
         expression: bool,
         r#async: bool,
         type_parameters: T1,
@@ -402,6 +407,7 @@ impl<'a> AstBuilder<'a> {
         Expression::ArrowFunctionExpression(
             self.alloc_arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
+                arrow_pos,
                 expression,
                 r#async,
                 type_parameters,
@@ -421,6 +427,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `operator`
     /// * `left`
     /// * `right`
@@ -428,13 +435,18 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_assignment(
         self,
         span: Span,
+        operator_pos: u32,
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::AssignmentExpression(
-            self.alloc_assignment_expression(span, operator, left, right),
-        )
+        Expression::AssignmentExpression(self.alloc_assignment_expression(
+            span,
+            operator_pos,
+            operator,
+            left,
+            right,
+        ))
     }
 
     /// Build an [`Expression::AwaitExpression`].
@@ -455,6 +467,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `left`
     /// * `operator`
     /// * `right`
@@ -462,11 +475,18 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_binary(
         self,
         span: Span,
+        operator_pos: u32,
         left: Expression<'a>,
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::BinaryExpression(self.alloc_binary_expression(span, left, operator, right))
+        Expression::BinaryExpression(self.alloc_binary_expression(
+            span,
+            operator_pos,
+            left,
+            operator,
+            right,
+        ))
     }
 
     /// Build an [`Expression::CallExpression`].
@@ -657,6 +677,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `test`
     /// * `consequent`
     /// * `alternate`
@@ -664,13 +686,20 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_conditional(
         self,
         span: Span,
+        question_pos: u32,
+        colon_pos: u32,
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::ConditionalExpression(
-            self.alloc_conditional_expression(span, test, consequent, alternate),
-        )
+        Expression::ConditionalExpression(self.alloc_conditional_expression(
+            span,
+            question_pos,
+            colon_pos,
+            test,
+            consequent,
+            alternate,
+        ))
     }
 
     /// Build an [`Expression::FunctionExpression`].
@@ -814,6 +843,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `left`
     /// * `operator`
     /// * `right`
@@ -821,11 +851,18 @@ impl<'a> AstBuilder<'a> {
     pub fn expression_logical(
         self,
         span: Span,
+        operator_pos: u32,
         left: Expression<'a>,
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::LogicalExpression(self.alloc_logical_expression(span, left, operator, right))
+        Expression::LogicalExpression(self.alloc_logical_expression(
+            span,
+            operator_pos,
+            left,
+            operator,
+            right,
+        ))
     }
 
     /// Build an [`Expression::NewExpression`].
@@ -1036,16 +1073,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     #[inline]
     pub fn expression_private_in(
         self,
         span: Span,
+        in_pos: u32,
         left: PrivateIdentifier<'a>,
         right: Expression<'a>,
     ) -> Expression<'a> {
-        Expression::PrivateInExpression(self.alloc_private_in_expression(span, left, right))
+        Expression::PrivateInExpression(self.alloc_private_in_expression(span, in_pos, left, right))
     }
 
     /// Build an [`Expression::JSXElement`].
@@ -1108,16 +1147,23 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `as_pos`: Position of the `as` keyword.
     /// * `expression`
     /// * `type_annotation`
     #[inline]
     pub fn expression_ts_as(
         self,
         span: Span,
+        as_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
-        Expression::TSAsExpression(self.alloc_ts_as_expression(span, expression, type_annotation))
+        Expression::TSAsExpression(self.alloc_ts_as_expression(
+            span,
+            as_pos,
+            expression,
+            type_annotation,
+        ))
     }
 
     /// Build an [`Expression::TSSatisfiesExpression`].
@@ -1126,17 +1172,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `satisfies_pos`: Position of the `satisfies` keyword.
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
     #[inline]
     pub fn expression_ts_satisfies(
         self,
         span: Span,
+        satisfies_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Expression<'a> {
         Expression::TSSatisfiesExpression(self.alloc_ts_satisfies_expression(
             span,
+            satisfies_pos,
             expression,
             type_annotation,
         ))
@@ -2415,6 +2464,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `left`
     /// * `operator`
     /// * `right`
@@ -2422,11 +2472,12 @@ impl<'a> AstBuilder<'a> {
     pub fn binary_expression(
         self,
         span: Span,
+        operator_pos: u32,
         left: Expression<'a>,
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> BinaryExpression<'a> {
-        BinaryExpression { span, left, operator, right }
+        BinaryExpression { span, operator_pos, left, operator, right }
     }
 
     /// Build a [`BinaryExpression`], and store it in the memory arena.
@@ -2436,6 +2487,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `left`
     /// * `operator`
     /// * `right`
@@ -2443,11 +2495,15 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_binary_expression(
         self,
         span: Span,
+        operator_pos: u32,
         left: Expression<'a>,
         operator: BinaryOperator,
         right: Expression<'a>,
     ) -> Box<'a, BinaryExpression<'a>> {
-        Box::new_in(self.binary_expression(span, left, operator, right), self.allocator)
+        Box::new_in(
+            self.binary_expression(span, operator_pos, left, operator, right),
+            self.allocator,
+        )
     }
 
     /// Build a [`PrivateInExpression`].
@@ -2457,16 +2513,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     #[inline]
     pub fn private_in_expression(
         self,
         span: Span,
+        in_pos: u32,
         left: PrivateIdentifier<'a>,
         right: Expression<'a>,
     ) -> PrivateInExpression<'a> {
-        PrivateInExpression { span, left, right }
+        PrivateInExpression { span, in_pos, left, right }
     }
 
     /// Build a [`PrivateInExpression`], and store it in the memory arena.
@@ -2476,16 +2534,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     #[inline]
     pub fn alloc_private_in_expression(
         self,
         span: Span,
+        in_pos: u32,
         left: PrivateIdentifier<'a>,
         right: Expression<'a>,
     ) -> Box<'a, PrivateInExpression<'a>> {
-        Box::new_in(self.private_in_expression(span, left, right), self.allocator)
+        Box::new_in(self.private_in_expression(span, in_pos, left, right), self.allocator)
     }
 
     /// Build a [`LogicalExpression`].
@@ -2495,6 +2555,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `left`
     /// * `operator`
     /// * `right`
@@ -2502,11 +2563,12 @@ impl<'a> AstBuilder<'a> {
     pub fn logical_expression(
         self,
         span: Span,
+        operator_pos: u32,
         left: Expression<'a>,
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> LogicalExpression<'a> {
-        LogicalExpression { span, left, operator, right }
+        LogicalExpression { span, operator_pos, left, operator, right }
     }
 
     /// Build a [`LogicalExpression`], and store it in the memory arena.
@@ -2516,6 +2578,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `left`
     /// * `operator`
     /// * `right`
@@ -2523,11 +2586,15 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_logical_expression(
         self,
         span: Span,
+        operator_pos: u32,
         left: Expression<'a>,
         operator: LogicalOperator,
         right: Expression<'a>,
     ) -> Box<'a, LogicalExpression<'a>> {
-        Box::new_in(self.logical_expression(span, left, operator, right), self.allocator)
+        Box::new_in(
+            self.logical_expression(span, operator_pos, left, operator, right),
+            self.allocator,
+        )
     }
 
     /// Build a [`ConditionalExpression`].
@@ -2537,6 +2604,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `test`
     /// * `consequent`
     /// * `alternate`
@@ -2544,11 +2613,13 @@ impl<'a> AstBuilder<'a> {
     pub fn conditional_expression(
         self,
         span: Span,
+        question_pos: u32,
+        colon_pos: u32,
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> ConditionalExpression<'a> {
-        ConditionalExpression { span, test, consequent, alternate }
+        ConditionalExpression { span, question_pos, colon_pos, test, consequent, alternate }
     }
 
     /// Build a [`ConditionalExpression`], and store it in the memory arena.
@@ -2558,6 +2629,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `test`
     /// * `consequent`
     /// * `alternate`
@@ -2565,11 +2638,16 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_conditional_expression(
         self,
         span: Span,
+        question_pos: u32,
+        colon_pos: u32,
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
     ) -> Box<'a, ConditionalExpression<'a>> {
-        Box::new_in(self.conditional_expression(span, test, consequent, alternate), self.allocator)
+        Box::new_in(
+            self.conditional_expression(span, question_pos, colon_pos, test, consequent, alternate),
+            self.allocator,
+        )
     }
 
     /// Build an [`AssignmentExpression`].
@@ -2579,6 +2657,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `operator`
     /// * `left`
     /// * `right`
@@ -2586,11 +2665,12 @@ impl<'a> AstBuilder<'a> {
     pub fn assignment_expression(
         self,
         span: Span,
+        operator_pos: u32,
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> AssignmentExpression<'a> {
-        AssignmentExpression { span, operator, left, right }
+        AssignmentExpression { span, operator_pos, operator, left, right }
     }
 
     /// Build an [`AssignmentExpression`], and store it in the memory arena.
@@ -2600,6 +2680,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `operator_pos`: Position of the operator.
     /// * `operator`
     /// * `left`
     /// * `right`
@@ -2607,11 +2688,15 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_assignment_expression(
         self,
         span: Span,
+        operator_pos: u32,
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
     ) -> Box<'a, AssignmentExpression<'a>> {
-        Box::new_in(self.assignment_expression(span, operator, left, right), self.allocator)
+        Box::new_in(
+            self.assignment_expression(span, operator_pos, operator, left, right),
+            self.allocator,
+        )
     }
 
     /// Build a [`SimpleAssignmentTarget::AssignmentTargetIdentifier`].
@@ -2664,17 +2749,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `as_pos`: Position of the `as` keyword.
     /// * `expression`
     /// * `type_annotation`
     #[inline]
     pub fn simple_assignment_target_ts_as_expression(
         self,
         span: Span,
+        as_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> SimpleAssignmentTarget<'a> {
         SimpleAssignmentTarget::TSAsExpression(self.alloc_ts_as_expression(
             span,
+            as_pos,
             expression,
             type_annotation,
         ))
@@ -2686,17 +2774,20 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `satisfies_pos`: Position of the `satisfies` keyword.
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
     #[inline]
     pub fn simple_assignment_target_ts_satisfies_expression(
         self,
         span: Span,
+        satisfies_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> SimpleAssignmentTarget<'a> {
         SimpleAssignmentTarget::TSSatisfiesExpression(self.alloc_ts_satisfies_expression(
             span,
+            satisfies_pos,
             expression,
             type_annotation,
         ))
@@ -3401,16 +3492,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `while_pos`: Position of the `while` keyword.
     /// * `body`
     /// * `test`
     #[inline]
     pub fn statement_do_while(
         self,
         span: Span,
+        while_pos: u32,
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> Statement<'a> {
-        Statement::DoWhileStatement(self.alloc_do_while_statement(span, body, test))
+        Statement::DoWhileStatement(self.alloc_do_while_statement(span, while_pos, body, test))
     }
 
     /// Build a [`Statement::EmptyStatement`].
@@ -3442,6 +3535,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     /// * `body`
@@ -3449,11 +3543,12 @@ impl<'a> AstBuilder<'a> {
     pub fn statement_for_in(
         self,
         span: Span,
+        in_pos: u32,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForInStatement(self.alloc_for_in_statement(span, left, right, body))
+        Statement::ForInStatement(self.alloc_for_in_statement(span, in_pos, left, right, body))
     }
 
     /// Build a [`Statement::ForInStatement`] with `scope_id`.
@@ -3462,6 +3557,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     /// * `body`
@@ -3470,13 +3566,14 @@ impl<'a> AstBuilder<'a> {
     pub fn statement_for_in_with_scope_id(
         self,
         span: Span,
+        in_pos: u32,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
         Statement::ForInStatement(
-            self.alloc_for_in_statement_with_scope_id(span, left, right, body, scope_id),
+            self.alloc_for_in_statement_with_scope_id(span, in_pos, left, right, body, scope_id),
         )
     }
 
@@ -3486,6 +3583,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `of_pos`: Position of the `of` keyword.
     /// * `await`
     /// * `left`
     /// * `right`
@@ -3494,12 +3592,15 @@ impl<'a> AstBuilder<'a> {
     pub fn statement_for_of(
         self,
         span: Span,
+        of_pos: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Statement<'a> {
-        Statement::ForOfStatement(self.alloc_for_of_statement(span, r#await, left, right, body))
+        Statement::ForOfStatement(
+            self.alloc_for_of_statement(span, of_pos, r#await, left, right, body),
+        )
     }
 
     /// Build a [`Statement::ForOfStatement`] with `scope_id`.
@@ -3508,6 +3609,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `of_pos`: Position of the `of` keyword.
     /// * `await`
     /// * `left`
     /// * `right`
@@ -3517,15 +3619,16 @@ impl<'a> AstBuilder<'a> {
     pub fn statement_for_of_with_scope_id(
         self,
         span: Span,
+        of_pos: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> Statement<'a> {
-        Statement::ForOfStatement(
-            self.alloc_for_of_statement_with_scope_id(span, r#await, left, right, body, scope_id),
-        )
+        Statement::ForOfStatement(self.alloc_for_of_statement_with_scope_id(
+            span, of_pos, r#await, left, right, body, scope_id,
+        ))
     }
 
     /// Build a [`Statement::ForStatement`].
@@ -3582,6 +3685,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `else_pos`: Position of the `else` keyword, if present.
     /// * `test`
     /// * `consequent`
     /// * `alternate`
@@ -3589,11 +3693,12 @@ impl<'a> AstBuilder<'a> {
     pub fn statement_if(
         self,
         span: Span,
+        else_pos: Option<u32>,
         test: Expression<'a>,
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> Statement<'a> {
-        Statement::IfStatement(self.alloc_if_statement(span, test, consequent, alternate))
+        Statement::IfStatement(self.alloc_if_statement(span, else_pos, test, consequent, alternate))
     }
 
     /// Build a [`Statement::LabeledStatement`].
@@ -3687,6 +3792,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `catch_pos`: Position of the `catch` keyword, if present.
+    /// * `finally_pos`: Position of the `finally` keyword, if present.
     /// * `block`: Statements in the `try` block
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
@@ -3694,6 +3801,8 @@ impl<'a> AstBuilder<'a> {
     pub fn statement_try<T1, T2, T3>(
         self,
         span: Span,
+        catch_pos: Option<u32>,
+        finally_pos: Option<u32>,
         block: T1,
         handler: T2,
         finalizer: T3,
@@ -3703,7 +3812,14 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
-        Statement::TryStatement(self.alloc_try_statement(span, block, handler, finalizer))
+        Statement::TryStatement(self.alloc_try_statement(
+            span,
+            catch_pos,
+            finally_pos,
+            block,
+            handler,
+            finalizer,
+        ))
     }
 
     /// Build a [`Statement::WhileStatement`].
@@ -4538,6 +4654,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `else_pos`: Position of the `else` keyword, if present.
     /// * `test`
     /// * `consequent`
     /// * `alternate`
@@ -4545,11 +4662,12 @@ impl<'a> AstBuilder<'a> {
     pub fn if_statement(
         self,
         span: Span,
+        else_pos: Option<u32>,
         test: Expression<'a>,
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> IfStatement<'a> {
-        IfStatement { span, test, consequent, alternate }
+        IfStatement { span, else_pos, test, consequent, alternate }
     }
 
     /// Build an [`IfStatement`], and store it in the memory arena.
@@ -4559,6 +4677,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `else_pos`: Position of the `else` keyword, if present.
     /// * `test`
     /// * `consequent`
     /// * `alternate`
@@ -4566,11 +4685,12 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_if_statement(
         self,
         span: Span,
+        else_pos: Option<u32>,
         test: Expression<'a>,
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
     ) -> Box<'a, IfStatement<'a>> {
-        Box::new_in(self.if_statement(span, test, consequent, alternate), self.allocator)
+        Box::new_in(self.if_statement(span, else_pos, test, consequent, alternate), self.allocator)
     }
 
     /// Build a [`DoWhileStatement`].
@@ -4580,16 +4700,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `while_pos`: Position of the `while` keyword.
     /// * `body`
     /// * `test`
     #[inline]
     pub fn do_while_statement(
         self,
         span: Span,
+        while_pos: u32,
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> DoWhileStatement<'a> {
-        DoWhileStatement { span, body, test }
+        DoWhileStatement { span, while_pos, body, test }
     }
 
     /// Build a [`DoWhileStatement`], and store it in the memory arena.
@@ -4599,16 +4721,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `while_pos`: Position of the `while` keyword.
     /// * `body`
     /// * `test`
     #[inline]
     pub fn alloc_do_while_statement(
         self,
         span: Span,
+        while_pos: u32,
         body: Statement<'a>,
         test: Expression<'a>,
     ) -> Box<'a, DoWhileStatement<'a>> {
-        Box::new_in(self.do_while_statement(span, body, test), self.allocator)
+        Box::new_in(self.do_while_statement(span, while_pos, body, test), self.allocator)
     }
 
     /// Build a [`WhileStatement`].
@@ -4780,6 +4904,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     /// * `body`
@@ -4787,11 +4912,12 @@ impl<'a> AstBuilder<'a> {
     pub fn for_in_statement(
         self,
         span: Span,
+        in_pos: u32,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForInStatement<'a> {
-        ForInStatement { span, left, right, body, scope_id: Default::default() }
+        ForInStatement { span, in_pos, left, right, body, scope_id: Default::default() }
     }
 
     /// Build a [`ForInStatement`], and store it in the memory arena.
@@ -4801,6 +4927,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     /// * `body`
@@ -4808,11 +4935,12 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_for_in_statement(
         self,
         span: Span,
+        in_pos: u32,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Box<'a, ForInStatement<'a>> {
-        Box::new_in(self.for_in_statement(span, left, right, body), self.allocator)
+        Box::new_in(self.for_in_statement(span, in_pos, left, right, body), self.allocator)
     }
 
     /// Build a [`ForInStatement`] with `scope_id`.
@@ -4822,6 +4950,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     /// * `body`
@@ -4830,12 +4959,13 @@ impl<'a> AstBuilder<'a> {
     pub fn for_in_statement_with_scope_id(
         self,
         span: Span,
+        in_pos: u32,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> ForInStatement<'a> {
-        ForInStatement { span, left, right, body, scope_id: Cell::new(Some(scope_id)) }
+        ForInStatement { span, in_pos, left, right, body, scope_id: Cell::new(Some(scope_id)) }
     }
 
     /// Build a [`ForInStatement`] with `scope_id`, and store it in the memory arena.
@@ -4845,6 +4975,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `left`
     /// * `right`
     /// * `body`
@@ -4853,13 +4984,14 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_for_in_statement_with_scope_id(
         self,
         span: Span,
+        in_pos: u32,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> Box<'a, ForInStatement<'a>> {
         Box::new_in(
-            self.for_in_statement_with_scope_id(span, left, right, body, scope_id),
+            self.for_in_statement_with_scope_id(span, in_pos, left, right, body, scope_id),
             self.allocator,
         )
     }
@@ -4896,6 +5028,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `of_pos`: Position of the `of` keyword.
     /// * `await`
     /// * `left`
     /// * `right`
@@ -4904,12 +5037,13 @@ impl<'a> AstBuilder<'a> {
     pub fn for_of_statement(
         self,
         span: Span,
+        of_pos: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> ForOfStatement<'a> {
-        ForOfStatement { span, r#await, left, right, body, scope_id: Default::default() }
+        ForOfStatement { span, of_pos, r#await, left, right, body, scope_id: Default::default() }
     }
 
     /// Build a [`ForOfStatement`], and store it in the memory arena.
@@ -4919,6 +5053,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `of_pos`: Position of the `of` keyword.
     /// * `await`
     /// * `left`
     /// * `right`
@@ -4927,12 +5062,13 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_for_of_statement(
         self,
         span: Span,
+        of_pos: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
     ) -> Box<'a, ForOfStatement<'a>> {
-        Box::new_in(self.for_of_statement(span, r#await, left, right, body), self.allocator)
+        Box::new_in(self.for_of_statement(span, of_pos, r#await, left, right, body), self.allocator)
     }
 
     /// Build a [`ForOfStatement`] with `scope_id`.
@@ -4942,6 +5078,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `of_pos`: Position of the `of` keyword.
     /// * `await`
     /// * `left`
     /// * `right`
@@ -4951,13 +5088,22 @@ impl<'a> AstBuilder<'a> {
     pub fn for_of_statement_with_scope_id(
         self,
         span: Span,
+        of_pos: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
         scope_id: ScopeId,
     ) -> ForOfStatement<'a> {
-        ForOfStatement { span, r#await, left, right, body, scope_id: Cell::new(Some(scope_id)) }
+        ForOfStatement {
+            span,
+            of_pos,
+            r#await,
+            left,
+            right,
+            body,
+            scope_id: Cell::new(Some(scope_id)),
+        }
     }
 
     /// Build a [`ForOfStatement`] with `scope_id`, and store it in the memory arena.
@@ -4967,6 +5113,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `of_pos`: Position of the `of` keyword.
     /// * `await`
     /// * `left`
     /// * `right`
@@ -4976,6 +5123,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_for_of_statement_with_scope_id(
         self,
         span: Span,
+        of_pos: u32,
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
@@ -4983,7 +5131,7 @@ impl<'a> AstBuilder<'a> {
         scope_id: ScopeId,
     ) -> Box<'a, ForOfStatement<'a>> {
         Box::new_in(
-            self.for_of_statement_with_scope_id(span, r#await, left, right, body, scope_id),
+            self.for_of_statement_with_scope_id(span, of_pos, r#await, left, right, body, scope_id),
             self.allocator,
         )
     }
@@ -5257,16 +5405,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `keyword_pos`: Position of the `case` or `default` keyword.
     /// * `test`
     /// * `consequent`
     #[inline]
     pub fn switch_case(
         self,
         span: Span,
+        keyword_pos: u32,
         test: Option<Expression<'a>>,
         consequent: Vec<'a, Statement<'a>>,
     ) -> SwitchCase<'a> {
-        SwitchCase { span, test, consequent }
+        SwitchCase { span, keyword_pos, test, consequent }
     }
 
     /// Build a [`LabeledStatement`].
@@ -5344,6 +5494,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `catch_pos`: Position of the `catch` keyword, if present.
+    /// * `finally_pos`: Position of the `finally` keyword, if present.
     /// * `block`: Statements in the `try` block
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
@@ -5351,6 +5503,8 @@ impl<'a> AstBuilder<'a> {
     pub fn try_statement<T1, T2, T3>(
         self,
         span: Span,
+        catch_pos: Option<u32>,
+        finally_pos: Option<u32>,
         block: T1,
         handler: T2,
         finalizer: T3,
@@ -5362,6 +5516,8 @@ impl<'a> AstBuilder<'a> {
     {
         TryStatement {
             span,
+            catch_pos,
+            finally_pos,
             block: block.into_in(self.allocator),
             handler: handler.into_in(self.allocator),
             finalizer: finalizer.into_in(self.allocator),
@@ -5375,6 +5531,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `catch_pos`: Position of the `catch` keyword, if present.
+    /// * `finally_pos`: Position of the `finally` keyword, if present.
     /// * `block`: Statements in the `try` block
     /// * `handler`: The `catch` clause, including the parameter and the block statement
     /// * `finalizer`: The `finally` clause
@@ -5382,6 +5540,8 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_try_statement<T1, T2, T3>(
         self,
         span: Span,
+        catch_pos: Option<u32>,
+        finally_pos: Option<u32>,
         block: T1,
         handler: T2,
         finalizer: T3,
@@ -5391,7 +5551,10 @@ impl<'a> AstBuilder<'a> {
         T2: IntoIn<'a, Option<Box<'a, CatchClause<'a>>>>,
         T3: IntoIn<'a, Option<Box<'a, BlockStatement<'a>>>>,
     {
-        Box::new_in(self.try_statement(span, block, handler, finalizer), self.allocator)
+        Box::new_in(
+            self.try_statement(span, catch_pos, finally_pos, block, handler, finalizer),
+            self.allocator,
+        )
     }
 
     /// Build a [`CatchClause`].
@@ -6239,6 +6402,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `arrow_pos`: Position of the `=>` arrow.
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
@@ -6249,6 +6413,7 @@ impl<'a> AstBuilder<'a> {
     pub fn arrow_function_expression<T1, T2, T3, T4>(
         self,
         span: Span,
+        arrow_pos: u32,
         expression: bool,
         r#async: bool,
         type_parameters: T1,
@@ -6264,6 +6429,7 @@ impl<'a> AstBuilder<'a> {
     {
         ArrowFunctionExpression {
             span,
+            arrow_pos,
             expression,
             r#async,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -6283,6 +6449,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `arrow_pos`: Position of the `=>` arrow.
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
@@ -6293,6 +6460,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_arrow_function_expression<T1, T2, T3, T4>(
         self,
         span: Span,
+        arrow_pos: u32,
         expression: bool,
         r#async: bool,
         type_parameters: T1,
@@ -6309,6 +6477,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(
             self.arrow_function_expression(
                 span,
+                arrow_pos,
                 expression,
                 r#async,
                 type_parameters,
@@ -6327,6 +6496,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `arrow_pos`: Position of the `=>` arrow.
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
@@ -6340,6 +6510,7 @@ impl<'a> AstBuilder<'a> {
     pub fn arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
+        arrow_pos: u32,
         expression: bool,
         r#async: bool,
         type_parameters: T1,
@@ -6358,6 +6529,7 @@ impl<'a> AstBuilder<'a> {
     {
         ArrowFunctionExpression {
             span,
+            arrow_pos,
             expression,
             r#async,
             type_parameters: type_parameters.into_in(self.allocator),
@@ -6377,6 +6549,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `arrow_pos`: Position of the `=>` arrow.
     /// * `expression`: Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     /// * `async`
     /// * `type_parameters`
@@ -6390,6 +6563,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_arrow_function_expression_with_scope_id_and_pure_and_pife<T1, T2, T3, T4>(
         self,
         span: Span,
+        arrow_pos: u32,
         expression: bool,
         r#async: bool,
         type_parameters: T1,
@@ -6409,6 +6583,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(
             self.arrow_function_expression_with_scope_id_and_pure_and_pife(
                 span,
+                arrow_pos,
                 expression,
                 r#async,
                 type_parameters,
@@ -10419,6 +10594,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `extends_pos`: Position of the `extends` keyword.
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `check_type`: The type before `extends` in the test expression.
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
@@ -10427,6 +10605,9 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_conditional_type(
         self,
         span: Span,
+        extends_pos: u32,
+        question_pos: u32,
+        colon_pos: u32,
         check_type: TSType<'a>,
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
@@ -10434,6 +10615,9 @@ impl<'a> AstBuilder<'a> {
     ) -> TSType<'a> {
         TSType::TSConditionalType(self.alloc_ts_conditional_type(
             span,
+            extends_pos,
+            question_pos,
+            colon_pos,
             check_type,
             extends_type,
             true_type,
@@ -10447,6 +10631,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `extends_pos`: Position of the `extends` keyword.
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `check_type`: The type before `extends` in the test expression.
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
@@ -10456,6 +10643,9 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_conditional_type_with_scope_id(
         self,
         span: Span,
+        extends_pos: u32,
+        question_pos: u32,
+        colon_pos: u32,
         check_type: TSType<'a>,
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
@@ -10464,6 +10654,9 @@ impl<'a> AstBuilder<'a> {
     ) -> TSType<'a> {
         TSType::TSConditionalType(self.alloc_ts_conditional_type_with_scope_id(
             span,
+            extends_pos,
+            question_pos,
+            colon_pos,
             check_type,
             extends_type,
             true_type,
@@ -10711,6 +10904,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
@@ -10720,6 +10914,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_mapped_type<T1>(
         self,
         span: Span,
+        in_pos: u32,
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
@@ -10731,6 +10926,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSType::TSMappedType(self.alloc_ts_mapped_type(
             span,
+            in_pos,
             type_parameter,
             name_type,
             type_annotation,
@@ -10745,6 +10941,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
@@ -10755,6 +10952,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_type_mapped_type_with_scope_id<T1>(
         self,
         span: Span,
+        in_pos: u32,
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
@@ -10767,6 +10965,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSType::TSMappedType(self.alloc_ts_mapped_type_with_scope_id(
             span,
+            in_pos,
             type_parameter,
             name_type,
             type_annotation,
@@ -11028,6 +11227,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `extends_pos`: Position of the `extends` keyword.
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `check_type`: The type before `extends` in the test expression.
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
@@ -11036,6 +11238,9 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_conditional_type(
         self,
         span: Span,
+        extends_pos: u32,
+        question_pos: u32,
+        colon_pos: u32,
         check_type: TSType<'a>,
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
@@ -11043,6 +11248,9 @@ impl<'a> AstBuilder<'a> {
     ) -> TSConditionalType<'a> {
         TSConditionalType {
             span,
+            extends_pos,
+            question_pos,
+            colon_pos,
             check_type,
             extends_type,
             true_type,
@@ -11058,6 +11266,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `extends_pos`: Position of the `extends` keyword.
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `check_type`: The type before `extends` in the test expression.
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
@@ -11066,13 +11277,25 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_conditional_type(
         self,
         span: Span,
+        extends_pos: u32,
+        question_pos: u32,
+        colon_pos: u32,
         check_type: TSType<'a>,
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> Box<'a, TSConditionalType<'a>> {
         Box::new_in(
-            self.ts_conditional_type(span, check_type, extends_type, true_type, false_type),
+            self.ts_conditional_type(
+                span,
+                extends_pos,
+                question_pos,
+                colon_pos,
+                check_type,
+                extends_type,
+                true_type,
+                false_type,
+            ),
             self.allocator,
         )
     }
@@ -11084,6 +11307,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `extends_pos`: Position of the `extends` keyword.
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `check_type`: The type before `extends` in the test expression.
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
@@ -11093,6 +11319,9 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_conditional_type_with_scope_id(
         self,
         span: Span,
+        extends_pos: u32,
+        question_pos: u32,
+        colon_pos: u32,
         check_type: TSType<'a>,
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
@@ -11101,6 +11330,9 @@ impl<'a> AstBuilder<'a> {
     ) -> TSConditionalType<'a> {
         TSConditionalType {
             span,
+            extends_pos,
+            question_pos,
+            colon_pos,
             check_type,
             extends_type,
             true_type,
@@ -11116,6 +11348,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `extends_pos`: Position of the `extends` keyword.
+    /// * `question_pos`: Position of the `?` operator.
+    /// * `colon_pos`: Position of the `:` operator.
     /// * `check_type`: The type before `extends` in the test expression.
     /// * `extends_type`: The type `check_type` is being tested against.
     /// * `true_type`: The type evaluated to if the test is true.
@@ -11125,6 +11360,9 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_conditional_type_with_scope_id(
         self,
         span: Span,
+        extends_pos: u32,
+        question_pos: u32,
+        colon_pos: u32,
         check_type: TSType<'a>,
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
@@ -11134,6 +11372,9 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(
             self.ts_conditional_type_with_scope_id(
                 span,
+                extends_pos,
+                question_pos,
+                colon_pos,
                 check_type,
                 extends_type,
                 true_type,
@@ -14476,6 +14717,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
@@ -14485,6 +14727,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_mapped_type<T1>(
         self,
         span: Span,
+        in_pos: u32,
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
@@ -14496,6 +14739,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSMappedType {
             span,
+            in_pos,
             type_parameter: type_parameter.into_in(self.allocator),
             name_type,
             type_annotation,
@@ -14512,6 +14756,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
@@ -14521,6 +14766,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_mapped_type<T1>(
         self,
         span: Span,
+        in_pos: u32,
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
@@ -14533,6 +14779,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(
             self.ts_mapped_type(
                 span,
+                in_pos,
                 type_parameter,
                 name_type,
                 type_annotation,
@@ -14550,6 +14797,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
@@ -14560,6 +14808,7 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_mapped_type_with_scope_id<T1>(
         self,
         span: Span,
+        in_pos: u32,
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
@@ -14572,6 +14821,7 @@ impl<'a> AstBuilder<'a> {
     {
         TSMappedType {
             span,
+            in_pos,
             type_parameter: type_parameter.into_in(self.allocator),
             name_type,
             type_annotation,
@@ -14588,6 +14838,7 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `in_pos`: Position of the `in` keyword.
     /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
@@ -14598,6 +14849,7 @@ impl<'a> AstBuilder<'a> {
     pub fn alloc_ts_mapped_type_with_scope_id<T1>(
         self,
         span: Span,
+        in_pos: u32,
         type_parameter: T1,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
@@ -14611,6 +14863,7 @@ impl<'a> AstBuilder<'a> {
         Box::new_in(
             self.ts_mapped_type_with_scope_id(
                 span,
+                in_pos,
                 type_parameter,
                 name_type,
                 type_annotation,
@@ -14667,16 +14920,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `as_pos`: Position of the `as` keyword.
     /// * `expression`
     /// * `type_annotation`
     #[inline]
     pub fn ts_as_expression(
         self,
         span: Span,
+        as_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSAsExpression<'a> {
-        TSAsExpression { span, expression, type_annotation }
+        TSAsExpression { span, as_pos, expression, type_annotation }
     }
 
     /// Build a [`TSAsExpression`], and store it in the memory arena.
@@ -14686,16 +14941,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `as_pos`: Position of the `as` keyword.
     /// * `expression`
     /// * `type_annotation`
     #[inline]
     pub fn alloc_ts_as_expression(
         self,
         span: Span,
+        as_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Box<'a, TSAsExpression<'a>> {
-        Box::new_in(self.ts_as_expression(span, expression, type_annotation), self.allocator)
+        Box::new_in(
+            self.ts_as_expression(span, as_pos, expression, type_annotation),
+            self.allocator,
+        )
     }
 
     /// Build a [`TSSatisfiesExpression`].
@@ -14705,16 +14965,18 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `satisfies_pos`: Position of the `satisfies` keyword.
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
     #[inline]
     pub fn ts_satisfies_expression(
         self,
         span: Span,
+        satisfies_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> TSSatisfiesExpression<'a> {
-        TSSatisfiesExpression { span, expression, type_annotation }
+        TSSatisfiesExpression { span, satisfies_pos, expression, type_annotation }
     }
 
     /// Build a [`TSSatisfiesExpression`], and store it in the memory arena.
@@ -14724,16 +14986,21 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `satisfies_pos`: Position of the `satisfies` keyword.
     /// * `expression`: The value expression being constrained.
     /// * `type_annotation`: The type `expression` must satisfy.
     #[inline]
     pub fn alloc_ts_satisfies_expression(
         self,
         span: Span,
+        satisfies_pos: u32,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
     ) -> Box<'a, TSSatisfiesExpression<'a>> {
-        Box::new_in(self.ts_satisfies_expression(span, expression, type_annotation), self.allocator)
+        Box::new_in(
+            self.ts_satisfies_expression(span, satisfies_pos, expression, type_annotation),
+            self.allocator,
+        )
     }
 
     /// Build a [`TSTypeAssertion`].

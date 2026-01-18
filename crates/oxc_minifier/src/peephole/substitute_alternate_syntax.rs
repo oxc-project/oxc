@@ -209,12 +209,13 @@ impl<'a> PeepholeOptimizations {
         {
             let left = e.left.take_in(ctx.ast);
             let right = ctx.ast.expression_string_literal(e.right.span(), "u", None);
-            ctx.ast.expression_binary(e.span, left, new_comp_op, right)
+            ctx.ast.expression_binary(e.span, 0, left, new_comp_op, right)
         } else {
             let span = e.span;
             let Expression::UnaryExpression(unary_expr) = &mut e.left else { return };
             ctx.ast.expression_binary(
                 span,
+                0,
                 unary_expr.take_in(ctx.ast).argument,
                 new_eq_op,
                 ctx.ast.void_0(e.right.span()),
@@ -302,13 +303,19 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(mut right) = e.right.take_in(ctx.ast) else { return };
         let mut new_left = ctx.ast.expression_logical(
             e.span,
+            0,
             e.left.take_in(ctx.ast),
             e.operator,
             right.left.take_in(ctx.ast),
         );
         Self::substitute_rotate_logical_expression(&mut new_left, ctx);
-        *expr =
-            ctx.ast.expression_logical(e.span, new_left, e.operator, right.right.take_in(ctx.ast));
+        *expr = ctx.ast.expression_logical(
+            e.span,
+            0,
+            new_left,
+            e.operator,
+            right.right.take_in(ctx.ast),
+        );
         ctx.state.changed = true;
     }
 
@@ -336,6 +343,7 @@ impl<'a> PeepholeOptimizations {
             };
             let mut new_left = ctx.ast.expression_binary(
                 e.span,
+                0,
                 e.left.take_in(ctx.ast),
                 e.operator,
                 right.left.take_in(ctx.ast),
@@ -343,6 +351,7 @@ impl<'a> PeepholeOptimizations {
             Self::substitute_rotate_binary_expression(&mut new_left, ctx);
             *expr = ctx.ast.expression_binary(
                 e.span,
+                0,
                 new_left,
                 e.operator,
                 right.right.take_in(ctx.ast),
@@ -423,7 +432,8 @@ impl<'a> PeepholeOptimizations {
         let Expression::LogicalExpression(left) = &mut e.left else {
             return;
         };
-        *expr = ctx.ast.expression_logical(span, left.left.take_in(ctx.ast), e.operator, new_expr);
+        *expr =
+            ctx.ast.expression_logical(span, 0, left.left.take_in(ctx.ast), e.operator, new_expr);
         ctx.state.changed = true;
     }
 
@@ -524,6 +534,7 @@ impl<'a> PeepholeOptimizations {
         };
         Some(ctx.ast.expression_logical(
             span,
+            0,
             new_left_expr,
             if inversed { LogicalOperator::Or } else { LogicalOperator::And },
             new_right_expr,
@@ -542,7 +553,7 @@ impl<'a> PeepholeOptimizations {
             } else {
                 return;
             };
-            *expr = ctx.ast.expression_binary(e.span, left, e.operator, right);
+            *expr = ctx.ast.expression_binary(e.span, 0, left, e.operator, right);
             ctx.state.changed = true;
         }
     }

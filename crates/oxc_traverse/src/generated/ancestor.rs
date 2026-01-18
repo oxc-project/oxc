@@ -3766,6 +3766,8 @@ impl<'a, 't> GetAddress for UnaryExpressionWithoutArgument<'a, 't> {
 }
 
 pub(crate) const OFFSET_BINARY_EXPRESSION_SPAN: usize = offset_of!(BinaryExpression, span);
+pub(crate) const OFFSET_BINARY_EXPRESSION_OPERATOR_POS: usize =
+    offset_of!(BinaryExpression, operator_pos);
 pub(crate) const OFFSET_BINARY_EXPRESSION_LEFT: usize = offset_of!(BinaryExpression, left);
 pub(crate) const OFFSET_BINARY_EXPRESSION_OPERATOR: usize = offset_of!(BinaryExpression, operator);
 pub(crate) const OFFSET_BINARY_EXPRESSION_RIGHT: usize = offset_of!(BinaryExpression, right);
@@ -3781,6 +3783,13 @@ impl<'a, 't> BinaryExpressionWithoutLeft<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_OPERATOR_POS) as *const u32)
+        }
     }
 
     #[inline]
@@ -3820,6 +3829,13 @@ impl<'a, 't> BinaryExpressionWithoutRight<'a, 't> {
     }
 
     #[inline]
+    pub fn operator_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_OPERATOR_POS) as *const u32)
+        }
+    }
+
+    #[inline]
     pub fn left(self) -> &'t Expression<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_BINARY_EXPRESSION_LEFT) as *const Expression<'a>)
@@ -3843,6 +3859,8 @@ impl<'a, 't> GetAddress for BinaryExpressionWithoutRight<'a, 't> {
 }
 
 pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_SPAN: usize = offset_of!(PrivateInExpression, span);
+pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_IN_POS: usize =
+    offset_of!(PrivateInExpression, in_pos);
 pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_LEFT: usize = offset_of!(PrivateInExpression, left);
 pub(crate) const OFFSET_PRIVATE_IN_EXPRESSION_RIGHT: usize = offset_of!(PrivateInExpression, right);
 
@@ -3857,6 +3875,11 @@ impl<'a, 't> PrivateInExpressionWithoutLeft<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_IN_POS) as *const u32) }
     }
 
     #[inline]
@@ -3889,6 +3912,11 @@ impl<'a, 't> PrivateInExpressionWithoutRight<'a, 't> {
     }
 
     #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_IN_POS) as *const u32) }
+    }
+
+    #[inline]
     pub fn left(self) -> &'t PrivateIdentifier<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PRIVATE_IN_EXPRESSION_LEFT)
@@ -3905,6 +3933,8 @@ impl<'a, 't> GetAddress for PrivateInExpressionWithoutRight<'a, 't> {
 }
 
 pub(crate) const OFFSET_LOGICAL_EXPRESSION_SPAN: usize = offset_of!(LogicalExpression, span);
+pub(crate) const OFFSET_LOGICAL_EXPRESSION_OPERATOR_POS: usize =
+    offset_of!(LogicalExpression, operator_pos);
 pub(crate) const OFFSET_LOGICAL_EXPRESSION_LEFT: usize = offset_of!(LogicalExpression, left);
 pub(crate) const OFFSET_LOGICAL_EXPRESSION_OPERATOR: usize =
     offset_of!(LogicalExpression, operator);
@@ -3921,6 +3951,13 @@ impl<'a, 't> LogicalExpressionWithoutLeft<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_OPERATOR_POS) as *const u32)
+        }
     }
 
     #[inline]
@@ -3960,6 +3997,13 @@ impl<'a, 't> LogicalExpressionWithoutRight<'a, 't> {
     }
 
     #[inline]
+    pub fn operator_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_OPERATOR_POS) as *const u32)
+        }
+    }
+
+    #[inline]
     pub fn left(self) -> &'t Expression<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_LOGICAL_EXPRESSION_LEFT) as *const Expression<'a>)
@@ -3984,6 +4028,10 @@ impl<'a, 't> GetAddress for LogicalExpressionWithoutRight<'a, 't> {
 
 pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_SPAN: usize =
     offset_of!(ConditionalExpression, span);
+pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_QUESTION_POS: usize =
+    offset_of!(ConditionalExpression, question_pos);
+pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_COLON_POS: usize =
+    offset_of!(ConditionalExpression, colon_pos);
 pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_TEST: usize =
     offset_of!(ConditionalExpression, test);
 pub(crate) const OFFSET_CONDITIONAL_EXPRESSION_CONSEQUENT: usize =
@@ -4002,6 +4050,20 @@ impl<'a, 't> ConditionalExpressionWithoutTest<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn question_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_QUESTION_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn colon_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_COLON_POS) as *const u32)
+        }
     }
 
     #[inline]
@@ -4042,6 +4104,20 @@ impl<'a, 't> ConditionalExpressionWithoutConsequent<'a, 't> {
     }
 
     #[inline]
+    pub fn question_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_QUESTION_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn colon_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_COLON_POS) as *const u32)
+        }
+    }
+
+    #[inline]
     pub fn test(self) -> &'t Expression<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_TEST)
@@ -4079,6 +4155,20 @@ impl<'a, 't> ConditionalExpressionWithoutAlternate<'a, 't> {
     }
 
     #[inline]
+    pub fn question_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_QUESTION_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn colon_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_COLON_POS) as *const u32)
+        }
+    }
+
+    #[inline]
     pub fn test(self) -> &'t Expression<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CONDITIONAL_EXPRESSION_TEST)
@@ -4103,6 +4193,8 @@ impl<'a, 't> GetAddress for ConditionalExpressionWithoutAlternate<'a, 't> {
 }
 
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_SPAN: usize = offset_of!(AssignmentExpression, span);
+pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR_POS: usize =
+    offset_of!(AssignmentExpression, operator_pos);
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR: usize =
     offset_of!(AssignmentExpression, operator);
 pub(crate) const OFFSET_ASSIGNMENT_EXPRESSION_LEFT: usize = offset_of!(AssignmentExpression, left);
@@ -4120,6 +4212,13 @@ impl<'a, 't> AssignmentExpressionWithoutLeft<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR_POS) as *const u32)
+        }
     }
 
     #[inline]
@@ -4157,6 +4256,13 @@ impl<'a, 't> AssignmentExpressionWithoutRight<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn operator_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ASSIGNMENT_EXPRESSION_OPERATOR_POS) as *const u32)
+        }
     }
 
     #[inline]
@@ -4962,6 +5068,7 @@ impl<'a, 't> GetAddress for ExpressionStatementWithoutExpression<'a, 't> {
 }
 
 pub(crate) const OFFSET_IF_STATEMENT_SPAN: usize = offset_of!(IfStatement, span);
+pub(crate) const OFFSET_IF_STATEMENT_ELSE_POS: usize = offset_of!(IfStatement, else_pos);
 pub(crate) const OFFSET_IF_STATEMENT_TEST: usize = offset_of!(IfStatement, test);
 pub(crate) const OFFSET_IF_STATEMENT_CONSEQUENT: usize = offset_of!(IfStatement, consequent);
 pub(crate) const OFFSET_IF_STATEMENT_ALTERNATE: usize = offset_of!(IfStatement, alternate);
@@ -4977,6 +5084,11 @@ impl<'a, 't> IfStatementWithoutTest<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn else_pos(self) -> &'t Option<u32> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_ELSE_POS) as *const Option<u32>) }
     }
 
     #[inline]
@@ -5016,6 +5128,11 @@ impl<'a, 't> IfStatementWithoutConsequent<'a, 't> {
     }
 
     #[inline]
+    pub fn else_pos(self) -> &'t Option<u32> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_ELSE_POS) as *const Option<u32>) }
+    }
+
+    #[inline]
     pub fn test(self) -> &'t Expression<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_TEST) as *const Expression<'a>) }
     }
@@ -5050,6 +5167,11 @@ impl<'a, 't> IfStatementWithoutAlternate<'a, 't> {
     }
 
     #[inline]
+    pub fn else_pos(self) -> &'t Option<u32> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_ELSE_POS) as *const Option<u32>) }
+    }
+
+    #[inline]
     pub fn test(self) -> &'t Expression<'a> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_IF_STATEMENT_TEST) as *const Expression<'a>) }
     }
@@ -5070,6 +5192,8 @@ impl<'a, 't> GetAddress for IfStatementWithoutAlternate<'a, 't> {
 }
 
 pub(crate) const OFFSET_DO_WHILE_STATEMENT_SPAN: usize = offset_of!(DoWhileStatement, span);
+pub(crate) const OFFSET_DO_WHILE_STATEMENT_WHILE_POS: usize =
+    offset_of!(DoWhileStatement, while_pos);
 pub(crate) const OFFSET_DO_WHILE_STATEMENT_BODY: usize = offset_of!(DoWhileStatement, body);
 pub(crate) const OFFSET_DO_WHILE_STATEMENT_TEST: usize = offset_of!(DoWhileStatement, test);
 
@@ -5084,6 +5208,11 @@ impl<'a, 't> DoWhileStatementWithoutBody<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn while_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_WHILE_POS) as *const u32) }
     }
 
     #[inline]
@@ -5112,6 +5241,11 @@ impl<'a, 't> DoWhileStatementWithoutTest<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn while_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_DO_WHILE_STATEMENT_WHILE_POS) as *const u32) }
     }
 
     #[inline]
@@ -5400,6 +5534,7 @@ impl<'a, 't> GetAddress for ForStatementWithoutBody<'a, 't> {
 }
 
 pub(crate) const OFFSET_FOR_IN_STATEMENT_SPAN: usize = offset_of!(ForInStatement, span);
+pub(crate) const OFFSET_FOR_IN_STATEMENT_IN_POS: usize = offset_of!(ForInStatement, in_pos);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_LEFT: usize = offset_of!(ForInStatement, left);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_RIGHT: usize = offset_of!(ForInStatement, right);
 pub(crate) const OFFSET_FOR_IN_STATEMENT_BODY: usize = offset_of!(ForInStatement, body);
@@ -5416,6 +5551,11 @@ impl<'a, 't> ForInStatementWithoutLeft<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_IN_POS) as *const u32) }
     }
 
     #[inline]
@@ -5459,6 +5599,11 @@ impl<'a, 't> ForInStatementWithoutRight<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_IN_POS) as *const u32) }
     }
 
     #[inline]
@@ -5506,6 +5651,11 @@ impl<'a, 't> ForInStatementWithoutBody<'a, 't> {
     }
 
     #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_IN_POS) as *const u32) }
+    }
+
+    #[inline]
     pub fn left(self) -> &'t ForStatementLeft<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FOR_IN_STATEMENT_LEFT)
@@ -5537,6 +5687,7 @@ impl<'a, 't> GetAddress for ForInStatementWithoutBody<'a, 't> {
 }
 
 pub(crate) const OFFSET_FOR_OF_STATEMENT_SPAN: usize = offset_of!(ForOfStatement, span);
+pub(crate) const OFFSET_FOR_OF_STATEMENT_OF_POS: usize = offset_of!(ForOfStatement, of_pos);
 pub(crate) const OFFSET_FOR_OF_STATEMENT_AWAIT: usize = offset_of!(ForOfStatement, r#await);
 pub(crate) const OFFSET_FOR_OF_STATEMENT_LEFT: usize = offset_of!(ForOfStatement, left);
 pub(crate) const OFFSET_FOR_OF_STATEMENT_RIGHT: usize = offset_of!(ForOfStatement, right);
@@ -5554,6 +5705,11 @@ impl<'a, 't> ForOfStatementWithoutLeft<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn of_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_OF_POS) as *const u32) }
     }
 
     #[inline]
@@ -5605,6 +5761,11 @@ impl<'a, 't> ForOfStatementWithoutRight<'a, 't> {
     }
 
     #[inline]
+    pub fn of_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_OF_POS) as *const u32) }
+    }
+
+    #[inline]
     pub fn r#await(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_AWAIT) as *const bool) }
     }
@@ -5651,6 +5812,11 @@ impl<'a, 't> ForOfStatementWithoutBody<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn of_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FOR_OF_STATEMENT_OF_POS) as *const u32) }
     }
 
     #[inline]
@@ -5917,6 +6083,7 @@ impl<'a, 't> GetAddress for SwitchStatementWithoutCases<'a, 't> {
 }
 
 pub(crate) const OFFSET_SWITCH_CASE_SPAN: usize = offset_of!(SwitchCase, span);
+pub(crate) const OFFSET_SWITCH_CASE_KEYWORD_POS: usize = offset_of!(SwitchCase, keyword_pos);
 pub(crate) const OFFSET_SWITCH_CASE_TEST: usize = offset_of!(SwitchCase, test);
 pub(crate) const OFFSET_SWITCH_CASE_CONSEQUENT: usize = offset_of!(SwitchCase, consequent);
 
@@ -5931,6 +6098,11 @@ impl<'a, 't> SwitchCaseWithoutTest<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn keyword_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_KEYWORD_POS) as *const u32) }
     }
 
     #[inline]
@@ -5960,6 +6132,11 @@ impl<'a, 't> SwitchCaseWithoutConsequent<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn keyword_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_SWITCH_CASE_KEYWORD_POS) as *const u32) }
     }
 
     #[inline]
@@ -6063,6 +6240,8 @@ impl<'a, 't> GetAddress for ThrowStatementWithoutArgument<'a, 't> {
 }
 
 pub(crate) const OFFSET_TRY_STATEMENT_SPAN: usize = offset_of!(TryStatement, span);
+pub(crate) const OFFSET_TRY_STATEMENT_CATCH_POS: usize = offset_of!(TryStatement, catch_pos);
+pub(crate) const OFFSET_TRY_STATEMENT_FINALLY_POS: usize = offset_of!(TryStatement, finally_pos);
 pub(crate) const OFFSET_TRY_STATEMENT_BLOCK: usize = offset_of!(TryStatement, block);
 pub(crate) const OFFSET_TRY_STATEMENT_HANDLER: usize = offset_of!(TryStatement, handler);
 pub(crate) const OFFSET_TRY_STATEMENT_FINALIZER: usize = offset_of!(TryStatement, finalizer);
@@ -6078,6 +6257,20 @@ impl<'a, 't> TryStatementWithoutBlock<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn catch_pos(self) -> &'t Option<u32> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_CATCH_POS) as *const Option<u32>)
+        }
+    }
+
+    #[inline]
+    pub fn finally_pos(self) -> &'t Option<u32> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_FINALLY_POS) as *const Option<u32>)
+        }
     }
 
     #[inline]
@@ -6118,6 +6311,20 @@ impl<'a, 't> TryStatementWithoutHandler<'a, 't> {
     }
 
     #[inline]
+    pub fn catch_pos(self) -> &'t Option<u32> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_CATCH_POS) as *const Option<u32>)
+        }
+    }
+
+    #[inline]
+    pub fn finally_pos(self) -> &'t Option<u32> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_FINALLY_POS) as *const Option<u32>)
+        }
+    }
+
+    #[inline]
     pub fn block(self) -> &'t Box<'a, BlockStatement<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_BLOCK)
@@ -6152,6 +6359,20 @@ impl<'a, 't> TryStatementWithoutFinalizer<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn catch_pos(self) -> &'t Option<u32> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_CATCH_POS) as *const Option<u32>)
+        }
+    }
+
+    #[inline]
+    pub fn finally_pos(self) -> &'t Option<u32> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TRY_STATEMENT_FINALLY_POS) as *const Option<u32>)
+        }
     }
 
     #[inline]
@@ -7708,6 +7929,8 @@ impl<'a, 't> GetAddress for FunctionBodyWithoutStatements<'a, 't> {
 
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN: usize =
     offset_of!(ArrowFunctionExpression, span);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_ARROW_POS: usize =
+    offset_of!(ArrowFunctionExpression, arrow_pos);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION: usize =
     offset_of!(ArrowFunctionExpression, expression);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC: usize =
@@ -7739,6 +7962,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutTypeParameters<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn arrow_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ARROW_POS) as *const u32)
         }
     }
 
@@ -7827,6 +8057,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutParams<'a, 't> {
     }
 
     #[inline]
+    pub fn arrow_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ARROW_POS) as *const u32)
+        }
+    }
+
+    #[inline]
     pub fn expression(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
@@ -7911,6 +8148,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutReturnType<'a, 't> {
     }
 
     #[inline]
+    pub fn arrow_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ARROW_POS) as *const u32)
+        }
+    }
+
+    #[inline]
     pub fn expression(self) -> &'t bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
@@ -7991,6 +8235,13 @@ impl<'a, 't> ArrowFunctionExpressionWithoutBody<'a, 't> {
     pub fn span(self) -> &'t Span {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn arrow_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ARROW_POS) as *const u32)
         }
     }
 
@@ -11685,6 +11936,12 @@ impl<'a, 't> GetAddress for TSLiteralTypeWithoutLiteral<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_SPAN: usize = offset_of!(TSConditionalType, span);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_POS: usize =
+    offset_of!(TSConditionalType, extends_pos);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_QUESTION_POS: usize =
+    offset_of!(TSConditionalType, question_pos);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_COLON_POS: usize =
+    offset_of!(TSConditionalType, colon_pos);
 pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE: usize =
     offset_of!(TSConditionalType, check_type);
 pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_TYPE: usize =
@@ -11707,6 +11964,25 @@ impl<'a, 't> TSConditionalTypeWithoutCheckType<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn extends_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn question_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_QUESTION_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn colon_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_COLON_POS) as *const u32) }
     }
 
     #[inline]
@@ -11762,6 +12038,25 @@ impl<'a, 't> TSConditionalTypeWithoutExtendsType<'a, 't> {
     }
 
     #[inline]
+    pub fn extends_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn question_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_QUESTION_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn colon_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_COLON_POS) as *const u32) }
+    }
+
+    #[inline]
     pub fn check_type(self) -> &'t TSType<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_CHECK_TYPE)
@@ -11811,6 +12106,25 @@ impl<'a, 't> TSConditionalTypeWithoutTrueType<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn extends_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn question_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_QUESTION_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn colon_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_COLON_POS) as *const u32) }
     }
 
     #[inline]
@@ -11864,6 +12178,25 @@ impl<'a, 't> TSConditionalTypeWithoutFalseType<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn extends_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_EXTENDS_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn question_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_QUESTION_POS) as *const u32)
+        }
+    }
+
+    #[inline]
+    pub fn colon_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_COLON_POS) as *const u32) }
     }
 
     #[inline]
@@ -15266,6 +15599,7 @@ impl<'a, 't> GetAddress for TSConstructorTypeWithoutReturnType<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_MAPPED_TYPE_SPAN: usize = offset_of!(TSMappedType, span);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_IN_POS: usize = offset_of!(TSMappedType, in_pos);
 pub(crate) const OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER: usize =
     offset_of!(TSMappedType, type_parameter);
 pub(crate) const OFFSET_TS_MAPPED_TYPE_NAME_TYPE: usize = offset_of!(TSMappedType, name_type);
@@ -15286,6 +15620,11 @@ impl<'a, 't> TSMappedTypeWithoutTypeParameter<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_IN_POS) as *const u32) }
     }
 
     #[inline]
@@ -15350,6 +15689,11 @@ impl<'a, 't> TSMappedTypeWithoutNameType<'a, 't> {
     }
 
     #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_IN_POS) as *const u32) }
+    }
+
+    #[inline]
     pub fn type_parameter(self) -> &'t Box<'a, TSTypeParameter<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER)
@@ -15408,6 +15752,11 @@ impl<'a, 't> TSMappedTypeWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn in_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_IN_POS) as *const u32) }
     }
 
     #[inline]
@@ -15528,6 +15877,7 @@ impl<'a, 't> GetAddress for TSTemplateLiteralTypeWithoutTypes<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_AS_EXPRESSION_SPAN: usize = offset_of!(TSAsExpression, span);
+pub(crate) const OFFSET_TS_AS_EXPRESSION_AS_POS: usize = offset_of!(TSAsExpression, as_pos);
 pub(crate) const OFFSET_TS_AS_EXPRESSION_EXPRESSION: usize = offset_of!(TSAsExpression, expression);
 pub(crate) const OFFSET_TS_AS_EXPRESSION_TYPE_ANNOTATION: usize =
     offset_of!(TSAsExpression, type_annotation);
@@ -15543,6 +15893,11 @@ impl<'a, 't> TSAsExpressionWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn as_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_AS_POS) as *const u32) }
     }
 
     #[inline]
@@ -15575,6 +15930,11 @@ impl<'a, 't> TSAsExpressionWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
+    pub fn as_pos(self) -> &'t u32 {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_AS_POS) as *const u32) }
+    }
+
+    #[inline]
     pub fn expression(self) -> &'t Expression<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_AS_EXPRESSION_EXPRESSION)
@@ -15592,6 +15952,8 @@ impl<'a, 't> GetAddress for TSAsExpressionWithoutTypeAnnotation<'a, 't> {
 
 pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_SPAN: usize =
     offset_of!(TSSatisfiesExpression, span);
+pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_SATISFIES_POS: usize =
+    offset_of!(TSSatisfiesExpression, satisfies_pos);
 pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_EXPRESSION: usize =
     offset_of!(TSSatisfiesExpression, expression);
 pub(crate) const OFFSET_TS_SATISFIES_EXPRESSION_TYPE_ANNOTATION: usize =
@@ -15608,6 +15970,14 @@ impl<'a, 't> TSSatisfiesExpressionWithoutExpression<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn satisfies_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SATISFIES_POS)
+                as *const u32)
+        }
     }
 
     #[inline]
@@ -15637,6 +16007,14 @@ impl<'a, 't> TSSatisfiesExpressionWithoutTypeAnnotation<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn satisfies_pos(self) -> &'t u32 {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_SATISFIES_EXPRESSION_SATISFIES_POS)
+                as *const u32)
+        }
     }
 
     #[inline]

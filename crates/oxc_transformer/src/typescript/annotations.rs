@@ -630,6 +630,7 @@ impl<'a> Assignment<'a> {
             SPAN,
             ctx.ast.expression_assignment(
                 SPAN,
+                0,
                 AssignmentOperator::Assign,
                 SimpleAssignmentTarget::from(ctx.ast.member_expression_static(
                     SPAN,

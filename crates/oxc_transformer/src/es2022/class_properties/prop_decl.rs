@@ -290,6 +290,7 @@ impl<'a> ClassProperties<'a, '_> {
         // TODO: Should this have span of the original `PropertyDefinition`?
         ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             AssignmentTarget::from(left),
             value,

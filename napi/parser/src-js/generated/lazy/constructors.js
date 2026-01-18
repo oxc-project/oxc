@@ -1683,7 +1683,7 @@ export class BinaryExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructBinaryOperator(internal.pos + 40, internal.ast);
+    return constructBinaryOperator(internal.pos + 44, internal.ast);
   }
 
   get right() {
@@ -1793,7 +1793,7 @@ export class LogicalExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructLogicalOperator(internal.pos + 40, internal.ast);
+    return constructLogicalOperator(internal.pos + 44, internal.ast);
   }
 
   get right() {
@@ -1904,7 +1904,7 @@ export class AssignmentExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructAssignmentOperator(internal.pos + 40, internal.ast);
+    return constructAssignmentOperator(internal.pos + 44, internal.ast);
   }
 
   get left() {
@@ -3498,7 +3498,7 @@ export class ForOfStatement {
 
   get await() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 60, internal.ast);
+    return constructBool(internal.pos + 64, internal.ast);
   }
 
   get left() {
@@ -4695,12 +4695,12 @@ export class ArrowFunctionExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 44, internal.ast);
+    return constructBool(internal.pos + 48, internal.ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 45, internal.ast);
+    return constructBool(internal.pos + 49, internal.ast);
   }
 
   get typeParameters() {
@@ -10947,12 +10947,12 @@ export class TSMappedType {
 
   get optional() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 52, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 56, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 53, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 57, internal.ast);
   }
 
   toJSON() {
@@ -13089,6 +13089,11 @@ function constructOptionBoxTSTypeAnnotation(pos, ast) {
   return constructBoxTSTypeAnnotation(pos, ast);
 }
 
+function constructOptionU32(pos, ast) {
+  if (ast.buffer[pos] === 0) return null;
+  return constructU32(pos + 4, ast);
+}
+
 function constructOptionStatement(pos, ast) {
   if (ast.buffer[pos] === 70) return null;
   return constructStatement(pos, ast);
@@ -13108,7 +13113,7 @@ function constructOptionLabelIdentifier(pos, ast) {
 function constructVecSwitchCase(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 48, constructSwitchCase, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 56, constructSwitchCase, ast);
 }
 
 function constructSwitchCase(pos, ast) {

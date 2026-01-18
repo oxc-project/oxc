@@ -131,6 +131,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
 
         let assignment = ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             binding.create_write_target(ctx),
             logical_expr.left,
@@ -172,6 +173,7 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
             );
             let arrow_function = ctx.ast.expression_arrow_function_with_scope_id_and_pure_and_pife(
                 SPAN,
+                0,
                 true,
                 false,
                 NONE,
@@ -222,10 +224,10 @@ impl<'a> NullishCoalescingOperator<'a, '_> {
     ) -> Expression<'a> {
         let op = BinaryOperator::StrictInequality;
         let null = ctx.ast.expression_null_literal(SPAN);
-        let left = ctx.ast.expression_binary(SPAN, assignment, op, null);
-        let right = ctx.ast.expression_binary(SPAN, reference1, op, ctx.ast.void_0(SPAN));
-        let test = ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, right);
+        let left = ctx.ast.expression_binary(SPAN, 0, assignment, op, null);
+        let right = ctx.ast.expression_binary(SPAN, 0, reference1, op, ctx.ast.void_0(SPAN));
+        let test = ctx.ast.expression_logical(SPAN, 0, left, LogicalOperator::And, right);
 
-        ctx.ast.expression_conditional(span, test, reference2, default)
+        ctx.ast.expression_conditional(span, 0, 0, test, reference2, default)
     }
 }

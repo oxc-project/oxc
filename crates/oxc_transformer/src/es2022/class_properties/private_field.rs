@@ -631,14 +631,15 @@ impl<'a> ClassProperties<'a, '_> {
                     // `Class.#prop += value` -> `_prop._ = _prop._ + value`
                     let value = assign_expr.right.take_in(ctx.ast);
                     assign_expr.operator = AssignmentOperator::Assign;
-                    assign_expr.right = ctx.ast.expression_binary(SPAN, prop_obj, operator, value);
+                    assign_expr.right =
+                        ctx.ast.expression_binary(SPAN, 0, prop_obj, operator, value);
                 } else if let Some(operator) = operator.to_logical_operator() {
                     // `Class.#prop &&= value` -> `_prop._ && (_prop._ = value)`
                     let span = assign_expr.span;
                     assign_expr.span = SPAN;
                     assign_expr.operator = AssignmentOperator::Assign;
                     let right = expr.take_in(ctx.ast);
-                    *expr = ctx.ast.expression_logical(span, prop_obj, operator, right);
+                    *expr = ctx.ast.expression_logical(span, 0, prop_obj, operator, right);
                 } else {
                     // The above covers all types of `AssignmentOperator`
                     unreachable!();
@@ -693,7 +694,7 @@ impl<'a> ClassProperties<'a, '_> {
                         ctx,
                     );
                     // `_assertClassBrand(Class, object, _prop)._ + value`
-                    let value = ctx.ast.expression_binary(SPAN, get_expr, operator, value);
+                    let value = ctx.ast.expression_binary(SPAN, 0, get_expr, operator, value);
                     // `_assertClassBrand(Class, object, _assertClassBrand(Class, object, _prop)._ + value)`
                     assign_expr.right =
                         self.create_assert_class_brand(class_ident2, object1, value, SPAN, ctx);
@@ -721,7 +722,7 @@ impl<'a> ClassProperties<'a, '_> {
                         self.create_assert_class_brand(class_ident2, object2, value, SPAN, ctx);
                     let right = expr.take_in(ctx.ast);
                     // `_assertClassBrand(Class, object, _prop)._ && (_prop._ = _assertClassBrand(Class, object, value))`
-                    *expr = ctx.ast.expression_logical(span, left, operator, right);
+                    *expr = ctx.ast.expression_logical(span, 0, left, operator, right);
                 } else {
                     // The above covers all types of `AssignmentOperator`
                     unreachable!();
@@ -755,7 +756,7 @@ impl<'a> ClassProperties<'a, '_> {
             Expression::AssignmentExpression(assign_expr) => assign_expr.unbox(),
             _ => unreachable!(),
         };
-        let AssignmentExpression { span, operator, right: value, left } = assign_expr;
+        let AssignmentExpression { span, operator, right: value, left, .. } = assign_expr;
         let AssignmentTarget::PrivateFieldExpression(field_expr) = left else { unreachable!() };
         let PrivateFieldExpression { field, object, .. } = field_expr.unbox();
 
@@ -789,7 +790,7 @@ impl<'a> ClassProperties<'a, '_> {
                 );
 
                 // `_classPrivateFieldGet2(_prop, object) + value`
-                let value = ctx.ast.expression_binary(SPAN, get_call, operator, value);
+                let value = ctx.ast.expression_binary(SPAN, 0, get_call, operator, value);
 
                 // `_classPrivateFieldSet2(_prop, object, _classPrivateFieldGet2(_prop, object) + value)`
                 *expr = self.create_private_setter(
@@ -826,7 +827,7 @@ impl<'a> ClassProperties<'a, '_> {
                     ctx,
                 );
                 // `_classPrivateFieldGet2(_prop, object) && _classPrivateFieldSet2(_prop, object, value)`
-                *expr = ctx.ast.expression_logical(span, get_call, operator, set_call);
+                *expr = ctx.ast.expression_logical(span, 0, get_call, operator, set_call);
             } else {
                 // The above covers all types of `AssignmentOperator`
                 unreachable!();
@@ -1039,6 +1040,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // `_prop._ = <value>`
                 *expr = ctx.ast.expression_assignment(
                     span,
+                    0,
                     AssignmentOperator::Assign,
                     Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
                     value,
@@ -1069,6 +1071,7 @@ impl<'a> ClassProperties<'a, '_> {
                 // `_prop._ = <value>`
                 let assignment3 = ctx.ast.expression_assignment(
                     SPAN,
+                    0,
                     AssignmentOperator::Assign,
                     Self::create_underscore_member_expr_target(prop_ident2, SPAN, ctx),
                     value,
@@ -1606,13 +1609,13 @@ impl<'a> ClassProperties<'a, '_> {
         } else {
             BinaryOperator::StrictEquality
         };
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.expression_null_literal(SPAN))
+        ctx.ast.expression_binary(SPAN, 0, left, operator, ctx.ast.expression_null_literal(SPAN))
     }
 
     /// Returns `left === void 0`
     fn wrap_void0_check(left: Expression<'a>, ctx: &TraverseCtx<'a>) -> Expression<'a> {
         let operator = BinaryOperator::StrictEquality;
-        ctx.ast.expression_binary(SPAN, left, operator, ctx.ast.void_0(SPAN))
+        ctx.ast.expression_binary(SPAN, 0, left, operator, ctx.ast.void_0(SPAN))
     }
 
     /// Returns `left1 === null || left2 === void 0`
@@ -1627,7 +1630,7 @@ impl<'a> ClassProperties<'a, '_> {
             null_check
         } else {
             let void0_check = Self::wrap_void0_check(left2, ctx);
-            ctx.ast.expression_logical(SPAN, null_check, LogicalOperator::Or, void0_check)
+            ctx.ast.expression_logical(SPAN, 0, null_check, LogicalOperator::Or, void0_check)
         }
     }
 
@@ -1637,7 +1640,7 @@ impl<'a> ClassProperties<'a, '_> {
         alternative: Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        ctx.ast.expression_conditional(SPAN, test, ctx.ast.void_0(SPAN), alternative)
+        ctx.ast.expression_conditional(SPAN, 0, 0, test, ctx.ast.void_0(SPAN), alternative)
     }
 
     /// Transform chain expression inside unary expression.
@@ -1686,6 +1689,8 @@ impl<'a> ClassProperties<'a, '_> {
         {
             *expr = ctx.ast.expression_conditional(
                 unary_expr.span,
+                0,
+                0,
                 result,
                 ctx.ast.expression_boolean_literal(SPAN, true),
                 {
@@ -1853,7 +1858,7 @@ impl<'a> ClassProperties<'a, '_> {
         private_field: ArenaBox<'a, PrivateInExpression<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let PrivateInExpression { left, right, span } = private_field.unbox();
+        let PrivateInExpression { left, right, span, .. } = private_field.unbox();
 
         let ResolvedPrivateProp { class_bindings, prop_binding, is_method, is_static, .. } =
             self.classes_stack.find_private_prop(&left);
@@ -1864,6 +1869,7 @@ impl<'a> ClassProperties<'a, '_> {
             let left = self.create_check_in_rhs(right, SPAN, ctx);
             return ctx.ast.expression_binary(
                 span,
+                0,
                 left,
                 BinaryOperator::StrictEquality,
                 class_ident,

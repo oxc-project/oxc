@@ -292,9 +292,14 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `if`
         let test = self.parse_paren_expression();
         let consequent = self.parse_statement_list_item(StatementContext::If);
-        let alternate =
-            self.eat(Kind::Else).then(|| self.parse_statement_list_item(StatementContext::If));
-        self.ast.statement_if(self.end_span(span), test, consequent, alternate)
+        let (else_pos, alternate) = if self.at(Kind::Else) {
+            let pos = self.cur_token().start();
+            self.bump_any();
+            (Some(pos), Some(self.parse_statement_list_item(StatementContext::If)))
+        } else {
+            (None, None)
+        };
+        self.ast.statement_if(self.end_span(span), else_pos, test, consequent, alternate)
     }
 
     /// Section 14.7.2 Do-While Statement
@@ -302,10 +307,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `do`
         let body = self.parse_statement_list_item(StatementContext::Do);
+        let while_pos = self.cur_token().start();
         self.expect(Kind::While);
         let test = self.parse_paren_expression();
         self.bump(Kind::Semicolon);
-        self.ast.statement_do_while(self.end_span(span), body, test)
+        self.ast.statement_do_while(self.end_span(span), while_pos, body, test)
     }
 
     /// Section 14.7.3 While Statement
@@ -588,6 +594,7 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
+        let in_pos = self.cur_token().start();
         self.bump_any(); // bump `in`
         let right = self.parse_expr();
         self.expect_closing(Kind::RParen, parenthesis_opening_span);
@@ -598,7 +605,7 @@ impl<'a> ParserImpl<'a> {
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);
-        self.ast.statement_for_in(span, left, right, body)
+        self.ast.statement_for_in(span, in_pos, left, right, body)
     }
 
     fn parse_for_of_loop(
@@ -608,13 +615,14 @@ impl<'a> ParserImpl<'a> {
         r#await: bool,
         left: ForStatementLeft<'a>,
     ) -> Statement<'a> {
+        let of_pos = self.cur_token().start();
         self.bump_any(); // bump `of`
         let right = self.parse_assignment_expression_or_higher();
         self.expect_closing(Kind::RParen, parenthesis_opening_span);
 
         let body = self.parse_statement_list_item(StatementContext::For);
         let span = self.end_span(span);
-        self.ast.statement_for_of(span, r#await, left, right, body)
+        self.ast.statement_for_of(span, of_pos, r#await, left, right, body)
     }
 
     /// Section 14.8 Continue Statement
@@ -678,6 +686,7 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_switch_case(&mut self) -> SwitchCase<'a> {
         let span = self.start_span();
+        let keyword_pos = self.cur_token().start();
         let test = match self.cur_kind() {
             Kind::Default => {
                 self.bump_any();
@@ -716,7 +725,7 @@ impl<'a> ParserImpl<'a> {
             }
             consequent.push(stmt);
         }
-        self.ast.switch_case(self.end_span(span), test, consequent)
+        self.ast.switch_case(self.end_span(span), keyword_pos, test, consequent)
     }
 
     /// Section 14.14 Throw Statement
@@ -742,16 +751,34 @@ impl<'a> ParserImpl<'a> {
 
         let block = self.parse_block();
 
-        let handler = self.at(Kind::Catch).then(|| self.parse_catch_clause());
+        let (catch_pos, handler) = if self.at(Kind::Catch) {
+            let pos = self.cur_token().start();
+            (Some(pos), Some(self.parse_catch_clause()))
+        } else {
+            (None, None)
+        };
 
-        let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
+        let (finally_pos, finalizer) = if self.at(Kind::Finally) {
+            let pos = self.cur_token().start();
+            self.bump_any();
+            (Some(pos), Some(self.parse_block()))
+        } else {
+            (None, None)
+        };
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::empty(block.span.end);
             self.error(diagnostics::expect_catch_finally(range));
         }
 
-        self.ast.statement_try(self.end_span(span), block, handler, finalizer)
+        self.ast.statement_try(
+            self.end_span(span),
+            catch_pos,
+            finally_pos,
+            block,
+            handler,
+            finalizer,
+        )
     }
 
     fn parse_catch_clause(&mut self) -> Box<'a, CatchClause<'a>> {

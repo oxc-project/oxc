@@ -162,8 +162,13 @@ impl<'a> PeepholeOptimizations {
                 {
                     let left = left_child.left.take_in(ctx.ast);
                     let right = logical_expr.right.take_in(ctx.ast);
-                    let logic_expr =
-                        ctx.ast.expression_logical(logical_expr.span, left, left_child_op, right);
+                    let logic_expr = ctx.ast.expression_logical(
+                        logical_expr.span,
+                        0,
+                        left,
+                        left_child_op,
+                        right,
+                    );
                     return Some(logic_expr);
                 }
             }
@@ -381,14 +386,14 @@ impl<'a> PeepholeOptimizations {
                 let value = ctx.ast.atom_from_strs_array([&left_str, &right_str]);
                 let right = ctx.ast.expression_string_literal(span, value, None);
                 let left = left_binary_expr.left.take_in(ctx.ast);
-                return Some(ctx.ast.expression_binary(e.span, left, e.operator, right));
+                return Some(ctx.ast.expression_binary(e.span, 0, left, e.operator, right));
             }
 
             if let Some(new_right) =
                 Self::try_fold_add_op(&mut left_binary_expr.right, &mut e.right, e.span, ctx)
             {
                 let left = left_binary_expr.left.take_in(ctx.ast);
-                return Some(ctx.ast.expression_binary(e.span, left, e.operator, new_right));
+                return Some(ctx.ast.expression_binary(e.span, 0, left, e.operator, new_right));
             }
         }
 
@@ -512,6 +517,7 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             e.span,
+            0,
             expr_to_move.take_in(ctx.ast),
             op,
             ctx.value_to_expr(

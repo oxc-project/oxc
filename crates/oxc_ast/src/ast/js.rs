@@ -713,6 +713,10 @@ pub struct UnaryExpression<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct BinaryExpression<'a> {
     pub span: Span,
+    /// Position of the operator.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub operator_pos: u32,
     pub left: Expression<'a>,
     pub operator: BinaryOperator,
     pub right: Expression<'a>,
@@ -725,6 +729,10 @@ pub struct BinaryExpression<'a> {
 #[estree(rename = "BinaryExpression", add_fields(operator = In), field_order(left, operator, right, span))]
 pub struct PrivateInExpression<'a> {
     pub span: Span,
+    /// Position of the `in` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub in_pos: u32,
     pub left: PrivateIdentifier<'a>,
     pub right: Expression<'a>,
 }
@@ -738,6 +746,10 @@ pub struct PrivateInExpression<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct LogicalExpression<'a> {
     pub span: Span,
+    /// Position of the operator.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub operator_pos: u32,
     pub left: Expression<'a>,
     pub operator: LogicalOperator,
     pub right: Expression<'a>,
@@ -751,6 +763,14 @@ pub struct LogicalExpression<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ConditionalExpression<'a> {
     pub span: Span,
+    /// Position of the `?` operator.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub question_pos: u32,
+    /// Position of the `:` operator.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub colon_pos: u32,
     pub test: Expression<'a>,
     pub consequent: Expression<'a>,
     pub alternate: Expression<'a>,
@@ -764,6 +784,10 @@ pub struct ConditionalExpression<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct AssignmentExpression<'a> {
     pub span: Span,
+    /// Position of the operator.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub operator_pos: u32,
     pub operator: AssignmentOperator,
     pub left: AssignmentTarget<'a>,
     pub right: Expression<'a>,
@@ -1263,6 +1287,10 @@ pub struct ExpressionStatement<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct IfStatement<'a> {
     pub span: Span,
+    /// Position of the `else` keyword, if present.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub else_pos: Option<u32>,
     pub test: Expression<'a>,
     pub consequent: Statement<'a>,
     pub alternate: Option<Statement<'a>>,
@@ -1274,6 +1302,10 @@ pub struct IfStatement<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct DoWhileStatement<'a> {
     pub span: Span,
+    /// Position of the `while` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub while_pos: u32,
     pub body: Statement<'a>,
     pub test: Expression<'a>,
 }
@@ -1325,6 +1357,10 @@ pub enum ForStatementInit<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ForInStatement<'a> {
     pub span: Span,
+    /// Position of the `in` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub in_pos: u32,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
     pub body: Statement<'a>,
@@ -1354,6 +1390,10 @@ pub enum ForStatementLeft<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct ForOfStatement<'a> {
     pub span: Span,
+    /// Position of the `of` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub of_pos: u32,
     pub r#await: bool,
     pub left: ForStatementLeft<'a>,
     pub right: Expression<'a>,
@@ -1419,6 +1459,10 @@ pub struct SwitchStatement<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct SwitchCase<'a> {
     pub span: Span,
+    /// Position of the `case` or `default` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub keyword_pos: u32,
     pub test: Option<Expression<'a>>,
     pub consequent: Vec<'a, Statement<'a>>,
 }
@@ -1469,6 +1513,14 @@ pub struct ThrowStatement<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TryStatement<'a> {
     pub span: Span,
+    /// Position of the `catch` keyword, if present.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub catch_pos: Option<u32>,
+    /// Position of the `finally` keyword, if present.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub finally_pos: Option<u32>,
     /// Statements in the `try` block
     pub block: Box<'a, BlockStatement<'a>>,
     /// The `catch` clause, including the parameter and the block statement
@@ -1947,6 +1999,10 @@ pub struct FunctionBody<'a> {
 #[estree(add_fields(id = Null, generator = False))]
 pub struct ArrowFunctionExpression<'a> {
     pub span: Span,
+    /// Position of the `=>` arrow.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub arrow_pos: u32,
     /// Is the function body an arrow expression? i.e. `() => expr` instead of `() => {}`
     pub expression: bool,
     pub r#async: bool,

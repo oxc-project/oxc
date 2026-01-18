@@ -398,7 +398,7 @@ impl<'a> TypeScript<'a, '_> {
     ) -> Statement<'a> {
         ctx.ast.statement_expression(
             SPAN,
-            ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, target, value),
+            ctx.ast.expression_assignment(SPAN, 0, AssignmentOperator::Assign, target, value),
         )
     }
 

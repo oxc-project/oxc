@@ -154,7 +154,7 @@ impl<'a> TypeScriptEnum<'a> {
                 ReferenceFlags::Read,
             );
             let right = ast.expression_object(SPAN, ast.vec());
-            let expression = ast.expression_logical(SPAN, left, op, right);
+            let expression = ast.expression_logical(SPAN, 0, left, op, right);
             ast.vec1(Argument::from(expression))
         };
 
@@ -176,7 +176,7 @@ impl<'a> TypeScriptEnum<'a> {
                 ReferenceFlags::Write,
             );
             let left = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(left));
-            let expr = ast.expression_assignment(SPAN, op, left, call_expression);
+            let expr = ast.expression_assignment(SPAN, 0, op, left, call_expression);
             return Some(ast.statement_expression(decl.span, expr));
         }
 
@@ -274,7 +274,7 @@ impl<'a> TypeScriptEnum<'a> {
 
                 // 1 + Foo["x"]
                 let one = Self::get_number_literal_expression(1.0, ctx);
-                ast.expression_binary(SPAN, one, BinaryOperator::Addition, self_ref)
+                ast.expression_binary(SPAN, 0, one, BinaryOperator::Addition, self_ref)
             } else {
                 previous_enum_members.insert(member_name, Some(ConstantValue::Number(0.0)));
                 Self::get_number_literal_expression(0.0, ctx)
@@ -291,7 +291,7 @@ impl<'a> TypeScriptEnum<'a> {
             };
             let left = SimpleAssignmentTarget::from(member_expr);
             let mut expr =
-                ast.expression_assignment(SPAN, AssignmentOperator::Assign, left.into(), init);
+                ast.expression_assignment(SPAN, 0, AssignmentOperator::Assign, left.into(), init);
 
             // Foo[Foo["x"] = init] = "x"
             if !is_str {
@@ -301,8 +301,13 @@ impl<'a> TypeScriptEnum<'a> {
                 };
                 let left = SimpleAssignmentTarget::from(member_expr);
                 let right = ast.expression_string_literal(SPAN, member_name, None);
-                expr =
-                    ast.expression_assignment(SPAN, AssignmentOperator::Assign, left.into(), right);
+                expr = ast.expression_assignment(
+                    SPAN,
+                    0,
+                    AssignmentOperator::Assign,
+                    left.into(),
+                    right,
+                );
             }
 
             prev_member_name = Some(member_name);

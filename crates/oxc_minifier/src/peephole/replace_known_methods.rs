@@ -92,6 +92,7 @@ impl<'a> PeepholeOptimizations {
 
         Some(ctx.ast.expression_binary(
             span,
+            0,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
             first_arg.take_in(ctx.ast),
             BinaryOperator::Exponential,
@@ -493,8 +494,10 @@ impl<'a> PeepholeOptimizations {
             |span: Span, base: f64, exponent: f64, op: BinaryOperator, a: f64| -> Expression<'a> {
                 ctx.ast.expression_binary(
                     span,
+                    0,
                     ctx.ast.expression_binary(
                         SPAN,
+                        0,
                         num(SPAN, base),
                         BinaryOperator::Exponential,
                         num(SPAN, exponent),
@@ -535,6 +538,7 @@ impl<'a> PeepholeOptimizations {
                 // 2**-52
                 ctx.ast.expression_binary(
                     span,
+                    0,
                     num(SPAN, 2.0),
                     BinaryOperator::Exponential,
                     num(SPAN, -52.0),

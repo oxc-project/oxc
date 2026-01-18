@@ -514,6 +514,7 @@ impl<'a> ReactRefresh<'a, '_> {
         if !is_variable_declarator {
             *expr = ctx.ast.expression_assignment(
                 SPAN,
+                0,
                 AssignmentOperator::Assign,
                 self.create_registration(ctx.ast.atom(inferred_name), ctx),
                 expr.take_in(ctx.ast),
@@ -532,7 +533,7 @@ impl<'a> ReactRefresh<'a, '_> {
         let left = self.create_registration(id.name, ctx);
         let right =
             ctx.create_bound_ident_expr(SPAN, id.name, id.symbol_id(), ReferenceFlags::Read);
-        let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
+        let expr = ctx.ast.expression_assignment(SPAN, 0, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }
 

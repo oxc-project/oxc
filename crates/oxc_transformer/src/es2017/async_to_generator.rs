@@ -749,6 +749,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         let right = self.create_async_to_generator_call(params, body, scope_id, ctx);
         let expression = ctx.ast.expression_assignment(
             SPAN,
+            0,
             AssignmentOperator::Assign,
             bound.create_write_target(ctx),
             right,

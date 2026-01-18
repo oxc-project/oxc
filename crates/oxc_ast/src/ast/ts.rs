@@ -338,6 +338,18 @@ pub use match_ts_type;
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSConditionalType<'a> {
     pub span: Span,
+    /// Position of the `extends` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub extends_pos: u32,
+    /// Position of the `?` operator.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub question_pos: u32,
+    /// Position of the `:` operator.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub colon_pos: u32,
     /// The type before `extends` in the test expression.
     pub check_type: TSType<'a>,
     /// The type `check_type` is being tested against.
@@ -1501,6 +1513,10 @@ pub struct TSConstructorType<'a> {
 )]
 pub struct TSMappedType<'a> {
     pub span: Span,
+    /// Position of the `in` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub in_pos: u32,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
     #[estree(skip)]
     pub type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1576,6 +1592,10 @@ pub struct TSTemplateLiteralType<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSAsExpression<'a> {
     pub span: Span,
+    /// Position of the `as` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub as_pos: u32,
     pub expression: Expression<'a>,
     pub type_annotation: TSType<'a>,
 }
@@ -1597,6 +1617,10 @@ pub struct TSAsExpression<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct TSSatisfiesExpression<'a> {
     pub span: Span,
+    /// Position of the `satisfies` keyword.
+    #[content_eq(skip)]
+    #[estree(skip)]
+    pub satisfies_pos: u32,
     /// The value expression being constrained.
     pub expression: Expression<'a>,
     /// The type `expression` must satisfy.

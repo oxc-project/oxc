@@ -368,6 +368,7 @@ impl<'a> Dummy<'a> for BinaryExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            operator_pos: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             operator: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
@@ -382,6 +383,7 @@ impl<'a> Dummy<'a> for PrivateInExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            in_pos: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
         }
@@ -395,6 +397,7 @@ impl<'a> Dummy<'a> for LogicalExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            operator_pos: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             operator: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
@@ -409,6 +412,8 @@ impl<'a> Dummy<'a> for ConditionalExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            question_pos: Dummy::dummy(allocator),
+            colon_pos: Dummy::dummy(allocator),
             test: Dummy::dummy(allocator),
             consequent: Dummy::dummy(allocator),
             alternate: Dummy::dummy(allocator),
@@ -423,6 +428,7 @@ impl<'a> Dummy<'a> for AssignmentExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            operator_pos: Dummy::dummy(allocator),
             operator: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
@@ -722,6 +728,7 @@ impl<'a> Dummy<'a> for IfStatement<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            else_pos: Dummy::dummy(allocator),
             test: Dummy::dummy(allocator),
             consequent: Dummy::dummy(allocator),
             alternate: Dummy::dummy(allocator),
@@ -736,6 +743,7 @@ impl<'a> Dummy<'a> for DoWhileStatement<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            while_pos: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
             test: Dummy::dummy(allocator),
         }
@@ -787,6 +795,7 @@ impl<'a> Dummy<'a> for ForInStatement<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            in_pos: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
             body: Dummy::dummy(allocator),
@@ -811,6 +820,7 @@ impl<'a> Dummy<'a> for ForOfStatement<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            of_pos: Dummy::dummy(allocator),
             r#await: Dummy::dummy(allocator),
             left: Dummy::dummy(allocator),
             right: Dummy::dummy(allocator),
@@ -882,6 +892,7 @@ impl<'a> Dummy<'a> for SwitchCase<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            keyword_pos: Dummy::dummy(allocator),
             test: Dummy::dummy(allocator),
             consequent: Dummy::dummy(allocator),
         }
@@ -917,6 +928,8 @@ impl<'a> Dummy<'a> for TryStatement<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            catch_pos: Dummy::dummy(allocator),
+            finally_pos: Dummy::dummy(allocator),
             block: Dummy::dummy(allocator),
             handler: Dummy::dummy(allocator),
             finalizer: Dummy::dummy(allocator),
@@ -1142,6 +1155,7 @@ impl<'a> Dummy<'a> for ArrowFunctionExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            arrow_pos: Dummy::dummy(allocator),
             expression: Dummy::dummy(allocator),
             r#async: Dummy::dummy(allocator),
             type_parameters: Dummy::dummy(allocator),
@@ -1992,6 +2006,9 @@ impl<'a> Dummy<'a> for TSConditionalType<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            extends_pos: Dummy::dummy(allocator),
+            question_pos: Dummy::dummy(allocator),
+            colon_pos: Dummy::dummy(allocator),
             check_type: Dummy::dummy(allocator),
             extends_type: Dummy::dummy(allocator),
             true_type: Dummy::dummy(allocator),
@@ -2722,6 +2739,7 @@ impl<'a> Dummy<'a> for TSMappedType<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            in_pos: Dummy::dummy(allocator),
             type_parameter: Dummy::dummy(allocator),
             name_type: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
@@ -2762,6 +2780,7 @@ impl<'a> Dummy<'a> for TSAsExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            as_pos: Dummy::dummy(allocator),
             expression: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
         }
@@ -2775,6 +2794,7 @@ impl<'a> Dummy<'a> for TSSatisfiesExpression<'a> {
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
+            satisfies_pos: Dummy::dummy(allocator),
             expression: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
         }

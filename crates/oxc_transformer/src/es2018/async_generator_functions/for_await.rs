@@ -122,6 +122,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 let target = left.to_assignment_target_mut().take_in(ctx.ast);
                 let expression = ctx.ast.expression_assignment(
                     SPAN,
+                    0,
                     AssignmentOperator::Assign,
                     target,
                     step_value,
@@ -284,6 +285,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 )),
                 Some(ctx.ast.expression_assignment(
                     SPAN,
+                    0,
                     AssignmentOperator::Assign,
                     iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_unary(
@@ -295,6 +297,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 SPAN,
                                 ctx.ast.expression_assignment(
                                     SPAN,
+                                    0,
                                     AssignmentOperator::Assign,
                                     step_key.create_write_target(ctx),
                                     ctx.ast.expression_await(
@@ -321,6 +324,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                 )),
                 Some(ctx.ast.expression_assignment(
                     SPAN,
+                    0,
                     AssignmentOperator::Assign,
                     iterator_abrupt_completion.create_write_target(ctx),
                     ctx.ast.expression_boolean_literal(SPAN, false),
@@ -362,6 +366,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 SPAN,
                                 ctx.ast.expression_assignment(
                                     SPAN,
+                                    0,
                                     AssignmentOperator::Assign,
                                     iterator_had_error_key.create_write_target(ctx),
                                     ctx.ast.expression_boolean_literal(SPAN, true),
@@ -371,6 +376,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                                 SPAN,
                                 ctx.ast.expression_assignment(
                                     SPAN,
+                                    0,
                                     AssignmentOperator::Assign,
                                     iterator_error_key.create_write_target(ctx),
                                     err_ident.create_read_expression(ctx),
@@ -394,12 +400,15 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                         ctx.create_child_scope(try_block_scope_id, ScopeFlags::empty());
                     ctx.ast.statement_if(
                         SPAN,
+                        None,
                         ctx.ast.expression_logical(
                             SPAN,
+                            0,
                             iterator_abrupt_completion.create_read_expression(ctx),
                             LogicalOperator::And,
                             ctx.ast.expression_binary(
                                 SPAN,
+                                0,
                                 Expression::from(ctx.ast.member_expression_static(
                                     SPAN,
                                     iterator_key.create_read_expression(ctx),
@@ -448,6 +457,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                             ctx.create_child_scope(finally_scope_id, ScopeFlags::empty());
                         ctx.ast.statement_if(
                             SPAN,
+                            None,
                             iterator_had_error_key.create_read_expression(ctx),
                             ctx.ast.statement_block_with_scope_id(
                                 SPAN,
@@ -466,7 +476,7 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
                         finally_scope_id,
                     )
                 };
-                ctx.ast.statement_try(SPAN, block, NONE, Some(finally))
+                ctx.ast.statement_try(SPAN, None, Some(0), block, NONE, Some(finally))
             };
 
             let block_statement = ctx.ast.block_statement_with_scope_id(
@@ -477,7 +487,8 @@ impl<'a> AsyncGeneratorFunctions<'a, '_> {
             Some(block_statement)
         };
 
-        let try_statement = ctx.ast.statement_try(SPAN, block, catch_clause, finally);
+        let try_statement =
+            ctx.ast.statement_try(SPAN, Some(0), Some(0), block, catch_clause, finally);
 
         items.push(try_statement);
         items
