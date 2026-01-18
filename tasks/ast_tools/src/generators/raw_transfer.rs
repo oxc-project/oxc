@@ -49,7 +49,7 @@ const ALLOCATOR_CHUNK_END_ALIGN: u32 = 16;
 /// This size includes metadata stored after the `Allocator` chunk which contains AST data.
 ///
 /// Must be a multiple of [`ALLOCATOR_CHUNK_END_ALIGN`].
-/// 16 bytes less than 2 GiB, to allow 16 bytes for `malloc` metadata (like Bumpalo does).
+/// 16 bytes less than 2 GiB, to allow 16 bytes for `malloc` metadata.
 const BLOCK_SIZE: u32 = (1 << 31) - MALLOC_RESERVED_SIZE; // 2 GiB - 16 bytes
 const _: () = assert!(BLOCK_SIZE.is_multiple_of(ALLOCATOR_CHUNK_END_ALIGN));
 
