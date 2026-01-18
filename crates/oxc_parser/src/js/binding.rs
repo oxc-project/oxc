@@ -43,7 +43,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_object_binding_pattern(&mut self) -> BindingPattern<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RCurly,
             opening_span,
@@ -58,7 +58,7 @@ impl<'a> ParserImpl<'a> {
             return self.fatal_error(error);
         }
 
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
         self.ast.binding_pattern_object_pattern(
             self.end_span(span),
             list,
@@ -70,7 +70,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_array_binding_pattern(&mut self) -> BindingPattern<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.expect_lbrack();
         let (list, rest) = self.parse_delimited_list_with_rest(
             Kind::RBrack,
             opening_span,
@@ -78,7 +78,7 @@ impl<'a> ParserImpl<'a> {
             Self::parse_rest_element,
             diagnostics::binding_rest_element_last,
         );
-        self.expect(Kind::RBrack);
+        self.expect_rbrack();
         self.ast.binding_pattern_array_pattern(
             self.end_span(span),
             list,
@@ -183,7 +183,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             // let { a: b } = c
             //       ^ IdentifierReference
-            self.expect(Kind::Colon);
+            self.expect_colon();
             self.parse_binding_pattern_with_initializer()
         };
 

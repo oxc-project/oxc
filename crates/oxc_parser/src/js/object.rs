@@ -19,7 +19,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_object_expression(&mut self) -> Box<'a, ObjectExpression<'a>> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let (object_expression_properties, comma_span) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
@@ -31,7 +31,7 @@ impl<'a> ParserImpl<'a> {
         if let Some(comma_span) = comma_span {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
         self.ast.alloc_object_expression(self.end_span(span), object_expression_properties)
     }
 
@@ -149,7 +149,7 @@ impl<'a> ParserImpl<'a> {
         key: PropertyKey<'a>,
         computed: bool,
     ) -> Box<'a, ObjectProperty<'a>> {
-        self.expect(Kind::Colon);
+        self.expect_colon();
         let value = self.parse_assignment_expression_or_higher();
         self.ast.alloc_object_property(
             self.end_span(span),
@@ -189,7 +189,7 @@ impl<'a> ParserImpl<'a> {
 
         let expression = self.context_add(Context::In, Self::parse_assignment_expression_or_higher);
 
-        self.expect(Kind::RBrack);
+        self.expect_rbrack();
         expression
     }
 

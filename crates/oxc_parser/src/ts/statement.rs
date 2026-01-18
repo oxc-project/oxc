@@ -45,14 +45,14 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_enum_body(&mut self) -> TSEnumBody<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let (members, _) = self.parse_delimited_list(
             Kind::RCurly,
             Kind::Comma,
             opening_span,
             Self::parse_ts_enum_member,
         );
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
         self.ast.ts_enum_body(self.end_span(span), members)
     }
 
@@ -130,7 +130,7 @@ impl<'a> ParserImpl<'a> {
 
         let id = self.parse_binding_identifier();
         let params = self.parse_ts_type_parameters();
-        self.expect(Kind::Eq);
+        self.expect_eq();
 
         let intrinsic_token = self.cur_token();
         let ty = if self.at(Kind::Intrinsic) {
@@ -344,10 +344,10 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_ts_module_block(&mut self) -> Box<'a, TSModuleBlock<'a>> {
         let span = self.start_span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let (directives, statements) =
             self.parse_directives_and_statements(/* is_top_level */ false);
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
         self.ast.alloc_ts_module_block(self.end_span(span), directives, statements)
     }
 
@@ -546,9 +546,9 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Expression<'a> {
         let span = self.start_span();
-        self.expect(Kind::LAngle);
+        self.expect_langle();
         let type_annotation = self.parse_ts_type();
-        self.expect(Kind::RAngle);
+        self.expect_rangle();
         let lhs_span = self.start_span();
         let expression = self.parse_simple_unary_expression(lhs_span);
         self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
@@ -560,13 +560,13 @@ impl<'a> ParserImpl<'a> {
         identifier: BindingIdentifier<'a>,
         span: u32,
     ) -> Declaration<'a> {
-        self.expect(Kind::Eq);
+        self.expect_eq();
 
         let reference_span = self.start_span();
         let module_reference = if self.eat(Kind::Require) {
-            self.expect(Kind::LParen);
+            self.expect_lparen();
             let expression = self.parse_literal_string();
-            self.expect(Kind::RParen);
+            self.expect_rparen();
             self.ast.ts_module_reference_external_module_reference(
                 self.end_span(reference_span),
                 expression,

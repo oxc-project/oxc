@@ -158,14 +158,14 @@ impl<'a> ParserImpl<'a> {
         }
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LAngle);
+        self.expect_langle();
         let (params, _) = self.parse_delimited_list(
             Kind::RAngle,
             Kind::Comma,
             opening_span,
             Self::parse_ts_type_parameter,
         );
-        self.expect(Kind::RAngle);
+        self.expect_rangle();
         let span = self.end_span(span);
         if params.is_empty() {
             self.error(diagnostics::ts_empty_type_parameter_list(span));
@@ -327,14 +327,14 @@ impl<'a> ParserImpl<'a> {
                     self.bump_any();
                     if self.is_start_of_type(/* in_start_of_parameter */ false) {
                         let index_type = self.parse_ts_type();
-                        self.expect(Kind::RBrack);
+                        self.expect_rbrack();
                         ty = self.ast.ts_type_indexed_access_type(
                             self.end_span(span),
                             ty,
                             index_type,
                         );
                     } else {
-                        self.expect(Kind::RBrack);
+                        self.expect_rbrack();
                         ty = self.ast.ts_type_array_type(self.end_span(span), ty);
                     }
                 }
@@ -589,7 +589,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_mapped_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let mut readonly = None;
         if self.eat(Kind::Readonly) {
             readonly = Some(TSMappedTypeModifierOperator::True);
@@ -599,7 +599,7 @@ impl<'a> ParserImpl<'a> {
             readonly = Some(TSMappedTypeModifierOperator::Minus);
         }
 
-        self.expect(Kind::LBrack);
+        self.expect_lbrack();
         let type_parameter_span = self.start_span();
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
@@ -618,7 +618,7 @@ impl<'a> ParserImpl<'a> {
         ));
 
         let name_type = if self.eat(Kind::As) { Some(self.parse_ts_type()) } else { None };
-        self.expect(Kind::RBrack);
+        self.expect_rbrack();
 
         let optional = match self.cur_kind() {
             Kind::Question => {
@@ -640,7 +640,7 @@ impl<'a> ParserImpl<'a> {
 
         let type_annotation = self.eat(Kind::Colon).then(|| self.parse_ts_type());
         self.bump(Kind::Semicolon);
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
 
         self.ast.ts_type_mapped_type(
             self.end_span(span),
@@ -815,14 +815,14 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::LAngle) {
             let span = self.start_span();
             let opening_span = self.cur_token().span();
-            self.expect(Kind::LAngle);
+            self.expect_langle();
             let (params, _) = self.parse_delimited_list(
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
                 Self::parse_ts_type,
             );
-            self.expect(Kind::RAngle);
+            self.expect_rangle();
             let span = self.end_span(span);
             if params.is_empty() {
                 self.error(diagnostics::ts_empty_type_argument_list(span));
@@ -838,14 +838,14 @@ impl<'a> ParserImpl<'a> {
         if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
             let span = self.start_span();
             let opening_span = self.cur_token().span();
-            self.expect(Kind::LAngle);
+            self.expect_langle();
             let (params, _) = self.parse_delimited_list(
                 Kind::RAngle,
                 Kind::Comma,
                 opening_span,
                 Self::parse_ts_type,
             );
-            self.expect(Kind::RAngle);
+            self.expect_rangle();
             let span = self.end_span(span);
             if params.is_empty() {
                 self.error(diagnostics::ts_empty_type_argument_list(span));
@@ -863,7 +863,7 @@ impl<'a> ParserImpl<'a> {
             return self.unexpected();
         }
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LAngle);
+        self.expect_langle();
         let (params, _) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
         // `a < b> = c`` is valid but `a < b >= c` is BinaryExpression
@@ -871,7 +871,7 @@ impl<'a> ParserImpl<'a> {
             return self.unexpected();
         }
         self.re_lex_ts_r_angle();
-        self.expect(Kind::RAngle);
+        self.expect_rangle();
         if !self.can_follow_type_arguments_in_expr() {
             return self.unexpected();
         }
@@ -897,7 +897,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_tuple_type(&mut self) -> TSType<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.expect_lbrack();
 
         let mut seen_rest_span: Option<Span> = None;
         let mut seen_optional_span: Option<Span> = None;
@@ -956,7 +956,7 @@ impl<'a> ParserImpl<'a> {
 
                 tuple
             });
-        self.expect(Kind::RBrack);
+        self.expect_rbrack();
         self.ast.ts_type_tuple_type(self.end_span(span), elements)
     }
 
@@ -970,7 +970,7 @@ impl<'a> ParserImpl<'a> {
             let member_span_start = self.start_span();
             let label = self.parse_identifier_name();
             let optional = self.eat(Kind::Question);
-            self.expect(Kind::Colon);
+            self.expect_colon();
             let type_span_start = self.start_span();
             let rest_after_tuple_member_name = self.eat(Kind::Dot3);
             let ty = self.parse_ts_type();
@@ -1030,7 +1030,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `(`
         let ty = self.parse_ts_type();
-        self.expect(Kind::RParen);
+        self.expect_rparen();
         if self.options.preserve_parens {
             self.ast.ts_type_parenthesized_type(self.end_span(span), ty)
         } else {
@@ -1066,7 +1066,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_import_type(&mut self) -> Box<'a, TSImportType<'a>> {
         let span = self.start_span();
         self.expect(Kind::Import);
-        self.expect(Kind::LParen);
+        self.expect_lparen();
 
         let source = if self.at(Kind::Str) {
             self.parse_literal_string()
@@ -1084,7 +1084,7 @@ impl<'a> ParserImpl<'a> {
 
         let options =
             if self.eat(Kind::Comma) { Some(self.parse_object_expression()) } else { None };
-        self.expect(Kind::RParen);
+        self.expect_rparen();
         let qualifier =
             if self.eat(Kind::Dot) { Some(self.parse_ts_import_type_qualifier()) } else { None };
         let type_arguments = self.parse_type_arguments_of_type_reference();
@@ -1295,7 +1295,7 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, TSIndexSignature<'a>> {
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.expect_lbrack();
         let (params, comma_span) = self.parse_delimited_list(
             Kind::RBrack,
             Kind::Comma,
@@ -1308,7 +1308,7 @@ impl<'a> ParserImpl<'a> {
                 self.end_span(comma_span),
             ));
         }
-        self.expect(Kind::RBrack);
+        self.expect_rbrack();
         if params.len() != 1 {
             self.error(diagnostics::index_signature_one_parameter(self.end_span(span)));
         }

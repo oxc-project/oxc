@@ -402,6 +402,140 @@ impl<'a> Lexer<'a> {
     }
 }
 
+// ==================== Specialized Token Reading Methods ====================
+// These methods provide optimized paths for reading tokens when the expected token
+// has a highly predictable distribution (e.g., 95%+ probability of a specific token).
+// By creating separate call sites with skewed distributions, the branch predictor
+// can more effectively learn and predict the patterns.
+
+impl Lexer<'_> {
+    /// Skip whitespace and prepare for specialized token reading.
+    /// Returns the first non-space byte, or None if at EOF.
+    /// Optimized for the common case of single spaces between tokens.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn skip_whitespace_for_specialized(&mut self) -> Option<u8> {
+        let mut pos = self.source.position();
+        let end = self.source.end();
+
+        while pos < end {
+            // SAFETY: `pos < end` guarantees we can read a byte
+            let byte = unsafe { pos.read() };
+            if byte != b' ' {
+                self.source.set_position(pos);
+                self.token.set_start(self.source.offset_of(pos));
+                return Some(byte);
+            }
+            // SAFETY: We're within bounds and space is ASCII (1 byte)
+            pos = unsafe { pos.add(1) };
+        }
+        None
+    }
+
+    /// Read next token with expectation of a single-byte token.
+    /// Falls back to regular `next_token` for unexpected bytes.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn next_token_expecting(&mut self, expected_byte: u8, expected_kind: Kind) -> Token {
+        self.trivia_builder.has_pure_comment = false;
+        self.trivia_builder.has_no_side_effects_comment = false;
+
+        if let Some(byte) = self.skip_whitespace_for_specialized() {
+            if byte == expected_byte {
+                // SAFETY: We know there's at least one byte (the expected byte)
+                unsafe {
+                    let pos = self.source.position().add(1);
+                    self.source.set_position(pos);
+                }
+                return self.finish_next(expected_kind);
+            }
+        }
+        self.read_next_token_fallback()
+    }
+
+    /// Fallback path when specialized token reading doesn't match.
+    #[cold]
+    #[inline(never)]
+    fn read_next_token_fallback(&mut self) -> Token {
+        let kind = self.read_next_token();
+        self.finish_next(kind)
+    }
+
+    // ===== Tier 1: Closing Brackets =====
+
+    /// Read next token expecting `}`.
+    #[inline]
+    pub fn next_token_expecting_rcurly(&mut self) -> Token {
+        self.next_token_expecting(b'}', Kind::RCurly)
+    }
+
+    /// Read next token expecting `)`.
+    #[inline]
+    pub fn next_token_expecting_rparen(&mut self) -> Token {
+        self.next_token_expecting(b')', Kind::RParen)
+    }
+
+    /// Read next token expecting `]`.
+    #[inline]
+    pub fn next_token_expecting_rbrack(&mut self) -> Token {
+        self.next_token_expecting(b']', Kind::RBrack)
+    }
+
+    /// Read next token expecting `>`.
+    #[inline]
+    pub fn next_token_expecting_rangle(&mut self) -> Token {
+        self.next_token_expecting(b'>', Kind::RAngle)
+    }
+
+    // ===== Tier 2: Colon =====
+
+    /// Read next token expecting `:`.
+    #[inline]
+    pub fn next_token_expecting_colon(&mut self) -> Token {
+        self.next_token_expecting(b':', Kind::Colon)
+    }
+
+    // ===== Tier 3: Opening Brackets =====
+
+    /// Read next token expecting `(`.
+    #[inline]
+    pub fn next_token_expecting_lparen(&mut self) -> Token {
+        self.next_token_expecting(b'(', Kind::LParen)
+    }
+
+    /// Read next token expecting `{`.
+    #[inline]
+    pub fn next_token_expecting_lcurly(&mut self) -> Token {
+        self.next_token_expecting(b'{', Kind::LCurly)
+    }
+
+    /// Read next token expecting `[`.
+    #[inline]
+    pub fn next_token_expecting_lbrack(&mut self) -> Token {
+        self.next_token_expecting(b'[', Kind::LBrack)
+    }
+
+    /// Read next token expecting `<`.
+    #[inline]
+    pub fn next_token_expecting_langle(&mut self) -> Token {
+        self.next_token_expecting(b'<', Kind::LAngle)
+    }
+
+    // ===== Tier 4: Other Tokens =====
+
+    /// Read next token expecting `=`.
+    #[inline]
+    pub fn next_token_expecting_eq(&mut self) -> Token {
+        self.next_token_expecting(b'=', Kind::Eq)
+    }
+
+    /// Read next token expecting `;`.
+    #[inline]
+    pub fn next_token_expecting_semicolon(&mut self) -> Token {
+        self.next_token_expecting(b';', Kind::Semicolon)
+    }
+}
+
 /// Call a closure while hinting to compiler that this branch is rarely taken.
 ///
 /// "Cold trampoline function", suggested in:

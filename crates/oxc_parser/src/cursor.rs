@@ -189,6 +189,118 @@ impl<'a> ParserImpl<'a> {
         self.advance(kind);
     }
 
+    // ===== Specialized expect methods using optimized lexer paths =====
+
+    /// Expect `}` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_rcurly(&mut self) {
+        if !self.at(Kind::RCurly) {
+            self.handle_expect_failure(Kind::RCurly);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_rcurly();
+    }
+
+    /// Expect `)` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_rparen(&mut self) {
+        if !self.at(Kind::RParen) {
+            self.handle_expect_failure(Kind::RParen);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_rparen();
+    }
+
+    /// Expect `]` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_rbrack(&mut self) {
+        if !self.at(Kind::RBrack) {
+            self.handle_expect_failure(Kind::RBrack);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_rbrack();
+    }
+
+    /// Expect `>` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_rangle(&mut self) {
+        if !self.at(Kind::RAngle) {
+            self.handle_expect_failure(Kind::RAngle);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_rangle();
+    }
+
+    /// Expect `:` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_colon(&mut self) {
+        if !self.at(Kind::Colon) {
+            self.handle_expect_failure(Kind::Colon);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_colon();
+    }
+
+    /// Expect `(` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_lparen(&mut self) {
+        if !self.at(Kind::LParen) {
+            self.handle_expect_failure(Kind::LParen);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_lparen();
+    }
+
+    /// Expect `{` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_lcurly(&mut self) {
+        if !self.at(Kind::LCurly) {
+            self.handle_expect_failure(Kind::LCurly);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_lcurly();
+    }
+
+    /// Expect `[` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_lbrack(&mut self) {
+        if !self.at(Kind::LBrack) {
+            self.handle_expect_failure(Kind::LBrack);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_lbrack();
+    }
+
+    /// Expect `<` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_langle(&mut self) {
+        if !self.at(Kind::LAngle) {
+            self.handle_expect_failure(Kind::LAngle);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_langle();
+    }
+
+    /// Expect `=` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_eq(&mut self) {
+        if !self.at(Kind::Eq) {
+            self.handle_expect_failure(Kind::Eq);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_eq();
+    }
+
+    /// Expect `;` using optimized lexer path.
+    #[inline]
+    pub(crate) fn expect_semicolon(&mut self) {
+        if !self.at(Kind::Semicolon) {
+            self.handle_expect_failure(Kind::Semicolon);
+        }
+        self.prev_token_end = self.token.end();
+        self.token = self.lexer.next_token_expecting_semicolon();
+    }
+
     #[inline]
     pub(crate) fn expect_closing(&mut self, kind: Kind, opening_span: Span) {
         if !self.at(kind) {

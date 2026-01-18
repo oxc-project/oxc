@@ -25,7 +25,7 @@ use crate::{
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LParen);
+        self.expect_lparen();
         let expression = self.parse_expr();
         self.expect_closing(Kind::RParen, opening_span);
         expression
@@ -263,13 +263,13 @@ impl<'a> ParserImpl<'a> {
         }
 
         if expressions.is_empty() {
-            self.expect(Kind::RParen);
+            self.expect_rparen();
             let error = diagnostics::empty_parenthesized_expression(self.end_span(span));
             return self.fatal_error(error);
         }
 
         let expr_span = self.end_span(expr_span);
-        self.expect(Kind::RParen);
+        self.expect_rparen();
 
         // ParenthesizedExpression is from acorn --preserveParens
         let mut expression = if expressions.len() == 1 {
@@ -492,7 +492,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_array_expression(&mut self) -> Expression<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.expect_lbrack();
         let (elements, comma_span) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RBrack,
@@ -504,7 +504,7 @@ impl<'a> ParserImpl<'a> {
         if let Some(comma_span) = comma_span {
             self.state.trailing_commas.insert(span, self.end_span(comma_span));
         }
-        self.expect(Kind::RBrack);
+        self.expect_rbrack();
         self.ast.expression_array(self.end_span(span), elements)
     }
 
@@ -690,7 +690,7 @@ impl<'a> ParserImpl<'a> {
         let name = self.parse_identifier_name();
 
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LParen);
+        self.expect_lparen();
         let (arguments, _) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
                 Kind::RParen,
@@ -699,7 +699,7 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_v8_intrinsic_argument,
             )
         });
-        self.expect(Kind::RParen);
+        self.expect_rparen();
         self.ast.expression_v_8_intrinsic(self.end_span(span), name, arguments)
     }
 
@@ -907,7 +907,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         self.bump_any(); // advance `[`
         let property = self.context_add(Context::In, Self::parse_expr);
-        self.expect(Kind::RBrack);
+        self.expect_rbrack();
         self.ast.member_expression_computed(self.end_span(lhs_span), lhs, property, optional).into()
     }
 
@@ -965,7 +965,7 @@ impl<'a> ParserImpl<'a> {
                     Self::parse_call_argument,
                 )
             });
-            self.expect(Kind::RParen);
+            self.expect_rparen();
             call_arguments
         } else {
             self.ast.vec()
@@ -1052,7 +1052,7 @@ impl<'a> ParserImpl<'a> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LParen);
+        self.expect_lparen();
         let (call_arguments, _) = self.context(Context::In, Context::Decorator, |p| {
             p.parse_delimited_list(
                 Kind::RParen,
@@ -1061,7 +1061,7 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_call_argument,
             )
         });
-        self.expect(Kind::RParen);
+        self.expect_rparen();
         self.ast.expression_call(
             self.end_span(lhs_span),
             lhs,

@@ -38,12 +38,12 @@ impl<'a> ParserImpl<'a> {
     /// </>
     fn parse_jsx_closing_fragment(&mut self, in_jsx_child: bool) -> JSXClosingFragment {
         let span = self.start_span();
-        self.expect(Kind::LAngle);
+        self.expect_langle();
         self.expect(Kind::Slash);
         if in_jsx_child {
             self.expect_jsx_child(Kind::RAngle);
         } else {
-            self.expect(Kind::RAngle);
+            self.expect_rangle();
         }
         self.ast.jsx_closing_fragment(self.end_span(span))
     }
@@ -91,7 +91,7 @@ impl<'a> ParserImpl<'a> {
         if !self_closing || in_jsx_child {
             self.expect_jsx_child(Kind::RAngle);
         } else {
-            self.expect(Kind::RAngle);
+            self.expect_rangle();
         }
         let elem = self.ast.alloc_jsx_opening_element(
             self.end_span(span),
@@ -104,13 +104,13 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_jsx_closing_element(&mut self, in_jsx_child: bool) -> Box<'a, JSXClosingElement<'a>> {
         let span = self.start_span();
-        self.expect(Kind::LAngle);
+        self.expect_langle();
         self.expect(Kind::Slash);
         let name = self.parse_jsx_element_name();
         if in_jsx_child {
             self.expect_jsx_child(Kind::RAngle);
         } else {
-            self.expect(Kind::RAngle);
+            self.expect_rangle();
         }
         self.ast.alloc_jsx_closing_element(self.end_span(span), name)
     }
@@ -286,7 +286,7 @@ impl<'a> ParserImpl<'a> {
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly);
             } else {
-                self.expect(Kind::RCurly);
+                self.expect_rcurly();
             }
             let span = self.end_span(span_start);
 
@@ -305,7 +305,7 @@ impl<'a> ParserImpl<'a> {
             if in_jsx_child {
                 self.expect_jsx_child(Kind::RCurly);
             } else {
-                self.expect(Kind::RCurly);
+                self.expect_rcurly();
             }
             expr
         };
@@ -365,7 +365,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `{`
         self.expect(Kind::Dot3);
         let argument = self.parse_expr();
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
         self.ast.alloc_jsx_spread_attribute(self.end_span(span), argument)
     }
 

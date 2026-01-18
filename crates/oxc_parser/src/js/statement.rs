@@ -336,7 +336,7 @@ impl<'a> ParserImpl<'a> {
         };
 
         let parenthesis_opening_span = self.cur_token().span();
-        self.expect(Kind::LParen);
+        self.expect_lparen();
 
         // for (;..
         if self.at(Kind::Semicolon) {
@@ -556,7 +556,7 @@ impl<'a> ParserImpl<'a> {
         init: Option<ForStatementInit<'a>>,
         r#await: bool,
     ) -> Statement<'a> {
-        self.expect(Kind::Semicolon);
+        self.expect_semicolon();
         if let Some(ForStatementInit::VariableDeclaration(decl)) = &init {
             for d in &decl.declarations {
                 self.check_missing_initializer(d);
@@ -567,7 +567,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             Some(self.context_add(Context::In, ParserImpl::parse_expr))
         };
-        self.expect(Kind::Semicolon);
+        self.expect_semicolon();
         let update = if self.at(Kind::RParen) {
             None
         } else {
@@ -693,7 +693,7 @@ impl<'a> ParserImpl<'a> {
                     .fatal_error(diagnostics::expect_switch_clause(self.cur_token().span()));
             }
         };
-        self.expect(Kind::Colon);
+        self.expect_colon();
         let mut consequent = self.ast.vec();
         loop {
             let kind = self.cur_kind();
@@ -759,7 +759,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // advance `catch`
         let pattern = if self.eat(Kind::LParen) {
             let (pattern, type_annotation) = self.parse_binding_pattern_with_type_annotation();
-            self.expect(Kind::RParen);
+            self.expect_rparen();
             Some((pattern, type_annotation))
         } else {
             None

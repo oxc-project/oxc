@@ -31,7 +31,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_function_body(&mut self) -> Box<'a, FunctionBody<'a>> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
 
         let (directives, statements) = self.context_add(Context::Return, |p| {
             p.parse_directives_and_statements(/* is_top_level */ false)
@@ -48,7 +48,7 @@ impl<'a> ParserImpl<'a> {
     ) -> (Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>) {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LParen);
+        self.expect_lparen();
         let this_param = if self.is_ts && self.at(Kind::This) {
             let param = self.parse_ts_this_parameter();
             self.bump(Kind::Comma);
@@ -57,7 +57,7 @@ impl<'a> ParserImpl<'a> {
             None
         };
         let (list, rest) = self.parse_formal_parameters_list(func_kind, opening_span);
-        self.expect(Kind::RParen);
+        self.expect_rparen();
 
         let formal_parameters =
             self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);

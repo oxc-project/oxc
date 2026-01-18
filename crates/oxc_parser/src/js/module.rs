@@ -34,7 +34,7 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         phase: Option<ImportPhase>,
     ) -> Expression<'a> {
-        self.expect(Kind::LParen);
+        self.expect_lparen();
         if self.eat(Kind::RParen) {
             let error = diagnostics::import_requires_a_specifier(self.end_span(span));
             return self.fatal_error(error);
@@ -333,13 +333,13 @@ impl<'a> ParserImpl<'a> {
         import_kind: ImportOrExportKind,
     ) -> Vec<'a, ImportDeclarationSpecifier<'a>> {
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let (list, _) = self.context_remove(self.ctx, |p| {
             p.parse_delimited_list(Kind::RCurly, Kind::Comma, opening_span, |parser| {
                 parser.parse_import_specifier(import_kind)
             })
         });
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
         list
     }
 
@@ -355,7 +355,7 @@ impl<'a> ParserImpl<'a> {
 
         let span = self.start_span();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let (with_entries, _) = self.context_remove(self.ctx, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
@@ -364,7 +364,7 @@ impl<'a> ParserImpl<'a> {
                 Self::parse_import_attribute,
             )
         });
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
 
         let mut keys = FxHashMap::default();
         for e in &with_entries {
@@ -384,7 +384,7 @@ impl<'a> ParserImpl<'a> {
             Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
             _ => ImportAttributeKey::Identifier(self.parse_identifier_name()),
         };
-        self.expect(Kind::Colon);
+        self.expect_colon();
         if !self.at(Kind::Str) {
             return self.fatal_error(diagnostics::import_attribute_value_must_be_string_literal(
                 self.cur_token().span(),
@@ -399,7 +399,7 @@ impl<'a> ParserImpl<'a> {
         start_span: u32,
         stmt_ctx: StatementContext,
     ) -> Box<'a, TSExportAssignment<'a>> {
-        self.expect(Kind::Eq);
+        self.expect_eq();
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
         if stmt_ctx.is_top_level() {
@@ -551,13 +551,13 @@ impl<'a> ParserImpl<'a> {
     ) -> Box<'a, ExportNamedDeclaration<'a>> {
         let export_kind = self.parse_import_or_export_kind();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.expect_lcurly();
         let (mut specifiers, _) = self.context_remove(self.ctx, |p| {
             p.parse_delimited_list(Kind::RCurly, Kind::Comma, opening_span, |parser| {
                 parser.parse_export_specifier(export_kind)
             })
         });
-        self.expect(Kind::RCurly);
+        self.expect_rcurly();
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string();
             (Some(source), self.parse_import_attributes())
