@@ -77,7 +77,7 @@ impl Ord for GroupName {
             ord => return ord,
         }
         let self_modifier_cnt = self.modifiers.len();
-        let other_modifier_cnt = self.modifiers.len();
+        let other_modifier_cnt = other.modifiers.len();
         if self_modifier_cnt > other_modifier_cnt {
             return Ordering::Less;
         } else if self_modifier_cnt < other_modifier_cnt {
