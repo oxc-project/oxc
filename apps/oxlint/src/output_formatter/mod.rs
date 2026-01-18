@@ -165,6 +165,13 @@ mod test {
     }
 
     #[test]
+    fn test_output_formatter_diagnostic_gitlab() {
+        let args = &["--format=gitlab", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_output_formatter_diagnostic_stylish() {
         let args = &["--format=stylish", "test.js"];
 
