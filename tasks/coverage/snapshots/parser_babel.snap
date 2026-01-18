@@ -3,9 +3,7 @@ commit: fc58af40
 parser_babel Summary:
 AST Parsed     : 2224/2230 (99.73%)
 Positive Passed: 2207/2230 (98.97%)
-Negative Passed: 1648/1697 (97.11%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
-
+Negative Passed: 1649/1697 (97.17%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
@@ -7370,12 +7368,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ────────────────
    ╰────
 
-  × Expected `in` but found `(`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/asi-failure-generator/input.js:3:7]
+  × Unexpected private identifier
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/asi-failure-generator/input.js:3:4]
  2 │   p = x
  3 │   *#m () {}
-   ·       ┬
-   ·       ╰── `in` expected
+   ·    ──
  4 │ }
    ╰────
 
@@ -8538,12 +8535,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean `export { "吾道一以貫之。" as "忠恕。" } from 'some-module'`?
 
-  × Unexpected right-hand side of private-in expression
+  × Unexpected private identifier
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-1/input.js:5:11]
  4 │   method() {
  5 │     #a in #b in c
-   ·           ───────
+   ·           ──
  6 │   }
+   ╰────
+
+  × Unexpected private identifier
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js:4:9]
+ 3 │   method() {
+ 4 │     1 + #a in b
+   ·         ──
+ 5 │   }
    ╰────
 
   × Unexpected token
@@ -8571,12 +8576,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │   }
    ╰────
 
-  × Expected `in` but found `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/private-binary-expression-right/input.js:4:11]
+  × Unexpected private identifier
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/private-binary-expression-right/input.js:4:9]
  3 │   test() {
  4 │     1 + #x;
-   ·           ┬
-   ·           ╰── `in` expected
+   ·         ──
  5 │   }
    ╰────
 

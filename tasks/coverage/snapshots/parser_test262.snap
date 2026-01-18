@@ -18123,11 +18123,11 @@ Negative Passed: 4581/4581 (100.00%)
     · ───────────
     ╰────
 
-  × Unexpected right-hand side of private-in expression
+  × Unexpected private identifier
     ╭─[test262/test/language/expressions/in/private-field-in-nested.js:26:15]
  25 │   constructor() {
  26 │     #field in #field in this;
-    ·               ──────────────
+    ·               ──────
  27 │   }
     ╰────
 

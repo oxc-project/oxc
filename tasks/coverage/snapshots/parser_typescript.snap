@@ -14345,12 +14345,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  26 │ 
     ╰────
 
-  × Cannot assign to this expression
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInInExpressionTransform.ts:29:9]
- 28 │     invalidLHS(v: any) {
- 29 │         'prop' in v = 10;
-    ·         ───────────
- 30 │         #field in v = 10;
+  × Unexpected private identifier
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInInExpressionTransform.ts:20:14]
+ 19 │ 
+ 20 │         v << #field in v << v; // Good precedence (SyntaxError): (v << #field) in (v << v)
+    ·              ──────
+ 21 │ 
     ╰────
 
   × Unexpected token
