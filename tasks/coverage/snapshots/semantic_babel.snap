@@ -1,8 +1,8 @@
 commit: fc58af40
 
 semantic_babel Summary:
-AST Parsed     : 2232/2232 (100.00%)
-Positive Passed: 1939/2232 (86.87%)
+AST Parsed     : 2230/2230 (100.00%)
+Positive Passed: 1939/2230 (86.95%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -145,9 +145,6 @@ Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "of", "require"]
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-basic/input.js
 Bindings mismatch:
 after transform: ScopeId(1): ["_usingCtx", "basic"]
@@ -199,9 +196,6 @@ Expected `)` but found `of`
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
 Keywords cannot contain escape characters
 Expected `)` but found `of`
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
 Scope children mismatch:

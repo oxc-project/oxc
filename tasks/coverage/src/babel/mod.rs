@@ -45,6 +45,8 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "annex-b/disabled",
             // Call expressions as assignment targets in non-strict mode - oxc intentionally does not support
             "annex-b/enabled/valid-assignment-target-type",
+            // Module blocks are stage 1
+            "module-block",
         ]
         .iter()
         .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));
