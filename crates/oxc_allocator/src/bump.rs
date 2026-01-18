@@ -37,8 +37,9 @@ pub const ALIGN: usize = 8;
 /// Size of chunk footer.
 pub const FOOTER_SIZE: usize = mem::size_of::<ChunkFooter>();
 
-/// Default first chunk size (512 bytes).
-const DEFAULT_CHUNK_SIZE: usize = 512;
+/// Default first chunk usable size target (512 bytes, same as bumpalo).
+/// Total chunk size = this + FOOTER_SIZE to ensure ~512 bytes usable.
+const DEFAULT_CHUNK_SIZE: usize = 512 + FOOTER_SIZE;
 
 /// Minimum chunk size.
 const MIN_CHUNK_SIZE: usize = FOOTER_SIZE + ALIGN;
