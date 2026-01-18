@@ -1,10 +1,12 @@
 commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2222/2234 (99.46%)
-Positive Passed: 2205/2234 (98.70%)
-Negative Passed: 1649/1697 (97.17%)
+AST Parsed     : 2224/2234 (99.55%)
+Positive Passed: 2207/2234 (98.79%)
+Negative Passed: 1648/1697 (97.11%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
+
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
 
@@ -294,16 +296,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026
    ·     ╰── Opened here
    ╰────
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js:2:17]
- 1 │ {
- 2 │   for (using of = reader();;);
-   ·                 ─
- 3 │ }
-   ╰────
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -520,16 +512,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     private static f();
    ·                    ─
  6 │ }
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js:2:16]
- 1 │ {
- 2 │   for (using of: Reader = reader();;);
-   ·                ─
- 3 │ }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
@@ -9276,12 +9258,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-equal-equal/input.js:1:15]
  1 │ for (using of == {};;);
    ·               ──
-   ╰────
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js:1:14]
- 1 │ for (using of;of.isValid;);
-   ·              ─
    ╰────
 
   × Lexical declaration cannot appear in a single-statement context

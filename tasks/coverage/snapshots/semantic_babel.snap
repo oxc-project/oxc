@@ -2,7 +2,7 @@ commit: fc58af40
 
 semantic_babel Summary:
 AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 1938/2234 (86.75%)
+Positive Passed: 1939/2234 (86.79%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
 Cannot assign to this expression
 
@@ -205,9 +205,6 @@ Expected `)` but found `of`
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
 Keywords cannot contain escape characters
 Expected `)` but found `of`
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-Unexpected token
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
 Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -706,7 +703,9 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-Unexpected token
+Unresolved references mismatch:
+after transform: ["Reader", "reader"]
+rebuilt        : ["reader"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:

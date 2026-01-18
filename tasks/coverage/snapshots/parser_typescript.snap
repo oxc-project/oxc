@@ -3,7 +3,7 @@ commit: f5ccf434
 parser_typescript Summary:
 AST Parsed     : 9844/9845 (99.99%)
 Positive Passed: 9836/9845 (99.91%)
-Negative Passed: 1496/2549 (58.69%)
+Negative Passed: 1495/2549 (58.65%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1959,6 +1959,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts
 
@@ -24818,13 +24820,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·            ┬
    ·            ╰── `;` expected
  2 │ }
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts:1:15]
- 1 │ for (using of = null;;) break;
-   ·               ─
- 2 │ for (using of: null = null;;) break;
    ╰────
 
   × Illegal break statement

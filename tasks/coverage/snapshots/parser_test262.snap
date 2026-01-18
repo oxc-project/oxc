@@ -1,8 +1,8 @@
 commit: 6f55d0c2
 
 parser_test262 Summary:
-AST Parsed     : 46555/46563 (99.98%)
-Positive Passed: 46555/46563 (99.98%)
+AST Parsed     : 46556/46563 (99.98%)
+Positive Passed: 46556/46563 (99.98%)
 Negative Passed: 4581/4581 (100.00%)
 Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 
@@ -72,15 +72,6 @@ Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignm
  20 │   async() = 1;
     ·   ───────
  21 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
-
-  × Unexpected token
-    ╭─[test262/test/language/statements/using/syntax/using-for-statement.js:14:15]
- 13 │ // handled similar to `for (let of = null;;)`:
- 14 │ for (using of = null;;) break;
-    ·               ─
     ╰────
 
 

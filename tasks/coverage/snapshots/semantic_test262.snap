@@ -2,7 +2,7 @@ commit: 6f55d0c2
 
 semantic_test262 Summary:
 AST Parsed     : 46563/46563 (100.00%)
-Positive Passed: 44919/46563 (96.47%)
+Positive Passed: 44920/46563 (96.47%)
 semantic Error: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
 Cannot assign to this expression
 
@@ -14654,9 +14654,6 @@ rebuilt        : SymbolId(4): []
 Reference symbol mismatch for "x":
 after transform: SymbolId(1) "x"
 rebuilt        : SymbolId(1) "x"
-
-semantic Error: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
-Unexpected token
 
 semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
 Bindings mismatch:
