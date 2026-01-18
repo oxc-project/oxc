@@ -305,10 +305,12 @@ impl<'a> ParserImpl<'a> {
         let kind = if self.eat(Kind::Namespace) {
             TSModuleDeclarationKind::Namespace
         } else {
+            let module_span = self.cur_token().span();
             self.expect(Kind::Module);
             if self.at(Kind::Str) {
                 return self.parse_ambient_external_module_declaration(span, modifiers);
             }
+            self.error(diagnostics::module_declaration_must_have_string_name(module_span));
             TSModuleDeclarationKind::Module
         };
         self.parse_module_or_namespace_declaration(span, kind, modifiers)

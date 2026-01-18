@@ -176,12 +176,6 @@ fn test() {
         ("declare global {}", None, None, None),
         ("declare module 'foo' {}", None, None, None),
         (
-            "declare module foo {}",
-            Some(serde_json::json!([{ "allowDeclarations": true }])),
-            None,
-            None,
-        ),
-        (
             "declare namespace foo {}",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
             None,
@@ -196,7 +190,7 @@ fn test() {
             None,
         ),
         (
-            "declare module foo {
+            "declare namespace foo {
                namespace bar {}
              }",
             Some(serde_json::json!([{ "allowDeclarations": true }])),
@@ -239,29 +233,13 @@ fn test() {
             None,
             Some(PathBuf::from("test.d.ts")),
         ),
-        (
-            "module foo {}",
-            Some(serde_json::json!([{ "allowDefinitionFiles": true }])),
-            None,
-            Some(PathBuf::from("test.d.ts")),
-        ),
     ];
 
     let fail = vec![
-        ("module foo {}", None, None, None),
         ("namespace foo {}", None, None, None),
-        ("module foo {}", Some(serde_json::json!([{ "allowDeclarations": false }])), None, None),
         ("namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": false }])), None, None),
-        ("module foo {}", Some(serde_json::json!([{ "allowDeclarations": true }])), None, None),
         ("namespace foo {}", Some(serde_json::json!([{ "allowDeclarations": true }])), None, None),
-        ("declare module foo {}", None, None, None),
         ("declare namespace foo {}", None, None, None),
-        (
-            "declare module foo {}",
-            Some(serde_json::json!([{ "allowDeclarations": false }])),
-            None,
-            None,
-        ),
         (
             "declare namespace foo {}",
             Some(serde_json::json!([{ "allowDeclarations": false }])),
@@ -270,18 +248,6 @@ fn test() {
         ),
         (
             "namespace foo {}",
-            Some(serde_json::json!([{ "allowDefinitionFiles": false }])),
-            None,
-            Some(PathBuf::from("test.d.ts")),
-        ),
-        (
-            "module foo {}",
-            Some(serde_json::json!([{ "allowDefinitionFiles": false }])),
-            None,
-            Some(PathBuf::from("test.d.ts")),
-        ),
-        (
-            "declare module foo {}",
             Some(serde_json::json!([{ "allowDefinitionFiles": false }])),
             None,
             Some(PathBuf::from("test.d.ts")),
@@ -468,7 +434,6 @@ fn test() {
             None,
             None,
         ),
-        ("declare /* module */ module foo {}", None, None, None),
         ("declare /* namespace */ namespace foo {}", None, None, None),
     ];
 
