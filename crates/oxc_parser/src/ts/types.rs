@@ -899,7 +899,8 @@ impl<'a> ParserImpl<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
 
-        let mut seen_type_span: Option<Span> = None;
+        let mut seen_rest_span: Option<Span> = None;
+        let mut seen_optional_span: Option<Span> = None;
         let (elements, _) =
             self.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |me| {
                 let tuple = me.parse_tuple_element();
@@ -918,23 +919,36 @@ impl<'a> ParserImpl<'a> {
                         _ => false,
                     }
                 {
-                    if let Some(seen_span) = seen_type_span {
+                    if let Some(seen_span) = seen_rest_span {
                         me.error(diagnostics::rest_element_cannot_follow_another_rest_element(
                             seen_span,
                             tuple.span(),
                         ));
                     }
-                    seen_type_span = Some(tuple.span());
+                    seen_rest_span = Some(tuple.span());
                 }
 
-                if let Some(seen_rest_span) = seen_type_span
-                    && matches!(tuple, TSTupleElement::TSOptionalType(_))
+                if !matches!(
+                    tuple,
+                    TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_)
+                ) && let Some(seen_optional_span) = seen_optional_span
                 {
-                    me.error(diagnostics::optional_element_cannot_follow_rest_element(
+                    me.error(diagnostics::required_element_cannot_follow_optional_element(
                         tuple.span(),
-                        seen_rest_span,
+                        seen_optional_span,
                     ));
                 }
+
+                if matches!(tuple, TSTupleElement::TSOptionalType(_)) {
+                    if let Some(seen_rest_span) = seen_rest_span {
+                        me.error(diagnostics::optional_element_cannot_follow_rest_element(
+                            tuple.span(),
+                            seen_rest_span,
+                        ));
+                    }
+                    seen_optional_span = Some(tuple.span());
+                }
+
                 tuple
             });
         self.expect(Kind::RBrack);

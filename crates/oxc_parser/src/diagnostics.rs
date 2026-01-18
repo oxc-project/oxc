@@ -343,6 +343,18 @@ pub fn const_class_member(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
+// A required element cannot follow an optional element. ts(1257)
+#[cold]
+pub fn required_element_cannot_follow_optional_element(
+    span: Span,
+    optional_span: Span,
+) -> OxcDiagnostic {
+    ts_error("1257", "A required element cannot follow an optional element.").with_labels([
+        span.label("Required element here"),
+        optional_span.label("Optional element seen here"),
+    ])
+}
+
 /// A rest element cannot follow another rest element. ts(1265)
 #[cold]
 pub fn rest_element_cannot_follow_another_rest_element(

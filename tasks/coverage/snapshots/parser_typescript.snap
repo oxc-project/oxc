@@ -3,7 +3,7 @@ commit: f5ccf434
 parser_typescript Summary:
 AST Parsed     : 9844/9845 (99.99%)
 Positive Passed: 9836/9845 (99.91%)
-Negative Passed: 1496/2549 (58.69%)
+Negative Passed: 1498/2549 (58.77%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -2069,10 +2069,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/thi
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/thisType/thisTypeInFunctions.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/contextualTypeTupleEnd.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/unionsOfTupleTypes1.ts
 
@@ -26472,6 +26468,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  17 │ 
     ╰────
 
+  × TS(1257): A required element cannot follow an optional element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts:11:20]
+ 10 │ 
+ 11 │ type T5 = [number, string?, boolean];  // Error
+    ·                    ───┬───  ───┬───
+    ·                       │        ╰── Required element here
+    ·                       ╰── Optional element seen here
+ 12 │ 
+    ╰────
+
   × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
     ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:9:12]
   8 │ 
@@ -26504,6 +26510,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │ 
     ╰────
 
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts:3:13]
+ 2 │ type T01 = [string, string?];
+ 3 │ type T02 = [string?, string];  // Error
+   ·             ───┬───  ───┬──
+   ·                │        ╰── Required element here
+   ·                ╰── Optional element seen here
+ 4 │ type T03 = [...string[]];
+   ╰────
+
   × TS(1265): A rest element cannot follow another rest element.
    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
  6 │ 
@@ -26523,6 +26539,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                          ╰── Rest element seen here
  9 │ type V12 = [number, string?, boolean];  // Error
    ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]
+  8 │ type V11 = [number, ...string[], boolean?];  // Error
+  9 │ type V12 = [number, string?, boolean];  // Error
+    ·                     ───┬───  ───┬───
+    ·                        │        ╰── Required element here
+    ·                        ╰── Optional element seen here
+ 10 │ 
+    ╰────
 
   × TS(1265): A rest element cannot follow another rest element.
     ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
