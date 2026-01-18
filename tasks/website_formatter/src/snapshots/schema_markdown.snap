@@ -82,6 +82,40 @@ For details, see each field's documentation.
 - Default: Disabled
 
 
+### experimentalSortImports.customGroups
+
+type: `array`
+
+
+Define your own groups and use regex for matching very specific imports
+
+
+#### experimentalSortImports.customGroups[n]
+
+type: `object`
+
+
+
+
+
+##### experimentalSortImports.customGroups[n].elementNamePattern
+
+type: `string[]`
+
+default: `[]`
+
+
+
+
+##### experimentalSortImports.customGroups[n].groupName
+
+type: `string`
+
+default: `""`
+
+
+
+
 ### experimentalSortImports.groups
 
 type: `array`
@@ -146,7 +180,11 @@ NOTE: `customGroups` is not implemented yet.
 type: `array | string`
 
 
+User-provided configuration for `package.json` sorting.
 
+- `true`: Enable sorting with default options
+- `false`: Disable sorting
+- `{ sortScripts: true }`: Enable sorting with custom options
 
 
 ##### experimentalSortImports.groups[n][n]
