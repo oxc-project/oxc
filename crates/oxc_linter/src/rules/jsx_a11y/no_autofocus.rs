@@ -56,7 +56,7 @@ declare_oxc_lint!(
     NoAutofocus,
     jsx_a11y,
     correctness,
-    fix,
+    suggestion,
     config = NoAutofocus,
 );
 
@@ -81,7 +81,7 @@ impl Rule for NoAutofocus {
             if HTML_TAG.contains(element_type.as_ref())
                 && let JSXAttributeItem::Attribute(attr) = autofocus
             {
-                ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+                ctx.diagnostic_with_suggestion(no_autofocus_diagnostic(attr.span), |fixer| {
                     fixer.delete(&attr.span)
                 });
             }
@@ -89,7 +89,7 @@ impl Rule for NoAutofocus {
         }
 
         if let JSXAttributeItem::Attribute(attr) = autofocus {
-            ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+            ctx.diagnostic_with_suggestion(no_autofocus_diagnostic(attr.span), |fixer| {
                 fixer.delete(&attr.span)
             });
         }
