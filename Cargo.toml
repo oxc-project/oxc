@@ -213,6 +213,7 @@ project-root = "0.2.2" # Project root detection
 rayon = "1.11.0" # Data parallelism
 ropey = "1.6.1" # Rope text structure
 rust-lapper = "1.2.0" # Interval tree
+rustversion = "1" # Rust version detection
 saphyr = "0.0.6" # YAML parser
 schemars = { package = "oxc-schemars", version = "0.8.27" } # JSON schema generation
 self_cell = "1.2.2" # Self-referential structs

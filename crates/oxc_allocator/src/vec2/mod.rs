@@ -1,5 +1,4 @@
-// This file was originally derived from Bumpalo's Vec:
-// https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/collections/vec.rs
+// This file is copied from the [Bumpalo's Vec](https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/collections/vec.rs)
 
 // Copyright 2014 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
@@ -25,50 +24,46 @@
 //!
 //! You can explicitly create a [`Vec<'a, T>`] with [`new_in`]:
 //!
-//! ```text
-//! use bumpalo::{Bump, collections::Vec};
-//!
-//! let b = Bump::new();
-//! let v: Vec<i32> = Vec::new_in(&b);
-//! ```text
+//! ```ignore
+//! # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+//! let arena = Arena::new();
+//! let v: Vec<i32> = Vec::new_in(&arena);
+//! ```
 //!
 //! You can [`push`] values onto the end of a vector (which will grow the vector
 //! as needed):
 //!
-//! ```text
-//! use bumpalo::{Bump, collections::Vec};
+//! ```ignore
+//! # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+//! let arena = Arena::new();
 //!
-//! let b = Bump::new();
-//!
-//! let mut v = Vec::new_in(&b);
+//! let mut v = Vec::new_in(&arena);
 //!
 //! v.push(1);
-//! ```text
+//! ```
 //!
 //! Popping values works in much the same way:
 //!
-//! ```text
-//! use bumpalo::{Bump, collections::Vec};
+//! ```ignore
+//! # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+//! let arena = Arena::new();
 //!
-//! let b = Bump::new();
-//!
-//! let mut v = Vec::from_iter_in([1, 2], &b);
+//! let mut v = Vec::from_iter_in([1, 2], &arena);
 //!
 //! assert_eq!(v.pop(), Some(2));
-//! ```text
+//! ```
 //!
 //! Vectors also support indexing (through the [`Index`] and [`IndexMut`] traits):
 //!
-//! ```text
-//! use bumpalo::{Bump, collections::Vec};
+//! ```ignore
+//! # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+//! let arena = Arena::new();
 //!
-//! let b = Bump::new();
-//!
-//! let mut v = Vec::from_iter_in([1, 2, 3], &b);
+//! let mut v = Vec::from_iter_in([1, 2, 3], &arena);
 //! assert_eq!(v[2], 3);
 //! v[1] += 5;
 //! assert_eq!(v, [1, 7, 3]);
-//! ```text
+//! ```
 //!
 //! [`Vec<'a, T>`]: Vec
 //! [`new_in`]: Vec::new_in
@@ -92,25 +87,20 @@
     unsafe_op_in_unsafe_fn,
     clippy::undocumented_unsafe_blocks
 )]
-#![allow(rustdoc::broken_intra_doc_links)]
 
-use std::{
-    borrow::{Borrow, BorrowMut},
-    cmp::Ordering,
-    fmt,
-    hash::{self, Hash},
-    hint::assert_unchecked,
-    iter::FusedIterator,
-    marker::PhantomData,
-    mem,
-    ops::{
-        self,
-        Bound::{Excluded, Included, Unbounded},
-        Index, IndexMut, RangeBounds,
-    },
-    ptr::{self, NonNull},
-    slice::{self, SliceIndex},
-};
+use core::borrow::{Borrow, BorrowMut};
+use core::cmp::Ordering;
+use core::fmt;
+use core::hash::{self, Hash};
+use core::iter::FusedIterator;
+use core::marker::PhantomData;
+use core::mem;
+use core::ops;
+use core::ops::Bound::{Excluded, Included, Unbounded};
+use core::ops::{Index, IndexMut, RangeBounds};
+use core::ptr;
+use core::ptr::NonNull;
+use core::slice;
 
 // #[cfg(feature = "std")]
 // use std::io;
@@ -219,7 +209,7 @@ unsafe fn offset_from<T>(p: *const T, origin: *const T) -> isize
 where
     T: Sized,
 {
-    let pointee_size = size_of::<T>();
+    let pointee_size = mem::size_of::<T>();
     assert!(0 < pointee_size && pointee_size <= isize::max_value() as usize);
 
     // This is the same sequence that Clang emits for pointer subtraction.
@@ -233,12 +223,11 @@ where
 ///
 /// # Examples
 ///
-/// ```text
-/// use bumpalo::{Bump, collections::Vec};
+/// ```
+/// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+/// let arena = Arena::new();
 ///
-/// let b = Bump::new();
-///
-/// let mut vec = Vec::new_in(&b);
+/// let mut vec = Vec::new_in(&arena);
 /// vec.push(1);
 /// vec.push(2);
 ///
@@ -257,16 +246,15 @@ where
 ///     println!("{}", x);
 /// }
 /// assert_eq!(vec, [7, 1, 2, 3]);
-/// ```text
+/// ```
 ///
 /// Use a `Vec<'a, T>` as an efficient stack:
 ///
-/// ```text
-/// use bumpalo::{Bump, collections::Vec};
+/// ```
+/// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+/// let arena = Arena::new();
 ///
-/// let b = Bump::new();
-///
-/// let mut stack = Vec::new_in(&b);
+/// let mut stack = Vec::new_in(&arena);
 ///
 /// stack.push(1);
 /// stack.push(2);
@@ -276,33 +264,31 @@ where
 ///     // Prints 3, 2, 1
 ///     println!("{}", top);
 /// }
-/// ```text
+/// ```
 ///
 /// # Indexing
 ///
-/// The `Vec` type allows accessing values by index, because it implements the
+/// The `Vec` type allows to access values by index, because it implements the
 /// [`Index`] trait. An example will be more explicit:
 ///
-/// ```text
-/// use bumpalo::{Bump, collections::Vec};
+/// ```
+/// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+/// let arena = Arena::new();
 ///
-/// let b = Bump::new();
-///
-/// let v = Vec::from_iter_in([0, 2, 4, 6], &b);
+/// let v = Vec::from_iter_in([0, 2, 4, 6], &arena);
 /// println!("{}", v[1]); // it will display '2'
-/// ```text
+/// ```
 ///
 /// However be careful: if you try to access an index which isn't in the `Vec`,
 /// your software will panic! You cannot do this:
 ///
-/// ```text
-/// use bumpalo::{Bump, collections::Vec};
+/// ```should_panic
+/// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+/// let arena = Arena::new();
 ///
-/// let b = Bump::new();
-///
-/// let v = Vec::from_iter_in([0, 2, 4, 6], &b);
+/// let v = Vec::from_iter_in([0, 2, 4, 6], &arena);
 /// println!("{}", v[6]); // it will panic!
-/// ```text
+/// ```
 ///
 /// In conclusion: always check if the index you want to get really exists
 /// before doing it.
@@ -312,22 +298,21 @@ where
 /// A `Vec` can be mutable. Slices, on the other hand, are read-only objects.
 /// To get a slice, use `&`. Example:
 ///
-/// ```text
-/// use bumpalo::{Bump, collections::Vec};
-///
+/// ```
+/// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
 /// fn read_slice(slice: &[usize]) {
 ///     // ...
 /// }
 ///
-/// let b = Bump::new();
+/// let arena = Arena::new();
 ///
-/// let v = Vec::from_iter_in([0, 1], &b);
+/// let v = Vec::from_iter_in([0, 1], &arena);
 /// read_slice(&v);
 ///
 /// // ... and that's all!
 /// // you can also do it like this:
 /// let x : &[usize] = &v;
-/// ```text
+/// ```
 ///
 /// In Rust, it's more common to pass slices as arguments rather than vectors
 /// when you just want to provide a read access. The same goes for [`String`] and
@@ -369,7 +354,7 @@ where
 /// on an empty Vec, it will not allocate memory. Similarly, if you store zero-sized
 /// types inside a `Vec`, it will not allocate space for them. *Note that in this case
 /// the `Vec` may not report a [`capacity`] of 0*. `Vec` will allocate if and only
-/// if <code>[`size_of::<T>`]\() * capacity() > 0</code>. In general, `Vec`'s allocation
+/// if <code>[`mem::size_of::<T>`]\() * capacity() > 0</code>. In general, `Vec`'s allocation
 /// details are very subtle &mdash; if you intend to allocate memory using a `Vec`
 /// and use it for something else (either to pass to unsafe code, or to build your
 /// own memory-backed collection), be sure to deallocate this memory by using
@@ -436,7 +421,7 @@ where
 /// [`Vec::new_in`]: struct.Vec.html#method.new_in
 /// [`shrink_to_fit`]: struct.Vec.html#method.shrink_to_fit
 /// [`capacity`]: struct.Vec.html#method.capacity
-/// [`size_of::<T>`]: https://doc.rust-lang.org/std/mem/fn.size_of.html
+/// [`mem::size_of::<T>`]: https://doc.rust-lang.org/std/mem/fn.size_of.html
 /// [`len`]: struct.Vec.html#method.len
 /// [`push`]: struct.Vec.html#method.push
 /// [`insert`]: struct.Vec.html#method.insert
@@ -458,13 +443,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
+    /// ```ignore
     /// # #![allow(unused_mut)]
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let mut vec: Vec<i32> = Vec::new_in(&b);
-    /// ```text
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let mut vec: Vec<i32> = Vec::new_in(&arena);
+    /// ```
     #[inline]
     pub fn new_in(alloc: &'a A) -> Vec<'a, T, A> {
         Vec { buf: RawVec::new_in(alloc) }
@@ -484,12 +468,11 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::with_capacity_in(10, &b);
+    /// let mut vec = Vec::with_capacity_in(10, &arena);
     ///
     /// // The vector contains no items, even though it has capacity for more
     /// assert_eq!(vec.len(), 0);
@@ -501,7 +484,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// // ...but this may make the vector reallocate
     /// vec.push(11);
-    /// ```text
+    /// ```
     #[inline]
     pub fn with_capacity_in(capacity: usize, alloc: &'a A) -> Vec<'a, T, A> {
         Vec { buf: RawVec::with_capacity_in(capacity, alloc) }
@@ -511,14 +494,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
     /// use std::iter;
     ///
-    /// let b = Bump::new();
-    /// let v = Vec::from_iter_in(iter::repeat(7).take(3), &b);
+    /// let arena = Arena::new();
+    /// let v = Vec::from_iter_in(iter::repeat(7).take(3), &arena);
     /// assert_eq!(v, [7, 7, 7]);
-    /// ```text
+    /// ```
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, alloc: &'a A) -> Vec<'a, T, A> {
         let mut v = Vec::new_in(alloc);
         v.extend(iter);
@@ -552,15 +535,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
+    /// ```ignore
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
     /// use std::ptr;
     /// use std::mem;
     ///
-    /// let b = Bump::new();
+    /// let arena = Arena::new();
     ///
-    /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut v = Vec::from_iter_in([1, 2, 3], arena);
     ///
     /// // Pull out the various important pieces of information about `v`
     /// let p = v.as_mut_ptr();
@@ -578,10 +560,10 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     }
     ///
     ///     // Put everything back together into a Vec
-    ///     let rebuilt = Vec::from_raw_parts_in(p, len, cap, &b);
+    ///     let rebuilt = Vec::from_raw_parts_in(p, len, cap, &arena);
     ///     assert_eq!(rebuilt, [4, 5, 6]);
     /// }
-    /// ```text
+    /// ```
     pub unsafe fn from_raw_parts_in(
         ptr: *mut T,
         length: usize,
@@ -595,14 +577,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let a = Vec::from_iter_in([1, 2, 3], &b);
-    /// assert_eq!(a.len(), 3);
-    /// ```text
+    /// let vec = Vec::from_iter_in([1, 2, 3], &arena);
+    /// assert_eq!(vec.len(), 3);
+    /// ```
     #[inline]
     pub fn len(&self) -> usize {
         self.buf.len_usize()
@@ -624,13 +605,12 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let vec: Vec<i32> = Vec::with_capacity_in(10, &b);
+    /// ```ignore
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let vec: Vec<i32> = Vec::with_capacity_in(10, &arena);
     /// assert_eq!(vec.capacity(), 10);
-    /// ```text
+    /// ```
     #[inline]
     pub fn capacity(&self) -> usize {
         self.buf.capacity_usize()
@@ -663,49 +643,46 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
     /// use std::ptr;
     ///
-    /// let b = Bump::new();
+    /// let arena = Arena::new();
     ///
-    /// let mut vec = Vec::from_iter_in(['r', 'u', 's', 't'], &b);
+    /// let mut vec = Vec::from_iter_in(['r', 'u', 's', 't'], &arena);
     ///
     /// unsafe {
     ///     ptr::drop_in_place(&mut vec[3]);
     ///     vec.set_len(3);
     /// }
     /// assert_eq!(vec, ['r', 'u', 's']);
-    /// ```text
+    /// ```
     ///
     /// In this example, there is a memory leak since the memory locations
     /// owned by the inner vectors were not freed prior to the `set_len` call:
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::new_in(&b);
+    /// let mut vec = Vec::new_in(&arena);
     /// vec.push("foo".to_string());
     ///
     /// unsafe {
     ///     vec.set_len(0);
     /// }
-    /// ```text
+    /// ```
     ///
     /// In this example, the vector gets expanded from zero to four items
     /// but we directly initialize uninitialized memory:
     ///
     // TODO: rely upon `spare_capacity_mut`
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```ignore
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
     /// let len = 4;
-    /// let b = Bump::new();
-    ///
-    /// let mut vec: Vec<u8> = Vec::with_capacity_in(len, &b);
+    /// let mut vec: Vec<u8> = Vec::with_capacity_in(len, &arena);
     ///
     /// for i in 0..len {
     ///     // SAFETY: we initialize memory via `pointer::write`
@@ -717,13 +694,32 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// }
     ///
     /// assert_eq!(b"aaaa", &*vec);
-    /// ```text
+    /// ```
     #[inline]
     pub unsafe fn set_len(&mut self, new_len: usize) {
         // Caller guarantees `new_len <= u32::MAX`, so `new_len as u32` cannot truncate `new_len`
         #[expect(clippy::cast_possible_truncation)]
         let new_len = new_len as u32;
         self.buf.set_len(new_len);
+    }
+
+    /// Returns a shared reference to the arena backing this `Vec`.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// // uses the same allocator as the provided `Vec`
+    /// fn add_strings<'a>(vec: &mut Vec<'a, &'a str>) {
+    ///     for string in ["foo", "bar", "baz"] {
+    ///         vec.push(vec.arena().alloc_str(string));
+    ///     }
+    /// }
+    /// ```
+    #[inline]
+    #[must_use]
+    pub fn arena(&self) -> &'a A {
+        self.buf.arena()
     }
 
     /// Reserves capacity for at least `additional` more elements to be inserted
@@ -738,14 +734,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let mut vec = Vec::from_iter_in([1], &b);
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let mut vec = Vec::from_iter_in([1], &arena);
     /// vec.reserve(10);
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn reserve(&mut self, additional: usize) {
         self.buf.reserve(self.len_u32(), additional);
     }
@@ -765,14 +760,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let mut vec = Vec::from_iter_in([1], &b);
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let mut vec = Vec::from_iter_in([1], &arena);
     /// vec.reserve_exact(10);
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn reserve_exact(&mut self, additional: usize) {
         self.buf.reserve_exact(self.len_u32(), additional);
     }
@@ -789,14 +783,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let mut vec = Vec::from_iter_in([1], &b);
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let mut vec = Vec::from_iter_in([1], &arena);
     /// vec.try_reserve(10).unwrap();
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn try_reserve(&mut self, additional: usize) -> Result<(), AllocError> {
         self.buf.try_reserve(self.len_u32(), additional)
     }
@@ -816,14 +809,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let mut vec = Vec::from_iter_in([1], &b);
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let mut vec = Vec::from_iter_in([1], &arena);
     /// vec.try_reserve_exact(10).unwrap();
     /// assert!(vec.capacity() >= 11);
-    /// ```text
+    /// ```
     pub fn try_reserve_exact(&mut self, additional: usize) -> Result<(), AllocError> {
         self.buf.try_reserve_exact(self.len_u32(), additional)
     }
@@ -835,17 +827,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::with_capacity_in(10, &b);
+    /// let mut vec = Vec::with_capacity_in(10, &arena);
     /// vec.extend([1, 2, 3].iter().cloned());
     /// assert_eq!(vec.capacity(), 10);
     /// vec.shrink_to_fit();
     /// assert!(vec.capacity() >= 3);
-    /// ```text
+    /// ```
     pub fn shrink_to_fit(&mut self) {
         if self.len_u32() != self.capacity_u32() {
             self.buf.shrink_to_fit(self.len_u32());
@@ -856,15 +847,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let v = Vec::from_iter_in([1, 2, 3], &b);
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let v = Vec::from_iter_in([1, 2, 3], &arena);
     ///
     /// let slice = v.into_bump_slice();
     /// assert_eq!(slice, [1, 2, 3]);
-    /// ```text
+    /// ```
     pub fn into_bump_slice(self) -> &'a [T] {
         unsafe {
             let ptr = self.as_ptr();
@@ -878,11 +868,10 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let b = Bump::new();
-    /// let v = Vec::from_iter_in([1, 2, 3], &b);
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    /// let v = Vec::from_iter_in([1, 2, 3], &arena);
     ///
     /// let mut slice = v.into_bump_slice_mut();
     ///
@@ -890,7 +879,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// slice[2] = 1;
     ///
     /// assert_eq!(slice, [3, 2, 1]);
-    /// ```text
+    /// ```
     pub fn into_bump_slice_mut(mut self) -> &'a mut [T] {
         let ptr = self.as_mut_ptr();
         let len = self.len_usize();
@@ -915,41 +904,38 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// Truncating a five element vector to two elements:
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &arena);
     /// vec.truncate(2);
     /// assert_eq!(vec, [1, 2]);
-    /// ```text
+    /// ```
     ///
     /// No truncation occurs when `len` is greater than the vector's current
     /// length:
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
     /// vec.truncate(8);
     /// assert_eq!(vec, [1, 2, 3]);
-    /// ```text
+    /// ```
     ///
     /// Truncating when `len == 0` is equivalent to calling the [`clear`]
     /// method.
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
     /// vec.truncate(0);
     /// assert_eq!(vec, []);
-    /// ```text
+    /// ```
     ///
     /// [`clear`]: #method.clear
     /// [`drain`]: #method.drain
@@ -969,15 +955,15 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
     /// use std::io::{self, Write};
     ///
-    /// let b = Bump::new();
+    /// let arena = Arena::new();
     ///
-    /// let buffer = Vec::from_iter_in([1, 2, 3, 5, 8], &b);
+    /// let buffer = Vec::from_iter_in([1, 2, 3, 5, 8], &arena);
     /// io::sink().write(buffer.as_slice()).unwrap();
-    /// ```text
+    /// ```
     #[inline]
     pub fn as_slice(&self) -> &[T] {
         self
@@ -989,14 +975,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
     /// use std::io::{self, Read};
     ///
-    /// let b = Bump::new();
-    /// let mut buffer = Vec::from_iter_in([0; 3], &b);
+    /// let arena = Arena::new();
+    /// let mut buffer = Vec::from_iter_in([0; 3], &arena);
     /// io::repeat(0b101).read_exact(buffer.as_mut_slice()).unwrap();
-    /// ```text
+    /// ```
     #[inline]
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         self
@@ -1016,10 +1002,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let arena = Bump::new();
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
     /// let x = Vec::from_iter_in([1, 2, 4], &arena);
     /// let x_ptr = x.as_ptr();
@@ -1029,7 +1014,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///         assert_eq!(*x_ptr.add(i), 1 << i);
     ///     }
     /// }
-    /// ```text
+    /// ```
     ///
     /// [`as_mut_ptr`]: Vec::as_mut_ptr
     #[inline]
@@ -1037,9 +1022,11 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
         // We shadow the slice method of the same name to avoid going through
         // `deref`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
-        // Inform compiler that `ptr` is not null. Very possibly compiler already knows this, as `ptr` is derived
-        // from a `NonNull<T>`, but Bumpalo includes this line, and it shouldn't hurt, so we keep it.
-        unsafe { assert_unchecked(!ptr.is_null()) };
+        unsafe {
+            if ptr.is_null() {
+                core::hint::unreachable_unchecked();
+            }
+        }
         ptr
     }
 
@@ -1053,10 +1040,9 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
-    ///
-    /// let arena = Bump::new();
+    /// ```ignore
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
     /// // Allocate vector big enough for 4 elements.
     /// let size = 4;
@@ -1071,15 +1057,17 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     x.set_len(size);
     /// }
     /// assert_eq!(&*x, &[0, 1, 2, 3]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn as_mut_ptr(&mut self) -> *mut T {
         // We shadow the slice method of the same name to avoid going through
         // `deref_mut`, which creates an intermediate reference.
         let ptr = self.buf.ptr();
-        // Inform compiler that `ptr` is not null. Very possibly compiler already knows this, as `ptr` is derived
-        // from a `NonNull<T>`, but Bumpalo includes this line, and it shouldn't hurt, so we keep it.
-        unsafe { assert_unchecked(!ptr.is_null()) };
+        unsafe {
+            if ptr.is_null() {
+                core::hint::unreachable_unchecked();
+            }
+        }
         ptr
     }
 
@@ -1095,19 +1083,18 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut v = Vec::from_iter_in(["foo", "bar", "baz", "qux"], &b);
+    /// let mut v = Vec::from_iter_in(["foo", "bar", "baz", "qux"], &arena);
     ///
     /// assert_eq!(v.swap_remove(1), "bar");
     /// assert_eq!(v, ["foo", "qux", "baz"]);
     ///
     /// assert_eq!(v.swap_remove(0), "foo");
     /// assert_eq!(v, ["baz", "qux"]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn swap_remove(&mut self, index: usize) -> T {
         unsafe {
@@ -1130,17 +1117,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
     /// vec.insert(1, 4);
     /// assert_eq!(vec, [1, 4, 2, 3]);
     /// vec.insert(4, 5);
     /// assert_eq!(vec, [1, 4, 2, 3, 5]);
-    /// ```text
+    /// ```
     pub fn insert(&mut self, index: usize, element: T) {
         let len = self.len_usize();
         assert!(index <= len);
@@ -1175,15 +1161,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut v = Vec::from_iter_in([1, 2, 3], &arena);
     /// assert_eq!(v.remove(1), 2);
     /// assert_eq!(v, [1, 3]);
-    /// ```text
+    /// ```
     pub fn remove(&mut self, index: usize) -> T {
         let len = self.len_usize();
         assert!(index < len);
@@ -1213,26 +1198,28 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::Bump;
-    /// let arena = Bump::new();
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    ///
     /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &arena);
     /// vec.retain(|&x| x % 2 == 0);
     /// assert_eq!(vec, [2, 4]);
-    /// ```text
+    /// ```
     ///
     /// Because the elements are visited exactly once in the original order,
     /// external state may be used to decide which elements to keep.
     ///
-    /// ```text
-    /// use bumpalo::Bump;
-    /// let arena = Bump::new();
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
+    ///
     /// let mut vec = Vec::from_iter_in([1, 2, 3, 4, 5], &arena);
     /// let keep = [false, true, true, false, true];
     /// let mut iter = keep.iter();
     /// vec.retain(|_| *iter.next().unwrap());
     /// assert_eq!(vec, [2, 3, 5]);
-    /// ```text
+    /// ```
     pub fn retain<F>(&mut self, mut f: F)
     where
         F: FnMut(&T) -> bool,
@@ -1248,12 +1235,11 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &arena);
     /// vec.retain_mut(|x| if *x <= 3 {
     ///     *x += 1;
     ///     true
@@ -1261,7 +1247,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///     false
     /// });
     /// assert_eq!(vec, [2, 3, 4]);
-    /// ```text
+    /// ```
     // The implementation is based on the [`std::vec::Vec::retain_mut`].
     //
     // Allowing the following clippy rules just to make the code same as the original implementation.
@@ -1370,19 +1356,17 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::Bump;
-    /// use bumpalo::collections::{CollectIn, Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
+    /// let mut numbers = Vec::from_iter_in([1, 2, 3, 4, 5], &arena);
     ///
-    /// let mut numbers = Vec::from_iter_in([1, 2, 3, 4, 5], &b);
-    ///
-    /// let evens: Vec<_> = numbers.drain_filter(|x| *x % 2 == 0).collect_in(&b);
+    /// let evens = Vec::from_iter_in(numbers.drain_filter(|x| *x % 2 == 0), &arena);
     ///
     /// assert_eq!(numbers, &[1, 3, 5]);
     /// assert_eq!(evens, &[2, 4]);
-    /// ```text
+    /// ```
     pub fn drain_filter<'v, F>(&'v mut self, filter: F) -> DrainFilter<'a, 'v, T, A, F>
     where
         F: FnMut(&mut T) -> bool,
@@ -1404,17 +1388,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([10, 20, 21, 30, 20], &b);
+    /// let mut vec = Vec::from_iter_in([10, 20, 21, 30, 20], &arena);
     ///
     /// vec.dedup_by_key(|i| *i / 10);
     ///
     /// assert_eq!(vec, [10, 20, 30, 20]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn dedup_by_key<F, K>(&mut self, mut key: F)
     where
@@ -1435,17 +1418,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in(["foo", "bar", "Bar", "baz", "bar"], &b);
+    /// let mut vec = Vec::from_iter_in(["foo", "bar", "Bar", "baz", "bar"], &arena);
     ///
     /// vec.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
     ///
     /// assert_eq!(vec, ["foo", "bar", "baz", "bar"]);
-    /// ```text
+    /// ```
     pub fn dedup_by<F>(&mut self, same_bucket: F)
     where
         F: FnMut(&mut T, &mut T) -> bool,
@@ -1465,15 +1447,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2], &arena);
     /// vec.push(3);
     /// assert_eq!(vec, [1, 2, 3]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn push(&mut self, value: T) {
         // This will panic or abort if we would allocate > isize::MAX bytes
@@ -1495,15 +1476,14 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
     /// assert_eq!(vec.pop(), Some(3));
     /// assert_eq!(vec, [1, 2]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn pop(&mut self) -> Option<T> {
         if self.len_u32() == 0 {
@@ -1525,17 +1505,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
-    /// let mut vec2 = Vec::from_iter_in([4, 5, 6], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
+    /// let mut vec2 = Vec::from_iter_in([4, 5, 6], &arena);
     /// vec.append(&mut vec2);
     /// assert_eq!(vec, [1, 2, 3, 4, 5, 6]);
     /// assert_eq!(vec2, []);
-    /// ```text
+    /// ```
     #[inline]
     pub fn append(&mut self, other: &mut Self) {
         unsafe {
@@ -1586,15 +1565,13 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::Bump;
-    /// use bumpalo::collections::{CollectIn, Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
+    /// let mut v = Vec::from_iter_in([1, 2, 3], &arena);
     ///
-    /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
-    ///
-    /// let u: Vec<_> = v.drain(1..).collect_in(&b);
+    /// let u = Vec::from_iter_in(v.drain(1..), &arena);
     ///
     /// assert_eq!(v, &[1]);
     /// assert_eq!(u, &[2, 3]);
@@ -1602,7 +1579,7 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     /// // A full range clears the vector
     /// v.drain(..);
     /// assert_eq!(v, &[]);
-    /// ```text
+    /// ```
     pub fn drain<R>(&mut self, range: R) -> Drain<'_, '_, T, A>
     where
         R: RangeBounds<usize>,
@@ -1653,17 +1630,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut v = Vec::from_iter_in([1, 2, 3], &arena);
     ///
     /// v.clear();
     ///
     /// assert!(v.is_empty());
-    /// ```text
+    /// ```
     #[inline]
     pub fn clear(&mut self) {
         self.truncate(0)
@@ -1673,17 +1649,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut v = Vec::new_in(&b);
+    /// let mut v = Vec::new_in(&arena);
     /// assert!(v.is_empty());
     ///
     /// v.push(1);
     /// assert!(!v.is_empty());
-    /// ```text
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.len_u32() == 0
     }
@@ -1701,26 +1676,22 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3], &arena);
     /// let vec2 = vec.split_off(1);
     /// assert_eq!(vec, [1]);
     /// assert_eq!(vec2, [2, 3]);
-    /// ```text
+    /// ```
     #[inline]
     #[must_use]
     pub fn split_off(&mut self, at: usize) -> Self {
         assert!(at <= self.len_usize(), "`at` out of bounds");
 
         let other_len = self.len_usize() - at;
-        // SAFETY: This method takes a `&mut self`. It lives for the duration of this method
-        // - longer than we use `bump` for.
-        let bump = unsafe { self.buf.bump() };
-        let mut other = Vec::with_capacity_in(other_len, bump);
+        let mut other = Vec::with_capacity_in(other_len, self.buf.arena());
 
         // Unsafely `set_len` and copy items to `other`.
         unsafe {
@@ -1744,19 +1715,19 @@ impl<'a, T> Vec<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec, vec};
+    /// ```
+    /// # use oxc_allocator::{__private::{ArenaDefault as Arena, Vec}, Box};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let v = Vec::from_iter_in([1, 2, 3], &b);
+    /// let v = Vec::from_iter_in([1, 2, 3], &arena);
     ///
     /// let slice = v.into_boxed_slice();
-    /// ```text
+    /// ```
     pub fn into_boxed_slice(mut self) -> crate::boxed::Box<'a, [T]> {
-        use crate::boxed::Box;
+        use crate::Box;
 
-        // Unlike `alloc::vec::Vec` shrinking here isn't necessary as `bumpalo::boxed::Box` doesn't own memory.
+        // Unlike `alloc::vec::Vec` shrinking here isn't necessary,
+        // as `oxc_allocator::Box` doesn't own memory
         unsafe {
             let slice = slice::from_raw_parts_mut(self.as_mut_ptr(), self.len);
             let output: Box<'a, [T]> = Box::from_raw(slice);
@@ -1780,19 +1751,18 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in(["hello"], &b);
+    /// let mut vec = Vec::from_iter_in(["hello"], &arena);
     /// vec.resize(3, "world");
     /// assert_eq!(vec, ["hello", "world", "world"]);
     ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 3, 4], &arena);
     /// vec.resize(2, 0);
     /// assert_eq!(vec, [1, 2]);
-    /// ```text
+    /// ```
     ///
     /// [`Clone`]: https://doc.rust-lang.org/std/clone/trait.Clone.html
     /// [`Default`]: https://doc.rust-lang.org/std/default/trait.Default.html
@@ -1819,15 +1789,14 @@ impl<'a, T: 'a + Clone, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1], &b);
+    /// let mut vec = Vec::from_iter_in([1], &arena);
     /// vec.extend_from_slice(&[2, 3, 4]);
     /// assert_eq!(vec, [1, 2, 3, 4]);
-    /// ```text
+    /// ```
     ///
     /// [`extend`]: #method.extend
     pub fn extend_from_slice(&mut self, other: &[T]) {
@@ -1874,25 +1843,23 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1], &b);
+    /// let mut vec = Vec::from_iter_in([1], &arena);
     /// vec.extend_from_slice_copy(&[2, 3, 4]);
     /// assert_eq!(vec, [1, 2, 3, 4]);
-    /// ```text
+    /// ```
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in(['H' as u8], &b);
+    /// let mut vec = Vec::from_iter_in(['H' as u8], &arena);
     /// vec.extend_from_slice_copy("ello, world!".as_bytes());
     /// assert_eq!(vec, "Hello, world!".as_bytes());
-    /// ```text
+    /// ```
     ///
     /// [`extend_from_slice`]: #method.extend_from_slice
     /// [`extend_from_slices_copy`]: #method.extend_from_slices_copy
@@ -1923,25 +1890,23 @@ impl<'a, T: 'a + Copy, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1], &b);
+    /// let mut vec = Vec::from_iter_in([1], &arena);
     /// vec.extend_from_slices_copy(&[&[2, 3], &[], &[4]]);
     /// assert_eq!(vec, [1, 2, 3, 4]);
-    /// ```text
+    /// ```
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in(['H' as u8], &b);
+    /// let mut vec = Vec::from_iter_in(['H' as u8], &arena);
     /// vec.extend_from_slices_copy(&["ello,".as_bytes(), &[], " world!".as_bytes()]);
     /// assert_eq!(vec, "Hello, world!".as_bytes());
-    /// ```text
+    /// ```
     ///
     /// [`extend_from_slice_copy`]: #method.extend_from_slice_copy
     pub fn extend_from_slices_copy(&mut self, slices: &[&[T]]) {
@@ -2031,17 +1996,16 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut vec = Vec::from_iter_in([1, 2, 2, 3, 2], &b);
+    /// let mut vec = Vec::from_iter_in([1, 2, 2, 3, 2], &arena);
     ///
     /// vec.dedup();
     ///
     /// assert_eq!(vec, [1, 2, 3, 2]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn dedup(&mut self) {
         self.dedup_by(|a, b| a == b)
@@ -2052,6 +2016,26 @@ impl<'a, T: 'a + PartialEq, A: Alloc> Vec<'a, T, A> {
 // Common trait implementations for Vec
 ////////////////////////////////////////////////////////////////////////////////
 
+impl<'a, T: 'a + Clone, A: Alloc> Clone for Vec<'a, T, A> {
+    #[cfg(not(test))]
+    fn clone(&self) -> Vec<'a, T, A> {
+        let mut v = Vec::with_capacity_in(self.len_usize(), self.buf.arena());
+        v.extend(self.iter().cloned());
+        v
+    }
+
+    // HACK(japaric): with cfg(test) the inherent `[T]::to_vec` method, which is
+    // required for this method definition, is not available. Instead use the
+    // `slice::to_vec`  function which is only available with cfg(test)
+    // NB see the slice::hack module in slice.rs for more information
+    #[cfg(test)]
+    fn clone(&self) -> Vec<'a, T, A> {
+        let mut v = Vec::new_in(self.buf.arena());
+        v.extend(self.iter().cloned());
+        v
+    }
+}
+
 impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, state: &mut H) {
@@ -2059,7 +2043,10 @@ impl<'a, T: 'a + Hash, A: Alloc> Hash for Vec<'a, T, A> {
     }
 }
 
-impl<T, A: Alloc, I: SliceIndex<[T]>> Index<I> for Vec<'_, T, A> {
+impl<T, A: Alloc, I> Index<I> for Vec<'_, T, A>
+where
+    I: ::core::slice::SliceIndex<[T]>,
+{
     type Output = I::Output;
 
     #[inline]
@@ -2068,7 +2055,10 @@ impl<T, A: Alloc, I: SliceIndex<[T]>> Index<I> for Vec<'_, T, A> {
     }
 }
 
-impl<T, A: Alloc, I: SliceIndex<[T]>> IndexMut<I> for Vec<'_, T, A> {
+impl<T, A: Alloc, I> IndexMut<I> for Vec<'_, T, A>
+where
+    I: ::core::slice::SliceIndex<[T]>,
+{
     #[inline]
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         IndexMut::index_mut(&mut **self, index)
@@ -2107,23 +2097,22 @@ impl<'a, T: 'a, A: Alloc> IntoIterator for Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let v = Vec::from_iter_in(["a".to_string(), "b".to_string()], &b);
+    /// let v = Vec::from_iter_in(["a".to_string(), "b".to_string()], &arena);
     /// for s in v.into_iter() {
     ///     // s has type String, not &String
     ///     println!("{}", s);
     /// }
-    /// ```text
+    /// ```
     #[inline]
     fn into_iter(mut self) -> IntoIter<'a, T> {
         unsafe {
             let begin = self.as_mut_ptr();
             // assume(!begin.is_null());
-            let end = if size_of::<T>() == 0 {
+            let end = if mem::size_of::<T>() == 0 {
                 arith_offset(begin as *const i8, self.len_u32() as isize) as *const T
             } else {
                 begin.add(self.len_usize()) as *const T
@@ -2227,17 +2216,16 @@ impl<'a, T: 'a, A: Alloc> Vec<'a, T, A> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```ignore
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let mut v = Vec::from_iter_in([1, 2, 3], &b);
+    /// let mut v = Vec::from_iter_in([1, 2, 3], &arena);
     /// let new = [7, 8];
-    /// let u: Vec<_> = Vec::from_iter_in(v.splice(..2, new.iter().cloned()), &b);
+    /// let u: Vec<_> = Vec::from_iter_in(v.splice(..2, new.iter().cloned()), &arena);
     /// assert_eq!(v, &[7, 8, 3]);
     /// assert_eq!(u, &[1, 2]);
-    /// ```text
+    /// ```
     #[inline]
     pub fn splice<R, I>(&mut self, range: R, replace_with: I) -> Splice<'_, '_, I::IntoIter, A>
     where
@@ -2423,17 +2411,16 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let vec = Vec::from_iter_in(['a', 'b', 'c'], &b);
+    /// let vec = Vec::from_iter_in(['a', 'b', 'c'], &arena);
     /// let mut into_iter = vec.into_iter();
     /// assert_eq!(into_iter.as_slice(), &['a', 'b', 'c']);
     /// let _ = into_iter.next().unwrap();
     /// assert_eq!(into_iter.as_slice(), &['b', 'c']);
-    /// ```text
+    /// ```
     pub fn as_slice(&self) -> &[T] {
         unsafe { slice::from_raw_parts(self.ptr, self.len()) }
     }
@@ -2442,19 +2429,18 @@ impl<'a, T: 'a> IntoIter<'a, T> {
     ///
     /// # Examples
     ///
-    /// ```text
-    /// use bumpalo::{Bump, collections::Vec};
+    /// ```
+    /// # use oxc_allocator::__private::{ArenaDefault as Arena, Vec};
+    /// let arena = Arena::new();
     ///
-    /// let b = Bump::new();
-    ///
-    /// let vec = Vec::from_iter_in(['a', 'b', 'c'], &b);
+    /// let vec = Vec::from_iter_in(['a', 'b', 'c'], &arena);
     /// let mut into_iter = vec.into_iter();
     /// assert_eq!(into_iter.as_slice(), &['a', 'b', 'c']);
     /// into_iter.as_mut_slice()[2] = 'z';
     /// assert_eq!(into_iter.next().unwrap(), 'a');
     /// assert_eq!(into_iter.next().unwrap(), 'b');
     /// assert_eq!(into_iter.next().unwrap(), 'z');
-    /// ```text
+    /// ```
     pub fn as_mut_slice(&mut self) -> &mut [T] {
         unsafe { slice::from_raw_parts_mut(self.ptr as *mut T, self.len()) }
     }
@@ -2471,7 +2457,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
         unsafe {
             if std::ptr::eq(self.ptr, self.end) {
                 None
-            } else if size_of::<T>() == 0 {
+            } else if mem::size_of::<T>() == 0 {
                 // purposefully don't use 'ptr.offset' because for
                 // vectors with 0-size elements this would return the
                 // same pointer.
@@ -2490,7 +2476,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
 
     #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let exact = if size_of::<T>() == 0 {
+        let exact = if mem::size_of::<T>() == 0 {
             (self.end as usize).wrapping_sub(self.ptr as usize)
         } else {
             unsafe { offset_from(self.end, self.ptr) as usize }
@@ -2510,7 +2496,7 @@ impl<'a, T: 'a> DoubleEndedIterator for IntoIter<'a, T> {
         unsafe {
             if self.end == self.ptr {
                 None
-            } else if size_of::<T>() == 0 {
+            } else if mem::size_of::<T>() == 0 {
                 // See above for why 'ptr.offset' isn't used
                 self.end = arith_offset(self.end as *const i8, -1) as *mut T;
 
@@ -2662,15 +2648,7 @@ impl<I: Iterator, A: Alloc> Drop for Splice<'_, '_, I, A> {
 
             // Collect any remaining elements.
             // This is a zero-length vector which does not allocate if `lower_bound` was exact.
-
-            // SAFETY: `Splice` iterator is created in `Vec::splice`, which takes a `&mut self`.
-            // `Splice` inherits the lifetime of `&mut self` from that method, so the mut borrow
-            // of the `Vec` is held for the life of the `Splice`.
-            // Therefore we have exclusive access to the `Vec` until end of this method.
-            // That is longer than we use `bump` for.
-            let bump = self.drain.vec.as_ref().buf.bump();
-
-            let mut collected = Vec::new_in(bump);
+            let mut collected = Vec::new_in(self.drain.vec.as_ref().buf.arena());
             collected.extend(self.replace_with.by_ref());
             let mut collected = collected.into_iter();
             // Now we have an exact count.
@@ -2789,7 +2767,7 @@ where
 
 /*
 #[cfg(feature = "std")]
-impl<'a> io::Write for Vec<'a, u8> {
+impl<'a, A: Alloc> io::Write for Vec<'a, u8, A> {
     #[inline]
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.extend_from_slice_copy(buf);
@@ -2816,7 +2794,7 @@ mod serialize {
 
     use serde::{Serialize, Serializer, ser::SerializeSeq};
 
-    impl<'a, T> Serialize for Vec<'a, T>
+    impl<'a, T, A: Alloc> Serialize for Vec<'a, T, A>
     where
         T: Serialize,
     {

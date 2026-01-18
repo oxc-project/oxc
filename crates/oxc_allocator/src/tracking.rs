@@ -17,7 +17,7 @@
 
 use std::{cell::Cell, ptr};
 
-use crate::{Allocator, allocator::STATS_FIELD_OFFSET, bump::Bump};
+use crate::{Allocator, allocator::STATS_FIELD_OFFSET, arena::ArenaDefault as Arena};
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
 #[derive(Default)]
@@ -60,30 +60,30 @@ impl Allocator {
     }
 }
 
-/// Get reference to [`AllocationStats`] for a [`Bump`].
+/// Get reference to [`AllocationStats`] for an [`Arena`].
 ///
 /// # SAFETY
 ///
-/// Caller must guarantee that the `Bump` provided to this function is wrapped in an [`Allocator`].
+/// Caller must guarantee that the `Arena` provided to this function is wrapped in an [`Allocator`].
 ///
-/// In Oxc, we never use `Bump` alone, without it being wrapped in an `Allocator`.
-/// However, we have no static guarantee of this relationship between `Bump` and `Allocator`,
+/// In Oxc, we never use `Arena` alone, without it being wrapped in an `Allocator`.
+/// However, we have no static guarantee of this relationship between `Arena` and `Allocator`,
 /// so it's usually impossible for callers to proveably satisfy the safety requirements of this method.
 ///
-/// Even if the `Bump` *is* wrapped in an `Allocator`, this may still be UB, as we project beyond
-/// the bounds of the `&Bump`. Certainly stacked borrows memory model says this is UB, though it's unclear
+/// Even if the `Arena` *is* wrapped in an `Allocator`, this may still be UB, as we project beyond
+/// the bounds of the `&Arena`. Certainly stacked borrows memory model says this is UB, though it's unclear
 /// to me (@overlookmotel) whether stacked borrows is unnecessarily strict on this point.
 /// <https://github.com/rust-lang/unsafe-code-guidelines/issues/134>
 ///
 /// This function (and the `track_allocations` feature in general) must only be used for internal tools,
 /// and must NEVER be compiled in production code.
-pub unsafe fn get_stats_ref(bump: &Bump) -> &AllocationStats {
-    // We assume the `Bump` is wrapped in an `Allocator`. We can therefore get a pointer to the `stats`
-    // field of `Allocator` from the memory location of the `Bump`.
+pub unsafe fn get_stats_ref(arena: &Arena) -> &AllocationStats {
+    // We assume the `Arena` is wrapped in an `Allocator`. We can therefore get a pointer to the `stats`
+    // field of `Allocator` from the memory location of the `Arena`.
     // SAFETY: This is UNSOUND. See above.
     unsafe {
         let stats_ptr =
-            ptr::from_ref(bump).byte_offset(STATS_FIELD_OFFSET).cast::<AllocationStats>();
+            ptr::from_ref(arena).byte_offset(STATS_FIELD_OFFSET).cast::<AllocationStats>();
         stats_ptr.as_ref().unwrap_unchecked()
     }
 }

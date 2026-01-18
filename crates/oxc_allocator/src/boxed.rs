@@ -30,7 +30,6 @@ use crate::Allocator;
 ///
 /// Static checks make this impossible to do. [`Box::new_in`] will refuse to compile if called
 /// with a [`Drop`] type.
-#[repr(transparent)]
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<T: ?Sized> Box<'_, T> {
@@ -67,10 +66,11 @@ impl<T> Box<'_, T> {
     /// # SAFETY
     /// Safe to create, but must never be dereferenced, as does not point to a valid `T`.
     /// Only purpose is for mocking types without allocating for const assertions.
+    #[expect(unsafe_code)]
     pub const unsafe fn dangling() -> Self {
-        // SAFETY: None of `from_non_null`'s invariants are satisfied, but caller promises
-        // never to dereference the `Box`
-        unsafe { Self::from_non_null(ptr::NonNull::dangling()) }
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(NonNull::dangling(), PhantomData)
     }
 
     /// Take ownership of the value stored in this [`Box`], consuming the box in
@@ -102,28 +102,29 @@ impl<T> Box<'_, T> {
 }
 
 impl<T: ?Sized> Box<'_, T> {
-    /// Get a [`NonNull`] pointer pointing to the [`Box`]'s contents.
-    ///
-    /// The pointer is not valid for writes.
-    ///
-    /// The caller must ensure that the `Box` outlives the pointer this
-    /// function returns, or else it will end up dangling.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use oxc_allocator::{Allocator, Box};
-    ///
-    /// let allocator = Allocator::new();
-    /// let boxed = Box::new_in(123_u64, &allocator);
-    /// let ptr = Box::as_non_null(&boxed);
-    /// ```
+    /// Get a [`NonNull`] pointer to the contents of a [`Box`], without consuming the box.
     //
     // `#[inline(always)]` because this is a no-op
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn as_non_null(boxed: &Self) -> NonNull<T> {
         boxed.0
+    }
+
+    /// Create a [`Box`] from a [`NonNull`] pointer.
+    ///
+    /// # SAFETY
+    ///
+    /// * `ptr` must have been allocated from an `Allocator` using the same method as `Box::new_in`
+    ///   uses internally.
+    /// * The value `ptr` points to must be a valid `T`.
+    /// * The returned `Box` must not be used after the `Allocator` that allocated the memory
+    ///   is dropped.
+    #[inline]
+    pub const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
+        const { Self::ASSERT_T_IS_NOT_DROP };
+
+        Self(ptr, PhantomData)
     }
 
     /// Consume a [`Box`] and return a [`NonNull`] pointer to its contents.
@@ -133,19 +134,6 @@ impl<T: ?Sized> Box<'_, T> {
     #[inline(always)]
     pub fn into_non_null(boxed: Self) -> NonNull<T> {
         boxed.0
-    }
-
-    /// Create a [`Box`] from a [`NonNull`] pointer.
-    ///
-    /// # SAFETY
-    ///
-    /// * Pointer must point to a valid `T`.
-    /// * Pointer must point to within an `Allocator`.
-    /// * Caller must ensure that the pointer is valid for the lifetime of the `Box`.
-    pub const unsafe fn from_non_null(ptr: NonNull<T>) -> Self {
-        const { Self::ASSERT_T_IS_NOT_DROP };
-
-        Self(ptr, PhantomData)
     }
 }
 
@@ -280,7 +268,7 @@ mod test {
         let allocator = Allocator::default();
         let b = Box::new_in("x", &allocator);
 
-        let mut serializer = CompactTSSerializer::default();
+        let mut serializer = CompactTSSerializer::new(false);
         b.serialize(&mut serializer);
         let s = serializer.into_string();
         assert_eq!(s, r#""x""#);

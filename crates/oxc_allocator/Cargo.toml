@@ -21,7 +21,7 @@ doctest = true
 
 [dependencies]
 oxc_ast_macros = { workspace = true, optional = true }
-oxc_data_structures = { workspace = true, features = ["assert_unchecked", "stack"] }
+oxc_data_structures = { workspace = true, features = ["assert_unchecked", "pointer_ext", "stack"] }
 oxc_estree = { workspace = true, optional = true }
 
 allocator-api2 = { workspace = true }
@@ -41,6 +41,7 @@ serde_json = { workspace = true }
 [features]
 bitset = []
 fixed_size = ["from_raw_parts", "pool", "dep:oxc_ast_macros"]
+disable_fixed_size = []
 from_raw_parts = []
 pool = []
 serialize = ["dep:serde", "oxc_estree/serialize"]

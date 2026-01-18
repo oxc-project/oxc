@@ -23,6 +23,7 @@ doctest = true
 
 [dependencies]
 ropey = { workspace = true, optional = true }
+rustversion = { workspace = true, optional = true }
 
 [features]
 default = []
@@ -31,6 +32,7 @@ all = [
   "box_macros",
   "code_buffer",
   "inline_string",
+  "pointer_ext",
   "rope",
   "slice_iter",
   "stack",
@@ -39,6 +41,7 @@ assert_unchecked = []
 box_macros = []
 code_buffer = ["assert_unchecked"]
 inline_string = ["assert_unchecked"]
+pointer_ext = ["dep:rustversion"]
 rope = ["dep:ropey"]
 slice_iter = ["assert_unchecked"]
-stack = []
+stack = ["pointer_ext"]

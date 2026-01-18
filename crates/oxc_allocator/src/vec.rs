@@ -20,9 +20,9 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, bump::Bump, vec2::Vec as InnerVecGeneric};
+use crate::{Allocator, Box, arena::ArenaDefault as Arena, vec2::Vec as InnerVecGeneric};
 
-type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
+type InnerVec<'a, T> = InnerVecGeneric<'a, T, Arena>;
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -40,18 +40,18 @@ type InnerVec<'a, T> = InnerVecGeneric<'a, T, Bump>;
 #[repr(transparent)]
 pub struct Vec<'alloc, T>(InnerVec<'alloc, T>);
 
-/// SAFETY: Even though `Bump` is not `Sync`, we can make `Vec<T>` `Sync` if `T` is `Sync` because:
+/// SAFETY: Even though `Arena` is not `Sync`, we can make `Vec<T>` `Sync` if `T` is `Sync` because:
 ///
-/// 1. No public methods allow access to the `&Bump` that `Vec` contains (in `RawVec`),
-///    so user cannot illegally obtain 2 `&Bump`s on different threads via `Vec`.
+/// 1. No public methods allow access to the `&Arena` that `Vec` contains (in `RawVec`),
+///    so user cannot illegally obtain 2 `&Arena`s on different threads via `Vec`.
 ///
-/// 2. All internal methods which access the `&Bump` take a `&mut self`.
+/// 2. All internal methods which access the `&Arena` take a `&mut self`.
 ///    `&mut Vec` cannot be transferred across threads, and nor can an owned `Vec` (`Vec` is not `Send`).
 ///    Therefore these methods taking `&mut self` can be sure they're not operating on a `Vec`
 ///    which has been moved across threads.
 ///
 /// Note: `Vec` CANNOT be `Send`, even if `T` is `Send`, because that would allow 2 `Vec`s on different
-/// threads to both allocate into same arena simultaneously. `Bump` is not thread-safe, and this would
+/// threads to both allocate into same arena simultaneously. `Arena` is not thread-safe, and this would
 /// be undefined behavior.
 unsafe impl<T: Sync> Sync for Vec<'_, T> {}
 
@@ -78,7 +78,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(InnerVec::new_in(allocator.bump()))
+        Self(InnerVec::new_in(allocator.arena()))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -131,7 +131,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(InnerVec::with_capacity_in(capacity, allocator.bump()))
+        Self(InnerVec::with_capacity_in(capacity, allocator.arena()))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -145,7 +145,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = InnerVec::with_capacity_in(capacity, allocator.bump());
+        let mut vec = InnerVec::with_capacity_in(capacity, allocator.arena());
         vec.extend(iter);
         Self(vec)
     }
@@ -175,7 +175,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
-        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.bump()) };
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.arena()) };
         Self(vec)
     }
 

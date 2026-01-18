@@ -1882,6 +1882,7 @@ name = "oxc_data_structures"
 version = "0.108.0"
 dependencies = [
  "ropey",
+ "rustversion",
 ]
 
 [[package]]

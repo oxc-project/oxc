@@ -1,5 +1,4 @@
-// This file was originally derived from Bumpalo's Vec:
-// https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/collections/raw_vec.rs
+// This file is copied from the [Bumpalo's Vec](https://github.com/fitzgen/bumpalo/blob/1d2fbea9e3d0c2be56367b9ad5382ff33852a188/src/collections/raw_vec.rs)
 
 // Copyright 2015 The Rust Project Developers. See the COPYRIGHT
 // file at the top-level directory of this distribution and at
@@ -24,16 +23,16 @@
 #![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
-use std::{
-    alloc::Layout,
-    cmp,
-    ptr::{self, NonNull},
-};
+use core::alloc::Layout;
+use core::cmp;
+use core::mem;
+use core::ptr::{self, NonNull};
 
 use crate::alloc::Alloc;
 
 /// Error type for fallible methods:
 /// [`RawVec::try_reserve`], [`RawVec::try_reserve_exact`].
+#[derive(Debug)]
 pub enum AllocError {
     AllocErr,
     CapacityOverflow,
@@ -74,15 +73,12 @@ pub struct RawVec<'a, T, A: Alloc> {
     ptr: NonNull<T>,
     len: u32,
     cap: u32,
-    // SAFETY: Methods must not mutate the allocator (e.g. allocate into it), unless they can guarantee
-    // they have exclusive access to it, by taking `&mut self`
     alloc: &'a A,
 }
 
 impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// Like `new` but parameterized over the choice of allocator for
     /// the returned RawVec.
-    #[inline(always)]
     pub fn new_in(alloc: &'a A) -> Self {
         // `cap: 0` means "unallocated". zero-sized types are ignored.
         RawVec { ptr: NonNull::dangling(), alloc, cap: 0, len: 0 }
@@ -97,7 +93,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     #[inline]
     pub fn with_capacity_in(cap: usize, alloc: &'a A) -> Self {
         unsafe {
-            let elem_size = size_of::<T>();
+            let elem_size = mem::size_of::<T>();
 
             let alloc_size = cap.checked_mul(elem_size).unwrap_or_else(|| capacity_overflow());
             alloc_guard(alloc_size).unwrap_or_else(|_| capacity_overflow());
@@ -106,7 +102,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
             let ptr = if alloc_size == 0 {
                 NonNull::<T>::dangling()
             } else {
-                let align = align_of::<T>();
+                let align = mem::align_of::<T>();
                 let layout = Layout::from_size_align(alloc_size, align).unwrap();
                 alloc.alloc(layout).cast::<T>()
             };
@@ -131,7 +127,6 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     ///
     /// If all these values came from a `Vec` created in allocator `a`, then these requirements
     /// are guaranteed to be fulfilled.
-    #[inline(always)]
     pub unsafe fn from_raw_parts_in(ptr: *mut T, len: usize, cap: usize, alloc: &'a A) -> Self {
         // SAFETY: Caller guarantees `ptr` was allocated, which implies it's not null
         let ptr = unsafe { NonNull::new_unchecked(ptr) };
@@ -145,10 +140,9 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
         RawVec { ptr, len, cap, alloc }
     }
 
-    /// Gets a raw pointer to the start of the allocation.
-    /// Note that this is `NonNull::dangling()` if `cap = 0` or T is zero-sized.
-    /// In the former case, you must be careful.
-    #[inline(always)]
+    /// Gets a raw pointer to the start of the allocation. Note that this is
+    /// Unique::empty() if `cap = 0` or T is zero-sized. In the former case, you must
+    /// be careful.
     pub fn ptr(&self) -> *mut T {
         self.ptr.as_ptr()
     }
@@ -188,7 +182,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// This will always be `u32::MAX` if `T` is zero-sized.
     #[inline(always)]
     pub fn capacity_u32(&self) -> u32 {
-        if size_of::<T>() == 0 { !0 } else { self.cap }
+        if mem::size_of::<T>() == 0 { !0 } else { self.cap }
     }
 
     /// Gets the capacity of the allocation as `usize`.
@@ -196,55 +190,14 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     /// This will always be `usize::MAX` if `T` is zero-sized.
     #[inline(always)]
     pub fn capacity_usize(&self) -> usize {
-        if size_of::<T>() == 0 { !0 } else { self.cap as usize }
+        if mem::size_of::<T>() == 0 { !0 } else { self.cap as usize }
     }
 
-    /// Get a shared reference to the allocator backing this `RawVec`.
-    ///
-    /// This method is hazardous.
-    ///
-    /// `Vec` is `Sync`, but `Bump` is not, because it utilizes interior mutability.
-    /// It is possible to make allocations into the arena while holding only a `&Bump`.
-    /// Because `Vec` is `Sync`, it's possible for multiple `&Vec` references to the same `Vec`,
-    /// or references to multiple `Vec`s attached to the same `Bump`, to exist simultaneously
-    /// on different threads.
-    ///
-    /// So this method could be used to obtain 2 `&Bump` references simultaneously on different threads.
-    /// Utilizing those references to allocate into the arena simultaneously from different threads
-    /// would be UB.
-    ///
-    /// We cannot rely on the type system or borrow checker to ensure correct synchronization.
-    ///
-    /// Therefore callers must ensure by other means that they have exclusive access, by:
-    ///
-    /// 1. Taking a `&mut self`.
-    ///    No methods of `Vec` or `RawVec` which do not hold a `&mut Vec` / `&mut RawVec` can use this method.
-    ///
-    /// 2. That `&mut self` must be held for at least as long as the `&'a A` reference returned by
-    ///    this method is held.
-    ///
-    /// Note: It's tempting to think we could make this a safe method by making it take `&mut self`,
-    /// but that's insufficient. That would enforce that the caller holds a `&mut self`, but the `&'a A`
-    /// returned by this method outlives the lifetime of `&self` that the method takes, so it would
-    /// NOT guarantee anything about *how long* they hold it for.
-    /// Taking a `&'a mut self` *would* be safe, but it'd be impractical.
-    ///
-    /// For further information, see comments on the `impl Sync` implementation of `Vec`.
-    ///
-    /// # IMPORTANT
-    /// The ability to obtain a reference to the allocator MUST NOT be exposed to user,
-    /// outside of `Vec`'s internals.
-    ///
-    /// # SAFETY
-    /// Caller must ensure they have exclusive access, but holding a `&mut Vec` or `&mut RawVec`
-    /// for the duration that the reference returned by this method is held.
-    /// See text above for further detail.
-    #[inline(always)]
-    pub unsafe fn bump(&self) -> &'a A {
+    /// Returns a shared reference to the arena backing this `RawVec`.
+    pub fn arena(&self) -> &'a A {
         self.alloc
     }
 
-    #[inline]
     fn current_layout(&self) -> Option<Layout> {
         if self.cap == 0 {
             None
@@ -252,10 +205,10 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
             // We have an allocated chunk of memory, so we can bypass runtime
             // checks to get our current layout.
             unsafe {
-                let align = align_of::<T>();
+                let align = mem::align_of::<T>();
                 // `self.cap as usize` is safe because it's is `u32`
                 // so it must be less than `usize::MAX`.
-                let size = size_of::<T>() * self.cap as usize;
+                let size = mem::size_of::<T>() * self.cap as usize;
                 Some(Layout::from_size_align_unchecked(size, align))
             }
         }
@@ -314,7 +267,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     #[cold]
     pub fn double(&mut self) {
         unsafe {
-            let elem_size = size_of::<T>();
+            let elem_size = mem::size_of::<T>();
 
             // since we set the capacity to usize::MAX when elem_size is
             // 0, getting to here necessarily means the RawVec is overfull.
@@ -377,7 +330,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     #[cold]
     pub fn double_in_place(&mut self) -> bool {
         unsafe {
-            let elem_size = size_of::<T>();
+            let elem_size = mem::size_of::<T>();
             let old_layout = match self.current_layout() {
                 Some(layout) => layout,
                 None => return false, // nothing to double
@@ -613,7 +566,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
     ///
     /// Aborts on OOM.
     pub fn shrink_to_fit(&mut self, amount: u32) {
-        let elem_size = size_of::<T>();
+        let elem_size = mem::size_of::<T>();
 
         // Set the `cap` because they might be about to promote to a `Box<[T]>`
         if elem_size == 0 {
@@ -651,7 +604,7 @@ impl<'a, T, A: Alloc> RawVec<'a, T, A> {
                 // they are `u32` so they must be less than `usize::MAX`.
                 let old_size = elem_size * self.cap as usize;
                 let new_size = elem_size * amount as usize;
-                let align = align_of::<T>();
+                let align = mem::align_of::<T>();
                 let old_layout = Layout::from_size_align_unchecked(old_size, align);
                 let new_layout = Layout::from_size_align_unchecked(new_size, align);
                 self.ptr =
@@ -679,7 +632,7 @@ impl<'a, T> RawVec<'a, T> {
         use crate::boxed::Box;
 
         // NOTE: not calling `cap()` here; actually using the real `cap` field!
-        let slice = std::slice::from_raw_parts_mut(self.ptr(), self.cap);
+        let slice = core::slice::from_raw_parts_mut(self.ptr(), self.cap);
         let output: Box<'a, [T]> = Box::from_raw(slice);
         mem::forget(self);
         output
@@ -794,20 +747,18 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
             Some(layout) => unsafe {
                 // Marking this function as `#[cold]` and `#[inline(never)]` because grow method is
                 // relatively expensive and we want to avoid inlining it into the caller.
-                // Type-erased (no `T` parameter) to avoid monomorphization bloat - the type is
-                // immediately cast to `u8` anyway.
                 #[cold]
                 #[inline(never)]
-                unsafe fn grow<A: Alloc>(
+                unsafe fn grow<T, A: Alloc>(
                     alloc: &A,
-                    ptr: NonNull<u8>,
+                    ptr: NonNull<T>,
                     old_layout: Layout,
                     new_layout: Layout,
                 ) -> NonNull<u8> {
-                    alloc.grow(ptr, old_layout, new_layout)
+                    alloc.grow(ptr.cast(), old_layout, new_layout)
                 }
                 debug_assert!(new_layout.align() == layout.align());
-                grow(self.alloc, self.ptr.cast(), layout, new_layout)
+                grow(self.alloc, self.ptr, layout, new_layout)
             },
             None => self.alloc.alloc(new_layout),
         };
@@ -823,7 +774,7 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
     ///
     /// Not sure what safety invariants of this method are! TODO
     pub unsafe fn dealloc_buffer(&mut self) {
-        let elem_size = size_of::<T>();
+        let elem_size = mem::size_of::<T>();
         if elem_size != 0
             && let Some(layout) = self.current_layout()
         {
@@ -843,8 +794,8 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
 
 #[inline]
 fn alloc_guard(alloc_size: usize) -> Result<(), AllocError> {
-    if size_of::<usize>() < 8 {
-        if alloc_size > isize::MAX as usize {
+    if mem::size_of::<usize>() < 8 {
+        if alloc_size > ::core::isize::MAX as usize {
             return Err(AllocError::CapacityOverflow);
         }
     } else if alloc_size > u32::MAX as usize {
@@ -878,13 +829,13 @@ fn handle_error(error: AllocError) -> ! {
 
 #[cfg(test)]
 mod tests {
-    use crate::bump::Bump;
+    use crate::arena::ArenaDefault;
 
     use super::*;
 
     #[test]
     fn reserve_does_not_overallocate() {
-        let arena = Bump::new();
+        let arena = ArenaDefault::new();
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`

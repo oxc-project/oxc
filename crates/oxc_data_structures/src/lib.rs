@@ -20,5 +20,8 @@ pub mod rope;
 #[cfg(feature = "slice_iter")]
 pub mod slice_iter;
 
+#[cfg(feature = "pointer_ext")]
+pub mod pointer_ext;
+
 #[cfg(feature = "stack")]
 pub mod stack;

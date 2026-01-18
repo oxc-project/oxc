@@ -8,14 +8,13 @@
 #![expect(clippy::inline_always)]
 
 use std::{
+    fmt::{self, Debug},
     hash::Hash,
     mem::ManuallyDrop,
     ops::{Deref, DerefMut},
 };
 
 use rustc_hash::FxBuildHasher;
-
-use crate::bump::Bump;
 
 // Re-export additional types from `hashbrown`
 pub use hashbrown::{
@@ -26,9 +25,9 @@ pub use hashbrown::{
     },
 };
 
-use crate::Allocator;
+use crate::{Allocator, arena::ArenaDefault as Arena};
 
-type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc Bump>;
+type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc Arena>;
 
 /// A hash map without `Drop`, that uses [`FxHasher`] to hash keys, and stores data in arena allocator.
 ///
@@ -49,44 +48,12 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// a [`HashMap`] will refuse to compile if either key or value is a [`Drop`] type.
 ///
 /// [`FxHasher`]: rustc_hash::FxHasher
-#[derive(Debug)]
-pub struct HashMap<'alloc, K, V>(pub(crate) ManuallyDrop<FxHashMap<'alloc, K, V>>);
+pub struct HashMap<'alloc, K, V>(ManuallyDrop<FxHashMap<'alloc, K, V>>);
 
-/// SAFETY: Even though `Bump` is not `Sync`, we can make `HashMap<K, V>` `Sync` if both `K` and `V`
-/// are `Sync` because:
-///
-/// 1. No public methods allow access to the `&Bump` that `HashMap` contains (in `hashbrown::HashMap`),
-///    so user cannot illegally obtain 2 `&Bump`s on different threads via `HashMap`.
-///
-/// 2. All internal methods which access the `&Bump` take a `&mut self`.
-///    `&mut HashMap` cannot be transferred across threads, and nor can an owned `HashMap`
-///    (`HashMap` is not `Send`).
-///    Therefore these methods taking `&mut self` can be sure they're not operating on a `HashMap`
-///    which has been moved across threads.
-///
-/// Note: `HashMap` CANNOT be `Send`, even if `K` and `V` are `Send`, because that would allow 2 `HashMap`s
-/// on different threads to both allocate into same arena simultaneously. `Bump` is not thread-safe,
-/// and this would be undefined behavior.
-///
-/// ### Soundness holes
-///
-/// This is not actually fully sound. There are 2 holes I (@overlookmotel) am aware of:
-///
-/// 1. `allocator` method, which does allow access to the `&Bump` that `HashMap` contains.
-/// 2. `Clone` impl on `hashbrown::HashMap`, which may perform allocations in the arena, given only a
-///    `&self` reference.
-///
-/// [`HashMap::allocator`] prevents accidental access to the underlying method of `hashbrown::HashMap`,
-/// and `clone` called on a `&HashMap` clones the `&HashMap` reference, not the `HashMap` itself (harmless).
-/// But both can be accessed via explicit `Deref` (`hash_map.deref().allocator()` or `hash_map.deref().clone()`),
-/// so we don't have complete soundness.
-///
-/// To close these holes we need to remove `Deref` and `DerefMut` impls on `HashMap`, and instead add
-/// methods to `HashMap` itself which pass on calls to the inner `hashbrown::HashMap`.
-///
-/// TODO: Fix these holes.
-/// TODO: Remove any other methods that currently allow performing allocations with only a `&self` reference.
-unsafe impl<K: Sync, V: Sync> Sync for HashMap<'_, K, V> {}
+/// SAFETY: Not actually safe, but for enabling `Send` for downstream crates.
+unsafe impl<K, V> Send for HashMap<'_, K, V> {}
+/// SAFETY: Not actually safe, but for enabling `Sync` for downstream crates.
+unsafe impl<K, V> Sync for HashMap<'_, K, V> {}
 
 // TODO: `IntoIter`, `Drain`, and other consuming iterators provided by `hashbrown` are `Drop`.
 // Wrap them in `ManuallyDrop` to prevent that.
@@ -113,7 +80,7 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.bump());
+        let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
     }
 
@@ -126,51 +93,15 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
         let inner =
-            FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
+            FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.arena());
         Self(ManuallyDrop::new(inner))
-    }
-
-    /// Create a new [`HashMap`] whose elements are taken from an iterator and
-    /// allocated in the given `allocator`.
-    ///
-    /// This is behaviorally identical to [`FromIterator::from_iter`].
-    #[inline]
-    pub fn from_iter_in<I: IntoIterator<Item = (K, V)>>(
-        iter: I,
-        allocator: &'alloc Allocator,
-    ) -> Self
-    where
-        K: Eq + Hash,
-    {
-        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
-
-        let iter = iter.into_iter();
-
-        // Use the iterator's lower size bound.
-        // This follows `hashbrown::HashMap`'s `from_iter` implementation.
-        //
-        // This is a trade-off:
-        // * Negative: If lower bound is too low, the `HashMap` may have to grow and reallocate during `for_each` loop.
-        // * Positive: Avoids potential large over-allocation for iterators where upper bound may be a large over-estimate
-        //   e.g. filter iterators.
-        let capacity = iter.size_hint().0;
-        let map = FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
-        // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
-        // to drop the `FxHashMap` in case of a panic in iterator's `next` method
-        let mut map = ManuallyDrop::new(map);
-
-        iter.for_each(|(k, v)| {
-            map.insert(k, v);
-        });
-
-        Self(map)
     }
 
     /// Creates a consuming iterator visiting all the keys in arbitrary order.
     ///
     /// The map cannot be used after calling this. The iterator element type is `K`.
     #[inline(always)]
-    pub fn into_keys(self) -> IntoKeys<K, V, &'alloc Bump> {
+    pub fn into_keys(self) -> IntoKeys<K, V, &'alloc Arena> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_keys()
     }
@@ -179,26 +110,9 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     ///
     /// The map cannot be used after calling this. The iterator element type is `V`.
     #[inline(always)]
-    pub fn into_values(self) -> IntoValues<K, V, &'alloc Bump> {
+    pub fn into_values(self) -> IntoValues<K, V, &'alloc Arena> {
         let inner = ManuallyDrop::into_inner(self.0);
         inner.into_values()
-    }
-
-    /// Calling this method produces a compile-time panic.
-    ///
-    /// This method would be unsound, because [`HashMap`] is `Sync`, and the underlying allocator
-    /// (`Bump`) is not `Sync`.
-    ///
-    /// This method exists only to block access as much as possible to the underlying
-    /// `hashbrown::HashMap::allocator` method. That method can still be accessed via explicit `Deref`
-    /// (`hash_map.deref().allocator()`), but that's unsound.
-    ///
-    /// We'll prevent access to it completely and remove this method as soon as we can.
-    // TODO: Do that!
-    #[expect(clippy::unused_self)]
-    pub fn allocator(&self) -> &'alloc Bump {
-        const { panic!("This method cannot be called") };
-        unreachable!();
     }
 }
 
@@ -220,7 +134,7 @@ impl<'alloc, K, V> DerefMut for HashMap<'alloc, K, V> {
 }
 
 impl<'alloc, K, V> IntoIterator for HashMap<'alloc, K, V> {
-    type IntoIter = IntoIter<K, V, &'alloc Bump>;
+    type IntoIter = IntoIter<K, V, &'alloc Arena>;
     type Item = (K, V);
 
     /// Creates a consuming iterator, that is, one that moves each key-value pair out of the map
@@ -285,4 +199,21 @@ where
 {
 }
 
+impl<K: Debug, V: Debug> Debug for HashMap<'_, K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 // Note: `Index` and `Extend` are implemented via `Deref`
+
+/*
+// Uncomment once we also provide `oxc_allocator::HashSet`
+impl<'alloc, T> From<HashMap<'alloc, T, ()>> for HashSet<'alloc, T> {
+    fn from(map: HashMap<'alloc, T, ()>) -> Self {
+        let inner_map = ManuallyDrop::into_inner(map.0);
+        let inner_set = FxHashSet::from(inner_map);
+        Self(ManuallyDrop::new(inner_set))
+    }
+}
+*/

@@ -405,10 +405,12 @@ impl FixedSizeAllocator {
         const CHUNK_SIZE: usize = FIXED_METADATA_OFFSET - RAW_METADATA_SIZE;
         const _: () = assert!(CHUNK_SIZE.is_multiple_of(Allocator::RAW_MIN_ALIGN));
 
+        let layout =
+            std::alloc::Layout::from_size_align(CHUNK_SIZE, Allocator::RAW_MIN_ALIGN).unwrap();
         // SAFETY: Memory region starting at `chunk_ptr` with `CHUNK_SIZE` bytes is within
         // the allocation we just made.
         // `chunk_ptr` has high alignment (4 GiB). `CHUNK_SIZE` is large and a multiple of 16.
-        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, CHUNK_SIZE) };
+        let allocator = unsafe { Allocator::from_raw_parts(chunk_ptr, layout) };
         let allocator = ManuallyDrop::new(allocator);
 
         // Write `FixedSizeAllocatorMetadata` to after space reserved for `RawTransferMetadata`,

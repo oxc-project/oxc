@@ -1,4 +1,5 @@
 use std::{
+    alloc::Layout,
     mem::ManuallyDrop,
     ptr::{self, NonNull},
 };
@@ -139,8 +140,10 @@ unsafe fn parse_raw_impl(
     // SAFETY: `data_ptr` and `data_size` outline a section of the memory in `buffer`.
     // `data_ptr` and `data_size` are multiples of 16.
     // `data_size` is greater than `Allocator::MIN_SIZE`.
-    let allocator =
-        unsafe { Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size) };
+    let allocator = unsafe {
+        let layout = Layout::from_size_align_unchecked(data_size, BUMP_ALIGN);
+        Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), layout)
+    };
     let allocator = ManuallyDrop::new(allocator);
 
     // Get source type
