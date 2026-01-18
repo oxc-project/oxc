@@ -1,6 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::{FileExtension, GetSpan};
+use oxc_span::{FileExtension, GetSpan, Span};
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
@@ -305,10 +305,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let kind = if self.eat(Kind::Namespace) {
             TSModuleDeclarationKind::Namespace
         } else {
+            let module_keyword_start = self.cur_token().start();
             self.expect(Kind::Module);
             if self.at(Kind::Str) {
                 return self.parse_ambient_external_module_declaration(span, modifiers);
             }
+            // TS1540: `module ... {}` declarations must have a string name.
+            self.error(diagnostics::module_declaration_must_have_string_name(Span::new(
+                module_keyword_start,
+                self.prev_token_end,
+            )));
             TSModuleDeclarationKind::Module
         };
         self.parse_module_or_namespace_declaration(span, kind, modifiers)
