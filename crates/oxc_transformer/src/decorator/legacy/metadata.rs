@@ -554,12 +554,13 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
                     let binding =
                         self.ctx.var_declarations.create_uid_var_based_on_node(&left, ctx);
                     let Expression::LogicalExpression(logical) = &mut left else { unreachable!() };
-                    let right = logical.right.take_in(ctx.ast);
+                    let right = logical.right.take_in(&ctx.ast);
                     // `(_a = A.B)`
+                    let write_target = binding.create_write_target(ctx);
                     let right = ctx.ast.expression_assignment(
                         SPAN,
                         AssignmentOperator::Assign,
-                        binding.create_write_target(ctx),
+                        write_target,
                         right,
                     );
                     // `(_a = A.B) !== void 0`
@@ -572,7 +573,9 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
 
                     let object = binding.create_read_expression(ctx);
                     let member = create_property_access(SPAN, object, &qualified.right.name, ctx);
-                    Some(ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member))
+                    let logical =
+                        ctx.ast.expression_logical(SPAN, left, LogicalOperator::And, member);
+                    Some(logical)
                 }
             }
             TSTypeName::ThisExpression(_) => None,
@@ -785,7 +788,8 @@ impl<'a> LegacyDecoratorMetadata<'a, '_> {
         value: Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Decorator<'a> {
-        ctx.ast.decorator(SPAN, self.create_metadata(key, value, ctx))
+        let metadata = self.create_metadata(key, value, ctx);
+        ctx.ast.decorator(SPAN, metadata)
     }
 
     /// `_metadata("design:type", type)`

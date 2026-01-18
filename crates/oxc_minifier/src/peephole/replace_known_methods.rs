@@ -84,16 +84,16 @@ impl<'a> PeepholeOptimizations {
 
         let wrap_with_unary_plus_if_needed = |expr: &mut Expression<'a>| {
             if expr.value_type(ctx).is_number() {
-                expr.take_in(ctx.ast)
+                expr.take_in(&ctx.ast)
             } else {
-                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, expr.take_in(ctx.ast))
+                ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryPlus, expr.take_in(&ctx.ast))
             }
         };
 
         Some(ctx.ast.expression_binary(
             span,
             // see [`PeepholeOptimizations::is_binary_operator_that_does_number_conversion`] why it does not require `wrap_with_unary_plus_if_needed` here
-            first_arg.take_in(ctx.ast),
+            first_arg.take_in(&ctx.ast),
             BinaryOperator::Exponential,
             wrap_with_unary_plus_if_needed(second_arg),
         ))
@@ -190,10 +190,10 @@ impl<'a> PeepholeOptimizations {
 
         *node = ctx.ast.expression_call(
             original_span,
-            new_root_callee.take_in(ctx.ast),
+            new_root_callee.take_in(&ctx.ast),
             NONE,
             ctx.ast.vec_from_iter(
-                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(ctx.ast)),
+                collected_arguments.into_iter().rev().flat_map(|arg| arg.take_in(&ctx.ast)),
             ),
             false,
         );
@@ -254,13 +254,13 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 if args.is_empty() {
-                    Some(object.take_in(ctx.ast))
+                    Some(object.take_in(&ctx.ast))
                 } else if can_merge_until.is_some() {
                     Some(ctx.ast.expression_call(
                         span,
-                        callee.take_in(ctx.ast),
+                        callee.take_in(&ctx.ast),
                         NONE,
-                        args.take_in(ctx.ast),
+                        args.take_in(&ctx.ast),
                         false,
                     ))
                 } else {
@@ -563,7 +563,7 @@ impl<'a> PeepholeOptimizations {
                     s.span = span;
                     s.value = ctx.ast.atom(&c.to_string());
                     s.raw = None;
-                    Some(object.take_in(ctx.ast))
+                    Some(object.take_in(&ctx.ast))
                 } else {
                     None
                 }

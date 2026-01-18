@@ -79,7 +79,7 @@ impl<'a> TypeScriptEnum<'a> {
             return None;
         }
 
-        let ast = ctx.ast;
+        let ast = ctx.ast.clone();
 
         let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
@@ -212,7 +212,7 @@ impl<'a> TypeScriptEnum<'a> {
         param_binding: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> ArenaVec<'a, Statement<'a>> {
-        let ast = ctx.ast;
+        let ast = ctx.ast.clone();
 
         let mut statements = ast.vec();
 
@@ -224,7 +224,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let mut prev_member_name = None;
 
-        for member in members.take_in(ctx.ast) {
+        for member in members.take_in(&ctx.ast) {
             let member_name = member.id.static_name();
 
             let init = if let Some(mut initializer) = member.initializer {

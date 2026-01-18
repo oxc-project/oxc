@@ -147,7 +147,7 @@ impl<'a> Transformer<'a> {
                 .source_type
                 .is_typescript()
                 .then(|| TypeScript::new(&self.typescript, &self.ctx)),
-            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, ast_builder, &self.ctx),
+            x1_jsx: Jsx::new(self.jsx, self.env.es2018.object_rest_spread, &ast_builder, &self.ctx),
             x2_es2026: ES2026::new(self.env.es2026, &self.ctx),
             x2_es2022: ES2022::new(
                 self.env.es2022,
@@ -578,7 +578,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a, '_> {
                 let Statement::ExpressionStatement(expr_stmt) = stmt else {
                     continue;
                 };
-                let expression = Some(expr_stmt.expression.take_in(ctx.ast));
+                let expression = Some(expr_stmt.expression.take_in(&ctx.ast));
                 *stmt = ctx.ast.statement_return(SPAN, expression);
                 return;
             }

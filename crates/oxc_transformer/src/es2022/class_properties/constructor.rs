@@ -237,7 +237,8 @@ impl<'a> ClassProperties<'a, '_> {
             let rest_element =
                 ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
             params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
-            stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)));
+            let super_call = create_super_call(&args_binding, ctx);
+            stmts.push(ctx.ast.statement_expression(SPAN, super_call));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
         stmts.extend(exprs_into_stmts(inits, ctx));
@@ -573,19 +574,16 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
         });
 
         let ctx = &mut *self.ctx;
-        let super_call = expr.take_in(ctx.ast);
-        *expr = ctx.ast.expression_call(
-            span,
-            Expression::from(ctx.ast.member_expression_static(
-                SPAN,
-                super_binding.create_read_expression(ctx),
-                ctx.ast.identifier_name(SPAN, Atom::from("call")),
-                false,
-            )),
-            NONE,
-            ctx.ast.vec1(Argument::from(super_call)),
+        let super_call = expr.take_in(&ctx.ast);
+        let callee_object = super_binding.create_read_expression(ctx);
+        let callee = Expression::from(ctx.ast.member_expression_static(
+            SPAN,
+            callee_object,
+            ctx.ast.identifier_name(SPAN, Atom::from("call")),
             false,
-        );
+        ));
+        let arguments = ctx.ast.vec1(Argument::from(super_call));
+        *expr = ctx.ast.expression_call(span, callee, NONE, arguments, false);
     }
 }
 

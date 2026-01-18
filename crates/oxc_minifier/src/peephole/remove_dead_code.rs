@@ -82,7 +82,7 @@ impl<'a> PeepholeOptimizations {
                     NumberBase::Decimal,
                 );
             }
-            let mut keep_var = KeepVar::new(ctx.ast);
+            let mut keep_var = KeepVar::new(ctx.ast.clone());
             if boolean {
                 if let Some(alternate) = &if_stmt.alternate {
                     keep_var.visit_statement(alternate);
@@ -113,7 +113,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
             *stmt = if boolean {
-                if_stmt.consequent.take_in(ctx.ast)
+                if_stmt.consequent.take_in(&ctx.ast)
             } else if let Some(alternate) = if_stmt.alternate.take() {
                 alternate
             } else {
@@ -147,7 +147,7 @@ impl<'a> PeepholeOptimizations {
         match test_boolean {
             Some(false) => match &for_stmt.init {
                 Some(ForStatementInit::VariableDeclaration(_)) => {
-                    let mut keep_var = KeepVar::new(ctx.ast);
+                    let mut keep_var = KeepVar::new(ctx.ast.clone());
                     keep_var.visit_statement(&for_stmt.body);
                     let mut var_decl = keep_var.get_variable_declaration();
                     let Some(ForStatementInit::VariableDeclaration(var_init)) = &mut for_stmt.init
@@ -158,9 +158,9 @@ impl<'a> PeepholeOptimizations {
                         if let Some(var_decl) = &mut var_decl {
                             var_decl
                                 .declarations
-                                .splice(0..0, var_init.declarations.take_in(ctx.ast));
+                                .splice(0..0, var_init.declarations.take_in(&ctx.ast));
                         } else {
-                            var_decl = Some(var_init.take_in_box(ctx.ast));
+                            var_decl = Some(var_init.take_in_box(&ctx.ast));
                         }
                     }
                     *stmt = var_decl.map_or_else(
@@ -170,7 +170,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.state.changed = true;
                 }
                 None => {
-                    let mut keep_var = KeepVar::new(ctx.ast);
+                    let mut keep_var = KeepVar::new(ctx.ast.clone());
                     keep_var.visit_statement(&for_stmt.body);
                     *stmt = keep_var.get_variable_declaration().map_or_else(
                         || ctx.ast.statement_empty(for_stmt.span),
@@ -217,7 +217,7 @@ impl<'a> PeepholeOptimizations {
             }
             _ => return
         }
-        let mut var = KeepVar::new(ctx.ast);
+        let mut var = KeepVar::new(ctx.ast.clone());
         var.visit_statement(&s.body);
         let var_decl = var.get_variable_declaration_statement();
         *stmt = var_decl.unwrap_or_else(|| ctx.ast.statement_empty(s.span));
@@ -245,7 +245,7 @@ impl<'a> PeepholeOptimizations {
         if let Some(handler) = &s.handler
             && s.block.body.is_empty()
         {
-            let mut var = KeepVar::new(ctx.ast);
+            let mut var = KeepVar::new(ctx.ast.clone());
             var.visit_block_statement(&handler.body);
             let Some(handler) = &mut s.handler else { return };
             handler.body.body.clear();
@@ -282,28 +282,22 @@ impl<'a> PeepholeOptimizations {
         ctx.state.changed = true;
         *expr = if e.test.may_have_side_effects(ctx) {
             // "(a, true) ? b : c" => "a, b"
-            let exprs = ctx.ast.vec_from_array([
-                {
-                    let mut test = e.test.take_in(ctx.ast);
-                    Self::remove_unused_expression(&mut test, ctx);
-                    test
-                },
-                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) },
-            ]);
+            let mut test = e.test.take_in(&ctx.ast);
+            Self::remove_unused_expression(&mut test, ctx);
+            let branch =
+                if v { e.consequent.take_in(&ctx.ast) } else { e.alternate.take_in(&ctx.ast) };
+            let exprs = ctx.ast.vec_from_array([test, branch]);
             ctx.ast.expression_sequence(e.span, exprs)
         } else {
             let result_expr =
-                if v { e.consequent.take_in(ctx.ast) } else { e.alternate.take_in(ctx.ast) };
+                if v { e.consequent.take_in(&ctx.ast) } else { e.alternate.take_in(&ctx.ast) };
             let should_keep_as_sequence_expr = Self::should_keep_indirect_access(&result_expr, ctx);
             // "(1 ? a.b : 0)()" => "(0, a.b)()"
             if should_keep_as_sequence_expr {
-                ctx.ast.expression_sequence(
-                    e.span,
-                    ctx.ast.vec_from_array([
-                        ctx.ast.expression_numeric_literal(e.span, 0.0, None, NumberBase::Decimal),
-                        result_expr,
-                    ]),
-                )
+                let zero =
+                    ctx.ast.expression_numeric_literal(e.span, 0.0, None, NumberBase::Decimal);
+                let exprs = ctx.ast.vec_from_array([zero, result_expr]);
+                ctx.ast.expression_sequence(e.span, exprs)
             } else {
                 result_expr
             }
