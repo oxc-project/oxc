@@ -581,6 +581,7 @@ pub(crate) mod oxc {
     pub mod const_comparisons;
     pub mod double_comparisons;
     pub mod erasing_op;
+    pub mod max_exports;
     pub mod misrefactored_assign_op;
     pub mod missing_throw;
     pub mod no_accumulating_spread;
@@ -1030,6 +1031,7 @@ oxc_macros::declare_all_lint_rules! {
     oxc::const_comparisons,
     oxc::double_comparisons,
     oxc::erasing_op,
+    oxc::max_exports,
     oxc::misrefactored_assign_op,
     oxc::missing_throw,
     oxc::no_accumulating_spread,

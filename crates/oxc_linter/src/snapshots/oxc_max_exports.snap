@@ -1,0 +1,43 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(max-exports): File has too many exports (2). Maximum allowed is 1.
+   ╭─[/Users/dallenpyrah/Projects/platform/submodules/oxlint/crates/oxc_linter/fixtures/import/index.ts:3:20]
+ 2 │             export const a = 1;
+ 3 │             export const b = 2;
+   ·                    ────────────
+ 4 │             
+   ╰────
+  help: Reduce the number of exports in this module or split it into smaller modules
+
+  ⚠ oxc(max-exports): File has too many exports (3). Maximum allowed is 2.
+   ╭─[/Users/dallenpyrah/Projects/platform/submodules/oxlint/crates/oxc_linter/fixtures/import/index.ts:4:20]
+ 3 │             export const b = 2;
+ 4 │             export const c = 3;
+   ·                    ────────────
+ 5 │             
+   ╰────
+  help: Reduce the number of exports in this module or split it into smaller modules
+
+  ⚠ oxc(max-exports): File has too many exports (2). Maximum allowed is 1.
+   ╭─[/Users/dallenpyrah/Projects/platform/submodules/oxlint/crates/oxc_linter/fixtures/import/index.ts:4:20]
+ 3 │             export const a = 1;
+ 4 │             export const b = 2;
+   ·                    ────────────
+ 5 │             
+   ╰────
+  help: Reduce the number of exports in this module or split it into smaller modules
+
+  ⚠ oxc(max-exports): File has too many exports (1). Maximum allowed is 0.
+   ╭─[/Users/dallenpyrah/Projects/platform/submodules/oxlint/crates/oxc_linter/fixtures/import/index.ts:1:1]
+ 1 │ export * from './mod';
+   · ──────────────────────
+   ╰────
+  help: Reduce the number of exports in this module or split it into smaller modules
+
+  ⚠ oxc(max-exports): File has too many exports (1). Maximum allowed is 0.
+   ╭─[/Users/dallenpyrah/Projects/platform/submodules/oxlint/crates/oxc_linter/fixtures/import/index.ts:1:10]
+ 1 │ export { foo } from './mod';
+   ·          ───
+   ╰────
+  help: Reduce the number of exports in this module or split it into smaller modules
