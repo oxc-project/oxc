@@ -14,6 +14,12 @@ impl<Config: ArenaConfigExt> Alloc for Arena<Config> {
     /// TODO: Docs
     #[inline(always)]
     fn alloc(&self, layout: Layout) -> NonNull<u8> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        {
+            // SAFETY: In Oxc, Arena is always wrapped in Allocator. This is only used for internal tooling.
+            unsafe { crate::tracking::get_stats_ref(self.cast_default()) }.record_allocation();
+        }
+
         self.alloc_layout(layout)
     }
 
@@ -43,6 +49,12 @@ impl<Config: ArenaConfigExt> Alloc for Arena<Config> {
     /// TODO
     #[inline(always)]
     unsafe fn grow(&self, ptr: NonNull<u8>, old_layout: Layout, new_layout: Layout) -> NonNull<u8> {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        {
+            // SAFETY: In Oxc, Arena is always wrapped in Allocator. This is only used for internal tooling.
+            unsafe { crate::tracking::get_stats_ref(self.cast_default()) }.record_reallocation();
+        }
+
         // Allocate new layout
         let new_ptr = self.alloc_layout(new_layout);
 

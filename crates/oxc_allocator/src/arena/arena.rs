@@ -762,6 +762,24 @@ impl<Config: ArenaConfigExt> Arena<Config> {
         let iter = unsafe { ChunkFooterIter::new(self) };
         iter.map(ChunkFooter::used_bytes).sum()
     }
+
+    /// Cast this `&Arena<Config>` to `&ArenaDefault`.
+    ///
+    /// This is only used for allocation tracking, which uses pointer arithmetic to find the
+    /// `AllocationStats` from the Arena's memory location. The tracking code assumes the Arena
+    /// is wrapped in an `Allocator`, which only uses `ArenaDefault`.
+    ///
+    /// # SAFETY
+    ///
+    /// This cast is only sound because all `Arena<Config>` types have the same memory layout
+    /// (the `Config` type parameter is only used for associated constants, not fields).
+    #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+    #[inline(always)]
+    pub(crate) fn cast_default(&self) -> &super::ArenaDefault {
+        // SAFETY: All Arena<Config> have identical memory layout regardless of Config.
+        // Config only affects associated constants, not struct fields.
+        unsafe { &*(std::ptr::from_ref(self).cast::<super::ArenaDefault>()) }
+    }
 }
 
 /// Iterator over all [`ChunkFooter`]s belonging to an [`Arena`], not including `EMPTY_CHUNK`.

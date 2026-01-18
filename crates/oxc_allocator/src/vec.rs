@@ -20,9 +20,9 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, vec2::Vec as InnerVecGeneric};
+use crate::{Allocator, Box, arena::ArenaDefault as Arena, vec2::Vec as InnerVecGeneric};
 
-type InnerVec<'a, T> = InnerVecGeneric<'a, T, Allocator>;
+type InnerVec<'a, T> = InnerVecGeneric<'a, T, Arena>;
 
 /// A `Vec` without [`Drop`], which stores its data in the arena allocator.
 ///
@@ -78,7 +78,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn new_in(allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(InnerVec::new_in(allocator))
+        Self(InnerVec::new_in(allocator.arena()))
     }
 
     /// Constructs a new, empty `Vec<T>` with at least the specified capacity
@@ -131,7 +131,7 @@ impl<'alloc, T> Vec<'alloc, T> {
     pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_T_IS_NOT_DROP };
 
-        Self(InnerVec::with_capacity_in(capacity, allocator))
+        Self(InnerVec::with_capacity_in(capacity, allocator.arena()))
     }
 
     /// Create a new [`Vec`] whose elements are taken from an iterator and
@@ -145,7 +145,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         let iter = iter.into_iter();
         let hint = iter.size_hint();
         let capacity = hint.1.unwrap_or(hint.0);
-        let mut vec = InnerVec::with_capacity_in(capacity, allocator);
+        let mut vec = InnerVec::with_capacity_in(capacity, allocator.arena());
         vec.extend(iter);
         Self(vec)
     }
@@ -175,7 +175,7 @@ impl<'alloc, T> Vec<'alloc, T> {
         // `ptr` was allocated with correct size for `[T; N]`.
         // `len` and `capacity` are both `N`.
         // Allocated size cannot be larger than `isize::MAX`, or `Box::new_in` would have failed.
-        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator) };
+        let vec = unsafe { InnerVec::from_raw_parts_in(ptr, N, N, allocator.arena()) };
         Self(vec)
     }
 
