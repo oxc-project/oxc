@@ -406,8 +406,9 @@ impl<'a> StyledComponents<'a, '_> {
         let TaggedTemplateExpression {
             span,
             tag,
-            quasi: TemplateLiteral { span: quasi_span, quasis, expressions },
+            quasi: TemplateLiteral { span: quasi_span, quasis, expressions, .. },
             type_arguments,
+            ..
         } = expr.take_in(ctx.ast);
 
         let quasis_elements = ctx.ast.vec_from_iter(quasis.into_iter().map(|quasi| {

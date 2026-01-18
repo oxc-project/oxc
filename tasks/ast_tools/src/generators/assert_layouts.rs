@@ -505,6 +505,8 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
             layout_64: PlatformLayout::from_size_align(0, 8),
             layout_32: PlatformLayout::from_size_align(0, 4),
         },
+        // `NodeId` is a `NonMaxU32` wrapper with a niche for max value
+        "NodeId" => Layout::from_size_align_niche(4, 4, Niche::new(0, 4, 1, 0)),
         name => panic!("Unknown primitive type: {name}"),
     }
 }

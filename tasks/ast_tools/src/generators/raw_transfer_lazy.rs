@@ -928,6 +928,8 @@ fn generate_primitive(primitive_def: &PrimitiveDef, state: &mut State, schema: &
         // Reuse constructors for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
         type_name if type_name.starts_with("Atomic") => return,
+        // Skip NodeId - it's handled specially (not transferred)
+        "NodeId" => return,
         type_name => panic!("Cannot generate constructor for primitive `{type_name}`"),
     };
 

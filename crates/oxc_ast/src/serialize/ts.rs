@@ -1,5 +1,6 @@
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{Concat2, ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
@@ -275,7 +276,11 @@ pub struct TSGlobalDeclarationId<'a, 'b>(pub &'b TSGlobalDeclaration<'a>);
 
 impl ESTree for TSGlobalDeclarationId<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ident = IdentifierName { span: self.0.global_span, name: Atom::from("global") };
+        let ident = IdentifierName {
+            span: self.0.global_span,
+            node_id: NodeId::DUMMY,
+            name: Atom::from("global"),
+        };
         ident.serialize(serializer);
     }
 }

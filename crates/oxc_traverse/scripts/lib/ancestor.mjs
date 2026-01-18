@@ -126,7 +126,7 @@ export default function generateAncestorsCode(types) {
 
     use oxc_allocator::{Address, Box, GetAddress, Vec};
     use oxc_ast::ast::*;
-    use oxc_syntax::scope::ScopeId;
+    use oxc_syntax::{node::NodeId, scope::ScopeId};
 
     /// Type of [\`Ancestor\`].
     /// Used in [\`crate::TraverseCtx::retag_stack\`].

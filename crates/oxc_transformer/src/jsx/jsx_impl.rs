@@ -540,7 +540,7 @@ impl<'a> JsxImpl<'a, '_> {
         element: ArenaBox<'a, JSXElement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let JSXElement { span, opening_element, closing_element, children } = element.unbox();
+        let JSXElement { span, opening_element, closing_element, children, .. } = element.unbox();
         Self::delete_reference_for_closing_element(closing_element.as_deref(), ctx);
         self.transform_jsx(span, Some(opening_element), children, ctx)
     }
@@ -581,7 +581,7 @@ impl<'a> JsxImpl<'a, '_> {
             for attribute in attributes {
                 match attribute {
                     JSXAttributeItem::Attribute(attr) => {
-                        let JSXAttribute { span, name, value } = attr.unbox();
+                        let JSXAttribute { span, name, value, .. } = attr.unbox();
                         match &name {
                             JSXAttributeName::Identifier(ident)
                                 if self.options.development
@@ -621,7 +621,7 @@ impl<'a> JsxImpl<'a, '_> {
                     }
                     // optimize `{...prop}` to `prop` in static mode
                     JSXAttributeItem::SpreadAttribute(spread) => {
-                        let JSXSpreadAttribute { argument, span } = spread.unbox();
+                        let JSXSpreadAttribute { argument, span, .. } = spread.unbox();
                         if is_classic
                             && attributes_len == 1
                             // Don't optimize when dev plugins are enabled - spread must be preserved
@@ -860,7 +860,7 @@ impl<'a> JsxImpl<'a, '_> {
         expr: ArenaBox<'a, JSXMemberExpression<'a>>,
         ctx: &TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let JSXMemberExpression { span, object, property } = expr.unbox();
+        let JSXMemberExpression { span, object, property, .. } = expr.unbox();
         let object = match object {
             JSXMemberExpressionObject::IdentifierReference(ident) => Expression::Identifier(ident),
             JSXMemberExpressionObject::MemberExpression(expr) => {
@@ -914,7 +914,7 @@ impl<'a> JsxImpl<'a, '_> {
         // Instead of Babel throwing `Spread children are not supported in React.`
         // `<>{...foo}</>` -> `jsxs(Fragment, { children: [ ...foo ] })`
         if let JSXChild::Spread(e) = child {
-            let JSXSpreadChild { span, expression } = e.unbox();
+            let JSXSpreadChild { span, expression, .. } = e.unbox();
             let spread_element = ctx.ast.array_expression_element_spread_element(span, expression);
             let elements = ctx.ast.vec1(spread_element);
             Some(ctx.ast.expression_array(span, elements))
@@ -932,7 +932,7 @@ impl<'a> JsxImpl<'a, '_> {
         // Instead of Babel throwing `Spread children are not supported in React.`
         // `<>{...foo}</>` -> `React.createElement(React.Fragment, null, ...foo)`
         if let JSXChild::Spread(e) = child {
-            let JSXSpreadChild { span, expression } = e.unbox();
+            let JSXSpreadChild { span, expression, .. } = e.unbox();
             Some(ctx.ast.argument_spread_element(span, expression))
         } else {
             self.transform_jsx_child(child, ctx).map(Argument::from)

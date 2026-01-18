@@ -10,6 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
 use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_syntax::node::NodeId;
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -330,7 +331,11 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
 
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
-            self.target_symbol.replace(IdentifierName { name: id.name, span: id.span });
+            self.target_symbol.replace(IdentifierName {
+                span: id.span,
+                node_id: NodeId::DUMMY,
+                name: id.name,
+            });
             true
         } else {
             false
@@ -341,7 +346,11 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol.replace(IdentifierName { name: Atom::from(name), span: id.span() });
+            self.target_symbol.replace(IdentifierName {
+                span: id.span(),
+                node_id: NodeId::DUMMY,
+                name: Atom::from(name),
+            });
             true
         } else {
             false

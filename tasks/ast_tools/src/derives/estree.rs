@@ -632,6 +632,10 @@ fn get_converter_path(converter_name: &str, from_krate: &str, schema: &Schema) -
 ///
 /// This function also used by Typescript and raw transfer generators.
 pub fn should_skip_field(field: &FieldDef, schema: &Schema) -> bool {
+    // Always skip node_id field - it's internal and not part of ESTree serialization
+    if field.name() == "node_id" {
+        return true;
+    }
     if field.estree.skip {
         true
     } else {

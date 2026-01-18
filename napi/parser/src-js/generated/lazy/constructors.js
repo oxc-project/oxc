@@ -36,7 +36,7 @@ export class Program {
 
   get sourceType() {
     const internal = this.#internal;
-    return new SourceType(internal.pos + 124, internal.ast);
+    return new SourceType(internal.pos + 136, internal.ast);
   }
 
   get hashbang() {
@@ -48,7 +48,7 @@ export class Program {
     const internal = this.#internal,
       cached = internal.$body;
     if (cached !== void 0) return cached;
-    return (internal.$body = constructVecStatement(internal.pos + 96, internal.ast));
+    return (internal.$body = constructVecStatement(internal.pos + 104, internal.ast));
   }
 
   toJSON() {
@@ -668,7 +668,7 @@ export class ObjectProperty {
 
   get kind() {
     const internal = this.#internal;
-    return constructPropertyKind(internal.pos + 40, internal.ast);
+    return constructPropertyKind(internal.pos + 44, internal.ast);
   }
 
   get key() {
@@ -683,17 +683,17 @@ export class ObjectProperty {
 
   get method() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 41, internal.ast);
+    return constructBool(internal.pos + 45, internal.ast);
   }
 
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 42, internal.ast);
+    return constructBool(internal.pos + 46, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 43, internal.ast);
+    return constructBool(internal.pos + 47, internal.ast);
   }
 
   toJSON() {
@@ -973,7 +973,7 @@ export class TemplateElement {
 
   get tail() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 44, internal.ast);
   }
 
   toJSON() {
@@ -1085,7 +1085,7 @@ export class ComputedMemberExpression {
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 44, internal.ast);
   }
 
   toJSON() {
@@ -1143,7 +1143,7 @@ export class StaticMemberExpression {
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 48, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   toJSON() {
@@ -1201,7 +1201,7 @@ export class PrivateFieldExpression {
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 48, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   toJSON() {
@@ -1266,7 +1266,7 @@ export class CallExpression {
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 56, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   toJSON() {
@@ -1380,7 +1380,7 @@ export class MetaProperty {
 
   get property() {
     const internal = this.#internal;
-    return new IdentifierName(internal.pos + 32, internal.ast);
+    return new IdentifierName(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -1568,12 +1568,12 @@ export class UpdateExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructUpdateOperator(internal.pos + 24, internal.ast);
+    return constructUpdateOperator(internal.pos + 28, internal.ast);
   }
 
   get prefix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 25, internal.ast);
+    return constructBool(internal.pos + 29, internal.ast);
   }
 
   get argument() {
@@ -1626,7 +1626,7 @@ export class UnaryExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructUnaryOperator(internal.pos + 24, internal.ast);
+    return constructUnaryOperator(internal.pos + 28, internal.ast);
   }
 
   get argument() {
@@ -1683,7 +1683,7 @@ export class BinaryExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructBinaryOperator(internal.pos + 40, internal.ast);
+    return constructBinaryOperator(internal.pos + 44, internal.ast);
   }
 
   get right() {
@@ -1741,7 +1741,7 @@ export class PrivateInExpression {
 
   get right() {
     const internal = this.#internal;
-    return constructExpression(internal.pos + 32, internal.ast);
+    return constructExpression(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -1793,7 +1793,7 @@ export class LogicalExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructLogicalOperator(internal.pos + 40, internal.ast);
+    return constructLogicalOperator(internal.pos + 44, internal.ast);
   }
 
   get right() {
@@ -1904,7 +1904,7 @@ export class AssignmentExpression {
 
   get operator() {
     const internal = this.#internal;
-    return constructAssignmentOperator(internal.pos + 40, internal.ast);
+    return constructAssignmentOperator(internal.pos + 44, internal.ast);
   }
 
   get left() {
@@ -2327,7 +2327,7 @@ export class AssignmentTargetPropertyProperty {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 44, internal.ast);
   }
 
   toJSON() {
@@ -2866,7 +2866,7 @@ export class VariableDeclaration {
 
   get kind() {
     const internal = this.#internal;
-    return constructVariableDeclarationKind(internal.pos + 32, internal.ast);
+    return constructVariableDeclarationKind(internal.pos + 36, internal.ast);
   }
 
   get declarations() {
@@ -2881,7 +2881,7 @@ export class VariableDeclaration {
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 33, internal.ast);
+    return constructBool(internal.pos + 37, internal.ast);
   }
 
   toJSON() {
@@ -2956,7 +2956,7 @@ export class VariableDeclarator {
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 49, internal.ast);
+    return constructBool(internal.pos + 53, internal.ast);
   }
 
   toJSON() {
@@ -3498,7 +3498,7 @@ export class ForOfStatement {
 
   get await() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 60, internal.ast);
+    return constructBool(internal.pos + 64, internal.ast);
   }
 
   get left() {
@@ -3865,7 +3865,7 @@ export class LabeledStatement {
 
   get body() {
     const internal = this.#internal;
-    return constructStatement(internal.pos + 32, internal.ast);
+    return constructStatement(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -4021,7 +4021,7 @@ export class CatchClause {
 
   get body() {
     const internal = this.#internal;
-    return constructBoxBlockStatement(internal.pos + 40, internal.ast);
+    return constructBoxBlockStatement(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -4055,6 +4055,16 @@ export class CatchParameter {
     nodes.set(pos, this);
   }
 
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
   get pattern() {
     const internal = this.#internal;
     return constructBindingPattern(internal.pos + 8, internal.ast);
@@ -4062,6 +4072,8 @@ export class CatchParameter {
 
   toJSON() {
     return {
+      start: this.start,
+      end: this.end,
       pattern: this.pattern,
     };
   }
@@ -4265,12 +4277,12 @@ export class BindingProperty {
 
   get shorthand() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 44, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 41, internal.ast);
+    return constructBool(internal.pos + 45, internal.ast);
   }
 
   toJSON() {
@@ -4412,7 +4424,7 @@ export class Function {
 
   get type() {
     const internal = this.#internal;
-    return constructFunctionType(internal.pos + 84, internal.ast);
+    return constructFunctionType(internal.pos + 88, internal.ast);
   }
 
   get id() {
@@ -4422,17 +4434,17 @@ export class Function {
 
   get generator() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 85, internal.ast);
+    return constructBool(internal.pos + 89, internal.ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 86, internal.ast);
+    return constructBool(internal.pos + 90, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 87, internal.ast);
+    return constructBool(internal.pos + 91, internal.ast);
   }
 
   get typeParameters() {
@@ -4520,7 +4532,7 @@ export class FormalParameters {
 
   get kind() {
     const internal = this.#internal;
-    return constructFormalParameterKind(internal.pos + 40, internal.ast);
+    return constructFormalParameterKind(internal.pos + 44, internal.ast);
   }
 
   get items() {
@@ -4561,6 +4573,16 @@ export class FormalParameter {
     nodes.set(pos, this);
   }
 
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
   get decorators() {
     const internal = this.#internal,
       cached = internal.$decorators;
@@ -4585,11 +4607,13 @@ export class FormalParameter {
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 64, internal.ast);
+    return constructBool(internal.pos + 68, internal.ast);
   }
 
   toJSON() {
     return {
+      start: this.start,
+      end: this.end,
       decorators: this.decorators,
       pattern: this.pattern,
       typeAnnotation: this.typeAnnotation,
@@ -4695,12 +4719,12 @@ export class ArrowFunctionExpression {
 
   get expression() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 44, internal.ast);
+    return constructBool(internal.pos + 48, internal.ast);
   }
 
   get async() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 45, internal.ast);
+    return constructBool(internal.pos + 49, internal.ast);
   }
 
   get typeParameters() {
@@ -4771,7 +4795,7 @@ export class YieldExpression {
 
   get delegate() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 24, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   get argument() {
@@ -4822,7 +4846,7 @@ export class Class {
 
   get type() {
     const internal = this.#internal;
-    return constructClassType(internal.pos + 132, internal.ast);
+    return constructClassType(internal.pos + 136, internal.ast);
   }
 
   get decorators() {
@@ -4866,12 +4890,12 @@ export class Class {
 
   get abstract() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 133, internal.ast);
+    return constructBool(internal.pos + 137, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 134, internal.ast);
+    return constructBool(internal.pos + 138, internal.ast);
   }
 
   toJSON() {
@@ -5000,7 +5024,7 @@ export class MethodDefinition {
 
   get type() {
     const internal = this.#internal;
-    return constructMethodDefinitionType(internal.pos + 56, internal.ast);
+    return constructMethodDefinitionType(internal.pos + 60, internal.ast);
   }
 
   get decorators() {
@@ -5022,32 +5046,32 @@ export class MethodDefinition {
 
   get kind() {
     const internal = this.#internal;
-    return constructMethodDefinitionKind(internal.pos + 57, internal.ast);
+    return constructMethodDefinitionKind(internal.pos + 61, internal.ast);
   }
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 58, internal.ast);
+    return constructBool(internal.pos + 62, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 59, internal.ast);
+    return constructBool(internal.pos + 63, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 60, internal.ast);
+    return constructBool(internal.pos + 64, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 61, internal.ast);
+    return constructBool(internal.pos + 65, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 62, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 66, internal.ast);
   }
 
   toJSON() {
@@ -5111,7 +5135,7 @@ export class PropertyDefinition {
 
   get type() {
     const internal = this.#internal;
-    return constructPropertyDefinitionType(internal.pos + 72, internal.ast);
+    return constructPropertyDefinitionType(internal.pos + 76, internal.ast);
   }
 
   get decorators() {
@@ -5138,42 +5162,42 @@ export class PropertyDefinition {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 73, internal.ast);
+    return constructBool(internal.pos + 77, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 74, internal.ast);
+    return constructBool(internal.pos + 78, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 75, internal.ast);
+    return constructBool(internal.pos + 79, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 77, internal.ast);
+    return constructBool(internal.pos + 81, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 78, internal.ast);
+    return constructBool(internal.pos + 82, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 79, internal.ast);
+    return constructBool(internal.pos + 83, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 80, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 84, internal.ast);
   }
 
   toJSON() {
@@ -5381,7 +5405,7 @@ export class AccessorProperty {
 
   get type() {
     const internal = this.#internal;
-    return constructAccessorPropertyType(internal.pos + 72, internal.ast);
+    return constructAccessorPropertyType(internal.pos + 76, internal.ast);
   }
 
   get decorators() {
@@ -5408,27 +5432,27 @@ export class AccessorProperty {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 73, internal.ast);
+    return constructBool(internal.pos + 77, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 74, internal.ast);
+    return constructBool(internal.pos + 78, internal.ast);
   }
 
   get override() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 75, internal.ast);
+    return constructBool(internal.pos + 79, internal.ast);
   }
 
   get definite() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 80, internal.ast);
   }
 
   get accessibility() {
     const internal = this.#internal;
-    return constructOptionTSAccessibility(internal.pos + 77, internal.ast);
+    return constructOptionTSAccessibility(internal.pos + 81, internal.ast);
   }
 
   toJSON() {
@@ -5492,7 +5516,7 @@ export class ImportExpression {
 
   get phase() {
     const internal = this.#internal;
-    return constructOptionImportPhase(internal.pos + 40, internal.ast);
+    return constructOptionImportPhase(internal.pos + 44, internal.ast);
   }
 
   toJSON() {
@@ -5555,7 +5579,7 @@ export class ImportDeclaration {
 
   get phase() {
     const internal = this.#internal;
-    return constructOptionImportPhase(internal.pos + 88, internal.ast);
+    return constructOptionImportPhase(internal.pos + 92, internal.ast);
   }
 
   get attributes() {
@@ -5565,7 +5589,7 @@ export class ImportDeclaration {
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 89, internal.ast);
+    return constructImportOrExportKind(internal.pos + 93, internal.ast);
   }
 
   toJSON() {
@@ -5649,7 +5673,7 @@ export class ImportSpecifier {
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 96, internal.ast);
+    return constructImportOrExportKind(internal.pos + 100, internal.ast);
   }
 
   toJSON() {
@@ -5776,6 +5800,16 @@ export class WithClause {
     nodes.set(pos, this);
   }
 
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
   get attributes() {
     const internal = this.#internal,
       cached = internal.$attributes;
@@ -5785,6 +5819,8 @@ export class WithClause {
 
   toJSON() {
     return {
+      start: this.start,
+      end: this.end,
       attributes: this.attributes,
     };
   }
@@ -5903,7 +5939,7 @@ export class ExportNamedDeclaration {
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 104, internal.ast);
+    return constructImportOrExportKind(internal.pos + 108, internal.ast);
   }
 
   get attributes() {
@@ -6019,7 +6055,7 @@ export class ExportAllDeclaration {
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 120, internal.ast);
+    return constructImportOrExportKind(internal.pos + 124, internal.ast);
   }
 
   toJSON() {
@@ -6078,7 +6114,7 @@ export class ExportSpecifier {
 
   get exportKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 120, internal.ast);
+    return constructImportOrExportKind(internal.pos + 124, internal.ast);
   }
 
   toJSON() {
@@ -6247,7 +6283,7 @@ export class V8IntrinsicExpression {
     const internal = this.#internal,
       cached = internal.$arguments;
     if (cached !== void 0) return cached;
-    return (internal.$arguments = constructVecArgument(internal.pos + 32, internal.ast));
+    return (internal.$arguments = constructVecArgument(internal.pos + 40, internal.ast));
   }
 
   toJSON() {
@@ -6294,7 +6330,7 @@ export class BooleanLiteral {
 
   get value() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 8, internal.ast);
+    return constructBool(internal.pos + 12, internal.ast);
   }
 
   toJSON() {
@@ -6871,12 +6907,12 @@ export class JSXFragment {
     const internal = this.#internal,
       cached = internal.$children;
     if (cached !== void 0) return cached;
-    return (internal.$children = constructVecJSXChild(internal.pos + 16, internal.ast));
+    return (internal.$children = constructVecJSXChild(internal.pos + 24, internal.ast));
   }
 
   get closingFragment() {
     const internal = this.#internal;
-    return new JSXClosingFragment(internal.pos + 40, internal.ast);
+    return new JSXClosingFragment(internal.pos + 48, internal.ast);
   }
 
   toJSON() {
@@ -7026,7 +7062,7 @@ export class JSXNamespacedName {
 
   get name() {
     const internal = this.#internal;
-    return new JSXIdentifier(internal.pos + 32, internal.ast);
+    return new JSXIdentifier(internal.pos + 40, internal.ast);
   }
 
   toJSON() {
@@ -7677,12 +7713,12 @@ export class TSEnumDeclaration {
 
   get const() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 80, internal.ast);
+    return constructBool(internal.pos + 84, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 81, internal.ast);
+    return constructBool(internal.pos + 85, internal.ast);
   }
 
   toJSON() {
@@ -8244,7 +8280,7 @@ export class TSTypeOperator {
 
   get operator() {
     const internal = this.#internal;
-    return constructTSTypeOperatorOperator(internal.pos + 24, internal.ast);
+    return constructTSTypeOperatorOperator(internal.pos + 28, internal.ast);
   }
 
   get typeAnnotation() {
@@ -8460,12 +8496,12 @@ export class TSNamedTupleMember {
 
   get elementType() {
     const internal = this.#internal;
-    return constructTSTupleElement(internal.pos + 32, internal.ast);
+    return constructTSTupleElement(internal.pos + 40, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 48, internal.ast);
+    return constructBool(internal.pos + 60, internal.ast);
   }
 
   toJSON() {
@@ -9430,17 +9466,17 @@ export class TSTypeParameter {
 
   get in() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 72, internal.ast);
+    return constructBool(internal.pos + 76, internal.ast);
   }
 
   get out() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 73, internal.ast);
+    return constructBool(internal.pos + 77, internal.ast);
   }
 
   get const() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 74, internal.ast);
+    return constructBool(internal.pos + 78, internal.ast);
   }
 
   toJSON() {
@@ -9554,7 +9590,7 @@ export class TSTypeAliasDeclaration {
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 68, internal.ast);
+    return constructBool(internal.pos + 72, internal.ast);
   }
 
   toJSON() {
@@ -9690,7 +9726,7 @@ export class TSInterfaceDeclaration {
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 84, internal.ast);
+    return constructBool(internal.pos + 88, internal.ast);
   }
 
   toJSON() {
@@ -9788,17 +9824,17 @@ export class TSPropertySignature {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 32, internal.ast);
+    return constructBool(internal.pos + 36, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 33, internal.ast);
+    return constructBool(internal.pos + 37, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 34, internal.ast);
+    return constructBool(internal.pos + 38, internal.ast);
   }
 
   get key() {
@@ -9890,12 +9926,12 @@ export class TSIndexSignature {
 
   get readonly() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 40, internal.ast);
+    return constructBool(internal.pos + 44, internal.ast);
   }
 
   get static() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 41, internal.ast);
+    return constructBool(internal.pos + 45, internal.ast);
   }
 
   toJSON() {
@@ -10020,17 +10056,17 @@ export class TSMethodSignature {
 
   get computed() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 60, internal.ast);
+    return constructBool(internal.pos + 64, internal.ast);
   }
 
   get optional() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 61, internal.ast);
+    return constructBool(internal.pos + 65, internal.ast);
   }
 
   get kind() {
     const internal = this.#internal;
-    return constructTSMethodSignatureKind(internal.pos + 62, internal.ast);
+    return constructTSMethodSignatureKind(internal.pos + 66, internal.ast);
   }
 
   get typeParameters() {
@@ -10266,12 +10302,12 @@ export class TSTypePredicate {
 
   get asserts() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 32, internal.ast);
+    return constructBool(internal.pos + 44, internal.ast);
   }
 
   get typeAnnotation() {
     const internal = this.#internal;
-    return constructOptionBoxTSTypeAnnotation(internal.pos + 24, internal.ast);
+    return constructOptionBoxTSTypeAnnotation(internal.pos + 32, internal.ast);
   }
 
   toJSON() {
@@ -10340,12 +10376,12 @@ export class TSModuleDeclaration {
 
   get kind() {
     const internal = this.#internal;
-    return constructTSModuleDeclarationKind(internal.pos + 84, internal.ast);
+    return constructTSModuleDeclarationKind(internal.pos + 88, internal.ast);
   }
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 85, internal.ast);
+    return constructBool(internal.pos + 89, internal.ast);
   }
 
   toJSON() {
@@ -10432,7 +10468,7 @@ export class TSGlobalDeclaration {
 
   get declare() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 76, internal.ast);
+    return constructBool(internal.pos + 88, internal.ast);
   }
 
   toJSON() {
@@ -10873,7 +10909,7 @@ export class TSConstructorType {
 
   get abstract() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 36, internal.ast);
+    return constructBool(internal.pos + 40, internal.ast);
   }
 
   get typeParameters() {
@@ -10947,12 +10983,12 @@ export class TSMappedType {
 
   get optional() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 52, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 56, internal.ast);
   }
 
   get readonly() {
     const internal = this.#internal;
-    return constructOptionTSMappedTypeModifierOperator(internal.pos + 53, internal.ast);
+    return constructOptionTSMappedTypeModifierOperator(internal.pos + 57, internal.ast);
   }
 
   toJSON() {
@@ -11238,7 +11274,7 @@ export class TSImportEqualsDeclaration {
 
   get importKind() {
     const internal = this.#internal;
-    return constructImportOrExportKind(internal.pos + 56, internal.ast);
+    return constructImportOrExportKind(internal.pos + 60, internal.ast);
   }
 
   toJSON() {
@@ -11599,7 +11635,7 @@ export class JSDocNullableType {
 
   get postfix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 24, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -11651,7 +11687,7 @@ export class JSDocNonNullableType {
 
   get postfix() {
     const internal = this.#internal;
-    return constructBool(internal.pos + 24, internal.ast);
+    return constructBool(internal.pos + 28, internal.ast);
   }
 
   toJSON() {
@@ -12266,19 +12302,19 @@ export class RawTransferData {
     const internal = this.#internal,
       cached = internal.$comments;
     if (cached !== void 0) return cached;
-    return (internal.$comments = constructVecComment(internal.pos + 128, internal.ast));
+    return (internal.$comments = constructVecComment(internal.pos + 144, internal.ast));
   }
 
   get module() {
     const internal = this.#internal;
-    return new EcmaScriptModule(internal.pos + 152, internal.ast);
+    return new EcmaScriptModule(internal.pos + 168, internal.ast);
   }
 
   get errors() {
     const internal = this.#internal,
       cached = internal.$errors;
     if (cached !== void 0) return cached;
-    return (internal.$errors = constructVecError(internal.pos + 256, internal.ast));
+    return (internal.$errors = constructVecError(internal.pos + 272, internal.ast));
   }
 
   toJSON() {
@@ -12654,7 +12690,7 @@ function constructOptionHashbang(pos, ast) {
 function constructVecDirective(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 72, constructDirective, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 80, constructDirective, ast);
 }
 
 function constructDirective(pos, ast) {
@@ -12830,7 +12866,7 @@ function constructBoxV8IntrinsicExpression(pos, ast) {
 function constructVecArrayExpressionElement(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructArrayExpressionElement, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 24, constructArrayExpressionElement, ast);
 }
 
 function constructBoxSpreadElement(pos, ast) {
@@ -13108,7 +13144,7 @@ function constructOptionLabelIdentifier(pos, ast) {
 function constructVecSwitchCase(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 48, constructSwitchCase, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 56, constructSwitchCase, ast);
 }
 
 function constructSwitchCase(pos, ast) {
@@ -13230,7 +13266,7 @@ function constructFormalParameter(pos, ast) {
 function constructVecDecorator(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 24, constructDecorator, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructDecorator, ast);
 }
 
 function constructDecorator(pos, ast) {
@@ -13254,7 +13290,7 @@ function constructOptionTSAccessibility(pos, ast) {
 function constructVecTSClassImplements(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructTSClassImplements, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 40, constructTSClassImplements, ast);
 }
 
 function constructTSClassImplements(pos, ast) {
@@ -13361,7 +13397,7 @@ function constructBoxImportNamespaceSpecifier(pos, ast) {
 function constructVecImportAttribute(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 112, constructImportAttribute, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 120, constructImportAttribute, ast);
 }
 
 function constructImportAttribute(pos, ast) {
@@ -13384,7 +13420,7 @@ function constructExportSpecifier(pos, ast) {
 }
 
 function constructOptionStringLiteral(pos, ast) {
-  if (ast.buffer[pos + 40] === 2) return null;
+  if (ast.buffer[pos + 44] === 2) return null;
   return new StringLiteral(pos, ast);
 }
 
@@ -13462,7 +13498,7 @@ function constructBoxJSXSpreadChild(pos, ast) {
 function constructVecTSEnumMember(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 40, constructTSEnumMember, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 48, constructTSEnumMember, ast);
 }
 
 function constructTSEnumMember(pos, ast) {
@@ -13659,7 +13695,7 @@ function constructTSTypeParameter(pos, ast) {
 function constructVecTSInterfaceHeritage(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructTSInterfaceHeritage, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 40, constructTSInterfaceHeritage, ast);
 }
 
 function constructTSInterfaceHeritage(pos, ast) {
@@ -13695,7 +13731,7 @@ function constructBoxTSMethodSignature(pos, ast) {
 function constructVecTSIndexSignatureName(pos, ast) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 32, constructTSIndexSignatureName, ast);
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 40, constructTSIndexSignatureName, ast);
 }
 
 function constructTSIndexSignatureName(pos, ast) {

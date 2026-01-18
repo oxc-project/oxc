@@ -198,7 +198,7 @@ function walkProgram(pos, ast, visitors) {
   }
 
   walkOptionHashbang(pos + 48, ast, visitors);
-  walkVecStatement(pos + 96, ast, visitors);
+  walkVecStatement(pos + 104, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -854,7 +854,7 @@ function walkMetaProperty(pos, ast, visitors) {
   }
 
   walkIdentifierName(pos + 8, ast, visitors);
-  walkIdentifierName(pos + 32, ast, visitors);
+  walkIdentifierName(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -1075,7 +1075,7 @@ function walkPrivateInExpression(pos, ast, visitors) {
   }
 
   walkPrivateIdentifier(pos + 8, ast, visitors);
-  walkExpression(pos + 32, ast, visitors);
+  walkExpression(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2041,7 +2041,7 @@ function walkLabeledStatement(pos, ast, visitors) {
   }
 
   walkLabelIdentifier(pos + 8, ast, visitors);
-  walkStatement(pos + 32, ast, visitors);
+  walkStatement(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2092,7 +2092,7 @@ function walkCatchClause(pos, ast, visitors) {
   }
 
   walkOptionCatchParameter(pos + 8, ast, visitors);
-  walkBoxBlockStatement(pos + 40, ast, visitors);
+  walkBoxBlockStatement(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2801,7 +2801,7 @@ function walkV8IntrinsicExpression(pos, ast, visitors) {
   }
 
   walkIdentifierName(pos + 8, ast, visitors);
-  walkVecArgument(pos + 32, ast, visitors);
+  walkVecArgument(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2900,8 +2900,8 @@ function walkJSXFragment(pos, ast, visitors) {
   }
 
   walkJSXOpeningFragment(pos + 8, ast, visitors);
-  walkVecJSXChild(pos + 16, ast, visitors);
-  walkJSXClosingFragment(pos + 40, ast, visitors);
+  walkVecJSXChild(pos + 24, ast, visitors);
+  walkJSXClosingFragment(pos + 48, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -2950,7 +2950,7 @@ function walkJSXNamespacedName(pos, ast, visitors) {
   }
 
   walkJSXIdentifier(pos + 8, ast, visitors);
-  walkJSXIdentifier(pos + 32, ast, visitors);
+  walkJSXIdentifier(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -3662,7 +3662,7 @@ function walkTSNamedTupleMember(pos, ast, visitors) {
   }
 
   walkIdentifierName(pos + 8, ast, visitors);
-  walkTSTupleElement(pos + 32, ast, visitors);
+  walkTSTupleElement(pos + 40, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4219,7 +4219,7 @@ function walkTSTypePredicate(pos, ast, visitors) {
   }
 
   walkTSTypePredicateName(pos + 8, ast, visitors);
-  walkOptionBoxTSTypeAnnotation(pos + 24, ast, visitors);
+  walkOptionBoxTSTypeAnnotation(pos + 32, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4900,10 +4900,10 @@ function walkVecArrayExpressionElement(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 16;
+  const endPos = pos + uint32[pos32 + 2] * 24;
   while (pos < endPos) {
     walkArrayExpressionElement(pos, ast, visitors);
-    pos += 16;
+    pos += 24;
   }
 }
 
@@ -5175,10 +5175,10 @@ function walkVecSwitchCase(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 48;
+  const endPos = pos + uint32[pos32 + 2] * 56;
   while (pos < endPos) {
     walkSwitchCase(pos, ast, visitors);
-    pos += 48;
+    pos += 56;
   }
 }
 
@@ -5284,10 +5284,10 @@ function walkVecDecorator(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 24;
+  const endPos = pos + uint32[pos32 + 2] * 32;
   while (pos < endPos) {
     walkDecorator(pos, ast, visitors);
-    pos += 24;
+    pos += 32;
   }
 }
 
@@ -5304,10 +5304,10 @@ function walkVecTSClassImplements(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 32;
+  const endPos = pos + uint32[pos32 + 2] * 40;
   while (pos < endPos) {
     walkTSClassImplements(pos, ast, visitors);
-    pos += 32;
+    pos += 40;
   }
 }
 
@@ -5411,10 +5411,10 @@ function walkVecImportAttribute(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 112;
+  const endPos = pos + uint32[pos32 + 2] * 120;
   while (pos < endPos) {
     walkImportAttribute(pos, ast, visitors);
-    pos += 112;
+    pos += 120;
   }
 }
 
@@ -5434,7 +5434,7 @@ function walkVecExportSpecifier(pos, ast, visitors) {
 }
 
 function walkOptionStringLiteral(pos, ast, visitors) {
-  if (!(ast.buffer[pos + 40] === 2)) walkStringLiteral(pos, ast, visitors);
+  if (!(ast.buffer[pos + 44] === 2)) walkStringLiteral(pos, ast, visitors);
 }
 
 function walkOptionModuleExportName(pos, ast, visitors) {
@@ -5516,10 +5516,10 @@ function walkVecTSEnumMember(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 40;
+  const endPos = pos + uint32[pos32 + 2] * 48;
   while (pos < endPos) {
     walkTSEnumMember(pos, ast, visitors);
-    pos += 40;
+    pos += 48;
   }
 }
 
@@ -5724,10 +5724,10 @@ function walkVecTSInterfaceHeritage(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 32;
+  const endPos = pos + uint32[pos32 + 2] * 40;
   while (pos < endPos) {
     walkTSInterfaceHeritage(pos, ast, visitors);
-    pos += 32;
+    pos += 40;
   }
 }
 
@@ -5766,10 +5766,10 @@ function walkVecTSIndexSignatureName(pos, ast, visitors) {
   const { uint32 } = ast.buffer,
     pos32 = pos >> 2;
   pos = uint32[pos32];
-  const endPos = pos + uint32[pos32 + 2] * 32;
+  const endPos = pos + uint32[pos32 + 2] * 40;
   while (pos < endPos) {
     walkTSIndexSignatureName(pos, ast, visitors);
-    pos += 32;
+    pos += 40;
   }
 }
 

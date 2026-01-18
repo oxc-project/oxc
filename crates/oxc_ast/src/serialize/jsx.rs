@@ -1,5 +1,6 @@
 use oxc_ast_macros::ast_meta;
 use oxc_estree::{ESTree, JsonSafeString, Serializer, StructSerializer};
+use oxc_syntax::node::NodeId;
 
 use crate::ast::*;
 
@@ -63,7 +64,8 @@ pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>
 
 impl ESTree for JSXElementIdentifierReference<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        JSXIdentifier { span: self.0.span, name: self.0.name }.serialize(serializer);
+        JSXIdentifier { span: self.0.span, node_id: NodeId::DUMMY, name: self.0.name }
+            .serialize(serializer);
     }
 }
 
@@ -82,6 +84,7 @@ pub struct JSXElementThisExpression<'b>(pub &'b ThisExpression);
 
 impl ESTree for JSXElementThisExpression<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        JSXIdentifier { span: self.0.span, name: Atom::from("this") }.serialize(serializer);
+        JSXIdentifier { span: self.0.span, node_id: NodeId::DUMMY, name: Atom::from("this") }
+            .serialize(serializer);
     }
 }

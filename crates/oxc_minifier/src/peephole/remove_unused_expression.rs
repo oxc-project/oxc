@@ -87,6 +87,7 @@ impl<'a> PeepholeOptimizations {
                 left: logical_left,
                 right: logical_right,
                 operator: logical_op,
+                ..
             } = logical_expr.as_mut();
             if let Expression::BinaryExpression(binary_expr) = logical_left {
                 match (logical_op, binary_expr.operator) {
