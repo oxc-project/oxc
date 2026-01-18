@@ -390,7 +390,7 @@ pub struct SortImportsConfig {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub groups: Option<Vec<SortGroupItemConfig>>,
-    /// Define your own groups and use regex for matching very specific imports
+    /// Define your own groups for matching very specific imports
     #[serde(skip_serializing_if = "Option::is_none")]
     pub custom_groups: Option<Vec<CustomGroupItem>>,
 }
