@@ -1,8 +1,8 @@
 commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2224/2234 (99.55%)
-Positive Passed: 2207/2234 (98.79%)
+AST Parsed     : 2224/2232 (99.64%)
+Positive Passed: 2207/2232 (98.88%)
 Negative Passed: 1648/1697 (97.11%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
 
@@ -101,26 +101,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
-
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js:3:1]
- 2 │ 
- 3 │ async() = 1;
-   · ───────
- 4 │ async() += 1;
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
-
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js:3:2]
- 2 │ 
- 3 │ (async()) = 1;
-   ·  ───────
- 4 │ (async()) += 1;
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
 

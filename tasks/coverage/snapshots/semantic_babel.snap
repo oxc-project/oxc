@@ -1,14 +1,8 @@
 commit: fc58af40
 
 semantic_babel Summary:
-AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 1939/2234 (86.79%)
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
-Cannot assign to this expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
-Cannot assign to this expression
-
+AST Parsed     : 2232/2232 (100.00%)
+Positive Passed: 1939/2232 (86.87%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }

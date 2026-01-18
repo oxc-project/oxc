@@ -43,6 +43,8 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "async-do-expression",
             "export-ns-from",
             "annex-b/disabled",
+            // Call expressions as assignment targets in non-strict mode - oxc intentionally does not support
+            "annex-b/enabled/valid-assignment-target-type",
         ]
         .iter()
         .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));

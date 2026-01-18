@@ -1,79 +1,9 @@
 commit: 6f55d0c2
 
 parser_test262 Summary:
-AST Parsed     : 46556/46563 (99.98%)
-Positive Passed: 46556/46563 (99.98%)
+AST Parsed     : 46556/46556 (100.00%)
+Positive Passed: 46556/46556 (100.00%)
 Negative Passed: 4581/4581 (100.00%)
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js:27:8]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   for (f() in [1]) {}
-    ·        ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js:27:8]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   for (f() of [1]) {}
-    ·        ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js:33:3]
- 32 │ assert.throws(ReferenceError, function() {
- 33 │   f() += g();
-    ·   ───
- 34 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js:27:3]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   f()++;
-    ·   ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js:27:5]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   ++f();
-    ·     ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js:33:3]
- 32 │ assert.throws(ReferenceError, function() {
- 33 │   f() = g();
-    ·   ───
- 34 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js:20:3]
- 19 │ assert.throws(ReferenceError, function() {
- 20 │   async() = 1;
-    ·   ───────
- 21 │ });
-    ╰────
-
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
