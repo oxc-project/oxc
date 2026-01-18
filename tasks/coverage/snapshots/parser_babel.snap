@@ -3,7 +3,7 @@ commit: fc58af40
 parser_babel Summary:
 AST Parsed     : 2223/2229 (99.73%)
 Positive Passed: 2206/2229 (98.97%)
-Negative Passed: 1651/1695 (97.40%)
+Negative Passed: 1652/1695 (97.46%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
@@ -73,8 +73,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
@@ -13707,6 +13705,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │ 'bar'
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(1540): A 'namespace' declaration should not be declared using the 'module' keyword. Please use the 'namespace' keyword instead.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts:1:1]
+ 1 │ module M {}
+   · ──────
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-new-line-error/input.ts:2:4]

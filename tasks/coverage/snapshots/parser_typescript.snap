@@ -3,7 +3,7 @@ commit: f5ccf434
 parser_typescript Summary:
 AST Parsed     : 9844/9845 (99.99%)
 Positive Passed: 9836/9845 (99.91%)
-Negative Passed: 1498/2549 (58.77%)
+Negative Passed: 1500/2549 (58.85%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -342,8 +342,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInt
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalNamedImports2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/escapedIdentifiers.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/esmNoSynthesizedDefault.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/excessPropertyCheckIntersectionWithRecursiveType.ts
@@ -663,8 +661,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmen
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationImportsAndExports3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleKeywordDeprecated.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/moduleProperty2.ts
 
@@ -5808,6 +5804,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·        ────────────────
    ╰────
 
+  × TS(1540): A 'namespace' declaration should not be declared using the 'module' keyword. Please use the 'namespace' keyword instead.
+    ╭─[typescript/tests/cases/compiler/escapedIdentifiers.ts:25:9]
+ 24 │ }
+ 25 │ declare module moduleType\u0032 { 
+    ·         ──────
+ 26 │     export var baz2: number;
+    ╰────
+
   × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ namespace M {
@@ -8077,6 +8081,38 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  12 │ ╰─▶         }
  13 │     
     ╰────
+
+  × TS(1540): A 'namespace' declaration should not be declared using the 'module' keyword. Please use the 'namespace' keyword instead.
+   ╭─[typescript/tests/cases/compiler/moduleKeywordDeprecated.ts:2:1]
+ 1 │ // Error
+ 2 │ module notok { }
+   · ──────
+ 3 │ module not.ok { }
+   ╰────
+
+  × TS(1540): A 'namespace' declaration should not be declared using the 'module' keyword. Please use the 'namespace' keyword instead.
+   ╭─[typescript/tests/cases/compiler/moduleKeywordDeprecated.ts:3:1]
+ 2 │ module notok { }
+ 3 │ module not.ok { }
+   · ──────
+ 4 │ declare module bad { }
+   ╰────
+
+  × TS(1540): A 'namespace' declaration should not be declared using the 'module' keyword. Please use the 'namespace' keyword instead.
+   ╭─[typescript/tests/cases/compiler/moduleKeywordDeprecated.ts:4:9]
+ 3 │ module not.ok { }
+ 4 │ declare module bad { }
+   ·         ──────
+ 5 │ declare module also.bad { }
+   ╰────
+
+  × TS(1540): A 'namespace' declaration should not be declared using the 'module' keyword. Please use the 'namespace' keyword instead.
+   ╭─[typescript/tests/cases/compiler/moduleKeywordDeprecated.ts:5:9]
+ 4 │ declare module bad { }
+ 5 │ declare module also.bad { }
+   ·         ──────
+ 6 │ 
+   ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/compiler/moduleKeywordRepeatError.ts:3:14]

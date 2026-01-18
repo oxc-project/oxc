@@ -374,6 +374,16 @@ pub fn optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) 
     ])
 }
 
+/// A 'namespace' declaration should not be declared using the 'module' keyword. ts(1540)
+#[cold]
+pub fn module_declaration_must_have_string_name(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "1540",
+        "A 'namespace' declaration should not be declared using the 'module' keyword. Please use the 'namespace' keyword instead.",
+    )
+    .with_label(span)
+}
+
 // A type-only import can specify a default import or named bindings, but not both. ts(1363)
 #[cold]
 pub fn type_only_import_default_and_named(specifier_span: Span) -> OxcDiagnostic {
