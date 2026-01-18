@@ -1,6 +1,6 @@
-//! Bumpalo arena allocator, ported from <https://github.com/fitzgen/bumpalo>
+//! Arena allocator.
 //!
-//! This module is ported exactly from bumpalo v3.19.0 without modifications.
+//! This module was originally derived from bumpalo v3.19.0.
 
 #![allow(
     clippy::borrow_as_ptr,
@@ -40,7 +40,7 @@
     unsafe_op_in_unsafe_fn
 )]
 
-//! Bumpalo arena allocator, ported from <https://github.com/fitzgen/bumpalo>
+//! Arena allocator.
 
 #[doc(hidden)]
 pub extern crate alloc as core_alloc;

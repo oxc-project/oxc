@@ -8,9 +8,9 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Memory allocation APIs, ported from bumpalo.
+//! Memory allocation APIs.
 //!
-//! This module is ported exactly from bumpalo without modifications.
+//! This module was originally derived from bumpalo and Rust's allocator APIs.
 
 #![allow(
     clippy::collapsible_if,
