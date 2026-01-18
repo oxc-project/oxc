@@ -794,18 +794,20 @@ impl<T, A: Alloc> RawVec<'_, T, A> {
             Some(layout) => unsafe {
                 // Marking this function as `#[cold]` and `#[inline(never)]` because grow method is
                 // relatively expensive and we want to avoid inlining it into the caller.
+                // Type-erased (no `T` parameter) to avoid monomorphization bloat - the type is
+                // immediately cast to `u8` anyway.
                 #[cold]
                 #[inline(never)]
-                unsafe fn grow<T, A: Alloc>(
+                unsafe fn grow<A: Alloc>(
                     alloc: &A,
-                    ptr: NonNull<T>,
+                    ptr: NonNull<u8>,
                     old_layout: Layout,
                     new_layout: Layout,
                 ) -> NonNull<u8> {
-                    alloc.grow(ptr.cast(), old_layout, new_layout)
+                    alloc.grow(ptr, old_layout, new_layout)
                 }
                 debug_assert!(new_layout.align() == layout.align());
-                grow(self.alloc, self.ptr, layout, new_layout)
+                grow(self.alloc, self.ptr.cast(), layout, new_layout)
             },
             None => self.alloc.alloc(new_layout),
         };
