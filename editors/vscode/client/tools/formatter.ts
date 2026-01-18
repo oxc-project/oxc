@@ -34,6 +34,9 @@ export default class FormatterTool implements ToolInterface {
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined> {
+    if (process.env.SERVER_PATH_DEV) {
+      return process.env.SERVER_PATH_DEV;
+    }
     const bin = await configService.getOxfmtServerBinPath();
     if (bin) {
       try {
@@ -43,7 +46,6 @@ export default class FormatterTool implements ToolInterface {
         outputChannel.error(`Invalid bin path: ${bin}`, e);
       }
     }
-    return process.env.SERVER_PATH_DEV;
   }
 
   async activate(
@@ -67,7 +69,7 @@ export default class FormatterTool implements ToolInterface {
 
     outputChannel.info(`Using server binary at: ${binaryPath}`);
 
-    const run: Executable = runExecutable(binaryPath, configService.vsCodeConfig.nodePath);
+    const run: Executable = runExecutable(binaryPath, "oxfmt", configService.vsCodeConfig.nodePath);
 
     const serverOptions: ServerOptions = {
       run,

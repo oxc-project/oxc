@@ -48,6 +48,9 @@ export default class LinterTool implements ToolInterface {
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined> {
+    if (process.env.SERVER_PATH_DEV) {
+      return process.env.SERVER_PATH_DEV;
+    }
     const bin = await configService.getOxlintServerBinPath();
     if (bin) {
       try {
@@ -57,7 +60,6 @@ export default class LinterTool implements ToolInterface {
         outputChannel.error(`Invalid bin path: ${bin}`, e);
       }
     }
-    return process.env.SERVER_PATH_DEV;
   }
 
   async activate(
@@ -116,6 +118,7 @@ export default class LinterTool implements ToolInterface {
 
     const run: Executable = runExecutable(
       binaryPath,
+      "oxlint",
       configService.vsCodeConfig.nodePath,
       configService.vsCodeConfig.binPathTsGoLint,
     );

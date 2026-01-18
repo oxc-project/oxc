@@ -1,11 +1,5 @@
 import * as path from "node:path";
-import {
-  CancellationTokenSource,
-  ConfigurationChangeEvent,
-  Uri,
-  workspace,
-  WorkspaceFolder,
-} from "vscode";
+import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from "vscode";
 import { DiagnosticPullMode } from "vscode-languageclient";
 import { validateSafeBinaryPath } from "./PathValidator";
 import { IDisposable } from "./types";
@@ -183,32 +177,19 @@ export class ConfigService implements IDisposable {
    * If multiple workspaces contain the binary, the first one found is returned.
    */
   private async searchNodeModulesBin(binaryName: string): Promise<string | undefined> {
-    const cts = new CancellationTokenSource();
-    setTimeout(() => cts.cancel(), 20000); // cancel after 20 seconds
-
+    // try to resolve via require.resolve
     try {
-      // search workspace root plus up to 3 subdirectory levels for the binary path
-      let patterns = [
-        `node_modules/.bin/${binaryName}`,
-        `*/node_modules/.bin/${binaryName}`,
-        `*/*/node_modules/.bin/${binaryName}`,
-        `*/*/*/node_modules/.bin/${binaryName}`,
-      ];
-
-      if (process.platform === "win32") {
-        // bun package manager uses `.exe` extension on Windows
-        // search for both with and without `.exe` extension
-        patterns = patterns.flatMap((pattern) => [`${pattern}`, `${pattern}.exe`]);
-      }
-
-      for (const pattern of patterns) {
-        // maybe use `tinyglobby` later for better performance, VSCode can be slow on globbing large projects.
-        // oxlint-disable-next-line no-await-in-loop -- search sequentially up the directories
-        const files = await workspace.findFiles(pattern, null, 1, cts.token);
-        if (files.length > 0) {
-          return files[0].fsPath;
-        }
-      }
+      const resolvedPath = require
+        .resolve(binaryName, {
+          paths: workspace.workspaceFolders?.map((folder) => folder.uri.fsPath) ?? [],
+        })
+        // we want to target the binary instead of the main index file
+        // Improvement: search inside package.json "bin" and `main` field for more reliability
+        .replace(
+          `${binaryName}${path.sep}dist${path.sep}index.js`,
+          `${binaryName}${path.sep}bin${path.sep}${binaryName}`,
+        );
+      return resolvedPath;
     } catch {}
   }
 

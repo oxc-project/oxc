@@ -1,7 +1,7 @@
 import { strictEqual } from "assert";
 import { workspace } from "vscode";
 import { ConfigService } from "../../client/ConfigService.js";
-import { WORKSPACE_FOLDER, WORKSPACE_SECOND_FOLDER } from "../test-helpers.js";
+import { WORKSPACE_FOLDER } from "../test-helpers.js";
 
 const conf = workspace.getConfiguration("oxc");
 
@@ -19,14 +19,7 @@ suite("ConfigService", () => {
   });
 
   const getWorkspaceFolderPlatformSafe = (folder = WORKSPACE_FOLDER) => {
-    let workspace_path = folder.uri.path;
-    if (process.platform === "win32") {
-      workspace_path = workspace_path.replaceAll("/", "\\");
-      if (workspace_path.startsWith("\\")) {
-        workspace_path = workspace_path.slice(1);
-      }
-    }
-    return workspace_path;
+    return folder.uri.fsPath;
   };
 
   const createWorkspaceFolderFileUri = async (relativePath: string, folder = WORKSPACE_FOLDER) => {
@@ -50,15 +43,25 @@ suite("ConfigService", () => {
   };
 
   suite("getOxfmtServerBinPath", () => {
+    test("falls back to node resolving when server path is not set", async () => {
+      const service = new ConfigService();
+      const oxlintPath = (await service.getOxlintServerBinPath())!;
+      const cwd = process.cwd().replace("/editors/vscode", "");
+      // it targets the oxc project's oxlint/bin/oxlint path
+      strictEqual(oxlintPath.startsWith(cwd), true, "path should start with cwd");
+      strictEqual(
+        oxlintPath.endsWith("oxlint/bin/oxlint"),
+        true,
+        "path should end with oxlint/bin/oxlint",
+      );
+    });
+
     test("resolves relative server path with workspace folder", async () => {
       const service = new ConfigService();
       const workspace_path = getWorkspaceFolderPlatformSafe();
-      const nonDefinedServerPath = await service.getOxfmtServerBinPath();
 
       await createWorkspaceFolderFileUri("absolute/oxfmt");
       await createWorkspaceFolderFileUri("relative/oxfmt");
-
-      strictEqual(nonDefinedServerPath, undefined);
 
       await conf.update("path.oxfmt", `${workspace_path}/absolute/oxfmt`);
       const absoluteServerPath = await service.getOxfmtServerBinPath();
@@ -105,13 +108,10 @@ suite("ConfigService", () => {
   suite("getOxlintServerBinPath", () => {
     test("resolves relative server path with workspace folder", async () => {
       const service = new ConfigService();
-      const nonDefinedServerPath = await service.getOxlintServerBinPath();
       const workspace_path = getWorkspaceFolderPlatformSafe();
 
       await createWorkspaceFolderFileUri("absolute/oxlint");
       await createWorkspaceFolderFileUri("relative/oxlint");
-
-      strictEqual(nonDefinedServerPath, undefined);
 
       await conf.update("path.oxlint", `${workspace_path}/absolute/oxlint`);
       const absoluteServerPath = await service.getOxlintServerBinPath();
@@ -152,20 +152,6 @@ suite("ConfigService", () => {
         "The test workspace folder must be an absolute path with a drive letter on Windows",
       );
       strictEqual(relativeServerPath, `${workspace_path}\\relative\\oxlint`);
-    });
-
-    test("resolves binary path in multi-folder workspace", async () => {
-      const service = new ConfigService();
-      const workspace_path = getWorkspaceFolderPlatformSafe();
-
-      await createWorkspaceFolderFileUri("node_modules/.bin/oxlint");
-      await createWorkspaceFolderFileUri("node_modules/.bin/oxlint", WORKSPACE_SECOND_FOLDER);
-      const absoluteServerPath = await service.getOxlintServerBinPath();
-
-      strictEqual(absoluteServerPath, `${workspace_path}/node_modules/.bin/oxlint`);
-
-      await deleteWorkspaceFolderFileUri("node_modules/.bin/oxlint");
-      await deleteWorkspaceFolderFileUri("node_modules/.bin/oxlint", WORKSPACE_SECOND_FOLDER);
     });
   });
 });
