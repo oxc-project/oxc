@@ -9,6 +9,7 @@ mod minimize_if_statement;
 mod minimize_logical_expression;
 mod minimize_not_expression;
 mod minimize_statements;
+mod minimize_switch_statement;
 mod normalize;
 mod remove_dead_code;
 mod remove_unused_declaration;
@@ -225,6 +226,9 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
                         *stmt = folded_stmt;
                         ctx.state.changed = true;
                     }
+                }
+                Statement::SwitchStatement(_) => {
+                    Self::try_minimize_switch(stmt, ctx);
                 }
                 Statement::WhileStatement(s) => {
                     Self::minimize_expression_in_boolean_context(&mut s.test, ctx);

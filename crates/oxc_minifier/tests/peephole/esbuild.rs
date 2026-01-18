@@ -2021,7 +2021,7 @@ fn test_inline_single_use_variable() {
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; switch (x) { case 0: return 1; }}",
-        "function wrapper(arg0, arg1) { switch (arg0) { case 0:  return 1; }}",
+        "function wrapper(arg0, arg1) { if (arg0 === 0) return 1; }",
     );
     test(
         "function wrapper(arg0, arg1) { let x = arg0; let y = x; return y + y;}",
@@ -2382,15 +2382,12 @@ fn test_remove_dead_expr_other() {
 #[test]
 fn prune_empty_case_before_default() {
     // Basic case: empty case with literal before default
-    test(
-        "switch (x) { case 0: foo(); break; case 1: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
-    );
+    test("switch (x) { case 0: foo(); break; case 1: default: bar() }", "x === 0 ? foo() : bar();");
 
     // Multiple empty cases with literals before default
     test(
         "switch (x) { case 0: foo(); break; case 1: case 2: case 3: default: bar() }",
-        "switch (x) { case 0: foo(); break; default: bar();}",
+        "x === 0 ? foo() : bar()",
     );
 
     // Empty case with non-literal (identifier) should NOT be removed
@@ -2403,13 +2400,13 @@ fn prune_empty_case_before_default() {
     test("switch (x) { default: case 1: bar() }", "switch (x) { default: case 1: bar();}");
 
     // String literals should also be removed
-    test("switch (x) { case 'a': case 'b': default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 'a': case 'b': default: bar() }", "x, bar()");
 
     // null literal (booleans get transformed to !0/!1 before this optimization runs)
-    test("switch (x) { case null: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case null: default: bar() }", "x, bar()");
 
     // BigInt literals
-    test("switch (x) { case 1n: case 2n: default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { case 1n: case 2n: default: bar() }", "x, bar()");
 
     // Non-empty case should stop the pruning
     test(
@@ -2418,8 +2415,8 @@ fn prune_empty_case_before_default() {
     );
 
     // Only default - nothing to prune
-    test("switch (x) { default: bar() }", "switch (x) { default: bar();}");
+    test("switch (x) { default: bar() }", "x, bar()");
 
     // No default - nothing to prune
-    test("switch (x) { case 0: foo(); case 1: }", "switch (x) { case 0: foo(); case 1:}");
+    test("switch (x) { case 0: foo(); case 1: }", "x === 0 && foo()");
 }
