@@ -512,6 +512,7 @@ fn layout_from_size_align(size: usize, align: usize) -> Result<Layout, AllocErr>
     Layout::from_size_align(size, align).map_err(|_| AllocErr)
 }
 
+#[cold]
 #[inline(never)]
 fn allocation_size_overflow<T>() -> T {
     panic!("requested allocation size overflowed")

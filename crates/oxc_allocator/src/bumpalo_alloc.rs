@@ -45,10 +45,14 @@ use core::usize;
 
 pub use core::alloc::{Layout, LayoutErr};
 
+#[cold]
+#[inline(never)]
 fn new_layout_err() -> LayoutErr {
     Layout::from_size_align(1, 3).unwrap_err()
 }
 
+#[cold]
+#[inline(never)]
 pub fn handle_alloc_error(layout: Layout) -> ! {
     panic!("encountered allocation error: {:?}", layout)
 }

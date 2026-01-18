@@ -856,6 +856,8 @@ fn alloc_guard(alloc_size: usize) -> Result<(), AllocError> {
 // One central function responsible for reporting capacity overflows. This'll
 // ensure that the code generation related to these panics is minimal as there's
 // only one location which panics rather than a bunch throughout the module.
+#[cold]
+#[inline(never)]
 fn capacity_overflow() -> ! {
     panic!("capacity overflow")
 }
