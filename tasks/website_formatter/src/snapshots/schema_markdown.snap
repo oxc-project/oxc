@@ -87,7 +87,15 @@ For details, see each field's documentation.
 type: `array`
 
 
-Define your own groups for matching very specific imports
+Define your own groups for matching very specific imports.
+
+The `customGroups` list is ordered: The first definition that matches an element will be used.
+Custom groups have a higher priority than any predefined group.
+
+If you want a predefined group to take precedence over a custom group,
+you must write a custom group definition that does the same as what the predefined group does, and put it first in the list.
+
+- Default: `[]`
 
 
 #### experimentalSortImports.customGroups[n]
@@ -104,7 +112,7 @@ type: `string[]`
 
 default: `[]`
 
-
+List of import name prefixes to match for this group.
 
 
 ##### experimentalSortImports.customGroups[n].groupName
@@ -113,7 +121,7 @@ type: `string`
 
 default: `""`
 
-
+Name of the custom group, used in the `groups` option.
 
 
 ### experimentalSortImports.groups
@@ -132,7 +140,8 @@ Individual groups can be combined together by placing them in an array.
 The order of groups in that array does not matter.
 All members of the groups in the array will be sorted together as if they were part of a single group.
 
-Predefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.
+Predefined groups are characterized by a single selector and potentially multiple modifiers.
+You may enter modifiers in any order, but the selector must always come at the end.
 
 The list of selectors is sorted from most to least important:
 - `type` — TypeScript type imports.
@@ -159,7 +168,6 @@ The list of modifiers is sorted from most to least important:
 - `singleline` — Imports on a single line.
 
 See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
-NOTE: `customGroups` is not implemented yet.
 
 - Default: See below
 ```json
@@ -180,11 +188,7 @@ NOTE: `customGroups` is not implemented yet.
 type: `array | string`
 
 
-User-provided configuration for `package.json` sorting.
 
-- `true`: Enable sorting with default options
-- `false`: Disable sorting
-- `{ sortScripts: true }`: Enable sorting with custom options
 
 
 ##### experimentalSortImports.groups[n][n]

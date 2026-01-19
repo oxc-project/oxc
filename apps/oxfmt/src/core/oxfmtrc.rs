@@ -347,7 +347,8 @@ pub struct SortImportsConfig {
     /// The order of groups in that array does not matter.
     /// All members of the groups in the array will be sorted together as if they were part of a single group.
     ///
-    /// Predefined groups are characterized by a single selector and potentially multiple modifiers. You may enter modifiers in any order, but the selector must always come at the end.
+    /// Predefined groups are characterized by a single selector and potentially multiple modifiers.
+    /// You may enter modifiers in any order, but the selector must always come at the end.
     ///
     /// The list of selectors is sorted from most to least important:
     /// - `type` — TypeScript type imports.
@@ -374,7 +375,6 @@ pub struct SortImportsConfig {
     /// - `singleline` — Imports on a single line.
     ///
     /// See also <https://perfectionist.dev/rules/sort-imports#groups> for details.
-    /// NOTE: `customGroups` is not implemented yet.
     ///
     /// - Default: See below
     /// ```json
@@ -390,9 +390,17 @@ pub struct SortImportsConfig {
     /// ```
     #[serde(skip_serializing_if = "Option::is_none")]
     pub groups: Option<Vec<SortGroupItemConfig>>,
-    /// Define your own groups for matching very specific imports
+    /// Define your own groups for matching very specific imports.
+    ///
+    /// The `customGroups` list is ordered: The first definition that matches an element will be used.
+    /// Custom groups have a higher priority than any predefined group.
+    ///
+    /// If you want a predefined group to take precedence over a custom group,
+    /// you must write a custom group definition that does the same as what the predefined group does, and put it first in the list.
+    ///
+    /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub custom_groups: Option<Vec<CustomGroupItem>>,
+    pub custom_groups: Option<Vec<CustomGroupItemConfig>>,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -402,18 +410,6 @@ pub enum SortOrderConfig {
     Desc,
 }
 
-#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct CustomGroupItem {
-    pub group_name: String,
-    pub element_name_pattern: Vec<String>,
-}
-
-/// User-provided configuration for `package.json` sorting.
-///
-/// - `true`: Enable sorting with default options
-/// - `false`: Disable sorting
-/// - `{ sortScripts: true }`: Enable sorting with custom options
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum SortGroupItemConfig {
@@ -428,6 +424,15 @@ impl SortGroupItemConfig {
             Self::Multiple(v) => v,
         }
     }
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default)]
+pub struct CustomGroupItemConfig {
+    /// Name of the custom group, used in the `groups` option.
+    pub group_name: String,
+    /// List of import name prefixes to match for this group.
+    pub element_name_pattern: Vec<String>,
 }
 
 // ---
