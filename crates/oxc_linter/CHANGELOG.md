@@ -4,6 +4,48 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.40.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- ba9c750 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `.cjs` and `.cts` file extensions (#18117) (Boshen)
+
+### 🚀 Features
+
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- b516088 linter: Implement rule option validation/error handling for jest/no-hooks and eslint/no-return-assign rules. (#17600) (connorshea)
+- e7631dd website: Update website generation flow for JSON rules output (#17973) (connorshea)
+- 1757251 linter: Update linter JSON rule output to include extra information. (#15763) (connorshea)
+- 1f3cdcd linter/no-useless-rename: Add automatic fix (#17951) (camchenry)
+- fe1444c linter/no-unused-vars: Improve fixer for unused imports (#17941) (camc314)
+- 251f301 linter/fixer: Expose `find_next_token_within` in fixer (#17942) (camc314)
+- f04aa60 linter/fixer: Expose `find_next_token_from` in fixer (#17940) (camc314)
+
+### 🐛 Bug Fixes
+
+- a0b3721 linter: Move typescript/prefer-optional-chain to nursery for now. (#18147) (connorshea)
+- 5f98e1a linter: Update react/jsx-max-depth to raise an error if provided invalid config options. (#18105) (connorshea)
+- c7e7008 linter: Raise errors for invalid config on eslint/prefer-promise-reject-errors rule (#18103) (connorshea)
+- 618c629 linter/rules-of-hooks: Detect hook calls inside JSX render props (#17980) (LeeKangbok)
+- 121a239 linter: Sort paths by length instead of alphabetically for depth heuristic (#18084) (Boshen)
+- 6956543 linter: Fix LSP panic from stale directive spans (#18082) (Boshen)
+- 2aae4fc linter: Fix stack overflow in `no-unreachable` rule on large files (#18077) (Boshen)
+- 7a0ca99 linter/plugins: Use correct ScriptKind for tokens (#17185) (Peter Wagenet)
+- 8deef41 linter/prefer-destructuring: Fix rule to exclude `using` and `await using` (#17952) (camchenry)
+- dbe06d8 linter/no-promise-executor-return: Check if `Promise` is the global one (#17949) (camchenry)
+- ad02e03 linter/no-await-in-loop: Add support for `await using` (#17947) (camchenry)
+- 63e2737 linter/no-import-node-test: Mark fixer as suggestion (#17925) (camc314)
+
+### 📚 Documentation
+
+- 4afa5c8 linter: Cleanup docs for various rules for consistency. (#18214) (connorshea)
+- c1c152b linter: Fix formatting for empty-brace-spaces rule example. (#18203) (connorshea)
+- 7028745 linter: Fix formatting of JSON examples in filename-case rule docs. (#18202) (connorshea)
+- 926b7be linter: Fix a mistake in the documentation for prefer-ts-expect-error (#18201) (connorshea)
+- 85a846c linter: Prefer enum docs over struct field docs for no-unused-vars (#18123) (Boshen)
+- c2173a7 linter: Minor typo fix for nextjs rules. (#18018) (connorshea)
+- 132cc48 linter: Improve prefer-spread docs. (#17976) (connorshea)
+
 ## [1.39.0] - 2026-01-12
 
 ### 🚀 Features
