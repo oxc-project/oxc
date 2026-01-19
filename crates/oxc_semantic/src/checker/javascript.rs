@@ -642,8 +642,8 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
         return;
     };
 
-    // Already checked in `check_redelcaration`, because it is also not allowed in TypeScript
-    // `let a; function a() {}` is invalid in both strict and non-strict mode
+    // Already checked in `check_redeclaration`, because it is also not allowed in TypeScript.
+    // `let a; function a() {}` is invalid in both strict and non-strict mode.
     if prev.flags.contains(SymbolFlags::BlockScopedVariable) {
         return;
     }
