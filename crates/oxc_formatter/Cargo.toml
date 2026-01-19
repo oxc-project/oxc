@@ -34,6 +34,7 @@ nodejs-built-in-modules = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 unicode-width = { workspace = true }
+lazy-regex = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
