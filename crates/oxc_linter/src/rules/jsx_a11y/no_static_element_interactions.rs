@@ -82,7 +82,7 @@ declare_oxc_lint!(
     config = NoStaticElementInteractionsConfig,
 );
 
-const INTERACTIVE_ROLES: [&str; 26] = [
+pub const INTERACTIVE_ROLES: [&str; 26] = [
     "button",
     "checkbox",
     "columnheader",

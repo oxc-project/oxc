@@ -59,15 +59,7 @@ impl GroupMatcher {
                         };
                         match Regex::new(&anchored) {
                             Ok(regex) => Some(regex),
-                            Err(err) => {
-                                eprintln!(
-                                    "oxc_formatter: invalid regex pattern `{}` in custom group `{}`: {}",
-                                    p,
-                                    custom_group.group_name,
-                                    err
-                                );
-                                None
-                            }
+                            Err(_) => None,
                         }
                     })
                     .collect::<Vec<_>>();
