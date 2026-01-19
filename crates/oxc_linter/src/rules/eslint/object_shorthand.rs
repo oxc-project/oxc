@@ -4,7 +4,10 @@ use crate::{AstNode, context::LintContext, rule::Rule};
 use lazy_regex::{Lazy, Regex, RegexBuilder, lazy_regex};
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind},
+    ast::{
+        ArrowFunctionExpression, Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind,
+        PropertyKind,
+    },
 };
 use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
@@ -218,6 +221,89 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
         }
     }
 
+    fn make_function_shorthand(
+        &self,
+        property: &ObjectProperty,
+        func: &ArrowFunctionExpression,
+    ) {
+        self.ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
+            let has_comment = self.ctx.semantic().has_comments_between(Span::new(
+                property.key.span().start,
+                property.value.span().start,
+            ));
+            if has_comment {
+                return fixer.noop();
+            }
+
+            let key_prefix = match func.r#async {
+                true => "async ",
+                false => "",
+            };
+            let property_key_span = property.key.span();
+            let key_text = if property.computed {
+                let (Some(paren_start), Some(paren_end_offset)) = (
+                    self.ctx.find_prev_token_from(property_key_span.start, "["),
+                    self.ctx.find_next_token_from(property_key_span.end, "]"),
+                ) else {
+                    return fixer.noop();
+                };
+                self.ctx.source_range(Span::new(
+                    paren_start,
+                    property_key_span.end + paren_end_offset + 1,
+                ))
+            } else {
+                self.ctx.source_range(property_key_span)
+            };
+
+            let next_token = self.ctx
+                .find_prev_token_from(func.body.span.start, "=>")
+                .map(|offset| offset + "=>".len() as u32);
+            let Some(arrow_token) = next_token else {
+                return fixer.noop();
+            };
+            let arrow_body = self.ctx.source_range(Span::new(
+                arrow_token,
+                property.value.without_parentheses().span().end,
+            ));
+            let old_param_text = self.ctx.source_range(Span::new(
+                func.params.span.start,
+                func.return_type.as_ref().map(|p| p.span.end).unwrap_or(func.params.span.end),
+            ));
+            let should_add_parens = if func.r#async {
+                if let Some(async_token) = self.ctx.find_next_token_from(func.span.start, "async") {
+                    if let Some(fist_param) = func.params.items.first() {
+                        self.ctx.find_next_token_within(
+                            func.span.start + async_token,
+                            fist_param.span.start,
+                            "(",
+                        )
+                        .is_none()
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+            } else {
+                if let Some(fist_param) = func.params.items.first() {
+                    self.ctx.find_next_token_within(func.span.start, fist_param.span.start, "(")
+                        .is_none()
+                } else {
+                    false
+                }
+            };
+            let new_param_text = if should_add_parens {
+                format!("({old_param_text})")
+            } else {
+                old_param_text.to_string()
+            };
+            let type_param =
+                func.type_parameters.as_ref().map(|t| self.ctx.source_range(t.span())).unwrap_or("");
+            let ret = format!("{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}");
+            fixer.replace(property.span, ret)
+        });
+    }
+
     fn check_longform_methods(&self, property: &ObjectProperty) {
         if self.rule.ignore_constructors
             && property.key.is_identifier()
@@ -289,102 +375,11 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
         }
 
         if self.rule.avoid_explicit_return_arrows {
-            if let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses() && !self.arrows_with_lexical_identifiers.contains(&func.scope_id())
+            if let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
+                && !self.arrows_with_lexical_identifiers.contains(&func.scope_id())
             {
                 if !func.expression {
-                    self.ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
-                        let has_comment = self.ctx.semantic().has_comments_between(Span::new(
-                            property.key.span().start,
-                            property.value.span().start,
-                        ));
-                        if has_comment {
-                            return fixer.noop();
-                        }
-
-                        let key_prefix = match func.r#async {
-                            true => "async ",
-                            false => "",
-                        };
-                        let property_key_span = property.key.span();
-                        let key_text = if property.computed {
-                            let (Some(paren_start), Some(paren_end_offset)) = (
-                                self.ctx.find_prev_token_from(property_key_span.start, "["),
-                                self.ctx.find_next_token_from(property_key_span.end, "]"),
-                            ) else {
-                                return fixer.noop();
-                            };
-                            self.ctx.source_range(Span::new(
-                                paren_start,
-                                property_key_span.end + paren_end_offset + 1,
-                            ))
-                        } else {
-                            self.ctx.source_range(property_key_span)
-                        };
-
-                        let next_token = self
-                            .ctx
-                            .find_prev_token_from(func.body.span.start, "=>")
-                            .map(|offset| offset + "=>".len() as u32);
-                        let Some(arrow_token) = next_token else {
-                            return fixer.noop();
-                        };
-                        let arrow_body = self.ctx.source_range(Span::new(
-                            arrow_token,
-                            property.value.without_parentheses().span().end,
-                        ));
-                        let old_param_text = self.ctx.source_range(Span::new(
-                            func.params.span.start,
-                            func.return_type
-                                .as_ref()
-                                .map(|p| p.span.end)
-                                .unwrap_or(func.params.span.end),
-                        ));
-                        let should_add_parens = if func.r#async {
-                            if let Some(async_token) =
-                                self.ctx.find_next_token_from(func.span.start, "async")
-                            {
-                                if let Some(fist_param) = func.params.items.first() {
-                                    self.ctx
-                                        .find_next_token_within(
-                                            func.span.start + async_token,
-                                            fist_param.span.start,
-                                            "(",
-                                        )
-                                        .is_none()
-                                } else {
-                                    false
-                                }
-                            } else {
-                                false
-                            }
-                        } else {
-                            if let Some(fist_param) = func.params.items.first() {
-                                self.ctx
-                                    .find_next_token_within(
-                                        func.span.start,
-                                        fist_param.span.start,
-                                        "(",
-                                    )
-                                    .is_none()
-                            } else {
-                                false
-                            }
-                        };
-                        let new_param_text = if should_add_parens {
-                            format!("({old_param_text})")
-                        } else {
-                            old_param_text.to_string()
-                        };
-                        let type_param = func
-                            .type_parameters
-                            .as_ref()
-                            .map(|t| self.ctx.source_range(t.span()))
-                            .unwrap_or("");
-                        let ret = format!(
-                            "{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}"
-                        );
-                        fixer.replace(property.span, ret)
-                    });
+                    self.make_function_shorthand(property, func);
                 }
             }
         }
@@ -418,9 +413,10 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                 )) {
                     self.ctx.diagnostic(expected_property_shorthand(property.span));
                 } else {
-                    self.ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
-                        fixer.replace(property.span, property_name.to_string())
-                    });
+                    self.ctx
+                        .diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
+                            fixer.replace(property.span, property_name.to_string())
+                        });
                 }
             }
         }
@@ -459,9 +455,7 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
     }
 
     fn report_lexical_identifier(&mut self) {
-        let Some(scope)= self.lexical_scope_stack.iter().nth(0) else {
-            return
-        };
+        let Some(scope) = self.lexical_scope_stack.iter().nth(0) else { return };
         scope.iter().for_each(|item| {
             self.arrows_with_lexical_identifiers.insert(item.clone());
         });
@@ -572,7 +566,6 @@ impl<'a> Visit<'a> for ObjectShorthandChecker<'a, '_> {
             self.check_longform_properties(property);
         }
     }
-
 }
 
 #[derive(Debug, Default, Clone)]
