@@ -7,7 +7,9 @@ mod constants;
 mod footer;
 
 pub use arena::Arena;
-pub use config::{ArenaConfig, ArenaConfigDefault, ArenaConfigPointerAligned, ArenaConfigSingleChunk};
+pub use config::{
+    ArenaConfig, ArenaConfigDefault, ArenaConfigPointerAligned, ArenaConfigSingleChunk,
+};
 pub use constants::{CHUNK_ALIGN, FOOTER_SIZE, MAX_INITIAL_CAPACITY};
 
 /// Default [`Arena`], with `MIN_ALIGN = 1`.

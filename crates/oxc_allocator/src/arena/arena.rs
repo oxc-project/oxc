@@ -383,7 +383,8 @@ impl<Config: ArenaConfigExt> Arena<Config> {
             if layout.align() <= Config::MIN_ALIGN {
                 // Round size up to MIN_ALIGN to maintain alignment invariant.
                 // This is slightly wasteful for small alignments but keeps the cursor aligned.
-                let aligned_size = (layout.size() + Config::MIN_ALIGN - 1) & !(Config::MIN_ALIGN - 1);
+                let aligned_size =
+                    (layout.size() + Config::MIN_ALIGN - 1) & !(Config::MIN_ALIGN - 1);
 
                 if aligned_size > chunk.free_bytes() {
                     return None;

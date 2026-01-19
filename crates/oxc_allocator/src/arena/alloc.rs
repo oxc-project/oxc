@@ -17,7 +17,8 @@ impl<Config: ArenaConfigExt> Alloc for Arena<Config> {
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         {
             // SAFETY: In Oxc, Arena is always wrapped in Allocator. This is only used for internal tooling.
-            unsafe { crate::tracking::get_stats_ref(self.cast_allocator_arena()) }.record_allocation();
+            unsafe { crate::tracking::get_stats_ref(self.cast_allocator_arena()) }
+                .record_allocation();
         }
 
         self.alloc_layout(layout)
@@ -52,7 +53,8 @@ impl<Config: ArenaConfigExt> Alloc for Arena<Config> {
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         {
             // SAFETY: In Oxc, Arena is always wrapped in Allocator. This is only used for internal tooling.
-            unsafe { crate::tracking::get_stats_ref(self.cast_allocator_arena()) }.record_reallocation();
+            unsafe { crate::tracking::get_stats_ref(self.cast_allocator_arena()) }
+                .record_reallocation();
         }
 
         // Allocate new layout

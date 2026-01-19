@@ -88,7 +88,9 @@ impl ChunkFooter {
     pub fn used_bytes(&self) -> usize {
         // Downward allocations: from cursor to footer
         // SAFETY: `self.cursor` is always before `self`, and both are within same allocation
-        let downward = unsafe { ptr::from_ref(self).cast::<u8>().offset_from_usize(self.cursor.get().as_ptr()) };
+        let downward = unsafe {
+            ptr::from_ref(self).cast::<u8>().offset_from_usize(self.cursor.get().as_ptr())
+        };
         // Upward allocations: from start to up_cursor
         // SAFETY: `self.start` is always before `self.up_cursor`, and both are within same allocation
         let upward = unsafe { self.up_cursor.get().offset_from_usize(self.start) };
