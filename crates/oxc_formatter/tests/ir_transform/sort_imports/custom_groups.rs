@@ -81,47 +81,47 @@ import CartComponentB from "./cart/CartComponentB.vue";
     "experimentalSortImports": {
         "customGroups": [
             {
-                "elementNamePattern": ["^~/validators/"],
+                "elementNamePattern": ["~/validators/"],
                 "groupName": "validators"
             },
             {
-                "elementNamePattern": ["^~/composable/"],
+                "elementNamePattern": ["~/composable/"],
                 "groupName": "composable"
             },
             {
-                "elementNamePattern": ["^~/components/"],
+                "elementNamePattern": ["~/components/"],
                 "groupName": "components"
             },
             {
-                "elementNamePattern": ["^~/services/"],
+                "elementNamePattern": ["~/services/"],
                 "groupName": "services"
             },
             {
-                "elementNamePattern": ["^~/widgets/"],
+                "elementNamePattern": ["~/widgets/"],
                 "groupName": "widgets"
             },
             {
-                "elementNamePattern": ["^~/stores/"],
+                "elementNamePattern": ["~/stores/"],
                 "groupName": "stores"
             },
             {
-                "elementNamePattern": ["^~/logics/"],
+                "elementNamePattern": ["~/logics/"],
                 "groupName": "logics"
             },
             {
-                "elementNamePattern": ["^~/assets/"],
+                "elementNamePattern": ["~/assets/"],
                 "groupName": "assets"
             },
             {
-                "elementNamePattern": ["^~/utils/"],
+                "elementNamePattern": ["~/utils/"],
                 "groupName": "utils"
             },
             {
-                "elementNamePattern": ["^~/pages/"],
+                "elementNamePattern": ["~/pages/"],
                 "groupName": "pages"
             },
             {
-                "elementNamePattern": ["^~/ui/"],
+                "elementNamePattern": ["~/ui/"],
                 "groupName": "ui"
             }
         ],
@@ -196,47 +196,47 @@ import ComponentC from "~/components/ComponentC.vue";
     "experimentalSortImports": {
         "customGroups": [
             {
-                "elementNamePattern": ["^~/validators/"],
+                "elementNamePattern": ["~/validators/"],
                 "groupName": "validators"
             },
             {
-                "elementNamePattern": ["^~/composable/"],
+                "elementNamePattern": ["~/composable/"],
                 "groupName": "composable"
             },
             {
-                "elementNamePattern": ["^~/components/"],
+                "elementNamePattern": ["~/components/"],
                 "groupName": "components"
             },
             {
-                "elementNamePattern": ["^~/services/"],
+                "elementNamePattern": ["~/services/"],
                 "groupName": "services"
             },
             {
-                "elementNamePattern": ["^~/widgets/"],
+                "elementNamePattern": ["~/widgets/"],
                 "groupName": "widgets"
             },
             {
-                "elementNamePattern": ["^~/stores/"],
+                "elementNamePattern": ["~/stores/"],
                 "groupName": "stores"
             },
             {
-                "elementNamePattern": ["^~/logics/"],
+                "elementNamePattern": ["~/logics/"],
                 "groupName": "logics"
             },
             {
-                "elementNamePattern": ["^~/assets/"],
+                "elementNamePattern": ["~/assets/"],
                 "groupName": "assets"
             },
             {
-                "elementNamePattern": ["^~/utils/"],
+                "elementNamePattern": ["~/utils/"],
                 "groupName": "utils"
             },
             {
-                "elementNamePattern": ["^~/pages/"],
+                "elementNamePattern": ["~/pages/"],
                 "groupName": "pages"
             },
             {
-                "elementNamePattern": ["^~/ui/"],
+                "elementNamePattern": ["~/ui/"],
                 "groupName": "ui"
             }
         ],

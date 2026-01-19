@@ -29,8 +29,10 @@ pub struct SortImportsOptions {
     pub internal_pattern: Vec<String>,
     /// Groups configuration for organizing imports.
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
+    /// Default is defined by [`default_groups()`] function.
     pub groups: Vec<Vec<String>>,
-    /// Define your own groups and use regex for matching very specific imports
+    /// Define your own groups for matching very specific imports.
+    /// Default is `[]`.
     pub custom_groups: Vec<CustomGroupDefinition>,
 }
 

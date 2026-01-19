@@ -1,50 +1,29 @@
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use super::group_config::{GroupName, ImportModifier, ImportSelector};
 use super::options::CustomGroupDefinition;
 
-use super::group_config::{GroupName, ImportModifier, ImportSelector};
-
-// intermediate import metadata that is used for group matching
+// Intermediate import metadata that is used for group matching
 pub struct ImportMetadata<'a> {
     pub source: &'a str,
     pub selectors: Vec<ImportSelector>,
     pub modifiers: Vec<ImportModifier>,
 }
 
-// CustomGroup is intended to be a processed NormalizedCustomGroupDefinition with compiled regex patterns,
-// but for now, it's the same as NormalizedCustomGroupDefinition, because I don't know which regex lib to use.
-type CustomGroup = CustomGroupDefinition;
-
-impl CustomGroup {
-    pub fn does_match(&self, import_metadata: &ImportMetadata) -> bool {
-        for pattern in &self.element_name_pattern {
-            if (pattern.starts_with('^') && import_metadata.source.starts_with(&pattern[1..]))
-                || import_metadata.source.contains(pattern)
-            {
-                return true;
-            }
-        }
-        false
-    }
-}
-
 pub struct GroupMatcher {
-    // custom groups that are used in options.groups.
-    pub custom_groups: Vec<(CustomGroup, usize)>,
+    // Custom groups that are used in `options.groups`
+    custom_groups: Vec<(CustomGroupDefinition, usize)>,
 
-    // > Predefined groups are characterized by a single selector and potentially multiple modifiers.
-    // > You may enter modifiers in any order, but the selector must always come at the end.
-
-    // predefined groups sorted by priority
+    // Predefined groups sorted by priority,
     // so that we don't need to enumerate all possible group names of a given import.
-    pub predefined_groups: Vec<(GroupName, usize)>,
+    predefined_groups: Vec<(GroupName, usize)>,
 
-    // The index of "unknown" in groups or groups.len() if absent
-    pub unknown_group_index: usize,
+    // The index of "unknown" in groups or `groups.len()` if absent
+    unknown_group_index: usize,
 }
 
 impl GroupMatcher {
-    pub fn new(groups: &[Vec<String>], custom_groups: &[CustomGroup]) -> Self {
+    pub fn new(groups: &[Vec<String>], custom_groups: &[CustomGroupDefinition]) -> Self {
         let custom_group_name_set =
             custom_groups.iter().map(|g| g.group_name.clone()).collect::<FxHashSet<_>>();
 
@@ -64,7 +43,7 @@ impl GroupMatcher {
             }
         }
 
-        let mut used_custom_groups: Vec<(CustomGroup, usize)> =
+        let mut used_custom_groups: Vec<(CustomGroupDefinition, usize)> =
             Vec::with_capacity(used_custom_group_index_map.len());
         for custom_group in custom_groups {
             if let Some(index) = used_custom_group_index_map.get(&custom_group.group_name) {
@@ -83,7 +62,11 @@ impl GroupMatcher {
 
     pub fn compute_group_index(&self, import_metadata: &ImportMetadata) -> usize {
         for (custom_group, index) in &self.custom_groups {
-            if custom_group.does_match(import_metadata) {
+            let is_match = custom_group
+                .element_name_pattern
+                .iter()
+                .any(|pattern| import_metadata.source.starts_with(pattern));
+            if is_match {
                 return *index;
             }
         }
@@ -99,7 +82,6 @@ impl GroupMatcher {
         self.unknown_group_index
     }
 
-    // ref: https://github.com/oxc-project/oxc/blob/92003083000b854658dee57462f3f12588b2d1df/crates/oxc_formatter/src/ir_transform/sort_imports/compute_metadata.rs#L56-L67
     pub fn should_regroup_side_effect(&self) -> bool {
         self.predefined_groups
             .iter()

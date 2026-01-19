@@ -35,8 +35,7 @@ impl GroupName {
             *ImportSelector::ALL_SELECTORS.iter().find(|selector| s.ends_with(selector.name()))?;
 
         // The remaining part represents a sequence of modifiers joined by "-".
-        // Since modifiers themselves may contain "-",
-        // splitting by "-" would be ambiguous.
+        // Since modifiers themselves may contain "-", splitting by "-" would be ambiguous.
         // Instead, we iterate over modifiers in a predefined order and check
         // whether they appear in the remaining string.
         // This guarantees the extracted modifiers are already ordered
@@ -54,7 +53,7 @@ impl GroupName {
         Some(Self { selector, modifiers })
     }
 
-    /// check if it represents a possible group name of the given import.
+    /// Check if it represents a possible group name of the given import.
     pub fn is_a_possible_name_of(
         &self,
         selectors: &[ImportSelector],
@@ -189,20 +188,6 @@ pub enum ImportModifier {
 }
 
 impl ImportModifier {
-    /// Parse a string into an ImportModifier.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "side-effect" => Some(Self::SideEffect),
-            "type" => Some(Self::Type),
-            "value" => Some(Self::Value),
-            "default" => Some(Self::Default),
-            "wildcard" => Some(Self::Wildcard),
-            "named" => Some(Self::Named),
-            _ => None,
-        }
-    }
-
     pub const ALL_MODIFIERS: &[ImportModifier] = &[
         ImportModifier::SideEffect,
         ImportModifier::Type,
