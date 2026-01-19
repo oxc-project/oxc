@@ -125,11 +125,13 @@ export type SortImportsOptions = {
   /** Glob patterns to identify internal imports. */
   internalPattern?: string[];
   /**
-   * Custom groups configuration for organizing imports.
+   * Groups configuration for organizing imports.
    * Each array element represents a group, and multiple group names in the same array are treated as one.
    * Accepts both `string` and `string[]` as group elements.
    */
   groups?: (string | string[])[];
+  /** Define custom groups for matching specific imports. */
+  customGroups?: { groupName: string; elementNamePattern: string[] }[];
 };
 
 /**

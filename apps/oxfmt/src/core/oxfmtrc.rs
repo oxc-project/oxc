@@ -397,6 +397,15 @@ impl FormatConfig {
             if let Some(v) = config.groups {
                 sort_imports.groups = v.into_iter().map(SortGroupItemConfig::into_vec).collect();
             }
+            if let Some(v) = config.custom_groups {
+                sort_imports.custom_groups = v
+                    .into_iter()
+                    .map(|c| CustomGroupDefinition {
+                        group_name: c.group_name,
+                        element_name_pattern: c.element_name_pattern,
+                    })
+                    .collect();
+            }
 
             // `partition_by_newline: true` and `newlines_between: true` cannot be used together
             if sort_imports.partition_by_newline && sort_imports.newlines_between {

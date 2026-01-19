@@ -1,0 +1,9 @@
+{
+    "experimentalSortImports": {
+        "customGroups": [
+            { "elementNamePattern": ["~/stores/"], "groupName": "stores" },
+            { "elementNamePattern": ["~/utils/"], "groupName": "utils" }
+        ],
+        "groups": ["stores", "utils", "sibling"]
+    }
+}
