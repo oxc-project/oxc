@@ -9,5 +9,6 @@ describe("LSP initialization", () => {
     const initResult = await client.initialize(pathToFileURL(dirPath).href);
 
     expect(initResult.capabilities.documentFormattingProvider).toBe(true);
+    expect(initResult.serverInfo?.name).toBe("oxfmt");
   });
 });
