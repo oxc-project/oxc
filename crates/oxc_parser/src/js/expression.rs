@@ -643,6 +643,7 @@ impl<'a> ParserImpl<'a> {
             TemplateElementValue { raw, cooked },
             tail,
             lone_surrogates,
+            false, // escape_raw: parser provides already-escaped values from source
         )
     }
 

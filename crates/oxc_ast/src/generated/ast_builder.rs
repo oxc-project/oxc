@@ -17,6 +17,8 @@ use oxc_syntax::{
     comment_node::CommentNodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId,
 };
 
+use oxc_span::Atom;
+
 use crate::{AstBuilder, ast::*};
 
 impl<'a> AstBuilder<'a> {
@@ -1788,7 +1790,16 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         value: TemplateElementValue<'a>,
         tail: bool,
+        escape_raw: bool,
     ) -> TemplateElement<'a> {
+        let value = if escape_raw {
+            TemplateElementValue {
+                raw: escape_template_element_raw(value.raw.as_str(), self),
+                cooked: value.cooked,
+            }
+        } else {
+            value
+        };
         TemplateElement { span, value, tail, lone_surrogates: Default::default() }
     }
 
@@ -1806,7 +1817,16 @@ impl<'a> AstBuilder<'a> {
         value: TemplateElementValue<'a>,
         tail: bool,
         lone_surrogates: bool,
+        escape_raw: bool,
     ) -> TemplateElement<'a> {
+        let value = if escape_raw {
+            TemplateElementValue {
+                raw: escape_template_element_raw(value.raw.as_str(), self),
+                cooked: value.cooked,
+            }
+        } else {
+            value
+        };
         TemplateElement { span, value, tail, lone_surrogates }
     }
 
@@ -15132,5 +15152,60 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_js_doc_unknown_type(self, span: Span) -> Box<'a, JSDocUnknownType> {
         Box::new_in(self.js_doc_unknown_type(span), self.allocator)
+    }
+}
+
+/// Escape special characters for template element raw value.
+///
+/// Escapes: backticks, `${`, backslashes, and carriage returns.
+fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
+    let bytes = raw.as_bytes();
+    let mut extra_bytes = 0usize;
+    for i in 0..bytes.len() {
+        extra_bytes += match bytes[i] {
+            b'\\' | b'`' | b'\r' => 1,
+            b'$' if bytes.get(i + 1) == Some(&b'{') => 1,
+            _ => 0,
+        };
+    }
+    if extra_bytes == 0 {
+        return ast.atom(raw);
+    }
+    let len = bytes.len() + extra_bytes;
+    let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+    let ptr = ast.allocator.alloc_layout(layout);
+    #[expect(clippy::undocumented_unsafe_blocks)]
+    unsafe {
+        let escaped = std::slice::from_raw_parts_mut(ptr.as_ptr(), len);
+        let mut j = 0;
+        for i in 0..bytes.len() {
+            match bytes[i] {
+                b'\\' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'\\';
+                    j += 2;
+                }
+                b'`' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'`';
+                    j += 2;
+                }
+                b'$' if bytes.get(i + 1) == Some(&b'{') => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'$';
+                    j += 2;
+                }
+                b'\r' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'r';
+                    j += 2;
+                }
+                b => {
+                    *escaped.get_unchecked_mut(j) = b;
+                    j += 1;
+                }
+            }
+        }
+        Atom::from(std::str::from_utf8_unchecked(escaped))
     }
 }

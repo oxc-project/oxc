@@ -273,6 +273,7 @@ impl<'a> PeepholeOptimizations {
                                 e.span(),
                                 TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
                                 false,
+                                false,
                             )
                         })
                         .take(expressions.len() + 1),
@@ -298,6 +299,7 @@ impl<'a> PeepholeOptimizations {
                     ctx.ast.template_element(
                         temp_lit.span,
                         TemplateElementValue { raw: "".into(), cooked: Some("".into()) },
+                        false,
                         false,
                     )
                 })

@@ -1,4 +1,7 @@
-use oxc_codegen::{CodegenOptions, IndentChar};
+use oxc_allocator::Allocator;
+use oxc_ast::AstBuilder;
+use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
+use oxc_span::SPAN;
 
 use crate::tester::{
     test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
@@ -690,4 +693,42 @@ fn indentation() {
         "\tlet foo = 1;\n",
         CodegenOptions { initial_indent: 1, ..CodegenOptions::default() },
     );
+}
+
+#[test]
+fn template_literal_escape_when_building_ast() {
+    use oxc_ast::ast::TemplateElementValue;
+
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+
+    // Create a template literal with special characters that need escaping:
+    // backtick, ${, and backslash
+    // Pass escape_raw: true to automatically escape the raw field
+    let cooked = "hello`world${foo}\\bar";
+    let value = TemplateElementValue { raw: ast.atom(cooked), cooked: Some(ast.atom(cooked)) };
+    let element = ast.template_element(SPAN, value, true, true); // escape_raw: true
+    let quasis = ast.vec1(element);
+    let template_literal = ast.template_literal(SPAN, quasis, ast.vec());
+
+    let expr = ast.expression_template_literal(
+        SPAN,
+        template_literal.quasis,
+        template_literal.expressions,
+    );
+    let stmt = ast.statement_expression(SPAN, expr);
+    let program = ast.program(
+        SPAN,
+        oxc_span::SourceType::mjs(),
+        "",
+        ast.vec(),
+        None,
+        ast.vec(),
+        ast.vec1(stmt),
+    );
+
+    let result = Codegen::new().build(&program).code;
+    // The raw value should have been escaped by template_element with escape_raw: true
+    // backtick, ${, and backslash are all escaped
+    assert_eq!(result, "`hello\\`world\\${foo}\\\\bar`;\n");
 }
