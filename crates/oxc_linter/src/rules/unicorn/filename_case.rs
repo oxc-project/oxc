@@ -60,39 +60,45 @@ pub struct FilenameCaseConfigJson {
     ///
     /// You can set the `cases` option like this:
     /// ```json
-    /// "unicorn/filename-case": [
-    ///   "error",
-    ///   {
-    ///     "cases": {
-    ///       "camelCase": true,
-    ///       "pascalCase": true
+    /// {
+    ///   "unicorn/filename-case": [
+    ///     "error",
+    ///     {
+    ///       "cases": {
+    ///         "camelCase": true,
+    ///         "pascalCase": true
+    ///       }
     ///     }
-    ///   }
-    /// ]
+    ///   ]
+    /// }
     /// ```
     cases: FilenameCaseConfigJsonCases,
     /// The case style to enforce for filenames.
     ///
     /// You can set the `case` option like this:
     /// ```json
-    /// "unicorn/filename-case": [
-    ///   "error",
-    ///   {
-    ///     "case": "kebabCase"
-    ///   }
-    /// ]
+    /// {
+    ///   "unicorn/filename-case": [
+    ///     "error",
+    ///     {
+    ///       "case": "kebabCase"
+    ///     }
+    ///   ]
+    /// }
     /// ```
     case: FilenameCaseJsonOptions,
     /// A regular expression pattern for filenames to ignore.
     ///
     /// You can set the `ignore` option like this:
     /// ```json
-    /// "unicorn/filename-case": [
-    ///   "error",
-    ///   {
-    ///     "ignore": "^foo.*$"
-    ///   }
-    /// ]
+    /// {
+    ///   "unicorn/filename-case": [
+    ///     "error",
+    ///     {
+    ///       "ignore": "^foo.*$"
+    ///     }
+    ///   ]
+    /// }
     /// ```
     ignore: Option<Regex>,
     /// Whether to treat additional, `.`-separated parts of a filename as
