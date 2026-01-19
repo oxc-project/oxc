@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.26.0] - 2026-01-19
+
+### 📚 Documentation
+
+- 8a294d5 oxfmt, oxlint: Update logo (#18242) (Dunqing)
+
 ## [0.25.0] - 2026-01-19
 
 ### 🚀 Features

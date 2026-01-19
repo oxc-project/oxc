@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.26.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 864b4ab oxfmt: Use `format_config` for `external_options` override (#18252) (leaysgur)
+- 90ce4b7 oxfmt: Restore `customGroups` handling lost (#18243) (leaysgur)
+
 ## [0.25.0] - 2026-01-19
 
 ### 🚀 Features
