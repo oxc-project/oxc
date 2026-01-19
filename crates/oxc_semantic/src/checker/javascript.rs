@@ -20,9 +20,10 @@ use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnos
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
 pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>) {
-    if ctx.source_type.is_typescript() || ctx.source_type.is_script() {
+    if ctx.source_type.is_typescript() || !ctx.source_type.is_module() {
         return;
     }
+
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
