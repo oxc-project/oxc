@@ -195,9 +195,7 @@ after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+'abstract' modifier cannot be used with a private identifier.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
 Unresolved references mismatch:

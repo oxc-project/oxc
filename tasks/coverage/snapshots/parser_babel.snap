@@ -2,11 +2,9 @@ commit: fc58af40
 
 parser_babel Summary:
 AST Parsed     : 2221/2227 (99.73%)
-Positive Passed: 2206/2227 (99.06%)
-Negative Passed: 1647/1689 (97.51%)
+Positive Passed: 2205/2227 (99.01%)
+Negative Passed: 1649/1689 (97.63%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -29,8 +27,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-incompatible/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts
 
@@ -216,6 +212,16 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026
    ·     ┬                 ─┬
    ·     │                  ╰── `)` expected
    ·     ╰── Opened here
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
+
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts:2:12]
+ 1 │ abstract class TSAbstractClass {
+ 2 │   abstract #foo(name: string): boolean;
+   ·            ────
+ 3 │ }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
@@ -12170,6 +12176,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:12]
+ 1 │ abstract class TSAbstractClass {
+ 2 │   abstract #foo: boolean;
+   ·            ────
+ 3 │ }
+   ╰────
+
   × A 'set' accessor must have exactly one parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/getter-setter/input.ts:3:9]
  2 │ ({ get x() { return 1 } });
@@ -13051,6 +13065,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │         public readonly pur,
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
+   ╰────
+
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:12]
+ 1 │ abstract class A {
+ 2 │   abstract #a;
+   ·            ──
+ 3 │ }
    ╰────
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.

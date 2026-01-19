@@ -14772,6 +14772,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  27 │     async get #asyncProp() { return 1; }         // Error
     ╰────
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
   × Private identifier '#prop' is not allowed outside class bodies
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesInterfaceExtendingClass.ts:10:7]
   9 │ function func(x: I) {
