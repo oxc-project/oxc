@@ -41,7 +41,7 @@ pub struct NoAbsolutePath {
     /// If set to `true`, dependency paths for AMD-style define and require calls will be resolved:
     ///
     /// ```js
-    /// /* eslint import/no-absolute-path: ['error', { commonjs: false, amd: true }] */
+    /// /* import/no-absolute-path: ["error", { "commonjs": false, "amd": true }] */
     /// define(['/foo'], function (foo) { /*...*/ }) // reported
     /// require(['/foo'], function (foo) { /*...*/ }) // reported
     ///
