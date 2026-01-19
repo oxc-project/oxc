@@ -266,8 +266,7 @@ impl<'t> Mangler<'t> {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut semantic =
-            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
+        let mut semantic = SemanticBuilder::new().build(program).semantic;
         let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
@@ -296,8 +295,6 @@ impl<'t> Mangler<'t> {
         generate_name: G,
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
-
-        assert!(scoping.has_scope_child_ids(), "child_id needs to be generated");
 
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
