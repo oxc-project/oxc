@@ -1,6 +1,14 @@
 use super::CHUNK_ALIGN;
 
-// TODO: We need `const NO_GROW: bool` for fixed-size arenas.
+/// Size of a single large chunk for `SINGLE_CHUNK` mode.
+/// 4 GiB - allows pointer compression to 32-bit offsets.
+/// On systems with virtual memory, only pages that are written to consume physical memory.
+#[cfg(not(target_arch = "wasm32"))]
+pub const SINGLE_CHUNK_CAPACITY: usize = 4 * 1024 * 1024 * 1024; // 4 GiB
+
+/// On WASM, we can't use the virtual memory trick, so use a smaller default.
+#[cfg(target_arch = "wasm32")]
+pub const SINGLE_CHUNK_CAPACITY: usize = 64 * 1024 * 1024; // 64 MiB
 
 /// Configuration trait for [`Arena`]s.
 ///
@@ -13,6 +21,7 @@ use super::CHUNK_ALIGN;
 ///
 /// impl ArenaConfig for MyArenaConfig {
 ///     const MIN_ALIGN: usize = 16;
+///     const SINGLE_CHUNK: bool = false;
 /// }
 ///
 /// type MyArena = Arena<MyArenaConfig>;
@@ -40,6 +49,22 @@ pub trait ArenaConfig {
     ///
     /// Breaking any of those restrictions will produce a compile-time error.
     const MIN_ALIGN: usize;
+
+    /// Whether the arena uses a single large chunk (4 GiB on 64-bit systems).
+    ///
+    /// When `true`:
+    /// - Arena allocates a single large chunk on first allocation
+    /// - Allocation is branchless (no capacity checks needed)
+    /// - Cannot grow beyond the single chunk
+    /// - Panics if allocation exceeds chunk capacity
+    ///
+    /// This mode exploits virtual memory: the 4 GiB chunk only consumes virtual
+    /// address space initially. Physical memory pages are allocated on-demand
+    /// as they are written to.
+    ///
+    /// This enables future optimizations like pointer compression (storing
+    /// pointers as 32-bit offsets within the chunk).
+    const SINGLE_CHUNK: bool;
 }
 
 /// Assertions for invariants of [`ArenaConfig`].
@@ -71,6 +96,7 @@ pub struct ArenaConfigDefault;
 
 impl ArenaConfig for ArenaConfigDefault {
     const MIN_ALIGN: usize = 1;
+    const SINGLE_CHUNK: bool = false;
 }
 
 /// Default [`ArenaConfig`], with `MIN_ALIGN = align_of::<usize>()`
@@ -81,4 +107,16 @@ pub struct ArenaConfigPointerAligned;
 
 impl ArenaConfig for ArenaConfigPointerAligned {
     const MIN_ALIGN: usize = align_of::<usize>();
+    const SINGLE_CHUNK: bool = false;
+}
+
+/// Single-chunk [`ArenaConfig`] with 4 GiB capacity.
+///
+/// Uses a single large chunk for branchless allocation.
+/// Ideal for parsing where total AST size is bounded.
+pub struct ArenaConfigSingleChunk;
+
+impl ArenaConfig for ArenaConfigSingleChunk {
+    const MIN_ALIGN: usize = align_of::<usize>();
+    const SINGLE_CHUNK: bool = true;
 }

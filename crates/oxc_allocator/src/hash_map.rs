@@ -25,7 +25,7 @@ pub use hashbrown::{
     },
 };
 
-use crate::{Allocator, arena::ArenaDefault as Arena};
+use crate::{Allocator, arena::AllocatorArena as Arena};
 
 type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc Arena>;
 

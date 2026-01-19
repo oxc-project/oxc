@@ -4,7 +4,7 @@
 use std::{
     alloc::{self, Layout, handle_alloc_error},
     cell::Cell,
-    cmp::{self, Ordering},
+    cmp,
     iter::FusedIterator,
     marker::PhantomData,
     ptr::{self, NonNull},
@@ -14,7 +14,7 @@ use std::{
 use oxc_data_structures::pointer_ext::PointerExt;
 
 use super::{
-    config::ArenaConfigExt,
+    config::{ArenaConfigExt, SINGLE_CHUNK_CAPACITY},
     constants::{
         CHUNK_ALIGN, FIRST_CHUNK_DEFAULT_CAPACITY, FOOTER_SIZE, MAX_INITIAL_CAPACITY, OVERHEAD,
         TYPICAL_PAGE_SIZE,
@@ -136,8 +136,10 @@ impl<Config: ArenaConfigExt> Arena<Config> {
         let footer_ptr = unsafe { ptr.add(layout.size() - FOOTER_SIZE).cast::<ChunkFooter>() };
         let footer = ChunkFooter {
             start: ptr,
-            // Cursor starts at end of the range
+            // Cursor starts at end of the range (bumps downward)
             cursor: Cell::new(footer_ptr.cast::<u8>()),
+            // Up cursor starts at start of the range (bumps upward)
+            up_cursor: Cell::new(ptr),
             previous_chunk: ChunkFooter::EMPTY,
             alignment: layout.align(),
         };
@@ -219,6 +221,10 @@ impl<Config: ArenaConfigExt> Arena<Config> {
 
     /// Copy a string slice into this [`Arena`] and return a reference to it.
     ///
+    /// Strings are allocated by bumping upward from the start of the chunk,
+    /// separate from AST nodes which bump downward. This bidirectional allocation
+    /// avoids alignment padding waste for 1-byte aligned string data.
+    ///
     /// # Panics
     /// Panics if reserving space for the string fails.
     ///
@@ -231,11 +237,16 @@ impl<Config: ArenaConfigExt> Arena<Config> {
     /// ```
     #[inline(always)]
     pub fn alloc_str<'arena>(&'arena self, s: &str) -> &'arena str {
-        // `str` is not `Drop`, so need for const assertion about `Drop` types in arena
+        // `str` is not `Drop`, so no need for const assertion about `Drop` types in arena
 
-        let bytes = self.alloc_slice_copy(s.as_bytes());
-        // SAFETY: `bytes` was created from a `&str`, so is guaranteed to be valid UTF-8
-        unsafe { str::from_utf8_unchecked(bytes) }
+        // Allocate bytes using upward allocation (optimized for 1-byte aligned data)
+        let dst = self.alloc_bytes_upward(s.len());
+
+        // SAFETY: `dst` points to uninitialized memory of `s.len()` bytes
+        unsafe {
+            ptr::copy_nonoverlapping(s.as_ptr(), dst.as_ptr(), s.len());
+            str::from_utf8_unchecked(slice::from_raw_parts(dst.as_ptr(), s.len()))
+        }
     }
 
     /// Copy a slice into this [`Arena`] and return an exclusive reference to the copy in arena.
@@ -274,106 +285,137 @@ impl<Config: ArenaConfigExt> Arena<Config> {
     /// Panics if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
-        if let Some(ptr) = self.alloc_layout_fast(layout) {
+        if Config::SINGLE_CHUNK {
+            // Single-chunk mode: branchless allocation (no capacity check in fast path).
+            // The chunk is large enough that we assume allocations always fit.
+            // If the arena hasn't allocated yet, we need to allocate the single chunk first.
+            if self.current_chunk_footer.get() == ChunkFooter::EMPTY {
+                self.alloc_single_chunk();
+            }
+            self.alloc_layout_branchless(layout)
+        } else if let Some(ptr) = self.alloc_layout_fast(layout) {
             ptr
         } else {
             self.alloc_layout_slow(layout)
         }
     }
 
+    /// Allocate the single large chunk for single-chunk mode.
+    ///
+    /// This is called once on first allocation when `Config::SINGLE_CHUNK` is true.
+    #[cold]
+    #[inline(never)]
+    fn alloc_single_chunk(&self) {
+        debug_assert!(Config::SINGLE_CHUNK);
+        debug_assert!(self.current_chunk_footer.get() == ChunkFooter::EMPTY);
+
+        // Allocate the full single chunk (4 GiB on 64-bit, smaller on WASM)
+        // Ensure capacity is properly aligned so footer is aligned
+        let total_size = SINGLE_CHUNK_CAPACITY;
+        // Round down to ensure footer is aligned on CHUNK_ALIGN
+        let capacity = (total_size - FOOTER_SIZE) & !(CHUNK_ALIGN - 1);
+
+        // SAFETY: TODO
+        let footer_ptr = unsafe {
+            match Self::new_chunk(capacity, CHUNK_ALIGN, ChunkFooter::EMPTY) {
+                Some(footer_ptr) => footer_ptr,
+                None => alloc_failure(capacity, CHUNK_ALIGN),
+            }
+        };
+
+        self.current_chunk_footer.set(footer_ptr);
+    }
+
+    /// Branchless allocation for single-chunk mode.
+    ///
+    /// In single-chunk mode, we skip capacity checks because the chunk is large (4 GiB).
+    /// This makes allocation branchless and faster. If allocation somehow exceeds
+    /// chunk capacity, behavior is undefined (but this should never happen in practice
+    /// since AST sizes are bounded well below 4 GiB).
+    #[inline(always)]
+    fn alloc_layout_branchless(&self, layout: Layout) -> NonNull<u8> {
+        debug_assert!(Config::SINGLE_CHUNK);
+        debug_assert!(self.current_chunk_footer.get() != ChunkFooter::EMPTY);
+
+        // SAFETY: We've verified we're not at EMPTY_CHUNK
+        unsafe {
+            let footer_ptr = self.current_chunk_footer.get();
+            let chunk = footer_ptr.as_ref();
+
+            // Round size up to MIN_ALIGN to maintain alignment invariant
+            let aligned_size = (layout.size() + Config::MIN_ALIGN - 1) & !(Config::MIN_ALIGN - 1);
+
+            // Branchless: no capacity check - we trust the single chunk is large enough
+            let value_ptr = chunk.cursor.get().sub(aligned_size);
+            chunk.cursor.set(value_ptr);
+
+            debug_assert!(is_multiple_of(value_ptr.as_ptr() as usize, layout.align()));
+            debug_assert!(value_ptr >= chunk.up_cursor.get());
+            value_ptr
+        }
+    }
+
+    /// Fast path for allocation.
+    ///
+    /// Optimized for AST node allocation where alignment equals `MIN_ALIGN` (8 bytes).
+    /// With bidirectional allocation, strings use `alloc_bytes_upward` instead,
+    /// so this path can focus on the common 8-byte aligned case.
     #[inline(always)]
     fn alloc_layout_fast(&self, layout: Layout) -> Option<NonNull<u8>> {
         // We don't need to check for ZSTs here since they will automatically be handled properly.
         // The pointer will be bumped by zero bytes, modulo alignment.
-        // This keeps the fast path optimized for non-ZSTs, which are much more common.
-        // Note: ZSTs includes zero-length slices and strings.
         //
         // `EMPTY_CHUNK` uses `Cell` for the cursor field so that it's placed in writable memory.
         // This allows ZST allocations to write to the cursor without causing SIGBUS.
-        // The write is idempotent (writing the same value back) so it's safe.
 
         // SAFETY: TODO
         unsafe {
-            let mut footer_ptr = self.current_chunk_footer.get();
-            let chunk = footer_ptr.as_mut();
+            let footer_ptr = self.current_chunk_footer.get();
+            let chunk = footer_ptr.as_ref();
 
-            debug_assert!(chunk.start <= chunk.cursor.get());
+            debug_assert!(chunk.up_cursor.get() <= chunk.cursor.get());
             debug_assert!(chunk.cursor.get() <= footer_ptr.cast::<u8>());
             debug_assert!(is_multiple_of(chunk.cursor.get().as_ptr() as usize, Config::MIN_ALIGN));
 
-            // This `match` should be boiled away by LLVM. `MIN_ALIGN` is a constant and the layout's
-            // alignment is also constant in practice after inlining
-            let value_ptr = match layout.align().cmp(&Config::MIN_ALIGN) {
-                Ordering::Less => {
-                    // We need to round the size up to a multiple of `MIN_ALIGN` to preserve the
-                    // minimum alignment. This cannot overflow, because `Layout` guarantees that
-                    // `size <= isize::MAX`.
-                    let aligned_size = layout.size().next_multiple_of(Config::MIN_ALIGN);
-                    if aligned_size > chunk.free_bytes() {
-                        return None;
-                    }
-                    chunk.cursor.get().sub(aligned_size)
+            // Fast path: Most AST allocations have alignment == MIN_ALIGN (8 bytes).
+            // With bidirectional allocation, strings (align 1) use upward allocation,
+            // so this path primarily handles 8-byte aligned AST nodes.
+            if layout.align() <= Config::MIN_ALIGN {
+                // Round size up to MIN_ALIGN to maintain alignment invariant.
+                // This is slightly wasteful for small alignments but keeps the cursor aligned.
+                let aligned_size = (layout.size() + Config::MIN_ALIGN - 1) & !(Config::MIN_ALIGN - 1);
+
+                if aligned_size > chunk.free_bytes() {
+                    return None;
                 }
-                Ordering::Equal => {
-                    // `Layout` guarantees that rounding the size up to its align cannot overflow.
-                    // But it does not guarantee that the size is initially a multiple of the alignment,
-                    // which is why we need to do this rounding.
-                    let aligned_size = layout.size().next_multiple_of(layout.align());
 
-                    // TODO: `cursor_ptr` of an allocated chunk is aligned on 16.
-                    // If we made `EmptyChunkFooter` aligned on 16 too, then `cursor_ptr` would
-                    // always be >= 16.
-                    // An unchecked assertion here to state that fact might help compiler,
-                    // when `layout.size() <= 16`, to convert this code to:
-                    // ```
-                    // let value_ptr = cursor_ptr.wrapping_sub(aligned_size);
-                    // if (value_ptr as usize) < (start_ptr as usize) {
-                    //   return None;
-                    // }
-                    // value_ptr
-                    // ```
-                    // This is 2 less instructions.
-                    //
-                    // If `CHUNK_ALIGN` were higher (e.g. 256), and `EmptyChunkFooter` aligned on 256 too,
-                    // then this optimization would apply for any allocation less than 256 size.
-                    // i.e. almost all `Box` AST nodes, and `Vec<Statement>`s etc with length <= 16.
-                    //
-                    // Sadly unchecked assertion doesn't help: https://godbolt.org/z/vhTzx1GYs
-                    // Would need to be a separate method for known size allocations.
-                    if aligned_size > chunk.free_bytes() {
-                        return None;
-                    }
-                    chunk.cursor.get().sub(aligned_size)
-                }
-                Ordering::Greater => {
-                    // `Layout` guarantees that rounding the size up to its align cannot overflow.
-                    // But it does not guarantee that the size is initially a multiple of the alignment,
-                    // which is why we need to do this rounding.
-                    let aligned_size = layout.size().next_multiple_of(layout.align());
+                let value_ptr = chunk.cursor.get().sub(aligned_size);
+                chunk.cursor.set(value_ptr);
 
-                    let cursor_ptr = chunk.cursor.get().as_ptr();
-                    let start_ptr = chunk.start.as_ptr();
-                    // Must use `wrapping_sub` because `layout.align()` could be very large (e.g. `1 << 63`),
-                    // so this could go out of bounds, or even wrap around the address space
-                    let aligned_cursor_ptr =
-                        cursor_ptr.wrapping_sub(cursor_ptr as usize & (layout.align() - 1));
-                    let free_space = (aligned_cursor_ptr as usize).wrapping_sub(start_ptr as usize);
-                    // TODO: How does this work?
-                    if aligned_cursor_ptr < start_ptr || aligned_size > free_space {
-                        return None;
-                    }
+                debug_assert!(is_multiple_of(value_ptr.as_ptr() as usize, layout.align()));
+                return Some(value_ptr);
+            }
 
-                    let value_ptr = aligned_cursor_ptr.sub(aligned_size);
-                    NonNull::new_unchecked(value_ptr)
-                }
-            };
+            // Slow path for over-aligned types (alignment > MIN_ALIGN).
+            // This is rare for AST nodes but needed for completeness.
+            let aligned_size = layout.size().next_multiple_of(layout.align());
 
-            debug_assert!(is_multiple_of(value_ptr.as_ptr() as usize, layout.align()));
-            debug_assert!(is_multiple_of(value_ptr.as_ptr() as usize, Config::MIN_ALIGN));
-            debug_assert!(value_ptr >= chunk.start && value_ptr <= chunk.cursor.get());
+            let cursor_ptr = chunk.cursor.get().as_ptr();
+            let up_cursor_ptr = chunk.up_cursor.get().as_ptr();
 
+            // Align cursor down to the required alignment
+            let aligned_cursor_ptr =
+                cursor_ptr.wrapping_sub(cursor_ptr as usize & (layout.align() - 1));
+            let free_space = (aligned_cursor_ptr as usize).wrapping_sub(up_cursor_ptr as usize);
+
+            if aligned_cursor_ptr < up_cursor_ptr || aligned_size > free_space {
+                return None;
+            }
+
+            let value_ptr = NonNull::new_unchecked(aligned_cursor_ptr.sub(aligned_size));
             chunk.cursor.set(value_ptr);
 
+            debug_assert!(is_multiple_of(value_ptr.as_ptr() as usize, layout.align()));
             Some(value_ptr)
         }
     }
@@ -441,6 +483,129 @@ impl<Config: ArenaConfigExt> Arena<Config> {
         // And then we can rely on `try_alloc_layout_fast` to allocate
         // space within this chunk.
         self.alloc_layout_fast(layout).unwrap()
+    }
+
+    /// Allocate space for bytes by bumping upward from the start of the chunk.
+    ///
+    /// This is used for string/byte data which has 1-byte alignment. By allocating
+    /// strings from the start and AST nodes from the end, we avoid alignment padding
+    /// waste and simplify the main allocation path.
+    ///
+    /// # Panics
+    /// Panics if reserving space fails.
+    #[inline(always)]
+    pub fn alloc_bytes_upward(&self, size: usize) -> NonNull<u8> {
+        if Config::SINGLE_CHUNK {
+            // Single-chunk mode: branchless allocation
+            if self.current_chunk_footer.get() == ChunkFooter::EMPTY {
+                self.alloc_single_chunk();
+            }
+            self.alloc_bytes_upward_branchless(size)
+        } else if let Some(ptr) = self.alloc_bytes_upward_fast(size) {
+            ptr
+        } else {
+            self.alloc_bytes_upward_slow(size)
+        }
+    }
+
+    /// Branchless upward allocation for single-chunk mode.
+    #[inline(always)]
+    fn alloc_bytes_upward_branchless(&self, size: usize) -> NonNull<u8> {
+        debug_assert!(Config::SINGLE_CHUNK);
+        debug_assert!(self.current_chunk_footer.get() != ChunkFooter::EMPTY);
+
+        // SAFETY: We've verified we're not at EMPTY_CHUNK
+        unsafe {
+            let footer_ptr = self.current_chunk_footer.get();
+            let chunk = footer_ptr.as_ref();
+
+            let up_cursor = chunk.up_cursor.get();
+
+            // Branchless: no capacity check - we trust the single chunk is large enough
+            let new_up_cursor = up_cursor.add(size);
+            chunk.up_cursor.set(new_up_cursor);
+
+            debug_assert!(new_up_cursor <= chunk.cursor.get());
+            up_cursor
+        }
+    }
+
+    #[inline(always)]
+    fn alloc_bytes_upward_fast(&self, size: usize) -> Option<NonNull<u8>> {
+        // SAFETY: TODO
+        unsafe {
+            let footer_ptr = self.current_chunk_footer.get();
+            let chunk = footer_ptr.as_ref();
+
+            let up_cursor = chunk.up_cursor.get();
+            let cursor = chunk.cursor.get();
+
+            debug_assert!(up_cursor <= cursor);
+
+            // Check if there's enough space between up_cursor and cursor
+            let free = cursor.offset_from_usize(up_cursor);
+            if size > free {
+                return None;
+            }
+
+            // Bump up_cursor upward
+            let new_up_cursor = up_cursor.add(size);
+            chunk.up_cursor.set(new_up_cursor);
+
+            Some(up_cursor)
+        }
+    }
+
+    #[inline(never)]
+    #[cold]
+    fn alloc_bytes_upward_slow(&self, size: usize) -> NonNull<u8> {
+        let current_footer_ptr = self.current_chunk_footer.get();
+        // SAFETY: TODO
+        let current_chunk_capacity = unsafe { current_footer_ptr.as_ref().capacity() };
+
+        let min_new_chunk_capacity = if size <= FIRST_CHUNK_DEFAULT_CAPACITY {
+            FIRST_CHUNK_DEFAULT_CAPACITY
+        } else {
+            let chunk_size = size.next_multiple_of(CHUNK_ALIGN) + FOOTER_SIZE;
+            Layout::from_size_align(chunk_size, CHUNK_ALIGN).expect("layout too big");
+            chunk_size - FOOTER_SIZE
+        };
+
+        let double_current_chunk_capacity = current_chunk_capacity * 2;
+        let mut double_current_size =
+            double_current_chunk_capacity.next_multiple_of(CHUNK_ALIGN) + FOOTER_SIZE;
+        if double_current_size.next_multiple_of(CHUNK_ALIGN) > isize::MAX as usize {
+            double_current_size -= CHUNK_ALIGN;
+        }
+        let target_capacity = double_current_size - FOOTER_SIZE;
+
+        let mut try_capacity = cmp::max(min_new_chunk_capacity, target_capacity);
+
+        let mut tried_minimum = false;
+        let new_footer_ptr = loop {
+            // SAFETY: TODO
+            let footer_ptr =
+                unsafe { Self::new_chunk(try_capacity, CHUNK_ALIGN, current_footer_ptr) };
+            if let Some(footer_ptr) = footer_ptr {
+                break footer_ptr;
+            }
+
+            try_capacity /= 2;
+            if try_capacity < min_new_chunk_capacity {
+                if tried_minimum {
+                    // SAFETY: TODO
+                    unsafe { alloc_failure(try_capacity, CHUNK_ALIGN) };
+                }
+                try_capacity = min_new_chunk_capacity;
+                tried_minimum = true;
+            }
+        };
+
+        // Set the new chunk as our new current chunk.
+        self.current_chunk_footer.set(new_footer_ptr);
+
+        // And then we can rely on fast path to allocate space within this chunk.
+        self.alloc_bytes_upward_fast(size).unwrap()
     }
 
     /// Allocate space for `bytes` bytes at start of [`Arena`]'s current chunk.
@@ -583,8 +748,10 @@ impl<Config: ArenaConfigExt> Arena<Config> {
 
             let footer = ChunkFooter {
                 start: start_ptr,
-                // Cursor starts at end of the range
+                // Cursor starts at end of the range (bumps downward)
                 cursor: Cell::new(footer_ptr.cast::<u8>()),
+                // Up cursor starts at start of the range (bumps upward)
+                up_cursor: Cell::new(start_ptr),
                 previous_chunk: previous_chunk_ptr,
                 alignment,
             };
@@ -630,14 +797,15 @@ impl<Config: ArenaConfigExt> Arena<Config> {
             return;
         }
 
-        // Reset cursor of last chunk, and get pointer to previous chunk
+        // Reset cursors of last chunk, and get pointer to previous chunk
         let mut chunk_ptr = {
             // SAFETY: Pointer always points to a valid initialized `ChunkFooter`.
             // Reference only lives during this block, so chunk is not referenced when it's deallocated below.
             let last_chunk = unsafe { last_chunk_ptr.as_mut() };
 
-            // Reset cursor of last chunk
+            // Reset both cursors of last chunk
             last_chunk.cursor.set(last_chunk_ptr.cast::<u8>());
+            last_chunk.up_cursor.set(last_chunk.start);
 
             // If only one chunk, exit
             let previous_chunk_ptr = last_chunk.previous_chunk;
@@ -763,11 +931,11 @@ impl<Config: ArenaConfigExt> Arena<Config> {
         iter.map(ChunkFooter::used_bytes).sum()
     }
 
-    /// Cast this `&Arena<Config>` to `&ArenaDefault`.
+    /// Cast this `&Arena<Config>` to `&AllocatorArena`.
     ///
     /// This is only used for allocation tracking, which uses pointer arithmetic to find the
     /// `AllocationStats` from the Arena's memory location. The tracking code assumes the Arena
-    /// is wrapped in an `Allocator`, which only uses `ArenaDefault`.
+    /// is wrapped in an `Allocator`, which uses `AllocatorArena`.
     ///
     /// # SAFETY
     ///
@@ -775,10 +943,10 @@ impl<Config: ArenaConfigExt> Arena<Config> {
     /// (the `Config` type parameter is only used for associated constants, not fields).
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
     #[inline(always)]
-    pub(crate) fn cast_default(&self) -> &super::ArenaDefault {
+    pub(crate) fn cast_allocator_arena(&self) -> &super::AllocatorArena {
         // SAFETY: All Arena<Config> have identical memory layout regardless of Config.
         // Config only affects associated constants, not struct fields.
-        unsafe { &*(std::ptr::from_ref(self).cast::<super::ArenaDefault>()) }
+        unsafe { &*(std::ptr::from_ref(self).cast::<super::AllocatorArena>()) }
     }
 }
 

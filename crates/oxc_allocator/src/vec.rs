@@ -20,7 +20,7 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 #[cfg(any(feature = "serialize", test))]
 use oxc_estree::{ConcatElement, ESTree, SequenceSerializer, Serializer as ESTreeSerializer};
 
-use crate::{Allocator, Box, arena::ArenaDefault as Arena, vec2::Vec as InnerVecGeneric};
+use crate::{Allocator, Box, arena::AllocatorArena as Arena, vec2::Vec as InnerVecGeneric};
 
 type InnerVec<'a, T> = InnerVecGeneric<'a, T, Arena>;
 

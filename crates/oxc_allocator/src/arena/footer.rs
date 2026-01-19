@@ -12,16 +12,25 @@ use super::constants::CHUNK_ALIGN;
 ///
 /// Each chunk contains `ChunkFooter` at the very end of the chunk.
 ///
-/// `cursor` uses `Cell` to allow interior mutability. This is necessary so that
+/// The arena uses bidirectional allocation:
+/// - `cursor` bumps downward from the footer (for AST nodes with 8-byte alignment)
+/// - `up_cursor` bumps upward from `start` (for strings with 1-byte alignment)
+///
+/// The chunk is full when `up_cursor` meets `cursor`.
+///
+/// `cursor` and `up_cursor` use `Cell` to allow interior mutability. This is necessary so that
 /// `EMPTY_CHUNK` static is placed in writable memory, allowing ZST allocations
 /// to write to the cursor without causing SIGBUS.
 #[repr(C)]
 pub struct ChunkFooter {
     /// Pointer to the start of this chunk.
     pub start: NonNull<u8>,
-    /// Bump allocation cursor that is always in the range `self.start..=self`.
+    /// Bump allocation cursor that bumps downward, always in the range `self.up_cursor..=self`.
     /// Uses `Cell` for interior mutability so `EMPTY_CHUNK` can be in writable memory.
     pub cursor: Cell<NonNull<u8>>,
+    /// Upward bump allocation cursor for strings, always in the range `self.start..=self.cursor`.
+    /// Uses `Cell` for interior mutability so `EMPTY_CHUNK` can be in writable memory.
+    pub up_cursor: Cell<NonNull<u8>>,
     /// Link to the previous chunk.
     ///
     /// The last node in the `prev` linked list is the canonical empty chunk [`EMPTY_CHUNK`],
@@ -56,8 +65,9 @@ const EMPTY_CHUNK_PTR: NonNull<ChunkFooter> =
 
 static EMPTY_CHUNK: EmptyChunkFooter = EmptyChunkFooter(ChunkFooter {
     start: EMPTY_CHUNK_PTR.cast::<u8>(),
-    previous_chunk: EMPTY_CHUNK_PTR,
     cursor: Cell::new(EMPTY_CHUNK_PTR.cast::<u8>()),
+    up_cursor: Cell::new(EMPTY_CHUNK_PTR.cast::<u8>()),
+    previous_chunk: EMPTY_CHUNK_PTR,
     alignment: CHUNK_ALIGN,
 });
 
@@ -73,17 +83,24 @@ impl ChunkFooter {
     }
 
     /// Get number of bytes used to store data in this chunk.
+    /// This includes both downward allocations (from cursor to footer) and upward allocations (from start to up_cursor).
     #[inline]
     pub fn used_bytes(&self) -> usize {
+        // Downward allocations: from cursor to footer
         // SAFETY: `self.cursor` is always before `self`, and both are within same allocation
-        unsafe { ptr::from_ref(self).cast::<u8>().offset_from_usize(self.cursor.get().as_ptr()) }
+        let downward = unsafe { ptr::from_ref(self).cast::<u8>().offset_from_usize(self.cursor.get().as_ptr()) };
+        // Upward allocations: from start to up_cursor
+        // SAFETY: `self.start` is always before `self.up_cursor`, and both are within same allocation
+        let upward = unsafe { self.up_cursor.get().offset_from_usize(self.start) };
+        downward + upward
     }
 
     /// Get number of bytes remaining which are free to store data in this chunk.
+    /// This is the space between `up_cursor` and `cursor`.
     #[inline]
     pub fn free_bytes(&self) -> usize {
-        // SAFETY: `self.start` is always before `self.cursor`, and both are within same allocation
-        unsafe { self.cursor.get().offset_from_usize(self.start) }
+        // SAFETY: `self.up_cursor` is always before `self.cursor`, and both are within same allocation
+        unsafe { self.cursor.get().offset_from_usize(self.up_cursor.get()) }
     }
 
     /// Get pointer to start of chunk's allocation, and its [`Layout`].

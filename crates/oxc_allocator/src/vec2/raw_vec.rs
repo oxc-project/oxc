@@ -829,13 +829,13 @@ fn handle_error(error: AllocError) -> ! {
 
 #[cfg(test)]
 mod tests {
-    use crate::arena::ArenaDefault;
+    use crate::arena::AllocatorArena;
 
     use super::*;
 
     #[test]
     fn reserve_does_not_overallocate() {
-        let arena = ArenaDefault::new();
+        let arena = AllocatorArena::new();
         {
             let mut v: RawVec<u32, _> = RawVec::new_in(&arena);
             // First `reserve` allocates like `reserve_exact`

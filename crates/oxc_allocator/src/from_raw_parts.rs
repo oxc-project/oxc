@@ -12,7 +12,7 @@ use std::{alloc::Layout, ptr::NonNull};
 
 use crate::{
     Allocator,
-    arena::{ArenaDefault as Arena, CHUNK_ALIGN, FOOTER_SIZE},
+    arena::{AllocatorArena as Arena, CHUNK_ALIGN, FOOTER_SIZE},
 };
 
 const _: () = assert!(FOOTER_SIZE >= CHUNK_ALIGN);

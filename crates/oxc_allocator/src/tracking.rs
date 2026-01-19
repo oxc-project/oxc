@@ -17,7 +17,7 @@
 
 use std::{cell::Cell, ptr};
 
-use crate::{Allocator, allocator::STATS_FIELD_OFFSET, arena::ArenaDefault as Arena};
+use crate::{Allocator, allocator::STATS_FIELD_OFFSET, arena::AllocatorArena as Arena};
 
 /// Counters of allocations and reallocations made in an [`Allocator`].
 #[derive(Default)]
