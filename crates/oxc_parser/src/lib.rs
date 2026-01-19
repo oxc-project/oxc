@@ -92,7 +92,7 @@ use oxc_ast::{
     ast::{Expression, Program},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{ModuleKind, SourceType, Span};
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
@@ -582,7 +582,7 @@ impl<'a> ParserImpl<'a> {
 
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
-        if source_type.module_kind() == ModuleKind::Module {
+        if source_type.is_module() {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
