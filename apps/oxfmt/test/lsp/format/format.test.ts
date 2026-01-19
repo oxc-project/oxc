@@ -1,4 +1,5 @@
 import { join } from "node:path";
+import { pathToFileURL } from "node:url";
 import fs from "node:fs/promises";
 import { describe, expect, it } from "vitest";
 import { formatFixture } from "../utils";
@@ -81,11 +82,14 @@ describe("LSP formatting", () => {
           FIXTURES_DIR,
           "custom_config_path/semicolons-as-needed.ts",
           "typescript",
-          {
-            settings: {
-              "fmt.configPath": "./format.json",
+          [
+            {
+              workspaceUri: pathToFileURL(join(FIXTURES_DIR, "custom_config_path")).href,
+              options: {
+                "fmt.configPath": "./format.json",
+              },
             },
-          },
+          ],
         ),
       ).toMatchSnapshot();
     });

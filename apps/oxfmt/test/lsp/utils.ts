@@ -12,6 +12,7 @@ import {
   DocumentFormattingRequest,
   ShutdownRequest,
   ExitNotification,
+  WorkspaceFolder,
 } from "vscode-languageserver-protocol/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import type { TextEdit } from "vscode-languageserver-protocol/node";
@@ -30,11 +31,12 @@ export function createLspConnection() {
   return {
     // NOTE: Config and ignore files are searched from `rootUri` upward
     // Or, provide a custom config path via `initializationOptions`
-    async initialize(rootUri: string, initializationOptions?: unknown) {
+    async initialize(workspaceFolders: WorkspaceFolder[], initializationOptions?: unknown) {
       const result = await connection.sendRequest(InitializeRequest.type, {
         processId: process.pid,
         capabilities: {},
-        rootUri,
+        workspaceFolders,
+        rootUri: null,
         initializationOptions,
       });
       await connection.sendNotification(InitializedNotification.type, {});
@@ -80,7 +82,10 @@ export async function formatFixture(
 
   await using client = createLspConnection();
 
-  await client.initialize(pathToFileURL(dirPath).href, initializationOptions);
+  await client.initialize(
+    [{ uri: pathToFileURL(dirPath).href, name: "test" }],
+    initializationOptions,
+  );
   await client.didOpen(fileUri, languageId, content);
 
   const edits = await client.format(fileUri);
