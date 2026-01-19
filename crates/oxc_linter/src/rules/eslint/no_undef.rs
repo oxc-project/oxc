@@ -83,7 +83,7 @@ impl Rule for NoUndef {
                 if name == "arguments"
                     && ctx
                         .scoping()
-                        .scope_ancestors(ctx.nodes().get_node(reference.node_id()).scope_id())
+                        .scope_ancestors(reference.scope_id())
                         .map(|id| ctx.scoping().scope_flags(id))
                         .any(|scope_flags| scope_flags.is_function() && !scope_flags.is_arrow())
                 {

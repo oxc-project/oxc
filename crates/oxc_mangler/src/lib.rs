@@ -10,7 +10,7 @@ use base54::base54;
 use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::{Atom, CompactStr};
 
 pub(crate) mod base54;
@@ -406,9 +406,8 @@ impl<'t> Mangler<'t> {
                     .iter()
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
 
-                let referenced_scope_ids = scoping
-                    .get_resolved_references(symbol_id)
-                    .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id());
+                let referenced_scope_ids =
+                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
 
                 // Calculate the scope ids that this symbol is alive in.
                 // For each used_scope_id, we walk up the ancestor chain and collect scopes
