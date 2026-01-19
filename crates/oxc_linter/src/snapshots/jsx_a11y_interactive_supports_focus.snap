@@ -1,0 +1,37 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsx-a11y(interactive-supports-focus): Elements with the 'button' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:6]
+ 1 │ <div role="button" onClick={() => {}} />
+   ·      ─────────────
+   ╰────
+  help: Interactive elements must be able to receive focus. In JSX, add a valid `tabIndex` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(interactive-supports-focus): Elements with the 'checkbox' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:6]
+ 1 │ <div role="checkbox" onClick={() => {}} />
+   ·      ───────────────
+   ╰────
+  help: Interactive elements must be able to receive focus. In JSX, add a valid `tabIndex` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(interactive-supports-focus): Elements with the 'link' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:6]
+ 1 │ <div role="link" onClick={() => {}} />
+   ·      ───────────
+   ╰────
+  help: Interactive elements must be able to receive focus. In JSX, add a valid `tabIndex` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(interactive-supports-focus): Elements with the 'slider' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:7]
+ 1 │ <span role="slider" onClick={() => {}} />
+   ·       ─────────────
+   ╰────
+  help: Interactive elements must be able to receive focus. In JSX, add a valid `tabIndex` prop.
+
+  ⚠ eslint-plugin-jsx-a11y(interactive-supports-focus): Elements with the 'button' interactive role must be focusable.
+   ╭─[interactive_supports_focus.tsx:1:6]
+ 1 │ <div role="button" onClick={() => {}} tabIndex={undefined} />
+   ·      ─────────────
+   ╰────
+  help: Interactive elements must be able to receive focus. In JSX, add a valid `tabIndex` prop.

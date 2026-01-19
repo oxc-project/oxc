@@ -143,6 +143,85 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
     }
 }
 
+pub const INTERACTIVE_ROLES: [&str; 26] = [
+    "button",
+    "checkbox",
+    "columnheader",
+    "combobox",
+    "gridcell",
+    "link",
+    "listbox",
+    "menu",
+    "menubar",
+    "menuitem",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "option",
+    "radio",
+    "radiogroup",
+    "row",
+    "rowheader",
+    "scrollbar",
+    "searchbox",
+    "separator",
+    "slider",
+    "spinbutton",
+    "switch",
+    "tab",
+    "textbox",
+    "treeitem",
+];
+
+pub const NON_INTERACTIVE_ROLES: [&str; 43] = [
+    "alert",
+    "alertdialog",
+    "application",
+    "article",
+    "banner",
+    "blockquote",
+    "caption",
+    "cell",
+    "complementary",
+    "contentinfo",
+    "definition",
+    "deletion",
+    "dialog",
+    "directory",
+    "document",
+    "feed",
+    "figure",
+    "form",
+    "group",
+    "heading",
+    "img",
+    "insertion",
+    "list",
+    "listitem",
+    "log",
+    "main",
+    "marquee",
+    "math",
+    "navigation",
+    "note",
+    "paragraph",
+    "region",
+    "row",
+    "rowgroup",
+    "search",
+    "status",
+    "table",
+    "tabpanel",
+    "term",
+    "time",
+    "timer",
+    "toolbar",
+    "tooltip",
+];
+
+pub fn is_interactive_role(role: &str) -> bool {
+    INTERACTIVE_ROLES.contains(&role)
+}
+
 const PRAGMA: &str = "React";
 const CREATE_CLASS: &str = "createReactClass";
 

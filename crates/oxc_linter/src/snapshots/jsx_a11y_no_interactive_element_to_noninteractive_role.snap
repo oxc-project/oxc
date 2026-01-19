@@ -1,0 +1,51 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:2]
+ 1 │ <button role='img' />
+   ·  ──────
+   ╰────
+  help: Interactive elements like <button> or <a href> should not use roles like 'img', 'listitem', or 'presentation' that negate their interactive semantics. Remove the role or use a non-interactive element (like <div>).
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:2]
+ 1 │ <button role='listitem' />
+   ·  ──────
+   ╰────
+  help: Interactive elements like <button> or <a href> should not use roles like 'img', 'listitem', or 'presentation' that negate their interactive semantics. Remove the role or use a non-interactive element (like <div>).
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:2]
+ 1 │ <button role='article' />
+   ·  ──────
+   ╰────
+  help: Interactive elements like <button> or <a href> should not use roles like 'img', 'listitem', or 'presentation' that negate their interactive semantics. Remove the role or use a non-interactive element (like <div>).
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:2]
+ 1 │ <a href='foo' role='img' />
+   ·  ─
+   ╰────
+  help: Interactive elements like <button> or <a href> should not use roles like 'img', 'listitem', or 'presentation' that negate their interactive semantics. Remove the role or use a non-interactive element (like <div>).
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:2]
+ 1 │ <a href='foo' role='listitem' />
+   ·  ─
+   ╰────
+  help: Interactive elements like <button> or <a href> should not use roles like 'img', 'listitem', or 'presentation' that negate their interactive semantics. Remove the role or use a non-interactive element (like <div>).
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:2]
+ 1 │ <input type='text' role='img' />
+   ·  ─────
+   ╰────
+  help: Interactive elements like <button> or <a href> should not use roles like 'img', 'listitem', or 'presentation' that negate their interactive semantics. Remove the role or use a non-interactive element (like <div>).
+
+  ⚠ eslint-plugin-jsx-a11y(no-interactive-element-to-noninteractive-role): Interactive elements should not be assigned non-interactive roles.
+   ╭─[no_interactive_element_to_noninteractive_role.tsx:1:2]
+ 1 │ <input type='checkbox' role='listitem' />
+   ·  ─────
+   ╰────
+  help: Interactive elements like <button> or <a href> should not use roles like 'img', 'listitem', or 'presentation' that negate their interactive semantics. Remove the role or use a non-interactive element (like <div>).
