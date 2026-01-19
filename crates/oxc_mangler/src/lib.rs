@@ -452,10 +452,13 @@ impl<'t> Mangler<'t> {
         let root_unresolved_references = scoping.root_unresolved_references();
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
 
-        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, temp_allocator);
+        // Generate reserved names only for slots that have symbols (frequencies.len())
+        // instead of all slots. This avoids generating unused names.
+        let names_needed = frequencies.len();
+        let mut reserved_names = Vec::with_capacity_in(names_needed, temp_allocator);
 
         let mut count = 0;
-        for _ in 0..total_number_of_slots {
+        for _ in 0..names_needed {
             let name = loop {
                 let name = generate_name(count);
                 count += 1;
@@ -545,7 +548,7 @@ impl<'t> Mangler<'t> {
             temp_allocator,
         );
 
-        for (symbol_id, slot) in slots.iter().copied().enumerate() {
+        for (symbol_id, &slot) in slots.iter().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);
             let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
             if symbol_scope_id == root_scope_id
@@ -568,6 +571,9 @@ impl<'t> Mangler<'t> {
             frequencies[index].symbol_ids.push(symbol_id);
         }
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
+        if let Some(idx) = frequencies.iter().position(|x| x.symbol_ids.is_empty()) {
+            frequencies.truncate(idx);
+        }
         frequencies
     }
 
