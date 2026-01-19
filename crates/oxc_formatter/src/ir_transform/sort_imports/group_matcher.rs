@@ -57,9 +57,14 @@ impl GroupMatcher {
                         } else {
                             format!("^{}", p)
                         };
-                        match Regex::new(&anchored) {
                             Ok(regex) => Some(regex),
-                            Err(_) => None,
+                            Err(err) => {
+                                eprintln!(
+                                    "Warning: invalid regex pattern '{}' in custom group '{}': {}",
+                                    p, custom_group.group_name, err
+                                );
+                                None
+                            }
                         }
                     })
                     .collect::<Vec<_>>();
