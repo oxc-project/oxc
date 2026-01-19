@@ -1,0 +1,246 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(dot-notation): .true is a syntax error.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a.true;
+   · ──────
+   ╰────
+  help: Replace a.true with a["true"]
+
+  ⚠ eslint(dot-notation): ["true"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['true'];
+   · ─────────
+   ╰────
+  help: Replace a["true"] with a.true
+
+  ⚠ eslint(dot-notation): ["time"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a[`time`];
+   · ─────────
+   ╰────
+  help: Replace a["time"] with a.time
+
+  ⚠ eslint(dot-notation): ["null"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a[null];
+   · ───────
+   ╰────
+  help: Replace a["null"] with a.null
+
+  ⚠ eslint(dot-notation): ["true"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a[true];
+   · ───────
+   ╰────
+  help: Replace a["true"] with a.true
+
+  ⚠ eslint(dot-notation): ["false"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a[false];
+   · ────────
+   ╰────
+  help: Replace a["false"] with a.false
+
+  ⚠ eslint(dot-notation): ["b"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['b'];
+   · ──────
+   ╰────
+  help: Replace a["b"] with a.b
+
+  ⚠ eslint(dot-notation): ["c"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a.b['c'];
+   · ────────
+   ╰────
+  help: Replace a.b["c"] with a.b.c
+
+  ⚠ eslint(dot-notation): ["_dangle"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['_dangle'];
+   · ────────────
+   ╰────
+  help: Replace a["_dangle"] with a._dangle
+
+  ⚠ eslint(dot-notation): ["SHOUT_CASE"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ a['SHOUT_CASE'];
+   · ───────────────
+   ╰────
+  help: Replace a["SHOUT_CASE"] with a.SHOUT_CASE
+
+  ⚠ eslint(dot-notation): ["bar"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo[ /* comment */ 'bar' ]
+   · ──────────────────────────
+   ╰────
+  help: Replace foo["bar"] with foo.bar
+
+  ⚠ eslint(dot-notation): ["bar"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo[ 'bar' /* comment */ ]
+   · ──────────────────────────
+   ╰────
+  help: Replace foo["bar"] with foo.bar
+
+  ⚠ eslint(dot-notation): ["bar"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo[    'bar'    ];
+   · ──────────────────
+   ╰────
+  help: Replace foo["bar"] with foo.bar
+
+  ⚠ eslint(dot-notation): .while is a syntax error.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo. /* comment */ while
+   · ────────────────────────
+   ╰────
+  help: Replace foo.while with foo["while"]
+
+  ⚠ eslint(dot-notation): ["bar"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo[('bar')]
+   · ────────────
+   ╰────
+  help: Replace foo["bar"] with foo.bar
+
+  ⚠ eslint(dot-notation): ["null"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo[(null)]
+   · ───────────
+   ╰────
+  help: Replace foo["null"] with foo.null
+
+  ⚠ eslint(dot-notation): ["bar"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ (foo)['bar']
+   · ────────────
+   ╰────
+  help: Replace (foo)["bar"] with (foo).bar
+
+  ⚠ eslint(dot-notation): ["toString"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 1['toString']
+   · ─────────────
+   ╰────
+  help: Replace 1["toString"] with 1.toString
+
+  ⚠ eslint(dot-notation): ["bar"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ foo['bar']instanceof baz
+   · ──────────
+   ╰────
+  help: Replace foo["bar"] with foo.bar
+
+  ⚠ eslint(dot-notation): .if is a syntax error.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ let.if()
+   · ──────
+   ╰────
+  help: Replace let.if with let["if"]
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 5['prop']
+   · ─────────
+   ╰────
+  help: Replace 5["prop"] with 5.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:2]
+ 1 │ -5['prop']
+   ·  ─────────
+   ╰────
+  help: Replace 5["prop"] with 5.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 01['prop']
+   · ──────────
+   ╰────
+  help: Replace 01["prop"] with 01.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 01234567['prop']
+   · ────────────────
+   ╰────
+  help: Replace 01234567["prop"] with 01234567.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 08['prop']
+   · ──────────
+   ╰────
+  help: Replace 08["prop"] with 08.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 090['prop']
+   · ───────────
+   ╰────
+  help: Replace 090["prop"] with 090.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 018['prop']
+   · ───────────
+   ╰────
+  help: Replace 018["prop"] with 018.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 5_000['prop']
+   · ─────────────
+   ╰────
+  help: Replace 5_000["prop"] with 5_000.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 5_000_00['prop']
+   · ────────────────
+   ╰────
+  help: Replace 5_000_00["prop"] with 5_000_00.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 5.000_000['prop']
+   · ─────────────────
+   ╰────
+  help: Replace 5.000_000["prop"] with 5.000_000.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 0b1010_1010['prop']
+   · ───────────────────
+   ╰────
+  help: Replace 0b1010_1010["prop"] with 0b1010_1010.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ obj?.['prop']
+   · ─────────────
+   ╰────
+  help: Replace obj?.["prop"] with obj?.prop
+
+  ⚠ eslint(dot-notation): ["prop"] is better written in dot notation.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ 0?.['prop']
+   · ───────────
+   ╰────
+  help: Replace 0?.["prop"] with 0?.prop
+
+  ⚠ eslint(dot-notation): .true is a syntax error.
+   ╭─[dot_notation.tsx:1:1]
+ 1 │ obj?.true
+   · ─────────
+   ╰────
+  help: Replace obj?.true with obj?.["true"]
+
+  × Unexpected token
+   ╭─[dot_notation.tsx:1:4]
+ 1 │ let?.true
+   ·    ──
+   ╰────
