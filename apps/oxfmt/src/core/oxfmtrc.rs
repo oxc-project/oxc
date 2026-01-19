@@ -19,13 +19,34 @@ use oxc_toml::Options as TomlFormatterOptions;
 pub struct Oxfmtrc {
     #[serde(flatten)]
     pub format_config: FormatConfig,
-    // TODO: `overrides`
+    /// File-specific overrides.
+    /// When a file matches multiple overrides, the later override takes precedence (array order matters).
+    ///
+    /// - Default: `[]`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub overrides: Option<Vec<OxfmtOverrideConfig>>,
     /// Ignore files matching these glob patterns.
     /// Patterns are based on the location of the Oxfmt configuration file.
     ///
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ignore_patterns: Option<Vec<String>>,
+}
+
+// ---
+
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase")]
+pub struct OxfmtOverrideConfig {
+    /// Glob patterns to match files for this override.
+    /// All patterns are relative to the Oxfmt configuration file.
+    pub files: Vec<String>,
+    /// Glob patterns to exclude from this override.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exclude_files: Option<Vec<String>>,
+    /// Format options to apply for matched files.
+    #[serde(default)]
+    pub options: FormatConfig,
 }
 
 // ---
@@ -1025,6 +1046,9 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
         }),
     );
 
+    // Already handled by Oxfmt
+    obj.remove("overrides");
+
     // Below are our own extensions, just remove them
     obj.remove("ignorePatterns");
     obj.remove("insertFinalNewline");
@@ -1284,6 +1308,58 @@ mod tests_populate_prettier_config {
         assert!(!obj.contains_key("ignorePatterns"));
         assert!(!obj.contains_key("experimentalSortImports"));
     }
+
+    #[test]
+    fn test_overrides_parsing() {
+        let json = r#"{
+            "tabWidth": 2,
+            "overrides": [
+                {
+                    "files": ["*.test.js"],
+                    "options": { "tabWidth": 4 }
+                },
+                {
+                    "files": ["*.md", "*.html"],
+                    "excludeFiles": ["*.min.js"],
+                    "options": { "printWidth": 80 }
+                }
+            ]
+        }"#;
+
+        let config: Oxfmtrc = serde_json::from_str(json).unwrap();
+        assert!(config.overrides.is_some());
+
+        let overrides = config.overrides.unwrap();
+        assert_eq!(overrides.len(), 2);
+
+        // First override: single file pattern
+        assert_eq!(overrides[0].files, vec!["*.test.js"]);
+        assert!(overrides[0].exclude_files.is_none());
+        assert_eq!(overrides[0].options.tab_width, Some(4));
+
+        // Second override: multiple file patterns with exclude
+        assert_eq!(overrides[1].files, vec!["*.md", "*.html"]);
+        assert_eq!(overrides[1].exclude_files, Some(vec!["*.min.js".to_string()]));
+        assert_eq!(overrides[1].options.print_width, Some(80));
+    }
+
+    #[test]
+    fn test_populate_prettier_config_removes_overrides() {
+        let json_string = r#"{
+            "tabWidth": 2,
+            "overrides": [
+                { "files": ["*.test.js"], "options": { "tabWidth": 4 } }
+            ]
+        }"#;
+        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
+        let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
+        let oxfmt_options = oxfmtrc.format_config.into_oxfmt_options().unwrap();
+
+        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
+
+        let obj = raw_config.as_object().unwrap();
+        assert!(!obj.contains_key("overrides"));
+    }
 }
 
 #[cfg(test)]
@@ -1309,7 +1385,7 @@ mod tests_json_deep_merge {
             json!({ "experimentalSortImports": { "order": "desc", "ignoreCase": true } })
         );
 
-        // Null resets to default (becomes null in JSON, then None in Option<T>)
+        // Null overwrites value (but in practice, None is skipped during serialization)
         let base = json!({ "semi": false, "tabWidth": 4 });
         let overlay = json!({ "semi": null });
         let merged = json_deep_merge(base, overlay);
