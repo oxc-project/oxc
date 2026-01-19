@@ -3,7 +3,7 @@
 ck = "check --all-features --all-targets --locked"
 lint = "clippy --all-targets --all-features"
 # Skip `tasks/website` due to linker errors with `oxlint`
-codecov = "llvm-cov --ignore-filename-regex tasks --exclude website"
+codecov = "llvm-cov --workspace --ignore-filename-regex tasks --exclude website"
 coverage = "run -p oxc_coverage --profile coverage --"
 benchmark = "bench -p oxc_benchmark"
 minsize = "run -p oxc_minsize --profile coverage --"
