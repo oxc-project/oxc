@@ -331,7 +331,7 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
 ///
 ///                                                         ALLOCATOR
 /// <----------------------------------------->             `Allocator` chunk (`CHUNK_SIZE` bytes)
-///                                      <---->             Bumpalo's `ChunkFooter` (aligned on 16)
+///                                      <---->             `ChunkFooter` (aligned on 16)
 /// <----------------------------------->                   `Allocator` chunk data storage (for AST)
 ///
 ///                                                         METADATA
@@ -345,8 +345,8 @@ const ALLOC_LAYOUT: Layout = match Layout::from_size_align(ALLOC_SIZE, ALLOC_ALI
 /// Note that the buffer sent to JS includes both the `Allocator` chunk, and `RawTransferMetadata`,
 /// but does NOT include `FixedSizeAllocatorMetadata`.
 ///
-/// The end of the region used for `Allocator` chunk must be aligned on `Allocator::RAW_MIN_ALIGN` (16),
-/// due to the requirements of Bumpalo. We manage that by:
+/// The end of the region used for `Allocator` chunk must be aligned on `Allocator::RAW_MIN_ALIGN` (16).
+/// We manage that by:
 /// * `BLOCK_SIZE` is a multiple of 16.
 /// * `RawTransferMetadata` is 16 bytes.
 /// * Size of `FixedSizeAllocatorMetadata` is rounded up to a multiple of 16.

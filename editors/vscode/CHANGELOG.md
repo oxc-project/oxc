@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.40.0] - 2026-01-19
+
+### 🚀 Features
+
+- 883f472 vscode: Change icon source (#17998) (Alexander Lichter)
+
+### 🐛 Bug Fixes
+
+- a7e2eb2 vscode: Resolve binary paths with node resolver (#17970) (Sysix)
+
+### 📚 Documentation
+
+- d8f5c66 vcode: Add example for `editor.formatOnSave` with `editor.formatOnSaveMode` (#18126) (Sysix)
+- 5346fc9 editor: Update the README for the vscode extension to clarify experimental setting (#18048) (Connor Shea)
+
 ## [1.39.0] - 2026-01-12
 
 ### 🚀 Features

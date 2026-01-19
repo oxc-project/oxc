@@ -2,175 +2,175 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.mts:1:1]
  1 │ (await promise)[0]
    · ──────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:1]
+   ╭─[no_await_expression_member.mts:1:1]
  1 │ (await promise).property
    · ────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:13]
+   ╭─[no_await_expression_member.mts:1:13]
  1 │ const foo = (await promise).bar()
    ·             ───────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:13]
+   ╭─[no_await_expression_member.mts:1:13]
  1 │ const foo = (await promise).bar?.()
    ·             ───────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:13]
+   ╭─[no_await_expression_member.mts:1:13]
  1 │ const foo = (await promise)?.bar()
    ·             ────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:22]
+   ╭─[no_await_expression_member.mts:1:22]
  1 │ const firstElement = (await getArray())[0]
    ·                      ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:23]
+   ╭─[no_await_expression_member.mts:1:23]
  1 │ const secondElement = (await getArray())[1]
    ·                       ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:22]
+   ╭─[no_await_expression_member.mts:1:22]
  1 │ const thirdElement = (await getArray())[2]
    ·                      ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:30]
+   ╭─[no_await_expression_member.mts:1:30]
  1 │ const optionalFirstElement = (await getArray())?.[0]
    ·                              ───────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:34]
+   ╭─[no_await_expression_member.mts:1:34]
  1 │ const {propertyOfFirstElement} = (await getArray())[0]
    ·                                  ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:38]
+   ╭─[no_await_expression_member.mts:1:38]
  1 │ const [firstElementOfFirstElement] = (await getArray())[0]
    ·                                      ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:25]
+   ╭─[no_await_expression_member.mts:1:25]
  1 │ let foo, firstElement = (await getArray())[0]
    ·                         ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:20]
+   ╭─[no_await_expression_member.mts:1:20]
  1 │ var firstElement = (await getArray())[0], bar
    ·                    ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:18]
+   ╭─[no_await_expression_member.mts:1:18]
  1 │ const property = (await getObject()).property
    ·                  ────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:17]
+   ╭─[no_await_expression_member.mts:1:17]
  1 │ const renamed = (await getObject()).property
    ·                 ────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:18]
+   ╭─[no_await_expression_member.mts:1:18]
  1 │ const property = (await getObject())[property]
    ·                  ─────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:18]
+   ╭─[no_await_expression_member.mts:1:18]
  1 │ const property = (await getObject())?.property
    ·                  ─────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:30]
+   ╭─[no_await_expression_member.mts:1:30]
  1 │ const {propertyOfProperty} = (await getObject()).property
    ·                              ────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:30]
+   ╭─[no_await_expression_member.mts:1:30]
  1 │ const {propertyOfProperty} = (await getObject()).propertyOfProperty
    ·                              ──────────────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:34]
+   ╭─[no_await_expression_member.mts:1:34]
  1 │ const [firstElementOfProperty] = (await getObject()).property
    ·                                  ────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:34]
+   ╭─[no_await_expression_member.mts:1:34]
  1 │ const [firstElementOfProperty] = (await getObject()).firstElementOfProperty
    ·                                  ──────────────────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:16]
+   ╭─[no_await_expression_member.mts:1:16]
  1 │ firstElement = (await getArray())[0]
    ·                ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:12]
+   ╭─[no_await_expression_member.mts:1:12]
  1 │ property = (await getArray()).property
    ·            ───────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:19]
+   ╭─[no_await_expression_member.mts:1:19]
  1 │ const foo: Type = (await promise)[0]
    ·                   ──────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
-   ╭─[no_await_expression_member.tsx:1:23]
+   ╭─[no_await_expression_member.mts:1:23]
  1 │ const foo: Type | A = (await promise).foo
    ·                       ───────────────────
    ╰────

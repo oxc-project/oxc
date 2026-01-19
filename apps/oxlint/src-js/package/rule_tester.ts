@@ -140,10 +140,9 @@ interface LanguageOptionsInternal extends LanguageOptions {
 /**
  * Source type.
  *
- * - `'unambiguous'` is not supported in ESLint compatibility mode.
- * - `'commonjs'` is only supported in ESLint compatibility mode.
+ * `'unambiguous'` is not supported in ESLint compatibility mode.
  */
-type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+type SourceType = "script" | "module" | "commonjs" | "unambiguous";
 
 /**
  * Value of a property in `globals` object.
@@ -202,6 +201,9 @@ interface EcmaFeatures {
  * Parser language.
  */
 type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
+
+// Empty language options
+const EMPTY_LANGUAGE_OPTIONS: LanguageOptionsInternal = {};
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
 let sharedConfig: Config = {};
@@ -992,8 +994,24 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
 
     return diagnostics.map((diagnostic) => {
-      const { line, column } = getLineColumnFromOffset(diagnostic.start),
-        { line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end);
+      let line, column, endLine, endColumn;
+
+      // Convert start/end offsets to line/column.
+      // In conformance build, use original `loc` if one was passed to `report`.
+      if (!CONFORMANCE || diagnostic.loc == null) {
+        ({ line, column } = getLineColumnFromOffset(diagnostic.start));
+        ({ line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end));
+      } else {
+        const { loc } = diagnostic;
+        ({ line, column } = loc.start);
+        if (loc.end != null) {
+          ({ line: endLine, column: endColumn } = loc.end);
+        } else {
+          endLine = line;
+          endColumn = column;
+        }
+      }
+
       const node = getNodeByRangeIndex(diagnostic.start);
       return {
         ruleId,
@@ -1027,38 +1045,27 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
-  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  if (languageOptions == null) return parseOptions;
+  let languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  if (languageOptions == null) languageOptions = EMPTY_LANGUAGE_OPTIONS;
 
   // Throw error if custom parser is provided
   if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
 
   // Handle `languageOptions.sourceType`
-  let { sourceType } = languageOptions;
+  const { sourceType } = languageOptions;
   if (sourceType != null) {
-    if (test.eslintCompat === true) {
-      // ESLint compatibility mode.
-      // `unambiguous` is disallowed. Treat `commonjs` as `script`.
-      if (sourceType === "commonjs") {
-        sourceType = "script";
-      } else if (sourceType === "unambiguous") {
-        throw new Error(
-          "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
-            "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
-        );
-      }
-    } else {
-      // Not ESLint compatibility mode.
-      // `commonjs` is disallowed.
-      if (sourceType === "commonjs") {
-        throw new Error(
-          "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
-            "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
-        );
-      }
+    // `unambiguous` is disallowed in ESLint compatibility mode
+    if (test.eslintCompat === true && sourceType === "unambiguous") {
+      throw new Error(
+        "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+          "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+      );
     }
 
     parseOptions.sourceType = sourceType;
+  } else if (test.eslintCompat === true) {
+    // ESLint defaults to `module` if no source type is specified
+    parseOptions.sourceType = "module";
   }
 
   // Handle `languageOptions.parserOptions`

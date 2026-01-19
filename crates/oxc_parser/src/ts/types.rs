@@ -600,22 +600,12 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.expect(Kind::LBrack);
-        let type_parameter_span = self.start_span();
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
         }
-        let name = self.parse_binding_identifier();
+        let key = self.parse_binding_identifier();
         self.expect(Kind::In);
         let constraint = self.parse_ts_type();
-        let type_parameter = self.alloc(self.ast.ts_type_parameter(
-            self.end_span(type_parameter_span),
-            name,
-            Some(constraint),
-            None,
-            false,
-            false,
-            false,
-        ));
 
         let name_type = if self.eat(Kind::As) { Some(self.parse_ts_type()) } else { None };
         self.expect(Kind::RBrack);
@@ -644,7 +634,8 @@ impl<'a> ParserImpl<'a> {
 
         self.ast.ts_type_mapped_type(
             self.end_span(span),
-            type_parameter,
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -898,12 +889,64 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
-        let (elements, _) = self.parse_delimited_list(
-            Kind::RBrack,
-            Kind::Comma,
-            opening_span,
-            Self::parse_tuple_element,
-        );
+
+        let mut seen_rest_span: Option<Span> = None;
+        let mut seen_optional_span: Option<Span> = None;
+        let (elements, _) =
+            self.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |me| {
+                let tuple = me.parse_tuple_element();
+                // check for array type, because unknown types can be destructed, example of valid code:
+                // type C<T extends unknown[]> = [...string[], ...T];
+                // example of invalid code:
+                // type C<T extends unknown[]> = [...string[], ...T[]];
+                if let TSTupleElement::TSRestType(rest) = &tuple
+                    && match &rest.type_annotation {
+                        TSType::TSArrayType(_) => true,
+                        // Check for `Array<...>` type
+                        TSType::TSTypeReference(ts_ref) => match &ts_ref.type_name {
+                            TSTypeName::IdentifierReference(id_ref) => id_ref.name == "Array",
+                            _ => false,
+                        },
+                        _ => false,
+                    }
+                {
+                    if let Some(seen_span) = seen_rest_span {
+                        me.error(diagnostics::rest_element_cannot_follow_another_rest_element(
+                            seen_span,
+                            tuple.span(),
+                        ));
+                    }
+                    seen_rest_span = Some(tuple.span());
+                }
+
+                if !match &tuple {
+                    TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_) => true,
+                    TSTupleElement::TSNamedTupleMember(named) => named.optional,
+                    _ => false,
+                } && let Some(seen_optional_span) = seen_optional_span
+                {
+                    me.error(diagnostics::required_element_cannot_follow_optional_element(
+                        tuple.span(),
+                        seen_optional_span,
+                    ));
+                }
+
+                if match &tuple {
+                    TSTupleElement::TSOptionalType(_) => true,
+                    TSTupleElement::TSNamedTupleMember(named) => named.optional,
+                    _ => false,
+                } {
+                    if let Some(seen_rest_span) = seen_rest_span {
+                        me.error(diagnostics::optional_element_cannot_follow_rest_element(
+                            tuple.span(),
+                            seen_rest_span,
+                        ));
+                    }
+                    seen_optional_span = Some(tuple.span());
+                }
+
+                tuple
+            });
         self.expect(Kind::RBrack);
         self.ast.ts_type_tuple_type(self.end_span(span), elements)
     }

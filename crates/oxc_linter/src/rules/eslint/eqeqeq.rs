@@ -66,7 +66,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /* eslint eqeqeq: "error" */
+    /// /* eqeqeq: "error" */
     ///
     /// if (x == 42) {}
     /// if ("" == text) {}
@@ -75,7 +75,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /* eslint eqeqeq: "error" */
+    /// /* eqeqeq: "error" */
     ///
     /// if (x === 42) {}
     /// if ("" === text) {}
@@ -86,7 +86,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule with the `"smart"` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "smart"] */
+    /// /* eqeqeq: ["error", "smart"] */
     ///
     /// if (x == 42) {}
     /// if ("" == text) {}
@@ -94,7 +94,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule with the `"smart"` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "smart"] */
+    /// /* eqeqeq: ["error", "smart"] */
     ///
     /// if (typeof foo == "undefined") {}
     /// if (foo == null) {}
@@ -105,14 +105,14 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule with the `{ "null": "ignore" }` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "always", { "null": "ignore" }] */
+    /// /* eqeqeq: ["error", "always", { "null": "ignore" }] */
     /// if (x == 42) {}
     /// if ("" == text) {}
     /// ```
     ///
     /// Examples of **correct** code for this rule with the `{ "null": "ignore" }` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "always", { "null": "ignore" }] */
+    /// /* eqeqeq: ["error", "always", { "null": "ignore" }] */
     /// if (foo == null) {}
     /// if (foo != null) {}
     /// ```
@@ -121,7 +121,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule with the `{ "null": "always" }` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "always", { "null": "always" }] */
+    /// /* eqeqeq: ["error", "always", { "null": "always" }] */
     ///
     /// if (foo == null) {}
     /// if (foo != null) {}
@@ -129,7 +129,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule with the `{ "null": "always" }` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "always", { "null": "always" }] */
+    /// /* eqeqeq: ["error", "always", { "null": "always" }] */
     ///
     /// if (foo === null) {}
     /// if (foo !== null) {}
@@ -139,7 +139,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule with the `{ "null": "never" }` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "always", { "null": "never" }] */
+    /// /* eqeqeq: ["error", "always", { "null": "never" }] */
     ///
     /// if (x == 42) {}
     /// if ("" == text) {}
@@ -149,7 +149,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule with the `{ "null": "never" }` option:
     /// ```js
-    /// /* eslint eqeqeq: ["error", "always", { "null": "never" }] */
+    /// /* eqeqeq: ["error", "always", { "null": "never" }] */
     ///
     /// if (x === 42) {}
     /// if ("" === text) {}

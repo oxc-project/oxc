@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- e2221e6 semantic: Store `scope_id` in `Reference` (#18053) (Dunqing)
+- 3f83ded traverse: Add into_state and into_state_and_scoping methods to ReusableTraverseCtx (#18010) (Cole Leavitt)
+
+### 📚 Documentation
+
+- 17406b6 traverse: Update comment (#18079) (overlookmotel)
+
 ## [0.104.0] - 2025-12-19
 
 ### 📚 Documentation

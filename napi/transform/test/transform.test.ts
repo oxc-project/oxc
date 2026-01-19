@@ -94,15 +94,15 @@ describe("target", () => {
   ];
 
   test.each(data)("transform %s", (target, code) => {
-    // Also test array syntax.
-    const ret = transformSync("test.js", code, { target: [target] });
+    // Also test array syntax. Use .mjs for explicit ESM.
+    const ret = transformSync("test.mjs", code, { target: [target] });
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).not.toEqual(code);
   });
 
   test.each(data)("no transform esnext: %s", (_target, code) => {
-    const ret = transformSync("test.js", code, { target: "esnext" });
+    const ret = transformSync("test.mjs", code, { target: "esnext" });
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).toEqual(code);
@@ -110,7 +110,7 @@ describe("target", () => {
 
   it("should turn off class propertiers because plugin is not ready", () => {
     const code = "class Foo {\n\t#a;\n}\n";
-    const ret = transformSync("test.js", code, { target: "es2015" });
+    const ret = transformSync("test.mjs", code, { target: "es2015" });
     expect(ret.errors.length).toBe(0);
     expect(ret.code).toBeDefined();
     expect(ret.code).toMatchInlineSnapshot(`
@@ -137,7 +137,7 @@ describe("helpers", () => {
 
   test.each(data)("%s", (mode, expected) => {
     const code = `({ ...x })`;
-    const ret = transformSync("test.js", code, {
+    const ret = transformSync("test.mjs", code, {
       target: "es2015",
       helpers: { mode },
     });
@@ -174,7 +174,7 @@ describe("jsx", () => {
   const code = `const foo: Foo = <div/>`;
 
   it("enables jsx transform by default", () => {
-    const ret = transformSync("test.tsx", code);
+    const ret = transformSync("test.tsx", code, { sourceType: "module" });
     expect(ret.code).toMatchInlineSnapshot(`
       "import { jsx as _jsx } from "react/jsx-runtime";
       const foo = /* @__PURE__ */ _jsx("div", {});
@@ -184,6 +184,7 @@ describe("jsx", () => {
 
   it("configures jsx", () => {
     const ret = transformSync("test.tsx", code, {
+      sourceType: "module",
       jsx: {
         importSource: "xxx",
       },
@@ -197,6 +198,7 @@ describe("jsx", () => {
 
   it("can preserve jsx transform", () => {
     const ret = transformSync("test.tsx", code, {
+      sourceType: "module",
       jsx: "preserve",
     });
     expect(ret.code).toEqual("const foo = <div />;\n");
@@ -423,6 +425,7 @@ describe("typescript", () => {
         }
       `;
       const ret = transformSync("test.ts", code, {
+        sourceType: "module",
         assumptions: {
           setPublicClassFields: true,
         },

@@ -1,16 +1,10 @@
 commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2222/2234 (99.46%)
-Positive Passed: 2205/2234 (98.70%)
-Negative Passed: 1649/1697 (97.17%)
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/arrow-function/arrow-like-in-conditional-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/satisfies-const-error/input.ts
+AST Parsed     : 2221/2227 (99.73%)
+Positive Passed: 2205/2227 (99.01%)
+Negative Passed: 1649/1689 (97.63%)
+Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -34,8 +28,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-invalid-order/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/invalid-namespace-var/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/module-class/input.ts
@@ -47,10 +39,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/declare/namespace-function/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/decorators/type-arguments-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/disallow-jsx-ambiguity/type-assertion/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/disallow-jsx-ambiguity/type-parameter/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/dts/invalid-class-implementation/input.ts
 
@@ -95,64 +83,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
-
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js:3:1]
- 2 │ 
- 3 │ async() = 1;
-   · ───────
- 4 │ async() += 1;
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
-
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js:3:2]
- 2 │ 
- 3 │ (async()) = 1;
-   ·  ───────
- 4 │ (async()) += 1;
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
-
-  × Unexpected new.target expression
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js:1:11]
- 1 │ const x = new.target;
-   ·           ──────────
- 2 │ const y = () => new.target;
-   ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js:2:17]
- 1 │ const x = new.target;
- 2 │ const y = () => new.target;
-   ·                 ──────────
-   ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js:1:1]
- 1 │ super();
-   · ───────
- 2 │ super.property;
-   ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js:2:1]
- 1 │ super();
- 2 │ super.property;
-   · ─────
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/new-target/input.js
 
@@ -252,16 +182,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js:1:17]
- 1 │ const m = module {
-   ·                 ▲
- 2 │   await using foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
 
   × Keywords cannot contain escape characters
@@ -294,25 +214,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026
    ·     ╰── Opened here
    ╰────
 
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js:2:17]
- 1 │ {
- 2 │   for (using of = reader();;);
-   ·                 ─
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts:2:12]
+ 1 │ abstract class TSAbstractClass {
+ 2 │   abstract #foo(name: string): boolean;
+   ·            ────
  3 │ }
    ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js:1:7]
- 1 │ module {
-   ·       ▲
- 2 │   using foo = bar();
-   ╰────
-  help: Try inserting a semicolon here
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/constructor-with-modifier-names/input.ts
 
@@ -520,16 +430,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     private static f();
    ·                    ─
  6 │ }
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js:2:16]
- 1 │ {
- 2 │   for (using of: Reader = reader();;);
-   ·                ─
- 3 │ }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
@@ -1071,46 +971,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │     return 0;
    ·     ──────
  4 │   }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-class-field-initializer/input.js:2:14]
- 1 │ class Derived extends Base {
- 2 │   property = super();
-   ·              ───────
- 3 │ }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body/input.js:2:3]
- 1 │ function f() {
- 2 │   super();
-   ·   ───────
- 3 │   super.property;
-   ╰────
-
-  × 'super' can only be referenced in members of derived classes or object literal expressions.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-function-body/input.js:3:3]
- 2 │   super();
- 3 │   super.property;
-   ·   ─────
- 4 │ }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-non-constructor-method/input.js:3:5]
- 2 │   method() {
- 3 │     super();
-   ·     ───────
- 4 │   }
-   ╰────
-
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
-   ╭─[babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true-in-static-block/input.js:3:5]
- 2 │   static {
- 3 │     super();
-   ·     ───────
- 4 │     super.property;
    ╰────
 
   × A 'yield' expression is only allowed in a generator body.
@@ -7428,12 +7288,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·  ────────────────
    ╰────
 
-  × Expected `in` but found `(`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/asi-failure-generator/input.js:3:7]
+  × Unexpected private identifier
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-private-methods/asi-failure-generator/input.js:3:4]
  2 │   p = x
  3 │   *#m () {}
-   ·       ┬
-   ·       ╰── `in` expected
+   ·    ──
  4 │ }
    ╰────
 
@@ -8596,12 +8455,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Did you mean `export { "吾道一以貫之。" as "忠恕。" } from 'some-module'`?
 
-  × Unexpected right-hand side of private-in expression
+  × Unexpected private identifier
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-1/input.js:5:11]
  4 │   method() {
  5 │     #a in #b in c
-   ·           ───────
+   ·           ──
  6 │   }
+   ╰────
+
+  × Unexpected private identifier
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/invalid-private-followed-by-in-2/input.js:4:9]
+ 3 │   method() {
+ 4 │     1 + #a in b
+   ·         ──
+ 5 │   }
    ╰────
 
   × Unexpected token
@@ -8629,12 +8496,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │   }
    ╰────
 
-  × Expected `in` but found `;`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/private-binary-expression-right/input.js:4:11]
+  × Unexpected private identifier
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/private-in/private-binary-expression-right/input.js:4:9]
  3 │   test() {
  4 │     1 + #x;
-   ·           ┬
-   ·           ╰── `in` expected
+   ·         ──
  5 │   }
    ╰────
 
@@ -9276,12 +9142,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-equal-equal/input.js:1:15]
  1 │ for (using of == {};;);
    ·               ──
-   ╰────
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js:1:14]
- 1 │ for (using of;of.isValid;);
-   ·              ─
    ╰────
 
   × Lexical declaration cannot appear in a single-statement context
@@ -12316,6 +12176,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:12]
+ 1 │ abstract class TSAbstractClass {
+ 2 │   abstract #foo: boolean;
+   ·            ────
+ 3 │ }
+   ╰────
+
   × A 'set' accessor must have exactly one parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/getter-setter/input.ts:3:9]
  2 │ ({ get x() { return 1 } });
@@ -13197,6 +13065,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  7 │         public readonly pur,
    ·         ───────────────────
  8 │         // Also works on AssignmentPattern
+   ╰────
+
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/private-fields-modifier-abstract/input.ts:2:12]
+ 1 │ abstract class A {
+ 2 │   abstract #a;
+   ·            ──
+ 3 │ }
    ╰────
 
   × TS(18010): An accessibility modifier cannot be used with a private identifier.
@@ -14431,6 +14307,22 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-labeled-invalid-optional/input.ts:1:14]
  1 │ type T = [x: A?];
    ·              ──
+   ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-optional-invalid/input.ts:1:9]
+ 1 │ let x: [string?, number]
+   ·         ───┬───  ───┬──
+   ·            │        ╰── Required element here
+   ·            ╰── Optional element seen here
+   ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/tuple-required-after-labeled-optional/input.ts:1:11]
+ 1 │ type T = [x?: A, y: B];
+   ·           ──┬──  ──┬─
+   ·             │      ╰── Required element here
+   ·             ╰── Optional element seen here
    ╰────
 
   × TS(1273): 'public' modifier cannot be used on a type parameter.

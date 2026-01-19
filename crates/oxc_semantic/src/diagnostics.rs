@@ -375,6 +375,13 @@ pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
+/// 'abstract' modifier cannot be used with a private identifier. (18019)
+#[cold]
+pub fn abstract_cannot_be_used_with_private_identifier(span: Span) -> OxcDiagnostic {
+    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
+        .with_label(span)
+}
+
 /// A parameter property is only allowed in a constructor implementation.ts(2369)
 #[cold]
 pub fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {

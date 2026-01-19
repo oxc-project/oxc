@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+
+### ⚡ Performance
+
+- 837edf6 transformer/typescript: Reduce `scope_id()` calls (#18097) (overlookmotel)
+- 8ee6f80 transformer/tagged-template: Add `#[cold]` hint to unlikely path (#18034) (overlookmotel)
+- 23449e0 transformer/tagged-template-transform: Improve performance (#15834) (Dunqing)
+
 ## [0.107.0] - 2026-01-05
 
 ### ⚡ Performance

@@ -783,6 +783,7 @@ fn test() {
         ),
     ];
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .expect_fix(fix)
         .test_and_snapshot();
 }

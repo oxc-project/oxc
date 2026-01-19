@@ -154,8 +154,7 @@ fn run_for_all_references(
     ctx.scoping()
         .get_resolved_references(*symbol)
         .filter(|reference| {
-            let reference_scope_id = ctx.nodes().get_node(reference.node_id()).scope_id();
-
+            let reference_scope_id = reference.scope_id();
             reference_scope_id != node.scope_id() && !scope_ids.contains(&reference_scope_id)
         })
         .for_each(|reference| {
@@ -421,5 +420,7 @@ fn test() {
         ",
     ];
 
-    Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(BlockScopedVar::NAME, BlockScopedVar::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
+        .test_and_snapshot();
 }

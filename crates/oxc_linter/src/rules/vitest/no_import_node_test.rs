@@ -69,16 +69,13 @@ impl Rule for NoImportNodeTest {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![(r#"import { test } from "vitest""#, None)];
+    let pass = vec![r#"import { test } from "vitest""#];
 
-    let fail = vec![
-        (r#"import { test } from "node:test""#, None),
-        ("import * as foo from 'node:test'", None),
-    ];
+    let fail = vec![r#"import { test } from "node:test""#, "import * as foo from 'node:test'"];
 
     let fix = vec![
-        (r#"import { test } from "node:test""#, r#"import { test } from "vitest""#, None),
-        (r#"import * as foo from "node:test""#, r#"import * as foo from "vitest""#, None),
+        (r#"import { test } from "node:test""#, r#"import { test } from "vitest""#),
+        ("import * as foo from 'node:test'", r#"import * as foo from "vitest""#),
     ];
 
     Tester::new(NoImportNodeTest::NAME, NoImportNodeTest::PLUGIN, pass, fail)

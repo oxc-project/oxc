@@ -3028,8 +3028,8 @@ impl ESTree for TSMappedType<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("TSMappedType"));
-        state.serialize_field("key", &crate::serialize::ts::TSMappedTypeKey(self));
-        state.serialize_field("constraint", &crate::serialize::ts::TSMappedTypeConstraint(self));
+        state.serialize_field("key", &self.key);
+        state.serialize_field("constraint", &self.constraint);
         state.serialize_field("nameType", &self.name_type);
         state.serialize_field("typeAnnotation", &self.type_annotation);
         state.serialize_field("optional", &crate::serialize::ts::TSMappedTypeOptional(self));

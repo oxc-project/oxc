@@ -101,8 +101,7 @@ class RuleTesterShim extends RuleTester {
 
 function modifyTestCase(test: TestCase): void {
   // Enable ESLint compat mode.
-  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior,
-  // and enables `sourceType: "commonjs"`.
+  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
   test.eslintCompat = true;
 
   // Ignore parsing errors. ESLint's test cases include invalid code.

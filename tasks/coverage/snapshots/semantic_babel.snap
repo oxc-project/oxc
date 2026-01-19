@@ -1,14 +1,8 @@
 commit: fc58af40
 
 semantic_babel Summary:
-AST Parsed     : 2234/2234 (100.00%)
-Positive Passed: 1938/2234 (86.75%)
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type/input.js
-Cannot assign to this expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/valid-assignment-target-type-createParenthesizedExpressions/input.js
-Cannot assign to this expression
-
+AST Parsed     : 2227/2227 (100.00%)
+Positive Passed: 1939/2227 (87.07%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -30,19 +24,6 @@ rebuilt        : SymbolId(2): Span { start: 65, end: 66 }
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowNewTargetOutsideFunction-true/input.js
-Unexpected new.target expression
-Unexpected new.target expression
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/opts/allowSuperOutsideMethod-true/input.js
-Super calls are not permitted outside constructors or in nested functions inside constructors.
-'super' can only be referenced in members of derived classes or object literal expressions.
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-using/input.js
-Symbol flags mismatch for "_usingCtx2":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(Import)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:
@@ -151,9 +132,6 @@ Unresolved references mismatch:
 after transform: ["arguments", "require"]
 rebuilt        : ["arguments", "of", "require"]
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-using-binding-basic/input.js
 Bindings mismatch:
 after transform: ScopeId(1): ["_usingCtx", "basic"]
@@ -206,21 +184,13 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/
 Keywords cannot contain escape characters
 Expected `)` but found `of`
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-Unexpected token
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-module-block-top-level-using-binding/input.js
-Expected a semicolon or an implicit semicolon after a statement, but found none
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-method/typescript/input.ts
 Scope children mismatch:
 after transform: ScopeId(1): [ScopeId(2)]
 rebuilt        : ScopeId(1): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(1): []
+'abstract' modifier cannot be used with a private identifier.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript/input.js
 Unresolved references mismatch:
@@ -706,7 +676,9 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/explicit-resource-management/valid-for-using-declaration-binding-of/input.js
-Unexpected token
+Unresolved references mismatch:
+after transform: ["Reader", "reader"]
+rebuilt        : ["reader"]
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:
@@ -1972,6 +1944,9 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): []
+Unresolved references mismatch:
+after transform: ["intrinsic"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword/input.ts
 Scope children mismatch:

@@ -2377,7 +2377,8 @@ impl ContentEq for TSConstructorType<'_> {
 
 impl ContentEq for TSMappedType<'_> {
     fn content_eq(&self, other: &Self) -> bool {
-        ContentEq::content_eq(&self.type_parameter, &other.type_parameter)
+        ContentEq::content_eq(&self.key, &other.key)
+            && ContentEq::content_eq(&self.constraint, &other.constraint)
             && ContentEq::content_eq(&self.name_type, &other.name_type)
             && ContentEq::content_eq(&self.type_annotation, &other.type_annotation)
             && ContentEq::content_eq(&self.optional, &other.optional)

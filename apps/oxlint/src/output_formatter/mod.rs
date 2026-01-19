@@ -133,8 +133,30 @@ mod test {
     const TEST_CWD: &str = "fixtures/output_formatter_diagnostic";
 
     #[test]
+    fn test_output_formatter_diagnostic_checkstyle() {
+        let args = &["--format=checkstyle", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_output_formatter_diagnostic_default() {
         let args = &["--format=default", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_output_formatter_diagnostic_github() {
+        let args = &["--format=github", "test.js"];
+
+        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+    }
+
+    #[cfg(not(target_endian = "big"))] // Apparently the fingerprint hash is different on big-endian systems.
+    #[test]
+    fn test_output_formatter_diagnostic_gitlab() {
+        let args = &["--format=gitlab", "test.js"];
 
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
@@ -151,15 +173,8 @@ mod test {
     }
 
     #[test]
-    fn test_output_formatter_diagnostic_checkstyle() {
-        let args = &["--format=checkstyle", "test.js"];
-
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_output_formatter_diagnostic_github() {
-        let args = &["--format=github", "test.js"];
+    fn test_output_formatter_diagnostic_junit() {
+        let args = &["--format=junit", "test.js"];
 
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }
@@ -172,8 +187,8 @@ mod test {
     }
 
     #[test]
-    fn test_output_formatter_diagnostic_junit() {
-        let args = &["--format=junit", "test.js"];
+    fn test_output_formatter_diagnostic_unix() {
+        let args = &["--format=unix", "test.js"];
 
         Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
     }

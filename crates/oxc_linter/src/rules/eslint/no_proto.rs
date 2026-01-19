@@ -31,8 +31,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// /*eslint no-proto: "error"*/
-    ///
     /// var a = obj.__proto__;
     ///
     /// var a = obj["__proto__"];
