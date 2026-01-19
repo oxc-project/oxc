@@ -1088,6 +1088,7 @@ fn test_ignore_constructors() {
 
     Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
         .expect_fix(fix)
+        .with_snapshot_suffix("ignore-constructors")
         .test_and_snapshot();
 
     let pass = vec![
@@ -1192,6 +1193,7 @@ fn test_methods_ignore_pattern() {
 
     Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
         .expect_fix(fix)
+        .with_snapshot_suffix("ignore-pattern")
         .test_and_snapshot();
 }
 
@@ -1232,6 +1234,7 @@ fn test_avoid_quotes() {
 
     Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
         .expect_fix(fix)
+        .with_snapshot_suffix("avoid-quotes")
         .test_and_snapshot();
 }
 
@@ -1618,5 +1621,6 @@ fn test_avoid_explicit_return_arrows() {
 
     Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![])
         .expect_fix(fix)
+        .with_snapshot_suffix("avoid-explicit-return-arrows")
         .test_and_snapshot();
 }
