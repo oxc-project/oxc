@@ -45,7 +45,7 @@ declare_oxc_lint!(
     /// const multiLine: number = 'value';
     /// ```
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **correct** code for this rule:
     /// ```ts
     /// /**
     /// * Explaining comment
