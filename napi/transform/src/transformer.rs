@@ -27,7 +27,7 @@ use oxc::{
         ReplaceGlobalDefinesConfig,
     },
 };
-use oxc_napi::{OxcError, get_source_type};
+use oxc_napi::{FastString, OxcError, get_source_type};
 use oxc_sourcemap::napi::SourceMap;
 
 use crate::IsolatedDeclarationsOptions;
@@ -78,6 +78,87 @@ pub struct TransformResult {
     /// transformed code may still be available even if there are errors in this
     /// list.
     pub errors: Vec<OxcError>,
+}
+
+/// Transform result with optimized string types for zero-copy when possible.
+///
+/// This struct uses `FastString` for string fields, which can avoid copying
+/// string data for ASCII-only output (common for JavaScript/TypeScript code).
+pub struct TransformResultFast {
+    /// The transformed code (uses zero-copy when possible).
+    ///
+    /// If parsing failed, this will be an empty string.
+    pub code: FastString,
+
+    /// The source map for the transformed code.
+    ///
+    /// This will be set if {@link TransformOptions#sourcemap} is `true`.
+    pub map: Option<SourceMap>,
+
+    /// The `.d.ts` declaration file for the transformed code (uses zero-copy when possible).
+    ///
+    /// Declarations are only generated if `declaration` is set to `true` and a
+    /// TypeScript file is provided.
+    ///
+    /// If parsing failed and `declaration` is set, this will be an empty string.
+    ///
+    /// @see {@link TypeScriptOptions#declaration}
+    /// @see [declaration tsconfig option](https://www.typescriptlang.org/tsconfig/#declaration)
+    pub declaration: Option<FastString>,
+
+    /// Declaration source map. Only generated if both
+    /// {@link TypeScriptOptions#declaration declaration} and
+    /// {@link TransformOptions#sourcemap sourcemap} are set to `true`.
+    pub declaration_map: Option<SourceMap>,
+
+    /// Helpers used.
+    ///
+    /// @internal
+    ///
+    /// Example:
+    ///
+    /// ```text
+    /// { "_objectSpread": "@oxc-project/runtime/helpers/objectSpread2" }
+    /// ```
+    pub helpers_used: FxHashMap<String, String>,
+
+    /// Parse and transformation errors.
+    ///
+    /// Oxc's parser recovers from common syntax errors, meaning that
+    /// transformed code may still be available even if there are errors in this
+    /// list.
+    pub errors: Vec<OxcError>,
+}
+
+impl napi::bindgen_prelude::ToNapiValue for TransformResultFast {
+    unsafe fn to_napi_value(
+        env: napi::sys::napi_env,
+        val: Self,
+    ) -> napi::Result<napi::sys::napi_value> {
+        let env_wrapper = napi::Env::from_raw(env);
+        let mut obj = napi::bindgen_prelude::Object::new(&env_wrapper)?;
+
+        obj.set("code", val.code)?;
+        obj.set("map", val.map)?;
+        obj.set("declaration", val.declaration)?;
+        obj.set("declarationMap", val.declaration_map)?;
+        obj.set("helpersUsed", val.helpers_used)?;
+        obj.set("errors", val.errors)?;
+
+        // SAFETY: `env` is a valid NAPI environment pointer passed from the NAPI runtime,
+        // and `obj` is a valid NAPI object created from that environment.
+        unsafe { napi::bindgen_prelude::ToNapiValue::to_napi_value(env, obj) }
+    }
+}
+
+impl napi::bindgen_prelude::TypeName for TransformResultFast {
+    fn type_name() -> &'static str {
+        "TransformResult"
+    }
+
+    fn value_type() -> napi::ValueType {
+        napi::ValueType::Object
+    }
 }
 
 /// Options for transforming a JavaScript or TypeScript file.
@@ -904,6 +985,60 @@ pub fn transform_sync(
     }
 }
 
+/// Transpile with optimized string return (zero-copy when possible).
+///
+/// This variant uses FastString which can avoid copying string data
+/// for ASCII-only output (common for JavaScript/TypeScript code).
+///
+/// @param filename The name of the file being transformed. If this is a
+/// relative path, consider setting the {@link TransformOptions#cwd} option..
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// TransformOptions} for more information.
+///
+/// @returns an object containing the transformed code, source maps, and any
+/// errors that occurred during parsing or transformation.
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+#[napi]
+pub fn transform_sync_fast(
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+) -> TransformResultFast {
+    let source_path = Path::new(&filename);
+
+    let source_type = get_source_type(
+        &filename,
+        options.as_ref().and_then(|options| options.lang.as_deref()),
+        options.as_ref().and_then(|options| options.source_type.as_deref()),
+    );
+
+    let mut compiler = match Compiler::new(options) {
+        Ok(compiler) => compiler,
+        Err(errors) => {
+            return TransformResultFast {
+                code: FastString::from(""),
+                map: None,
+                declaration: None,
+                declaration_map: None,
+                helpers_used: FxHashMap::default(),
+                errors: OxcError::from_diagnostics(&filename, &source_text, errors),
+            };
+        }
+    };
+
+    compiler.compile(&source_text, source_type, source_path);
+
+    TransformResultFast {
+        code: FastString::new(compiler.printed),
+        map: compiler.printed_sourcemap,
+        declaration: compiler.declaration.map(FastString::new),
+        declaration_map: compiler.declaration_map,
+        helpers_used: compiler.helpers_used,
+        errors: OxcError::from_diagnostics(&filename, &source_text, compiler.errors),
+    }
+}
+
 pub struct TransformTask {
     filename: String,
     source_text: String,
@@ -970,6 +1105,82 @@ pub fn transform(
     options: Option<TransformOptions>,
 ) -> AsyncTask<TransformTask> {
     AsyncTask::new(TransformTask { filename, source_text, options })
+}
+
+pub struct TransformTaskFast {
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+}
+
+#[napi]
+impl Task for TransformTaskFast {
+    type JsValue = TransformResultFast;
+    type Output = TransformResultFast;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        let source_path = Path::new(&self.filename);
+
+        let source_type = get_source_type(
+            &self.filename,
+            self.options.as_ref().and_then(|options| options.lang.as_deref()),
+            self.options.as_ref().and_then(|options| options.source_type.as_deref()),
+        );
+
+        let mut compiler = match Compiler::new(self.options.take()) {
+            Ok(compiler) => compiler,
+            Err(errors) => {
+                return Ok(TransformResultFast {
+                    code: FastString::from(""),
+                    map: None,
+                    declaration: None,
+                    declaration_map: None,
+                    helpers_used: FxHashMap::default(),
+                    errors: OxcError::from_diagnostics(&self.filename, &self.source_text, errors),
+                });
+            }
+        };
+
+        compiler.compile(&self.source_text, source_type, source_path);
+
+        Ok(TransformResultFast {
+            code: FastString::new(compiler.printed),
+            map: compiler.printed_sourcemap,
+            declaration: compiler.declaration.map(FastString::new),
+            declaration_map: compiler.declaration_map,
+            helpers_used: compiler.helpers_used,
+            errors: OxcError::from_diagnostics(&self.filename, &self.source_text, compiler.errors),
+        })
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
+/// Uses optimized string return (zero-copy when possible).
+///
+/// This variant uses FastString which can avoid copying string data
+/// for ASCII-only output (common for JavaScript/TypeScript code).
+///
+/// Note: This function can be slower than `transformSyncFast` due to the overhead of spawning a thread.
+///
+/// @param filename The name of the file being transformed. If this is a
+/// relative path, consider setting the {@link TransformOptions#cwd} option.
+/// @param sourceText the source code itself
+/// @param options The options for the transformation. See {@link
+/// TransformOptions} for more information.
+///
+/// @returns a promise that resolves to an object containing the transformed code,
+/// source maps, and any errors that occurred during parsing or transformation.
+#[napi]
+pub fn transform_fast(
+    filename: String,
+    source_text: String,
+    options: Option<TransformOptions>,
+) -> AsyncTask<TransformTaskFast> {
+    AsyncTask::new(TransformTaskFast { filename, source_text, options })
 }
 
 #[derive(Default)]

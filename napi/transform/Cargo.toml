@@ -53,3 +53,4 @@ napi-build = { workspace = true }
 [features]
 default = []
 allocator = ["dep:mimalloc-safe"]
+napi10 = ["oxc_napi/napi10"]

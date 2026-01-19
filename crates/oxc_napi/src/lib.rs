@@ -1,8 +1,10 @@
 mod comment;
 mod error;
+mod fast_string;
 
 pub use comment::*;
 pub use error::*;
+pub use fast_string::FastString;
 
 use oxc_ast::{CommentKind, ast::Program};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;

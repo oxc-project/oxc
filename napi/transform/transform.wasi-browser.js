@@ -63,4 +63,6 @@ export const isolatedDeclarationSync = __napiModule.exports.isolatedDeclarationS
 export const moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
 export const moduleRunnerTransformSync = __napiModule.exports.moduleRunnerTransformSync
 export const transform = __napiModule.exports.transform
+export const transformFast = __napiModule.exports.transformFast
 export const transformSync = __napiModule.exports.transformSync
+export const transformSyncFast = __napiModule.exports.transformSyncFast

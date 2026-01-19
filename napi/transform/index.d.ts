@@ -452,6 +452,26 @@ export interface StyledComponentsOptions {
 export declare function transform(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResult>
 
 /**
+ * Transpile a JavaScript or TypeScript into a target ECMAScript version, asynchronously.
+ * Uses optimized string return (zero-copy when possible).
+ *
+ * This variant uses FastString which can avoid copying string data
+ * for ASCII-only output (common for JavaScript/TypeScript code).
+ *
+ * Note: This function can be slower than `transformSyncFast` due to the overhead of spawning a thread.
+ *
+ * @param filename The name of the file being transformed. If this is a
+ * relative path, consider setting the {@link TransformOptions#cwd} option.
+ * @param sourceText the source code itself
+ * @param options The options for the transformation. See {@link
+ * TransformOptions} for more information.
+ *
+ * @returns a promise that resolves to an object containing the transformed code,
+ * source maps, and any errors that occurred during parsing or transformation.
+ */
+export declare function transformFast(filename: string, sourceText: string, options?: TransformOptions | undefined | null): Promise<TransformResultFast>
+
+/**
  * Options for transforming a JavaScript or TypeScript file.
  *
  * @see {@link transform}
@@ -574,6 +594,23 @@ export interface TransformResult {
  * errors that occurred during parsing or transformation.
  */
 export declare function transformSync(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResult
+
+/**
+ * Transpile with optimized string return (zero-copy when possible).
+ *
+ * This variant uses FastString which can avoid copying string data
+ * for ASCII-only output (common for JavaScript/TypeScript code).
+ *
+ * @param filename The name of the file being transformed. If this is a
+ * relative path, consider setting the {@link TransformOptions#cwd} option..
+ * @param sourceText the source code itself
+ * @param options The options for the transformation. See {@link
+ * TransformOptions} for more information.
+ *
+ * @returns an object containing the transformed code, source maps, and any
+ * errors that occurred during parsing or transformation.
+ */
+export declare function transformSyncFast(filename: string, sourceText: string, options?: TransformOptions | undefined | null): TransformResultFast
 
 export interface TypeScriptOptions {
   jsxPragma?: string

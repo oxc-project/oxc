@@ -115,4 +115,6 @@ module.exports.isolatedDeclarationSync = __napiModule.exports.isolatedDeclaratio
 module.exports.moduleRunnerTransform = __napiModule.exports.moduleRunnerTransform
 module.exports.moduleRunnerTransformSync = __napiModule.exports.moduleRunnerTransformSync
 module.exports.transform = __napiModule.exports.transform
+module.exports.transformFast = __napiModule.exports.transformFast
 module.exports.transformSync = __napiModule.exports.transformSync
+module.exports.transformSyncFast = __napiModule.exports.transformSyncFast

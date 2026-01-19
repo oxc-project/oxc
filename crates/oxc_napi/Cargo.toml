@@ -16,6 +16,10 @@ description.workspace = true
 [lints]
 workspace = true
 
+[features]
+# Enable Node.js 21+ external string APIs for zero-copy string creation
+napi10 = ["napi/napi10"]
+
 [lib]
 test = false
 doctest = false
