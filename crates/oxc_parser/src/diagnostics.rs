@@ -554,6 +554,17 @@ pub fn constructor_generator(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn declare_constructor(span: Span) -> OxcDiagnostic {
+    ts_error("1031", "'declare' modifier cannot appear on a constructor declaration.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn constructor_return_type(span: Span) -> OxcDiagnostic {
+    ts_error("1093", "Type annotation cannot appear on a constructor declaration.").with_label(span)
+}
+
+#[cold]
 pub fn field_constructor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Classes can't have a field named 'constructor'").with_label(span)
 }
