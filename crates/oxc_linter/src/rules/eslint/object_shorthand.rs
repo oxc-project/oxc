@@ -221,11 +221,7 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
         }
     }
 
-    fn make_function_shorthand(
-        &self,
-        property: &ObjectProperty,
-        func: &ArrowFunctionExpression,
-    ) {
+    fn make_function_shorthand(&self, property: &ObjectProperty, func: &ArrowFunctionExpression) {
         self.ctx.diagnostic_with_fix(expected_method_shorthand(func.span), |fixer| {
             let has_comment = self.ctx.semantic().has_comments_between(Span::new(
                 property.key.span().start,
@@ -255,7 +251,8 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                 self.ctx.source_range(property_key_span)
             };
 
-            let next_token = self.ctx
+            let next_token = self
+                .ctx
                 .find_prev_token_from(func.body.span.start, "=>")
                 .map(|offset| offset + "=>".len() as u32);
             let Some(arrow_token) = next_token else {
@@ -272,12 +269,13 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             let should_add_parens = if func.r#async {
                 if let Some(async_token) = self.ctx.find_next_token_from(func.span.start, "async") {
                     if let Some(fist_param) = func.params.items.first() {
-                        self.ctx.find_next_token_within(
-                            func.span.start + async_token,
-                            fist_param.span.start,
-                            "(",
-                        )
-                        .is_none()
+                        self.ctx
+                            .find_next_token_within(
+                                func.span.start + async_token,
+                                fist_param.span.start,
+                                "(",
+                            )
+                            .is_none()
                     } else {
                         false
                     }
@@ -286,7 +284,8 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                 }
             } else {
                 if let Some(fist_param) = func.params.items.first() {
-                    self.ctx.find_next_token_within(func.span.start, fist_param.span.start, "(")
+                    self.ctx
+                        .find_next_token_within(func.span.start, fist_param.span.start, "(")
                         .is_none()
                 } else {
                     false
@@ -297,10 +296,43 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             } else {
                 old_param_text.to_string()
             };
-            let type_param =
-                func.type_parameters.as_ref().map(|t| self.ctx.source_range(t.span())).unwrap_or("");
+            let type_param = func
+                .type_parameters
+                .as_ref()
+                .map(|t| self.ctx.source_range(t.span()))
+                .unwrap_or("");
             let ret = format!("{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}");
             fixer.replace(property.span, ret)
+        });
+    }
+
+    fn make_function_long_form(&self, property: &ObjectProperty) {
+        self.ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+            let property_key_span = property.key.span();
+            let key_text_range = if property.computed {
+                let (Some(paren_start), Some(paren_end_offset)) = (
+                    self.ctx.find_prev_token_from(property_key_span.start, "["),
+                    self.ctx.find_next_token_from(property_key_span.end, "]"),
+                ) else {
+                    return fixer.noop();
+                };
+                Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
+            } else {
+                property_key_span
+            };
+            let key_text = self.ctx.source_range(key_text_range);
+
+            let Expression::FunctionExpression(func) = &property.value.without_parentheses() else {
+                return fixer.noop();
+            };
+            let function_header = match (func.r#async, func.generator) {
+                (true, true) => "async function*",
+                (true, false) => "async function",
+                (false, true) => "function*",
+                (false, false) => "function",
+            };
+
+            fixer.replace(key_text_range, format!("{key_text}: {function_header}"))
         });
     }
 
@@ -521,35 +553,7 @@ impl<'a> Visit<'a> for ObjectShorthandChecker<'a, '_> {
                     || self.rule.avoid_quotes && is_property_key_string_literal(property))
             {
                 // from { x() {} } to { x: function() {} }
-                self.ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
-                    let property_key_span = property.key.span();
-                    let key_text_range = if property.computed {
-                        let (Some(paren_start), Some(paren_end_offset)) = (
-                            self.ctx.find_prev_token_from(property_key_span.start, "["),
-                            self.ctx.find_next_token_from(property_key_span.end, "]"),
-                        ) else {
-                            return fixer.noop();
-                        };
-                        Span::new(paren_start, property_key_span.end + paren_end_offset + 1)
-                    } else {
-                        property_key_span
-                    };
-                    let key_text = self.ctx.source_range(key_text_range);
-
-                    let Expression::FunctionExpression(func) =
-                        &property.value.without_parentheses()
-                    else {
-                        return fixer.noop();
-                    };
-                    let function_header = match (func.r#async, func.generator) {
-                        (true, true) => "async function*",
-                        (true, false) => "async function",
-                        (false, true) => "function*",
-                        (false, false) => "function",
-                    };
-
-                    fixer.replace(key_text_range, format!("{key_text}: {function_header}"))
-                });
+                self.make_function_long_form(property);
             } else if self.rule.apply_never {
                 // from { x } to { x: x }
                 self.check_shorthand_properties(property);
