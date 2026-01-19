@@ -570,10 +570,10 @@ impl<'t> Mangler<'t> {
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
+
+        // Remove slots that have no symbols to rename before sorting.
+        frequencies.retain(|x| !x.symbol_ids.is_empty());
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
-        if let Some(idx) = frequencies.iter().position(|x| x.symbol_ids.is_empty()) {
-            frequencies.truncate(idx);
-        }
         frequencies
     }
 
