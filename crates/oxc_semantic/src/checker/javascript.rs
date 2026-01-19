@@ -503,9 +503,7 @@ pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
     match prop.meta.name.as_str() {
         "import" => {
             // import.meta is only allowed in ES modules, not in scripts or CommonJS
-            if prop.property.name == "meta"
-                && (ctx.source_type.is_script() || ctx.source_type.is_commonjs())
-            {
+            if prop.property.name == "meta" && !ctx.source_type.is_module() {
                 ctx.error(diagnostics::import_meta(prop.span));
             }
         }
