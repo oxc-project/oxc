@@ -98,8 +98,6 @@ impl fmt::Display for SortOrder {
 #[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct CustomGroupDefinition {
     pub group_name: String,
-    /// Regular expressions to match an element name.
-    /// The first definition that matches an element will be used.
     pub element_name_pattern: Vec<String>,
 }
 

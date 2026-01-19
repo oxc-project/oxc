@@ -10,7 +10,7 @@ use crate::{
     rule::Rule,
     utils::{
         get_element_type, has_jsx_prop, is_hidden_from_screen_reader, is_interactive_element,
-        is_presentation_role,
+        NON_INTERACTIVE_ROLES,
     },
 };
 
@@ -53,6 +53,10 @@ declare_oxc_lint!(
     correctness
 );
 
+impl crate::rule::RuleRunner for NoInteractiveElementToNoninteractiveRole {
+    const NODE_TYPES: Option<&'static oxc_semantic::AstTypesBitset> = None;
+}
+
 impl Rule for NoInteractiveElementToNoninteractiveRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_opening_el) = node.kind() else {
@@ -79,7 +83,7 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
         let role = has_jsx_prop(jsx_opening_el, "role");
         if let Some(role_attr) = role {
             if let Some(role_val) = crate::utils::get_string_literal_prop_value(role_attr) {
-                 if crate::rules::jsx_a11y::no_static_element_interactions::NON_INTERACTIVE_ROLES.contains(&role_val)
+                 if NON_INTERACTIVE_ROLES.contains(&role_val)
                     || role_val == "presentation" 
                     || role_val == "none" 
                  {

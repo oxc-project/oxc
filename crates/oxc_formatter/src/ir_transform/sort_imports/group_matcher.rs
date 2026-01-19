@@ -1,4 +1,3 @@
-use lazy_regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use super::group_config::{GroupName, ImportModifier, ImportSelector};
@@ -12,8 +11,8 @@ pub struct ImportMetadata<'a> {
 }
 
 pub struct GroupMatcher {
-    // Custom groups matching regex patterns
-    custom_groups: Vec<(Vec<Regex>, usize)>,
+    // Custom groups that are used in `options.groups`
+    custom_groups: Vec<(CustomGroupDefinition, usize)>,
 
     // Predefined groups sorted by priority,
     // so that we don't need to enumerate all possible group names of a given import.
@@ -44,34 +43,11 @@ impl GroupMatcher {
             }
         }
 
-        let mut used_custom_groups: Vec<(Vec<Regex>, usize)> =
+        let mut used_custom_groups: Vec<(CustomGroupDefinition, usize)> =
             Vec::with_capacity(used_custom_group_index_map.len());
         for custom_group in custom_groups {
             if let Some(index) = used_custom_group_index_map.get(&custom_group.group_name) {
-                let patterns = custom_group
-                    .element_name_pattern
-                    .iter()
-                    .filter_map(|p| {
-                        let anchored = if p.starts_with('^') {
-                            p.to_owned()
-                        } else {
-                            format!("^{}", p)
-                        };
-                            Ok(regex) => Some(regex),
-                            Err(err) => {
-                                eprintln!(
-                                    "Warning: invalid regex pattern '{}' in custom group '{}': {}",
-                                    p, custom_group.group_name, err
-                                );
-                                None
-                            }
-                        }
-                    })
-                    .collect::<Vec<_>>();
-
-                if !patterns.is_empty() {
-                    used_custom_groups.push((patterns, *index));
-                }
+                used_custom_groups.push((custom_group.clone(), *index));
             }
         }
 
@@ -85,8 +61,11 @@ impl GroupMatcher {
     }
 
     pub fn compute_group_index(&self, import_metadata: &ImportMetadata) -> usize {
-        for (patterns, index) in &self.custom_groups {
-            let is_match = patterns.iter().any(|regex| regex.is_match(import_metadata.source));
+        for (custom_group, index) in &self.custom_groups {
+            let is_match = custom_group
+                .element_name_pattern
+                .iter()
+                .any(|pattern| import_metadata.source.starts_with(pattern));
             if is_match {
                 return *index;
             }
