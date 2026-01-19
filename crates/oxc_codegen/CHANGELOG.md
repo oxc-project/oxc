@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 4c16ae7 codegen: Remove spaces around `=` in minified type parameter defaults (#17989) (Boshen)
+- 06bd17b codegen: Remove unnecessary double parentheses from satisfies expressions (#17986) (Boshen)
+- 1874765 codegen: Fix inconsistent multiline EOF comment formatting (#17983) (Boshen)
+- 2619c66 codegen: Remove leading whitespace from export statements after comments (#17982) (Boshen)
+
 ## [0.108.0] - 2026-01-12
 
 ### 🚀 Features
