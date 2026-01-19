@@ -29,7 +29,7 @@ export function createLspConnection() {
   connection.listen();
 
   return {
-    // NOTE: Config and ignore files are searched from `rootUri` upward
+    // NOTE: Config and ignore files are searched from `workspaceFolders[].uri` upward
     // Or, provide a custom config path via `initializationOptions`
     async initialize(workspaceFolders: WorkspaceFolder[], initializationOptions?: unknown) {
       const result = await connection.sendRequest(InitializeRequest.type, {
