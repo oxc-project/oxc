@@ -140,10 +140,9 @@ interface LanguageOptionsInternal extends LanguageOptions {
 /**
  * Source type.
  *
- * - `'unambiguous'` is not supported in ESLint compatibility mode.
- * - `'commonjs'` is only supported in ESLint compatibility mode.
+ * `'unambiguous'` is not supported in ESLint compatibility mode.
  */
-type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+type SourceType = "script" | "module" | "commonjs" | "unambiguous";
 
 /**
  * Value of a property in `globals` object.
@@ -1037,28 +1036,14 @@ function getParseOptions(test: TestCase): ParseOptions {
   if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
 
   // Handle `languageOptions.sourceType`
-  let { sourceType } = languageOptions;
+  const { sourceType } = languageOptions;
   if (sourceType != null) {
-    if (test.eslintCompat === true) {
-      // ESLint compatibility mode.
-      // `unambiguous` is disallowed. Treat `commonjs` as `script`.
-      if (sourceType === "commonjs") {
-        sourceType = "script";
-      } else if (sourceType === "unambiguous") {
-        throw new Error(
-          "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
-            "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
-        );
-      }
-    } else {
-      // Not ESLint compatibility mode.
-      // `commonjs` is disallowed.
-      if (sourceType === "commonjs") {
-        throw new Error(
-          "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
-            "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
-        );
-      }
+    // `unambiguous` is disallowed in ESLint compatibility mode
+    if (test.eslintCompat === true && sourceType === "unambiguous") {
+      throw new Error(
+        "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+          "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+      );
     }
 
     parseOptions.sourceType = sourceType;

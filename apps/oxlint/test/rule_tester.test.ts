@@ -1198,138 +1198,71 @@ describe("RuleTester", () => {
       });
 
       describe("commonjs", () => {
-        describe("with `eslintCompat` option", () => {
-          it("set globally", () => {
-            RuleTester.setDefaultConfig({
-              languageOptions: { sourceType: "commonjs" },
-              eslintCompat: true,
-            });
-
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                null,
-                [Error: Parsing failed],
-              ]
-            `);
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "commonjs" },
           });
 
-          it("set in `RuleTester` options", () => {
-            const tester = new RuleTester({
-              languageOptions: { sourceType: "commonjs" },
-              eslintCompat: true,
-            });
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                null,
-                [Error: Parsing failed],
-              ]
-            `);
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "return 123;", "import x from 'foo';"],
+            invalid: [],
           });
 
-          it("set in individual test cases", () => {
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: [
-                {
-                  code: "with (obj) {}",
-                  languageOptions: { sourceType: "commonjs" },
-                  eslintCompat: true,
-                },
-                {
-                  code: "import x from 'foo';",
-                  languageOptions: { sourceType: "commonjs" },
-                  eslintCompat: true,
-                },
-              ],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                null,
-                [Error: Parsing failed],
-              ]
-            `);
-          });
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
         });
 
-        describe("without `eslintCompat` option", () => {
-          it("set globally", () => {
-            RuleTester.setDefaultConfig({
-              languageOptions: { sourceType: "commonjs" },
-            });
-
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-              ]
-            `);
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "commonjs" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "return 123;", "import x from 'foo';"],
+            invalid: [],
           });
 
-          it("set in `RuleTester` options", () => {
-            const tester = new RuleTester({
-              languageOptions: { sourceType: "commonjs" },
-            });
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
 
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-              ]
-            `);
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "commonjs" },
+              },
+              {
+                code: "return 123;",
+                languageOptions: { sourceType: "commonjs" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "commonjs" },
+              },
+            ],
+            invalid: [],
           });
 
-          it("set in individual test cases", () => {
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: [
-                {
-                  code: "with (obj) {}",
-                  languageOptions: { sourceType: "commonjs" },
-                },
-                {
-                  code: "import x from 'foo';",
-                  languageOptions: { sourceType: "commonjs" },
-                },
-              ],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-              ]
-            `);
-          });
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
         });
       });
 
