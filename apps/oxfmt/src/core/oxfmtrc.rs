@@ -19,7 +19,7 @@ use oxc_toml::Options as TomlFormatterOptions;
 pub struct Oxfmtrc {
     #[serde(flatten)]
     pub format_config: FormatConfig,
-
+    // TODO: `overrides`
     /// Ignore files matching these glob patterns.
     /// Patterns are based on the location of the Oxfmt configuration file.
     ///
@@ -204,6 +204,210 @@ pub struct FormatConfig {
     /// - Default: Disabled
     #[serde(skip_serializing_if = "Option::is_none")]
     pub experimental_tailwindcss: Option<TailwindcssConfig>,
+}
+
+impl FormatConfig {
+    /// Merge another `FormatConfig`, overwriting only fields that are `Some<T>`.
+    ///
+    /// # Panics
+    /// Panics if serialization/deserialization fails,
+    /// which should never happen for valid `FormatConfig` structs.
+    pub fn merge(&mut self, other: &Self) {
+        let base = serde_json::to_value(&*self).unwrap();
+        let overlay = serde_json::to_value(other).unwrap();
+        let merged = json_deep_merge(base, overlay);
+        *self = serde_json::from_value(merged).unwrap();
+    }
+
+    /// Convert to `OxfmtOptions`.
+    ///
+    /// # Errors
+    /// Returns error if any option value is invalid
+    pub fn into_oxfmt_options(self) -> Result<OxfmtOptions, String> {
+        // Not yet supported options:
+        // [Prettier] experimentalOperatorPosition: "start" | "end"
+        // [Prettier] experimentalTernaries: boolean
+        if self.experimental_operator_position.is_some() {
+            return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
+        }
+        if self.experimental_ternaries.is_some() {
+            return Err("Unsupported option: `experimentalTernaries`".to_string());
+        }
+
+        // All values are based on defaults from `FormatOptions::default()`
+        let mut format_options = FormatOptions::default();
+
+        // [Prettier] useTabs: boolean
+        if let Some(use_tabs) = self.use_tabs {
+            format_options.indent_style =
+                if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
+        }
+
+        // [Prettier] tabWidth: number
+        if let Some(width) = self.tab_width {
+            format_options.indent_width =
+                IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
+        }
+
+        // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
+        // NOTE: "auto" is not supported
+        if let Some(ending) = self.end_of_line {
+            format_options.line_ending = match ending {
+                EndOfLineConfig::Lf => LineEnding::Lf,
+                EndOfLineConfig::Crlf => LineEnding::Crlf,
+                EndOfLineConfig::Cr => LineEnding::Cr,
+            };
+        }
+
+        // [Prettier] printWidth: number
+        if let Some(width) = self.print_width {
+            format_options.line_width =
+                LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
+        }
+
+        // [Prettier] singleQuote: boolean
+        if let Some(single_quote) = self.single_quote {
+            format_options.quote_style =
+                if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+        }
+
+        // [Prettier] jsxSingleQuote: boolean
+        if let Some(jsx_single_quote) = self.jsx_single_quote {
+            format_options.jsx_quote_style =
+                if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+        }
+
+        // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
+        if let Some(props) = self.quote_props {
+            format_options.quote_properties = match props {
+                QuotePropsConfig::AsNeeded => QuoteProperties::AsNeeded,
+                QuotePropsConfig::Consistent => QuoteProperties::Consistent,
+                QuotePropsConfig::Preserve => QuoteProperties::Preserve,
+            };
+        }
+
+        // [Prettier] trailingComma: "all" | "es5" | "none"
+        if let Some(commas) = self.trailing_comma {
+            format_options.trailing_commas = match commas {
+                TrailingCommaConfig::All => TrailingCommas::All,
+                TrailingCommaConfig::Es5 => TrailingCommas::Es5,
+                TrailingCommaConfig::None => TrailingCommas::None,
+            };
+        }
+
+        // [Prettier] semi: boolean
+        if let Some(semi) = self.semi {
+            format_options.semicolons =
+                if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+        }
+
+        // [Prettier] arrowParens: "avoid" | "always"
+        if let Some(parens) = self.arrow_parens {
+            format_options.arrow_parentheses = match parens {
+                ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
+                ArrowParensConfig::Always => ArrowParentheses::Always,
+            };
+        }
+
+        // [Prettier] bracketSpacing: boolean
+        if let Some(spacing) = self.bracket_spacing {
+            format_options.bracket_spacing = BracketSpacing::from(spacing);
+        }
+
+        // [Prettier] bracketSameLine: boolean
+        if let Some(same_line) = self.bracket_same_line {
+            format_options.bracket_same_line = BracketSameLine::from(same_line);
+        }
+
+        // [Prettier] singleAttributePerLine: boolean
+        if let Some(single_attribute_per_line) = self.single_attribute_per_line {
+            format_options.attribute_position = if single_attribute_per_line {
+                AttributePosition::Multiline
+            } else {
+                AttributePosition::Auto
+            };
+        }
+
+        // [Prettier] objectWrap: "preserve" | "collapse"
+        if let Some(object_wrap) = self.object_wrap {
+            format_options.expand = match object_wrap {
+                ObjectWrapConfig::Preserve => Expand::Auto,
+                ObjectWrapConfig::Collapse => Expand::Never,
+            };
+        }
+
+        // [Prettier] embeddedLanguageFormatting: "auto" | "off"
+        if let Some(embedded_language_formatting) = self.embedded_language_formatting {
+            format_options.embedded_language_formatting = match embedded_language_formatting {
+                EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
+                EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
+            };
+        }
+
+        // Below are our own extensions
+
+        if let Some(config) = self.experimental_sort_imports {
+            let mut sort_imports = SortImportsOptions::default();
+
+            if let Some(v) = config.partition_by_newline {
+                sort_imports.partition_by_newline = v;
+            }
+            if let Some(v) = config.partition_by_comment {
+                sort_imports.partition_by_comment = v;
+            }
+            if let Some(v) = config.sort_side_effects {
+                sort_imports.sort_side_effects = v;
+            }
+            if let Some(v) = config.order {
+                sort_imports.order = match v {
+                    SortOrderConfig::Asc => SortOrder::Asc,
+                    SortOrderConfig::Desc => SortOrder::Desc,
+                };
+            }
+            if let Some(v) = config.ignore_case {
+                sort_imports.ignore_case = v;
+            }
+            if let Some(v) = config.newlines_between {
+                sort_imports.newlines_between = v;
+            }
+            if let Some(v) = config.internal_pattern {
+                sort_imports.internal_pattern = v;
+            }
+            if let Some(v) = config.groups {
+                sort_imports.groups = v.into_iter().map(SortGroupItemConfig::into_vec).collect();
+            }
+
+            // `partition_by_newline: true` and `newlines_between: true` cannot be used together
+            if sort_imports.partition_by_newline && sort_imports.newlines_between {
+                return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
+            }
+
+            format_options.experimental_sort_imports = Some(sort_imports);
+        }
+
+        if let Some(config) = self.experimental_tailwindcss {
+            format_options.experimental_tailwindcss = Some(TailwindcssOptions {
+                config: config.config,
+                stylesheet: config.stylesheet,
+                functions: config.functions.unwrap_or_default(),
+                attributes: config.attributes.unwrap_or_default(),
+                preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
+                preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
+            });
+        }
+
+        // Currently, there is a no options for TOML formatter
+        let toml_options = build_toml_options(&format_options);
+
+        let sort_package_json = self.experimental_sort_package_json.map_or_else(
+            || Some(SortPackageJsonConfig::default().to_sort_options()),
+            |c| c.to_sort_options(),
+        );
+
+        let insert_final_newline = self.insert_final_newline.unwrap_or(true);
+
+        Ok(OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline })
+    }
 }
 
 // ---
@@ -533,7 +737,7 @@ pub struct TailwindcssConfig {
 
 // ---
 
-/// Resolved format options from `Oxfmtrc`.
+/// Resolved format options from `FormatConfig`.
 ///
 /// Contains `FormatOptions` for `oxc_formatter` plus additional Oxfmt-specific options.
 /// All fields here are subject to per-file overrides.
@@ -842,6 +1046,30 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
 
 // ---
 
+/// Merge two JSON values recursively.
+/// - Overlay values overwrite base values
+/// - `null` values in overlay reset the field to default (via `Option<T>` → `None`)
+///
+/// All Prettier options are flat, but some our options are nested.
+fn json_deep_merge(base: Value, overlay: Value) -> Value {
+    match (base, overlay) {
+        (Value::Object(mut base_map), Value::Object(overlay_map)) => {
+            for (key, overlay_value) in overlay_map {
+                let merged = if let Some(base_value) = base_map.remove(&key) {
+                    json_deep_merge(base_value, overlay_value)
+                } else {
+                    overlay_value
+                };
+                base_map.insert(key, merged);
+            }
+            Value::Object(base_map)
+        }
+        (_base, overlay) => overlay,
+    }
+}
+
+// ---
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -862,8 +1090,8 @@ mod tests {
             }
         }"#;
 
-        let config: Oxfmtrc = serde_json::from_str(json).unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let config: FormatConfig = serde_json::from_str(json).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
 
         assert!(oxfmt_options.format_options.indent_style.is_tab());
         assert_eq!(oxfmt_options.format_options.indent_width.value(), 4);
@@ -880,14 +1108,14 @@ mod tests {
 
     #[test]
     fn test_ignore_unknown_fields() {
-        let config: Oxfmtrc = serde_json::from_str(
+        let config: FormatConfig = serde_json::from_str(
             r#"{
                 "unknownField": "someValue",
                 "anotherUnknown": 123
             }"#,
         )
         .unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
 
         // Should use defaults
         assert!(oxfmt_options.format_options.indent_style.is_space());
@@ -898,8 +1126,8 @@ mod tests {
 
     #[test]
     fn test_empty_config() {
-        let config: Oxfmtrc = serde_json::from_str("{}").unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let config: FormatConfig = serde_json::from_str("{}").unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
 
         // Should use defaults
         assert!(oxfmt_options.format_options.indent_style.is_space());
@@ -911,44 +1139,44 @@ mod tests {
     #[test]
     fn test_arrow_parens_normalization() {
         // Test "avoid" -> "as-needed" normalization
-        let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "avoid"}"#).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         assert!(oxfmt_options.format_options.arrow_parentheses.is_as_needed());
 
         // Test "always" remains unchanged
-        let config: Oxfmtrc = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let config: FormatConfig = serde_json::from_str(r#"{"arrowParens": "always"}"#).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         assert!(oxfmt_options.format_options.arrow_parentheses.is_always());
     }
 
     #[test]
     fn test_object_wrap_normalization() {
         // Test "preserve" -> "auto" normalization
-        let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "preserve"}"#).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         assert_eq!(oxfmt_options.format_options.expand, Expand::Auto);
 
         // Test "collapse" -> "never" normalization
-        let config: Oxfmtrc = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let config: FormatConfig = serde_json::from_str(r#"{"objectWrap": "collapse"}"#).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         assert_eq!(oxfmt_options.format_options.expand, Expand::Never);
     }
 
     #[test]
     fn test_sort_imports_config() {
-        let config: Oxfmtrc = serde_json::from_str(
+        let config: FormatConfig = serde_json::from_str(
             r#"{
             "experimentalSortImports": {}
         }"#,
         )
         .unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
         // Test explicit false
-        let config: Oxfmtrc = serde_json::from_str(
+        let config: FormatConfig = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
                     "newlinesBetween": false
@@ -956,13 +1184,13 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert!(!sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
         // Test explicit true
-        let config: Oxfmtrc = serde_json::from_str(
+        let config: FormatConfig = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
                     "newlinesBetween": true
@@ -970,12 +1198,12 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert!(sort_imports.newlines_between);
         assert!(!sort_imports.partition_by_newline);
 
-        let config: Oxfmtrc = serde_json::from_str(
+        let config: FormatConfig = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
                     "partitionByNewline": true,
@@ -984,8 +1212,8 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(Oxfmtrc::into_options(config).is_ok());
-        let config: Oxfmtrc = serde_json::from_str(
+        assert!(config.into_oxfmt_options().is_ok());
+        let config: FormatConfig = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
                     "partitionByNewline": true,
@@ -994,9 +1222,9 @@ mod tests {
             }"#,
         )
         .unwrap();
-        assert!(Oxfmtrc::into_options(config).is_err_and(|e| e.contains("newlinesBetween")));
+        assert!(config.into_oxfmt_options().is_err_and(|e| e.contains("newlinesBetween")));
 
-        let config: Oxfmtrc = serde_json::from_str(
+        let config: FormatConfig = serde_json::from_str(
             r#"{
                 "experimentalSortImports": {
                     "groups": [
@@ -1010,20 +1238,25 @@ mod tests {
             }"#,
         )
         .unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(config).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
         let sort_imports = oxfmt_options.format_options.experimental_sort_imports.unwrap();
         assert_eq!(sort_imports.groups.len(), 5);
         assert_eq!(sort_imports.groups[0], vec!["builtin".to_string()]);
         assert_eq!(sort_imports.groups[1], vec!["external".to_string(), "internal".to_string()]);
         assert_eq!(sort_imports.groups[4], vec!["index".to_string()]);
     }
+}
+
+#[cfg(test)]
+mod tests_populate_prettier_config {
+    use super::*;
 
     #[test]
     fn test_populate_prettier_config_defaults() {
         let json_string = r"{}";
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
-        let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(oxfmtrc).unwrap();
+        let config: FormatConfig = serde_json::from_str(json_string).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
 
         populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
 
@@ -1039,8 +1272,8 @@ mod tests {
             "experimentalSortImports": { "order": "asc" }
         }"#;
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
-        let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
-        let (oxfmt_options, _) = Oxfmtrc::into_options(oxfmtrc).unwrap();
+        let config: FormatConfig = serde_json::from_str(json_string).unwrap();
+        let oxfmt_options = config.into_oxfmt_options().unwrap();
 
         populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
 
@@ -1050,5 +1283,36 @@ mod tests {
         // oxfmt extensions are removed
         assert!(!obj.contains_key("ignorePatterns"));
         assert!(!obj.contains_key("experimentalSortImports"));
+    }
+}
+
+#[cfg(test)]
+mod tests_json_deep_merge {
+    use super::*;
+
+    #[test]
+    fn test_json_deep_merge() {
+        use serde_json::json;
+
+        // Primitives: overlay wins
+        let base = json!({ "semi": true, "tabWidth": 2 });
+        let overlay = json!({ "semi": false });
+        let merged = json_deep_merge(base, overlay);
+        assert_eq!(merged, json!({ "semi": false, "tabWidth": 2 }));
+
+        // Nested objects: deep merge
+        let base = json!({ "experimentalSortImports": { "order": "asc", "ignoreCase": true } });
+        let overlay = json!({ "experimentalSortImports": { "order": "desc" } });
+        let merged = json_deep_merge(base, overlay);
+        assert_eq!(
+            merged,
+            json!({ "experimentalSortImports": { "order": "desc", "ignoreCase": true } })
+        );
+
+        // Null resets to default (becomes null in JSON, then None in Option<T>)
+        let base = json!({ "semi": false, "tabWidth": 4 });
+        let overlay = json!({ "semi": null });
+        let merged = json_deep_merge(base, overlay);
+        assert_eq!(merged, json!({ "semi": null, "tabWidth": 4 }));
     }
 }

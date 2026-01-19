@@ -12,7 +12,7 @@ use oxc_toml::Options as TomlFormatterOptions;
 
 use super::{
     FormatFileStrategy,
-    oxfmtrc::{EndOfLineConfig, OxfmtOptions, Oxfmtrc, populate_prettier_config},
+    oxfmtrc::{EndOfLineConfig, FormatConfig, OxfmtOptions, Oxfmtrc, populate_prettier_config},
     utils,
 };
 
@@ -139,17 +139,19 @@ impl ConfigResolver {
         Ok(Self { raw_config, editorconfig, cached_options: None })
     }
 
-    /// Validate config and return ignore patterns for file walking.
+    /// Validate config and return ignore patterns (= non-formatting option) for file walking.
     ///
     /// Validated options are cached for fast path resolution.
-    /// See also [`ConfigResolver::resolve_with_overrides`] for per-file overrides.
+    /// See also [`ConfigResolver::resolve_with_editorconfig_overrides`] for per-file overrides.
     ///
     /// # Errors
     /// Returns error if config deserialization fails.
     #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
     pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
-        let mut oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
+        let oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
             .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
+
+        let mut format_config = oxfmtrc.format_config;
 
         // If `.editorconfig` is used, apply its root section first
         // If there are per-file overrides, they will be applied during `resolve()`
@@ -157,22 +159,26 @@ impl ConfigResolver {
             && let Some(props) =
                 editorconfig.sections().iter().find(|s| s.name == "*").map(|s| &s.properties)
         {
-            apply_editorconfig(&mut oxfmtrc, props);
+            apply_editorconfig(&mut format_config, props);
         }
 
-        // If not specified, default options are resolved here
-        let (oxfmt_options, ignore_patterns) = oxfmtrc
-            .into_options()
+        // Convert `FormatConfig` to `OxfmtOptions`, applying defaults where needed
+        let oxfmt_options = format_config
+            .into_oxfmt_options()
             .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
         // Apply our resolved defaults to Prettier options too
         // e.g. set `printWidth: 100` if not specified (= Prettier default: 80)
+        // NOTE: `raw_config` is used to preserve unknown options for Prettier plugins.
+        // If we decide to support only known plugins, and keep their options inside `FormatConfig` like Tailwindcss,
+        // we can use `format_config` instead, which may be a bit efficient.
         let mut external_options = self.raw_config.clone();
         populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
 
-        // NOTE: Save cache for fast path: no per-file overrides
+        // Save cache for fast path: no per-file overrides
         self.cached_options = Some((oxfmt_options, external_options));
 
+        let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
         Ok(ignore_patterns)
     }
 
@@ -182,7 +188,7 @@ impl ConfigResolver {
         let (oxfmt_options, external_options) = if let Some(editorconfig) = &self.editorconfig
             && let Some(props) = get_editorconfig_overrides(editorconfig, strategy.path())
         {
-            self.resolve_with_overrides(&props)
+            self.resolve_with_editorconfig_overrides(&props)
         } else {
             // Fast path: no per-file overrides
             // Either:
@@ -229,19 +235,25 @@ impl ConfigResolver {
 
     /// Resolve format options for a specific file with `.editorconfig` overrides.
     /// This is the slow path, for fast path, see [`ConfigResolver::build_and_validate`].
+    /// Also main logics are the same as in `build_and_validate()`.
     #[instrument(level = "debug", name = "oxfmt::config::resolve_with_overrides", skip_all)]
-    fn resolve_with_overrides(&self, props: &EditorConfigProperties) -> (OxfmtOptions, Value) {
-        let mut oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
+    fn resolve_with_editorconfig_overrides(
+        &self,
+        props: &EditorConfigProperties,
+    ) -> (OxfmtOptions, Value) {
+        // NOTE: Deserialize `FormatConfig` from `raw_config` (not from cached options).
+        // If we base it on cached options, root section may be already applied,
+        // so `.is_some()` checks won't work and per-file overrides may not be applied.
+        // And `props` already has root section applied.
+        let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before `resolve()`");
 
-        apply_editorconfig(&mut oxfmtrc, props);
+        apply_editorconfig(&mut format_config, props);
 
-        let (oxfmt_options, _) = oxfmtrc
-            .into_options()
+        let oxfmt_options = format_config
+            .into_oxfmt_options()
             .expect("If this fails, there is an issue with editorconfig insertion above");
 
-        // Apply our defaults for Prettier options too
-        // e.g. set `printWidth: 100` if not specified (= Prettier default: 80)
         let mut external_options = self.raw_config.clone();
         populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
 
@@ -300,49 +312,49 @@ fn get_editorconfig_overrides(
     if has_overrides { Some(resolved) } else { None }
 }
 
-/// Apply `.editorconfig` properties to `Oxfmtrc`.
+/// Apply `.editorconfig` properties to `FormatConfig`.
 ///
-/// Only applies values that are not already set in oxfmtrc.
-/// Priority: oxfmtrc default < editorconfig < user's oxfmtrc
+/// Only applies values that are not already set in the user's config.
+/// Priority: `FormatConfig` default < `.editorconfig` < user's `FormatConfig`
 ///
 /// Only properties checked by [`get_editorconfig_overrides`] are applied here.
-fn apply_editorconfig(oxfmtrc: &mut Oxfmtrc, props: &EditorConfigProperties) {
+fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties) {
     #[expect(clippy::cast_possible_truncation)]
-    if oxfmtrc.format_config.print_width.is_none()
+    if config.print_width.is_none()
         && let EditorConfigProperty::Value(MaxLineLength::Number(v)) = props.max_line_length
     {
-        oxfmtrc.format_config.print_width = Some(v as u16);
+        config.print_width = Some(v as u16);
     }
 
-    if oxfmtrc.format_config.end_of_line.is_none()
+    if config.end_of_line.is_none()
         && let EditorConfigProperty::Value(eol) = props.end_of_line
     {
-        oxfmtrc.format_config.end_of_line = Some(match eol {
+        config.end_of_line = Some(match eol {
             EndOfLine::Lf => EndOfLineConfig::Lf,
             EndOfLine::Cr => EndOfLineConfig::Cr,
             EndOfLine::Crlf => EndOfLineConfig::Crlf,
         });
     }
 
-    if oxfmtrc.format_config.use_tabs.is_none()
+    if config.use_tabs.is_none()
         && let EditorConfigProperty::Value(style) = props.indent_style
     {
-        oxfmtrc.format_config.use_tabs = Some(match style {
+        config.use_tabs = Some(match style {
             IndentStyle::Tab => true,
             IndentStyle::Space => false,
         });
     }
 
     #[expect(clippy::cast_possible_truncation)]
-    if oxfmtrc.format_config.tab_width.is_none()
+    if config.tab_width.is_none()
         && let EditorConfigProperty::Value(size) = props.indent_size
     {
-        oxfmtrc.format_config.tab_width = Some(size as u8);
+        config.tab_width = Some(size as u8);
     }
 
-    if oxfmtrc.format_config.insert_final_newline.is_none()
+    if config.insert_final_newline.is_none()
         && let EditorConfigProperty::Value(v) = props.insert_final_newline
     {
-        oxfmtrc.format_config.insert_final_newline = Some(v);
+        config.insert_final_newline = Some(v);
     }
 }
