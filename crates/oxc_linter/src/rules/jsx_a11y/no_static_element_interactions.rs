@@ -111,7 +111,7 @@ pub const INTERACTIVE_ROLES: [&str; 26] = [
     "treeitem",
 ];
 
-const NON_INTERACTIVE_ROLES: [&str; 43] = [
+pub const NON_INTERACTIVE_ROLES: [&str; 43] = [
     "alert",
     "alertdialog",
     "application",
