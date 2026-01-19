@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f1e2dc0 semantic: No error in `check_function_redeclaration` for CommonJS files (#18231) (overlookmotel)
+
+### ⚡ Performance
+
+- 52073d9 semantic: Use cheaper test for source type (#18235) (overlookmotel)
+
 ## [0.109.0] - 2026-01-19
 
 ### 💥 BREAKING CHANGES
