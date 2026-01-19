@@ -74,11 +74,15 @@ impl Rule for NoRedeclare {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        // Cache `GLOBALS["builtin"]`, to avoid repeatedly fetching it (hashmap lookup) in the loop below
+        let builtin_globals = if self.builtin_globals { Some(&GLOBALS["builtin"]) } else { None };
+
         for symbol_id in ctx.scoping().symbol_ids() {
             let name = ctx.scoping().symbol_name(symbol_id);
             let decl_span = ctx.scoping().symbol_span(symbol_id);
-            let is_builtin = self.builtin_globals
-                && (GLOBALS["builtin"].contains_key(name) || ctx.globals().is_enabled(name));
+            let is_builtin = builtin_globals.is_some_and(|builtin_globals| {
+                builtin_globals.contains_key(name) || ctx.globals().is_enabled(name)
+            });
 
             if is_builtin {
                 ctx.diagnostic(no_redeclare_as_builtin_in_diagnostic(name, decl_span));
