@@ -455,7 +455,7 @@ jobs:
           webhook-url: ${{ secrets.DISCORD_OXC_RELEASES_CHANNEL }}
           embed-title: oxlint v${{ needs.check.outputs.oxlint_version }} & oxfmt v${{ needs.check.outputs.oxfmt_version }}
           embed-description: A new release is available! Check the changelog for details.
-          embed-url: ${{ steps.release.outputs.url }}
+          embed-url: https://github.com/${{ github.repository }}/releases/tag/apps_v${{ needs.check.outputs.oxlint_version }}
 
       - name: wait 3 minutes for smoke test
         run: sleep 180s
