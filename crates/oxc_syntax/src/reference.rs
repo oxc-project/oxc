@@ -111,6 +111,13 @@ bitflags! {
         const Type = 1 << 2;
         /// A value symbol is used in a type context, such as in `typeof` expressions.
         const ValueAsType = 1 << 3;
+        /// Reference must resolve to a namespace (module, namespace, enum).
+        ///
+        /// Used for the left side of qualified names like `Database.Table`.
+        /// This ensures the reference resolves to a namespace/module rather than
+        /// a type parameter that might shadow it, since type parameters cannot
+        /// have member access.
+        const Namespace = 1 << 4;
         /// The symbol being referenced is a value.
         ///
         /// Note that this does not necessarily indicate the reference is used
@@ -187,6 +194,12 @@ impl ReferenceFlags {
     #[inline]
     pub const fn is_value(self) -> bool {
         self.intersects(Self::Value)
+    }
+
+    /// Checks if the reference must resolve to a namespace.
+    #[inline]
+    pub const fn is_namespace(self) -> bool {
+        self.contains(Self::Namespace)
     }
 }
 

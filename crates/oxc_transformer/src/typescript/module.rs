@@ -247,7 +247,7 @@ impl<'a> TypeScriptModule<'a, '_> {
             // Example: `import Unused = X.Y.Z`
             //                           ^ `X` was marked as Read reference but should be Type.
             let flags = reference.flags_mut();
-            debug_assert_eq!(*flags, ReferenceFlags::Read);
+            debug_assert!(flags.is_read());
             *flags = ReferenceFlags::Type;
         }
     }

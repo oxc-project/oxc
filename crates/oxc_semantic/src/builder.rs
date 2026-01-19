@@ -531,11 +531,23 @@ impl<'a> SemanticBuilder<'a> {
 
                     let flags = reference.flags_mut();
 
-                    // Determine the symbol whether can be referenced by this reference.
-                    let resolved = (flags.is_value() && symbol_flags.can_be_referenced_by_value())
-                        || (flags.is_type() && symbol_flags.can_be_referenced_by_type())
-                        || (flags.is_value_as_type()
-                            && symbol_flags.can_be_referenced_by_value_as_type());
+                    // Determine whether the symbol can be referenced by this reference.
+                    // For pure type references (not value or typeof) in qualified names,
+                    // only resolve to namespaces (modules, namespaces, enums, imports).
+                    // Type parameters and type aliases cannot have member access in type space.
+                    // Value references (including typeof) can always have member access.
+                    let resolved = if flags.is_namespace()
+                        && !flags.is_value()
+                        && !flags.is_value_as_type()
+                        && !symbol_flags.can_be_referenced_as_namespace()
+                    {
+                        false
+                    } else {
+                        (flags.is_value() && symbol_flags.can_be_referenced_by_value())
+                            || (flags.is_type() && symbol_flags.can_be_referenced_by_type())
+                            || (flags.is_value_as_type()
+                                && symbol_flags.can_be_referenced_by_value_as_type())
+                    };
 
                     if !resolved {
                         return true;
@@ -2442,6 +2454,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(type_arguments) = &ty.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_qualified_name(&mut self, name: &TSQualifiedName<'a>) {
+        let kind = AstKind::TSQualifiedName(self.alloc(name));
+        self.enter_node(kind);
+        self.visit_span(&name.span);
+        // The left side of a qualified name (e.g., `Database` in `Database.Table`)
+        // must resolve to a namespace/module, not a type parameter.
+        // Add Namespace flag to skip type parameters during resolution.
+        // If no flags set yet (value context like `import foo = A.B.C`),
+        // also add Read as the default.
+        if self.current_reference_flags.is_empty() {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Namespace;
+        } else {
+            self.current_reference_flags |= ReferenceFlags::Namespace;
+        }
+        self.visit_ts_type_name(&name.left);
+        self.visit_identifier_name(&name.right);
         self.leave_node(kind);
     }
 

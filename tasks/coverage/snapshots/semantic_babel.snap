@@ -1949,6 +1949,9 @@ rebuilt        : ScopeId(0): [ScopeId(1)]
 Scope children mismatch:
 after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
 rebuilt        : ScopeId(1): []
+Unresolved references mismatch:
+after transform: ["intrinsic"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/intrinsic-keyword/input.ts
 Scope children mismatch:
