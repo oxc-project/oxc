@@ -1,10 +1,9 @@
-ts compatibility: 581/606 (95.87%)
+ts compatibility: 581/605 (96.03%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| jsx/fbt/test.js | 💥 | 84.06% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | jsx/top-level-await/test.jsx | 💥 | 0.00% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
