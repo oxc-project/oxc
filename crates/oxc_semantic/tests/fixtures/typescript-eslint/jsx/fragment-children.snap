@@ -19,7 +19,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/fragment-ch
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "child",
-            "node_id": 9
+            "node_id": 9,
+            "scope_id": 0
           }
         ]
       }
