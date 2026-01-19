@@ -65,68 +65,24 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
             return;
         }
 
-        if is_hidden_from_screen_reader(ctx, jsx_opening_el) || is_presentation_role(jsx_opening_el) {
-            // If it's presentation role, it's effectively non-interactive, but checking if it WAS interactive...
-            // If <button role="presentation">, that IS exactly what we want to catch?
-            // "Interactive elements should not be assigned non-interactive roles."
-            // 'presentation' IS a non-interactive role.
-            // So if `is_presentation_role` is true, we might actually want to FLAG it if the element *was* interactive.
-            
-            // However, `is_presentation_role` checks if the role attribute IS 'presentation' or 'none'.
-            // If we have <button role="presentation">, `is_interactive_element` might return false because the role overrides?
-            // `is_interactive_element` checks semantics.
-            // Let's check `is_interactive_element` details. 
-            // It usually checks the tag name and attributes.
-            
-            // If <button role="presentation">, does `is_interactive_element` return true?
-            // Usually `is_interactive_element` checks *native* interactivity or *role* interactivity.
-            // If it's <button>, it IS natively interactive.
+        if is_hidden_from_screen_reader(ctx, jsx_opening_el) {
+            return;
         }
-        
-        // Wait, `is_presentation_role` returning true means the user explicitly set role="presentation".
-        // If the element *would have been* interactive (like <button>), then setting role="presentation" is bad (usually).
-        // Actually, sometimes you DO want to remove semantics from a button? No, that's usually bad for accessibility if it's still clickable.
-        // But if it's just visual... why use a button?
-        
-        // The rule says: "Interactive elements should not be assigned non-interactive roles."
-        // Presentation is non-interactive.
-        // So we should NOT return early here if we want to catch <button role="presentation">.
-        
-        // Let's look at `is_interactive_element`. It takes `element_type` and `jsx_opening_el`.
-        // If `jsx_opening_el` has `role="presentation"`, does `is_interactive_element` account for that?
-        // Likely yes. If role is presentation, it might be considered non-interactive.
-        
-        // We need to check if the *element itself* (tag) is natively interactive, regardless of the role.
-        // We can force `is_interactive_element` to check only tag? 
-        // Or we can just assume common interactive tags: button, input, select, textarea, option, a[href], area[href].
-        
-        // Let's use `is_interactive_element` but understand we might need to be careful.
-        
-        // Actually, we want to know if the element *is inherently interactive*.
+
         let is_natively_interactive = is_interactive_element(&element_type, jsx_opening_el);
-        
+
         if !is_natively_interactive {
             return;
         }
 
-        // It IS interactive. Now check if it has a non-interactive role.
+        // Report when a natively interactive element is given a non-interactive or presentation role.
         let role = has_jsx_prop(jsx_opening_el, "role");
         if let Some(role_attr) = role {
             if let Some(role_val) = crate::utils::get_string_literal_prop_value(role_attr) {
-                 if crate::rules::jsx_a11y::no_static_element_interactions::NON_INTERACTIVE_ROLES.contains(&role_val) {
-                     // Wait, `is_presentation_role` checks for "presentation" or "none".
-                     // "presentation" is in NON_INTERACTIVE_ROLES?
-                     // Let's check `no_static_element_interactions.rs` again.
-                     // The list in step 1669 (lines 114-158) does NOT seem to include "presentation" or "none".
-                     // It has "article", "img", "list", etc.
-                     
-                     // We should ALSO check for "presentation" and "none" explicitly if they aren't in that list.
-                     // Or check `is_presentation_role`.
-                     
-                     // If I use `is_presentation_role(jsx_opening_el)` and it's true, AND it's a native interactive element, that's a violation.
-                     
-                     ctx.diagnostic(no_interactive_element_to_noninteractive_role_diagnostic(jsx_opening_el.span));
-                 } else if role_val == "presentation" || role_val == "none" {
+                 if crate::rules::jsx_a11y::no_static_element_interactions::NON_INTERACTIVE_ROLES.contains(&role_val)
+                    || role_val == "presentation" 
+                    || role_val == "none" 
+                 {
                      ctx.diagnostic(no_interactive_element_to_noninteractive_role_diagnostic(jsx_opening_el.span));
                  }
             }

@@ -96,17 +96,52 @@ impl Rule for InteractiveSupportsFocus {
         // Check for `tabIndex`.
         match has_jsx_prop(jsx_opening_el, "tabIndex") {
             Some(JSXAttributeItem::Attribute(attr)) => {
-                 if let Some(JSXAttributeValue::ExpressionContainer(container)) = &attr.value {
-                     if let JSXExpression::Expression(expr) = &container.expression {
-                         if let Expression::Identifier(id) = expr {
-                             if id.name == "undefined" {
-                                 ctx.diagnostic(interactive_supports_focus_diagnostic(jsx_opening_el.span));
-                             }
+                 match &attr.value {
+                     Some(JSXAttributeValue::StringLiteral(s)) => {
+                         // Check if string is parseable as integer
+                         if s.value.parse::<i32>().is_err() {
+                              // If it's not a valid integer string, it doesn't make it focusable (HTML behavior).
+                              // Though browsers might be lenient, the spec says integer.
+                              // If it's effectively invalid, we flag it.
+                              ctx.diagnostic(interactive_supports_focus_diagnostic(jsx_opening_el.span));
                          }
                      }
+                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
+                         match &container.expression {
+                             JSXExpression::Expression(expr) => {
+                                 match expr {
+                                     Expression::NumericLiteral(_) => {
+                                         // It's a number, so it's focusable.
+                                         // Unless it's NaN? NumericLiteral is usually valid.
+                                     }
+                                     Expression::Identifier(id) => {
+                                         if id.name == "undefined" {
+                                             ctx.diagnostic(interactive_supports_focus_diagnostic(jsx_opening_el.span));
+                                         }
+                                         // If it's a variable `tabIndex={val}`, we can't confirm value, so we assume valid to avoid false positives.
+                                     }
+                                     Expression::UnaryExpression(unary) => {
+                                         // Check for negative numbers like -1
+                                         if let Expression::NumericLiteral(_) = &unary.argument {
+                                              // Valid
+                                         } else {
+                                              // Unknown, assume valid
+                                         }
+                                     }
+                                     _ => {
+                                         // Other expressions, assume valid
+                                     }
+                                 }
+                             }
+                             _ => {}
+                         }
+                     }
+                     _ => {} // No value or other types
                  }
             }
-            Some(JSXAttributeItem::SpreadAttribute(_)) => {}
+            Some(JSXAttributeItem::SpreadAttribute(_)) => {
+                // Ignore spread attributes
+            }
             None => {
                  ctx.diagnostic(interactive_supports_focus_diagnostic(jsx_opening_el.span));
             }
