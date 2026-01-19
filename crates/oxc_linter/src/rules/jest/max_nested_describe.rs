@@ -45,7 +45,7 @@ declare_oxc_lint!(
     ///
     /// Nesting `describe()` blocks too deeply can make the test suite hard to read and understand.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// The following patterns are considered warnings (with the default option of
     /// `{ "max": 5 } `):
