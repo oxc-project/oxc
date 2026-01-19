@@ -249,15 +249,16 @@ impl ConfigResolver {
     }
 
     /// Resolve options for a specific file path.
-    /// Priority: oxfmtrc base → oxfmtrc overrides → editorconfig (fallback for unset fields)
+    /// Priority: oxfmtrc base → oxfmtrc overrides → editorconfig (fallback for unset fields) -> defaults
     fn resolve_options(&self, path: &Path) -> (OxfmtOptions, Value) {
-        let editorconfig_overrides =
-            self.editorconfig.as_ref().and_then(|ec| get_editorconfig_overrides(ec, path));
+        let has_editorconfig_overrides =
+            self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
         let has_oxfmtrc_overrides =
             self.oxfmtrc_overrides.as_ref().is_some_and(|o| o.has_match(path));
 
         // Fast path: no per-file overrides
-        if editorconfig_overrides.is_none() && !has_oxfmtrc_overrides {
+        // `.editorconfig` root section is already applied during `build_and_validate()`
+        if !has_editorconfig_overrides && !has_oxfmtrc_overrides {
             return self
                 .cached_options
                 .clone()
@@ -265,6 +266,7 @@ impl ConfigResolver {
         }
 
         // Slow path: reconstruct `FormatConfig` to apply overrides
+        // See `build_and_validate()` for why we cannot base this on cached options directly
         let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before");
 
@@ -274,10 +276,10 @@ impl ConfigResolver {
                 format_config.merge(options);
             }
         }
-
-        // Apply editorconfig as fallback (fills in unset fields only)
-        if let Some(props) = &editorconfig_overrides {
-            apply_editorconfig(&mut format_config, props);
+        // Apply `.editorconfig` as fallback (fills in unset fields only)
+        if let Some(ec) = &self.editorconfig {
+            let props = ec.resolve(path);
+            apply_editorconfig(&mut format_config, &props);
         }
 
         let oxfmt_options = format_config
@@ -364,8 +366,7 @@ struct OxfmtrcOverrideEntry {
 
 /// Check if `.editorconfig` has per-file overrides for this path.
 ///
-/// Returns `Some(props)` if the resolved properties differ from the root `[*]` section.
-/// Returns `None` if no overrides.
+/// Returns `true` if the resolved properties differ from the root `[*]` section.
 ///
 /// Currently, only the following properties are considered for overrides:
 /// - max_line_length
@@ -373,15 +374,12 @@ struct OxfmtrcOverrideEntry {
 /// - indent_style
 /// - indent_size
 /// - insert_final_newline
-fn get_editorconfig_overrides(
-    editorconfig: &EditorConfig,
-    path: &Path,
-) -> Option<EditorConfigProperties> {
+fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool {
     let sections = editorconfig.sections();
 
     // No sections, or only root `[*]` section → no overrides
     if sections.is_empty() || matches!(sections, [s] if s.name == "*") {
-        return None;
+        return false;
     }
 
     let resolved = editorconfig.resolve(path);
@@ -390,7 +388,7 @@ fn get_editorconfig_overrides(
     let root_props = sections.iter().find(|s| s.name == "*").map(|s| &s.properties);
 
     // Compare only the properties we care about
-    let has_overrides = match root_props {
+    match root_props {
         Some(root) => {
             resolved.max_line_length != root.max_line_length
                 || resolved.end_of_line != root.end_of_line
@@ -406,15 +404,13 @@ fn get_editorconfig_overrides(
                 || resolved.indent_size != EditorConfigProperty::Unset
                 || resolved.insert_final_newline != EditorConfigProperty::Unset
         }
-    };
-
-    if has_overrides { Some(resolved) } else { None }
+    }
 }
 
 /// Apply `.editorconfig` properties to `FormatConfig`.
 ///
 /// Only applies values that are not already set in the user's config.
-/// NOTE: Only properties checked by [`get_editorconfig_overrides`] are applied here.
+/// NOTE: Only properties checked by [`has_editorconfig_overrides`] are applied here.
 fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties) {
     #[expect(clippy::cast_possible_truncation)]
     if config.print_width.is_none()

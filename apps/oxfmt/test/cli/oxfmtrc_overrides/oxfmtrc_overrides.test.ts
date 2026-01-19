@@ -36,6 +36,21 @@ describe("oxfmtrc overrides", () => {
     expect(snapshot).toMatchSnapshot();
   });
 
+  // .editorconfig:
+  //   [*] indent_style=tab
+  // .oxfmtrc.json:
+  //   overrides: [{ files: ["*.js"], options: { semi: false } }]
+  //
+  // Expected:
+  // - test.js: useTabs=true (from editorconfig [*]), semi=false (from oxfmtrc overrides)
+  //
+  // This test verifies editorconfig [*] section is applied even when oxfmtrc overrides trigger slow path
+  it("editorconfig root section applies with oxfmtrc overrides", async () => {
+    const cwd = join(fixturesDir, "editorconfig_root_only");
+    const snapshot = await runAndSnapshot(cwd, [["--check", "test.js"]]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
   // .oxfmtrc.json:
   //   tabWidth: 2
   //   overrides: [{ files: ["src/*.js"], options: { tabWidth: 4 } }]
