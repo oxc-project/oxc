@@ -4,13 +4,11 @@ exports[`oxfmtrc overrides > Prettier options override - only enabled for specif
 "--------------------
 arguments: --check .
 working directory: oxfmtrc_overrides/fixtures/prettier_overrides
-exit code: 1
+exit code: 0
 --- STDOUT ---------
 Checking formatting...
 
-indented.vue (<variable>ms)
-
-Format issues found in above 1 files. Run without \`--check\` to fix.
+All matched files use the correct format.
 Finished in <variable>ms on 5 files using 1 threads.
 --- STDERR ---------
 

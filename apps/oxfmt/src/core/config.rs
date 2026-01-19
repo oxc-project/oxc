@@ -189,17 +189,20 @@ impl ConfigResolver {
             apply_editorconfig(&mut format_config, props);
         }
 
+        // NOTE: Revisit this when adding Prettier plugin support.
+        // We use `format_config` directly instead of merging with `raw_config`.
+        // To preserve plugin-specific options,
+        // we would need to merge `raw_config` first, then apply `format_config` values on top.
+        // Or we could keep track of plugin options separately in `FormatConfig` itself,
+        // like how Tailwindcss options are handled currently.
+        let mut external_options = serde_json::to_value(&format_config)
+            .expect("FormatConfig serialization should not fail");
+
         // Convert `FormatConfig` to `OxfmtOptions`, applying defaults where needed
         let oxfmt_options = format_config
             .into_oxfmt_options()
             .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
-        // Apply our resolved defaults to Prettier options too
-        // e.g. set `printWidth: 100` if not specified (= Prettier default: 80)
-        // NOTE: `raw_config` is used to preserve unknown options for Prettier plugins.
-        // If we decide to support only known plugins, and keep their options inside `FormatConfig` like Tailwindcss,
-        // we can use `format_config` instead, which may be a bit efficient.
-        let mut external_options = self.raw_config.clone();
         populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
 
         // Save cache for fast path: no per-file overrides
@@ -266,7 +269,7 @@ impl ConfigResolver {
         }
 
         // Slow path: reconstruct `FormatConfig` to apply overrides
-        // See `build_and_validate()` for why we cannot base this on cached options directly
+        // Overrides are merged at `FormatConfig` level, not `OxfmtOptions` level
         let mut format_config: FormatConfig = serde_json::from_value(self.raw_config.clone())
             .expect("`build_and_validate()` should catch this before");
 
@@ -282,11 +285,14 @@ impl ConfigResolver {
             apply_editorconfig(&mut format_config, &props);
         }
 
+        // NOTE: See `build_and_validate()` for details about `external_options` handling
+        let mut external_options = serde_json::to_value(&format_config)
+            .expect("FormatConfig serialization should not fail");
+
         let oxfmt_options = format_config
             .into_oxfmt_options()
             .expect("If this fails, there is an issue with override values");
 
-        let mut external_options = self.raw_config.clone();
         populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
 
         (oxfmt_options, external_options)
