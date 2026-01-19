@@ -2,7 +2,7 @@ commit: fc58af40
 
 semantic_babel Summary:
 AST Parsed     : 2227/2227 (100.00%)
-Positive Passed: 1938/2227 (87.02%)
+Positive Passed: 1939/2227 (87.07%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -24,11 +24,6 @@ rebuilt        : SymbolId(2): Span { start: 65, end: 66 }
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/top-level-using/input.js
-Symbol flags mismatch for "_usingCtx2":
-after transform: SymbolId(2): SymbolFlags(FunctionScopedVariable)
-rebuilt        : SymbolId(0): SymbolFlags(Import)
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/core/sourcetype-unambiguous/typescript-type-only/input.ts
 Bindings mismatch:

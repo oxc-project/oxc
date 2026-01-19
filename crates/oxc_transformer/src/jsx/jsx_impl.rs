@@ -460,15 +460,15 @@ impl<'a, 'ctx> JsxImpl<'a, 'ctx> {
                     }
                 };
 
-                if ctx.source_type.is_script() {
-                    Bindings::AutomaticScript(AutomaticScriptBindings::new(
+                if ctx.source_type.is_module() {
+                    Bindings::AutomaticModule(AutomaticModuleBindings::new(
                         ctx,
                         jsx_runtime_importer,
                         source_len,
                         is_development,
                     ))
                 } else {
-                    Bindings::AutomaticModule(AutomaticModuleBindings::new(
+                    Bindings::AutomaticScript(AutomaticScriptBindings::new(
                         ctx,
                         jsx_runtime_importer,
                         source_len,
@@ -509,10 +509,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for JsxImpl<'a, '_> {
 }
 
 impl<'a> JsxImpl<'a, '_> {
-    fn is_script(&self) -> bool {
-        self.ctx.source_type.is_script()
-    }
-
     fn insert_filename_var_statement(&self, ctx: &TraverseCtx<'a>) {
         let Some(declarator) = self.jsx_source.get_filename_var_declarator(ctx) else { return };
 
@@ -520,7 +516,7 @@ impl<'a> JsxImpl<'a, '_> {
         // This is the same behavior as Babel.
         // If in classic mode, then there are no import statements, so it doesn't matter either way.
         // TODO(improve-on-babel): Simplify this once we don't need to follow Babel exactly.
-        if self.bindings.is_classic() || !self.is_script() {
+        if self.bindings.is_classic() || self.ctx.source_type.is_module() {
             // Insert before imports - add to `top_level_statements` immediately
             let stmt = Statement::VariableDeclaration(ctx.ast.alloc_variable_declaration(
                 SPAN,
