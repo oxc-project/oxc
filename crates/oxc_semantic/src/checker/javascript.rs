@@ -1,5 +1,3 @@
-use std::ptr;
-
 use memchr::memchr_iter;
 use rustc_hash::FxHashMap;
 
@@ -605,23 +603,21 @@ pub fn check_variable_declarator_redeclaration(
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
 pub fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
+    if !function.is_declaration() {
+        return false;
+    }
+
+    // Function declarations cannot be `consequent` or `alternate` of an `IfStatement` in strict mode.
+    // This check is redundant - parent kind lookup below will always return `false` in strict mode.
+    // But this check is cheaper, and strict mode code is more common than sloppy mode, so we do this cheap check first.
     if builder.current_scope_flags().is_strict_mode() {
         return false;
     }
-    let AstKind::IfStatement(stmt) = builder.nodes.parent_kind(builder.current_node_id) else {
-        return false;
-    };
-    if let Statement::FunctionDeclaration(func) = &stmt.consequent
-        && ptr::eq(func.as_ref(), function)
-    {
-        return true;
-    }
-    if let Some(Statement::FunctionDeclaration(func)) = &stmt.alternate
-        && ptr::eq(func.as_ref(), function)
-    {
-        return true;
-    }
-    false
+
+    // A function declaration whose parent is an `IfStatement` can only be
+    // either that `IfStatement`'s `consequent` or `alternate`
+    // (can't be `test` because that's an expression)
+    matches!(builder.nodes.parent_kind(builder.current_node_id), AstKind::IfStatement(_))
 }
 
 // It is a Syntax Error if the LexicallyDeclaredNames of StatementList contains any duplicate entries,
