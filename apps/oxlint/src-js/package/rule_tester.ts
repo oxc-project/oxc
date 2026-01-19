@@ -994,8 +994,24 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
 
     return diagnostics.map((diagnostic) => {
-      const { line, column } = getLineColumnFromOffset(diagnostic.start),
-        { line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end);
+      let line, column, endLine, endColumn;
+
+      // Convert start/end offsets to line/column.
+      // In conformance build, use original `loc` if one was passed to `report`.
+      if (!CONFORMANCE || diagnostic.loc == null) {
+        ({ line, column } = getLineColumnFromOffset(diagnostic.start));
+        ({ line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end));
+      } else {
+        const { loc } = diagnostic;
+        ({ line, column } = loc.start);
+        if (loc.end != null) {
+          ({ line: endLine, column: endColumn } = loc.end);
+        } else {
+          endLine = line;
+          endColumn = column;
+        }
+      }
+
       const node = getNodeByRangeIndex(diagnostic.start);
       return {
         ruleId,
