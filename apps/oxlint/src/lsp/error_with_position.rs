@@ -32,7 +32,7 @@ pub struct FixedContent {
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn message_to_lsp_diagnostic(
-    mut message: Message,
+    message: Message,
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
@@ -112,20 +112,20 @@ pub fn message_to_lsp_diagnostic(
 
     let mut fixed_content = vec![];
     // Convert PossibleFixes directly to PossibleFixContent
-    match &mut message.fixes {
+    match message.fixes {
         PossibleFixes::None => {}
-        PossibleFixes::Single(fix) => {
+        PossibleFixes::Single(mut fix) => {
             if fix.message.is_none() {
                 fix.message = Some(alternative_fix_title);
             }
-            fixed_content.push(fix_to_fixed_content(fix, rope, source_text));
+            fixed_content.push(fix_to_fixed_content(&fix, rope, source_text));
         }
         PossibleFixes::Multiple(fixes) => {
-            fixed_content.extend(fixes.iter_mut().map(|fix| {
+            fixed_content.extend(fixes.into_iter().map(|mut fix| {
                 if fix.message.is_none() {
                     fix.message = Some(alternative_fix_title.clone());
                 }
-                fix_to_fixed_content(fix, rope, source_text)
+                fix_to_fixed_content(&fix, rope, source_text)
             }));
         }
     }
