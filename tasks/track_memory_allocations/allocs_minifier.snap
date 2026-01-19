@@ -4,11 +4,11 @@ checker.ts                 | 2.92 MB        ||           4128 |           1669 |
 
 cal.com.tsx                | 1.06 MB        ||          21098 |            474 ||          37138 |           4586
 
-RadixUIAdoptionSection.jsx | 2.52 kB        ||             65 |              3 ||             30 |              6
+RadixUIAdoptionSection.jsx | 2.52 kB        ||             58 |              3 ||             30 |              6
 
 pdf.mjs                    | 567.30 kB      ||           4691 |            569 ||          47464 |           7730
 
-antd.js                    | 6.69 MB        ||          10732 |           2514 ||         331644 |          69358
+antd.js                    | 6.69 MB        ||          10728 |           2514 ||         331644 |          69358
 
-binder.ts                  | 193.08 kB      ||            431 |            119 ||           7075 |            824
+binder.ts                  | 193.08 kB      ||            430 |            119 ||           7075 |            824
 
