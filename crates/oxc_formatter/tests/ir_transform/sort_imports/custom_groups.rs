@@ -360,3 +360,33 @@ import { a } from "abc";
 "#,
     );
 }
+
+#[test]
+fn should_maintain_backward_compatibility_for_prefixes() {
+    assert_format(
+        r#"
+import { a } from "my-react"; // Should NOT match "react" group
+import { b } from "react-dom"; // Should match "react" group
+import { c } from "react"; // Should match "react" group
+"#,
+        r#"
+{
+    "experimentalSortImports": {
+        "groups": ["react", "unknown"],
+        "customGroups": [
+            {
+                "groupName": "react",
+                "elementNamePattern": ["react"]
+            }
+        ]
+    }
+}
+"#,
+        r#"
+import { b } from "react-dom"; // Should match "react" group
+import { c } from "react"; // Should match "react" group
+
+import { a } from "my-react"; // Should NOT match "react" group
+"#,
+    );
+}

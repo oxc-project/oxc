@@ -51,9 +51,30 @@ impl GroupMatcher {
                 let patterns = custom_group
                     .element_name_pattern
                     .iter()
-                    .filter_map(|p| Regex::new(p).ok())
+                    .filter_map(|p| {
+                        let anchored = if p.starts_with('^') {
+                            p.to_owned()
+                        } else {
+                            format!("^{}", p)
+                        };
+                        match Regex::new(&anchored) {
+                            Ok(regex) => Some(regex),
+                            Err(err) => {
+                                eprintln!(
+                                    "oxc_formatter: invalid regex pattern `{}` in custom group `{}`: {}",
+                                    p,
+                                    custom_group.group_name,
+                                    err
+                                );
+                                None
+                            }
+                        }
+                    })
                     .collect::<Vec<_>>();
-                used_custom_groups.push((patterns, *index));
+
+                if !patterns.is_empty() {
+                    used_custom_groups.push((patterns, *index));
+                }
             }
         }
 
