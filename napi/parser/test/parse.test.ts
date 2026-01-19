@@ -46,20 +46,34 @@ describe("parse", () => {
   });
 
   describe("sets lang and sourceType", () => {
-    const code = "await(1)";
     const langs: ParserOptions["lang"][] = ["js", "ts", "jsx", "tsx"];
+
     test.each(langs)("%s", (lang) => {
+      const code = "await(1)";
       const ret = parseSync("test.cjs", code, { lang, sourceType: "script" });
       expect(ret.errors.length).toBe(0);
+      expect(ret.program.sourceType).toBe("script");
       // Parsed as `await(1)`
       expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe("CallExpression");
     });
+
     test.each(langs)("%s", (lang) => {
+      const code = "await(1)";
       const ret = parseSync("test.cjs", code, { lang, sourceType: "module" });
       expect(ret.errors.length).toBe(0);
+      expect(ret.program.sourceType).toBe("module");
       // Parsed as `await 1`
       expect((ret.program.body[0] as ExpressionStatement).expression.type).toBe("AwaitExpression");
     });
+
+    test.each(langs)("%s", (lang) => {
+      const code = "return 123;";
+      const ret = parseSync("test.cjs", code, { lang, sourceType: "commonjs" });
+      expect(ret.errors.length).toBe(0);
+      expect(ret.program.sourceType).toBe("commonjs");
+      expect(ret.program.body[0].type).toBe("ReturnStatement");
+    });
+
     test("sets lang as dts", () => {
       const code = "declare const foo";
       const ret = parseSync("test", code, { lang: "dts" });

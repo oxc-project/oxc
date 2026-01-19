@@ -66,7 +66,7 @@ pub fn get_source_type(
     source_type: Option<&str>,
 ) -> SourceType {
     // When `lang` is specified, use unambiguous module kind to match the behavior of
-    // SourceType::from_path for .js/.jsx/.ts/.tsx extensions.
+    // `SourceType::from_path` for .js/.jsx/.ts/.tsx extensions.
     let ty = match lang {
         Some("js") => SourceType::unambiguous(),
         Some("jsx") => SourceType::unambiguous().with_jsx(true),
@@ -78,6 +78,7 @@ pub fn get_source_type(
     match source_type {
         Some("script") => ty.with_script(true),
         Some("module") => ty.with_module(true),
+        Some("commonjs") => ty.with_commonjs(true),
         Some("unambiguous") => ty.with_unambiguous(true),
         _ => ty,
     }
