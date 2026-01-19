@@ -376,7 +376,9 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                 (false, false) => "function",
             };
 
-            fixer.replace(key_text_range, format!("{key_text}: {function_header}"))
+            // always include async and * in replace range
+            let replace_range = Span::new(property.span.start, key_text_range.end);
+            fixer.replace(replace_range, format!("{key_text}: {function_header}"))
         });
     }
 
