@@ -95,7 +95,7 @@ export function it(code: string, fn: () => void): void {
 
     // Skip test cases which include `// eslint-disable` comments.
     // These are not handled by `RuleTester`.
-    if (code.match(/\/\/\s*eslint-disable((-next)?-line)?\s/)) {
+    if (code.match(/\/\/\s*eslint-disable((-next)?-line)?(\s|$)/)) {
       testResult.isSkipped = true;
     }
 
