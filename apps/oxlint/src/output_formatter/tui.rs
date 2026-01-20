@@ -11,6 +11,7 @@ use oxc_diagnostics::{
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use ratatui::{prelude::*, widgets::*};
+use rustc_hash::FxHashMap;
 
 #[derive(Debug, Default)]
 pub struct TuiOutputFormatter;
@@ -19,9 +20,7 @@ impl InternalFormatter for TuiOutputFormatter {
     fn all_rules(&self) -> Option<String> {
         let rules = get_formatted_rules();
 
-        if let Err(e) = run_rule_explorer_tui(rules) {
-            eprintln!("Error running TUI: {e}");
-        }
+        let _ = run_rule_explorer_tui(rules);
         None
     }
 
@@ -41,7 +40,7 @@ enum ActivePane {
 
 struct TuiAppState {
     categories: Vec<String>,
-    rules_by_category: std::collections::HashMap<String, Vec<FormattedRule>>,
+    rules_by_category: FxHashMap<String, Vec<FormattedRule>>,
     active_pane: ActivePane,
     category_list_state: ListState,
     rule_list_state: ListState,
@@ -49,8 +48,7 @@ struct TuiAppState {
 
 impl TuiAppState {
     fn new(rules: Vec<FormattedRule>) -> Self {
-        let mut rules_by_category: std::collections::HashMap<String, Vec<FormattedRule>> =
-            std::collections::HashMap::new();
+        let mut rules_by_category: FxHashMap<String, Vec<FormattedRule>> = FxHashMap::default();
 
         for rule in rules {
             rules_by_category.entry(rule.category.to_string()).or_default().push(rule);
@@ -60,7 +58,7 @@ impl TuiAppState {
         categories.sort();
 
         for list in rules_by_category.values_mut() {
-            list.sort_by(|a, b| a.name.cmp(&b.name));
+            list.sort_by(|a, b| a.name.cmp(b.name));
         }
 
         let mut cat_state = ListState::default();
@@ -85,7 +83,7 @@ impl TuiAppState {
     }
 
     fn current_rules(&self) -> &[FormattedRule] {
-        self.rules_by_category.get(self.current_category()).map(|v| v.as_slice()).unwrap_or(&[])
+        self.rules_by_category.get(self.current_category()).map_or(&[], |v| v.as_slice())
     }
 
     fn current_rule(&self) -> Option<&FormattedRule> {
@@ -117,7 +115,7 @@ fn run_rule_explorer_tui(rules: Vec<FormattedRule>) -> io::Result<()> {
             let cat_items: Vec<ListItem> =
                 app.categories.iter().map(|c| ListItem::new(Line::from(c.as_str()))).collect();
 
-            let cat_style = if let ActivePane::Categories = app.active_pane {
+            let cat_style = if matches!(app.active_pane, ActivePane::Categories) {
                 Style::default().fg(Color::Green)
             } else {
                 Style::default()
@@ -141,7 +139,7 @@ fn run_rule_explorer_tui(rules: Vec<FormattedRule>) -> io::Result<()> {
                 current_rules.iter().map(|r| ListItem::new(Line::from(r.name))).collect()
             };
 
-            let rule_style = if let ActivePane::Rules = app.active_pane {
+            let rule_style = if matches!(app.active_pane, ActivePane::Rules) {
                 Style::default().fg(Color::Green)
             } else {
                 Style::default()
@@ -212,57 +210,56 @@ fn run_rule_explorer_tui(rules: Vec<FormattedRule>) -> io::Result<()> {
         })?;
 
         // INPUT HANDLERS
-        if event::poll(std::time::Duration::from_millis(100))? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    match key.code {
-                        KeyCode::Char('q') | KeyCode::Esc => break,
+        if event::poll(std::time::Duration::from_millis(100))?
+            && let Event::Key(key) = event::read()?
+            && key.kind == KeyEventKind::Press
+        {
+            match key.code {
+                KeyCode::Char('q') | KeyCode::Esc => break,
 
-                        // Switch Pane
-                        KeyCode::Left | KeyCode::Char('h') => {
-                            app.active_pane = ActivePane::Categories;
-                        }
-                        KeyCode::Right | KeyCode::Char('l') => {
-                            app.active_pane = ActivePane::Rules;
-                        }
-
-                        // Navigate List
-                        KeyCode::Down | KeyCode::Char('j') => match app.active_pane {
-                            ActivePane::Categories => {
-                                let i = app.category_list_state.selected().unwrap_or(0);
-                                let next = if i >= app.categories.len() - 1 { 0 } else { i + 1 };
-                                app.category_list_state.select(Some(next));
-                                app.rule_list_state.select(Some(0));
-                            }
-                            ActivePane::Rules => {
-                                let len = app.current_rules().len();
-                                if len > 0 {
-                                    let i = app.rule_list_state.selected().unwrap_or(0);
-                                    let next = if i >= len - 1 { 0 } else { i + 1 };
-                                    app.rule_list_state.select(Some(next));
-                                }
-                            }
-                        },
-
-                        KeyCode::Up | KeyCode::Char('k') => match app.active_pane {
-                            ActivePane::Categories => {
-                                let i = app.category_list_state.selected().unwrap_or(0);
-                                let next = if i == 0 { app.categories.len() - 1 } else { i - 1 };
-                                app.category_list_state.select(Some(next));
-                                app.rule_list_state.select(Some(0));
-                            }
-                            ActivePane::Rules => {
-                                let len = app.current_rules().len();
-                                if len > 0 {
-                                    let i = app.rule_list_state.selected().unwrap_or(0);
-                                    let next = if i == 0 { len - 1 } else { i - 1 };
-                                    app.rule_list_state.select(Some(next));
-                                }
-                            }
-                        },
-                        _ => {}
-                    }
+                // Switch Pane
+                KeyCode::Left | KeyCode::Char('h') => {
+                    app.active_pane = ActivePane::Categories;
                 }
+                KeyCode::Right | KeyCode::Char('l') => {
+                    app.active_pane = ActivePane::Rules;
+                }
+
+                // Navigate List
+                KeyCode::Down | KeyCode::Char('j') => match app.active_pane {
+                    ActivePane::Categories => {
+                        let i = app.category_list_state.selected().unwrap_or(0);
+                        let next = if i >= app.categories.len() - 1 { 0 } else { i + 1 };
+                        app.category_list_state.select(Some(next));
+                        app.rule_list_state.select(Some(0));
+                    }
+                    ActivePane::Rules => {
+                        let len = app.current_rules().len();
+                        if len > 0 {
+                            let i = app.rule_list_state.selected().unwrap_or(0);
+                            let next = if i >= len - 1 { 0 } else { i + 1 };
+                            app.rule_list_state.select(Some(next));
+                        }
+                    }
+                },
+
+                KeyCode::Up | KeyCode::Char('k') => match app.active_pane {
+                    ActivePane::Categories => {
+                        let i = app.category_list_state.selected().unwrap_or(0);
+                        let next = if i == 0 { app.categories.len() - 1 } else { i - 1 };
+                        app.category_list_state.select(Some(next));
+                        app.rule_list_state.select(Some(0));
+                    }
+                    ActivePane::Rules => {
+                        let len = app.current_rules().len();
+                        if len > 0 {
+                            let i = app.rule_list_state.selected().unwrap_or(0);
+                            let next = if i == 0 { len - 1 } else { i - 1 };
+                            app.rule_list_state.select(Some(next));
+                        }
+                    }
+                },
+                _ => {}
             }
         }
     }

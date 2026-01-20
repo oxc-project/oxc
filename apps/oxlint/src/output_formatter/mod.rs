@@ -39,7 +39,7 @@ pub enum OutputFormat {
     Checkstyle,
     Stylish,
     JUnit,
-    TUI,
+    Tui,
 }
 
 impl FromStr for OutputFormat {
@@ -55,7 +55,7 @@ impl FromStr for OutputFormat {
             "gitlab" => Ok(Self::Gitlab),
             "stylish" => Ok(Self::Stylish),
             "junit" => Ok(Self::JUnit),
-            "tui" => Ok(Self::TUI),
+            "tui" => Ok(Self::Tui),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
@@ -112,7 +112,7 @@ impl OutputFormatter {
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
-            OutputFormat::TUI => Box::<TuiOutputFormatter>::default(),
+            OutputFormat::Tui => Box::<TuiOutputFormatter>::default(),
         }
     }
 
