@@ -117,7 +117,10 @@ function initTsScopeManager() {
   if (ast === null) initAst();
   debugAssertIsNonNull(ast);
 
-  analyzeOptions.sourceType = ast.sourceType;
+  const { sourceType } = ast;
+  analyzeOptions.sourceType = sourceType;
+  analyzeOptions.globalReturn = sourceType === "commonjs";
+  analyzeOptions.impliedStrict = sourceType === "module";
 
   // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);

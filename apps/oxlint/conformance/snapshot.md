@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
-| Passing     | 32717 |  98.9% |
-| Failing     |   266 |   0.8% |
+| Passing     | 32719 |  98.9% |
+| Failing     |   264 |   0.8% |
 | Skipped     |   107 |   0.3% |
 
 ## Fully Passing Rules
@@ -291,7 +291,7 @@
 - `no-extra-parens` - 1068 / 1072 (99.6%)
 - `no-fallthrough` - 86 / 87 (98.9%)
 - `no-global-assign` - 15 / 18 (83.3%)
-- `no-implicit-globals` - 155 / 245 (63.3%)
+- `no-implicit-globals` - 157 / 245 (64.1%)
 - `no-invalid-this` - 520 / 562 (92.5%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
 - `no-lone-blocks` - 49 / 50 (98.0%)
@@ -1132,8 +1132,8 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
 
 ### `no-implicit-globals`
 
-Pass: 155 / 245 (63.3%)
-Fail: 90 / 245 (36.7%)
+Pass: 157 / 245 (64.1%)
+Fail: 88 / 245 (35.9%)
 Skip: 0 / 245 (0.0%)
 
 #### no-implicit-globals > valid
@@ -1191,80 +1191,6 @@ function foo() {}
         "globalReturn": true
       }
     }
-  }
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-implicit-globals',
-    message: 'Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable.',
-    messageId: 'globalNonLexicalBinding',
-    severity: 1,
-    nodeType: 'FunctionDeclaration',
-    line: 1,
-    column: 0,
-    endLine: 1,
-    endColumn: 17,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-implicit-globals > valid
-
-```js
-var foo = 1;
-```
-
-```json
-{
-  "languageOptions": {
-    "sourceType": "commonjs"
-  }
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-implicit-globals',
-    message: "Unexpected 'var' declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable.",
-    messageId: 'globalNonLexicalBinding',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 1,
-    column: 4,
-    endLine: 1,
-    endColumn: 11,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-implicit-globals > valid
-
-```js
-function foo() {}
-```
-
-```json
-{
-  "languageOptions": {
-    "sourceType": "commonjs"
   }
 }
 ```
