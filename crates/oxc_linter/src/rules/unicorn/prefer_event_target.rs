@@ -1,3 +1,4 @@
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,7 +61,7 @@ impl Rule for PreferEventTarget {
                     return;
                 };
 
-                if !std::ptr::eq(ident, callee_ident.as_ref()) {
+                if ident.unstable_address() != callee_ident.address() {
                     return;
                 }
             }
