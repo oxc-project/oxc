@@ -22,6 +22,7 @@ type InvalidTestCase = OxlintRuleTesterTypes.InvalidTestCase;
 type ExtraCaseProps = {
   code?: string;
   languageOptions?: {
+    ecmaVersion?: number | "latest";
     parserOptions?: {
       ecmaFeatures?: {
         globalReturn?: boolean;
