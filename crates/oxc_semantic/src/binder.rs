@@ -135,6 +135,8 @@ impl<'a> Binder<'a> for Class<'a> {
 
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
+        let is_declaration = self.is_declaration();
+
         let includes = if self.declare {
             SymbolFlags::Function | SymbolFlags::Ambient
         } else {
@@ -144,8 +146,7 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(ident) = &self.id {
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
-            } else if self.is_declaration() && is_function_decl_part_of_if_statement(self, builder)
-            {
+            } else if is_declaration && is_function_decl_part_of_if_statement(self, builder) {
                 SymbolFlags::empty()
             } else {
                 // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
@@ -164,7 +165,10 @@ impl<'a> Binder<'a> for Function<'a> {
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
-        if let AstKind::ObjectProperty(prop) = builder.nodes.parent_kind(builder.current_node_id) {
+        if !is_declaration
+            && let AstKind::ObjectProperty(prop) =
+                builder.nodes.parent_kind(builder.current_node_id)
+        {
             // Do not bind scope flags when function is inside of the object property key:
             //
             // { set [function() {}](val) {} }
