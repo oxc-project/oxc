@@ -123,6 +123,7 @@ fn keep_in_script_mode() {
     let source_type = SourceType::cjs().with_script(true);
     test_same_options_source_type("var x = 1; x = 2;", source_type, &options);
     test_same_options_source_type("var x = 1; x = 2, foo(x)", source_type, &options);
+    test_options_source_type("var x = 1; x = 2;", "", SourceType::cjs(), &options);
 
     test_options_source_type("class C {}", "class C {}", source_type, &options);
 }
