@@ -54,6 +54,8 @@ tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 tower-lsp-server = { workspace = true, features = ["proposed"] }
+ratatui = { workspace = true }
+crossterm = { workspace = true }
 
 [target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }

@@ -5,6 +5,7 @@ mod gitlab;
 mod json;
 mod junit;
 mod stylish;
+mod tui;
 mod unix;
 mod xml_utils;
 
@@ -15,7 +16,11 @@ use checkstyle::CheckStyleOutputFormatter;
 use github::GithubOutputFormatter;
 use gitlab::GitlabOutputFormatter;
 use junit::JUnitOutputFormatter;
+use oxc_linter::{RuleCategory, rules::RULES};
+use rustc_hash::FxHashSet;
+use serde::Serialize;
 use stylish::StylishOutputFormatter;
+use tui::TuiOutputFormatter;
 use unix::UnixOutputFormatter;
 
 use oxc_diagnostics::reporter::DiagnosticReporter;
@@ -34,6 +39,7 @@ pub enum OutputFormat {
     Checkstyle,
     Stylish,
     JUnit,
+    TUI,
 }
 
 impl FromStr for OutputFormat {
@@ -49,6 +55,7 @@ impl FromStr for OutputFormat {
             "gitlab" => Ok(Self::Gitlab),
             "stylish" => Ok(Self::Stylish),
             "junit" => Ok(Self::JUnit),
+            "tui" => Ok(Self::TUI),
             _ => Err(format!("'{s}' is not a known format")),
         }
     }
@@ -105,6 +112,7 @@ impl OutputFormatter {
             OutputFormat::Default => Box::new(DefaultOutputFormatter),
             OutputFormat::Stylish => Box::<StylishOutputFormatter>::default(),
             OutputFormat::JUnit => Box::<JUnitOutputFormatter>::default(),
+            OutputFormat::TUI => Box::<TuiOutputFormatter>::default(),
         }
     }
 
@@ -124,6 +132,56 @@ impl OutputFormatter {
     pub fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         self.internal.get_diagnostic_reporter()
     }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct FormattedRule {
+    pub scope: &'static str,
+    #[serde(rename = "value")]
+    pub name: &'static str,
+    pub category: RuleCategory,
+    #[serde(rename = "type_aware")]
+    pub is_type_aware: bool,
+    pub fix: String,
+    #[serde(rename = "default")]
+    pub is_default: bool,
+    pub docs_url: String,
+}
+
+impl FormattedRule {
+    pub fn description(&self) -> String {
+        format!("Type Aware: {}", self.is_type_aware)
+    }
+}
+
+pub fn get_formatted_rules() -> Vec<FormattedRule> {
+    // Determine which rules are turned on by default (same logic as RuleTable)
+    let default_plugin_names = ["eslint", "unicorn", "typescript", "oxc"];
+    let default_rules: FxHashSet<&'static str> = RULES
+        .iter()
+        .filter(|rule| {
+            rule.category() == RuleCategory::Correctness
+                && default_plugin_names.contains(&rule.plugin_name())
+        })
+        .map(oxc_linter::rules::RuleEnum::name)
+        .collect();
+
+    RULES
+        .iter()
+        .map(|rule| FormattedRule {
+            scope: rule.plugin_name(),
+            name: rule.name(),
+            category: rule.category(),
+            is_type_aware: rule.is_tsgolint_rule(),
+            fix: rule.fix().to_string(),
+            is_default: default_rules.contains(rule.name()),
+            docs_url: format!(
+                "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
+                rule.plugin_name(),
+                rule.name()
+            ),
+        })
+        .collect()
 }
 
 #[cfg(test)]
