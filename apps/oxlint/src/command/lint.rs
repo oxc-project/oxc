@@ -61,6 +61,9 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub inline_config_options: InlineConfigOptions,
 
+    #[bpaf(external)]
+    pub suppression_options: SuppressionOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,
@@ -432,6 +435,73 @@ pub enum ReportUnusedDirectives {
 pub struct InlineConfigOptions {
     #[bpaf(external)]
     pub report_unused_directives: ReportUnusedDirectives,
+}
+
+/// Bulk Suppressions
+///
+/// Options for managing bulk suppressions of lint violations.
+/// Suppressions allow you to record existing violations in a separate file,
+/// enabling gradual adoption of stricter lint rules.
+#[derive(Debug, Clone, Default, Bpaf)]
+pub struct SuppressionOptions {
+    /// Suppress all violations (creates or updates the suppressions file)
+    #[bpaf(long("suppress-all"), switch, hide_usage)]
+    pub suppress_all: bool,
+
+    /// Suppress violations for specific rules (can be used multiple times)
+    #[bpaf(long("suppress-rule"), argument("RULE"), many, hide_usage)]
+    pub suppress_rule: Vec<String>,
+
+    /// Specify the location of the suppressions file
+    ///
+    /// If not provided, defaults to `oxlint-suppressions.json` in the current directory.
+    #[bpaf(long("suppressions-location"), argument("PATH"), hide_usage)]
+    pub suppressions_location: Option<PathBuf>,
+
+    /// Remove unused suppressions from the suppressions file
+    #[bpaf(long("prune-suppressions"), switch, hide_usage)]
+    pub prune_suppressions: bool,
+
+    /// Ignore unused suppressions when calculating exit code
+    #[bpaf(long("pass-on-unpruned-suppressions"), switch, hide_usage)]
+    pub pass_on_unpruned_suppressions: bool,
+}
+
+impl SuppressionOptions {
+    /// Validates that the suppression options are not conflicting.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error message if conflicting options are used together, such as:
+    /// - `--suppress-all` with `--suppress-rule`
+    /// - `--suppress-all` with `--prune-suppressions`
+    /// - `--suppress-rule` with `--prune-suppressions`
+    pub fn validate(&self) -> Result<(), &'static str> {
+        if self.suppress_all && !self.suppress_rule.is_empty() {
+            return Err(
+                "The --suppress-all option and the --suppress-rule option cannot be used together.",
+            );
+        }
+
+        if self.suppress_all && self.prune_suppressions {
+            return Err(
+                "The --suppress-all option and the --prune-suppressions option cannot be used together.",
+            );
+        }
+
+        if !self.suppress_rule.is_empty() && self.prune_suppressions {
+            return Err(
+                "The --suppress-rule option and the --prune-suppressions option cannot be used together.",
+            );
+        }
+
+        Ok(())
+    }
+
+    /// Returns true if any suppression-related operation is requested.
+    pub fn is_suppression_operation(&self) -> bool {
+        self.suppress_all || !self.suppress_rule.is_empty() || self.prune_suppressions
+    }
 }
 
 #[cfg(test)]
