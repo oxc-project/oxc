@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 62/62 (100.00%)
-Positive Passed: 62/62 (100.00%)
-Negative Passed: 130/130 (100.00%)
+AST Parsed     : 64/64 (100.00%)
+Positive Passed: 64/64 (100.00%)
+Negative Passed: 131/131 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -3392,6 +3392,28 @@ Negative Passed: 130/130 (100.00%)
   × Unexpected token
    ╭─[misc/fail/oxc-169.js:2:1]
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
+   ╰────
+
+  × Identifier `f` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:1:10]
+ 1 │ function f() {}
+   ·          ┬
+   ·          ╰── `f` has already been declared here
+ 2 │ function f() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `g` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:4:5]
+ 3 │ 
+ 4 │ var g;
+   ·     ┬
+   ·     ╰── `g` has already been declared here
+ 5 │ function g() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
    ╰────
 
   × Expected `(` but found `:`
