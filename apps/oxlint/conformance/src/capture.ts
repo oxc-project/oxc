@@ -86,6 +86,12 @@ export function it(code: string, fn: () => void): void {
       testResult.isSkipped = true;
     }
 
+    // Skip test cases which start with `/* global */`, `/* globals */`, or `/* exported */` comments.
+    // Oxlint does not support defining globals inline.
+    if (code.match(/^\s*\/\*\s*(globals?|exported)\s/)) {
+      testResult.isSkipped = true;
+    }
+
     testResult.error = err as Error;
     testResult.testCase = err?.__testCase ?? null;
   }
