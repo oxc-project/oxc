@@ -9,7 +9,7 @@ static ALLOC: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 mod options;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use napi::{Either, Task, bindgen_prelude::AsyncTask};
 use napi_derive::napi;
@@ -55,8 +55,6 @@ fn minify_impl(filename: &str, source_text: &str, options: Option<MinifyOptions>
 
     let source_type = if options.module == Some(true) {
         SourceType::mjs()
-    } else if Path::new(&filename).extension().is_some_and(|ext| ext == "js") {
-        SourceType::cjs()
     } else {
         SourceType::from_path(filename).unwrap_or_default()
     };

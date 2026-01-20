@@ -86,7 +86,7 @@ impl NodeCompatCase {
     }
 
     pub fn source_type() -> SourceType {
-        SourceType::cjs()
+        SourceType::cjs().with_script(true)
     }
 }
 

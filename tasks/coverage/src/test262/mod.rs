@@ -143,7 +143,7 @@ impl Case for Test262Case {
     // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode
     fn run(&mut self) {
         let flags = &self.meta.flags;
-        let source_type = SourceType::cjs();
+        let source_type = SourceType::cjs().with_script(true);
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
             self.always_strict = true;

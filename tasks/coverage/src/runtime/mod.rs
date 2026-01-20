@@ -178,7 +178,7 @@ impl Test262RuntimeCase {
         let source_text = self.base.code();
         let is_module = self.base.is_module();
         let is_only_strict = self.base.is_only_strict();
-        let source_type = SourceType::cjs().with_module(is_module);
+        let source_type = SourceType::cjs().with_script(!is_module).with_module(is_module);
         let allocator = Allocator::default();
         let mut program = Parser::new(&allocator, source_text, source_type).parse().program;
 
