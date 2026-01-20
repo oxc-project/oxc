@@ -133,63 +133,79 @@ mod test {
     const TEST_CWD: &str = "fixtures/output_formatter_diagnostic";
 
     #[test]
-    fn test_output_formatter_diagnostic_checkstyle() {
-        let args = &["--format=checkstyle", "test.js"];
+    fn test_output_formatter_diagnostic_formats() {
+        let mut formats: Vec<&str> =
+            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
 
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+        // disabled for windows
+        // json will output the offset which will be different for windows
+        // when there are multiple lines (`\r\n` vs `\n`)
+        if cfg!(not(target_os = "windows")) {
+            formats.push("json");
+        }
+
+        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        if cfg!(not(target_endian = "big")) {
+            formats.push("gitlab");
+        }
+
+        for fmt in &formats {
+            let args_vec = [format!("--format={fmt}"), "test.js".to_string()];
+            let args_ref: Vec<&str> = args_vec.iter().map(std::string::String::as_str).collect();
+            Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(&args_ref);
+        }
     }
 
     #[test]
-    fn test_output_formatter_diagnostic_default() {
-        let args = &["--format=default", "test.js"];
+    fn test_output_formatter_diagnostic_formats_success() {
+        let mut formats: Vec<&str> =
+            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
 
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+        // disabled for windows
+        // json will output the offset which will be different for windows
+        // when there are multiple lines (`\r\n` vs `\n`)
+        if cfg!(not(target_os = "windows")) {
+            formats.push("json");
+        }
+
+        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        if cfg!(not(target_endian = "big")) {
+            formats.push("gitlab");
+        }
+
+        for fmt in &formats {
+            let args_vec = [format!("--format={fmt}"), "ok.js".to_string()];
+            let args_ref: Vec<&str> = args_vec.iter().map(std::string::String::as_str).collect();
+            Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(&args_ref);
+        }
     }
 
+    // Test that each of the formatters can output the disable directive violations.
     #[test]
-    fn test_output_formatter_diagnostic_github() {
-        let args = &["--format=github", "test.js"];
+    fn test_output_formatter_diagnostic_formats_with_disable_directive() {
+        let mut formats: Vec<&str> =
+            vec!["checkstyle", "default", "github", "junit", "stylish", "unix"];
 
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
+        // disabled for windows
+        // json will output the offset which will be different for windows
+        // when there are multiple lines (`\r\n` vs `\n`)
+        if cfg!(not(target_os = "windows")) {
+            formats.push("json");
+        }
 
-    #[cfg(not(target_endian = "big"))] // Apparently the fingerprint hash is different on big-endian systems.
-    #[test]
-    fn test_output_formatter_diagnostic_gitlab() {
-        let args = &["--format=gitlab", "test.js"];
+        // Exclude `gitlab` on big-endian systems because fingerprints differ there
+        if cfg!(not(target_endian = "big")) {
+            formats.push("gitlab");
+        }
 
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
-
-    /// disabled for windows
-    /// json will output the offset which will be different for windows
-    /// when there are multiple lines (`\r\n` vs `\n`)
-    #[cfg(all(test, not(target_os = "windows")))]
-    #[test]
-    fn test_output_formatter_diagnostic_json() {
-        let args = &["--format=json", "test.js"];
-
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_output_formatter_diagnostic_junit() {
-        let args = &["--format=junit", "test.js"];
-
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_output_formatter_diagnostic_stylish() {
-        let args = &["--format=stylish", "test.js"];
-
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_output_formatter_diagnostic_unix() {
-        let args = &["--format=unix", "test.js"];
-
-        Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(args);
+        for fmt in &formats {
+            let args_vec = [
+                format!("--format={fmt}"),
+                "--report-unused-disable-directives".to_string(),
+                "disable-directive.js".to_string(),
+            ];
+            let args_ref: Vec<&str> = args_vec.iter().map(std::string::String::as_str).collect();
+            Tester::new().with_cwd(TEST_CWD.into()).test_and_snapshot(&args_ref);
+        }
     }
 }
