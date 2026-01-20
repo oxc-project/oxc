@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ExternalCallbacks, IndentWidth,
+    IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
@@ -802,12 +802,13 @@ fn format_embedded_template<'a>(
 }
 
 /// Try to format a tagged template with the embedded formatter if supported.
-/// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
+/// Returns `true` if formatting was performed, `false` if not applicable.
 fn try_format_embedded_template<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let quasi = &tagged.quasi;
+    // TODO: Support expressions in the template
     if !quasi.is_no_substitution_template() {
         return false;
     }
@@ -816,12 +817,6 @@ fn try_format_embedded_template<'a>(
         return false;
     };
 
-    // Check if the tag is supported by the embedded formatter
-    if !ExternalCallbacks::is_supported_tag(tag_name) {
-        return false;
-    }
-
-    // Get the external callbacks from the context
     let template_content = quasi.quasis[0].value.raw.as_str();
 
     format_embedded_template(f, tag_name, template_content)
@@ -867,6 +862,7 @@ fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
+    // TODO: Support expressions in the template
     if !template_literal.is_no_substitution_template() {
         return false;
     }

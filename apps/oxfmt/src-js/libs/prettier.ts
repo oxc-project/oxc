@@ -30,23 +30,9 @@ export async function resolvePlugins(): Promise<string[]> {
 
 // ---
 
-const TAG_TO_PARSER: Record<string, string> = {
-  // CSS
-  css: "css",
-  styled: "css",
-  // GraphQL
-  gql: "graphql",
-  graphql: "graphql",
-  // HTML
-  html: "html",
-  // Markdown
-  md: "markdown",
-  markdown: "markdown",
-};
-
 export type FormatEmbeddedCodeParam = {
   code: string;
-  tagName: string;
+  parserName: string;
   options: Options;
 };
 
@@ -59,15 +45,9 @@ export type FormatEmbeddedCodeParam = {
  */
 export async function formatEmbeddedCode({
   code,
-  tagName,
+  parserName,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
-  // TODO: This should be resolved in Rust side
-  const parserName = TAG_TO_PARSER[tagName];
-
-  // Unknown tag, return original code
-  if (!parserName) return code;
-
   const prettier = await loadPrettier();
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
