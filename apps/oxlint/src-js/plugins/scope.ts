@@ -6,7 +6,7 @@ import { analyze, Variable as TSVariable } from "@typescript-eslint/scope-manage
 import { ast, initAst } from "./source_code.ts";
 import { globals, envs, initGlobals } from "./globals.ts";
 import { ENVS } from "../generated/envs.ts";
-import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type {
   AnalyzeOptions,
@@ -15,7 +15,6 @@ import type {
 } from "@typescript-eslint/scope-manager";
 import type { Writable } from "type-fest";
 import type * as ESTree from "../generated/types.d.ts";
-import type { SetNullable } from "../utils/types.ts";
 
 export interface Scope {
   type: ScopeType;
@@ -100,12 +99,15 @@ let tsScopeManager: TSESLintScopeManager | null = null;
 
 // Options for TS-ESLint's `analyze` method.
 // `sourceType` property is set before calling `analyze`.
-const analyzeOptions: SetNullable<AnalyzeOptions, "sourceType"> = {
+const analyzeOptions: AnalyzeOptions = {
+  childVisitorKeys: undefined,
   globalReturn: false,
-  jsxFragmentName: null,
+  impliedStrict: false,
   jsxPragma: "React",
+  jsxFragmentName: null,
   lib: [],
-  sourceType: null,
+  sourceType: "module",
+  emitDecoratorMetadata: false,
 };
 
 /**
@@ -116,7 +118,7 @@ function initTsScopeManager() {
   debugAssertIsNonNull(ast);
 
   analyzeOptions.sourceType = ast.sourceType;
-  typeAssertIs<AnalyzeOptions>(analyzeOptions);
+
   // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);
 
