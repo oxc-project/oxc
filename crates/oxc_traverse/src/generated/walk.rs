@@ -3758,12 +3758,6 @@ unsafe fn walk_ts_enum_declaration<'a, State, Tr: Traverse<'a, State>>(
         (node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_ID) as *mut BindingIdentifier,
         ctx,
     );
-    let previous_scope_id = ctx.current_scope_id();
-    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
-        as *mut Cell<Option<ScopeId>>))
-        .get()
-        .unwrap();
-    ctx.set_current_scope_id(current_scope_id);
     ctx.retag_stack(AncestorType::TSEnumDeclarationBody);
     walk_ts_enum_body(
         traverser,
@@ -3771,7 +3765,6 @@ unsafe fn walk_ts_enum_declaration<'a, State, Tr: Traverse<'a, State>>(
         ctx,
     );
     ctx.pop_stack(pop_token);
-    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_ts_enum_declaration(&mut *node, ctx);
 }
 
@@ -3781,6 +3774,12 @@ unsafe fn walk_ts_enum_body<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_ts_enum_body(&mut *node, ctx);
+    let previous_scope_id = ctx.current_scope_id();
+    let current_scope_id = (*((node as *mut u8).add(ancestor::OFFSET_TS_ENUM_BODY_SCOPE_ID)
+        as *mut Cell<Option<ScopeId>>))
+        .get()
+        .unwrap();
+    ctx.set_current_scope_id(current_scope_id);
     let pop_token = ctx.push_stack(Ancestor::TSEnumBodyMembers(
         ancestor::TSEnumBodyWithoutMembers(node, PhantomData),
     ));
@@ -3790,6 +3789,7 @@ unsafe fn walk_ts_enum_body<'a, State, Tr: Traverse<'a, State>>(
         walk_ts_enum_member(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack(pop_token);
+    ctx.set_current_scope_id(previous_scope_id);
     traverser.exit_ts_enum_body(&mut *node, ctx);
 }
 
@@ -5383,13 +5383,17 @@ unsafe fn walk_ts_mapped_type<'a, State, Tr: Traverse<'a, State>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
-    let pop_token = ctx.push_stack(Ancestor::TSMappedTypeTypeParameter(
-        ancestor::TSMappedTypeWithoutTypeParameter(node, PhantomData),
-    ));
-    walk_ts_type_parameter(
+    let pop_token = ctx
+        .push_stack(Ancestor::TSMappedTypeKey(ancestor::TSMappedTypeWithoutKey(node, PhantomData)));
+    walk_binding_identifier(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER)
-            as *mut Box<TSTypeParameter>)) as *mut _,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_KEY) as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSMappedTypeConstraint);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *mut TSType,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_NAME_TYPE)

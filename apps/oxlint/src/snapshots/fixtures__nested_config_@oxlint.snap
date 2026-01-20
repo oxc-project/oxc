@@ -6,35 +6,35 @@ arguments:
 working directory: fixtures/nested_config
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  x eslint(no-console): Unexpected console statement.
    ,-[console.ts:1:1]
  1 | console.log("test");
    : ^^^^^^^^^^^
    `----
   help: Delete this console statement.
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[debugger.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
   help: Remove the debugger statement
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  x eslint(no-console): Unexpected console statement.
    ,-[package2-no-config/console.ts:1:1]
  1 | console.log("test");
    : ^^^^^^^^^^^
    `----
   help: Delete this console statement.
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[package2-no-config/debugger.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
    `----
   help: Remove the debugger statement
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  x eslint(no-console): Unexpected console statement.
    ,-[package3-deep-config/src/components/component.js:2:3]
  1 | export function Component() {
  2 |   console.log("hello");

@@ -120,26 +120,26 @@ fn test() {
     }
 
     let pass = vec![
-        (vitest_context!("describe('foo', function () {})"), None),
-        (vitest_context!("it('foo', function () {})"), None),
-        (vitest_context!("it.concurrent('foo', function () {})"), None),
-        (vitest_context!("test('foo', function () {})"), None),
-        (vitest_context!("test.concurrent('foo', function () {})"), None),
-        (vitest_context!("describe.only('foo', function () {})"), None),
-        (vitest_context!("it.only('foo', function () {})"), None),
-        (vitest_context!("it.each()('foo', function () {})"), None),
+        (vitest_context!(r#"describe("foo", function () {})"#)),
+        (vitest_context!(r#"it("foo", function () {})"#)),
+        (vitest_context!(r#"it.concurrent("foo", function () {})"#)),
+        (vitest_context!(r#"test("foo", function () {})"#)),
+        (vitest_context!(r#"test.concurrent("foo", function () {})"#)),
+        (vitest_context!(r#"describe.only("foo", function () {})"#)),
+        (vitest_context!(r#"it.only("foo", function () {})"#)),
+        (vitest_context!(r#"it.each()("foo", function () {})"#)),
     ];
 
     let fail = vec![
-        (vitest_context!("describe.todo('foo', function () {})"), None),
-        (vitest_context!("it.todo('foo', function () {})"), None),
-        (vitest_context!("test.todo('foo', function () {})"), None),
-        (vitest_context!("describe.todo.each([])('foo', function () {})"), None),
-        (vitest_context!("it.todo.each([])('foo', function () {})"), None),
-        (vitest_context!("test.todo.each([])('foo', function () {})"), None),
-        (vitest_context!("describe.only.todo('foo', function () {})"), None),
-        (vitest_context!("it.only.todo('foo', function () {})"), None),
-        (vitest_context!("test.only.todo('foo', function () {})"), None),
+        (vitest_context!(r#"describe.todo("foo", function () {})"#)),
+        (vitest_context!(r#"it.todo("foo", function () {})"#)),
+        (vitest_context!(r#"test.todo("foo", function () {})"#)),
+        (vitest_context!(r#"describe.todo.each([])("foo", function () {})"#)),
+        (vitest_context!(r#"it.todo.each([])("foo", function () {})"#)),
+        (vitest_context!(r#"test.todo.each([])("foo", function () {})"#)),
+        (vitest_context!(r#"describe.only.todo("foo", function () {})"#)),
+        (vitest_context!(r#"it.only.todo("foo", function () {})"#)),
+        (vitest_context!(r#"test.only.todo("foo", function () {})"#)),
     ];
 
     Tester::new(WarnTodo::NAME, WarnTodo::PLUGIN, pass, fail)

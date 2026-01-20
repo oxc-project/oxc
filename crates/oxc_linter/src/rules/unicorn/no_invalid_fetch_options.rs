@@ -353,5 +353,6 @@ fn test() {
     ];
 
     Tester::new(NoInvalidFetchOptions::NAME, NoInvalidFetchOptions::PLUGIN, pass, fail)
+        .change_rule_path_extension("mts")
         .test_and_snapshot();
 }

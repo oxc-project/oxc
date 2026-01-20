@@ -1,3 +1,4 @@
+use oxc_allocator::UnstableAddress;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -67,7 +68,7 @@ impl Rule for NoUselessSwitchCase {
         let default_case = default_cases[0];
 
         // Check if the `default` case is the last case
-        if !std::ptr::eq(default_case, cases.last().unwrap()) {
+        if default_case.unstable_address() != cases.last().unwrap().unstable_address() {
             return;
         }
 

@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=unix test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+test.js:5:1: `debugger` statement is not allowed [Error/eslint(no-debugger)]
+test.js:1:10: Function 'foo' is declared but never used. [Warning/eslint(no-unused-vars)]
+test.js:1:17: Parameter 'b' is declared but never used. Unused parameters should start with a '_'. [Warning/eslint(no-unused-vars)]
+
+3 problems
+----------
+CLI result: LintFoundErrors
+----------

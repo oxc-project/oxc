@@ -4,8 +4,9 @@
 
 import { filePath } from "./context.ts";
 import { getFixes } from "./fix.ts";
-import { getOffsetFromLineColumn } from "./location.ts";
-import { typeAssertIs } from "../utils/asserts.ts";
+import { initLines, lines, lineStartIndices, debugAssertLinesIsInitialized } from "./location.ts";
+import { sourceText } from "./source_code.ts";
+import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Fix, FixFn } from "./fix.ts";
@@ -71,6 +72,8 @@ export interface DiagnosticReport {
   ruleIndex: number;
   fixes: Fix[] | null;
   messageId: string | null;
+  // Only used in conformance tests
+  loc?: LocationWithOptionalEnd | null;
 }
 
 // Diagnostics array. Reused for every file.
@@ -100,6 +103,8 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
+  // We need the original location in conformance tests
+  let conformedLoc: LocationWithOptionalEnd | null = null;
 
   if (Object.hasOwn(diagnostic, "loc") && (loc = diagnostic.loc) != null) {
     // `loc`
@@ -113,12 +118,28 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 
     if (Object.hasOwn(loc, "start")) {
       typeAssertIs<LocationWithOptionalEnd>(loc);
-      start = getOffsetFromLineColumn(loc.start);
-      end = loc.end == null ? start : getOffsetFromLineColumn(loc.end);
+      const { start: startLineCol, end: endLineCol } = loc;
+
+      if (startLineCol === null || typeof startLineCol !== "object") {
+        throw new TypeError("`loc.start` must be an object");
+      }
+      start = getOffsetFromLineColumn(startLineCol);
+
+      if (endLineCol == null) {
+        end = start;
+      } else if (typeof endLineCol === "object") {
+        end = getOffsetFromLineColumn(endLineCol);
+      } else {
+        throw new TypeError("`loc.end` must be an object or null/undefined");
+      }
+
+      if (CONFORMANCE) conformedLoc = loc;
     } else {
       typeAssertIs<LineColumn>(loc);
       start = getOffsetFromLineColumn(loc);
       end = start;
+
+      if (CONFORMANCE) conformedLoc = { start: loc, end: null };
     }
   } else {
     // `node`
@@ -159,6 +180,9 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
     ruleIndex: ruleDetails.ruleIndex,
     fixes: getFixes(diagnostic, ruleDetails),
   });
+
+  // We need the original location in conformance tests
+  if (CONFORMANCE) diagnostics.at(-1)!.loc = conformedLoc;
 }
 
 /**
@@ -231,4 +255,56 @@ export function replacePlaceholders(message: string, data: DiagnosticData): stri
     // but actually returning other types e.g. `number` or `boolean` is fine
     return value !== undefined ? (value as string) : match;
   });
+}
+
+/**
+ * Convert a `{ line, column }` pair into a range index.
+ *
+ * Same as `getOffsetFromLineColumn` in `location.ts`, except:
+ * 1. Does not check that `lineCol` is an object - caller must do that.
+ * 2. Allows `column` to be less than 0 or greater than the length of the line.
+ *
+ * Relaxing the restriction on `column` is required because some rules (e.g. ESLint's `func-call-spacing`)
+ * produce `column: -1` in some cases.
+ *
+ * @param lineCol - A line/column location.
+ * @returns The character index of the location in the file.
+ * @throws {TypeError} If `lineCol` is not an object with a integer `line` and `column`.
+ * @throws {RangeError} If `line` is less than or equal to 0, or greater than the number of lines in the source text.
+ * @throws {RangeError} If computed offset is out of range of the source text.
+ */
+function getOffsetFromLineColumn(lineCol: LineColumn): number {
+  const { line, column } = lineCol;
+  if (
+    typeof line !== "number" ||
+    typeof column !== "number" ||
+    (line | 0) !== line ||
+    (column | 0) !== column
+  ) {
+    throw new TypeError("Expected an object with integer `line` and `column` properties");
+  }
+
+  // Build `lines` and `lineStartIndices` tables if they haven't been already.
+  // This also decodes `sourceText` if it wasn't already.
+  if (lines.length === 0) initLines();
+  debugAssertIsNonNull(sourceText);
+  debugAssertLinesIsInitialized();
+
+  if (line <= 0 || line > lineStartIndices.length) {
+    throw new RangeError(
+      `Line number out of range (line ${line} requested). ` +
+        `Line numbers should be 1-based, and less than or equal to number of lines in file (${lineStartIndices.length}).`,
+    );
+  }
+
+  const lineOffset = lineStartIndices[line - 1];
+  const offset = lineOffset + column;
+
+  // Ensure offset is within bounds.
+  // Do this here on JS side to prevent a NAPI error when converting to `u32` on Rust side.
+  if (offset < 0 || offset > sourceText.length) {
+    throw new RangeError("Line/column pair translates to an out of range offset");
+  }
+
+  return offset;
 }

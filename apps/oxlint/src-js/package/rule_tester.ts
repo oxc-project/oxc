@@ -16,6 +16,7 @@ import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
 import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
+import { analyzeOptionsOverride } from "../plugins/scope.ts";
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
@@ -140,10 +141,9 @@ interface LanguageOptionsInternal extends LanguageOptions {
 /**
  * Source type.
  *
- * - `'unambiguous'` is not supported in ESLint compatibility mode.
- * - `'commonjs'` is only supported in ESLint compatibility mode.
+ * `'unambiguous'` is not supported in ESLint compatibility mode.
  */
-type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+type SourceType = "script" | "module" | "commonjs" | "unambiguous";
 
 /**
  * Value of a property in `globals` object.
@@ -199,9 +199,29 @@ interface EcmaFeatures {
 }
 
 /**
+ * ECMA features config, with `globalReturn` and `impliedStrict` properties.
+ * These properties should not be present in `ecmaFeatures` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+interface EcmaFeaturesInternal extends EcmaFeatures {
+  /**
+   * `true` if file is parsed with top-level `return` statements allowed.
+   */
+  globalReturn?: boolean;
+  /**
+   * `true` if file is parsed as strict mode code.
+   */
+  impliedStrict?: boolean;
+}
+
+/**
  * Parser language.
  */
 type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
+
+// Empty language options
+const EMPTY_LANGUAGE_OPTIONS: LanguageOptionsInternal = {};
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
 let sharedConfig: Config = {};
@@ -978,7 +998,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
     // In conformance tests, set `context.languageOptions.ecmaVersion`.
     // This is not supported outside of conformance tests.
-    if (CONFORMANCE) setEcmaVersionContext(test);
+    if (CONFORMANCE) setEcmaVersionAndFeatures(test);
 
     // Get globals and settings
     const globalsJSON: string = getGlobalsJson(test);
@@ -992,8 +1012,24 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
 
     return diagnostics.map((diagnostic) => {
-      const { line, column } = getLineColumnFromOffset(diagnostic.start),
-        { line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end);
+      let line, column, endLine, endColumn;
+
+      // Convert start/end offsets to line/column.
+      // In conformance build, use original `loc` if one was passed to `report`.
+      if (!CONFORMANCE || diagnostic.loc == null) {
+        ({ line, column } = getLineColumnFromOffset(diagnostic.start));
+        ({ line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end));
+      } else {
+        const { loc } = diagnostic;
+        ({ line, column } = loc.start);
+        if (loc.end != null) {
+          ({ line: endLine, column: endColumn } = loc.end);
+        } else {
+          endLine = line;
+          endColumn = column;
+        }
+      }
+
       const node = getNodeByRangeIndex(diagnostic.start);
       return {
         ruleId,
@@ -1027,38 +1063,27 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
-  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  if (languageOptions == null) return parseOptions;
+  let languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  if (languageOptions == null) languageOptions = EMPTY_LANGUAGE_OPTIONS;
 
   // Throw error if custom parser is provided
   if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
 
   // Handle `languageOptions.sourceType`
-  let { sourceType } = languageOptions;
+  const { sourceType } = languageOptions;
   if (sourceType != null) {
-    if (test.eslintCompat === true) {
-      // ESLint compatibility mode.
-      // `unambiguous` is disallowed. Treat `commonjs` as `script`.
-      if (sourceType === "commonjs") {
-        sourceType = "script";
-      } else if (sourceType === "unambiguous") {
-        throw new Error(
-          "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
-            "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
-        );
-      }
-    } else {
-      // Not ESLint compatibility mode.
-      // `commonjs` is disallowed.
-      if (sourceType === "commonjs") {
-        throw new Error(
-          "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
-            "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
-        );
-      }
+    // `unambiguous` is disallowed in ESLint compatibility mode
+    if (test.eslintCompat === true && sourceType === "unambiguous") {
+      throw new Error(
+        "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+          "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+      );
     }
 
     parseOptions.sourceType = sourceType;
+  } else if (test.eslintCompat === true) {
+    // ESLint defaults to `module` if no source type is specified
+    parseOptions.sourceType = "module";
   }
 
   // Handle `languageOptions.parserOptions`
@@ -1201,14 +1226,19 @@ function setupOptions(test: TestCase): number {
 }
 
 /**
- * Inject `context.languageOptions.ecmaVersion` into `context.languageOptions`.
+ * Inject:
+ * - `languageOptions.ecmaVersion` into `context.languageOptions`.
+ * - `languageOptions.parserOptions.ecmaFeatures.globalReturn` into scope analyzer options.
+ * - `languageOptions.parserOptions.ecmaFeatures.impliedStrict` into scope analyzer options.
+ *
  * This is only supported in conformance tests, where it's necessary to pass some tests.
- * Oxlint doesn't support any version except latest.
+ * Oxlint doesn't support any ECMA version except latest, or the `globalReturn` or `impliedStrict` ECMA features.
  * @param test - Test case
  */
-function setEcmaVersionContext(test: TestCase) {
+function setEcmaVersionAndFeatures(test: TestCase) {
   if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
 
+  // Set `ecmaVersion`.
   // Same logic as ESLint's `normalizeEcmaVersionForLanguageOptions` function.
   // https://github.com/eslint/eslint/blob/54bf0a3646265060f5f22faef71ec840d630c701/lib/languages/js/index.js#L71-L100
   // Only difference is that we default to `ECMA_VERSION` not `5` if `ecmaVersion` is undefined.
@@ -1221,8 +1251,14 @@ function setEcmaVersionContext(test: TestCase) {
   if (typeof ecmaVersion === "number") {
     version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
   }
-
   setEcmaVersion(version);
+
+  // Set `globalReturn` and `impliedStrict` in scope analyzer options
+  const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures as
+    | EcmaFeaturesInternal
+    | undefined;
+  analyzeOptionsOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
+  analyzeOptionsOverride.impliedStrict = ecmaFeatures?.impliedStrict ?? null;
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)

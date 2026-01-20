@@ -1,38 +1,14 @@
-/// Parse groups from string-based configuration.
-/// If parsing fails (= undefined), it falls back to `Unknown` selector.
-pub fn parse_groups_from_strings(string_groups: &Vec<Vec<String>>) -> Vec<Vec<GroupName>> {
-    let mut groups = Vec::with_capacity(string_groups.len());
-    for group in string_groups {
-        let mut parsed_group = Vec::with_capacity(group.len());
-        for name in group {
-            parsed_group.push(
-                GroupName::parse(name).unwrap_or_else(|| GroupName::new(ImportSelector::Unknown)),
-            );
-        }
-        groups.push(parsed_group);
-    }
-    groups
-}
+use std::cmp::Ordering;
 
 /// Represents a group name pattern for matching imports.
 /// A group name consists of 1 selector and N modifiers.
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct GroupName {
-    pub modifiers: Vec<ImportModifier>,
     pub selector: ImportSelector,
+    pub modifiers: Vec<ImportModifier>,
 }
 
 impl GroupName {
-    /// Create a new group name with no modifiers.
-    pub fn new(selector: ImportSelector) -> Self {
-        Self { modifiers: vec![], selector }
-    }
-
-    /// Create a new group name with one modifier.
-    pub fn with_modifier(selector: ImportSelector, modifier: ImportModifier) -> Self {
-        Self { modifiers: vec![modifier], selector }
-    }
-
     /// Check if this is a plain selector (no modifiers).
     pub fn is_plain_selector(&self, selector: ImportSelector) -> bool {
         self.selector == selector && self.modifiers.is_empty()
@@ -45,46 +21,74 @@ impl GroupName {
     /// - "external" -> modifiers: (empty), selector: External
     /// - "type-external" -> modifiers: Type, selector: External
     /// - "value-builtin" -> modifiers: Value, selector: Builtin
-    /// - "internal-type" -> modifiers: (empty), selector: InternalType
     /// - "side-effect-import" -> modifiers: SideEffect, selector: Import
     /// - "side-effect-type-external" -> modifiers: SideEffect, Type, selector: External
+    /// - "named-side-effect-type-builtin" -> modifiers: SideEffect, Type, Named, selector: Builtin
     pub fn parse(s: &str) -> Option<Self> {
         // Try to parse as a selector without modifiers first
         if let Some(selector) = ImportSelector::parse(s) {
             return Some(Self { modifiers: vec![], selector });
         }
 
-        // Split by '-' and try parsing as modifier(s) + selector
-        let parts: Vec<&str> = s.split('-').collect();
-        if parts.len() < 2 {
-            return None;
-        }
-
         // Last part should be the selector
-        let selector = ImportSelector::parse(parts[parts.len() - 1])?;
+        let selector =
+            *ImportSelector::ALL_SELECTORS.iter().find(|selector| s.ends_with(selector.name()))?;
 
-        // Everything before should be modifier(s)
-        let modifier_parts = &parts[..parts.len() - 1];
-        let mut modifiers = vec![];
-
-        // Try to parse the entire modifier string first (handles "side-effect")
-        let modifier_str = modifier_parts.join("-");
-        if let Some(modifier) = ImportModifier::parse(&modifier_str) {
-            modifiers.push(modifier);
-        } else {
-            // Otherwise, parse each part individually
-            for &part in modifier_parts {
-                modifiers.push(ImportModifier::parse(part)?);
+        // The remaining part represents a sequence of modifiers joined by "-".
+        // Since modifiers themselves may contain "-", splitting by "-" would be ambiguous.
+        // Instead, we iterate over modifiers in a predefined order and check
+        // whether they appear in the remaining string.
+        // This guarantees the extracted modifiers are already ordered
+        // and no additional sorting is required.
+        //
+        // The trade-off is that this approach may tolerate invalid input,
+        // as unmatched or malformed segments are not strictly rejected.
+        let mut modifiers = Vec::with_capacity(ImportModifier::ALL_MODIFIERS.len());
+        for m in ImportModifier::ALL_MODIFIERS {
+            if s.contains(m.name()) {
+                modifiers.push(*m);
             }
         }
 
-        Some(Self { modifiers, selector })
+        Some(Self { selector, modifiers })
+    }
+
+    /// Check if it represents a possible group name of the given import.
+    pub fn is_a_possible_name_of(
+        &self,
+        selectors: &[ImportSelector],
+        modifiers: &[ImportModifier],
+    ) -> bool {
+        selectors.contains(&self.selector) && self.modifiers.iter().all(|m| modifiers.contains(m))
+    }
+}
+
+impl PartialOrd for GroupName {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for GroupName {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.selector.cmp(&other.selector) {
+            Ordering::Equal => {}
+            ord => return ord,
+        }
+        let self_modifier_cnt = self.modifiers.len();
+        let other_modifier_cnt = other.modifiers.len();
+        if self_modifier_cnt > other_modifier_cnt {
+            return Ordering::Less;
+        } else if self_modifier_cnt < other_modifier_cnt {
+            return Ordering::Greater;
+        }
+        self.modifiers.cmp(&other.modifiers)
     }
 }
 
 /// Selector types for import categorization.
 /// Selectors identify the type or location of an import.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ImportSelector {
     /// Type-only imports (`import type { ... }`)
     Type,
@@ -94,18 +98,6 @@ pub enum ImportSelector {
     SideEffect,
     /// Style file imports (CSS, SCSS, etc.)
     Style,
-    /// Type import from index file
-    IndexType,
-    /// Type import from sibling module
-    SiblingType,
-    /// Type import from parent module
-    ParentType,
-    /// Type import from internal module
-    InternalType,
-    /// Type import from built-in module
-    BuiltinType,
-    /// Type import from external module
-    ExternalType,
     /// Index file imports (`./`, `../`)
     Index,
     /// Sibling module imports (`./foo`)
@@ -122,8 +114,6 @@ pub enum ImportSelector {
     External,
     /// Catch-all selector
     Import,
-    /// Unknown/fallback group
-    Unknown,
 }
 
 impl ImportSelector {
@@ -134,12 +124,6 @@ impl ImportSelector {
             "side-effect-style" => Some(Self::SideEffectStyle),
             "side-effect" => Some(Self::SideEffect),
             "style" => Some(Self::Style),
-            "index-type" => Some(Self::IndexType),
-            "sibling-type" => Some(Self::SiblingType),
-            "parent-type" => Some(Self::ParentType),
-            "internal-type" => Some(Self::InternalType),
-            "builtin-type" => Some(Self::BuiltinType),
-            "external-type" => Some(Self::ExternalType),
             "index" => Some(Self::Index),
             "sibling" => Some(Self::Sibling),
             "parent" => Some(Self::Parent),
@@ -148,15 +132,46 @@ impl ImportSelector {
             "builtin" => Some(Self::Builtin),
             "external" => Some(Self::External),
             "import" => Some(Self::Import),
-            "unknown" => Some(Self::Unknown),
             _ => None,
+        }
+    }
+
+    pub const ALL_SELECTORS: &[ImportSelector] = &[
+        ImportSelector::Type,
+        ImportSelector::SideEffectStyle,
+        ImportSelector::SideEffect,
+        ImportSelector::Style,
+        ImportSelector::Index,
+        ImportSelector::Sibling,
+        ImportSelector::Parent,
+        ImportSelector::Subpath,
+        ImportSelector::Internal,
+        ImportSelector::Builtin,
+        ImportSelector::External,
+        ImportSelector::Import,
+    ];
+
+    pub fn name(&self) -> &str {
+        match self {
+            ImportSelector::Type => "type",
+            ImportSelector::SideEffectStyle => "side-effect-style",
+            ImportSelector::SideEffect => "side-effect",
+            ImportSelector::Style => "style",
+            ImportSelector::Index => "index",
+            ImportSelector::Sibling => "sibling",
+            ImportSelector::Parent => "parent",
+            ImportSelector::Subpath => "subpath",
+            ImportSelector::Internal => "internal",
+            ImportSelector::Builtin => "builtin",
+            ImportSelector::External => "external",
+            ImportSelector::Import => "import",
         }
     }
 }
 
 /// Modifier types for import categorization.
 /// Modifiers describe characteristics of how an import is declared.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum ImportModifier {
     /// Side-effect imports
     SideEffect,
@@ -173,16 +188,23 @@ pub enum ImportModifier {
 }
 
 impl ImportModifier {
-    /// Parse a string into an ImportModifier.
-    pub fn parse(s: &str) -> Option<Self> {
-        match s {
-            "side-effect" => Some(Self::SideEffect),
-            "type" => Some(Self::Type),
-            "value" => Some(Self::Value),
-            "default" => Some(Self::Default),
-            "wildcard" => Some(Self::Wildcard),
-            "named" => Some(Self::Named),
-            _ => None,
+    pub const ALL_MODIFIERS: &[ImportModifier] = &[
+        ImportModifier::SideEffect,
+        ImportModifier::Type,
+        ImportModifier::Value,
+        ImportModifier::Default,
+        ImportModifier::Wildcard,
+        ImportModifier::Named,
+    ];
+
+    pub fn name(&self) -> &str {
+        match self {
+            ImportModifier::SideEffect => "side-effect",
+            ImportModifier::Type => "type",
+            ImportModifier::Value => "value",
+            ImportModifier::Default => "default",
+            ImportModifier::Wildcard => "wildcard",
+            ImportModifier::Named => "named",
         }
     }
 }

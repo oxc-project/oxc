@@ -1,0 +1,50 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=gitlab test.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+[
+  {
+    "description": "`debugger` statement is not allowed",
+    "check_name": "eslint(no-debugger)",
+    "fingerprint": "9333a3278325994",
+    "severity": "critical",
+    "location": {
+      "path": "test.js",
+      "lines": {
+        "begin": 5,
+        "end": 5
+      }
+    }
+  },
+  {
+    "description": "Function 'foo' is declared but never used.",
+    "check_name": "eslint(no-unused-vars)",
+    "fingerprint": "b1e9b343a9c1e457",
+    "severity": "major",
+    "location": {
+      "path": "test.js",
+      "lines": {
+        "begin": 1,
+        "end": 1
+      }
+    }
+  },
+  {
+    "description": "Parameter 'b' is declared but never used. Unused parameters should start with a '_'.",
+    "check_name": "eslint(no-unused-vars)",
+    "fingerprint": "53ecf7c08335f91",
+    "severity": "major",
+    "location": {
+      "path": "test.js",
+      "lines": {
+        "begin": 1,
+        "end": 1
+      }
+    }
+  }
+]----------
+CLI result: LintFoundErrors
+----------

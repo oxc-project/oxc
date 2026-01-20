@@ -6,7 +6,7 @@ arguments: --import-plugin -D import/no-cycle
 working directory: fixtures/import-cycle
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[a.ts:1:19]
  1 | import { B } from "./b";
    :                   ^^^^^
@@ -19,7 +19,7 @@ working directory: fixtures/import-cycle
            │    ./a (fixtures/import-cycle/a.ts)
            ╰─────────╯ imports the current file
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-cycle.html\eslint-plugin-import(no-cycle)]8;;\: Dependency cycle detected
+  x eslint-plugin-import(no-cycle): Dependency cycle detected
    ,-[b.ts:1:19]
  1 | import { A } from "./a";
    :                   ^^^^^

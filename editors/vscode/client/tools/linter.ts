@@ -48,6 +48,9 @@ export default class LinterTool implements ToolInterface {
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined> {
+    if (process.env.SERVER_PATH_DEV) {
+      return process.env.SERVER_PATH_DEV;
+    }
     const bin = await configService.getOxlintServerBinPath();
     if (bin) {
       try {
@@ -57,7 +60,6 @@ export default class LinterTool implements ToolInterface {
         outputChannel.error(`Invalid bin path: ${bin}`, e);
       }
     }
-    return process.env.SERVER_PATH_DEV;
   }
 
   async activate(
@@ -116,6 +118,7 @@ export default class LinterTool implements ToolInterface {
 
     const run: Executable = runExecutable(
       binaryPath,
+      "oxlint",
       configService.vsCodeConfig.nodePath,
       configService.vsCodeConfig.binPathTsGoLint,
     );
@@ -250,19 +253,19 @@ export default class LinterTool implements ToolInterface {
 
   async restartClient(): Promise<void> {
     if (this.client === undefined) {
-      window.showErrorMessage("oxc client not found");
+      window.showErrorMessage("oxlint client not found");
       return;
     }
 
     try {
       if (this.client.isRunning()) {
         await this.client.restart();
-        window.showInformationMessage("oxc server restarted.");
+        window.showInformationMessage("oxlint server restarted.");
       } else {
         await this.client.start();
       }
     } catch (err) {
-      this.client.error("Restarting client failed", err, "force");
+      this.client.error("Restarting oxlint client failed", err, "force");
     }
   }
 

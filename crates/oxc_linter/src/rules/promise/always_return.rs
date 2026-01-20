@@ -85,7 +85,7 @@ pub struct AlwaysReturnConfig {
     /// `["globalThis"]`.
     ///
     /// ```javascript
-    /// /* eslint promise/always-return: ["error", { ignoreAssignmentVariable: ["globalThis"] }] */
+    /// /* promise/always-return: ["error", { ignoreAssignmentVariable: ["globalThis"] }] */
     ///
     /// // OK
     /// promise.then((x) => {

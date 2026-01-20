@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f1e2dc0 semantic: No error in `check_function_redeclaration` for CommonJS files (#18231) (overlookmotel)
+
+### ⚡ Performance
+
+- 52073d9 semantic: Use cheaper test for source type (#18235) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- e2221e6 semantic: Store `scope_id` in `Reference` (#18053) (Dunqing)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+- 6b29bd1 semantic/example: Add detailed references info (#17938) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1b199af semantic: Report TS18019 for abstract modifier with private identifier (#18173) (Boshen)
+- fb181cc semantic: Error on `using` at top level in scripts (#18090) (Boshen)
+- 4d9582d semantic: Allow `arguments`/`eval` as binding identifier names and identifier reference names in `.d.ts` (#17910) (Dunqing)
+
+### 📚 Documentation
+
+- 06a96da semantic: Document `with` statement limitation in `is_global_reference` (#17996) (Boshen)
+
 ## [0.108.0] - 2026-01-12
 
 ### 🚀 Features

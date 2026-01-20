@@ -133,6 +133,13 @@ pub fn import_meta(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn using_declaration_not_allowed_in_script(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("'using' declarations are not allowed at the top level of a script")
+        .with_help("Wrap this code in a block or use a module")
+        .with_label(span)
+}
+
+#[cold]
 pub fn function_declaration_strict(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid function declaration")
         .with_help(
@@ -366,6 +373,13 @@ pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
         "'abstract' modifier can only appear on a class, method, or property declaration.",
     )
     .with_label(span)
+}
+
+/// 'abstract' modifier cannot be used with a private identifier. (18019)
+#[cold]
+pub fn abstract_cannot_be_used_with_private_identifier(span: Span) -> OxcDiagnostic {
+    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
+        .with_label(span)
 }
 
 /// A parameter property is only allowed in a constructor implementation.ts(2369)

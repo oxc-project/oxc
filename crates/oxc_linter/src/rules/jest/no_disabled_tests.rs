@@ -27,7 +27,7 @@ declare_oxc_lint!(
     /// tests. Before committing changes we may want to check that all tests are
     /// running.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// ```js
     /// describe.skip('foo', () => {});

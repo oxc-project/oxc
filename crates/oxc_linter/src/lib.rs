@@ -61,7 +61,7 @@ pub use crate::{
     context::{ContextSubHost, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetupConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -332,7 +332,7 @@ impl Linter {
                     assert_eq!(
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len(),
-                        "Running with and without optimizations produced different diagnostic counts: {} vs {}",
+                        "Running with and without optimizations produced different diagnostic counts: {} vs {}.\nThis can be caused by a mismatch between the rule definition and generated RuleRunner impl. Try `cargo run -p oxc_linter_codegen` to regenerate.",
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len()
                     );

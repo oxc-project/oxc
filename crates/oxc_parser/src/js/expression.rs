@@ -66,6 +66,10 @@ impl<'a> ParserImpl<'a> {
         if !kind.is_identifier_reference(false, false) {
             return self.unexpected();
         }
+        // Track await identifier for potential reparsing in unambiguous mode
+        if kind == Kind::Await && !self.ctx.has_await() {
+            self.state.encountered_await_identifier = true;
+        }
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         self.ast.identifier_reference(span, name)
@@ -151,6 +155,27 @@ impl<'a> ParserImpl<'a> {
         let name = Atom::from(self.cur_string());
         self.bump_any();
         self.ast.private_identifier(span, name)
+    }
+
+    /// [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
+    fn parse_private_in_expression(
+        &mut self,
+        lhs_span: u32,
+        lhs_precedence: Precedence,
+    ) -> Expression<'a> {
+        let left = self.parse_private_identifier();
+        // Check if `in` operator precedence is allowed at current level.
+        // For `1 + #a in b`, when parsing RHS of `+`, lhs_precedence is `Add` which is
+        // higher than `Compare` (the precedence of `in`), so `#a in` cannot be parsed here.
+        if lhs_precedence >= Precedence::Compare {
+            return self.fatal_error(diagnostics::unexpected_private_identifier(left.span));
+        }
+        self.expect(Kind::In);
+        let right = self.parse_binary_expression_or_higher(Precedence::Compare);
+        if let Expression::PrivateInExpression(private_in_expr) = right {
+            return self.fatal_error(diagnostics::private_in_private(private_in_expr.span));
+        }
+        self.ast.expression_private_in(self.end_span(lhs_span), left, right)
     }
 
     /// Section [Primary Expression](https://tc39.es/ecma262/#sec-primary-expression)
@@ -618,6 +643,7 @@ impl<'a> ParserImpl<'a> {
             TemplateElementValue { raw, cooked },
             tail,
             lone_surrogates,
+            false, // escape_raw: parser provides already-escaped values from source
         )
     }
 
@@ -1139,14 +1165,7 @@ impl<'a> ParserImpl<'a> {
         let lhs_parenthesized = self.at(Kind::LParen);
         // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
         let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
-            let left = self.parse_private_identifier();
-            self.expect(Kind::In);
-            let right = self.parse_binary_expression_or_higher(Precedence::Compare);
-            if let Expression::PrivateInExpression(private_in_expr) = right {
-                let error = diagnostics::private_in_private(private_in_expr.span);
-                return self.fatal_error(error);
-            }
-            self.ast.expression_private_in(self.end_span(lhs_span), left, right)
+            self.parse_private_in_expression(lhs_span, lhs_precedence)
         } else {
             let has_pure_comment = self.lexer.trivia_builder.previous_token_has_pure_comment();
             let mut expr = self.parse_unary_expression_or_higher(lhs_span);
@@ -1460,7 +1479,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_await_expression(&mut self, lhs_span: u32) -> Expression<'a> {
         let span = self.start_span();
         if !self.ctx.has_await() {
-            self.error(diagnostics::await_expression(self.cur_token().span()));
+            // For `ModuleKind::Unambiguous`, defer the error until we know whether
+            // this is a Module (where top-level await is valid) or Script.
+            self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
         }
         self.bump_any();
         let argument =
@@ -1556,6 +1577,15 @@ impl<'a> ParserImpl<'a> {
 
         let token = self.cur_token();
         let kind = token.kind();
+
+        // For `await /regex/`, treat `/` as regex start (not division).
+        // In `await` context, `/` should always start a regex since `await` expects an expression.
+        // EXCEPTION: In unambiguous mode, don't do this. TypeScript initially parses `await` as
+        // identifier when `/` follows (treating `/` as division), then reparses if ESM is detected.
+        if is_await && kind == Kind::Slash && !self.source_type.is_unambiguous() {
+            return !token.is_on_new_line();
+        }
+
         !token.is_on_new_line() && kind.is_after_await_or_yield()
     }
 }

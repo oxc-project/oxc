@@ -27,7 +27,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/exports/default/type-alias
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "A",
-            "node_id": 5
+            "node_id": 5,
+            "scope_id": 0
           }
         ]
       }

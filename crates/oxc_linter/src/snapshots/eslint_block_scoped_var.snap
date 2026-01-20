@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var a = 3;
    ·                     ┬
@@ -17,14 +17,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var a = 3;
    ·                     ┬
    ·                     ╰── It is declared in a different scope here
  4 │             } else {
    ╰────
-   ╭─[block_scoped_var.tsx:8:25]
+   ╭─[block_scoped_var.mjs:8:25]
  7 │             }
  8 │             console.log(a, b);
    ·                         ┬
@@ -34,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'b' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:5:21]
+   ╭─[block_scoped_var.mjs:5:21]
  4 │             } else {
  5 │                 var b = 4;
    ·                     ┬
@@ -49,7 +49,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'b' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var a = 3;
    ·                     ┬
@@ -64,7 +64,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:6:21]
+   ╭─[block_scoped_var.mjs:6:21]
  5 │                 var b = 4;
  6 │                 var a = 4;
    ·                     ┬
@@ -78,7 +78,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var [a, b] = [1, 2];
    ·                     ───┬──
@@ -92,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'b' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var [a, b] = [1, 2];
    ·                     ───┬──
@@ -106,7 +106,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'b' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var a = 4, b = 3;
    ·                     ┬
@@ -120,7 +120,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'b' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:28]
+   ╭─[block_scoped_var.mjs:3:28]
  2 │             if (true) {
  3 │                 var a = 4, b = 3;
    ·                            ┬
@@ -134,7 +134,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'b' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:4:25]
+   ╭─[block_scoped_var.mjs:4:25]
  3 │                 {
  4 │                     var a = 4, b = 3;
    ·                         ┬
@@ -148,7 +148,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:15]
+   ╭─[block_scoped_var.mjs:1:15]
  1 │ function f(){ x; { var x; } }
    ·               ┬        ┬
    ·               │        ╰── It is declared in a different scope here
@@ -157,7 +157,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'x' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:21]
+   ╭─[block_scoped_var.mjs:1:21]
  1 │ function f(){ { var x; } x; }
    ·                     ┬    ┬
    ·                     │    ╰── 'x' is used here
@@ -166,7 +166,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'x' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'b' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:29]
+   ╭─[block_scoped_var.mjs:1:29]
  1 │ function f() { var a; { var b = 0; } a = b; }
    ·                             ┬            ┬
    ·                             │            ╰── 'b' is used here
@@ -175,7 +175,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'b' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:26]
+   ╭─[block_scoped_var.mjs:1:26]
  1 │ function f() { try { var a = 0; } catch (e) { var b = a; } }
    ·                          ┬                            ┬
    ·                          │                            ╰── 'a' is used here
@@ -184,7 +184,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'c' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:39]
+   ╭─[block_scoped_var.mjs:1:39]
  1 │ function a() { for(var b in {}) { var c = b; } c; }
    ·                                       ┬        ┬
    ·                                       │        ╰── 'c' is used here
@@ -193,7 +193,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'c' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'c' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:39]
+   ╭─[block_scoped_var.mjs:1:39]
  1 │ function a() { for(var b of {}) { var c = b; } c; }
    ·                                       ┬        ┬
    ·                                       │        ╰── 'c' is used here
@@ -202,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'c' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'b' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:39]
+   ╭─[block_scoped_var.mjs:1:39]
  1 │ function f(){ switch(2) { case 1: var b = 2; b; break; default: b; break;} b; }
    ·                                       ┬                                    ┬
    ·                                       │                                    ╰── 'b' is used here
@@ -211,7 +211,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'b' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:10]
+   ╭─[block_scoped_var.mjs:1:10]
  1 │ for (var a = 0;;) {} a;
    ·          ┬           ┬
    ·          │           ╰── 'a' is used here
@@ -220,7 +220,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:10]
+   ╭─[block_scoped_var.mjs:1:10]
  1 │ for (var a in []) {} a;
    ·          ┬           ┬
    ·          │           ╰── 'a' is used here
@@ -229,7 +229,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:10]
+   ╭─[block_scoped_var.mjs:1:10]
  1 │ for (var a of []) {} a;
    ·          ┬           ┬
    ·          │           ╰── 'a' is used here
@@ -238,7 +238,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:7]
+   ╭─[block_scoped_var.mjs:1:7]
  1 │ { var a = 0; } a;
    ·       ┬        ┬
    ·       │        ╰── 'a' is used here
@@ -247,7 +247,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:17]
+   ╭─[block_scoped_var.mjs:1:17]
  1 │ if (true) { var a; } a;
    ·                 ┬    ┬
    ·                 │    ╰── 'a' is used here
@@ -256,7 +256,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:17]
+   ╭─[block_scoped_var.mjs:1:17]
  1 │ if (true) { var a = 1; } else { var a = 2; }
    ·                 ┬                   ┬
    ·                 │                   ╰── it is redeclared here
@@ -265,7 +265,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:17]
+   ╭─[block_scoped_var.mjs:1:17]
  1 │ if (true) { var a = 1; } else { var a = 2; }
    ·                 ┬                   ┬
    ·                 │                   ╰── 'a' is first declared here
@@ -274,7 +274,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'i' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:10]
+   ╭─[block_scoped_var.mjs:1:10]
  1 │ for (var i = 0;;) {} for(var i = 0;;) {}
    ·          ┬                   ┬
    ·          │                   ╰── it is redeclared here
@@ -283,7 +283,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'i' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'i' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:10]
+   ╭─[block_scoped_var.mjs:1:10]
  1 │ for (var i = 0;;) {} for(var i = 0;;) {}
    ·          ┬                   ┬
    ·          │                   ╰── 'i' is first declared here
@@ -292,7 +292,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'i' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'foo' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:35]
+   ╭─[block_scoped_var.mjs:1:35]
  1 │ class C { static { if (bar) { var foo; } foo; } }
    ·                                   ─┬─    ─┬─
    ·                                    │      ╰── 'foo' is used here
@@ -301,7 +301,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'foo' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'bar' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:13]
+   ╭─[block_scoped_var.mjs:1:13]
  1 │ { var foo,  bar; } bar;
    ·             ─┬─    ─┬─
    ·              │      ╰── 'bar' is used here
@@ -310,7 +310,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'bar' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:16]
+   ╭─[block_scoped_var.mjs:1:16]
  1 │ if (foo) { var a = 1; } else if (bar) { var a = 2; } else { var a = 3; }
    ·                ┬                            ┬
    ·                │                            ╰── it is redeclared here
@@ -319,7 +319,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:16]
+   ╭─[block_scoped_var.mjs:1:16]
  1 │ if (foo) { var a = 1; } else if (bar) { var a = 2; } else { var a = 3; }
    ·                ┬                                                ┬
    ·                │                                                ╰── it is redeclared here
@@ -328,7 +328,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:16]
+   ╭─[block_scoped_var.mjs:1:16]
  1 │ if (foo) { var a = 1; } else if (bar) { var a = 2; } else { var a = 3; }
    ·                ┬                            ┬
    ·                │                            ╰── 'a' is first declared here
@@ -337,7 +337,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:45]
+   ╭─[block_scoped_var.mjs:1:45]
  1 │ if (foo) { var a = 1; } else if (bar) { var a = 2; } else { var a = 3; }
    ·                                             ┬                   ┬
    ·                                             │                   ╰── it is redeclared here
@@ -346,7 +346,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:16]
+   ╭─[block_scoped_var.mjs:1:16]
  1 │ if (foo) { var a = 1; } else if (bar) { var a = 2; } else { var a = 3; }
    ·                ┬                                                ┬
    ·                │                                                ╰── 'a' is first declared here
@@ -355,7 +355,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'a' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:1:45]
+   ╭─[block_scoped_var.mjs:1:45]
  1 │ if (foo) { var a = 1; } else if (bar) { var a = 2; } else { var a = 3; }
    ·                                             ┬                   ┬
    ·                                             │                   ╰── 'a' is first declared here
@@ -364,14 +364,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'a' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'build' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var build = true;
    ·                     ──┬──
    ·                       ╰── It is declared in a different scope here
  4 │                 console.log(build);
    ╰────
-    ╭─[block_scoped_var.tsx:12:25]
+    ╭─[block_scoped_var.mjs:12:25]
  11 │             }
  12 │             console.log(build);
     ·                         ──┬──
@@ -381,14 +381,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'build' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'build' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:3:21]
+   ╭─[block_scoped_var.mjs:3:21]
  2 │             if (true) {
  3 │                 var build = true;
    ·                     ──┬──
    ·                       ╰── It is declared in a different scope here
  4 │                 console.log(build);
    ╰────
-    ╭─[block_scoped_var.tsx:13:21]
+    ╭─[block_scoped_var.mjs:13:21]
  12 │             console.log(build);
  13 │             let t = build;
     ·                     ──┬──
@@ -398,7 +398,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'build' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'build' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:4:25]
+   ╭─[block_scoped_var.mjs:4:25]
  3 │                 if (true) {
  4 │                     var build = true;
    ·                         ──┬──
@@ -413,7 +413,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'build' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'build' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:4:25]
+   ╭─[block_scoped_var.mjs:4:25]
  3 │                 if (true) {
  4 │                     var build = true;
    ·                         ──┬──
@@ -427,7 +427,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'build' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'build' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:4:25]
+   ╭─[block_scoped_var.mjs:4:25]
  3 │                 if (true) {
  4 │                     var build = true;
    ·                         ──┬──
@@ -441,7 +441,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'build' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'build' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:4:25]
+   ╭─[block_scoped_var.mjs:4:25]
  3 │                 try {
  4 │                     var build = 1;
    ·                         ──┬──
@@ -455,7 +455,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'build' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'y' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:4:25]
+   ╭─[block_scoped_var.mjs:4:25]
  3 │                 for (var x = 1; x < 10; x++) {
  4 │                     var y = f(x);
    ·                         ┬
@@ -469,7 +469,7 @@ source: crates/oxc_linter/src/tester.rs
   help: Variable 'y' is used outside its declaration block. Declare it outside the block or use 'let'/'const'.
 
   ⚠ eslint(block-scoped-var): 'build' is used outside of binding context.
-   ╭─[block_scoped_var.tsx:5:29]
+   ╭─[block_scoped_var.mjs:5:29]
  4 │                     if (something) {
  5 │                         var build = true;
    ·                             ──┬──

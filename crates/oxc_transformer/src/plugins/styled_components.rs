@@ -1155,6 +1155,7 @@ mod tests {
                 SPAN,
                 TemplateElementValue { raw: ast.atom(input), cooked: Some(ast.atom(input)) },
                 true,
+                false,
             )),
             ast.vec(),
         );

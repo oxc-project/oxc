@@ -1570,8 +1570,8 @@ export interface TSConstructorType extends Span {
 
 export interface TSMappedType extends Span {
   type: "TSMappedType";
-  key: TSTypeParameter["name"];
-  constraint: TSTypeParameter["constraint"];
+  key: BindingIdentifier;
+  constraint: TSType;
   nameType: TSType | null;
   typeAnnotation: TSType | null;
   optional: TSMappedTypeModifierOperator | false;
@@ -1725,7 +1725,7 @@ export type UnaryOperator = "+" | "-" | "!" | "~" | "typeof" | "void" | "delete"
 
 export type UpdateOperator = "++" | "--";
 
-export type ModuleKind = "script" | "module";
+export type ModuleKind = "script" | "module" | "commonjs";
 
 export type Node =
   | Program

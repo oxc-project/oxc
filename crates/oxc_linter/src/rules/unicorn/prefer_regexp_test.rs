@@ -1,3 +1,4 @@
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
     ast::{Expression, MemberExpression},
@@ -90,7 +91,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the for statement is the same node as the call expression.
-                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
+                if call_expr2.address() != call_expr.unstable_address() {
                     return;
                 }
             }
@@ -100,7 +101,7 @@ impl Rule for PreferRegexpTest {
                 };
 
                 // Check if the `test` of the conditional expression is the same node as the call expression.
-                if !std::ptr::eq(call_expr2.as_ref(), call_expr) {
+                if call_expr2.address() != call_expr.unstable_address() {
                     return;
                 }
             }

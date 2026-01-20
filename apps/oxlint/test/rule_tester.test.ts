@@ -941,19 +941,61 @@ describe("RuleTester", () => {
 
   describe("parsing options", () => {
     describe("sourceType", () => {
-      it("default (module)", () => {
-        const tester = new RuleTester();
-        tester.run("no-foo", simpleRule, {
-          valid: ["with (obj) {}", "import x from 'foo';"],
-          invalid: [],
+      describe("default", () => {
+        const reportSourceTypeRule: Rule = {
+          create(context) {
+            return {
+              Program(node) {
+                context.report({
+                  message: `sourceType: ${context.languageOptions.sourceType}`,
+                  node,
+                });
+              },
+            };
+          },
+        };
+
+        it("unambiguous without ESLint compatibility mode", () => {
+          const tester = new RuleTester();
+          tester.run("source-type", reportSourceTypeRule, {
+            valid: [],
+            invalid: [
+              // No ESM syntax, parsed as script, so `with` is allowed
+              {
+                code: "with (obj) {}",
+                errors: ["sourceType: script"],
+              },
+              // Has ESM syntax, parsed as module
+              {
+                code: "import x from 'foo';",
+                errors: ["sourceType: module"],
+              },
+            ],
+          });
+          expect(runCases()).toEqual([null, null]);
         });
 
-        expect(runCases()).toMatchInlineSnapshot(`
-          [
-            [Error: Parsing failed],
-            null,
-          ]
-        `);
+        it("module with ESLint compatibility mode", () => {
+          const tester = new RuleTester({ eslintCompat: true });
+          tester.run("source-type", reportSourceTypeRule, {
+            // Parsed as module, `with` is not allowed, so parse error
+            valid: ["with (obj) {}"],
+            // Has ESM syntax, successfully parsed as module
+            invalid: [
+              {
+                code: "import x from 'foo';",
+                errors: ["sourceType: module"],
+              },
+            ],
+          });
+
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              [Error: Parsing failed],
+              null,
+            ]
+          `);
+        });
       });
 
       describe("module", () => {
@@ -1156,138 +1198,71 @@ describe("RuleTester", () => {
       });
 
       describe("commonjs", () => {
-        describe("with `eslintCompat` option", () => {
-          it("set globally", () => {
-            RuleTester.setDefaultConfig({
-              languageOptions: { sourceType: "commonjs" },
-              eslintCompat: true,
-            });
-
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                null,
-                [Error: Parsing failed],
-              ]
-            `);
+        it("set globally", () => {
+          RuleTester.setDefaultConfig({
+            languageOptions: { sourceType: "commonjs" },
           });
 
-          it("set in `RuleTester` options", () => {
-            const tester = new RuleTester({
-              languageOptions: { sourceType: "commonjs" },
-              eslintCompat: true,
-            });
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                null,
-                [Error: Parsing failed],
-              ]
-            `);
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "return 123;", "import x from 'foo';"],
+            invalid: [],
           });
 
-          it("set in individual test cases", () => {
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: [
-                {
-                  code: "with (obj) {}",
-                  languageOptions: { sourceType: "commonjs" },
-                  eslintCompat: true,
-                },
-                {
-                  code: "import x from 'foo';",
-                  languageOptions: { sourceType: "commonjs" },
-                  eslintCompat: true,
-                },
-              ],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                null,
-                [Error: Parsing failed],
-              ]
-            `);
-          });
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
         });
 
-        describe("without `eslintCompat` option", () => {
-          it("set globally", () => {
-            RuleTester.setDefaultConfig({
-              languageOptions: { sourceType: "commonjs" },
-            });
-
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-              ]
-            `);
+        it("set in `RuleTester` options", () => {
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "commonjs" },
+          });
+          tester.run("no-foo", simpleRule, {
+            valid: ["with (obj) {}", "return 123;", "import x from 'foo';"],
+            invalid: [],
           });
 
-          it("set in `RuleTester` options", () => {
-            const tester = new RuleTester({
-              languageOptions: { sourceType: "commonjs" },
-            });
-            tester.run("no-foo", simpleRule, {
-              valid: ["with (obj) {}", "import x from 'foo';"],
-              invalid: [],
-            });
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
+        });
 
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-              ]
-            `);
+        it("set in individual test cases", () => {
+          const tester = new RuleTester();
+          tester.run("no-foo", simpleRule, {
+            valid: [
+              {
+                code: "with (obj) {}",
+                languageOptions: { sourceType: "commonjs" },
+              },
+              {
+                code: "return 123;",
+                languageOptions: { sourceType: "commonjs" },
+              },
+              {
+                code: "import x from 'foo';",
+                languageOptions: { sourceType: "commonjs" },
+              },
+            ],
+            invalid: [],
           });
 
-          it("set in individual test cases", () => {
-            const tester = new RuleTester();
-            tester.run("no-foo", simpleRule, {
-              valid: [
-                {
-                  code: "with (obj) {}",
-                  languageOptions: { sourceType: "commonjs" },
-                },
-                {
-                  code: "import x from 'foo';",
-                  languageOptions: { sourceType: "commonjs" },
-                },
-              ],
-              invalid: [],
-            });
-
-            expect(runCases()).toMatchInlineSnapshot(`
-              [
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-                [Error: 'commonjs' source type is only supported in ESLint compatibility mode.
-              Enable ESLint compatibility mode by setting \`eslintCompat\` to \`true\` in the config / test case.],
-              ]
-            `);
-          });
+          expect(runCases()).toMatchInlineSnapshot(`
+            [
+              null,
+              null,
+              [Error: Parsing failed],
+            ]
+          `);
         });
       });
 
@@ -1416,7 +1391,9 @@ describe("RuleTester", () => {
         const tester = new RuleTester();
         tester.run("no-foo", simpleRule, {
           valid: [
+            // Default = unambiguous
             "with (obj) {}",
+            "import x from 'foo';",
             {
               code: "with (obj) {}",
               languageOptions: { sourceType: "script" },
@@ -1447,7 +1424,8 @@ describe("RuleTester", () => {
 
         expect(runCases()).toMatchInlineSnapshot(`
           [
-            [Error: Parsing failed],
+            null,
+            null,
             null,
             null,
             [Error: Parsing failed],
@@ -2558,7 +2536,9 @@ describe("RuleTester", () => {
 
     describe("ignoreNonFatalErrors", () => {
       it("default (off)", () => {
-        const tester = new RuleTester();
+        const tester = new RuleTester({
+          languageOptions: { sourceType: "module" },
+        });
         tester.run("no-foo", simpleRule, {
           valid: ["function f(x, x) {}"],
           invalid: [],
@@ -2574,10 +2554,14 @@ describe("RuleTester", () => {
       describe("disabled", () => {
         it("set globally", () => {
           RuleTester.setDefaultConfig({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            languageOptions: {
+              parserOptions: { ignoreNonFatalErrors: false },
+            },
           });
 
-          const tester = new RuleTester();
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
             invalid: [],
@@ -2592,7 +2576,10 @@ describe("RuleTester", () => {
 
         it("set in `RuleTester` options", () => {
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: false },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
@@ -2608,11 +2595,16 @@ describe("RuleTester", () => {
 
         it("set in `RuleTester` options, overriding global setting", () => {
           RuleTester.setDefaultConfig({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
 
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: false },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
@@ -2627,12 +2619,16 @@ describe("RuleTester", () => {
         });
 
         it("set in individual test cases", () => {
-          const tester = new RuleTester();
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
           tester.run("no-foo", simpleRule, {
             valid: [
               {
                 code: "function f(x, x) {}",
-                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+                languageOptions: {
+                  parserOptions: { ignoreNonFatalErrors: false },
+                },
               },
             ],
             invalid: [],
@@ -2647,15 +2643,21 @@ describe("RuleTester", () => {
 
         it("set in individual test cases, overriding global setting", () => {
           RuleTester.setDefaultConfig({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
 
-          const tester = new RuleTester();
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
           tester.run("no-foo", simpleRule, {
             valid: [
               {
                 code: "function f(x, x) {}",
-                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+                languageOptions: {
+                  parserOptions: { ignoreNonFatalErrors: false },
+                },
               },
             ],
             invalid: [],
@@ -2670,13 +2672,18 @@ describe("RuleTester", () => {
 
         it("set in individual test cases, overriding `RuleTester` options", () => {
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: [
               {
                 code: "function f(x, x) {}",
-                languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+                languageOptions: {
+                  parserOptions: { ignoreNonFatalErrors: false },
+                },
               },
             ],
             invalid: [],
@@ -2696,7 +2703,9 @@ describe("RuleTester", () => {
             languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
           });
 
-          const tester = new RuleTester();
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
             invalid: [],
@@ -2707,7 +2716,10 @@ describe("RuleTester", () => {
 
         it("set in `RuleTester` options", () => {
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
@@ -2723,7 +2735,10 @@ describe("RuleTester", () => {
           });
 
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: true } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: true },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: ["function f(x, x) {}"],
@@ -2734,7 +2749,9 @@ describe("RuleTester", () => {
         });
 
         it("set in individual test cases", () => {
-          const tester = new RuleTester();
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
           tester.run("no-foo", simpleRule, {
             valid: [
               {
@@ -2753,7 +2770,9 @@ describe("RuleTester", () => {
             languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
           });
 
-          const tester = new RuleTester();
+          const tester = new RuleTester({
+            languageOptions: { sourceType: "module" },
+          });
           tester.run("no-foo", simpleRule, {
             valid: [
               {
@@ -2769,7 +2788,10 @@ describe("RuleTester", () => {
 
         it("set in individual test cases, overriding `RuleTester` options", () => {
           const tester = new RuleTester({
-            languageOptions: { parserOptions: { ignoreNonFatalErrors: false } },
+            languageOptions: {
+              sourceType: "module",
+              parserOptions: { ignoreNonFatalErrors: false },
+            },
           });
           tester.run("no-foo", simpleRule, {
             valid: [
@@ -2786,7 +2808,9 @@ describe("RuleTester", () => {
       });
 
       it("mixed across test cases", () => {
-        const tester = new RuleTester();
+        const tester = new RuleTester({
+          languageOptions: { sourceType: "module" },
+        });
         tester.run("no-foo", simpleRule, {
           valid: [
             "function f(x, x) {}",

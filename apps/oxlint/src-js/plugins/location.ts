@@ -107,7 +107,7 @@ export function initLines(): void {
  * Debug assert that `lines` and `lineStartIndices` are initialized.
  * No-op in release build - TSDown will remove this function and all calls to it.
  */
-function debugAssertLinesIsInitialized(): void {
+export function debugAssertLinesIsInitialized(): void {
   debugAssert(lines.length > 0, "`lines` should be initialized");
   debugAssert(
     lines.length === lineStartIndices.length,

@@ -6,7 +6,7 @@ arguments: -c fixtures/no_empty_disallow_empty_catch/eslintrc.json -W no-empty f
 working directory: 
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-empty.html\eslint(no-empty)]8;;\: Unexpected empty block statements
+  ! eslint(no-empty): Unexpected empty block statements
    ,-[fixtures/no_empty_disallow_empty_catch/test.js:1:29]
  1 | try { console.log() } catch {}
    :                             ^^

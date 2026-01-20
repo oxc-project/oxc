@@ -421,7 +421,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AwaitExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ChainExpression<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        self.expression().fmt(f);
+        // When ChainExpression contains TSNonNullExpression, we print `(a?.b)!` instead of `(a?.b!)`
+        // This normalizes `(a?.b!).c` to `(a?.b)!.c` to match Prettier's output.
+        // See: https://github.com/prettier/prettier/blob/main/src/language-js/clean.js
+        if let AstNodes::TSNonNullExpression(non_null) = self.expression().as_ast_nodes() {
+            let needs_parens =
+                crate::parentheses::chain_expression_needs_parens(self.span, self.parent);
+            if needs_parens {
+                write!(f, "(");
+            }
+            non_null.expression().fmt(f);
+            if needs_parens {
+                write!(f, ")");
+            }
+            write!(f, "!");
+        } else {
+            self.expression().fmt(f);
+        }
     }
 }
 

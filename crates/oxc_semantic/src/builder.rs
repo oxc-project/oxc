@@ -531,11 +531,23 @@ impl<'a> SemanticBuilder<'a> {
 
                     let flags = reference.flags_mut();
 
-                    // Determine the symbol whether can be referenced by this reference.
-                    let resolved = (flags.is_value() && symbol_flags.can_be_referenced_by_value())
-                        || (flags.is_type() && symbol_flags.can_be_referenced_by_type())
-                        || (flags.is_value_as_type()
-                            && symbol_flags.can_be_referenced_by_value_as_type());
+                    // Determine whether the symbol can be referenced by this reference.
+                    // For pure type references (not value or typeof) in qualified names,
+                    // only resolve to namespaces (modules, namespaces, enums, imports).
+                    // Type parameters and type aliases cannot have member access in type space.
+                    // Value references (including typeof) can always have member access.
+                    let resolved = if flags.is_namespace()
+                        && !flags.is_value()
+                        && !flags.is_value_as_type()
+                        && !symbol_flags.can_be_referenced_as_namespace()
+                    {
+                        false
+                    } else {
+                        (flags.is_value() && symbol_flags.can_be_referenced_by_value())
+                            || (flags.is_type() && symbol_flags.can_be_referenced_by_type())
+                            || (flags.is_value_as_type()
+                                && symbol_flags.can_be_referenced_by_value_as_type())
+                    };
 
                     if !resolved {
                         return true;
@@ -2320,9 +2332,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         decl.bind(self);
         self.visit_span(&decl.span);
         self.visit_binding_identifier(&decl.id);
-        self.enter_scope(ScopeFlags::empty(), &decl.scope_id);
         self.visit_ts_enum_body(&decl.body);
-        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -2350,6 +2360,24 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(default) = &param.default {
             self.visit_ts_type(default);
         }
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
+        let kind = AstKind::TSMappedType(self.alloc(it));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        it.bind(self);
+        self.visit_span(&it.span);
+        self.visit_binding_identifier(&it.key);
+        self.visit_ts_type(&it.constraint);
+        if let Some(name_type) = &it.name_type {
+            self.visit_ts_type(name_type);
+        }
+        if let Some(type_annotation) = &it.type_annotation {
+            self.visit_ts_type(type_annotation);
+        }
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -2429,6 +2457,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_ts_qualified_name(&mut self, name: &TSQualifiedName<'a>) {
+        let kind = AstKind::TSQualifiedName(self.alloc(name));
+        self.enter_node(kind);
+        self.visit_span(&name.span);
+        // The left side of a qualified name (e.g., `Database` in `Database.Table`)
+        // must resolve to a namespace/module, not a type parameter.
+        // Add Namespace flag to skip type parameters during resolution.
+        // If no flags set yet (value context like `import foo = A.B.C`),
+        // also add Read as the default.
+        if self.current_reference_flags.is_empty() {
+            self.current_reference_flags = ReferenceFlags::Read | ReferenceFlags::Namespace;
+        } else {
+            self.current_reference_flags |= ReferenceFlags::Namespace;
+        }
+        self.visit_ts_type_name(&name.left);
+        self.visit_identifier_name(&name.right);
+        self.leave_node(kind);
+    }
+
     fn visit_expression_statement(&mut self, it: &ExpressionStatement<'a>) {
         let kind = AstKind::ExpressionStatement(self.alloc(it));
         self.enter_node(kind);
@@ -2476,7 +2523,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
-        let reference = Reference::new(self.current_node_id, flags);
+        let reference = Reference::new(self.current_node_id, self.current_scope_id, flags);
         let reference_id = self.declare_reference(ident.name, reference);
         ident.reference_id.set(Some(reference_id));
     }

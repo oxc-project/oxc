@@ -10,7 +10,12 @@ fn test_script_same(source_text: &str) {
 
 #[track_caller]
 fn test_script(source_text: &str, expected: &str) {
-    test_options_source_type(source_text, expected, SourceType::cjs(), &default_options());
+    test_options_source_type(
+        source_text,
+        expected,
+        SourceType::cjs().with_script(true),
+        &default_options(),
+    );
 }
 
 #[track_caller]

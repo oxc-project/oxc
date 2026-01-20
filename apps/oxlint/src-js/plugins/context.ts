@@ -141,7 +141,6 @@ const PARSER_OPTIONS = Object.freeze({
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
@@ -157,7 +156,6 @@ const LANGUAGE_OPTIONS = {
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
@@ -303,9 +301,8 @@ const FILE_CONTEXT = Object.freeze({
    * Current working directory.
    */
   get cwd(): string {
-    // Note: We can allow accessing `cwd` in `createOnce`, as it's global.
-    // Note: If we change this implementation, also change `getCwd` method below,
-    // and `cwd` getter + `getCwd` method in `index.ts` (`createOnce` shim for ESLint).
+    // Note: If we change this implementation, also change `getCwd` method below
+    if (filePath === null) throw new Error("Cannot access `context.cwd` in `createOnce`");
     if (cwd === null) cwd = process.cwd();
     return cwd;
   },
@@ -316,6 +313,7 @@ const FILE_CONTEXT = Object.freeze({
    * @deprecated Use `context.cwd` property instead.
    */
   getCwd(): string {
+    if (filePath === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
     if (cwd === null) cwd = process.cwd();
     return cwd;
   },

@@ -20,9 +20,10 @@ use crate::{IsGlobalReference, builder::SemanticBuilder, class::Element, diagnos
 /// It is a Syntax Error if any element of the ExportedBindings of ModuleItemList
 /// does not also occur in either the VarDeclaredNames of ModuleItemList, or the LexicallyDeclaredNames of ModuleItemList.
 pub fn check_unresolved_exports(program: &Program<'_>, ctx: &SemanticBuilder<'_>) {
-    if ctx.source_type.is_typescript() || ctx.source_type.is_script() {
+    if ctx.source_type.is_typescript() || !ctx.source_type.is_module() {
         return;
     }
+
     for stmt in &program.body {
         if let Statement::ExportNamedDeclaration(decl) = stmt {
             for specifier in &decl.specifiers {
@@ -470,7 +471,8 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
             #[cfg(debug_assertions)]
             panic!("Technically unreachable, omit to avoid panic.");
         }
-        ModuleKind::Script => {
+        // CommonJS uses require/module.exports, not import/export statements
+        ModuleKind::Script | ModuleKind::CommonJS => {
             ctx.error(diagnostics::module_code(text, span));
         }
         ModuleKind::Module => {
@@ -482,15 +484,36 @@ pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuil
     }
 }
 
+/// Check that `using` declarations are not at the top level in script mode.
+/// `using` is allowed:
+/// - At the top level of ES modules
+/// - At the top level of CommonJS modules (wrapped in function scope)
+/// - Inside any block scope in scripts
+///
+/// But NOT at the top level of scripts.
+pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuilder<'_>) {
+    if decl.kind.is_using()
+        && ctx.source_type.is_script()
+        && ctx.current_scope_flags().contains(ScopeFlags::Top)
+    {
+        ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
+    }
+}
+
 pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
     match prop.meta.name.as_str() {
         "import" => {
-            if prop.property.name == "meta" && ctx.source_type.is_script() {
+            // import.meta is only allowed in ES modules, not in scripts or CommonJS
+            if prop.property.name == "meta" && !ctx.source_type.is_module() {
                 ctx.error(diagnostics::import_meta(prop.span));
             }
         }
         "new" => {
             if prop.property.name == "target" {
+                // In CommonJS, the file is wrapped in a function, so new.target is always valid
+                if ctx.source_type.is_commonjs() {
+                    return;
+                }
                 let mut in_function_scope = false;
                 for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
                     let flags = ctx.scoping.scope_flags(scope_id);
@@ -620,8 +643,8 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
         return;
     };
 
-    // Already checked in `check_redelcaration`, because it is also not allowed in TypeScript
-    // `let a; function a() {}` is invalid in both strict and non-strict mode
+    // Already checked in `check_redeclaration`, because it is also not allowed in TypeScript.
+    // `let a; function a() {}` is invalid in both strict and non-strict mode.
     if prev.flags.contains(SymbolFlags::BlockScopedVariable) {
         return;
     }
@@ -629,7 +652,7 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     let current_scope_flags = ctx.current_scope_flags();
     if prev.flags.intersects(SymbolFlags::FunctionScopedVariable | SymbolFlags::Function)
         && (current_scope_flags.is_function()
-            || (ctx.source_type.is_script() && current_scope_flags.is_top()))
+            || (!ctx.source_type.is_module() && current_scope_flags.is_top()))
     {
         // https://tc39.github.io/ecma262/#sec-scripts-static-semantics-lexicallydeclarednames
         // `function a() {}; function a() {}` and `var a; function a() {}` are

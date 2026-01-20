@@ -5734,7 +5734,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumDeclaration<'_> {
             body: CloneIn::clone_in(&self.body, allocator),
             r#const: CloneIn::clone_in(&self.r#const, allocator),
             declare: CloneIn::clone_in(&self.declare, allocator),
-            scope_id: Default::default(),
         }
     }
 
@@ -5745,7 +5744,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumDeclaration<'_> {
             body: CloneIn::clone_in_with_semantic_ids(&self.body, allocator),
             r#const: CloneIn::clone_in_with_semantic_ids(&self.r#const, allocator),
             declare: CloneIn::clone_in_with_semantic_ids(&self.declare, allocator),
-            scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
         }
     }
 }
@@ -5757,6 +5755,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumBody<'_> {
         TSEnumBody {
             span: CloneIn::clone_in(&self.span, allocator),
             members: CloneIn::clone_in(&self.members, allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -5764,6 +5763,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSEnumBody<'_> {
         TSEnumBody {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
             members: CloneIn::clone_in_with_semantic_ids(&self.members, allocator),
+            scope_id: CloneIn::clone_in_with_semantic_ids(&self.scope_id, allocator),
         }
     }
 }
@@ -7600,7 +7600,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSMappedType<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSMappedType {
             span: CloneIn::clone_in(&self.span, allocator),
-            type_parameter: CloneIn::clone_in(&self.type_parameter, allocator),
+            key: CloneIn::clone_in(&self.key, allocator),
+            constraint: CloneIn::clone_in(&self.constraint, allocator),
             name_type: CloneIn::clone_in(&self.name_type, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
             optional: CloneIn::clone_in(&self.optional, allocator),
@@ -7612,7 +7613,8 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSMappedType<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         TSMappedType {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
-            type_parameter: CloneIn::clone_in_with_semantic_ids(&self.type_parameter, allocator),
+            key: CloneIn::clone_in_with_semantic_ids(&self.key, allocator),
+            constraint: CloneIn::clone_in_with_semantic_ids(&self.constraint, allocator),
             name_type: CloneIn::clone_in_with_semantic_ids(&self.name_type, allocator),
             type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
             optional: CloneIn::clone_in_with_semantic_ids(&self.optional, allocator),

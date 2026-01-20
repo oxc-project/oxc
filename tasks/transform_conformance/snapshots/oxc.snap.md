@@ -1,6 +1,6 @@
 commit: fc58af40
 
-Passed: 201/333
+Passed: 202/334
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -40,7 +40,7 @@ after transform: SymbolId(4): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 
-# babel-plugin-transform-class-properties (24/31)
+# babel-plugin-transform-class-properties (25/32)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 

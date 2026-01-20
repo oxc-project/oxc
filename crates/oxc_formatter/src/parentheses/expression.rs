@@ -627,15 +627,41 @@ impl NeedsParentheses<'_> for AstNode<'_, ChainExpression<'_>> {
             return false;
         }
 
-        match self.parent {
-            AstNodes::NewExpression(new) => new.is_callee_span(self.span),
-            AstNodes::CallExpression(call) => call.is_callee_span(self.span) && !call.optional,
-            AstNodes::StaticMemberExpression(member) => !member.optional,
-            AstNodes::ComputedMemberExpression(member) => {
-                !member.optional && member.object.span() == self.span
-            }
-            _ => false,
+        // When ChainExpression contains TSNonNullExpression as its child,
+        // we handle parentheses manually in write() to print `(a?.b)!` instead of `(a?.b!)`
+        if matches!(self.expression, ChainElement::TSNonNullExpression(_)) {
+            return false;
         }
+
+        // Check if chain expression needs parens based on how it's being accessed
+        chain_expression_needs_parens(self.span, self.parent)
+    }
+}
+
+/// Check if a ChainExpression needs parentheses based on its parent context.
+///
+/// Parentheses are needed when the chain is:
+/// - The callee of a non-optional call expression
+/// - The callee of a new expression
+/// - The object of a non-optional member expression
+/// - The tag of a tagged template expression
+///
+/// For `(a?.b)!.c`, the parent is TSNonNullExpression, so we check the grandparent.
+pub fn chain_expression_needs_parens(span: Span, parent: &AstNodes<'_>) -> bool {
+    match parent {
+        AstNodes::NewExpression(new) => new.is_callee_span(span),
+        AstNodes::CallExpression(call) => call.is_callee_span(span) && !call.optional,
+        AstNodes::StaticMemberExpression(member) => !member.optional,
+        AstNodes::ComputedMemberExpression(member) => {
+            !member.optional && member.object.span() == span
+        }
+        AstNodes::TaggedTemplateExpression(_) => true,
+        // Handle `(a?.b)!.c` - when ChainExpression is wrapped in TSNonNullExpression.
+        // Use the TSNonNullExpression's span when checking the grandparent.
+        AstNodes::TSNonNullExpression(non_null) => {
+            chain_expression_needs_parens(non_null.span, parent.parent())
+        }
+        _ => false,
     }
 }
 

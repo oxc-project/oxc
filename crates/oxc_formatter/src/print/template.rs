@@ -7,8 +7,8 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ExternalCallbacks, IndentWidth,
-    ast_nodes::{AstNode, AstNodeIterator},
+    IndentWidth,
+    ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
         Format, FormatElement, Formatter, TailwindContextEntry, VecBuffer,
@@ -29,6 +29,9 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        if try_format_css_template(self, f) {
+            return;
+        }
         let template = TemplateLike::TemplateLiteral(self);
         write!(f, template);
     }
@@ -758,30 +761,22 @@ impl<'a> Format<'a> for EachTemplateTable<'a> {
     }
 }
 
-/// Try to format a tagged template with the embedded formatter if supported.
-/// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
-fn try_format_embedded_template<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
+    let expr = expr.get_inner_expression();
+    match expr {
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
+        Expression::StaticMemberExpression(member) => get_tag_name(&member.object),
+        Expression::ComputedMemberExpression(exp) => get_tag_name(&exp.object),
+        Expression::CallExpression(call) => get_tag_name(&call.callee),
+        _ => None,
+    }
+}
+
+fn format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
+    tag_name: &str,
+    template_content: &str,
 ) -> bool {
-    let quasi = &tagged.quasi;
-    if !quasi.is_no_substitution_template() {
-        return false;
-    }
-
-    let Expression::Identifier(ident) = &tagged.tag else {
-        return false;
-    };
-
-    let tag_name = ident.name.as_str();
-    // Check if the tag is supported by the embedded formatter
-    if !ExternalCallbacks::is_supported_tag(tag_name) {
-        return false;
-    }
-
-    // Get the external callbacks from the context
-    let template_content = quasi.quasis[0].value.raw.as_str();
-
     let Some(Ok(formatted)) =
         f.context().external_callbacks().format_embedded(tag_name, template_content)
     else {
@@ -804,4 +799,80 @@ fn try_format_embedded_template<'a>(
     write!(f, ["`", block_indent(&format_content), "`"]);
 
     true
+}
+
+/// Try to format a tagged template with the embedded formatter if supported.
+/// Returns `true` if formatting was performed, `false` if not applicable.
+fn try_format_embedded_template<'a>(
+    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    let quasi = &tagged.quasi;
+    // TODO: Support expressions in the template
+    if !quasi.is_no_substitution_template() {
+        return false;
+    }
+
+    let Some(tag_name) = get_tag_name(&tagged.tag) else {
+        return false;
+    };
+
+    let template_content = quasi.quasis[0].value.raw.as_str();
+
+    format_embedded_template(f, tag_name, template_content)
+}
+
+/// Check if the template literal is inside a `css` prop or `<style jsx>` element.
+///
+/// ```jsx
+/// <div css={`color: red;`} />
+/// <style jsx>{`div { color: red; }`}</style>
+/// ```
+fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
+    let AstNodes::JSXExpressionContainer(container) = node.parent else {
+        return false;
+    };
+
+    match container.parent {
+        AstNodes::JSXAttribute(attribute) => {
+            if let JSXAttributeName::Identifier(ident) = &attribute.name
+                && ident.name == "css"
+            {
+                return true;
+            }
+        }
+        AstNodes::JSXElement(element) => {
+            if let JSXElementName::Identifier(ident) = &element.opening_element.name
+                && ident.name == "style"
+                && element.opening_element.attributes.iter().any(|attr| {
+                    matches!(attr.as_attribute().and_then(|a| a.name.as_identifier()), Some(name) if name.name == "jsx")
+                })
+            {
+                return true;
+            }
+        }
+        _ => {}
+    }
+    false
+}
+
+/// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
+/// Returns `true` if formatting was attempted, `false` if not applicable.
+fn try_format_css_template<'a>(
+    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    // TODO: Support expressions in the template
+    if !template_literal.is_no_substitution_template() {
+        return false;
+    }
+
+    if !is_in_css_jsx(template_literal) {
+        return false;
+    }
+
+    let quasi = template_literal.quasis();
+    let template_content = quasi[0].value.raw.as_str();
+
+    format_embedded_template(f, "css", template_content)
 }

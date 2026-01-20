@@ -26,7 +26,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --workspace --all-features
+      - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-ubuntu-aarch64:
@@ -41,7 +41,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm-aarch64
       - run: cargo ck
-      - run: cargo test --workspace --all-features
+      - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-mac: # Separate job to save a job on PRs
@@ -56,7 +56,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       - run: cargo ck
-      - run: cargo test --workspace --all-features
+      - run: cargo test --all-features
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
@@ -101,7 +101,7 @@ jobs:
       - name: Run tests
         # No need for `cargo ck` because it's already checked in linux
         # Run `website` tests separately to avoid feature unification problems with `oxlint`
-        run: cargo test --workspace --all-features
+        run: cargo test --all-features
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         shell: bash
 
@@ -119,14 +119,14 @@ jobs:
           tools: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      - run: cross test --workspace --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
+      - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
 
   test-32bit:
     if: ${{ github.ref_name == 'main' }}
     name: Test 32-bit # armv7-unknown-linux-gnueabihf is a 32-bit target
     runs-on: ubuntu-latest
     steps:
-      - uses: taiki-e/checkout-action@b13d20b7cda4e2f325ef19895128f7ff735c0b3d # v1.3.1
+      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
       - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
         with:
           save-cache: ${{ github.ref_name == 'main' }}
@@ -266,7 +266,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
-      - uses: crate-ci/typos@bb4666ad77b539a6b4ce4eda7ebb6de553704021 # v1.42.0
+      - uses: crate-ci/typos@65120634e79d8374d1aa2f27e54baa0c364fff5a # v1.42.1
         with:
           files: .
 

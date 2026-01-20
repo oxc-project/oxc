@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=unix --report-unused-disable-directives disable-directive.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+disable-directive.js:9:3: Unused eslint-disable directive (no problems were reported). [Warning]
+disable-directive.js:12:3: Unused eslint-disable directive (no problems were reported). [Warning]
+disable-directive.js:15:3: Unused eslint-disable directive (no problems were reported). [Warning]
+
+3 problems
+----------
+CLI result: LintSucceeded
+----------

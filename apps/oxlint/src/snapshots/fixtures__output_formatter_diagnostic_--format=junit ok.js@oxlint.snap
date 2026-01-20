@@ -1,0 +1,14 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=junit ok.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Oxlint" tests="0" failures="0" errors="0">
+
+</testsuites>
+----------
+CLI result: LintSucceeded
+----------

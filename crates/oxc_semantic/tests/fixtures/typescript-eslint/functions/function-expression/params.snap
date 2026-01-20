@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function)",
+        "flags": "ScopeFlags(Function)",
         "id": 1,
         "node": "Function(<anonymous>)",
         "symbols": [
@@ -21,13 +21,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
                 "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "a",
-                "node_id": 25
+                "node_id": 25,
+                "scope_id": 1
               },
               {
                 "flags": "ReferenceFlags(Read)",
                 "id": 2,
                 "name": "a",
-                "node_id": 33
+                "node_id": 33,
+                "scope_id": 1
               }
             ]
           },
@@ -76,7 +78,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -90,7 +92,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "outer",
-            "node_id": 28
+            "node_id": 28,
+            "scope_id": 1
           }
         ]
       },

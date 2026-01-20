@@ -782,3 +782,41 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              │          ╰── Hook is called here
    ·                                              ╰── Outer function
    ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:3:38]
+ 2 │             function Component() {
+ 3 │                 return <Foo>{() => { useState(); }}</Foo>;
+   ·                                      ──────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useMemo" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:3:41]
+ 2 │             function Component() {
+ 3 │                 return <Foo>{props => { useMemo(() => {}, []); }}</Foo>;
+   ·                                         ─────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:3:45]
+ 2 │             function Component() {
+ 3 │                 return <Foo render={() => { useState(); }} />;
+   ·                                             ──────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useCallback" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:3:48]
+ 2 │             function Component() {
+ 3 │                 return <Foo render={props => { useCallback(() => {}, []); }} />;
+   ·                                                ─────────────────────────
+ 4 │             }
+   ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:81]
+ 1 │ const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });
+   ·                                                                                 ───────────────
+   ╰────

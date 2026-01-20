@@ -64,6 +64,7 @@ impl NoUnusedVars {
             | AstKind::TSEnumMember(_)
             | AstKind::TSImportEqualsDeclaration(_)
             | AstKind::TSInterfaceDeclaration(_)
+            | AstKind::TSMappedType(_)
             | AstKind::TSModuleDeclaration(_)
             | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSTypeParameter(_) => self.is_ignored_var(declared_binding),

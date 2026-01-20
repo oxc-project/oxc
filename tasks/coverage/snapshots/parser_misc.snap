@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 54/54 (100.00%)
-Positive Passed: 54/54 (100.00%)
-Negative Passed: 124/124 (100.00%)
+AST Parsed     : 64/64 (100.00%)
+Positive Passed: 64/64 (100.00%)
+Negative Passed: 131/131 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -49,6 +49,36 @@ Negative Passed: 124/124 (100.00%)
    ·                ────
  8 │ 
    ╰────
+
+  × Cannot use export statement outside a module
+   ╭─[misc/fail/commonjs-export-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow export statements (use module.exports instead)
+ 2 │ export const foo = 1;
+   · ──────
+   ╰────
+
+  × Unexpected import.meta expression
+   ╭─[misc/fail/commonjs-import-meta.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import.meta (only ES modules do)
+ 2 │ import.meta;
+   · ───────────
+   ╰────
+  help: import.meta is only allowed in module code
+
+  × Cannot use import statement outside a module
+   ╭─[misc/fail/commonjs-import-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import statements (use require instead)
+ 2 │ import foo from 'foo';
+   · ──────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/commonjs-top-level-await.cjs:2:1]
+ 1 │ // CommonJS does NOT allow top-level await (only ES modules do)
+ 2 │ await Promise.resolve();
+   · ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
@@ -394,6 +424,15 @@ Negative Passed: 124/124 (100.00%)
    ·                      │               ╰── It can not be redeclared here
    ·                      ╰── `b` has already been declared here
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/oxc-10503.ts:4:1]
+ 3 │ 
+ 4 │ await using
+   · ─────
+ 5 │ foo = bar();
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]
@@ -3355,6 +3394,28 @@ Negative Passed: 124/124 (100.00%)
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
    ╰────
 
+  × Identifier `f` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:1:10]
+ 1 │ function f() {}
+   ·          ┬
+   ·          ╰── `f` has already been declared here
+ 2 │ function f() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `g` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:4:5]
+ 3 │ 
+ 4 │ var g;
+   ·     ┬
+   ·     ╰── `g` has already been declared here
+ 5 │ function g() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
+   ╰────
+
   × Expected `(` but found `:`
    ╭─[misc/fail/oxc-1942-1.ts:2:8]
  1 │ class Foo {
@@ -3677,6 +3738,14 @@ Negative Passed: 124/124 (100.00%)
  3 │ }
    ╰────
   help: Add an identifier after '?.'
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[misc/fail/script-top-level-using.js:2:1]
+ 1 │ // 'using' is not allowed at top level in scripts
+ 2 │ using x = {};
+   · ─────────────
+   ╰────
+  help: Wrap this code in a block or use a module
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

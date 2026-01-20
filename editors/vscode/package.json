@@ -1,7 +1,7 @@
 {
   "name": "oxc-vscode",
   "displayName": "Oxc",
-  "version": "1.39.0",
+  "version": "1.41.0",
   "description": "Oxlint and Oxfmt editor integration",
   "categories": [
     "Formatters",
@@ -313,7 +313,9 @@
       "restrictedConfigurations": [
         "oxc.path.server",
         "oxc.path.oxlint",
-        "oxc.path.oxfmt"
+        "oxc.path.oxfmt",
+        "oxc.path.tsgolint",
+        "oxc.path.node"
       ]
     }
   },

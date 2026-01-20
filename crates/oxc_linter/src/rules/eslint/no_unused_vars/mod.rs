@@ -96,8 +96,8 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     ///
     /// ```javascript
-    /// /*eslint no-unused-vars: "error"*/
-    /// /*global some_unused_var*/
+    /// /* no-unused-vars: "error" */
+    /// /* if you have `some_unused_var` defined as a global in .oxlintrc.json */
     ///
     /// // It checks variables you have defined as global
     /// some_unused_var = 42;
@@ -142,7 +142,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /*eslint no-unused-vars: "error"*/
+    /// /* no-unused-vars: "error" */
     ///
     /// var x = 10;
     /// alert(x);
@@ -338,6 +338,8 @@ impl NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::declared(symbol, &self.vars_ignore_pattern, false));
             }
+            // Mapped type keys are always used within the type definition
+            AstKind::TSMappedType(_) => {}
             AstKind::CatchParameter(catch) => {
                 // NOTE: these are safe suggestions as deleting unused catch
                 // bindings wont have any side effects.

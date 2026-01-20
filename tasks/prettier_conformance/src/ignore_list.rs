@@ -16,6 +16,8 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/async-do-expressions/",
     "js/do/",
     "jsx/do/",
+    // Facebook Translation (fbt) is not supported
+    "jsx/fbt/",
     // Experimental syntax: `export X from "mod"`
     "js/export-default/export-default-from/",
     "js/export-default/escaped/default-escaped.js",
@@ -86,6 +88,7 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/module-blocks",
     // embedded
     "js/multiparser",
+    "typescript/multiparser",
     "typescript/angular-component-examples",
     "js/partial-application",
     "js/pipeline-operator",

@@ -73,13 +73,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/return-type.ts
             "flags": "ReferenceFlags(Type)",
             "id": 0,
             "name": "T",
-            "node_id": 10
+            "node_id": 10,
+            "scope_id": 2
           },
           {
             "flags": "ReferenceFlags(Type)",
             "id": 1,
             "name": "T",
-            "node_id": 24
+            "node_id": 24,
+            "scope_id": 4
           }
         ]
       },

@@ -1,6 +1,6 @@
 [package]
 name = "oxfmt"
-version = "0.24.0"
+version = "0.26.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -39,6 +39,7 @@ oxc_span = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 editorconfig-parser = { workspace = true }
+fast-glob = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }
 json-strip-comments = { workspace = true }
 miette = { workspace = true }

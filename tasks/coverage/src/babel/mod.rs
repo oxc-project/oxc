@@ -43,6 +43,14 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "async-do-expression",
             "export-ns-from",
             "annex-b/disabled",
+            // Call expressions as assignment targets in non-strict mode - oxc intentionally does not support
+            "annex-b/enabled/valid-assignment-target-type",
+            // Module blocks are stage 1
+            "module-block",
+            // Babel failed to parse, but this is valid syntax
+            "typescript/arrow-function/arrow-like-in-conditional-2",
+            // TypeScript allows `satisfies const`, Babel doesn't
+            "typescript/cast/satisfies-const-error",
         ]
         .iter()
         .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));
@@ -151,6 +159,8 @@ impl Case for BabelCase {
             source_type = source_type.with_unambiguous(true);
         } else if options.is_module() {
             source_type = source_type.with_module(true);
+        } else if options.is_commonjs() {
+            source_type = source_type.with_commonjs(true);
         }
         let should_fail = Self::determine_should_fail(&path, &options);
         Self { path, code, source_type, options, should_fail, result: TestResult::ToBeRun }
@@ -188,6 +198,9 @@ impl Case for BabelCase {
         has_not_supported_plugins
             || self.options.allow_await_outside_function
             || self.options.allow_undeclared_exports
+            || self.options.allow_new_target_outside_function
+            || self.options.allow_super_outside_method
+            || self.options.has_disallow_ambiguous_jsx_like()
     }
 
     fn run(&mut self) {

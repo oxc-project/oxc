@@ -56,6 +56,11 @@ declare_oxc_lint!(
     /// This rule enforces `defineEmits` typing style which you should use `type-based`, strict `type-literal` (introduced in Vue 3.3), or `runtime` declaration.
     /// This rule only works in setup script and `lang="ts"`.
     ///
+    /// ### Why is this bad?
+    ///
+    /// Inconsistent code style can be confusing and make code harder to read
+    /// through.
+    ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:

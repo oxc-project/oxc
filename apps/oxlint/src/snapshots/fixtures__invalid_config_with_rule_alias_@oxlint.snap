@@ -1,0 +1,14 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/invalid_config_with_rule_alias
+----------
+Failed to parse oxlint configuration file.
+
+  x Invalid configuration for rule `vitest/no-hooks`: invalid type: integer `123`, expected a sequence, received `{ "allow": 123 }`
+
+----------
+CLI result: InvalidOptionConfig
+----------
