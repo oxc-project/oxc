@@ -84,6 +84,15 @@ impl PreferDescribeFunctionTitle {
             return;
         }
 
+        let Some(test_vitest_fn) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
+        else {
+            return;
+        };
+
+        if test_vitest_fn.kind != JestFnKind::General(JestGeneralFnKind::Describe) {
+            return;
+        }
+
         let mut imported_entries =
             ctx.module_record().import_entries.iter().map(|entry| entry.local_name.name.as_ref());
 
@@ -113,16 +122,6 @@ impl PreferDescribeFunctionTitle {
                 );
             }
             Argument::StringLiteral(string_title) => {
-                let Some(test_vitest_fn) =
-                    parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
-                else {
-                    return;
-                };
-
-                if test_vitest_fn.kind != JestFnKind::General(JestGeneralFnKind::Describe) {
-                    return;
-                }
-
                 if !imported_entries.contains(string_title.value.as_ref()) {
                     return;
                 }
@@ -261,6 +260,32 @@ fn test() {
 			      "#,
             None,
             Some(serde_json::json!({ "settings": {  "vitest": {  "typecheck": true,  },  } })),
+            Some(PathBuf::from("myFunction.test.ts")),
+        ),
+        (
+            r#"
+			        import { DocumentBuilder } from "./DocumentBuilder"
+			        describe("Swagger Helper", () => {
+			          beforeEach(() => {
+			            vi.spyOn(DocumentBuilder.prototype, "setTitle")
+			          })
+			        })
+			      "#,
+            None,
+            None,
+            Some(PathBuf::from("swagger.helpers.spec.ts")),
+        ),
+        (
+            r#"
+			        import { myFunction } from "./myFunction"
+			        describe("Test Suite", () => {
+			          beforeEach(() => {
+			            vi.spyOn(myFunction, "name")
+			          })
+			        })
+			      "#,
+            None,
+            None,
             Some(PathBuf::from("myFunction.test.ts")),
         ),
     ];
