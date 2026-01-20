@@ -25,7 +25,7 @@ import { run_code } from "./sandbox";
 function run(input: string, expected: string[], prepend_code?: string) {
   const consoleMock = vi.spyOn(console, "log").mockImplementation(() => undefined);
   try {
-    const minified = minifySync("test.cjs", input).code;
+    const minified = minifySync("test.cjs", input, { mangle: { toplevel: false } }).code;
     expect(minified).not.toBeFalsy();
     // Use `consoleMock` instead of the returned output.
     const _ = run_code(minified, prepend_code);

@@ -337,7 +337,7 @@ impl Oxc {
         };
         let mangle = if options.run.mangle {
             options.mangle.map(|o| MangleOptions {
-                top_level: o.top_level,
+                top_level: Some(o.top_level),
                 keep_names: MangleOptionsKeepNames { function: o.keep_names, class: o.keep_names },
                 debug: false,
             })

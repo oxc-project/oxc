@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr, Ident};
+use oxc_span::{Atom, CompactStr, Ident, SourceType};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -22,8 +22,11 @@ pub use keep_names::MangleOptionsKeepNames;
 pub struct MangleOptions {
     /// Pass true to mangle names declared in the top level scope.
     ///
-    /// Default: `false`
-    pub top_level: bool,
+    /// Default: `true` for [`ModuleKind::Module`] and [`ModuleKind::CommonJS`]. Otherwise `false`.
+    ///
+    /// [`ModuleKind::Module`]: oxc_span::ModuleKind::Module
+    /// [`ModuleKind::CommonJS`]: oxc_span::ModuleKind::CommonJS
+    pub top_level: Option<bool>,
 
     /// Keep function / class names
     pub keep_names: MangleOptionsKeepNames,
@@ -33,6 +36,12 @@ pub struct MangleOptions {
     ///
     /// Uses base54 if false.
     pub debug: bool,
+}
+
+impl MangleOptions {
+    fn top_level(self, source_type: SourceType) -> bool {
+        self.top_level.unwrap_or(source_type.is_module() || source_type.is_commonjs())
+    }
 }
 
 type Slot = u32;
@@ -298,7 +307,8 @@ impl<'t> Mangler<'t> {
 
         let temp_allocator = self.temp_allocator.as_ref();
 
-        let (exported_names, exported_symbols) = if self.options.top_level {
+        let top_level = self.options.top_level(program.source_type);
+        let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
             Mangler::collect_exported_symbols(program)
         } else {
             Default::default()
@@ -453,6 +463,7 @@ impl<'t> Mangler<'t> {
             keep_name_symbols.as_ref(),
             total_number_of_slots,
             &slots,
+            top_level,
         );
 
         let root_unresolved_references = scoping.root_unresolved_references();
@@ -477,7 +488,7 @@ impl<'t> Mangler<'t> {
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
                     && !(root_bindings.contains_key(n)
-                        && (!self.options.top_level || exported_names.contains(n)))
+                        && (!top_level || exported_names.contains(n)))
                     // TODO: only skip the names that are kept in the current scope
                     && !keep_name_names.contains(n)
                     && !eval_reserved_names.contains(n)
@@ -546,6 +557,7 @@ impl<'t> Mangler<'t> {
         keep_name_symbols: Option<&BitSet<'a>>,
         total_number_of_slots: usize,
         slots: &[Slot],
+        top_level: bool,
     ) -> Vec<'a, SlotFrequency<'a>> {
         let root_scope_id = scoping.root_scope_id();
         let temp_allocator = self.temp_allocator.as_ref();
@@ -558,7 +570,7 @@ impl<'t> Mangler<'t> {
             let symbol_id = SymbolId::from_usize(symbol_id);
             let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
             if symbol_scope_id == root_scope_id
-                && (!self.options.top_level || exported_symbols.contains(&symbol_id))
+                && (!top_level || exported_symbols.contains(&symbol_id))
             {
                 continue;
             }
@@ -606,7 +618,7 @@ impl<'t> Mangler<'t> {
                     itertools::Either::Right(decl.id().into_iter())
                 }
             })
-            .map(|id| (Atom::from(id.name), id.symbol_id()))
+            .map(|id| (id.name.as_atom(), id.symbol_id()))
             .collect()
     }
 

@@ -87,7 +87,7 @@ fn bench_mangler(criterion: &mut Criterion) {
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .with_options(MangleOptions {
-                            top_level: false,
+                            top_level: None,
                             keep_names: MangleOptionsKeepNames::all_true(),
                             debug: false,
                         })
