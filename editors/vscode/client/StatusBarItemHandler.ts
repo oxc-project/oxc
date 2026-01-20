@@ -63,7 +63,7 @@ export default class StatusBarItemHandler {
 
     const text = sections
       .map(([tool, section]) => {
-        const version = section.version ? ` v${section.version}` : "unknown version";
+        const version = section.version ? `v${section.version}` : "unknown version";
         const statusText = section.isEnabled ? `enabled (${version})` : "disabled";
         return `**${tool} is ${statusText}**\n\n${section.content}`;
       })
