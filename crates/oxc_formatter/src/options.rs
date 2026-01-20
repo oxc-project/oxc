@@ -108,11 +108,11 @@ pub struct TailwindcssOptions {
     /// Default: `[]`
     pub functions: Vec<String>,
 
-    /// List of attributes that contain Tailwind CSS classes.
+    /// List of additional attributes to sort (beyond `class` and `className`).
     ///
     /// Example: `["myClassProp", ":class"]`
     ///
-    /// Default: `["class", "className"]`
+    /// Default: `[]`
     pub attributes: Vec<String>,
 
     /// Preserve whitespace around classes.

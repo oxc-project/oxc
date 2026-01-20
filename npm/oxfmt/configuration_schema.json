@@ -730,7 +730,7 @@
       "type": "object",
       "properties": {
         "attributes": {
-          "description": "List of attribute prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[\"class\", \"className\"]`\n- Example: `[\"myClassProp\", \":class\"]`",
+          "description": "List of additional attributes to sort beyond `class` and `className` (exact match).\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"myClassProp\", \":class\"]`",
           "type": [
             "array",
             "null"
@@ -738,7 +738,7 @@
           "items": {
             "type": "string"
           },
-          "markdownDescription": "List of attribute prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[\"class\", \"className\"]`\n- Example: `[\"myClassProp\", \":class\"]`"
+          "markdownDescription": "List of additional attributes to sort beyond `class` and `className` (exact match).\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"myClassProp\", \":class\"]`"
         },
         "config": {
           "description": "Path to your Tailwind CSS configuration file (v3).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Automatically find `\"tailwind.config.js\"`",
@@ -749,7 +749,7 @@
           "markdownDescription": "Path to your Tailwind CSS configuration file (v3).\n\nNOTE: Paths are resolved relative to the Oxfmt configuration file.\n\n- Default: Automatically find `\"tailwind.config.js\"`"
         },
         "functions": {
-          "description": "List of custom function name prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`",
+          "description": "List of custom function names whose arguments should be sorted (exact match).\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`",
           "type": [
             "array",
             "null"
@@ -757,7 +757,7 @@
           "items": {
             "type": "string"
           },
-          "markdownDescription": "List of custom function name prefixes that contain Tailwind CSS classes.\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`"
+          "markdownDescription": "List of custom function names whose arguments should be sorted (exact match).\n\nNOTE: Regex patterns are not yet supported.\n\n- Default: `[]`\n- Example: `[\"clsx\", \"cn\", \"cva\", \"tw\"]`"
         },
         "preserveDuplicates": {
           "description": "Preserve duplicate classes.\n\n- Default: `false`",

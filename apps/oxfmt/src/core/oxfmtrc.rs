@@ -756,7 +756,7 @@ pub struct TailwindcssConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub stylesheet: Option<String>,
 
-    /// List of custom function name prefixes that contain Tailwind CSS classes.
+    /// List of custom function names whose arguments should be sorted (exact match).
     ///
     /// NOTE: Regex patterns are not yet supported.
     ///
@@ -764,11 +764,11 @@ pub struct TailwindcssConfig {
     /// - Example: `["clsx", "cn", "cva", "tw"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub functions: Option<Vec<String>>,
-    /// List of attribute prefixes that contain Tailwind CSS classes.
+    /// List of additional attributes to sort beyond `class` and `className` (exact match).
     ///
     /// NOTE: Regex patterns are not yet supported.
     ///
-    /// - Default: `["class", "className"]`
+    /// - Default: `[]`
     /// - Example: `["myClassProp", ":class"]`
     #[serde(skip_serializing_if = "Option::is_none")]
     pub attributes: Option<Vec<String>>,
