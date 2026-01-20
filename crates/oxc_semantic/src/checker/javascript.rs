@@ -625,6 +625,12 @@ pub fn is_function_part_of_if_statement(function: &Function, builder: &SemanticB
 // and the duplicate entries are only bound by FunctionDeclarations.
 // https://tc39.es/ecma262/#sec-block-level-function-declarations-web-legacy-compatibility-semantics
 pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) {
+    if !func.is_declaration() {
+        return;
+    }
+
+    // Function declarations always have an identifier, except for `export default function () {}`.
+    // Skip that case.
     let Some(id) = &func.id else { return };
 
     if is_function_part_of_if_statement(func, ctx) {
