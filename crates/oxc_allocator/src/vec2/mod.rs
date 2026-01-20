@@ -2469,7 +2469,7 @@ impl<'a, T: 'a> Iterator for IntoIter<'a, T> {
     #[inline]
     fn next(&mut self) -> Option<T> {
         unsafe {
-            if std::ptr::eq(self.ptr, self.end) {
+            if self.ptr == self.end {
                 None
             } else if size_of::<T>() == 0 {
                 // purposefully don't use 'ptr.offset' because for
