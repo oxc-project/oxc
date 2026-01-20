@@ -19,7 +19,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         let key = self.key();
         let constraint = self.constraint();
         let name_type = self.name_type();
-        let should_expand = has_line_break_before_property_name(self, f.source_text());
+        let should_expand = has_line_break_after_opening_brace(self, f.source_text());
 
         let format_inner = format_with(|f| {
             if should_expand {
@@ -84,16 +84,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
     }
 }
 
-/// Check if the user introduced a new line inside the node, but only if
-/// that new line occurs at or before the property name. For example,
-/// this would break:
-///   { [
-///     A in B]: T}
-/// Because the line break occurs before `A`, the property name. But this
-/// would _not_ break:
-///   { [A
-///     in B]: T}
-/// Because the break is _after_ the `A`.
-fn has_line_break_before_property_name(node: &TSMappedType, f: SourceText) -> bool {
-    f.contains_newline_between(node.span.start, node.key.span.start)
+/// Check if the user introduced a new line immediately after the opening brace.
+/// For example, this would break:
+///   {
+///     readonly [A in B]: T}
+/// Because the line break occurs right after `{`. But this would _not_ break:
+///   { readonly
+///     [A in B]: T}
+/// Because the break is not immediately after `{`.
+fn has_line_break_after_opening_brace(node: &TSMappedType, f: SourceText) -> bool {
+    // Check if there's a newline immediately after `{` (before any non-whitespace)
+    f.has_newline_after(node.span.start + 1)
 }
