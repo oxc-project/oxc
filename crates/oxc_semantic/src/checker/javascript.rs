@@ -602,10 +602,11 @@ pub fn check_variable_declarator_redeclaration(
 }
 
 /// Check for Annex B `if (foo) function a() {} else function b() {}`
-pub fn is_function_part_of_if_statement(function: &Function, builder: &SemanticBuilder) -> bool {
-    if !function.is_declaration() {
-        return false;
-    }
+pub fn is_function_decl_part_of_if_statement(
+    function: &Function,
+    builder: &SemanticBuilder,
+) -> bool {
+    debug_assert!(function.is_declaration());
 
     // Function declarations cannot be `consequent` or `alternate` of an `IfStatement` in strict mode.
     // This check is redundant - parent kind lookup below will always return `false` in strict mode.
@@ -633,7 +634,7 @@ pub fn check_function_redeclaration(func: &Function, ctx: &SemanticBuilder<'_>) 
     // Skip that case.
     let Some(id) = &func.id else { return };
 
-    if is_function_part_of_if_statement(func, ctx) {
+    if is_function_decl_part_of_if_statement(func, ctx) {
         return;
     }
 

@@ -6,7 +6,7 @@ use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_span::GetSpan;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
-use crate::{SemanticBuilder, checker::is_function_part_of_if_statement};
+use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
 
 pub trait Binder<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>);
@@ -144,7 +144,8 @@ impl<'a> Binder<'a> for Function<'a> {
         if let Some(ident) = &self.id {
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
-            } else if is_function_part_of_if_statement(self, builder) {
+            } else if self.is_declaration() && is_function_decl_part_of_if_statement(self, builder)
+            {
                 SymbolFlags::empty()
             } else {
                 // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
