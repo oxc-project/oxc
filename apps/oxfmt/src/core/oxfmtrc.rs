@@ -440,6 +440,26 @@ impl FormatConfig {
     }
 }
 
+/// Build `toml` formatter options from `FormatOptions`.
+/// Use the same options as `prettier-plugin-toml`.
+/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
+fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
+    TomlFormatterOptions {
+        column_width: format_options.line_width.value() as usize,
+        indent_string: if format_options.indent_style.is_tab() {
+            "\t".to_string()
+        } else {
+            " ".repeat(format_options.indent_width.value() as usize)
+        },
+        array_trailing_comma: !format_options.trailing_commas.is_none(),
+        crlf: format_options.line_ending.is_carriage_return_line_feed(),
+        // NOTE: Need to align with `oxc_formatter` and Prettier defaults,
+        // to make `insertFinalNewline` option work correctly.
+        trailing_newline: true,
+        ..Default::default()
+    }
+}
+
 // ---
 
 #[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
@@ -777,245 +797,6 @@ pub struct OxfmtOptions {
     pub toml_options: TomlFormatterOptions,
     pub sort_package_json: Option<sort_package_json::SortOptions>,
     pub insert_final_newline: bool,
-}
-
-// ---
-
-impl Oxfmtrc {
-    /// Converts the `Oxfmtrc` into `OxfmtOptions` and ignore patterns.
-    ///
-    /// # Errors
-    /// Returns error if any option value is invalid
-    pub fn into_options(self) -> Result<(OxfmtOptions, Vec<String>), String> {
-        let user_format_config = self.format_config;
-
-        let format_options = {
-            // Not yet supported options:
-            // [Prettier] experimentalOperatorPosition: "start" | "end"
-            // [Prettier] experimentalTernaries: boolean
-            if user_format_config.experimental_operator_position.is_some() {
-                return Err("Unsupported option: `experimentalOperatorPosition`".to_string());
-            }
-            if user_format_config.experimental_ternaries.is_some() {
-                return Err("Unsupported option: `experimentalTernaries`".to_string());
-            }
-
-            // All values are based on defaults from `FormatOptions::default()`
-            let mut format_options = FormatOptions::default();
-
-            // [Prettier] useTabs: boolean
-            if let Some(use_tabs) = user_format_config.use_tabs {
-                format_options.indent_style =
-                    if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
-            }
-
-            // [Prettier] tabWidth: number
-            if let Some(width) = user_format_config.tab_width {
-                format_options.indent_width =
-                    IndentWidth::try_from(width).map_err(|e| format!("Invalid tabWidth: {e}"))?;
-            }
-
-            // [Prettier] endOfLine: "lf" | "cr" | "crlf" | "auto"
-            // NOTE: "auto" is not supported
-            if let Some(ending) = user_format_config.end_of_line {
-                format_options.line_ending = match ending {
-                    EndOfLineConfig::Lf => LineEnding::Lf,
-                    EndOfLineConfig::Crlf => LineEnding::Crlf,
-                    EndOfLineConfig::Cr => LineEnding::Cr,
-                };
-            }
-
-            // [Prettier] printWidth: number
-            if let Some(width) = user_format_config.print_width {
-                format_options.line_width =
-                    LineWidth::try_from(width).map_err(|e| format!("Invalid printWidth: {e}"))?;
-            }
-
-            // [Prettier] singleQuote: boolean
-            if let Some(single_quote) = user_format_config.single_quote {
-                format_options.quote_style =
-                    if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
-            }
-
-            // [Prettier] jsxSingleQuote: boolean
-            if let Some(jsx_single_quote) = user_format_config.jsx_single_quote {
-                format_options.jsx_quote_style =
-                    if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
-            }
-
-            // [Prettier] quoteProps: "as-needed" | "consistent" | "preserve"
-            if let Some(props) = user_format_config.quote_props {
-                format_options.quote_properties = match props {
-                    QuotePropsConfig::AsNeeded => QuoteProperties::AsNeeded,
-                    QuotePropsConfig::Consistent => QuoteProperties::Consistent,
-                    QuotePropsConfig::Preserve => QuoteProperties::Preserve,
-                };
-            }
-
-            // [Prettier] trailingComma: "all" | "es5" | "none"
-            if let Some(commas) = user_format_config.trailing_comma {
-                format_options.trailing_commas = match commas {
-                    TrailingCommaConfig::All => TrailingCommas::All,
-                    TrailingCommaConfig::Es5 => TrailingCommas::Es5,
-                    TrailingCommaConfig::None => TrailingCommas::None,
-                };
-            }
-
-            // [Prettier] semi: boolean
-            if let Some(semi) = user_format_config.semi {
-                format_options.semicolons =
-                    if semi { Semicolons::Always } else { Semicolons::AsNeeded };
-            }
-
-            // [Prettier] arrowParens: "avoid" | "always"
-            if let Some(parens) = user_format_config.arrow_parens {
-                format_options.arrow_parentheses = match parens {
-                    ArrowParensConfig::Avoid => ArrowParentheses::AsNeeded,
-                    ArrowParensConfig::Always => ArrowParentheses::Always,
-                };
-            }
-
-            // [Prettier] bracketSpacing: boolean
-            if let Some(spacing) = user_format_config.bracket_spacing {
-                format_options.bracket_spacing = BracketSpacing::from(spacing);
-            }
-
-            // [Prettier] bracketSameLine: boolean
-            if let Some(same_line) = user_format_config.bracket_same_line {
-                format_options.bracket_same_line = BracketSameLine::from(same_line);
-            }
-
-            // [Prettier] singleAttributePerLine: boolean
-            if let Some(single_attribute_per_line) = user_format_config.single_attribute_per_line {
-                format_options.attribute_position = if single_attribute_per_line {
-                    AttributePosition::Multiline
-                } else {
-                    AttributePosition::Auto
-                };
-            }
-
-            // [Prettier] objectWrap: "preserve" | "collapse"
-            if let Some(object_wrap) = user_format_config.object_wrap {
-                format_options.expand = match object_wrap {
-                    ObjectWrapConfig::Preserve => Expand::Auto,
-                    ObjectWrapConfig::Collapse => Expand::Never,
-                };
-            }
-
-            // [Prettier] embeddedLanguageFormatting: "auto" | "off"
-            if let Some(embedded_language_formatting) =
-                user_format_config.embedded_language_formatting
-            {
-                format_options.embedded_language_formatting = match embedded_language_formatting {
-                    EmbeddedLanguageFormattingConfig::Auto => EmbeddedLanguageFormatting::Auto,
-                    EmbeddedLanguageFormattingConfig::Off => EmbeddedLanguageFormatting::Off,
-                };
-            }
-
-            // Below are our own extensions
-
-            if let Some(config) = user_format_config.experimental_sort_imports {
-                let mut sort_imports = SortImportsOptions::default();
-
-                if let Some(v) = config.partition_by_newline {
-                    sort_imports.partition_by_newline = v;
-                }
-                if let Some(v) = config.partition_by_comment {
-                    sort_imports.partition_by_comment = v;
-                }
-                if let Some(v) = config.sort_side_effects {
-                    sort_imports.sort_side_effects = v;
-                }
-                if let Some(v) = config.order {
-                    sort_imports.order = match v {
-                        SortOrderConfig::Asc => SortOrder::Asc,
-                        SortOrderConfig::Desc => SortOrder::Desc,
-                    };
-                }
-                if let Some(v) = config.ignore_case {
-                    sort_imports.ignore_case = v;
-                }
-                if let Some(v) = config.newlines_between {
-                    sort_imports.newlines_between = v;
-                }
-                if let Some(v) = config.internal_pattern {
-                    sort_imports.internal_pattern = v;
-                }
-                if let Some(v) = config.groups {
-                    sort_imports.groups =
-                        v.into_iter().map(SortGroupItemConfig::into_vec).collect();
-                }
-                if let Some(v) = config.custom_groups {
-                    sort_imports.custom_groups = v
-                        .into_iter()
-                        .map(|group| CustomGroupDefinition {
-                            group_name: group.group_name,
-                            element_name_pattern: group.element_name_pattern,
-                        })
-                        .collect();
-                }
-
-                // `partition_by_newline: true` and `newlines_between: true` cannot be used together
-                if sort_imports.partition_by_newline && sort_imports.newlines_between {
-                    return Err("Invalid `sortImports` configuration: `partitionByNewline: true` and `newlinesBetween: true` cannot be used together".to_string());
-                }
-
-                format_options.experimental_sort_imports = Some(sort_imports);
-            }
-
-            // [Oxfmt] experimentalTailwindcss: object | null
-            if let Some(config) = user_format_config.experimental_tailwindcss {
-                format_options.experimental_tailwindcss = Some(TailwindcssOptions {
-                    config: config.config,
-                    stylesheet: config.stylesheet,
-                    functions: config.functions.unwrap_or_default(),
-                    attributes: config.attributes.unwrap_or_default(),
-                    preserve_whitespace: config.preserve_whitespace.unwrap_or(false),
-                    preserve_duplicates: config.preserve_duplicates.unwrap_or(false),
-                });
-            }
-
-            format_options
-        };
-
-        // Currently, there is a no options for TOML formatter
-        let toml_options = build_toml_options(&format_options);
-
-        let sort_package_json = user_format_config.experimental_sort_package_json.map_or_else(
-            || Some(SortPackageJsonConfig::default().to_sort_options()),
-            |c| c.to_sort_options(),
-        );
-
-        let insert_final_newline = user_format_config.insert_final_newline.unwrap_or(true);
-
-        // Globs will be validated later
-        let ignore_patterns = self.ignore_patterns.unwrap_or_default();
-
-        Ok((
-            OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline },
-            ignore_patterns,
-        ))
-    }
-}
-
-/// Build `toml` formatter options from `FormatOptions`.
-/// Use the same options as `prettier-plugin-toml`.
-/// <https://github.com/un-ts/prettier/blob/7a4346d5dbf6b63987c0f81228fc46bb12f8692f/packages/toml/src/index.ts#L27-L31>
-fn build_toml_options(format_options: &FormatOptions) -> TomlFormatterOptions {
-    TomlFormatterOptions {
-        column_width: format_options.line_width.value() as usize,
-        indent_string: if format_options.indent_style.is_tab() {
-            "\t".to_string()
-        } else {
-            " ".repeat(format_options.indent_width.value() as usize)
-        },
-        array_trailing_comma: !format_options.trailing_commas.is_none(),
-        crlf: format_options.line_ending.is_carriage_return_line_feed(),
-        // NOTE: Need to align with `oxc_formatter` and Prettier defaults,
-        // to make `insertFinalNewline` option work correctly.
-        trailing_newline: true,
-        ..Default::default()
-    }
 }
 
 /// Populates the raw config JSON with resolved `FormatOptions` values.
