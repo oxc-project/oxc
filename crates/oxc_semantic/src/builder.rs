@@ -597,18 +597,29 @@ impl<'a> SemanticBuilder<'a> {
     ) {
         self.scoping.add_symbol_redeclaration(symbol_id, flags, self.current_node_id, span);
     }
+
+    /// Create a scope for a node, but don't enter the scope.
+    #[inline] // Inline into `enter_scope`
+    fn create_scope(
+        &mut self,
+        flags: ScopeFlags,
+        scope_id_field: &Cell<Option<ScopeId>>,
+    ) -> ScopeId {
+        let parent_scope_id = self.current_scope_id;
+        let flags = self.scoping.get_new_scope_flags(flags, parent_scope_id);
+        let scope_id = self.scoping.add_scope(Some(parent_scope_id), self.current_node_id, flags);
+        scope_id_field.set(Some(scope_id));
+
+        self.unresolved_references.increment_scope_depth();
+
+        scope_id
+    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
     // NB: Not called for `Program`
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        let parent_scope_id = self.current_scope_id;
-        let flags = self.scoping.get_new_scope_flags(flags, parent_scope_id);
-        self.current_scope_id =
-            self.scoping.add_scope(Some(parent_scope_id), self.current_node_id, flags);
-        scope_id.set(Some(self.current_scope_id));
-
-        self.unresolved_references.increment_scope_depth();
+        self.current_scope_id = self.create_scope(flags, scope_id);
     }
 
     // NB: Not called for `Program`
@@ -1778,7 +1789,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+    fn visit_function(&mut self, func: &Function<'a>, mut flags: ScopeFlags) {
         /* cfg */
         // We add a new basic block to the cfg before entering the node
         // so that the correct cfg_ix is associated with the ast node.
@@ -1800,24 +1811,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let parent_function_node_id = self.current_function_node_id;
         self.current_function_node_id = self.current_node_id;
 
-        if func.is_declaration() {
-            func.bind(self);
+        // Create scope for function.
+        // Bind identifier in parent scope for function declarations, this function's scope for function expressions.
+        if func.has_use_strict_directive() {
+            flags |= ScopeFlags::StrictMode;
+        }
+        let scope_id = self.create_scope(flags, &func.scope_id);
+
+        let is_declaration = func.is_declaration();
+        if !is_declaration {
+            self.current_scope_id = scope_id;
         }
 
-        self.enter_scope(
-            {
-                let mut flags = flags;
-                if func.has_use_strict_directive() {
-                    flags |= ScopeFlags::StrictMode;
-                }
-                flags
-            },
-            &func.scope_id,
-        );
+        func.bind(self);
 
-        if func.is_expression() {
-            // We need to bind function expression in the function scope
-            func.bind(self);
+        if is_declaration {
+            self.current_scope_id = scope_id;
         }
 
         if let Some(id) = &func.id {
