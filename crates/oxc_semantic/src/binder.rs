@@ -137,13 +137,13 @@ impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let is_declaration = self.is_declaration();
 
-        let includes = if self.declare {
-            SymbolFlags::Function | SymbolFlags::Ambient
-        } else {
-            SymbolFlags::Function
-        };
-
         if let Some(ident) = &self.id {
+            let includes = if self.declare {
+                SymbolFlags::Function | SymbolFlags::Ambient
+            } else {
+                SymbolFlags::Function
+            };
+
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
             } else if is_declaration && is_function_decl_part_of_if_statement(self, builder) {
