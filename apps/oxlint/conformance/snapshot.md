@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   273 |  93.5% |
-| Partially passing |    19 |   6.5% |
+| Fully passing     |   279 |  95.5% |
+| Partially passing |    13 |   4.5% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -19,8 +19,8 @@
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
 | Passing     | 32761 |  99.0% |
-| Failing     |    69 |   0.2% |
-| Skipped     |   260 |   0.8% |
+| Failing     |    58 |   0.2% |
+| Skipped     |   271 |   0.8% |
 
 ## Fully Passing Rules
 
@@ -39,6 +39,7 @@
 - `camelcase` (204 tests)
 - `capitalized-comments` (178 tests)
 - `class-methods-use-this` (156 tests)
+- `comma-dangle` (267 tests) (10 skipped)
 - `comma-spacing` (173 tests)
 - `comma-style` (96 tests)
 - `complexity` (165 tests)
@@ -142,6 +143,7 @@
 - `no-extra-boolean-cast` (501 tests) (1 skipped)
 - `no-extra-label` (34 tests)
 - `no-extra-semi` (53 tests)
+- `no-fallthrough` (87 tests) (1 skipped)
 - `no-floating-decimal` (8 tests)
 - `no-func-assign` (15 tests)
 - `no-global-assign` (18 tests) (3 skipped)
@@ -193,6 +195,7 @@
 - `no-regex-spaces` (73 tests)
 - `no-restricted-exports` (183 tests)
 - `no-restricted-globals` (166 tests)
+- `no-restricted-imports` (254 tests) (1 skipped)
 - `no-restricted-modules` (44 tests)
 - `no-restricted-properties` (89 tests)
 - `no-restricted-syntax` (32 tests)
@@ -229,6 +232,7 @@
 - `no-unsafe-optional-chaining` (187 tests)
 - `no-unused-labels` (26 tests)
 - `no-unused-private-class-members` (39 tests)
+- `no-useless-assignment` (85 tests) (2 skipped)
 - `no-useless-backreference` (190 tests) (1 skipped)
 - `no-useless-call` (44 tests)
 - `no-useless-catch` (16 tests)
@@ -255,6 +259,7 @@
 - `padded-blocks` (133 tests)
 - `padding-line-between-statements` (624 tests)
 - `prefer-arrow-callback` (107 tests)
+- `prefer-const` (138 tests) (4 skipped)
 - `prefer-destructuring` (103 tests)
 - `prefer-exponentiation-operator` (167 tests) (4 skipped)
 - `prefer-named-capture-group` (57 tests)
@@ -277,6 +282,7 @@
 - `rest-spread-spacing` (82 tests)
 - `semi-spacing` (62 tests)
 - `semi-style` (81 tests)
+- `semi` (308 tests) (1 skipped)
 - `sort-imports` (61 tests)
 - `sort-keys` (215 tests)
 - `sort-vars` (61 tests)
@@ -300,141 +306,21 @@
 
 ## Rules with Failures
 
-- `comma-dangle` - 265 / 267 (99.3%)
 - `no-eval` - 98 / 101 (97.0%)
 - `no-extra-parens` - 1068 / 1072 (99.6%)
-- `no-fallthrough` - 86 / 87 (98.9%)
 - `no-implicit-globals` - 242 / 245 (98.8%)
 - `no-invalid-this` - 556 / 562 (98.9%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
 - `no-multiple-empty-lines` - 45 / 46 (97.8%)
 - `no-redeclare` - 68 / 75 (90.7%)
-- `no-restricted-imports` - 253 / 254 (99.6%)
 - `no-unused-expressions` - 120 / 124 (96.8%)
-- `no-unused-vars` - 424 / 436 (97.2%)
+- `no-unused-vars` - 428 / 436 (98.2%)
 - `no-use-before-define` - 346 / 347 (99.7%)
-- `no-useless-assignment` - 84 / 85 (98.8%)
-- `prefer-const` - 137 / 138 (99.3%)
 - `prefer-object-spread` - 86 / 87 (98.9%)
-- `semi` - 307 / 308 (99.7%)
 - `strict` - 110 / 126 (87.3%)
 - `unicode-bom` - 4 / 7 (57.1%)
 
 ## Rules with Failures Detail
-
-### `comma-dangle`
-
-Pass: 257 / 267 (96.3%)
-Fail: 2 / 267 (0.7%)
-Skip: 8 / 267 (3.0%)
-
-#### comma-dangle > invalid
-
-```js
-/*eslint custom/add-named-import:1*/
-import {
-    StyleSheet,
-    View,
-    TextInput,
-    ImageBackground,
-    Image,
-    TouchableOpacity,
-    SafeAreaView
-} from 'react-native';
-```
-
-```json
-{
-  "output": "/*eslint custom/add-named-import:1*/\nimport {\n    StyleSheet,\n    View,\n    TextInput,\n    ImageBackground,\n    Image,\n    TouchableOpacity,\n    SafeAreaView,\n} from 'react-native';",
-  "options": [
-    {
-      "imports": "always-multiline"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": 2
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/comma-dangle',
-    message: 'Missing trailing comma.',
-    messageId: 'missing',
-    severity: 1,
-    nodeType: 'ImportDeclaration',
-    line: 9,
-    column: 16,
-    endLine: 10,
-    endColumn: 0,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### comma-dangle > invalid
-
-```js
-/*eslint custom/add-named-import:1*/
-import {
-    StyleSheet,
-    View,
-    TextInput,
-    ImageBackground,
-    Image,
-    TouchableOpacity,
-    SafeAreaView,
-} from 'react-native';
-```
-
-```json
-{
-  "output": "/*eslint custom/add-named-import:1*/\nimport {\n    StyleSheet,\n    View,\n    TextInput,\n    ImageBackground,\n    Image,\n    TouchableOpacity,\n    SafeAreaView\n} from 'react-native';",
-  "options": [
-    {
-      "imports": "never"
-    }
-  ],
-  "languageOptions": {
-    "ecmaVersion": 6,
-    "sourceType": "module"
-  },
-  "errors": 2
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/comma-dangle',
-    message: 'Unexpected trailing comma.',
-    messageId: 'unexpected',
-    severity: 1,
-    nodeType: 'ImportDeclaration',
-    line: 9,
-    column: 16,
-    endLine: 9,
-    endColumn: 17,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
 
 ### `no-eval`
 
@@ -667,47 +553,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     column: 0,
     endLine: 1,
     endColumn: 1,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `no-fallthrough`
-
-Pass: 86 / 87 (98.9%)
-Fail: 1 / 87 (1.1%)
-Skip: 0 / 87 (0.0%)
-
-#### no-fallthrough > valid
-
-```js
-switch (foo) { case 0: a(); 
-// eslint-disable-next-line rule-to-test/no-fallthrough
- case 1: }
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-fallthrough',
-    message: "Expected a 'break' statement before 'case'.",
-    messageId: 'case',
-    severity: 1,
-    nodeType: 'SwitchCase',
-    line: 3,
-    column: 1,
-    endLine: 3,
-    endColumn: 8,
     suggestions: null
   }
 ]
@@ -3719,61 +3564,6 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-### `no-restricted-imports`
-
-Pass: 253 / 254 (99.6%)
-Fail: 1 / 254 (0.4%)
-Skip: 0 / 254 (0.0%)
-
-#### no-restricted-imports > valid
-
-```js
-import {
-AllowedObject,
-DisallowedObject, // eslint-disable-line
-} from "foo";
-```
-
-```json
-{
-  "options": [
-    {
-      "paths": [
-        {
-          "name": "foo",
-          "importNames": [
-            "DisallowedObject"
-          ]
-        }
-      ]
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-restricted-imports',
-    message: "'DisallowedObject' import from 'foo' is restricted.",
-    messageId: 'importName',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 3,
-    column: 0,
-    endLine: 3,
-    endColumn: 16,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
 ### `no-unused-expressions`
 
 Pass: 120 / 124 (96.8%)
@@ -3909,107 +3699,8 @@ AssertionError [ERR_ASSERTION]: Should have 2 errors but had 0: []
 ### `no-unused-vars`
 
 Pass: 407 / 436 (93.3%)
-Fail: 12 / 436 (2.8%)
-Skip: 17 / 436 (3.9%)
-
-#### no-unused-vars > valid
-
-```js
-/*eslint custom/use-every-a:1*/ var a;
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-unused-vars',
-    message: "'a' is defined but never used.",
-    messageId: 'unusedVar',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 1,
-    column: 36,
-    endLine: 1,
-    endColumn: 37,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-unused-vars > valid
-
-```js
-/*eslint custom/use-every-a:1*/ !function(a) { return 1; }
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-unused-vars',
-    message: "'a' is defined but never used.",
-    messageId: 'unusedVar',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 1,
-    column: 42,
-    endLine: 1,
-    endColumn: 43,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-unused-vars > valid
-
-```js
-/*eslint custom/use-every-a:1*/ !function() { var a; return 1 }
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-unused-vars',
-    message: "'a' is defined but never used.",
-    messageId: 'unusedVar',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 1,
-    column: 50,
-    endLine: 1,
-    endColumn: 51,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
+Fail: 8 / 436 (1.8%)
+Skip: 21 / 436 (4.8%)
 
 #### no-unused-vars > valid
 
@@ -4184,51 +3875,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ]
 
 1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-unused-vars > valid
-
-```js
-/*eslint custom/use-every-a:1*/ !function(b, a) { return 1 }
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 2: [
-  {
-    ruleId: 'rule-to-test/no-unused-vars',
-    message: "'b' is defined but never used.",
-    messageId: 'unusedVar',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 1,
-    column: 42,
-    endLine: 1,
-    endColumn: 43,
-    suggestions: null
-  },
-  {
-    ruleId: 'rule-to-test/no-unused-vars',
-    message: "'a' is defined but never used.",
-    messageId: 'unusedVar',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 1,
-    column: 45,
-    endLine: 1,
-    endColumn: 46,
-    suggestions: null
-  }
-]
-
-2 !== 0
 
     at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
@@ -4438,91 +4084,6 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at apps/oxlint/dist/index.js
 
 
-### `no-useless-assignment`
-
-Pass: 83 / 85 (97.6%)
-Fail: 1 / 85 (1.2%)
-Skip: 1 / 85 (1.2%)
-
-#### no-useless-assignment > valid
-
-```js
-/*eslint test/use-a:1*/
-        let a = 'used';
-        console.log(a);
-        a = 'unused like but marked by markVariableAsUsed()';
-        
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-useless-assignment',
-    message: 'This assigned value is not used in subsequent statements.',
-    messageId: 'unnecessaryAssignment',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 4,
-    column: 8,
-    endLine: 4,
-    endColumn: 9,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `prefer-const`
-
-Pass: 134 / 138 (97.1%)
-Fail: 1 / 138 (0.7%)
-Skip: 3 / 138 (2.2%)
-
-#### prefer-const > invalid
-
-```js
-/*eslint no-undef-init:error*/ let foo = undefined;
-```
-
-```json
-{
-  "output": "/*eslint no-undef-init:error*/ const foo = undefined;",
-  "errors": 2
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/prefer-const',
-    message: "'foo' is never reassigned. Use 'const' instead.",
-    messageId: 'useConst',
-    severity: 1,
-    nodeType: 'Identifier',
-    line: 1,
-    column: 35,
-    endLine: 1,
-    endColumn: 38,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
 ### `prefer-object-spread`
 
 Pass: 84 / 87 (96.6%)
@@ -4561,68 +4122,6 @@ Error: `tokensAndComments` is not correctly ordered
     at initTokensAndComments (apps/oxlint/dist/lint.js)
     at Object.getTokenBefore (apps/oxlint/dist/lint.js)
     at getStartWithSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/prefer-object-spread.js:143:32)
-
-
-### `semi`
-
-Pass: 307 / 308 (99.7%)
-Fail: 1 / 308 (0.3%)
-Skip: 0 / 308 (0.0%)
-
-#### semi > invalid
-
-```js
-/*eslint no-extra-semi: error */
-foo();
-;[0,1,2].forEach(bar)
-```
-
-```json
-{
-  "output": "/*eslint no-extra-semi: error */\nfoo()\n;[0,1,2].forEach(bar)",
-  "options": [
-    "never"
-  ],
-  "errors": [
-    {
-      "messageId": "extraSemi",
-      "line": 2,
-      "column": 6,
-      "endLine": 2,
-      "endColumn": 7
-    },
-    {
-      "message": "Unnecessary semicolon.",
-      "line": 3,
-      "column": 1,
-      "endLine": 3,
-      "endColumn": 2
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 2 errors but had 1: [
-  {
-    ruleId: 'rule-to-test/semi',
-    message: 'Extra semicolon.',
-    messageId: 'extraSemi',
-    severity: 1,
-    nodeType: 'ExpressionStatement',
-    line: 2,
-    column: 5,
-    endLine: 2,
-    endColumn: 6,
-    suggestions: null
-  }
-]
-
-1 !== 2
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
 
 
 ### `strict`

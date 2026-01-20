@@ -86,9 +86,16 @@ export function it(code: string, fn: () => void): void {
       testResult.isSkipped = true;
     }
 
-    // Skip test cases which start with `/* global */`, `/* globals */`, or `/* exported */` comments.
+    // Skip test cases which start with `/* global */`, `/* globals */`, `/* exported */`, or `/* eslint */` comments.
     // Oxlint does not support defining globals inline.
-    if (code.match(/^\s*\/\*\s*(globals?|exported)\s/)) {
+    // `RuleTester` does not support enabling other rules beyond the rule under test.
+    if (code.match(/^\s*\/\*\s*(globals?|exported|eslint)\s/)) {
+      testResult.isSkipped = true;
+    }
+
+    // Skip test cases which include `// eslint-disable` comments.
+    // These are not handled by `RuleTester`.
+    if (code.match(/\/\/\s*eslint-disable((-next)?-line)?\s/)) {
       testResult.isSkipped = true;
     }
 
