@@ -3,7 +3,6 @@
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
-import { TAILWIND_OPTION_MAPPING } from "../../libs/prettier";
 import { Options } from "prettier";
 
 /**
@@ -162,6 +161,15 @@ async function resolvePrettierIgnore(cwd: string) {
 }
 
 // ---
+
+const TAILWIND_OPTION_MAPPING: Record<string, string> = {
+  config: "tailwindConfig",
+  stylesheet: "tailwindStylesheet",
+  functions: "tailwindFunctions",
+  attributes: "tailwindAttributes",
+  preserveWhitespace: "tailwindPreserveWhitespace",
+  preserveDuplicates: "tailwindPreserveDuplicates",
+};
 
 /**
  * Migrate prettier-plugin-tailwindcss options to Oxfmt's experimentalTailwindcss format.

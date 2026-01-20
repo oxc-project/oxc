@@ -66,7 +66,7 @@ export type FormatFileParam = {
   code: string;
   parserName: string;
   fileName: string;
-  options: Options & { experimentalTailwindcss?: TailwindcssOptions };
+  options: Options & { _tailwindPluginEnabled?: boolean };
 };
 
 /**
@@ -88,7 +88,8 @@ export async function formatFile({
   // But some plugins rely on `filepath`, so we set it too
   options.filepath = fileName;
 
-  // Enable Tailwind CSS plugin for non-JS files when experimentalTailwindcss is set
+  // Enable Tailwind CSS plugin for non-JS files
+  // when `options._tailwindPluginEnabled` is set
   await setupTailwindPlugin(options);
 
   return prettier.format(code, options);
@@ -100,7 +101,6 @@ export async function formatFile({
 
 // Import types only to avoid runtime error if plugin is not installed
 import type { TransformerEnv } from "prettier-plugin-tailwindcss";
-import type { TailwindcssOptions } from "../index";
 
 // Shared cache for prettier-plugin-tailwindcss
 let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
@@ -114,52 +114,22 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
 
 // ---
 
-// Oxfmt to Prettier option name mapping (adds `tailwind` prefix)
-export const TAILWIND_OPTION_MAPPING: Record<string, string> = {
-  config: "tailwindConfig",
-  stylesheet: "tailwindStylesheet",
-  functions: "tailwindFunctions",
-  attributes: "tailwindAttributes",
-  preserveWhitespace: "tailwindPreserveWhitespace",
-  preserveDuplicates: "tailwindPreserveDuplicates",
-};
-
 /**
- * Map Oxfmt Tailwind options to Prettier format.
- */
-function mapTailwindOptions(
-  tailwindcss: TailwindcssOptions,
-  target: Record<string, unknown>,
-): void {
-  for (const [oxfmtKey, prettierKey] of Object.entries(TAILWIND_OPTION_MAPPING)) {
-    const value = tailwindcss[oxfmtKey as keyof TailwindcssOptions];
-    if (value !== undefined) {
-      target[prettierKey] = value;
-    }
-  }
-}
-
-// ---
-
-/**
- * Set up Tailwind CSS plugin for Prettier when experimentalTailwindcss is enabled.
- * Loads the plugin lazily and maps Oxfmt config options to Prettier format.
+ * Set up Tailwind CSS plugin for Prettier when _tailwindPluginEnabled is set.
+ * Loads the plugin lazily. Option mapping is done in Rust side.
  */
 async function setupTailwindPlugin(
-  options: Options & { experimentalTailwindcss?: TailwindcssOptions },
+  options: Options & { _tailwindPluginEnabled?: boolean },
 ): Promise<void> {
-  const tailwindcss = options.experimentalTailwindcss;
-  if (!tailwindcss) return;
+  if (!options._tailwindPluginEnabled) return;
 
   const tailwindPlugin = await loadTailwindPlugin();
 
-  // Cast to `any` because the module type is not compatible with Prettier's plugin type
   options.plugins = options.plugins || [];
   options.plugins.push(tailwindPlugin as Plugin);
-  mapTailwindOptions(tailwindcss, options as Record<string, unknown>);
 
-  // Clean up experimentalTailwindcss from options to avoid passing it to Prettier
-  delete options.experimentalTailwindcss;
+  // Clean up internal flag for sure
+  delete options._tailwindPluginEnabled;
 }
 
 // ---
@@ -167,11 +137,12 @@ async function setupTailwindPlugin(
 export interface SortTailwindClassesArgs {
   filepath: string;
   classes: string[];
-  options?: { experimentalTailwindcss?: TailwindcssOptions } & Record<string, unknown>;
+  options?: Record<string, unknown>;
 }
 
 /**
  * Process Tailwind CSS classes found in JSX attributes.
+ * Option mapping (`experimentalTailwindcss.xxx` → `tailwindXxx`) is done in Rust side.
  * @param args - Object containing filepath, classes, and options
  * @returns Array of sorted class strings (same order/length as input)
  */
@@ -182,19 +153,15 @@ export async function sortTailwindClasses({
 }: SortTailwindClassesArgs): Promise<string[]> {
   const tailwindPlugin = await loadTailwindPlugin();
 
-  const tailwindcss = options.experimentalTailwindcss || {};
-  const configOptions: Record<string, unknown> = { filepath, ...options };
-  mapTailwindOptions(tailwindcss, configOptions);
+  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
+  options.filepath = filepath;
 
   // Load Tailwind context
-  const tailwindContext = await tailwindPlugin.getTailwindConfig(configOptions);
-  if (!tailwindContext) return classes;
+  const context = await tailwindPlugin.getTailwindConfig(options);
+  if (!context) return classes;
 
   // Create transformer env with options
-  const env: TransformerEnv = {
-    context: tailwindContext,
-    options: configOptions,
-  };
+  const env: TransformerEnv = { context, options };
 
   // Sort all classes
   return classes.map((classStr) => {

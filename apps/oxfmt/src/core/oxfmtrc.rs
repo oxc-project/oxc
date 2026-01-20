@@ -1064,9 +1064,28 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
     obj.remove("experimentalSortImports");
     obj.remove("experimentalSortPackageJson");
 
-    // TODO: Currently, `experimentalTailwindcss` is not removed here.
-    // Instead, they are mapped directly to Prettier's options in JS side.
-    // But in theory, we can also remove and remap them here.
+    // Map `experimentalTailwindcss` options to Prettier's tailwind plugin format,
+    // by adding `tailwind` prefix to each field.
+    // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
+    if let Some(tailwind) = obj.remove("experimentalTailwindcss")
+        && let Some(tailwind) = tailwind.as_object()
+    {
+        // NOTE: Internal flag for JS side to signal that plugin is enabled
+        obj.insert("_tailwindPluginEnabled".to_string(), Value::Bool(true));
+
+        for (src, dst) in [
+            ("config", "tailwindConfig"),
+            ("stylesheet", "tailwindStylesheet"),
+            ("functions", "tailwindFunctions"),
+            ("attributes", "tailwindAttributes"),
+            ("preserveWhitespace", "tailwindPreserveWhitespace"),
+            ("preserveDuplicates", "tailwindPreserveDuplicates"),
+        ] {
+            if let Some(v) = tailwind.get(src) {
+                obj.insert(dst.to_string(), v.clone());
+            }
+        }
+    }
 
     // Any other fields are preserved as-is.
     // - e.g. `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
