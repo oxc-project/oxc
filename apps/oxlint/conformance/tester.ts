@@ -19,8 +19,20 @@ import type { RuleTester as OxlintRuleTesterTypes } from "#oxlint";
 type ValidTestCase = OxlintRuleTesterTypes.ValidTestCase;
 type InvalidTestCase = OxlintRuleTesterTypes.InvalidTestCase;
 
-type ValidTestCaseWithoutCode = Omit<ValidTestCase, "code"> & { code?: string };
-type InvalidTestCaseWithoutCode = Omit<InvalidTestCase, "code"> & { code?: string };
+type ExtraCaseProps = {
+  code?: string;
+  languageOptions?: {
+    parserOptions?: {
+      ecmaFeatures?: {
+        globalReturn?: boolean;
+        impliedStrict?: boolean;
+      };
+    };
+  };
+};
+
+type ValidTestCaseWithoutCode = Omit<ValidTestCase, "code"> & ExtraCaseProps;
+type InvalidTestCaseWithoutCode = Omit<InvalidTestCase, "code"> & ExtraCaseProps;
 type TestCaseWithoutCode = ValidTestCaseWithoutCode | InvalidTestCaseWithoutCode;
 
 // Reset `describe` + `it` to simple pass-through functions.

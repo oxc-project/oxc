@@ -110,6 +110,15 @@ const analyzeOptions: AnalyzeOptions = {
   emitDecoratorMetadata: false,
 };
 
+// In conformance build, setting these properties to `true` or `false` overrides the defaults
+export const analyzeOptionsOverride: {
+  globalReturn: boolean | null;
+  impliedStrict: boolean | null;
+} = {
+  globalReturn: null,
+  impliedStrict: null,
+};
+
 /**
  * Initialize TS-ESLint `ScopeManager` for current file.
  */
@@ -121,6 +130,13 @@ function initTsScopeManager() {
   analyzeOptions.sourceType = sourceType;
   analyzeOptions.globalReturn = sourceType === "commonjs";
   analyzeOptions.impliedStrict = sourceType === "module";
+
+  // Override `globalReturn` and `impliedStrict` if in conformance build
+  if (CONFORMANCE) {
+    const { globalReturn, impliedStrict } = analyzeOptionsOverride;
+    if (globalReturn !== null) analyzeOptions.globalReturn = globalReturn;
+    if (impliedStrict !== null) analyzeOptions.impliedStrict = impliedStrict;
+  }
 
   // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);

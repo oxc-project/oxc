@@ -16,6 +16,7 @@ import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
 import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
+import { analyzeOptionsOverride } from "../plugins/scope.ts";
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
@@ -195,6 +196,23 @@ interface EcmaFeatures {
    * `parserOptions.lang` takes priority over this option, if `lang` is specified.
    */
   jsx?: boolean;
+}
+
+/**
+ * ECMA features config, with `globalReturn` and `impliedStrict` properties.
+ * These properties should not be present in `ecmaFeatures` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+interface EcmaFeaturesInternal extends EcmaFeatures {
+  /**
+   * `true` if file is parsed with top-level `return` statements allowed.
+   */
+  globalReturn?: boolean;
+  /**
+   * `true` if file is parsed as strict mode code.
+   */
+  impliedStrict?: boolean;
 }
 
 /**
@@ -980,7 +998,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
     // In conformance tests, set `context.languageOptions.ecmaVersion`.
     // This is not supported outside of conformance tests.
-    if (CONFORMANCE) setEcmaVersionContext(test);
+    if (CONFORMANCE) setEcmaVersionAndFeatures(test);
 
     // Get globals and settings
     const globalsJSON: string = getGlobalsJson(test);
@@ -1208,14 +1226,19 @@ function setupOptions(test: TestCase): number {
 }
 
 /**
- * Inject `context.languageOptions.ecmaVersion` into `context.languageOptions`.
+ * Inject:
+ * - `languageOptions.ecmaVersion` into `context.languageOptions`.
+ * - `languageOptions.parserOptions.ecmaFeatures.globalReturn` into scope analyzer options.
+ * - `languageOptions.parserOptions.ecmaFeatures.impliedStrict` into scope analyzer options.
+ *
  * This is only supported in conformance tests, where it's necessary to pass some tests.
- * Oxlint doesn't support any version except latest.
+ * Oxlint doesn't support any ECMA version except latest, or the `globalReturn` or `impliedStrict` ECMA features.
  * @param test - Test case
  */
-function setEcmaVersionContext(test: TestCase) {
+function setEcmaVersionAndFeatures(test: TestCase) {
   if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
 
+  // Set `ecmaVersion`.
   // Same logic as ESLint's `normalizeEcmaVersionForLanguageOptions` function.
   // https://github.com/eslint/eslint/blob/54bf0a3646265060f5f22faef71ec840d630c701/lib/languages/js/index.js#L71-L100
   // Only difference is that we default to `ECMA_VERSION` not `5` if `ecmaVersion` is undefined.
@@ -1228,8 +1251,14 @@ function setEcmaVersionContext(test: TestCase) {
   if (typeof ecmaVersion === "number") {
     version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
   }
-
   setEcmaVersion(version);
+
+  // Set `globalReturn` and `impliedStrict` in scope analyzer options
+  const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures as
+    | EcmaFeaturesInternal
+    | undefined;
+  analyzeOptionsOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
+  analyzeOptionsOverride.impliedStrict = ecmaFeatures?.impliedStrict ?? null;
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)
