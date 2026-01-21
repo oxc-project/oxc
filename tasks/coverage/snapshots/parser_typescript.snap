@@ -16683,7 +16683,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·           ──────────
  2 │ const b = () => new.target;
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:2:17]
@@ -16692,7 +16692,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                 ──────────
  3 │ 
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:5:6]
@@ -16701,16 +16701,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·      ──────────
  6 │     c() { return new.target; }
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:9:15]
-  8 │     set e(_) { _ = new.target; }
-  9 │     f = () => new.target;
-    ·               ──────────
- 10 │ 
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:11:13]
@@ -16719,16 +16710,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·             ──────────
  12 │     static g() { return new.target; }
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:15:22]
- 14 │     static set i(_) { _ = new.target; }
- 15 │     static j = () => new.target;
-    ·                      ──────────
- 16 │ }
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:19:6]
@@ -16737,7 +16719,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·      ──────────
  20 │     k() { return new.target; },
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:23:8]
@@ -16746,7 +16728,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·        ──────────
  24 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:1:11]
@@ -16754,7 +16736,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·           ──────────
  2 │ const b = () => new.target;
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:2:17]
@@ -16763,7 +16745,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                 ──────────
  3 │ 
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:5:6]
@@ -16772,16 +16754,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·      ──────────
  6 │     c() { return new.target; }
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:9:15]
-  8 │     set e(_) { _ = new.target; }
-  9 │     f = () => new.target;
-    ·               ──────────
- 10 │ 
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:11:13]
@@ -16790,16 +16763,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·             ──────────
  12 │     static g() { return new.target; }
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:15:22]
- 14 │     static set i(_) { _ = new.target; }
- 15 │     static j = () => new.target;
-    ·                      ──────────
- 16 │ }
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:19:6]
@@ -16808,7 +16772,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·      ──────────
  20 │     k() { return new.target; },
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:23:8]
@@ -16817,7 +16781,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·        ──────────
  24 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Expected `:` but found `,`
    ╭─[typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorFromNotUsingIdentifier.ts:3:20]

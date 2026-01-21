@@ -121,7 +121,9 @@ pub fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
 #[cold]
 pub fn new_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected new.target expression")
-        .with_help("new.target is only allowed in constructors and functions invoked using the `new` operator")
+        .with_help(
+            "new.target is only allowed in constructors, functions, and class field initializers",
+        )
         .with_label(span)
 }
 

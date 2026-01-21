@@ -20523,7 +20523,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·   ──────────
  38 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[test262/test/language/global-code/new.target.js:21:1]
@@ -20531,7 +20531,7 @@ Negative Passed: 4581/4581 (100.00%)
  21 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[test262/test/language/global-code/return.js:23:1]
@@ -24730,7 +24730,7 @@ Negative Passed: 4581/4581 (100.00%)
  16 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/module-code/early-strict-mode.js:15:5]

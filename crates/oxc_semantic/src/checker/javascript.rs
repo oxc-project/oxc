@@ -512,19 +512,50 @@ pub fn check_meta_property(prop: &MetaProperty, ctx: &SemanticBuilder<'_>) {
                 if ctx.source_type.is_commonjs() {
                     return;
                 }
-                let mut in_function_scope = false;
-                for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
-                    let flags = ctx.scoping.scope_flags(scope_id);
-                    // In arrow functions, new.target is inherited from the surrounding scope.
-                    if flags.contains(ScopeFlags::Arrow) {
-                        continue;
-                    }
-                    if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
-                        in_function_scope = true;
-                        break;
+
+                // Check if we're in a valid context for new.target:
+                // 1. Inside a function (including constructor)
+                // 2. Inside a class static block
+                // 3. Inside a class field initializer (new.target evaluates to undefined)
+                //
+                // Arrow functions inherit new.target from their surrounding scope,
+                // so we skip them and continue checking the enclosing context.
+
+                let mut in_valid_context = false;
+
+                // First, check AST ancestors for class field initializers.
+                // We need to do this because class fields don't have their own scope.
+                for node_kind in ctx.nodes.ancestor_kinds(ctx.current_node_id) {
+                    match node_kind {
+                        // Regular functions have their own new.target binding.
+                        // Use scope-based check from here.
+                        AstKind::Function(_) => break,
+                        // Class field initializers allow new.target (evaluates to undefined).
+                        // This includes arrow functions nested inside the initializer.
+                        AstKind::PropertyDefinition(_) | AstKind::AccessorProperty(_) => {
+                            in_valid_context = true;
+                            break;
+                        }
+                        _ => {}
                     }
                 }
-                if !in_function_scope {
+
+                // If not in a class field, fall back to scope-based check
+                if !in_valid_context {
+                    for scope_id in ctx.scoping.scope_ancestors(ctx.current_scope_id) {
+                        let flags = ctx.scoping.scope_flags(scope_id);
+                        // In arrow functions, new.target is inherited from the surrounding scope.
+                        if flags.contains(ScopeFlags::Arrow) {
+                            continue;
+                        }
+                        if flags.intersects(ScopeFlags::Function | ScopeFlags::ClassStaticBlock) {
+                            in_valid_context = true;
+                            break;
+                        }
+                    }
+                }
+
+                if !in_valid_context {
                     ctx.error(diagnostics::new_target(prop.span));
                 }
             }
