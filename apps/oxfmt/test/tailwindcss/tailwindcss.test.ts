@@ -2,7 +2,9 @@ import { format } from "../../dist/index.js";
 import { describe, expect, test } from "vitest";
 
 describe("Tailwind CSS Sorting", () => {
-  test("should sort Tailwind classes when experimentalTailwindcss is enabled", async () => {
+  // First test triggers Tailwind CSS initialization which is slow on Windows CI
+  // https://github.com/oxc-project/oxc/issues/18072
+  test("should sort Tailwind classes when experimentalTailwindcss is enabled", { timeout: 30_000 }, async () => {
     // Unsorted: p-4 comes before flex
     const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
 
