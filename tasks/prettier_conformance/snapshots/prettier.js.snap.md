@@ -1,4 +1,4 @@
-js compatibility: 737/754 (97.75%)
+js compatibility: 738/754 (97.88%)
 
 # Failed
 
@@ -11,8 +11,7 @@ js compatibility: 737/754 (97.75%)
 | js/comments/return-statement.js | 💥💥 | 98.85% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 80.00% |
 | js/for/9812-unstable.js | 💥 | 63.64% |
-| js/for/for-in-with-initializer.js | 💥 | 37.50% |
-| js/for/parentheses.js | 💥 | 97.96% |
+| js/for/for-in-with-initializer.js | 💥 | 31.25% |
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
