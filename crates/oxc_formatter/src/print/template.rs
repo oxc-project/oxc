@@ -29,6 +29,11 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        // Angular `@Component({ template, styles })`
+        if try_format_angular_component(self, f) {
+            return;
+        }
+        // styled-jsx: <style jsx>{`...`}</style> or <div css={`...`} />
         if try_format_css_template(self, f) {
             return;
         }
@@ -879,4 +884,79 @@ fn try_format_css_template<'a>(
     let template_content = quasi[0].value.raw.as_str();
 
     format_embedded_template(f, "styled-jsx", template_content)
+}
+
+/// Try to format a template literal inside Angular @Component's template/styles property.
+/// Returns `true` if formatting was performed, `false` if not applicable.
+fn try_format_angular_component<'a>(
+    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    // TODO: Support expressions in the template
+    if !template_literal.is_no_substitution_template() {
+        return false;
+    }
+
+    // Check if inside `@Component` decorator's `template/styles` property
+    let Some(language) = get_angular_component_language(template_literal) else {
+        return false;
+    };
+
+    let quasi = template_literal.quasis();
+    let template_content = quasi[0].value.raw.as_str();
+
+    format_embedded_template(f, language, template_content)
+}
+
+/// Check if this template literal is one of:
+/// ```ts
+/// @Component({
+///   template: `...`,
+///   styles: `...`,
+///   // or styles: [`...`]
+/// })
+/// ```
+fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Option<&'static str> {
+    let prop = match node.parent {
+        AstNodes::ObjectProperty(prop) => prop,
+        AstNodes::ArrayExpression(arr) => {
+            let AstNodes::ObjectProperty(prop) = arr.parent else {
+                return None;
+            };
+            prop
+        }
+        _ => return None,
+    };
+
+    // Skip computed properties
+    if prop.computed {
+        return None;
+    }
+    let PropertyKey::StaticIdentifier(key) = &prop.key else {
+        return None;
+    };
+
+    // Check parent chain: ObjectExpression -> CallExpression(Component) -> Decorator
+    let AstNodes::ObjectExpression(obj) = prop.parent else {
+        return None;
+    };
+    let AstNodes::CallExpression(call) = obj.parent else {
+        return None;
+    };
+    let Expression::Identifier(ident) = &call.callee else {
+        return None;
+    };
+    if ident.name.as_str() != "Component" {
+        return None;
+    }
+    if !matches!(call.parent, AstNodes::Decorator(_)) {
+        return None;
+    }
+
+    let language = match key.name.as_str() {
+        "template" => "angular-template",
+        "styles" => "angular-styles",
+        _ => return None,
+    };
+    Some(language)
 }

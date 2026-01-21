@@ -207,6 +207,8 @@ fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
         "tagged-graphql" => Some("graphql"),
         "tagged-html" => Some("html"),
         "tagged-markdown" => Some("markdown"),
+        "angular-template" => Some("angular"),
+        "angular-styles" => Some("scss"),
         _ => None,
     }
 }
