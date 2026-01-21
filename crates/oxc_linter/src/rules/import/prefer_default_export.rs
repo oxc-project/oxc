@@ -29,7 +29,7 @@ enum Target {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferDefaultExport {
     /// Configuration option to specify the target type for preferring default exports.
     /// - `"single"`: Prefer default export when there is only one export in the module.
@@ -79,9 +79,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferDefaultExport {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {

@@ -32,7 +32,7 @@ fn reject(span: Span, preferred: &str) -> OxcDiagnostic {
 pub struct NoUselessPromiseResolveReject(Box<NoUselessPromiseResolveRejectOptions>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUselessPromiseResolveRejectOptions {
     /// If set to `true`, allows the use of `Promise.reject` in async functions and promise callbacks.
     pub allow_reject: bool,
@@ -67,9 +67,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessPromiseResolveReject {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
