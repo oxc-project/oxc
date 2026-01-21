@@ -2,7 +2,7 @@
  * `describe` and `it` functions for capturing test results.
  */
 
-import type { TestCase } from "./rule_tester.ts";
+import type { TestCase, LanguageOptionsInternal } from "./rule_tester.ts";
 
 /**
  * Result of running all tests in a rule file.
@@ -138,6 +138,46 @@ function shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Err
   // Skip test cases which include `// eslint-disable` comments.
   // These are not handled by `RuleTester`.
   if (code.match(/\/\/\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
+
+  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+
+  // Tests rely on directives being parsed as plain `StringLiteral`s in ES3.
+  // Oxc parser does not support parsing as ES3.
+  if (
+    (ruleName === "no-eval" ||
+      ruleName === "no-invalid-this" ||
+      ruleName === "no-unused-expressions") &&
+    languageOptions?.ecmaVersion === 3
+  ) {
+    return true;
+  }
+
+  // Test relies on scope analysis to follow ES5 semantics where function declarations in blocks are bound in parent scope.
+  // TS-ESLint scope manager does not support ES5. Oxc also doesn't support parsing/semantic as ES5.
+  if (
+    ruleName === "no-use-before-define" &&
+    code === '"use strict"; a(); { function a() {} }' &&
+    languageOptions?.ecmaVersion === 5
+  ) {
+    return true;
+  }
+
+  // Code contains unrecoverable syntax error - `function (x, this: context) {}`
+  if (
+    ruleName === "no-invalid-this" &&
+    code.includes("function (x, this: context) {") &&
+    err?.message === "Parsing failed"
+  ) {
+    return true;
+  }
+
+  // TypeScript parser incorrectly tokenizes `let` as a `Keyword` instead of an `Identifier` token
+  if (
+    ruleName === "no-extra-parens" &&
+    ["(let[a] = b);", "(let)\nfoo", "(let[foo]) = 1", "(let)[foo]"].includes(code)
+  ) {
+    return true;
+  }
 
   return false;
 }
