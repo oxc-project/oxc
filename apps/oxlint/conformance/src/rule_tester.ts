@@ -11,29 +11,18 @@ import { ESLINT_RULES_TESTS_DIR_PATH } from "./run.ts";
 import { FILTER_ONLY_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
+import type { LanguageOptionsInternal } from "../../src-js/package/rule_tester.ts";
+export type { LanguageOptionsInternal };
 
 type DescribeFn = RuleTester.DescribeFn;
 type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
 type ValidTestCase = RuleTester.ValidTestCase;
 type InvalidTestCase = RuleTester.InvalidTestCase;
-type LanguageOptions = RuleTester.LanguageOptions;
 type Globals = RuleTester.Globals;
 export type TestCase = ValidTestCase | InvalidTestCase;
 
 const { isArray } = Array;
-
-/**
- * Language options config, with `parser` and `ecmaVersion` properties.
- * This is a copy of `RuleTester`'s internal type of the same name.
- */
-interface LanguageOptionsInternal extends LanguageOptions {
-  ecmaVersion?: number | "latest";
-  parser?: {
-    parse?: (code: string, options?: Record<string, unknown>) => unknown;
-    parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
-  };
-}
 
 // Get `@typescript-eslint/parser` module.
 // Load the instance which would be loaded by files in ESLint's `tests/lib/rules` directory.

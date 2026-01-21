@@ -15,25 +15,18 @@ import { builtinRules } from "./submodules/eslint/lib/unsupported-api.js";
 
 import type { Rule } from "#oxlint";
 import type { RuleTester as OxlintRuleTesterTypes } from "#oxlint";
+import type { LanguageOptionsInternal } from "./src/rule_tester.ts";
 
 type ValidTestCase = OxlintRuleTesterTypes.ValidTestCase;
 type InvalidTestCase = OxlintRuleTesterTypes.InvalidTestCase;
 
-type ExtraCaseProps = {
+interface TestCaseExtension {
   code?: string;
-  languageOptions?: {
-    ecmaVersion?: number | "latest";
-    parserOptions?: {
-      ecmaFeatures?: {
-        globalReturn?: boolean;
-        impliedStrict?: boolean;
-      };
-    };
-  };
-};
+  languageOptions?: LanguageOptionsInternal;
+}
 
-type ValidTestCaseWithoutCode = Omit<ValidTestCase, "code"> & ExtraCaseProps;
-type InvalidTestCaseWithoutCode = Omit<InvalidTestCase, "code"> & ExtraCaseProps;
+type ValidTestCaseWithoutCode = Omit<ValidTestCase, "code"> & TestCaseExtension;
+type InvalidTestCaseWithoutCode = Omit<InvalidTestCase, "code"> & TestCaseExtension;
 type TestCaseWithoutCode = ValidTestCaseWithoutCode | InvalidTestCaseWithoutCode;
 
 // Reset `describe` + `it` to simple pass-through functions.

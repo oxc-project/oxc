@@ -124,17 +124,18 @@ interface LanguageOptions {
 }
 
 /**
- * Language options config, with `parser` and `ecmaVersion` properties.
+ * Language options config, with `parser` and `ecmaVersion` properties, and extended `parserOptions`.
  * These properties should not be present in `languageOptions` config,
  * but could be if test cases are ported from ESLint.
  * For internal use only.
  */
-interface LanguageOptionsInternal extends LanguageOptions {
+export interface LanguageOptionsInternal extends LanguageOptions {
   ecmaVersion?: number | "latest";
   parser?: {
     parse?: (code: string, options?: Record<string, unknown>) => unknown;
     parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
   };
+  parserOptions?: ParserOptionsInternal;
 }
 
 /**
@@ -183,6 +184,16 @@ interface ParserOptions {
    * `true` to ignore non-fatal parsing errors.
    */
   ignoreNonFatalErrors?: boolean;
+}
+
+/**
+ * Parser options config, with extended `ecmaFeatures`.
+ * These properties should not be present in `languageOptions` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+interface ParserOptionsInternal extends ParserOptions {
+  ecmaFeatures?: EcmaFeaturesInternal;
 }
 
 /**
@@ -1253,9 +1264,7 @@ function setEcmaVersionAndFeatures(test: TestCase) {
   setEcmaVersion(version);
 
   // Set `globalReturn` and `impliedStrict` in scope analyzer options
-  const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures as
-    | EcmaFeaturesInternal
-    | undefined;
+  const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures;
   ecmaFeaturesOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
   ecmaFeaturesOverride.impliedStrict = ecmaFeatures?.impliedStrict ?? null;
 }
