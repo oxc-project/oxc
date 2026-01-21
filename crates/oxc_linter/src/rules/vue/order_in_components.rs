@@ -1342,6 +1342,286 @@ export default {
 ",
             None,
         ),
+        // defineComponent wrapper
+        (
+            "
+import { defineComponent } from 'vue'
+export default defineComponent({
+  name: 'app',
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+  props: {
+    propA: Number,
+  },
+})
+",
+            "
+import { defineComponent } from 'vue'
+export default defineComponent({
+  name: 'app',
+  props: {
+    propA: Number,
+  },
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+})
+",
+            None,
+        ),
+        // defineNuxtComponent wrapper
+        (
+            "
+import { defineNuxtComponent } from '#app'
+export default defineNuxtComponent({
+  name: 'app',
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+  props: {
+    propA: Number,
+  },
+})
+",
+            "
+import { defineNuxtComponent } from '#app'
+export default defineNuxtComponent({
+  name: 'app',
+  props: {
+    propA: Number,
+  },
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+})
+",
+            None,
+        ),
+        // app.component registration
+        (
+            "
+app.component('smart-list', {
+  name: 'app',
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+  components: {},
+  template: '<div></div>'
+})
+",
+            "
+app.component('smart-list', {
+  name: 'app',
+  components: {},
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+  template: '<div></div>'
+})
+",
+            None,
+        ),
+        // destructured component
+        (
+            "
+const { component } = Vue;
+component('smart-list', {
+  name: 'app',
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+  components: {},
+  template: '<div></div>'
+})
+",
+            "
+const { component } = Vue;
+component('smart-list', {
+  name: 'app',
+  components: {},
+  data () {
+    return {
+      msg: 'Welcome to Your Vue.js App'
+    }
+  },
+  template: '<div></div>'
+})
+",
+            None,
+        ),
+        // custom order option
+        (
+            "
+export default {
+  data() {
+  },
+  name: 'burger',
+  test: 'ok'
+};
+",
+            "
+export default {
+  data() {
+  },
+  test: 'ok',
+  name: 'burger'
+};
+",
+            Some(serde_json::json!([{ "order": ["data", "test", "name"] }])),
+        ),
+        // comment preservation
+        (
+            "
+export default {
+  /** data provider */
+  data() {
+  },
+  /** name of vue component */
+  name: 'burger'
+};
+",
+            "
+export default {
+  /** name of vue component */
+  name: 'burger',
+  /** data provider */
+  data() {
+  }
+};
+",
+            None,
+        ),
+        // comment preservation with inline comment
+        (
+            "
+export default {
+  /** data provider */
+  data() {
+  }/*test*/,
+  /** name of vue component */
+  name: 'burger'
+};
+",
+            "
+export default {
+  /** name of vue component */
+  name: 'burger',
+  /** data provider */
+  data() {
+  }/*test*/
+};
+",
+            None,
+        ),
+        // without side-effects fn()
+        (
+            "
+export default {
+  data() {
+  },
+  name: 'burger',
+  test: fn(),
+};
+",
+            "
+export default {
+  name: 'burger',
+  data() {
+  },
+  test: fn(),
+};
+",
+            None,
+        ),
+        // don't side-effects - complex values
+        (
+            "
+export default {
+  data() {
+  },
+  testArray: [1, 2, 3, true, false, 'a', 'b', 'c'],
+  testRegExp: /[a-z]*/,
+  testSpreadElement: [...array],
+  testOperator: (!!(a - b + c * d / e % f)) || (a && b),
+  testArrow: (a) => a,
+  testConditional: a ? b : c,
+  testYield: function* () {},
+  testTemplate: `a:${a},b:${b},c:${c}.`,
+  testNullish: a ?? b,
+  testOptionalChaining: a?.b?.c,
+  name: 'burger',
+};
+",
+            "
+export default {
+  name: 'burger',
+  data() {
+  },
+  testArray: [1, 2, 3, true, false, 'a', 'b', 'c'],
+  testRegExp: /[a-z]*/,
+  testSpreadElement: [...array],
+  testOperator: (!!(a - b + c * d / e % f)) || (a && b),
+  testArrow: (a) => a,
+  testConditional: a ? b : c,
+  testYield: function* () {},
+  testTemplate: `a:${a},b:${b},c:${c}.`,
+  testNullish: a ?? b,
+  testOptionalChaining: a?.b?.c,
+};
+",
+            None,
+        ),
+        // slots/setup/expose ordering 1
+        (
+            "
+export default {
+  setup,
+  slots,
+  expose,
+};
+",
+            "
+export default {
+  slots,
+  setup,
+  expose,
+};
+",
+            None,
+        ),
+        // slots/setup/expose ordering 2
+        (
+            "
+export default {
+  slots,
+  setup,
+  expose,
+};
+",
+            "
+export default {
+  slots,
+  expose,
+  setup,
+};
+",
+            None,
+        ),
     ];
 
     Tester::new(OrderInComponents::NAME, OrderInComponents::PLUGIN, pass, fail)
