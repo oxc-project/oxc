@@ -171,14 +171,6 @@ function shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Err
     return true;
   }
 
-  // TypeScript parser incorrectly tokenizes `let` as a `Keyword` instead of an `Identifier` token
-  if (
-    ruleName === "no-extra-parens" &&
-    ["(let[a] = b);", "(let)\nfoo", "(let[foo]) = 1", "(let)[foo]"].includes(code)
-  ) {
-    return true;
-  }
-
   return false;
 }
 

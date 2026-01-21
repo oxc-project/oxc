@@ -18,9 +18,9 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
-| Passing     | 32799 |  99.1% |
+| Passing     | 32803 |  99.1% |
 | Failing     |     6 |   0.0% |
-| Skipped     |   285 |   0.9% |
+| Skipped     |   281 |   0.8% |
 
 ## Fully Passing Rules
 
@@ -142,7 +142,7 @@
 - `no-extra-bind` (43 tests)
 - `no-extra-boolean-cast` (501 tests) (1 skipped)
 - `no-extra-label` (34 tests)
-- `no-extra-parens` (1072 tests) (5 skipped)
+- `no-extra-parens` (1072 tests) (1 skipped)
 - `no-extra-semi` (53 tests)
 - `no-fallthrough` (87 tests) (1 skipped)
 - `no-floating-decimal` (8 tests)
