@@ -268,14 +268,22 @@ function addGlobals(): void {
  * @param isWritable - `true` if the variable is writable, `false` otherwise
  */
 function createGlobalVariable(name: string, globalScope: TSScope, isWritable: boolean): void {
+  const implicitGlobalSetting = isWritable ? "writable" : "readonly";
+
   // If var already exists in the scope (from code declarations or previous envs), don't create a new one.
   // TS-ESLint's scope manager doesn't resolve references in the global scope for `sourceType: "script"`,
   // so we mustn't overwrite local `var` declarations with globals of the same name.
-  // But set `writeable` on the existing variable to indicate whether the global is writable or read-only.
+  // But set properties on the existing variable to indicate it's a configured global.
   let variable = globalScope.set.get(name);
   if (variable !== undefined) {
     // @ts-expect-error - not present in types
     variable.writeable = isWritable;
+    // @ts-expect-error - not present in types
+    variable.eslintImplicitGlobalSetting = implicitGlobalSetting;
+    // @ts-expect-error - not present in types
+    variable.eslintExplicitGlobal = false;
+    // @ts-expect-error - not present in types
+    variable.eslintExplicitGlobalComments = undefined;
     return;
   }
 
@@ -285,6 +293,12 @@ function createGlobalVariable(name: string, globalScope: TSScope, isWritable: bo
   debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
   // @ts-expect-error - not present in types
   variable.writeable = isWritable;
+  // @ts-expect-error - not present in types
+  variable.eslintImplicitGlobalSetting = implicitGlobalSetting;
+  // @ts-expect-error - not present in types
+  variable.eslintExplicitGlobal = false;
+  // @ts-expect-error - not present in types
+  variable.eslintExplicitGlobalComments = undefined;
 
   globalScope.set.set(name, variable);
   globalScope.variables.push(variable);
