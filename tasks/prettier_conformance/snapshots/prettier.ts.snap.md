@@ -1,4 +1,4 @@
-ts compatibility: 583/600 (97.17%)
+ts compatibility: 584/600 (97.33%)
 
 # Failed
 
@@ -9,7 +9,6 @@ ts compatibility: 583/600 (97.17%)
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
-| typescript/class/quoted-property.ts | 💥 | 66.67% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
 | typescript/decorators-ts/angular.ts | 💥 | 87.50% |

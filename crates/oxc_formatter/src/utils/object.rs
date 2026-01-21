@@ -13,9 +13,12 @@ use crate::{
 
 pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
     if let PropertyKey::StringLiteral(s) = key.as_ref() {
-        // `"constructor"` property in the class should be kept quoted
+        // In TypeScript, quoted property names are treated differently than unquoted ones
+        // under `--strictPropertyInitialization`. See https://github.com/microsoft/TypeScript/pull/20075
+        // Also, `"constructor"` property in the class should always be kept quoted.
         let kind = if matches!(key.parent, AstNodes::PropertyDefinition(_))
-            && matches!(key.as_ref(), PropertyKey::StringLiteral(string) if string.value == "constructor")
+            && (f.context().source_type().is_typescript()
+                || matches!(key.as_ref(), PropertyKey::StringLiteral(string) if string.value == "constructor"))
         {
             StringLiteralParentKind::Expression
         } else {
