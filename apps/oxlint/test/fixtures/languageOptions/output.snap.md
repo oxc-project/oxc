@@ -6,7 +6,7 @@
   x language-options-plugin(lang): languageOptions:
   | sourceType: commonjs
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"commonjs"}
+  | parserOptions: {"sourceType":"commonjs","ecmaFeatures":{"globalReturn":true,"impliedStrict":false}}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.cjs:1:1]
@@ -794,7 +794,7 @@
   x language-options-plugin(lang): languageOptions:
   | sourceType: script
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"script"}
+  | parserOptions: {"sourceType":"script","ecmaFeatures":{"globalReturn":false,"impliedStrict":false}}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.js:1:1]
@@ -805,7 +805,7 @@
   x language-options-plugin(lang): languageOptions:
   | sourceType: module
   | ecmaVersion: 2026
-  | parserOptions: {"sourceType":"module"}
+  | parserOptions: {"sourceType":"module","ecmaFeatures":{"globalReturn":false,"impliedStrict":true}}
   | globals: {}
   | env: {"builtin":true}
    ,-[files/index.mjs:1:1]

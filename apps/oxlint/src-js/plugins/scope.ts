@@ -3,6 +3,7 @@
  */
 
 import { analyze, Variable as TSVariable } from "@typescript-eslint/scope-manager";
+import { ecmaFeaturesOverride } from "./context.ts";
 import { ast, initAst } from "./source_code.ts";
 import { globals, envs, initGlobals } from "./globals.ts";
 import { ENVS } from "../generated/envs.ts";
@@ -110,15 +111,6 @@ const analyzeOptions: AnalyzeOptions = {
   emitDecoratorMetadata: false,
 };
 
-// In conformance build, setting these properties to `true` or `false` overrides the defaults
-export const analyzeOptionsOverride: {
-  globalReturn: boolean | null;
-  impliedStrict: boolean | null;
-} = {
-  globalReturn: null,
-  impliedStrict: null,
-};
-
 /**
  * Initialize TS-ESLint `ScopeManager` for current file.
  */
@@ -133,7 +125,7 @@ function initTsScopeManager() {
 
   // Override `globalReturn` and `impliedStrict` if in conformance build
   if (CONFORMANCE) {
-    const { globalReturn, impliedStrict } = analyzeOptionsOverride;
+    const { globalReturn, impliedStrict } = ecmaFeaturesOverride;
     if (globalReturn !== null) analyzeOptions.globalReturn = globalReturn;
     if (impliedStrict !== null) analyzeOptions.impliedStrict = impliedStrict;
   }

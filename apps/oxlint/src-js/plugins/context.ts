@@ -132,8 +132,57 @@ const PARSER = Object.freeze({
   supportedEcmaVersions: SUPPORTED_ECMA_VERSIONS,
 });
 
+// In conformance build, setting properties of this object to `true` or `false` overrides the defaults
+export const ecmaFeaturesOverride: {
+  globalReturn: boolean | null;
+  impliedStrict: boolean | null;
+} = {
+  globalReturn: null,
+  impliedStrict: null,
+};
+
+// Singleton object for ECMA features.
+const ECMA_FEATURES = Object.freeze({
+  /**
+   * `true` if file was parsed with top-level `return` statements allowed.
+   */
+  get globalReturn(): boolean {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    // In conformance build, allow overriding from `languageOptions.parserOptions.ecmaFeatures.globalReturn` config
+    if (CONFORMANCE) {
+      const { globalReturn } = ecmaFeaturesOverride;
+      if (globalReturn !== null) return globalReturn;
+    }
+
+    return ast.sourceType === "commonjs";
+  },
+
+  /**
+   * `true` if file was parsed as strict mode code.
+   */
+  get impliedStrict(): boolean {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    // In conformance build, allow overriding from `languageOptions.parserOptions.ecmaFeatures.impliedStrict` config
+    if (CONFORMANCE) {
+      const { impliedStrict } = ecmaFeaturesOverride;
+      if (impliedStrict !== null) return impliedStrict;
+    }
+
+    return ast.sourceType === "module";
+  },
+});
+
 // Singleton object for parser options.
-// TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
+// TODO: `sourceType` and `ecmaFeatures` are the only property ESLint provides.
+// But does TS-ESLint provide any further properties?
 const PARSER_OPTIONS = Object.freeze({
   /**
    * Source type of the file being linted.
@@ -146,6 +195,11 @@ const PARSER_OPTIONS = Object.freeze({
 
     return ast.sourceType;
   },
+
+  /**
+   * ECMA features.
+   */
+  ecmaFeatures: ECMA_FEATURES,
 });
 
 // Singleton object for language options.

@@ -10,13 +10,12 @@
 import { default as assert, AssertionError } from "node:assert";
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
-import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
+import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
 import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
-import { analyzeOptionsOverride } from "../plugins/scope.ts";
 import { parse } from "./parse.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
@@ -1257,8 +1256,8 @@ function setEcmaVersionAndFeatures(test: TestCase) {
   const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures as
     | EcmaFeaturesInternal
     | undefined;
-  analyzeOptionsOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
-  analyzeOptionsOverride.impliedStrict = ecmaFeatures?.impliedStrict ?? null;
+  ecmaFeaturesOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
+  ecmaFeaturesOverride.impliedStrict = ecmaFeatures?.impliedStrict ?? null;
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)
