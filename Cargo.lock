@@ -2038,7 +2038,9 @@ name = "oxc_linter_codegen"
 version = "0.0.0"
 dependencies = [
  "convert_case",
+ "proc-macro2",
  "project-root",
+ "quote",
  "rustc-hash",
  "syn",
 ]

@@ -1,4 +1,10 @@
-#![expect(clippy::self_named_module_files)] // for rules.rs
+#![expect(clippy::self_named_module_files)]
+// for rules.rs
+// RuleEnum contains rule configs with interior mutability (e.g. Regex),
+// but Hash/Eq/Ord are based only on the rule id, so it's safe as a map key.
+#![expect(clippy::mutable_key_type)]
+// Rule::from_configuration returns Result but documenting errors is not useful here.
+#![expect(clippy::missing_errors_doc)]
 
 use std::{
     mem,
@@ -41,6 +47,7 @@ mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
     mod rule_runner_impls;
+    pub mod rules_enum;
 }
 
 #[cfg(test)]
