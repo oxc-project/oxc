@@ -119,8 +119,6 @@ const testCase: TestCaseWithoutCode = {
   ]
 };
 
-const config = {};
-
 ------------- Script setup ends -------------
 
 ## 3. Run the test
@@ -164,20 +162,17 @@ const testCase: TestCaseWithoutCode = {
   ],
 };
 
-const config = {};
-
 // -----------------------------------------------------------------------------
 // Run test case with both ESLint and Oxlint
 // -----------------------------------------------------------------------------
 
-runBoth(ruleName, isInvalid, code, testCase, config);
+runBoth(ruleName, isInvalid, code, testCase);
 
 function runBoth(
   ruleName: string,
   isInvalid: boolean,
   code: string,
   testCase: TestCaseWithoutCode,
-  config?: Record<string, unknown> | null,
 ) {
   testCase = { code, ...testCase };
 
@@ -194,24 +189,17 @@ function runBoth(
   console.log("--------------------");
   console.log("ESLint");
   console.log("--------------------");
-  runOne(ESLintRuleTester, rule, valid, invalid, config);
+  runOne(ESLintRuleTester, rule, valid, invalid);
 
   console.log("\n--------------------");
   console.log("Oxlint");
   console.log("--------------------");
-  config = { ...config, eslintCompat: true };
-  runOne(OxlintRuleTester, rule, valid, invalid, config);
+  runOne(OxlintRuleTester, rule, valid, invalid);
 }
 
-function runOne(
-  RuleTester: any,
-  rule: Rule,
-  valid: ValidTestCase[],
-  invalid: InvalidTestCase[],
-  config?: Record<string, unknown> | null,
-) {
+function runOne(RuleTester: any, rule: Rule, valid: ValidTestCase[], invalid: InvalidTestCase[]) {
   try {
-    const tester = new RuleTester(config);
+    const tester = new RuleTester();
     tester.run("my-rule", rule, { valid, invalid });
     console.log("No errors");
   } catch (err) {
