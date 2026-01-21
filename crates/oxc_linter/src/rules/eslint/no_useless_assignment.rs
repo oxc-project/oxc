@@ -417,10 +417,10 @@ fn expr_uses_symbol(ctx: &LintContext, expr: &Expression, symbol_id: SymbolId) -
         match current_expr {
             Expression::Identifier(identifier) => {
                 let reference = identifier.reference_id();
-                if let Some(id_symbol) = ctx.scoping().get_reference(reference).symbol_id() {
-                    if id_symbol == symbol_id {
-                        return true;
-                    }
+                if let Some(id_symbol) = ctx.scoping().get_reference(reference).symbol_id()
+                    && id_symbol == symbol_id
+                {
+                    return true;
                 }
             }
             Expression::BinaryExpression(binary_expr) => {
