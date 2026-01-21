@@ -4,16 +4,15 @@ use std::{
     ops::Deref,
 };
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
-use super::AstNodes;
+use super::{AstNodes, allocator};
 
 pub struct AstNode<'a, T> {
     pub(super) inner: &'a T,
     pub parent: &'a AstNodes<'a>,
-    pub(super) allocator: &'a Allocator,
     pub(super) following_span: Option<Span>,
 }
 
@@ -43,11 +42,10 @@ impl<'a, T> AsRef<T> for AstNode<'a, T> {
 
 impl<'a, T> AstNode<'a, Option<T>> {
     pub fn as_ref(&self) -> Option<&'a AstNode<'a, T>> {
-        self.allocator
+        allocator()
             .alloc(self.inner.as_ref().map(|inner| AstNode {
                 inner,
                 parent: self.parent,
-                allocator: self.allocator,
                 following_span: self.following_span,
             }))
             .as_ref()
@@ -109,8 +107,8 @@ impl<'a, T> AstNode<'a, T> {
 }
 
 impl<'a> AstNode<'a, Program<'a>> {
-    pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
-        AstNode { inner, parent, allocator, following_span: None }
+    pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>) -> Self {
+        AstNode { inner, parent, following_span: None }
     }
 }
 
@@ -154,7 +152,8 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         // This allows us to reuse CallExpression's argument formatting logic when printing
         // import expressions, since import(source, options) has the same structure as
         // a function call with arguments.
-        let mut arguments = Vec::new_in(self.allocator);
+        let allocator = allocator();
+        let mut arguments = Vec::new_in(allocator);
 
         // SAFETY: Argument inherits all Expression variants through the inherit_variants! macro,
         // so Expression and Argument have identical memory layout for shared variants.
@@ -169,13 +168,12 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
             }
         }
 
-        let arguments_ref = self.allocator.alloc(arguments);
+        let arguments_ref = allocator.alloc(arguments);
         let following_span = self.following_span;
 
-        self.allocator.alloc(AstNode {
+        allocator.alloc(AstNode {
             inner: arguments_ref,
-            allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportExpression({
+            parent: allocator.alloc(AstNodes::ImportExpression({
                 // SAFETY: `self` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
                 unsafe {
                     transmute::<

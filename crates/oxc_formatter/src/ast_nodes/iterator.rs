@@ -6,47 +6,40 @@
 
 use std::cmp::min;
 
-use oxc_allocator::{Allocator, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
-use super::{AstNode, AstNodes};
+use super::{AstNode, AstNodes, allocator};
 
 pub struct AstNodeIterator<'a, T> {
     inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
     parent: &'a AstNodes<'a>,
-    allocator: &'a Allocator,
 }
 
 macro_rules! impl_ast_node_vec {
     ($type:ty) => {
         impl<'a> AstNode<'a, Vec<'a, $type>> {
             pub fn iter(&self) -> AstNodeIterator<'a, $type> {
-                AstNodeIterator {
-                    inner: self.inner.iter().peekable(),
-                    parent: self.parent,
-                    allocator: self.allocator,
-                }
+                AstNodeIterator { inner: self.inner.iter().peekable(), parent: self.parent }
             }
 
             pub fn first(&self) -> Option<&'a AstNode<'a, $type>> {
                 let mut inner_iter = self.inner.iter();
-                self.allocator
+                allocator()
                     .alloc(inner_iter.next().map(|inner| AstNode {
                         inner,
                         parent: self.parent,
-                        allocator: self.allocator,
                         following_span: inner_iter.next().map(GetSpan::span),
                     }))
                     .as_ref()
             }
 
             pub fn last(&self) -> Option<&'a AstNode<'a, $type>> {
-                self.allocator
+                allocator()
                     .alloc(self.inner.last().map(|inner| AstNode {
                         inner,
                         parent: self.parent,
-                        allocator: self.allocator,
                         following_span: None,
                     }))
                     .as_ref()
@@ -56,12 +49,10 @@ macro_rules! impl_ast_node_vec {
         impl<'a> Iterator for AstNodeIterator<'a, $type> {
             type Item = &'a AstNode<'a, $type>;
             fn next(&mut self) -> Option<Self::Item> {
-                let allocator = self.allocator;
-                allocator
+                allocator()
                     .alloc(self.inner.next().map(|inner| AstNode {
                         parent: self.parent,
                         inner,
-                        allocator,
                         following_span: self.inner.peek().copied().map(GetSpan::span),
                     }))
                     .as_ref()
@@ -75,7 +66,6 @@ macro_rules! impl_ast_node_vec {
                 AstNodeIterator::<$type> {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
-                    allocator: self.allocator,
                 }
             }
         }
@@ -86,20 +76,15 @@ macro_rules! impl_ast_node_vec_for_option {
     ($type:ty) => {
         impl<'a> AstNode<'a, Vec<'a, $type>> {
             pub fn iter(&self) -> AstNodeIterator<'a, $type> {
-                AstNodeIterator {
-                    inner: self.inner.iter().peekable(),
-                    parent: self.parent,
-                    allocator: self.allocator,
-                }
+                AstNodeIterator { inner: self.inner.iter().peekable(), parent: self.parent }
             }
 
             pub fn first(&self) -> Option<&'a AstNode<'a, $type>> {
                 let mut inner_iter = self.inner.iter();
-                self.allocator
+                allocator()
                     .alloc(inner_iter.next().map(|inner| AstNode {
                         inner,
                         parent: self.parent,
-                        allocator: self.allocator,
                         following_span:
                             inner_iter.next().and_then(|opt| opt.as_ref().map(GetSpan::span)),
                     }))
@@ -107,11 +92,10 @@ macro_rules! impl_ast_node_vec_for_option {
             }
 
             pub fn last(&self) -> Option<&'a AstNode<'a, $type>> {
-                self.allocator
+                allocator()
                     .alloc(self.inner.last().map(|inner| AstNode {
                         inner,
                         parent: self.parent,
-                        allocator: self.allocator,
                         following_span: None,
                     }))
                     .as_ref()
@@ -121,13 +105,11 @@ macro_rules! impl_ast_node_vec_for_option {
         impl<'a> Iterator for AstNodeIterator<'a, $type> {
             type Item = &'a AstNode<'a, $type>;
             fn next(&mut self) -> Option<Self::Item> {
-                let allocator = self.allocator;
-                allocator
+                allocator()
                     .alloc(self.inner.next().map(|inner| {
                         AstNode {
                             parent: self.parent,
                             inner,
-                            allocator,
                             following_span: self
                                 .inner
                                 .peek()
@@ -146,7 +128,6 @@ macro_rules! impl_ast_node_vec_for_option {
                 AstNodeIterator::<$type> {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
-                    allocator: self.allocator,
                 }
             }
         }
@@ -188,29 +169,23 @@ impl_ast_node_vec_for_option!(Option<BindingPattern<'a>>);
 // <https://github.com/oxc-project/oxc/issues/10409>
 impl<'a> AstNode<'a, Vec<'a, Statement<'a>>> {
     pub fn iter(&self) -> AstNodeIterator<'a, Statement<'a>> {
-        AstNodeIterator {
-            inner: self.inner.iter().peekable(),
-            parent: self.parent,
-            allocator: self.allocator,
-        }
+        AstNodeIterator { inner: self.inner.iter().peekable(), parent: self.parent }
     }
     pub fn first(&self) -> Option<&'a AstNode<'a, Statement<'a>>> {
         let mut inner_iter = self.inner.iter();
-        self.allocator
+        allocator()
             .alloc(inner_iter.next().map(|inner| AstNode {
                 inner,
                 parent: self.parent,
-                allocator: self.allocator,
                 following_span: inner_iter.next().map(GetSpan::span),
             }))
             .as_ref()
     }
     pub fn last(&self) -> Option<&'a AstNode<'a, Statement<'a>>> {
-        self.allocator
+        allocator()
             .alloc(self.inner.last().map(|inner| AstNode {
                 inner,
                 parent: self.parent,
-                allocator: self.allocator,
                 following_span: None,
             }))
             .as_ref()
@@ -219,12 +194,10 @@ impl<'a> AstNode<'a, Vec<'a, Statement<'a>>> {
 impl<'a> Iterator for AstNodeIterator<'a, Statement<'a>> {
     type Item = &'a AstNode<'a, Statement<'a>>;
     fn next(&mut self) -> Option<Self::Item> {
-        let allocator = self.allocator;
-        allocator
+        allocator()
             .alloc(self.inner.next().map(|inner| AstNode {
                 parent: self.parent,
                 inner,
-                allocator,
                 following_span: {
                     match self.inner.peek() {
                         // `@decorator export default class A {}`
@@ -271,7 +244,6 @@ impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Statement<'a>>> {
         AstNodeIterator::<Statement<'a>> {
             inner: self.inner.iter().peekable(),
             parent: self.parent,
-            allocator: self.allocator,
         }
     }
 }
@@ -293,20 +265,15 @@ fn get_following_span_for_directive_parent(parent: &AstNodes<'_>) -> Option<Span
 // following_span for the last directive in Program.body.
 impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
     pub fn iter(&self) -> AstNodeIterator<'a, Directive<'a>> {
-        AstNodeIterator {
-            inner: self.inner.iter().peekable(),
-            parent: self.parent,
-            allocator: self.allocator,
-        }
+        AstNodeIterator { inner: self.inner.iter().peekable(), parent: self.parent }
     }
     pub fn first(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
         let mut inner_iter = self.inner.iter();
-        self.allocator
+        allocator()
             .alloc(inner_iter.next().map(|inner| {
                 AstNode {
                     inner,
                     parent: self.parent,
-                    allocator: self.allocator,
                     following_span: inner_iter
                         .next()
                         .map(GetSpan::span)
@@ -316,11 +283,10 @@ impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
             .as_ref()
     }
     pub fn last(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
-        self.allocator
+        allocator()
             .alloc(self.inner.last().map(|inner| AstNode {
                 inner,
                 parent: self.parent,
-                allocator: self.allocator,
                 following_span: get_following_span_for_directive_parent(self.parent),
             }))
             .as_ref()
@@ -329,13 +295,11 @@ impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
 impl<'a> Iterator for AstNodeIterator<'a, Directive<'a>> {
     type Item = &'a AstNode<'a, Directive<'a>>;
     fn next(&mut self) -> Option<Self::Item> {
-        let allocator = self.allocator;
-        allocator
+        allocator()
             .alloc(self.inner.next().map(|inner| {
                 AstNode {
                     parent: self.parent,
                     inner,
-                    allocator,
                     following_span: self
                         .inner
                         .peek()
@@ -354,7 +318,6 @@ impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Directive<'a>>> {
         AstNodeIterator::<Directive<'a>> {
             inner: self.inner.iter().peekable(),
             parent: self.parent,
-            allocator: self.allocator,
         }
     }
 }

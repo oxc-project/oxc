@@ -22,7 +22,7 @@ pub use crate::ir_transform::options::*;
 pub use crate::options::*;
 pub use crate::service::*;
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodes, set_allocator},
     formatter::{FormatContext, Formatted},
     ir_transform::SortImportsTransform,
 };
@@ -58,8 +58,11 @@ impl<'a> Formatter<'a> {
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
+        // Set the thread-local allocator for use during AST node operations.
+        set_allocator(self.allocator);
+
         let parent = self.allocator.alloc(AstNodes::Dummy());
-        let program_node = AstNode::new(program, parent, self.allocator);
+        let program_node = AstNode::new(program, parent);
 
         let context = FormatContext::new(
             program.source_text,

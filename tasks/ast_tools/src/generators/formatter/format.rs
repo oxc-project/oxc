@@ -88,7 +88,7 @@ impl Generator for FormatterFormatGenerator {
             use crate::{
                 formatter::{Format, Formatter},
                 parentheses::NeedsParentheses,
-                ast_nodes::AstNode,
+                ast_nodes::{AstNode, allocator},
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
                 print::{FormatWrite #(#options)*},
             };
@@ -274,10 +274,9 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
         Some(quote! {
             #enum_ident::#variant_name(inner) => {
-                allocator.alloc(AstNode::<#node_type> {
+                allocator().alloc(AstNode::<#node_type> {
                     inner,
                     parent,
-                    allocator,
                     following_span: self.following_span,
                 }).fmt(f);
             },
@@ -297,10 +296,9 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
                 let inner = it.#to_fn_ident();
-                allocator.alloc(AstNode::<'a, #inherits_inner_type> {
+                allocator().alloc(AstNode::<'a, #inherits_inner_type> {
                     inner,
                     parent,
-                    allocator,
                     following_span: self.following_span,
                 }).fmt(f);
             },
@@ -311,7 +309,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
     let parent = if enum_def.kind.has_kind {
         quote! {
-            let parent = allocator.alloc(AstNodes::#enum_ident(transmute_self(self)))
+            let parent = allocator().alloc(AstNodes::#enum_ident(transmute_self(self)))
         }
     } else {
         quote! { let parent = self.parent }
@@ -323,7 +321,6 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         impl<'a> Format<'a> for #node_type {
             #[inline]
             fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-                let allocator = self.allocator;
                 #parent;
                 match self.inner {
                     #(#variant_match_arms)*

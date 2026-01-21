@@ -6,7 +6,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, allocator},
     formatter::{Format, Formatter},
     parentheses::NeedsParentheses,
     print::{FormatFunctionOptions, FormatJsArrowFunctionExpressionOptions, FormatWrite},
@@ -22,416 +22,366 @@ impl<'a> Format<'a> for AstNode<'a, Program<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Expression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Expression::BooleanLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BooleanLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::NullLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<NullLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::NumericLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<NumericLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::BigIntLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BigIntLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::RegExpLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<RegExpLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::StringLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::TemplateLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TemplateLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::MetaProperty(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<MetaProperty> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::Super(inner) => {
-                allocator
-                    .alloc(AstNode::<Super> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span: self.following_span,
-                    })
+                allocator()
+                    .alloc(AstNode::<Super> { inner, parent, following_span: self.following_span })
                     .fmt(f);
             }
             Expression::ArrayExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ArrayExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::ArrowFunctionExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ArrowFunctionExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::AssignmentExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<AssignmentExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::AwaitExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<AwaitExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::BinaryExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BinaryExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::CallExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<CallExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::ChainExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ChainExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::ClassExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<Class> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span: self.following_span,
-                    })
+                allocator()
+                    .alloc(AstNode::<Class> { inner, parent, following_span: self.following_span })
                     .fmt(f);
             }
             Expression::ConditionalExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ConditionalExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::FunctionExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<Function> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::ImportExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ImportExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::LogicalExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<LogicalExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::NewExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<NewExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::ObjectExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ObjectExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::ParenthesizedExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ParenthesizedExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::SequenceExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<SequenceExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::TaggedTemplateExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TaggedTemplateExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::ThisExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ThisExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::UnaryExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<UnaryExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::UpdateExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<UpdateExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::YieldExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<YieldExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::PrivateInExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<PrivateInExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::JSXElement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXElement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::JSXFragment(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXFragment> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::TSAsExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSAsExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::TSSatisfiesExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSSatisfiesExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::TSTypeAssertion(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypeAssertion> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::TSNonNullExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNonNullExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::TSInstantiationExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSInstantiationExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Expression::V8IntrinsicExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<V8IntrinsicExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_member_expression!(Expression) => {
                 let inner = it.to_member_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, MemberExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -551,36 +501,32 @@ impl<'a> Format<'a> for AstNode<'a, ArrayExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ArrayExpressionElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ArrayExpressionElement::SpreadElement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<SpreadElement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ArrayExpressionElement::Elision(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<Elision> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_expression!(ArrayExpressionElement) => {
                 let inner = it.to_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, Expression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -628,25 +574,22 @@ impl<'a> Format<'a> for AstNode<'a, ObjectExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ObjectPropertyKind<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ObjectPropertyKind::ObjectProperty(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ObjectProperty> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ObjectPropertyKind::SpreadProperty(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<SpreadElement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -671,36 +614,32 @@ impl<'a> Format<'a> for AstNode<'a, ObjectProperty<'a>> {
 impl<'a> Format<'a> for AstNode<'a, PropertyKey<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             PropertyKey::StaticIdentifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             PropertyKey::PrivateIdentifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<PrivateIdentifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_expression!(PropertyKey) => {
                 let inner = it.to_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, Expression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -771,35 +710,31 @@ impl<'a> Format<'a> for AstNode<'a, TemplateElement<'a>> {
 impl<'a> Format<'a> for AstNode<'a, MemberExpression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             MemberExpression::ComputedMemberExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ComputedMemberExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             MemberExpression::StaticMemberExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StaticMemberExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             MemberExpression::PrivateFieldExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<PrivateFieldExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -962,26 +897,23 @@ impl<'a> Format<'a> for AstNode<'a, SpreadElement<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Argument<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Argument::SpreadElement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<SpreadElement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_expression!(Argument) => {
                 let inner = it.to_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, Expression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1154,27 +1086,24 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, AssignmentTarget<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
                 let inner = it.to_simple_assignment_target();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, SimpleAssignmentTarget> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
                 let inner = it.to_assignment_target_pattern();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, AssignmentTargetPattern> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1186,66 +1115,59 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTarget<'a>> {
 impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             SimpleAssignmentTarget::TSAsExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSAsExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             SimpleAssignmentTarget::TSSatisfiesExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSSatisfiesExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             SimpleAssignmentTarget::TSNonNullExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNonNullExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             SimpleAssignmentTarget::TSTypeAssertion(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypeAssertion> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_member_expression!(SimpleAssignmentTarget) => {
                 let inner = it.to_member_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, MemberExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1257,25 +1179,22 @@ impl<'a> Format<'a> for AstNode<'a, SimpleAssignmentTarget<'a>> {
 impl<'a> Format<'a> for AstNode<'a, AssignmentTargetPattern<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ArrayAssignmentTarget> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             AssignmentTargetPattern::ObjectAssignmentTarget(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ObjectAssignmentTarget> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1326,26 +1245,23 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetRest<'a>> {
 impl<'a> Format<'a> for AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<AssignmentTargetWithDefault> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
                 let inner = it.to_assignment_target();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, AssignmentTarget> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1370,25 +1286,22 @@ impl<'a> Format<'a> for AstNode<'a, AssignmentTargetWithDefault<'a>> {
 impl<'a> Format<'a> for AstNode<'a, AssignmentTargetProperty<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<AssignmentTargetPropertyIdentifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<AssignmentTargetPropertyProperty> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1518,36 +1431,32 @@ impl<'a> Format<'a> for AstNode<'a, ChainExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ChainElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ChainElement::CallExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<CallExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ChainElement::TSNonNullExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNonNullExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_member_expression!(ChainElement) => {
                 let inner = it.to_member_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, MemberExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1582,207 +1491,186 @@ impl<'a> Format<'a> for AstNode<'a, ParenthesizedExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Statement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Statement::BlockStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BlockStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::BreakStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BreakStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::ContinueStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ContinueStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::DebuggerStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<DebuggerStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::DoWhileStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<DoWhileStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::EmptyStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<EmptyStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::ExpressionStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ExpressionStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::ForInStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ForInStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::ForOfStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ForOfStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::ForStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ForStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::IfStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IfStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::LabeledStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<LabeledStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::ReturnStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ReturnStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::SwitchStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<SwitchStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::ThrowStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ThrowStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::TryStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TryStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::WhileStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<WhileStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Statement::WithStatement(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<WithStatement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_declaration!(Statement) => {
                 let inner = it.to_declaration();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, Declaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_module_declaration!(Statement) => {
                 let inner = it.to_module_declaration();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, ModuleDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -1833,95 +1721,81 @@ impl<'a> Format<'a> for AstNode<'a, BlockStatement<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Declaration<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Declaration::VariableDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<VariableDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Declaration::FunctionDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<Function> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Declaration::ClassDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<Class> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span: self.following_span,
-                    })
+                allocator()
+                    .alloc(AstNode::<Class> { inner, parent, following_span: self.following_span })
                     .fmt(f);
             }
             Declaration::TSTypeAliasDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypeAliasDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Declaration::TSInterfaceDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSInterfaceDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Declaration::TSEnumDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSEnumDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Declaration::TSModuleDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSModuleDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Declaration::TSGlobalDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSGlobalDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             Declaration::TSImportEqualsDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSImportEqualsDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -2037,26 +1911,23 @@ impl<'a> Format<'a> for AstNode<'a, ForStatement<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ForStatementInit<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ForStatementInit::VariableDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<VariableDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_expression!(ForStatementInit) => {
                 let inner = it.to_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, Expression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -2081,26 +1952,23 @@ impl<'a> Format<'a> for AstNode<'a, ForInStatement<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ForStatementLeft<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ForStatementLeft::VariableDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<VariableDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_assignment_target!(ForStatementLeft) => {
                 let inner = it.to_assignment_target();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, AssignmentTarget> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -2281,45 +2149,40 @@ impl<'a> Format<'a> for AstNode<'a, DebuggerStatement> {
 impl<'a> Format<'a> for AstNode<'a, BindingPattern<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             BindingPattern::BindingIdentifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BindingIdentifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             BindingPattern::ObjectPattern(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ObjectPattern> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             BindingPattern::ArrayPattern(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ArrayPattern> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             BindingPattern::AssignmentPattern(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<AssignmentPattern> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -2601,55 +2464,49 @@ impl<'a> Format<'a> for AstNode<'a, ClassBody<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ClassElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ClassElement::StaticBlock(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StaticBlock> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ClassElement::MethodDefinition(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<MethodDefinition> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ClassElement::PropertyDefinition(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<PropertyDefinition> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ClassElement::AccessorProperty(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<AccessorProperty> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ClassElement::TSIndexSignature(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSIndexSignature> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -2713,65 +2570,58 @@ impl<'a> Format<'a> for AstNode<'a, StaticBlock<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ModuleDeclaration<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ModuleDeclaration::ImportDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ImportDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ModuleDeclaration::ExportAllDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ExportAllDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ModuleDeclaration::ExportDefaultDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ExportDefaultDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ModuleDeclaration::ExportNamedDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ExportNamedDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ModuleDeclaration::TSExportAssignment(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSExportAssignment> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ModuleDeclaration::TSNamespaceExportDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNamespaceExportDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -2832,35 +2682,31 @@ impl<'a> Format<'a> for AstNode<'a, ImportDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ImportDeclarationSpecifier::ImportSpecifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ImportSpecifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ImportDeclarationSpecifier::ImportDefaultSpecifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ImportDefaultSpecifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ImportNamespaceSpecifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -2937,25 +2783,22 @@ impl<'a> Format<'a> for AstNode<'a, ImportAttribute<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ImportAttributeKey<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ImportAttributeKey::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ImportAttributeKey::StringLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3019,46 +2862,37 @@ impl<'a> Format<'a> for AstNode<'a, ExportSpecifier<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ExportDefaultDeclarationKind::FunctionDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<Function> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ExportDefaultDeclarationKind::ClassDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<Class> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span: self.following_span,
-                    })
+                allocator()
+                    .alloc(AstNode::<Class> { inner, parent, following_span: self.following_span })
                     .fmt(f);
             }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSInterfaceDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_expression!(ExportDefaultDeclarationKind) => {
                 let inner = it.to_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, Expression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3070,35 +2904,31 @@ impl<'a> Format<'a> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
 impl<'a> Format<'a> for AstNode<'a, ModuleExportName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ModuleExportName::IdentifierName(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ModuleExportName::IdentifierReference(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             ModuleExportName::StringLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3355,55 +3185,49 @@ impl<'a> Format<'a> for AstNode<'a, JSXClosingFragment> {
 impl<'a> Format<'a> for AstNode<'a, JSXElementName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXElementName::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXIdentifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXElementName::IdentifierReference(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXElementName::NamespacedName(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXNamespacedName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXElementName::MemberExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXMemberExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXElementName::ThisExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ThisExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3441,35 +3265,31 @@ impl<'a> Format<'a> for AstNode<'a, JSXMemberExpression<'a>> {
 impl<'a> Format<'a> for AstNode<'a, JSXMemberExpressionObject<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXMemberExpressionObject::IdentifierReference(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXMemberExpressionObject::MemberExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXMemberExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXMemberExpressionObject::ThisExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ThisExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3494,26 +3314,23 @@ impl<'a> Format<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
 impl<'a> Format<'a> for AstNode<'a, JSXExpression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXExpression::EmptyExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXEmptyExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_expression!(JSXExpression) => {
                 let inner = it.to_expression();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, Expression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3538,25 +3355,22 @@ impl<'a> Format<'a> for AstNode<'a, JSXEmptyExpression> {
 impl<'a> Format<'a> for AstNode<'a, JSXAttributeItem<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXAttributeItem::Attribute(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXAttribute> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXAttributeItem::SpreadAttribute(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXSpreadAttribute> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3594,25 +3408,22 @@ impl<'a> Format<'a> for AstNode<'a, JSXSpreadAttribute<'a>> {
 impl<'a> Format<'a> for AstNode<'a, JSXAttributeName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXAttributeName::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXIdentifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXAttributeName::NamespacedName(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXNamespacedName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3624,45 +3435,40 @@ impl<'a> Format<'a> for AstNode<'a, JSXAttributeName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, JSXAttributeValue<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXAttributeValue::StringLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXAttributeValue::ExpressionContainer(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXExpressionContainer> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXAttributeValue::Element(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXElement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXAttributeValue::Fragment(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXFragment> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3687,55 +3493,49 @@ impl<'a> Format<'a> for AstNode<'a, JSXIdentifier<'a>> {
 impl<'a> Format<'a> for AstNode<'a, JSXChild<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXChild::Text(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXText> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXChild::Element(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXElement> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXChild::Fragment(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXFragment> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXChild::ExpressionContainer(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXExpressionContainer> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             JSXChild::Spread(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSXSpreadChild> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3825,45 +3625,40 @@ impl<'a> Format<'a> for AstNode<'a, TSEnumMember<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSEnumMemberName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSEnumMemberName::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSEnumMemberName::String(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSEnumMemberName::ComputedString(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSEnumMemberName::ComputedTemplateString(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TemplateLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3901,65 +3696,58 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteralType<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSLiteral::BooleanLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BooleanLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSLiteral::NumericLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<NumericLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSLiteral::BigIntLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BigIntLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSLiteral::StringLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSLiteral::TemplateLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TemplateLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSLiteral::UnaryExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<UnaryExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -3971,375 +3759,337 @@ impl<'a> Format<'a> for AstNode<'a, TSLiteral<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSType<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSType::TSAnyKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSAnyKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSBigIntKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSBigIntKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSBooleanKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSBooleanKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSIntrinsicKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSIntrinsicKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSNeverKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNeverKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSNullKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNullKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSNumberKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNumberKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSObjectKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSObjectKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSStringKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSStringKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSSymbolKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSSymbolKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSUndefinedKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSUndefinedKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSUnknownKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSUnknownKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSVoidKeyword(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSVoidKeyword> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSArrayType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSArrayType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSConditionalType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSConditionalType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSConstructorType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSConstructorType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSFunctionType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSFunctionType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSImportType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSImportType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSIndexedAccessType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSIndexedAccessType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSInferType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSInferType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSIntersectionType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSIntersectionType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSLiteralType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSLiteralType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSMappedType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSMappedType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSNamedTupleMember(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSNamedTupleMember> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSTemplateLiteralType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTemplateLiteralType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSThisType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSThisType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSTupleType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTupleType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSTypeLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypeLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSTypeOperatorType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypeOperator> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSTypePredicate(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypePredicate> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSTypeQuery(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypeQuery> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSTypeReference(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSTypeReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSUnionType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSUnionType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::TSParenthesizedType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSParenthesizedType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::JSDocNullableType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSDocNullableType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::JSDocNonNullableType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSDocNonNullableType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSType::JSDocUnknownType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<JSDocUnknownType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -4533,36 +4283,32 @@ impl<'a> Format<'a> for AstNode<'a, TSRestType<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSTupleElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTupleElement::TSOptionalType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSOptionalType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSTupleElement::TSRestType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSRestType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_ts_type!(TSTupleElement) => {
                 let inner = it.to_ts_type();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, TSType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -4769,35 +4515,31 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeReference<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSTypeName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTypeName::IdentifierReference(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSTypeName::QualifiedName(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSQualifiedName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSTypeName::ThisExpression(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<ThisExpression> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -4926,55 +4668,49 @@ impl<'a> Format<'a> for AstNode<'a, TSPropertySignature<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSSignature<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSSignature::TSIndexSignature(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSIndexSignature> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSSignature::TSPropertySignature(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSPropertySignature> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSSignature::TSCallSignatureDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSCallSignatureDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSSignature::TSConstructSignatureDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSConstructSignatureDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSSignature::TSMethodSignature(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSMethodSignature> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -5077,25 +4813,22 @@ impl<'a> Format<'a> for AstNode<'a, TSTypePredicate<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSTypePredicateName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTypePredicateName::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSTypePredicateName::This(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSThisType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -5120,25 +4853,22 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSModuleDeclarationName::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<BindingIdentifier> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSModuleDeclarationName::StringLiteral(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<StringLiteral> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -5150,25 +4880,22 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationName<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSModuleDeclarationBody<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSModuleDeclarationBody::TSModuleDeclaration(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSModuleDeclaration> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSModuleDeclarationBody::TSModuleBlock(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSModuleBlock> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -5265,26 +4992,23 @@ impl<'a> Format<'a> for AstNode<'a, TSTypeQuery<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSTypeQueryExprName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTypeQueryExprName::TSImportType(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSImportType> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_ts_type_name!(TSTypeQueryExprName) => {
                 let inner = it.to_ts_type_name();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, TSTypeName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -5309,25 +5033,22 @@ impl<'a> Format<'a> for AstNode<'a, TSImportType<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSImportTypeQualifier<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSImportTypeQualifier::Identifier(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<IdentifierName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             TSImportTypeQualifier::QualifiedName(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSImportTypeQualifiedName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
@@ -5506,26 +5227,23 @@ impl<'a> Format<'a> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
 impl<'a> Format<'a> for AstNode<'a, TSModuleReference<'a>> {
     #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSModuleReference::ExternalModuleReference(inner) => {
-                allocator
+                allocator()
                     .alloc(AstNode::<TSExternalModuleReference> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);
             }
             it @ match_ts_type_name!(TSModuleReference) => {
                 let inner = it.to_ts_type_name();
-                allocator
+                allocator()
                     .alloc(AstNode::<'a, TSTypeName> {
                         inner,
                         parent,
-                        allocator,
                         following_span: self.following_span,
                     })
                     .fmt(f);

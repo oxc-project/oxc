@@ -110,7 +110,7 @@ impl Generator for FormatterAstNodesGenerator {
             use oxc_ast::ast::*;
             use oxc_span::GetSpan;
             ///@@line_break
-            use crate::ast_nodes::AstNode;
+            use crate::ast_nodes::{AstNode, allocator};
             use crate::formatter::{
                 Format, Formatter,
                 trivia::{format_leading_comments, format_trailing_comments},
@@ -234,7 +234,7 @@ fn generate_struct_impls(
         };
 
         let parent_expr = if has_kind {
-            quote! { self.allocator.alloc(AstNodes::#struct_name(transmute_self(self))) }
+            quote! { allocator().alloc(AstNodes::#struct_name(transmute_self(self))) }
         } else {
             quote! { self.parent }
         };
@@ -304,9 +304,8 @@ fn generate_struct_impls(
             if is_option {
                 quote! {
                     let following_span = #following_span;
-                    self.allocator.alloc(self.inner.#field_name.as_ref().map(|inner| AstNode {
+                    allocator().alloc(self.inner.#field_name.as_ref().map(|inner| AstNode {
                         inner: #inner_access,
-                        allocator: self.allocator,
                         parent: #parent_expr,
                         following_span
                     })).as_ref()
@@ -314,9 +313,8 @@ fn generate_struct_impls(
             } else {
                 quote! {
                     let following_span = #following_span;
-                    self.allocator.alloc(AstNode {
+                    allocator().alloc(AstNode {
                         inner: #field_access,
-                        allocator: self.allocator,
                         parent: #parent_expr,
                         following_span
                     })
@@ -443,7 +441,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
     let type_ty = enum_def.ty(schema);
 
     let parent_decl = if enum_def.kind.has_kind {
-        quote! { let parent = self.allocator.alloc(AstNodes::#enum_ident(transmute_self(self))); }
+        quote! { let parent = allocator().alloc(AstNodes::#enum_ident(transmute_self(self))); }
     } else {
         quote! { let parent = self.parent; }
     };
@@ -460,10 +458,9 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
         let implementation = if has_kind(field_type, schema) {
             quote! {
-                AstNodes::#node_type_ident(self.allocator.alloc(AstNode {
+                AstNodes::#node_type_ident(allocator().alloc(AstNode {
                     inner: #inner_expr,
                     parent,
-                    allocator: self.allocator,
                     following_span: self.following_span,
                 }))
             }
@@ -488,19 +485,17 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
 
         let implementation = if inherited_enum_def.kind.has_kind {
             quote! {
-                AstNodes::#inherited_enum_inner_type_ident(self.allocator.alloc(AstNode {
+                AstNodes::#inherited_enum_inner_type_ident(allocator().alloc(AstNode {
                     inner: it.#to_fn_ident(),
                     parent,
-                    allocator: self.allocator,
                     following_span: self.following_span,
                 }))
             }
         } else {
             quote! {
-                return self.allocator.alloc(AstNode {
+                return allocator().alloc(AstNode {
                     inner: it.#to_fn_ident(),
                     parent,
-                    allocator: self.allocator,
                     following_span: self.following_span,
                 }).as_ast_nodes();
             }
@@ -522,7 +517,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                 #(#variant_match_arms)*
                 #(#inherits_match_arms)*
             };
-            self.allocator.alloc(node)
+            allocator().alloc(node)
         }
     };
     quote! {
