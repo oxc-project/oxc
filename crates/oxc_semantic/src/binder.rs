@@ -3,7 +3,6 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_span::GetSpan;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
 use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
@@ -173,7 +172,7 @@ impl<'a> Binder<'a> for Function<'a> {
             //
             // { set [function() {}](val) {} }
             //        ^^^^^^^^^^^^^
-            if prop.key.span() == self.span {
+            if prop.key.address() == self.unstable_address() {
                 return;
             }
             let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
