@@ -171,6 +171,9 @@ function shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Err
     return true;
   }
 
+  // TypeScript parser does not support HTML comments
+  if (ruleName === "prefer-object-spread" && code.includes("<!--")) return true;
+
   return false;
 }
 

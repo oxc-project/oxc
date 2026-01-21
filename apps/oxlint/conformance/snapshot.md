@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   288 |  98.6% |
-| Partially passing |     4 |   1.4% |
+| Fully passing     |   289 |  99.0% |
+| Partially passing |     3 |   1.0% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -19,8 +19,8 @@
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
 | Passing     | 32803 |  99.1% |
-| Failing     |     6 |   0.0% |
-| Skipped     |   281 |   0.8% |
+| Failing     |     5 |   0.0% |
+| Skipped     |   282 |   0.9% |
 
 ## Fully Passing Rules
 
@@ -273,6 +273,7 @@
 - `prefer-named-capture-group` (57 tests)
 - `prefer-numeric-literals` (87 tests)
 - `prefer-object-has-own` (92 tests) (1 skipped)
+- `prefer-object-spread` (87 tests) (3 skipped)
 - `prefer-promise-reject-errors` (65 tests)
 - `prefer-reflect` (49 tests)
 - `prefer-regex-literals` (251 tests) (2 skipped)
@@ -317,7 +318,6 @@
 
 - `no-eval` - 100 / 101 (99.0%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
-- `prefer-object-spread` - 86 / 87 (98.9%)
 - `unicode-bom` - 4 / 7 (57.1%)
 
 ## Rules with Failures Detail
@@ -397,47 +397,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
-
-
-### `prefer-object-spread`
-
-Pass: 84 / 87 (96.6%)
-Fail: 1 / 87 (1.1%)
-Skip: 2 / 87 (2.3%)
-
-#### prefer-object-spread > invalid
-
-```js
-const test = Object.assign({ ...bar }, {
-                <!-- html comment
-                foo: 'bar',
-                baz: "cats"
-                --> weird
-            })
-```
-
-```json
-{
-  "languageOptions": {
-    "ecmaVersion": 2018,
-    "sourceType": "script"
-  },
-  "output": "const test = {...bar, <!-- html comment\n                foo: 'bar',\n                baz: \"cats\"\n                --> weird\n            }",
-  "errors": [
-    {
-      "messageId": "useSpreadMessage",
-      "line": 1,
-      "column": 14
-    }
-  ]
-}
-```
-
-Error: `tokensAndComments` is not correctly ordered
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.getTokenBefore (apps/oxlint/dist/lint.js)
-    at getStartWithSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/prefer-object-spread.js:143:32)
 
 
 ### `unicode-bom`
