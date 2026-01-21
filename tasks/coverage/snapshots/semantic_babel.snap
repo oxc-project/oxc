@@ -2,7 +2,7 @@ commit: fc58af40
 
 semantic_babel Summary:
 AST Parsed     : 2227/2227 (100.00%)
-Positive Passed: 1940/2227 (87.11%)
+Positive Passed: 1941/2227 (87.16%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -75,9 +75,6 @@ rebuilt        : ScopeId(2): ["f", "x"]
 Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
-Identifier `x` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 `await` is only allowed within async functions and at the top levels of modules

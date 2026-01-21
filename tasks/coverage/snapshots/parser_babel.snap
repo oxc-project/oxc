@@ -2,7 +2,7 @@ commit: fc58af40
 
 parser_babel Summary:
 AST Parsed     : 2221/2227 (99.73%)
-Positive Passed: 2206/2227 (99.06%)
+Positive Passed: 2207/2227 (99.10%)
 Negative Passed: 1649/1689 (97.63%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
@@ -83,20 +83,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
-
-  × Identifier `x` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js:3:11]
- 2 │     static {
- 3 │       var x;
-   ·           ┬
-   ·           ╰── `x` has already been declared here
- 4 │       function x() {}
-   ·                ┬
-   ·                ╰── It can not be redeclared here
- 5 │     }
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
 
