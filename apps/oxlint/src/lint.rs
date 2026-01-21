@@ -1517,4 +1517,11 @@ export { redundant };
     fn test_valid_complex_config() {
         Tester::new().with_cwd("fixtures/valid_complex_config".into()).test_and_snapshot(&[]);
     }
+
+    #[test]
+    fn test_invalid_config_invalid_config_complex_enum() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_complex_enum".into())
+            .test_and_snapshot(&[]);
+    }
 }
