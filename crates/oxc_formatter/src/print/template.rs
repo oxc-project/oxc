@@ -774,11 +774,11 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 
 fn format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
-    tag_name: &str,
+    language: &str,
     template_content: &str,
 ) -> bool {
     let Some(Ok(formatted)) =
-        f.context().external_callbacks().format_embedded(tag_name, template_content)
+        f.context().external_callbacks().format_embedded(language, template_content)
     else {
         return false;
     };
@@ -813,13 +813,17 @@ fn try_format_embedded_template<'a>(
         return false;
     }
 
-    let Some(tag_name) = get_tag_name(&tagged.tag) else {
-        return false;
+    let language = match get_tag_name(&tagged.tag) {
+        Some("css" | "styled") => "tagged-css",
+        Some("gql" | "graphql") => "tagged-graphql",
+        Some("html") => "tagged-html",
+        Some("md" | "markdown") => "tagged-markdown",
+        _ => return false,
     };
 
     let template_content = quasi.quasis[0].value.raw.as_str();
 
-    format_embedded_template(f, tag_name, template_content)
+    format_embedded_template(f, language, template_content)
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
@@ -874,5 +878,5 @@ fn try_format_css_template<'a>(
     let quasi = template_literal.quasis();
     let template_content = quasi[0].value.raw.as_str();
 
-    format_embedded_template(f, "css", template_content)
+    format_embedded_template(f, "styled-jsx", template_content)
 }
