@@ -16,7 +16,7 @@ impl<'a> TSEnumMemberName<'a> {
     /// Panics if `self` is a `TemplateString` with no quasi.
     pub fn static_name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => ident.name,
+            Self::Identifier(ident) => ident.name.into(),
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
             Self::ComputedTemplateString(template) => template
                 .single_quasi()
@@ -218,7 +218,7 @@ impl<'a> TSModuleDeclarationName<'a> {
     /// Get the static name of this module declaration name.
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => ident.name,
+            Self::Identifier(ident) => ident.name.into(),
             Self::StringLiteral(lit) => lit.value,
         }
     }

@@ -128,7 +128,7 @@ impl<'a> ClassProperties<'a, '_> {
 
         // Identifier is reference to class name. Rename it.
         let temp_binding = class_details.bindings.get_or_init_static_binding(ctx);
-        ident.name = temp_binding.name;
+        ident.name = temp_binding.name.clone().into();
 
         let symbols = ctx.scoping_mut();
         symbols.get_reference_mut(reference_id).set_symbol_id(temp_binding.symbol_id);

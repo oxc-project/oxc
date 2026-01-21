@@ -52,8 +52,8 @@ impl<'a> JSXElementName<'a> {
     /// * `<Foo:Bar>` - [namespaced identifiers](JSXElementName::NamespacedName)
     pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::Identifier(id) => Some(id.as_ref().name),
-            Self::IdentifierReference(id) => Some(id.as_ref().name),
+            Self::Identifier(id) => Some(id.as_ref().name.into()),
+            Self::IdentifierReference(id) => Some(id.as_ref().name.into()),
             _ => None,
         }
     }

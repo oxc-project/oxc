@@ -365,7 +365,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
                 // `function foo() { ... }` -> `function foo() {} return foo;`
                 let reference = ctx.create_bound_ident_expr(
                     SPAN,
-                    id.name,
+                    id.name.into(),
                     id.symbol_id(),
                     ReferenceFlags::Read,
                 );
@@ -550,7 +550,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         match ctx.parent() {
             // infer `foo` from `const foo = async function() {}`
             Ancestor::VariableDeclaratorInit(declarator) => {
-                declarator.id().get_binding_identifier().map(|id| id.name)
+                declarator.id().get_binding_identifier().map(|id| id.name.into())
             }
             // infer `foo` from `({ foo: async function() {} })`
             Ancestor::ObjectPropertyValue(property) if !*property.method() => {

@@ -91,7 +91,7 @@ impl Generator for AstBuilderGenerator {
             };
 
             ///@@line_break
-            use oxc_span::Atom;
+            use oxc_span::{Atom, Ident};
 
             ///@@line_break
             use crate::{AstBuilder, ast::*};
@@ -408,7 +408,9 @@ fn get_struct_params<'s>(
             }
 
             let generic_details = match type_def {
-                TypeDef::Primitive(primitive_def) if primitive_def.name() == "Atom" => {
+                TypeDef::Primitive(primitive_def)
+                    if matches!(primitive_def.name(), "Atom" | "Ident") =>
+                {
                     atom_generic_count += 1;
                     Some((format_ident!("A{atom_generic_count}"), GenericType::Into))
                 }

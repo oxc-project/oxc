@@ -598,7 +598,7 @@ impl<'t> Mangler<'t> {
                     itertools::Either::Right(decl.id().into_iter())
                 }
             })
-            .map(|id| (id.name, id.symbol_id()))
+            .map(|id| (Atom::from(id.name), id.symbol_id()))
             .collect()
     }
 

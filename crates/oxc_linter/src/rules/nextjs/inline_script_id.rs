@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -125,7 +125,7 @@ impl Rule for InlineScriptId {
                 match prop {
                     JSXAttributeItem::Attribute(attr) => {
                         if let JSXAttributeName::Identifier(ident) = &attr.name {
-                            prop_names_hash_set.insert(ident.name);
+                            prop_names_hash_set.insert(Atom::from(ident.name));
                         }
                     }
                     JSXAttributeItem::SpreadAttribute(spread_attr) => {
@@ -136,7 +136,7 @@ impl Rule for InlineScriptId {
                                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop
                                     && let PropertyKey::StaticIdentifier(ident) = &obj_prop.key
                                 {
-                                    prop_names_hash_set.insert(ident.name);
+                                    prop_names_hash_set.insert(Atom::from(ident.name));
                                 }
                             }
                         } else {
