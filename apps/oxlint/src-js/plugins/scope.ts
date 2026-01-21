@@ -268,40 +268,29 @@ function addGlobals(): void {
  * @param isWritable - `true` if the variable is writable, `false` otherwise
  */
 function createGlobalVariable(name: string, globalScope: TSScope, isWritable: boolean): void {
-  const implicitGlobalSetting = isWritable ? "writable" : "readonly";
-
   // If var already exists in the scope (from code declarations or previous envs), don't create a new one.
   // TS-ESLint's scope manager doesn't resolve references in the global scope for `sourceType: "script"`,
   // so we mustn't overwrite local `var` declarations with globals of the same name.
   // But set properties on the existing variable to indicate it's a configured global.
   let variable = globalScope.set.get(name);
-  if (variable !== undefined) {
-    // @ts-expect-error - not present in types
-    variable.writeable = isWritable;
-    // @ts-expect-error - not present in types
-    variable.eslintImplicitGlobalSetting = implicitGlobalSetting;
-    // @ts-expect-error - not present in types
-    variable.eslintExplicitGlobal = false;
-    // @ts-expect-error - not present in types
-    variable.eslintExplicitGlobalComments = undefined;
-    return;
+  if (variable === undefined) {
+    variable = new TSVariable(name, globalScope);
+    globalScope.set.set(name, variable);
+    globalScope.variables.push(variable);
+
+    // All globals are type + value
+    debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
+    debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
   }
 
-  // All globals are type + value
-  variable = new TSVariable(name, globalScope);
-  debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
-  debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
   // @ts-expect-error - not present in types
   variable.writeable = isWritable;
   // @ts-expect-error - not present in types
-  variable.eslintImplicitGlobalSetting = implicitGlobalSetting;
+  variable.eslintImplicitGlobalSetting = isWritable ? "writable" : "readonly";
   // @ts-expect-error - not present in types
   variable.eslintExplicitGlobal = false;
   // @ts-expect-error - not present in types
   variable.eslintExplicitGlobalComments = undefined;
-
-  globalScope.set.set(name, variable);
-  globalScope.variables.push(variable);
 }
 
 /**
