@@ -70,12 +70,11 @@ pub struct OnlyExportComponentsConfig {
 
 // NOTE: Ensure this is always kept in sync with OnlyExportComponentsConfig
 #[derive(Debug, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(default)]
+#[serde(default, rename_all = "camelCase")]
 struct OnlyExportComponentsOptionsJson {
     /// Treat specific named exports as HMR-safe (useful for frameworks that hot-replace
     /// certain exports). For example, in Remix:
     /// `{ "allowExportNames": ["meta", "links", "headers", "loader", "action"] }`
-    #[serde(rename = "allowExportNames")]
     allow_export_names: Option<Vec<String>>,
     /// Allow exporting primitive constants (string/number/boolean/template literal)
     /// alongside component exports without triggering a violation. Recommended when your
@@ -87,7 +86,6 @@ struct OnlyExportComponentsOptionsJson {
     /// export const VERSION = "3";
     /// export const Foo = () => null;
     /// ```
-    #[serde(rename = "allowConstantExport")]
     allow_constant_export: Option<bool>,
     /// If you export components wrapped in custom higher-order components, list their
     /// identifiers here to avoid false positives.
@@ -106,7 +104,7 @@ declare_oxc_lint!(
     /// that Fast Refresh (a.k.a. hot reloading) can safely preserve component state.
     /// Concretely, it validates the shape of your module’s exports and common entrypoints
     /// (e.g. `createRoot(...).render(<App />)`) to match what integrations like
-    /// `react-refresh` expect. The rule name is `react-refresh/only-export-components`.
+    /// `react-refresh` expect.
     ///
     /// ### Why is this bad?
     ///
