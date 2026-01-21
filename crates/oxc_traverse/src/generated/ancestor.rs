@@ -14,6 +14,7 @@ use std::{cell::Cell, marker::PhantomData, mem::offset_of};
 
 use oxc_allocator::{Address, Box, GetAddress, Vec};
 use oxc_ast::ast::*;
+use oxc_span::Ident;
 use oxc_syntax::scope::ScopeId;
 
 /// Type of [`Ancestor`].
@@ -14143,9 +14144,9 @@ impl<'a, 't> TSIndexSignatureNameWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn name(self) -> &'t Atom<'a> {
+    pub fn name(self) -> &'t Ident<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_NAME) as *const Atom<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INDEX_SIGNATURE_NAME_NAME) as *const Ident<'a>)
         }
     }
 }

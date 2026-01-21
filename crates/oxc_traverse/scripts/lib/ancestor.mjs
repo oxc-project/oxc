@@ -126,6 +126,7 @@ export default function generateAncestorsCode(types) {
 
     use oxc_allocator::{Address, Box, GetAddress, Vec};
     use oxc_ast::ast::*;
+    use oxc_span::Ident;
     use oxc_syntax::scope::ScopeId;
 
     /// Type of [\`Ancestor\`].

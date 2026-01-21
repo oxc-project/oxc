@@ -13415,7 +13415,7 @@ impl<'a> AstBuilder<'a> {
         type_annotation: T1,
     ) -> TSIndexSignatureName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
         T1: IntoIn<'a, Box<'a, TSTypeAnnotation<'a>>>,
     {
         TSIndexSignatureName {

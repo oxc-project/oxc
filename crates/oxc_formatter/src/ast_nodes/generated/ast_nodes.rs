@@ -8163,7 +8163,7 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
 
 impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     #[inline]
-    pub fn name(&self) -> Atom<'a> {
+    pub fn name(&self) -> Ident<'a> {
         self.inner.name
     }
 
