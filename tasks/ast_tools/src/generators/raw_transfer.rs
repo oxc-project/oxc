@@ -415,12 +415,18 @@ fn generate_struct(
                     DeserializerType::TsOnly => write_it!(fields_str, "...(IS_TS && {value}),"),
                 }
             } else if inline || !needs_parent_field {
-                let value = if generator.dependent_field_names.contains(&field_name) {
-                    write_it!(inline_preamble_str, "const {field_name} = {value};\n");
-                    &field_name
-                } else {
-                    &value
-                };
+                let value: Cow<str> =
+                    if generator.inline_assignment_field_names.contains(&field_name) {
+                        // Use inline assignment pattern: `let x; return { x: x = value };`
+                        // This allows minifiers to eliminate the variable when RANGE is false.
+                        write_it!(inline_preamble_str, "let {field_name};\n");
+                        Cow::Owned(format!("{field_name} = {value}"))
+                    } else if generator.dependent_field_names.contains(&field_name) {
+                        write_it!(inline_preamble_str, "const {field_name} = {value};\n");
+                        Cow::Borrowed(field_name.as_str())
+                    } else {
+                        Cow::Borrowed(value.as_str())
+                    };
 
                 if deser_type == DeserializerType::Both {
                     write_it!(fields_str, "{field_name}: {value},");
@@ -498,8 +504,11 @@ fn generate_struct(
 }
 
 struct StructDeserializerGenerator<'s> {
-    /// Dependencies
+    /// Dependencies - fields that must be computed before they're used
     dependent_field_names: FxHashSet<String>,
+    /// Fields that should use inline assignment pattern: `let x; return { x: x = value };`
+    /// This allows minifiers to eliminate unused variables when RANGE is false.
+    inline_assignment_field_names: FxHashSet<String>,
     /// Preamble
     preamble: Vec<String>,
     /// Fields, keyed by fields name (field name in ESTree AST)
@@ -523,6 +532,7 @@ impl<'s> StructDeserializerGenerator<'s> {
     fn new(span_type_id: TypeId, schema: &'s Schema) -> Self {
         Self {
             dependent_field_names: FxHashSet::default(),
+            inline_assignment_field_names: FxHashSet::default(),
             preamble: vec![],
             fields: FxIndexMap::default(),
             span_type_id,
@@ -612,7 +622,14 @@ impl<'s> StructDeserializerGenerator<'s> {
                     },
                 );
 
-                self.dependent_field_names.extend(["start".to_string(), "end".to_string()]);
+                // Use inline assignment for `start` and `end` so minifiers can eliminate
+                // them when RANGE is false. Pattern: `let start, end; { start: start = v1, end: end = v2 }`
+                // But only if no other field depends on them (e.g., `Comment.value` uses `THIS.start`).
+                for name in ["start", "end"] {
+                    if !self.dependent_field_names.contains(name) {
+                        self.inline_assignment_field_names.insert(name.to_string());
+                    }
+                }
             }
 
             return;
