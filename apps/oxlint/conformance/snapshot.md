@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   281 |  96.2% |
-| Partially passing |    11 |   3.8% |
+| Fully passing     |   282 |  96.6% |
+| Partially passing |    10 |   3.4% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
-| Passing     | 32788 |  99.1% |
-| Failing     |    31 |   0.1% |
+| Passing     | 32791 |  99.1% |
+| Failing     |    28 |   0.1% |
 | Skipped     |   271 |   0.8% |
 
 ## Fully Passing Rules
@@ -148,6 +148,7 @@
 - `no-func-assign` (15 tests)
 - `no-global-assign` (18 tests) (3 skipped)
 - `no-implicit-coercion` (134 tests)
+- `no-implicit-globals` (245 tests) (83 skipped)
 - `no-implied-eval` (138 tests)
 - `no-import-assign` (116 tests)
 - `no-inline-comments` (49 tests)
@@ -310,7 +311,6 @@
 
 - `no-eval` - 99 / 101 (98.0%)
 - `no-extra-parens` - 1068 / 1072 (99.6%)
-- `no-implicit-globals` - 242 / 245 (98.8%)
 - `no-invalid-this` - 558 / 562 (99.3%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
 - `no-multiple-empty-lines` - 45 / 46 (97.8%)
@@ -522,107 +522,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
-
-
-### `no-implicit-globals`
-
-Pass: 159 / 245 (64.9%)
-Fail: 3 / 245 (1.2%)
-Skip: 83 / 245 (33.9%)
-
-#### no-implicit-globals > valid
-
-```js
-function foo() {}
-```
-
-```json
-{
-  "languageOptions": {
-    "globals": {
-      "foo": "writable"
-    }
-  }
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-implicit-globals',
-    message: 'Unexpected function declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable.',
-    messageId: 'globalNonLexicalBinding',
-    severity: 1,
-    nodeType: 'FunctionDeclaration',
-    line: 1,
-    column: 0,
-    endLine: 1,
-    endColumn: 17,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### no-implicit-globals > invalid
-
-```js
-var Array = 1
-```
-
-```json
-{
-  "errors": [
-    {
-      "message": "Unexpected redeclaration of read-only global variable."
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-+ actual - expected
-
-+ "Unexpected 'var' declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable."
-- 'Unexpected redeclaration of read-only global variable.'
-
-    at assertMessageMatches (apps/oxlint/dist/index.js)
-    at assertInvalidTestCaseMessageIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-
-
-#### no-implicit-globals > invalid
-
-```js
-var Array = 1; Array = 2;
-```
-
-```json
-{
-  "errors": [
-    {
-      "message": "Unexpected redeclaration of read-only global variable."
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
-+ actual - expected
-
-+ "Unexpected 'var' declaration in the global scope, wrap in an IIFE for a local variable, assign as global property for a global variable."
-- 'Unexpected redeclaration of read-only global variable.'
-
-    at assertMessageMatches (apps/oxlint/dist/index.js)
-    at assertInvalidTestCaseMessageIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
 
 
 ### `no-invalid-this`

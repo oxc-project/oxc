@@ -268,15 +268,19 @@ function addGlobals(): void {
  * @param isWritable - `true` if the variable is writable, `false` otherwise
  */
 function createGlobalVariable(name: string, globalScope: TSScope, isWritable: boolean): void {
-  // Skip vars that already exist in the scope.
-  // These could be from code declarations or previous envs.
-  // This is important because typescript-eslint's scope manager doesn't resolve references
-  // in the global scope for `sourceType: "script"`, so we mustn't overwrite local `var`
-  // declarations with globals of the same name.
-  if (globalScope.set.has(name)) return;
+  // If var already exists in the scope (from code declarations or previous envs), don't create a new one.
+  // TS-ESLint's scope manager doesn't resolve references in the global scope for `sourceType: "script"`,
+  // so we mustn't overwrite local `var` declarations with globals of the same name.
+  // But set `writeable` on the existing variable to indicate whether the global is writable or read-only.
+  let variable = globalScope.set.get(name);
+  if (variable !== undefined) {
+    // @ts-expect-error - not present in types
+    variable.writeable = isWritable;
+    return;
+  }
 
   // All globals are type + value
-  const variable = new TSVariable(name, globalScope);
+  variable = new TSVariable(name, globalScope);
   debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
   debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
   // @ts-expect-error - not present in types
