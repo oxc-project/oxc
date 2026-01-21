@@ -705,7 +705,6 @@ pub(crate) mod vitest {
     pub mod prefer_called_times;
     pub mod prefer_describe_function_title;
     pub mod prefer_expect_type_of;
-    pub mod prefer_mock_return_shorthand;
     pub mod prefer_to_be_falsy;
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
