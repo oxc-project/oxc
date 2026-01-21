@@ -110,4 +110,7 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/top-level-await",
     "jsx/top-level-await",
     "typescript/top-level-await",
+    // ES5 vs ES6+ identifier: Prettier uses ES5 validation, OXC uses ES6+
+    // Characters outside BMP (like U+102A7) are valid ES6+ identifiers but not ES5
+    "js/quotes/objects.js",
 ];
