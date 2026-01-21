@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   283 |  96.9% |
-| Partially passing |     9 |   3.1% |
+| Fully passing     |   284 |  97.3% |
+| Partially passing |     8 |   2.7% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
-| Passing     | 32798 |  99.1% |
-| Failing     |    21 |   0.1% |
+| Passing     | 32799 |  99.1% |
+| Failing     |    20 |   0.1% |
 | Skipped     |   271 |   0.8% |
 
 ## Fully Passing Rules
@@ -169,6 +169,7 @@
 - `no-multi-assign` (31 tests)
 - `no-multi-spaces` (130 tests)
 - `no-multi-str` (7 tests)
+- `no-multiple-empty-lines` (46 tests)
 - `no-native-reassign` (18 tests) (3 skipped)
 - `no-negated-condition` (19 tests)
 - `no-negated-in-lhs` (3 tests)
@@ -314,7 +315,6 @@
 - `no-extra-parens` - 1068 / 1072 (99.6%)
 - `no-invalid-this` - 558 / 562 (99.3%)
 - `no-irregular-whitespace` - 279 / 280 (99.6%)
-- `no-multiple-empty-lines` - 45 / 46 (97.8%)
 - `no-unused-expressions` - 120 / 124 (96.8%)
 - `no-use-before-define` - 346 / 347 (99.7%)
 - `prefer-object-spread` - 86 / 87 (98.9%)
@@ -704,47 +704,6 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
     at assertValidTestCasePasses (apps/oxlint/dist/index.js)
     at runValidTestCase (apps/oxlint/dist/index.js)
     at apps/oxlint/dist/index.js
-
-
-### `no-multiple-empty-lines`
-
-Pass: 45 / 46 (97.8%)
-Fail: 1 / 46 (2.2%)
-Skip: 0 / 46 (0.0%)
-
-#### no-multiple-empty-lines > invalid
-
-```js
-foo
- 
-```
-
-```json
-{
-  "output": "foo\n",
-  "options": [
-    {
-      "max": 1,
-      "maxEOF": 0
-    }
-  ],
-  "errors": [
-    {
-      "messageId": "blankEndOfFile",
-      "data": {
-        "max": 0
-      },
-      "column": 1
-    }
-  ]
-}
-```
-
-RangeError: Line number out of range (line 3 requested). Line numbers should be 1-based, and less than or equal to number of lines in file (2).
-    at getOffsetFromLineColumn (apps/oxlint/dist/lint.js)
-    at report (apps/oxlint/dist/lint.js)
-    at Object.report (apps/oxlint/dist/lint.js)
-    at apps/oxlint/conformance/submodules/eslint/lib/rules/no-multiple-empty-lines.js:157:17
 
 
 ### `no-unused-expressions`

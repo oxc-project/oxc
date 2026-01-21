@@ -291,6 +291,9 @@ function getOffsetFromLineColumn(lineCol: LineColumn): number {
   debugAssertLinesIsInitialized();
 
   if (line <= 0 || line > lineStartIndices.length) {
+    // Allow `line` to be 1 greater than the number of lines in the file if `column` is 0
+    if (line === lineStartIndices.length + 1 && column === 0) return sourceText.length;
+
     throw new RangeError(
       `Line number out of range (line ${line} requested). ` +
         `Line numbers should be 1-based, and less than or equal to number of lines in file (${lineStartIndices.length}).`,
