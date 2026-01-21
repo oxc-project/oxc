@@ -22,11 +22,7 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 };
                 let name: Atom = private_id.name.into();
-                if ctx
-                    .state
-                    .class_symbols_stack
-                    .is_private_member_used_in_current_class(&name)
-                {
+                if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
                 prop.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
@@ -36,20 +32,14 @@ impl<'a> PeepholeOptimizations {
                     return true;
                 };
                 let name: Atom = private_id.name.into();
-                ctx.state
-                    .class_symbols_stack
-                    .is_private_member_used_in_current_class(&name)
+                ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                     return true;
                 };
                 let name: Atom = private_id.name.into();
-                if ctx
-                    .state
-                    .class_symbols_stack
-                    .is_private_member_used_in_current_class(&name)
-                {
+                if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
                 accessor.value.as_ref().is_some_and(|value| value.may_have_side_effects(ctx))
