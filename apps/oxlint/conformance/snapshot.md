@@ -336,6 +336,10 @@ function foo() { ('use strict'); this.eval; }
 
 ```json
 {
+  "languageOptions": {
+    "ecmaVersion": 5,
+    "sourceType": "script"
+  },
   "errors": [
     {
       "messageId": "unexpected",
@@ -365,7 +369,8 @@ function foo() { 'use strict'; this.eval(); }
 ```json
 {
   "languageOptions": {
-    "ecmaVersion": 3
+    "ecmaVersion": 3,
+    "sourceType": "script"
   },
   "errors": [
     {
@@ -398,7 +403,16 @@ Skip: 1 / 1072 (0.1%)
 ```
 
 ```json
-{}
+{
+  "languageOptions": {
+    "sourceType": "script",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    }
+  }
+}
 ```
 
 AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
@@ -432,7 +446,16 @@ foo
 ```
 
 ```json
-{}
+{
+  "languageOptions": {
+    "sourceType": "script",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    }
+  }
+}
 ```
 
 AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
@@ -465,7 +488,16 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ```
 
 ```json
-{}
+{
+  "languageOptions": {
+    "sourceType": "script",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    }
+  }
+}
 ```
 
 AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
@@ -498,7 +530,16 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ```
 
 ```json
-{}
+{
+  "languageOptions": {
+    "sourceType": "script",
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    }
+  }
+}
 ```
 
 AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
@@ -539,7 +580,8 @@ function foo() { 'use strict'; this.eval(); }
 ```json
 {
   "languageOptions": {
-    "ecmaVersion": 3
+    "ecmaVersion": 3,
+    "sourceType": "script"
   }
 }
 ```
@@ -576,7 +618,8 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ```json
 {
   "languageOptions": {
-    "ecmaVersion": 3
+    "ecmaVersion": 3,
+    "sourceType": "script"
   }
 }
 ```
@@ -614,6 +657,7 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 {
   "languageOptions": {
     "ecmaVersion": 3,
+    "sourceType": "script",
     "parserOptions": {
       "ecmaFeatures": {
         "impliedStrict": true
@@ -657,7 +701,11 @@ AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
 ```
 
 ```json
-{}
+{
+  "languageOptions": {
+    "parser": {}
+  }
+}
 ```
 
 Error: Parsing failed
@@ -852,6 +900,10 @@ Skip: 0 / 347 (0.0%)
 
 ```json
 {
+  "languageOptions": {
+    "ecmaVersion": 5,
+    "sourceType": "script"
+  },
   "errors": [
     {
       "messageId": "usedBeforeDefined",
@@ -892,10 +944,11 @@ const test = Object.assign({ ...bar }, {
 
 ```json
 {
-  "output": "const test = {...bar, <!-- html comment\n                foo: 'bar',\n                baz: \"cats\"\n                --> weird\n            }",
   "languageOptions": {
+    "ecmaVersion": 2018,
     "sourceType": "script"
   },
+  "output": "const test = {...bar, <!-- html comment\n                foo: 'bar',\n                baz: \"cats\"\n                --> weird\n            }",
   "errors": [
     {
       "messageId": "useSpreadMessage",

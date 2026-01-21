@@ -6,7 +6,7 @@
 import eslintGlobals from "../submodules/eslint/conf/globals.js";
 import { createRequire } from "node:module";
 import { RuleTester } from "#oxlint";
-import { describe, it } from "./capture.ts";
+import { describe, it, setCurrentTest } from "./capture.ts";
 import { ESLINT_RULES_TESTS_DIR_PATH } from "./run.ts";
 import { FILTER_ONLY_CODE } from "./filter.ts";
 
@@ -89,6 +89,10 @@ class RuleTesterShim extends RuleTester {
 (RuleTester as any).registerModifyTestCaseHook(modifyTestCase);
 
 function modifyTestCase(test: TestCase): void {
+  // Record current test case.
+  // Clone it to avoid including the changes to the original test case made below.
+  setCurrentTest({ ...test });
+
   // Enable ESLint compat mode.
   // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
   test.eslintCompat = true;

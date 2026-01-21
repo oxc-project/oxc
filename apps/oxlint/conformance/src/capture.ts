@@ -49,6 +49,18 @@ export function resetCurrentRule(): void {
   currentRule = null;
 }
 
+// Current test case being tested
+let currentTest: TestCase | null = null;
+
+/**
+ * Set the current test being tested.
+ * Call before running linter for a test case (in `modifyTestCase` hook).
+ * @param test - `TestCase` object
+ */
+export function setCurrentTest(test: TestCase): void {
+  currentTest = test;
+}
+
 /**
  * `describe` function that tracks the test hierarchy.
  * @param name - Name of the test group
@@ -80,30 +92,54 @@ export function it(code: string, fn: () => void): void {
 
   try {
     fn();
+
+    // Check that the test case was actually run
+    if (currentTest === null) throw new Error("Test case was not run with `RuleTester`");
+
     testResult.isPassed = true;
   } catch (err) {
-    if (err instanceof Error && err.message === "Custom parsers are not supported") {
-      testResult.isSkipped = true;
-    }
+    testResult.testCase = currentTest;
 
-    // Skip test cases which start with `/* global */`, `/* globals */`, `/* exported */`, or `/* eslint */` comments.
-    // Oxlint does not support defining globals inline.
-    // `RuleTester` does not support enabling other rules beyond the rule under test.
-    if (code.match(/^\s*\/\*\s*(globals?|exported|eslint)\s/)) {
-      testResult.isSkipped = true;
-    }
+    if (!(err instanceof Error)) {
+      testResult.error = new Error("Unknown error");
+    } else if (currentTest === null) {
+      testResult.error = new Error("Test case was not run with `RuleTester`");
+    } else {
+      testResult.error = err;
 
-    // Skip test cases which include `// eslint-disable` comments.
-    // These are not handled by `RuleTester`.
-    if (code.match(/\/\/\s*eslint-disable((-next)?-line)?(\s|$)/)) {
-      testResult.isSkipped = true;
+      const ruleName = describeStack[0];
+      if (shouldSkipTest(ruleName, currentTest, code, err)) testResult.isSkipped = true;
     }
-
-    testResult.error = err as Error;
-    testResult.testCase = err?.__testCase ?? null;
+  } finally {
+    // Reset current test
+    currentTest = null;
   }
 
   currentRule!.tests.push(testResult);
+}
+
+/**
+ * Determine if failing test case should be skipped.
+ * @param ruleName - Rule name
+ * @param test - Test case
+ * @param code - Code for test case
+ * @param err - Error thrown during test case
+ * @returns `true` if test should be skipped
+ */
+function shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Error): boolean {
+  // We cannot support custom parsers
+  if (err.message === "Custom parsers are not supported") return true;
+
+  // Skip test cases which start with `/* global */`, `/* globals */`, `/* exported */`, or `/* eslint */` comments.
+  // Oxlint does not support defining globals inline.
+  // `RuleTester` does not support enabling other rules beyond the rule under test.
+  if (code.match(/^\s*\/\*\s*(globals?|exported|eslint)\s/)) return true;
+
+  // Skip test cases which include `// eslint-disable` comments.
+  // These are not handled by `RuleTester`.
+  if (code.match(/\/\/\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
+
+  return false;
 }
 
 // Add `it.only` property for compatibility.

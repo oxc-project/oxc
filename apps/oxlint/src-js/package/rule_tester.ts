@@ -815,32 +815,6 @@ function getMessagePlaceholders(message: string): string[] {
   return Array.from(message.matchAll(PLACEHOLDER_REGEX), ([, name]) => name.trim());
 }
 
-// In conformance build, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
-// This is used in conformance tests.
-type RunFunction<T> = (test: T, plugin: Plugin, config: Config, seenTestCases: Set<string>) => void;
-
-function wrapRunTestCaseFunction<T extends ValidTestCase | InvalidTestCase>(
-  run: RunFunction<T>,
-): RunFunction<T> {
-  return function (test, plugin, config, seenTestCases) {
-    try {
-      run(test, plugin, config, seenTestCases);
-    } catch (err) {
-      // oxlint-disable-next-line no-ex-assign
-      if (typeof err !== "object" || err === null) err = new Error("Unknown error");
-      err.__testCase = test;
-      throw err;
-    }
-  };
-}
-
-if (CONFORMANCE) {
-  // oxlint-disable-next-line no-func-assign
-  (runValidTestCase as any) = wrapRunTestCaseFunction(runValidTestCase);
-  // oxlint-disable-next-line no-func-assign
-  (runInvalidTestCase as any) = wrapRunTestCaseFunction(runInvalidTestCase);
-}
-
 /**
  * Create config for a test run.
  * Merges config from `RuleTester` instance on top of shared config.
