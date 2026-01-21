@@ -78,11 +78,11 @@ declare_oxc_lint!(
     /// functions, etc.
     ///
     /// #### Ignored Files
-    /// This rule ignores `.d.ts` files and `.vue` files entirely. Variables,
+    /// This rule ignores `.d.ts`, `.astro`, `.svelte` and `.vue` files entirely. Variables,
     /// classes, interfaces, and types declared in `.d.ts` files are generally
     /// used by other files, which are not checked by Oxlint. Since Oxlint does
-    /// not support parsing Vue templates, this rule cannot tell if a variable
-    /// is used or unused in a Vue file.
+    /// not support parsing template syntax, this rule cannot tell if a variable
+    /// is used or unused in a Vue / Svelte / Astro file.
     ///
     /// #### Exported
     ///
