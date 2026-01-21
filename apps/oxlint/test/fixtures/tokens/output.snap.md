@@ -343,15 +343,15 @@
   | Keyword           loc= 6:0 - 6:3    range= 72-75   "let"
   | Identifier        loc= 6:4 - 6:5    range= 76-77   "y"
   | Punctuator        loc= 6:6 - 6:7    range= 78-79   "="
-  | Numeric           loc= 6:8 - 6:9    range= 80-81   "2"
-  | Punctuator        loc= 6:9 - 6:10   range= 81-82   ";"
+  | RegularExpression loc= 6:8 - 6:15   range= 80-87   "/abc/gu"
+  | Punctuator        loc= 6:15 - 6:16  range= 87-88   ";"
    ,-[files/index.js:1:1]
  1 | ,-> // Leading comment
  2 | |   
  3 | |   let x = /* inline comment */ 1;
  4 | |   
  5 | |   // Another comment
- 6 | |   let y = 2;
+ 6 | |   let y = /abc/gu;
  7 | |   
  8 | `-> // Trailing comment
    `----
@@ -368,16 +368,16 @@
   | Keyword           loc= 6:0 - 6:3    range= 72-75   "let"
   | Identifier        loc= 6:4 - 6:5    range= 76-77   "y"
   | Punctuator        loc= 6:6 - 6:7    range= 78-79   "="
-  | Numeric           loc= 6:8 - 6:9    range= 80-81   "2"
-  | Punctuator        loc= 6:9 - 6:10   range= 81-82   ";"
-  | Line              loc= 8:0 - 8:19   range= 84-103  " Trailing comment"
+  | RegularExpression loc= 6:8 - 6:15   range= 80-87   "/abc/gu"
+  | Punctuator        loc= 6:15 - 6:16  range= 87-88   ";"
+  | Line              loc= 8:0 - 8:19   range= 90-109  " Trailing comment"
    ,-[files/index.js:1:1]
  1 | ,-> // Leading comment
  2 | |   
  3 | |   let x = /* inline comment */ 1;
  4 | |   
  5 | |   // Another comment
- 6 | |   let y = 2;
+ 6 | |   let y = /abc/gu;
  7 | |   
  8 | `-> // Trailing comment
    `----
@@ -435,13 +435,13 @@
  4 | 
  5 | // Another comment
    : ^^^^^^^^^^^^^^^^^^
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    `----
 
   x tokens-plugin(tokens): Keyword ("let")
    ,-[files/index.js:6:1]
  5 | // Another comment
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    : ^^^
  7 | 
    `----
@@ -449,7 +449,7 @@
   x tokens-plugin(tokens): Identifier ("y")
    ,-[files/index.js:6:5]
  5 | // Another comment
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    :     ^
  7 | 
    `----
@@ -457,24 +457,25 @@
   x tokens-plugin(tokens): Punctuator ("=")
    ,-[files/index.js:6:7]
  5 | // Another comment
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    :       ^
  7 | 
    `----
 
-  x tokens-plugin(tokens): Numeric ("2")
+  x tokens-plugin(tokens): RegularExpression ("/abc/gu")
+  |   regex: {"flags":"gu","pattern":"abc"}
    ,-[files/index.js:6:9]
  5 | // Another comment
- 6 | let y = 2;
-   :         ^
+ 6 | let y = /abc/gu;
+   :         ^^^^^^^
  7 | 
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
-   ,-[files/index.js:6:10]
+   ,-[files/index.js:6:16]
  5 | // Another comment
- 6 | let y = 2;
-   :          ^
+ 6 | let y = /abc/gu;
+   :                ^
  7 | 
    `----
 

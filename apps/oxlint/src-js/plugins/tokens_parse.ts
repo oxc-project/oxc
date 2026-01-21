@@ -231,8 +231,11 @@ function getTokenType(token: ts.Identifier | ts.Token<ts.SyntaxKind>): Token["ty
         : "String";
     }
 
+    /*
+    // Not needed. Handled in `convertToken` instead.
     case tsSyntaxKind.RegularExpressionLiteral:
       return "RegularExpression";
+    */
 
     case tsSyntaxKind.Identifier: {
       // Some JSX tokens have to be determined based on their parent
