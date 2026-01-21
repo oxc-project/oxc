@@ -106,4 +106,8 @@ pub const IGNORE_TESTS: &[&str] = &[
     "cursor",
     // Invalid
     "js/call/invalid",
+    // Prettier bug: https://github.com/prettier/prettier/issues/18707
+    "js/top-level-await",
+    "jsx/top-level-await",
+    "typescript/top-level-await",
 ];

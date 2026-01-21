@@ -1,4 +1,4 @@
-js compatibility: 741/760 (97.50%)
+js compatibility: 737/754 (97.75%)
 
 # Failed
 
@@ -20,6 +20,4 @@ js compatibility: 741/760 (97.50%)
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
 | js/ternaries/parenthesis/await-expression.js | 💥 | 33.33% |
-| js/top-level-await/test.js | 💥 | 0.00% |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/top-level-await/test.jsx | 💥 | 0.00% |

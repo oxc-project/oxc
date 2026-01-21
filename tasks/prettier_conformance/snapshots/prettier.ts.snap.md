@@ -1,11 +1,10 @@
-ts compatibility: 585/605 (96.69%)
+ts compatibility: 583/600 (97.17%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
-| jsx/top-level-await/test.jsx | 💥 | 0.00% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
@@ -18,8 +17,6 @@ ts compatibility: 585/605 (96.69%)
 | typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
-| typescript/top-level-await/test.ts | 💥 | 0.00% |
-| typescript/top-level-await/test.tsx | 💥 | 0.00% |
 | typescript/union/comments/18106.ts | 💥 | 92.68% |
 | typescript/union/comments/18379.ts | 💥 | 87.27% |
 | typescript/union/comments/18389.ts | 💥 | 51.28% |
