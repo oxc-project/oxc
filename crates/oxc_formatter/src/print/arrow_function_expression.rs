@@ -394,15 +394,15 @@ struct ArrowChain<'a, 'b> {
 
 impl<'a, 'b> ArrowChain<'a, 'b> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &&'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
-        once(&self.head).chain(self.middle.iter()).chain(once(&self.tail))
+        once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
 }
 
 impl<'a> Format<'a> for ArrowChain<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
-        let ArrowChain { tail, expand_signatures, .. } = self;
+        let ArrowChain { tail, expand_signatures, .. } = *self;
 
         let tail_body = tail.body();
         let is_grouped_call_arg_layout = self.options.call_argument_layout.is_some();
@@ -550,7 +550,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                 }
             });
 
-            group(&join_signatures).should_expand(*expand_signatures).fmt(f);
+            group(&join_signatures).should_expand(expand_signatures).fmt(f);
         });
 
         let format_tail_body_inner = format_with(|f| {
