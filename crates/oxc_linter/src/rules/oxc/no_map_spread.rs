@@ -22,7 +22,6 @@ use crate::{
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
-    utils::default_true,
 };
 
 fn no_map_spread_diagnostic(
@@ -65,13 +64,12 @@ fn no_map_spread_diagnostic(
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMapSpreadConfig {
     /// Ignore mapped arrays that are re-read after the `map` call.
     ///
     /// Re-used arrays may rely on shallow copying behavior to avoid mutations.
     /// In these cases, `Object.assign` is not really more performant than spreads.
-    #[serde(default = "default_true")]
     ignore_rereads: bool,
     /// Ignore maps on arrays passed as parameters to a function.
     ///
@@ -97,7 +95,6 @@ pub struct NoMapSpreadConfig {
     ///     return arr.map(x => ({ ...x }));
     /// }
     /// ```
-    #[serde(default = "default_true")]
     ignore_args: bool,
     // todo: ignore_arrays?
 }
@@ -319,9 +316,7 @@ const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
 
 impl Rule for NoMapSpread {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
