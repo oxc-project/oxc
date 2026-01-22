@@ -643,6 +643,7 @@ pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsync
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
+pub use crate::rules::vitest::prefer_import_in_mock::PreferImportInMock as VitestPreferImportInMock;
 pub use crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy as VitestPreferToBeFalsy;
 pub use crate::rules::vitest::prefer_to_be_object::PreferToBeObject as VitestPreferToBeObject;
 pub use crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy as VitestPreferToBeTruthy;
@@ -1310,6 +1311,7 @@ pub enum RuleEnum {
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
+    VitestPreferImportInMock(VitestPreferImportInMock),
     VitestPreferToBeFalsy(VitestPreferToBeFalsy),
     VitestPreferToBeObject(VitestPreferToBeObject),
     VitestPreferToBeTruthy(VitestPreferToBeTruthy),
@@ -1976,32 +1978,33 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => 631usize,
             Self::VitestPreferCalledTimes(_) => 632usize,
             Self::VitestPreferDescribeFunctionTitle(_) => 633usize,
-            Self::VitestPreferToBeFalsy(_) => 634usize,
-            Self::VitestPreferToBeObject(_) => 635usize,
-            Self::VitestPreferToBeTruthy(_) => 636usize,
-            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 637usize,
-            Self::VitestWarnTodo(_) => 638usize,
-            Self::NodeGlobalRequire(_) => 639usize,
-            Self::NodeNoExportsAssign(_) => 640usize,
-            Self::NodeNoNewRequire(_) => 641usize,
-            Self::NodeNoProcessEnv(_) => 642usize,
-            Self::VueDefineEmitsDeclaration(_) => 643usize,
-            Self::VueDefinePropsDeclaration(_) => 644usize,
-            Self::VueDefinePropsDestructuring(_) => 645usize,
-            Self::VueMaxProps(_) => 646usize,
-            Self::VueNoArrowFunctionsInWatch(_) => 647usize,
-            Self::VueNoDeprecatedDestroyedLifecycle(_) => 648usize,
-            Self::VueNoExportInScriptSetup(_) => 649usize,
-            Self::VueNoImportCompilerMacros(_) => 650usize,
-            Self::VueNoLifecycleAfterAwait(_) => 651usize,
-            Self::VueNoMultipleSlotArgs(_) => 652usize,
-            Self::VueNoRequiredPropWithDefault(_) => 653usize,
-            Self::VueNoThisInBeforeRouteEnter(_) => 654usize,
-            Self::VuePreferImportFromVue(_) => 655usize,
-            Self::VueRequireDefaultExport(_) => 656usize,
-            Self::VueRequireTypedRef(_) => 657usize,
-            Self::VueValidDefineEmits(_) => 658usize,
-            Self::VueValidDefineProps(_) => 659usize,
+            Self::VitestPreferImportInMock(_) => 634usize,
+            Self::VitestPreferToBeFalsy(_) => 635usize,
+            Self::VitestPreferToBeObject(_) => 636usize,
+            Self::VitestPreferToBeTruthy(_) => 637usize,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 638usize,
+            Self::VitestWarnTodo(_) => 639usize,
+            Self::NodeGlobalRequire(_) => 640usize,
+            Self::NodeNoExportsAssign(_) => 641usize,
+            Self::NodeNoNewRequire(_) => 642usize,
+            Self::NodeNoProcessEnv(_) => 643usize,
+            Self::VueDefineEmitsDeclaration(_) => 644usize,
+            Self::VueDefinePropsDeclaration(_) => 645usize,
+            Self::VueDefinePropsDestructuring(_) => 646usize,
+            Self::VueMaxProps(_) => 647usize,
+            Self::VueNoArrowFunctionsInWatch(_) => 648usize,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => 649usize,
+            Self::VueNoExportInScriptSetup(_) => 650usize,
+            Self::VueNoImportCompilerMacros(_) => 651usize,
+            Self::VueNoLifecycleAfterAwait(_) => 652usize,
+            Self::VueNoMultipleSlotArgs(_) => 653usize,
+            Self::VueNoRequiredPropWithDefault(_) => 654usize,
+            Self::VueNoThisInBeforeRouteEnter(_) => 655usize,
+            Self::VuePreferImportFromVue(_) => 656usize,
+            Self::VueRequireDefaultExport(_) => 657usize,
+            Self::VueRequireTypedRef(_) => 658usize,
+            Self::VueValidDefineEmits(_) => 659usize,
+            Self::VueValidDefineProps(_) => 660usize,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -2724,6 +2727,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::NAME,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::NAME,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::NAME,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::NAME,
@@ -3512,6 +3516,7 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::CATEGORY
             }
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::CATEGORY,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::CATEGORY,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::CATEGORY,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::CATEGORY,
@@ -4265,6 +4270,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::FIX,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FIX,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FIX,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FIX,
@@ -5190,6 +5196,7 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::documentation()
             }
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::documentation(),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::documentation(),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::documentation(),
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::documentation(),
@@ -7014,6 +7021,8 @@ impl RuleEnum {
                 VitestPreferDescribeFunctionTitle::config_schema(generator)
                     .or_else(|| VitestPreferDescribeFunctionTitle::schema(generator))
             }
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::config_schema(generator)
+                .or_else(|| VitestPreferImportInMock::schema(generator)),
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::config_schema(generator)
                 .or_else(|| VitestPreferToBeFalsy::schema(generator)),
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::config_schema(generator)
@@ -7725,6 +7734,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
+            Self::VitestPreferImportInMock(_) => "vitest",
             Self::VitestPreferToBeFalsy(_) => "vitest",
             Self::VitestPreferToBeObject(_) => "vitest",
             Self::VitestPreferToBeTruthy(_) => "vitest",
@@ -9782,6 +9792,9 @@ impl RuleEnum {
                     VitestPreferDescribeFunctionTitle::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferImportInMock(_) => Ok(Self::VitestPreferImportInMock(
+                VitestPreferImportInMock::from_configuration(value)?,
+            )),
             Self::VitestPreferToBeFalsy(_) => {
                 Ok(Self::VitestPreferToBeFalsy(VitestPreferToBeFalsy::from_configuration(value)?))
             }
@@ -10502,6 +10515,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
+            Self::VitestPreferImportInMock(rule) => rule.to_configuration(),
             Self::VitestPreferToBeFalsy(rule) => rule.to_configuration(),
             Self::VitestPreferToBeObject(rule) => rule.to_configuration(),
             Self::VitestPreferToBeTruthy(rule) => rule.to_configuration(),
@@ -11168,6 +11182,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
+            Self::VitestPreferImportInMock(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run(node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run(node, ctx),
@@ -11832,6 +11847,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
+            Self::VitestPreferImportInMock(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_once(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_once(ctx),
@@ -12584,6 +12600,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VitestPreferImportInMock(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeObject(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13250,6 +13267,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
+            Self::VitestPreferImportInMock(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeFalsy(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeObject(rule) => rule.should_run(ctx),
             Self::VitestPreferToBeTruthy(rule) => rule.should_run(ctx),
@@ -14172,6 +14190,7 @@ impl RuleEnum {
             Self::VitestPreferDescribeFunctionTitle(_) => {
                 VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
             Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
@@ -14840,6 +14859,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
+            Self::VitestPreferImportInMock(rule) => rule.types_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.types_info(),
             Self::VitestPreferToBeObject(rule) => rule.types_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.types_info(),
@@ -15504,6 +15524,7 @@ impl RuleEnum {
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
+            Self::VitestPreferImportInMock(rule) => rule.run_info(),
             Self::VitestPreferToBeFalsy(rule) => rule.run_info(),
             Self::VitestPreferToBeObject(rule) => rule.run_info(),
             Self::VitestPreferToBeTruthy(rule) => rule.run_info(),
@@ -16274,6 +16295,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
+        RuleEnum::VitestPreferImportInMock(VitestPreferImportInMock::default()),
         RuleEnum::VitestPreferToBeFalsy(VitestPreferToBeFalsy::default()),
         RuleEnum::VitestPreferToBeObject(VitestPreferToBeObject::default()),
         RuleEnum::VitestPreferToBeTruthy(VitestPreferToBeTruthy::default()),
