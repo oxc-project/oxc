@@ -26,7 +26,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           assignee_trigger: "boshen"
-          additional_permissions: "*"
+          claude_args: --allowedTools "Edit,Write,Read,Glob,Grep,Bash(gh:*),Bash(cargo:*),Bash(git:*),Bash(just:*),WebFetch,TodoWrite"
           prompt: |
             Analyze issue #${{ github.event.issue.number }} in ${{ github.repository }} and determine if it can be fixed.
 
