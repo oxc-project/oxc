@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-ESLINT_SHA="e593aa0fd29f51edea787815ffc847aa723ef1f8"
+ESLINT_SHA="8f360ad6a7a743d33a83eed8973ee4a50731e55b" # 10.0.0-rc.0
 
 # Delete existing `submodules` directory
 rm -rf submodules

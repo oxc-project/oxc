@@ -17,10 +17,10 @@
 
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
-| Total tests | 33090 | 100.0% |
-| Passing     | 32808 |  99.1% |
+| Total tests | 33159 | 100.0% |
+| Passing     | 32873 |  99.1% |
 | Failing     |     0 |   0.0% |
-| Skipped     |   282 |   0.9% |
+| Skipped     |   286 |   0.9% |
 
 ## Fully Passing Rules
 
@@ -91,7 +91,7 @@
 - `max-lines-per-function` (43 tests)
 - `max-lines` (47 tests)
 - `max-nested-callbacks` (14 tests)
-- `max-params` (45 tests)
+- `max-params` (53 tests)
 - `max-statements-per-line` (96 tests)
 - `max-statements` (42 tests)
 - `multiline-comment-style` (110 tests)
@@ -202,7 +202,7 @@
 - `no-regex-spaces` (73 tests)
 - `no-restricted-exports` (183 tests)
 - `no-restricted-globals` (166 tests)
-- `no-restricted-imports` (254 tests) (1 skipped)
+- `no-restricted-imports` (263 tests) (1 skipped)
 - `no-restricted-modules` (44 tests)
 - `no-restricted-properties` (89 tests)
 - `no-restricted-syntax` (32 tests)
@@ -226,7 +226,7 @@
 - `no-trailing-spaces` (54 tests)
 - `no-unassigned-vars` (23 tests)
 - `no-undef-init` (28 tests)
-- `no-undef` (94 tests) (6 skipped)
+- `no-undef` (103 tests) (7 skipped)
 - `no-undefined` (53 tests)
 - `no-underscore-dangle` (116 tests)
 - `no-unexpected-multiline` (56 tests) (4 skipped)
@@ -240,9 +240,9 @@
 - `no-unused-expressions` (124 tests) (4 skipped)
 - `no-unused-labels` (26 tests)
 - `no-unused-private-class-members` (39 tests)
-- `no-unused-vars` (436 tests) (21 skipped)
-- `no-use-before-define` (347 tests) (1 skipped)
-- `no-useless-assignment` (85 tests) (2 skipped)
+- `no-unused-vars` (448 tests) (21 skipped)
+- `no-use-before-define` (354 tests) (1 skipped)
+- `no-useless-assignment` (109 tests) (5 skipped)
 - `no-useless-backreference` (190 tests) (1 skipped)
 - `no-useless-call` (44 tests)
 - `no-useless-catch` (16 tests)
