@@ -51,6 +51,8 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "typescript/arrow-function/arrow-like-in-conditional-2",
             // TypeScript allows `satisfies const`, Babel doesn't
             "typescript/cast/satisfies-const-error",
+            // Babel's heuristic for detecting module via unambiguous `await` - not in ES spec, we follow TypeScript
+            "es2022/top-level-await-unambiguous",
         ]
         .iter()
         .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));

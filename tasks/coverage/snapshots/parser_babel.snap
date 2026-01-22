@@ -1,8 +1,8 @@
 commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2221/2227 (99.73%)
-Positive Passed: 2207/2227 (99.10%)
+AST Parsed     : 2217/2223 (99.73%)
+Positive Passed: 2204/2223 (99.15%)
 Negative Passed: 1649/1689 (97.63%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
@@ -83,16 +83,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js:1:1]
- 1 │ await 0
-   · ─────
- 2 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
 
