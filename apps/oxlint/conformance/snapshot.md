@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   291 |  99.7% |
-| Partially passing |     1 |   0.3% |
+| Fully passing     |   292 | 100.0% |
+| Partially passing |     0 |   0.0% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
-| Passing     | 32807 |  99.1% |
-| Failing     |     1 |   0.0% |
+| Passing     | 32808 |  99.1% |
+| Failing     |     0 |   0.0% |
 | Skipped     |   282 |   0.9% |
 
 ## Fully Passing Rules
@@ -137,6 +137,7 @@
 - `no-empty-static-block` (10 tests)
 - `no-empty` (35 tests)
 - `no-eq-null` (5 tests)
+- `no-eval` (101 tests) (1 skipped)
 - `no-ex-assign` (8 tests)
 - `no-extend-native` (40 tests)
 - `no-extra-bind` (43 tests)
@@ -318,44 +319,4 @@
 
 ## Rules with Failures
 
-- `no-eval` - 100 / 101 (99.0%)
-
-## Rules with Failures Detail
-
-### `no-eval`
-
-Pass: 99 / 101 (98.0%)
-Fail: 1 / 101 (1.0%)
-Skip: 1 / 101 (1.0%)
-
-#### no-eval > invalid
-
-```js
-function foo() { ('use strict'); this.eval; }
-```
-
-```json
-{
-  "languageOptions": {
-    "ecmaVersion": 5,
-    "sourceType": "script"
-  },
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "column": 39,
-      "endColumn": 43
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
+No rules with failures

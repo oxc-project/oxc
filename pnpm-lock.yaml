@@ -41,6 +41,9 @@ catalogs:
       version: 4.0.15
 
 patchedDependencies:
+  '@typescript-eslint/scope-manager':
+    hash: 15e9da78cb0de614fd78a94fbaca0b199efb09049db999b533c420a2125ab6a3
+    path: patches/@typescript-eslint__scope-manager.patch
   prettier-plugin-tailwindcss@0.7.2:
     hash: 85d2396832ac55f5f0187f4ba0a7b8bf22d7d117e33f75c1290670eb9a8c55af
     path: patches/prettier-plugin-tailwindcss@0.7.2.patch
@@ -127,7 +130,7 @@ importers:
         version: 24.1.0
       '@typescript-eslint/scope-manager':
         specifier: 8.53.1
-        version: 8.53.1
+        version: 8.53.1(patch_hash=15e9da78cb0de614fd78a94fbaca0b199efb09049db999b533c420a2125ab6a3)
       ajv:
         specifier: ^6.12.6
         version: 6.12.6
@@ -7921,7 +7924,7 @@ snapshots:
 
   '@types/whatwg-mimetype@3.0.2': {}
 
-  '@typescript-eslint/scope-manager@8.53.1':
+  '@typescript-eslint/scope-manager@8.53.1(patch_hash=15e9da78cb0de614fd78a94fbaca0b199efb09049db999b533c420a2125ab6a3)':
     dependencies:
       '@typescript-eslint/types': 8.53.1
       '@typescript-eslint/visitor-keys': 8.53.1
