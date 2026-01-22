@@ -640,6 +640,7 @@ pub use crate::rules::vitest::hoisted_apis_on_top::HoistedApisOnTop as VitestHoi
 pub use crate::rules::vitest::no_conditional_tests::NoConditionalTests as VitestNoConditionalTests;
 pub use crate::rules::vitest::no_import_node_test::NoImportNodeTest as VitestNoImportNodeTest;
 pub use crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction as VitestNoUnneededAsyncExpectFunction;
+pub use crate::rules::vitest::prefer_called_exactly_once_with::PreferCalledExactlyOnceWith as VitestPreferCalledExactlyOnceWith;
 pub use crate::rules::vitest::prefer_called_once::PreferCalledOnce as VitestPreferCalledOnce;
 pub use crate::rules::vitest::prefer_called_times::PreferCalledTimes as VitestPreferCalledTimes;
 pub use crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle as VitestPreferDescribeFunctionTitle;
@@ -1307,6 +1308,7 @@ pub enum RuleEnum {
     VitestNoConditionalTests(VitestNoConditionalTests),
     VitestNoImportNodeTest(VitestNoImportNodeTest),
     VitestNoUnneededAsyncExpectFunction(VitestNoUnneededAsyncExpectFunction),
+    VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith),
     VitestPreferCalledOnce(VitestPreferCalledOnce),
     VitestPreferCalledTimes(VitestPreferCalledTimes),
     VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle),
@@ -1973,35 +1975,36 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => 628usize,
             Self::VitestNoImportNodeTest(_) => 629usize,
             Self::VitestNoUnneededAsyncExpectFunction(_) => 630usize,
-            Self::VitestPreferCalledOnce(_) => 631usize,
-            Self::VitestPreferCalledTimes(_) => 632usize,
-            Self::VitestPreferDescribeFunctionTitle(_) => 633usize,
-            Self::VitestPreferToBeFalsy(_) => 634usize,
-            Self::VitestPreferToBeObject(_) => 635usize,
-            Self::VitestPreferToBeTruthy(_) => 636usize,
-            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 637usize,
-            Self::VitestWarnTodo(_) => 638usize,
-            Self::NodeGlobalRequire(_) => 639usize,
-            Self::NodeNoExportsAssign(_) => 640usize,
-            Self::NodeNoNewRequire(_) => 641usize,
-            Self::NodeNoProcessEnv(_) => 642usize,
-            Self::VueDefineEmitsDeclaration(_) => 643usize,
-            Self::VueDefinePropsDeclaration(_) => 644usize,
-            Self::VueDefinePropsDestructuring(_) => 645usize,
-            Self::VueMaxProps(_) => 646usize,
-            Self::VueNoArrowFunctionsInWatch(_) => 647usize,
-            Self::VueNoDeprecatedDestroyedLifecycle(_) => 648usize,
-            Self::VueNoExportInScriptSetup(_) => 649usize,
-            Self::VueNoImportCompilerMacros(_) => 650usize,
-            Self::VueNoLifecycleAfterAwait(_) => 651usize,
-            Self::VueNoMultipleSlotArgs(_) => 652usize,
-            Self::VueNoRequiredPropWithDefault(_) => 653usize,
-            Self::VueNoThisInBeforeRouteEnter(_) => 654usize,
-            Self::VuePreferImportFromVue(_) => 655usize,
-            Self::VueRequireDefaultExport(_) => 656usize,
-            Self::VueRequireTypedRef(_) => 657usize,
-            Self::VueValidDefineEmits(_) => 658usize,
-            Self::VueValidDefineProps(_) => 659usize,
+            Self::VitestPreferCalledExactlyOnceWith(_) => 631usize,
+            Self::VitestPreferCalledOnce(_) => 632usize,
+            Self::VitestPreferCalledTimes(_) => 633usize,
+            Self::VitestPreferDescribeFunctionTitle(_) => 634usize,
+            Self::VitestPreferToBeFalsy(_) => 635usize,
+            Self::VitestPreferToBeObject(_) => 636usize,
+            Self::VitestPreferToBeTruthy(_) => 637usize,
+            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => 638usize,
+            Self::VitestWarnTodo(_) => 639usize,
+            Self::NodeGlobalRequire(_) => 640usize,
+            Self::NodeNoExportsAssign(_) => 641usize,
+            Self::NodeNoNewRequire(_) => 642usize,
+            Self::NodeNoProcessEnv(_) => 643usize,
+            Self::VueDefineEmitsDeclaration(_) => 644usize,
+            Self::VueDefinePropsDeclaration(_) => 645usize,
+            Self::VueDefinePropsDestructuring(_) => 646usize,
+            Self::VueMaxProps(_) => 647usize,
+            Self::VueNoArrowFunctionsInWatch(_) => 648usize,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => 649usize,
+            Self::VueNoExportInScriptSetup(_) => 650usize,
+            Self::VueNoImportCompilerMacros(_) => 651usize,
+            Self::VueNoLifecycleAfterAwait(_) => 652usize,
+            Self::VueNoMultipleSlotArgs(_) => 653usize,
+            Self::VueNoRequiredPropWithDefault(_) => 654usize,
+            Self::VueNoThisInBeforeRouteEnter(_) => 655usize,
+            Self::VuePreferImportFromVue(_) => 656usize,
+            Self::VueRequireDefaultExport(_) => 657usize,
+            Self::VueRequireTypedRef(_) => 658usize,
+            Self::VueValidDefineEmits(_) => 659usize,
+            Self::VueValidDefineProps(_) => 660usize,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -2721,6 +2724,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::NAME
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::NAME,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::NAME,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::NAME,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::NAME,
@@ -3507,6 +3511,9 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::CATEGORY
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::CATEGORY
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::CATEGORY,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::CATEGORY,
             Self::VitestPreferDescribeFunctionTitle(_) => {
@@ -4262,6 +4269,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::FIX
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FIX,
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FIX,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FIX,
             Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FIX,
@@ -5184,6 +5192,9 @@ impl RuleEnum {
             Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::documentation(),
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::documentation()
+            }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::documentation()
             }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::documentation(),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::documentation(),
@@ -7006,6 +7017,10 @@ impl RuleEnum {
                 VitestNoUnneededAsyncExpectFunction::config_schema(generator)
                     .or_else(|| VitestNoUnneededAsyncExpectFunction::schema(generator))
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::config_schema(generator)
+                    .or_else(|| VitestPreferCalledExactlyOnceWith::schema(generator))
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::config_schema(generator)
                 .or_else(|| VitestPreferCalledOnce::schema(generator)),
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::config_schema(generator)
@@ -7722,6 +7737,7 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(_) => "vitest",
             Self::VitestNoImportNodeTest(_) => "vitest",
             Self::VitestNoUnneededAsyncExpectFunction(_) => "vitest",
+            Self::VitestPreferCalledExactlyOnceWith(_) => "vitest",
             Self::VitestPreferCalledOnce(_) => "vitest",
             Self::VitestPreferCalledTimes(_) => "vitest",
             Self::VitestPreferDescribeFunctionTitle(_) => "vitest",
@@ -9771,6 +9787,11 @@ impl RuleEnum {
                     VitestNoUnneededAsyncExpectFunction::from_configuration(value)?,
                 ))
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                Ok(Self::VitestPreferCalledExactlyOnceWith(
+                    VitestPreferCalledExactlyOnceWith::from_configuration(value)?,
+                ))
+            }
             Self::VitestPreferCalledOnce(_) => {
                 Ok(Self::VitestPreferCalledOnce(VitestPreferCalledOnce::from_configuration(value)?))
             }
@@ -10499,6 +10520,7 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.to_configuration(),
             Self::VitestNoImportNodeTest(rule) => rule.to_configuration(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.to_configuration(),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.to_configuration(),
             Self::VitestPreferCalledOnce(rule) => rule.to_configuration(),
             Self::VitestPreferCalledTimes(rule) => rule.to_configuration(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.to_configuration(),
@@ -11165,6 +11187,7 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.run(node, ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run(node, ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run(node, ctx),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run(node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run(node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run(node, ctx),
@@ -11829,6 +11852,7 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.run_once(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.run_once(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_once(ctx),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_once(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_once(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_once(ctx),
@@ -12581,6 +12605,7 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
             }
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledOnce(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferCalledTimes(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13247,6 +13272,7 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.should_run(ctx),
             Self::VitestNoImportNodeTest(rule) => rule.should_run(ctx),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.should_run(ctx),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledOnce(rule) => rule.should_run(ctx),
             Self::VitestPreferCalledTimes(rule) => rule.should_run(ctx),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.should_run(ctx),
@@ -14167,6 +14193,9 @@ impl RuleEnum {
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
                 VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
             }
+            Self::VitestPreferCalledExactlyOnceWith(_) => {
+                VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
+            }
             Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
             Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
             Self::VitestPreferDescribeFunctionTitle(_) => {
@@ -14837,6 +14866,7 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.types_info(),
             Self::VitestNoImportNodeTest(rule) => rule.types_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.types_info(),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.types_info(),
             Self::VitestPreferCalledOnce(rule) => rule.types_info(),
             Self::VitestPreferCalledTimes(rule) => rule.types_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.types_info(),
@@ -15501,6 +15531,7 @@ impl RuleEnum {
             Self::VitestNoConditionalTests(rule) => rule.run_info(),
             Self::VitestNoImportNodeTest(rule) => rule.run_info(),
             Self::VitestNoUnneededAsyncExpectFunction(rule) => rule.run_info(),
+            Self::VitestPreferCalledExactlyOnceWith(rule) => rule.run_info(),
             Self::VitestPreferCalledOnce(rule) => rule.run_info(),
             Self::VitestPreferCalledTimes(rule) => rule.run_info(),
             Self::VitestPreferDescribeFunctionTitle(rule) => rule.run_info(),
@@ -16271,6 +16302,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VitestNoUnneededAsyncExpectFunction(
             VitestNoUnneededAsyncExpectFunction::default(),
         ),
+        RuleEnum::VitestPreferCalledExactlyOnceWith(VitestPreferCalledExactlyOnceWith::default()),
         RuleEnum::VitestPreferCalledOnce(VitestPreferCalledOnce::default()),
         RuleEnum::VitestPreferCalledTimes(VitestPreferCalledTimes::default()),
         RuleEnum::VitestPreferDescribeFunctionTitle(VitestPreferDescribeFunctionTitle::default()),
