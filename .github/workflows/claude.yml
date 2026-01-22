@@ -17,8 +17,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          fetch-depth: 1
-          persist-credentials: false
+          fetch-depth: 100
+          persist-credentials: true
 
       - name: Run Claude Code
         id: claude
@@ -26,6 +26,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           assignee_trigger: "boshen"
+          additional_permissions: "*"
           prompt: |
             Analyze issue #${{ github.event.issue.number }} in ${{ github.repository }} and determine if it can be fixed.
 
