@@ -1,5 +1,5 @@
-commit: 6f55d0c2
+commit: fff41f05
 
 transformer_test262 Summary:
-AST Parsed     : 46556/46556 (100.00%)
-Positive Passed: 46556/46556 (100.00%)
+AST Parsed     : 46595/46595 (100.00%)
+Positive Passed: 46595/46595 (100.00%)

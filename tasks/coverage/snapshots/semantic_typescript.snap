@@ -1,8 +1,8 @@
-commit: f5ccf434
+commit: 7f6a8467
 
 semantic_typescript Summary:
-AST Parsed     : 6167/6167 (100.00%)
-Positive Passed: 3378/6167 (54.78%)
+AST Parsed     : 6126/6126 (100.00%)
+Positive Passed: 3339/6126 (54.51%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -1010,11 +1010,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["use"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/blockScopedClassDeclarationAcrossFiles.ts
-Unresolved references mismatch:
-after transform: ["C"]
-rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/booleanFilterAnyArray.ts
 Bindings mismatch:
@@ -4162,6 +4157,17 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["box", "observable"]
 
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypedByDiscriminableUnion2.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["MyComponent", "item"]
+rebuilt        : ScopeId(0): ["MyComponent"]
+Reference symbol mismatch for "item":
+after transform: SymbolId(16) "item"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["item"]
+
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/contextuallyTypedJsxAttribute.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["Test", "_jsxFileName", "_reactJsxRuntime"]
@@ -6432,9 +6438,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["createExperiment"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationFilesGeneratingTypeReferences.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationFilesWithTypeReferences1.ts
 Unresolved references mismatch:
@@ -14980,22 +14983,13 @@ Unresolved references mismatch:
 after transform: []
 rebuilt        : ["infoProps"]
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult.ts
+semantic Error: tasks/coverage/typescript/tests/cases/compiler/keyRemappingKeyofResult2.ts
 Bindings mismatch:
-after transform: ScopeId(0): ["f", "g", "sym", "x"]
-rebuilt        : ScopeId(0): ["f", "g", "sym"]
-Symbol reference IDs mismatch for "sym":
-after transform: SymbolId(0): [ReferenceId(1), ReferenceId(12), ReferenceId(14), ReferenceId(20), ReferenceId(29), ReferenceId(31), ReferenceId(37), ReferenceId(53)]
-rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(6), ReferenceId(9), ReferenceId(13), ReferenceId(16)]
-Reference symbol mismatch for "x":
-after transform: SymbolId(6) "x"
-rebuilt        : <None>
-Reference symbol mismatch for "x":
-after transform: SymbolId(6) "x"
-rebuilt        : <None>
+after transform: ScopeId(0): ["setup"]
+rebuilt        : ScopeId(0): []
 Unresolved references mismatch:
-after transform: ["Exclude", "PropertyKey", "Record", "Symbol"]
-rebuilt        : ["Symbol", "x"]
+after transform: ["Record"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/keyofGenericExtendingClassDoubleLayer.ts
 Symbol reference IDs mismatch for "Model":
@@ -15658,9 +15652,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDecla
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromAlias.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["ClassA", "SomeClass", "_decorate", "_decorateMetadata", "_defineProperty", "annotation"]
-rebuilt        : ScopeId(0): ["ClassA", "_decorate", "_decorateMetadata", "_defineProperty", "annotation"]
+Symbol reference IDs mismatch for "SomeClass":
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4), ReferenceId(5)]
+rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6)]
 Unresolved references mismatch:
 after transform: ["Object", "PropertyDecorator"]
 rebuilt        : ["Object"]
@@ -15741,9 +15735,9 @@ after transform: [ReferenceId(0), ReferenceId(29), ReferenceId(38), ReferenceId(
 rebuilt        : [ReferenceId(18), ReferenceId(28), ReferenceId(49), ReferenceId(54), ReferenceId(59), ReferenceId(64), ReferenceId(69)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataReferencedWithinFilteredUnion.ts
-Bindings mismatch:
-after transform: ScopeId(0): ["Class1", "Class2", "_decorate", "_decorateMetadata", "decorate"]
-rebuilt        : ScopeId(0): ["Class2", "_decorate", "_decorateMetadata", "decorate"]
+Symbol reference IDs mismatch for "Class1":
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4), ReferenceId(11), ReferenceId(12)]
+rebuilt        : SymbolId(0): [ReferenceId(12), ReferenceId(13)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/methodContainingLocalFunction.ts
 Scope flags mismatch:
@@ -22612,9 +22606,6 @@ rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationModule.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapWithMultipleFilesWithFileEndingWithInterface.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourcemapValidationDuplicateNames.ts
 Scope flags mismatch:
 after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
@@ -24937,14 +24928,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["a", "b"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/compiler/useBeforeDeclaration.ts
-Symbol flags mismatch for "ts":
-after transform: SymbolId(0): SymbolFlags(ValueModule)
-rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
-Symbol span mismatch for "ts":
-after transform: SymbolId(0): Span { start: 10, end: 12 }
-rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/usingModuleWithExportImportInValuePosition.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -40618,6 +40601,113 @@ rebuilt        : SymbolId(0): Span { start: 134, end: 140 }
 Symbol redeclarations mismatch for "kindIs":
 after transform: SymbolId(1): [Span { start: 32, end: 38 }, Span { start: 83, end: 89 }, Span { start: 134, end: 140 }]
 rebuilt        : SymbolId(0): []
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/stringLiteral/stringLiteralTypesWithVariousOperators01.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["a", "abc", "abcOrXyz", "abcOrXyzOrNumber", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "xyz"]
+rebuilt        : ScopeId(0): ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v"]
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "xyz":
+after transform: SymbolId(1) "xyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "xyz":
+after transform: SymbolId(1) "xyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "xyz":
+after transform: SymbolId(1) "xyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abc":
+after transform: SymbolId(0) "abc"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyz":
+after transform: SymbolId(2) "abcOrXyz"
+rebuilt        : <None>
+Reference symbol mismatch for "abcOrXyzOrNumber":
+after transform: SymbolId(3) "abcOrXyzOrNumber"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["abc", "abcOrXyz", "abcOrXyzOrNumber", "xyz"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/thisType/fluentClasses.ts
 Symbol reference IDs mismatch for "C":

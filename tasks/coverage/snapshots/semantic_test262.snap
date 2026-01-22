@@ -1,8 +1,8 @@
-commit: 6f55d0c2
+commit: fff41f05
 
 semantic_test262 Summary:
-AST Parsed     : 46556/46556 (100.00%)
-Positive Passed: 44920/46556 (96.49%)
+AST Parsed     : 46595/46595 (100.00%)
+Positive Passed: 44959/46595 (96.49%)
 semantic Error: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-iterator-next-rejected-promise-close.js
 Bindings mismatch:
 after transform: ScopeId(4): []
