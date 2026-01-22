@@ -127,6 +127,7 @@ oxc_parser_napi = { version = "0.110.0", path = "napi/parser" } # Node.js parser
 oxc_regular_expression = { version = "0.110.0", path = "crates/oxc_regular_expression" } # Regex parser
 oxc_semantic = { version = "0.110.0", path = "crates/oxc_semantic" } # Semantic analysis
 oxc_span = { version = "0.110.0", path = "crates/oxc_span" } # Source positions
+oxc_str = { version = "0.110.0", path = "crates/oxc_str" } # String types
 oxc_syntax = { version = "0.110.0", path = "crates/oxc_syntax" } # Syntax utilities
 oxc_transform_napi = { version = "0.110.0", path = "napi/transform" } # Node.js transformer binding
 oxc_transformer = { version = "0.110.0", path = "crates/oxc_transformer" } # Code transformation

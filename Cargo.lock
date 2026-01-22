@@ -2330,6 +2330,18 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast_macros",
  "oxc_estree",
+ "oxc_str",
+ "serde",
+]
+
+[[package]]
+name = "oxc_str"
+version = "0.110.0"
+dependencies = [
+ "compact_str",
+ "oxc-schemars",
+ "oxc_allocator",
+ "oxc_estree",
  "serde",
 ]
 

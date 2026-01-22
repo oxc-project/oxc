@@ -1,14 +1,12 @@
 use std::{
     borrow::{Borrow, Cow},
     fmt, hash,
-    ops::{Deref, Index},
+    ops::Deref,
 };
 
 use compact_str::CompactString;
 #[cfg(feature = "serialize")]
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-
-use crate::Span;
 
 /// Maximum length for inline string, which can be created with [`CompactStr::new_const`].
 pub const MAX_INLINE_LEN: usize = 16;
@@ -165,14 +163,6 @@ impl PartialEq<CompactStr> for Cow<'_, str> {
 impl PartialEq<str> for CompactStr {
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
-    }
-}
-
-impl Index<Span> for CompactStr {
-    type Output = str;
-
-    fn index(&self, index: Span) -> &Self::Output {
-        &self.0[index]
     }
 }
 

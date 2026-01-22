@@ -12,7 +12,7 @@ use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{Atom, CompactStr, ContentEq};
+use crate::{Atom, CompactStr};
 
 /// An identifier string for oxc_allocator.
 ///
@@ -274,13 +274,6 @@ impl PartialEq<Ident<'_>> for Cow<'_, str> {
     }
 }
 
-impl ContentEq for Ident<'_> {
-    #[inline]
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
 impl hash::Hash for Ident<'_> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
@@ -333,7 +326,7 @@ impl ESTree for Ident<'_> {
 ///
 /// ```
 /// use oxc_allocator::Allocator;
-/// use oxc_span::format_ident;
+/// use oxc_str::format_ident;
 /// let allocator = Allocator::new();
 ///
 /// let s1 = "foo";

@@ -10,7 +10,7 @@ use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
-use crate::{CompactStr, ContentEq};
+use crate::CompactStr;
 
 /// An inlinable string for oxc_allocator.
 ///
@@ -75,7 +75,7 @@ impl<'a> Atom<'a> {
     /// # Example
     /// ```
     /// use oxc_allocator::Allocator;
-    /// use oxc_span::Atom;
+    /// use oxc_str::Atom;
     ///
     /// let allocator = Allocator::new();
     /// let s = Atom::from_strs_array_in(["hello", " ", "world", "!"], &allocator);
@@ -259,13 +259,6 @@ impl PartialEq<Atom<'_>> for Cow<'_, str> {
     }
 }
 
-impl ContentEq for Atom<'_> {
-    #[inline]
-    fn content_eq(&self, other: &Self) -> bool {
-        self == other
-    }
-}
-
 impl hash::Hash for Atom<'_> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
@@ -318,7 +311,7 @@ impl ESTree for Atom<'_> {
 ///
 /// ```
 /// use oxc_allocator::Allocator;
-/// use oxc_span::format_atom;
+/// use oxc_str::format_atom;
 /// let allocator = Allocator::new();
 ///
 /// let s1 = "foo";
