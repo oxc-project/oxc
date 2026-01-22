@@ -922,51 +922,39 @@ fn is_identifier_a_dependency_impl<'a>(
     component_scope_id: ScopeId,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    // if it is a global e.g. `console` or `window`, then it's not a dependency
-    if ctx.scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
-        return false;
-    }
-
     let Some(declaration) = get_declaration_from_reference_id(ident_reference_id, ctx) else {
+        // No declaration means it's a global variable, e.g. `console` or `window`,
+        // which are not dependencies
         return false;
     };
 
-    let semantic = ctx.semantic();
-    let scopes = semantic.scoping();
-
-    // if the variable was declared in the root scope, then it's not a dependency
-    if declaration.scope_id() == scopes.root_scope_id() {
+    // As long as the variable is not declared inside the component, it is not a dependency.
+    if declaration.scope_id() != component_scope_id {
+        // 1. Variable was declared outside the component scope
+        // ```tsx
+        // const id = crypto.randomUUID();
+        // function MyComponent() {
+        //   useEffect(() => {
+        //     console.log(id);
+        //   }, []);
+        //   return <div />;
+        // }
+        // ```
+        //
+        // 2. Variable was declared inside a child scope
+        // ```tsx
+        // function MyComponent() {
+        //   useEffect(() => {
+        //     const id = crypto.randomUUID();
+        //     console.log(id);
+        //   }, []);
+        //  return <div />;
+        // }
+        // ```
         return false;
     }
 
-    // Variable was declared outside the component scope
-    // ```tsx
-    // const id = crypto.randomUUID();
-    // function MyComponent() {
-    //   useEffect(() => {
-    //     console.log(id);
-    //   }, []);
-    //   return <div />;
-    // }
-    // ```
-    if scopes
-        .scope_ancestors(component_scope_id)
-        .skip(1)
-        .any(|parent| parent == declaration.scope_id())
-    {
-        return false;
-    }
-
-    // Variable was declared inside a child scope
-    // ```tsx
-    // function MyComponent() {
-    //   useEffect(() => {
-    //     const id = crypto.randomUUID();
-    //     console.log(id);
-    //   }, []);
-    //  return <div />;
-    // }
-    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
+    if declaration.span().contains_inclusive(ident_span) {
         return false;
     }
 
@@ -978,17 +966,6 @@ fn is_identifier_a_dependency_impl<'a>(
         component_scope_id,
         visited,
     ) {
-        return false;
-    }
-
-    // Using a declaration recursively is ok
-    // ```tsx
-    // function MyComponent() {
-    //     const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []);
-    //     return recursive
-    // }
-    // ```
-    if declaration.span().contains_inclusive(ident_span) {
         return false;
     }
 
