@@ -1139,3 +1139,105 @@ fn test_assignment_targets() {
     test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
     test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
 }
+
+// Tests for SideEffectInfo
+
+use oxc_ecmascript::side_effects::SideEffectInfo;
+
+#[track_caller]
+fn test_side_effect_info(source_text: &str, expected: SideEffectInfo) {
+    let ctx = Ctx::default();
+    test_side_effect_info_with_ctx(source_text, &ctx, expected);
+}
+
+#[track_caller]
+fn test_side_effect_info_with_ctx(source_text: &str, ctx: &Ctx, expected: SideEffectInfo) {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{source_text}");
+    assert!(ret.errors.is_empty(), "{source_text}");
+
+    let Some(Statement::ExpressionStatement(stmt)) = &ret.program.body.first() else {
+        panic!("should have a expression statement body: {source_text}");
+    };
+    assert_eq!(stmt.expression.side_effect_info(ctx), expected, "{source_text}");
+}
+
+#[test]
+fn test_side_effect_info_global_var_access() {
+    // Known safe globals (in GLOBALS["builtin"]): no side effect, but GLOBAL_VAR_ACCESS is set
+    test_side_effect_info("JSON", SideEffectInfo::GLOBAL_VAR_ACCESS);
+    test_side_effect_info("Math", SideEffectInfo::GLOBAL_VAR_ACCESS);
+    test_side_effect_info("Object", SideEffectInfo::GLOBAL_VAR_ACCESS);
+    test_side_effect_info("Array", SideEffectInfo::GLOBAL_VAR_ACCESS);
+    test_side_effect_info("Proxy", SideEffectInfo::GLOBAL_VAR_ACCESS);
+    test_side_effect_info("Symbol", SideEffectInfo::GLOBAL_VAR_ACCESS);
+    test_side_effect_info("Reflect", SideEffectInfo::GLOBAL_VAR_ACCESS);
+
+    // Special globals: no side effect, no GLOBAL_VAR_ACCESS (they are not "global references")
+    test_side_effect_info("undefined", SideEffectInfo::empty());
+    test_side_effect_info("NaN", SideEffectInfo::empty());
+    test_side_effect_info("Infinity", SideEffectInfo::empty());
+
+    // Local variables: no flags
+    test_side_effect_info("localVar", SideEffectInfo::empty());
+}
+
+#[test]
+fn test_side_effect_info_pure_annotation() {
+    // Pure annotation on call expression with global callee
+    test_side_effect_info(
+        "/* #__PURE__ */ String()",
+        SideEffectInfo::PURE_ANNOTATION | SideEffectInfo::GLOBAL_VAR_ACCESS,
+    );
+    test_side_effect_info(
+        "/* @__PURE__ */ Array()",
+        SideEffectInfo::PURE_ANNOTATION | SideEffectInfo::GLOBAL_VAR_ACCESS,
+    );
+
+    // Pure annotation on call with local callee (no GLOBAL_VAR_ACCESS)
+    test_side_effect_info(
+        "/* #__PURE__ */ localFunc()",
+        SideEffectInfo::PURE_ANNOTATION,
+    );
+
+    // Pure annotation on new expression with global callee
+    test_side_effect_info(
+        "/* #__PURE__ */ new Map()",
+        SideEffectInfo::PURE_ANNOTATION | SideEffectInfo::GLOBAL_VAR_ACCESS,
+    );
+
+    // Pure annotation with side-effectful argument (argument accesses global)
+    let ctx = Ctx {
+        global_variable_names: ["bar"].iter().copied().collect(),
+        unknown_global_side_effects: true,
+        ..Default::default()
+    };
+    test_side_effect_info_with_ctx(
+        "/* #__PURE__ */ localFunc(bar)",
+        &ctx,
+        SideEffectInfo::PURE_ANNOTATION | SideEffectInfo::SIDE_EFFECT,
+    );
+}
+
+#[test]
+fn test_side_effect_info_combined() {
+    // Unknown global with side effect
+    let ctx = Ctx {
+        global_variable_names: ["unknownGlobal"].iter().copied().collect(),
+        unknown_global_side_effects: true,
+        ..Default::default()
+    };
+    test_side_effect_info_with_ctx(
+        "unknownGlobal",
+        &ctx,
+        SideEffectInfo::GLOBAL_VAR_ACCESS | SideEffectInfo::SIDE_EFFECT,
+    );
+
+    // Known global with unknown_global_side_effects = false: no side effect
+    let ctx = Ctx {
+        unknown_global_side_effects: false,
+        ..Default::default()
+    };
+    test_side_effect_info_with_ctx("JSON", &ctx, SideEffectInfo::GLOBAL_VAR_ACCESS);
+}

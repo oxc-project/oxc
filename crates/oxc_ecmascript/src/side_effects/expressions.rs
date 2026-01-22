@@ -63,6 +63,17 @@ impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
             _ => true,
         }
     }
+
+    fn side_effect_info(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectInfo {
+        match self {
+            Expression::Identifier(ident) => ident.side_effect_info(ctx),
+            Expression::CallExpression(e) => e.side_effect_info(ctx),
+            Expression::NewExpression(e) => e.side_effect_info(ctx),
+            Expression::ParenthesizedExpression(e) => e.expression.side_effect_info(ctx),
+            // For other expressions, use the default implementation
+            _ => self.may_have_side_effects(ctx).into(),
+        }
+    }
 }
 
 impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
@@ -78,6 +89,12 @@ impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
 
     fn side_effect_info(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectInfo {
         let name = self.name.as_str();
+
+        // Special globals: no flags at all (not even GLOBAL_VAR_ACCESS)
+        if matches!(name, "NaN" | "Infinity" | "undefined") {
+            return SideEffectInfo::empty();
+        }
+
         let mut info = SideEffectInfo::empty();
 
         // Track global variable access separately
@@ -87,16 +104,11 @@ impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
         }
 
         // Determine if there's a side effect
-        let has_side_effect = match name {
-            "NaN" | "Infinity" | "undefined" => false,
-            _ => {
-                // Known safe globals don't have side effects even when accessed
-                if is_known_global_ident(name) {
-                    false
-                } else {
-                    ctx.unknown_global_side_effects() && is_global
-                }
-            }
+        // Known safe globals don't have side effects even when accessed
+        let has_side_effect = if is_known_global_ident(name) {
+            false
+        } else {
+            ctx.unknown_global_side_effects() && is_global
         };
 
         if has_side_effect {
