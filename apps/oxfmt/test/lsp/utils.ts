@@ -1,17 +1,19 @@
-import { join, dirname } from "node:path";
-import fs from "node:fs/promises";
 import { spawn } from "node:child_process";
+import fs from "node:fs/promises";
+import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   createMessageConnection,
-  StreamMessageReader,
-  StreamMessageWriter,
-  InitializeRequest,
-  InitializedNotification,
+  DidChangeConfigurationNotification,
+  DidChangeTextDocumentNotification,
   DidOpenTextDocumentNotification,
   DocumentFormattingRequest,
-  ShutdownRequest,
   ExitNotification,
+  InitializedNotification,
+  InitializeRequest,
+  ShutdownRequest,
+  StreamMessageReader,
+  StreamMessageWriter,
   WorkspaceFolder,
 } from "vscode-languageserver-protocol/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
@@ -43,9 +45,20 @@ export function createLspConnection() {
       return result;
     },
 
+    async didChangeConfiguration(settings: unknown) {
+      await connection.sendNotification(DidChangeConfigurationNotification.type, { settings });
+    },
+
     async didOpen(uri: string, languageId: string, text: string) {
       await connection.sendNotification(DidOpenTextDocumentNotification.type, {
         textDocument: { uri, languageId, version: 1, text },
+      });
+    },
+
+    async didChange(uri: string, text: string) {
+      await connection.sendNotification(DidChangeTextDocumentNotification.type, {
+        textDocument: { uri, version: 2 },
+        contentChanges: [{ text }],
       });
     },
 
@@ -97,6 +110,55 @@ ${fixturePath}
 ${content}
 --- AFTER ----------
 ${applyEdits(content, edits, languageId)}
+--------------------
+`.trim();
+}
+
+export async function formatFixtureAfterConfigChange(
+  fixturesDir: string,
+  fixturePath: string,
+  languageId: string,
+  initializationOptions: unknown,
+  configurationChangeOptions: unknown,
+): Promise<string> {
+  const filePath = join(fixturesDir, fixturePath);
+  const dirPath = dirname(filePath);
+  const fileUri = pathToFileURL(filePath).href;
+  const content = await fs.readFile(filePath, "utf-8");
+
+  await using client = createLspConnection();
+
+  // Initial format with first config
+  await client.initialize(
+    [{ uri: pathToFileURL(dirPath).href, name: "test" }],
+    [
+      {
+        workspaceUri: pathToFileURL(dirPath).href,
+        options: initializationOptions,
+      },
+    ],
+  );
+  await client.didOpen(fileUri, languageId, content);
+  const edits1 = await client.format(fileUri);
+  const formatted1 = applyEdits(content, edits1, languageId) ?? content;
+  await client.didChange(fileUri, formatted1);
+
+  // Re-format with second config
+  await client.didChangeConfiguration([
+    { workspaceUri: pathToFileURL(dirPath).href, options: configurationChangeOptions },
+  ]);
+  const edits2 = await client.format(fileUri);
+  const formatted2 = applyEdits(formatted1, edits2, languageId) ?? formatted1;
+
+  return `
+--- FILE -----------
+${fixturePath}
+--- BEFORE ---------
+${content}
+--- AFTER FIRST FORMAT ----------
+${formatted1}
+--- AFTER SECOND FORMAT ----------
+${formatted2}
 --------------------
 `.trim();
 }
