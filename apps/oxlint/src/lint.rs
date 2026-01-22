@@ -1524,4 +1524,9 @@ export { redundant };
             .with_cwd("fixtures/invalid_config_complex_enum".into())
             .test_and_snapshot(&[]);
     }
+
+    #[test]
+    fn test_invalid_config_invalid_config_tuple_rules() {
+        Tester::new().with_cwd("fixtures/invalid_config_tuple_rules".into()).test_and_snapshot(&[]);
+    }
 }

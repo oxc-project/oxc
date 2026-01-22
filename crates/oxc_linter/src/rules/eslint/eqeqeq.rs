@@ -7,9 +7,14 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::fixer::{RuleFix, RuleFixer};
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::{Rule, TupleRuleConfig},
+};
 
 fn eqeqeq_diagnostic(actual: &str, expected: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected {expected} and instead saw {actual}"))
@@ -17,11 +22,40 @@ fn eqeqeq_diagnostic(actual: &str, expected: &str, span: Span) -> OxcDiagnostic 
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
-pub struct Eqeqeq {
-    compare_type: CompareType,
-    null_type: NullType,
+pub struct Eqeqeq(CompareType, EqeqeqOptions);
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct EqeqeqOptions {
+    /// Configuration for whether to allow/disallow comparisons against `null`,
+    /// e.g. `foo == null` or `foo != null`
+    null: NullType,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum CompareType {
+    /// Always require triple-equal comparisons, `===`/`!==`.
+    /// This is the default.
+    #[default]
+    Always,
+    /// Allow certain safe comparisons to use `==`/`!=` (`typeof`, literals, nullish).
+    Smart,
+}
+
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+enum NullType {
+    /// Always require triple-equals when comparing with null, `=== null`/`!== null`.
+    /// This is the default.
+    #[default]
+    Always,
+    /// Never require triple-equals when comparing with null, always use `== null`/`!= null`.
+    Never,
+    /// Ignore null comparisons, allow either `== null`/`!= null` or `=== null`/`!== null`.
+    Ignore,
 }
 
 declare_oxc_lint!(
@@ -33,25 +67,7 @@ declare_oxc_lint!(
     ///
     /// Using non-strict equality operators leads to unexpected behavior due to type coercion, which can cause hard-to-find bugs.
     ///
-    /// ### Options
-    ///
-    /// First option:
-    /// - Type: `string`
-    /// - Default: `"always"`
-    ///
-    /// Possible values:
-    /// * `"always"` - always require `===`/`!==`
-    /// * `"smart"` - allow safe comparisons (`typeof`, literals, nullish)
-    ///
-    /// Second option (only used with `"always"`):
-    /// - Type: `object`
-    /// - Properties:
-    ///   - `null`: `string` (default: `"always"`) - `"ignore"` allows `== null` and `!= null`.
-    ///
-    /// Possible values for `null`:
-    /// * `"always"` - always require `=== null`/`!== null`
-    /// * `"never"` - always require `== null`/`!= null`
-    /// * `"ignore"` - allow both `== null`/`!= null` and `=== null`/`!== null`
+    /// ### Examples
     ///
     /// Example JSON configuration:
     /// ```json
@@ -59,8 +75,6 @@ declare_oxc_lint!(
     ///   "eqeqeq": ["error", "always", { "null": "ignore" }]
     /// }
     /// ```
-    ///
-    /// ### Examples
     ///
     /// #### `"always"` (default)
     ///
@@ -156,7 +170,6 @@ declare_oxc_lint!(
     /// if (foo == null) {}
     /// if (foo != null) {}
     /// ```
-    ///
     Eqeqeq,
     eslint,
     pedantic,
@@ -164,45 +177,9 @@ declare_oxc_lint!(
     config = Eqeqeq,
 );
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum CompareType {
-    #[default]
-    Always,
-    Smart,
-}
-
-impl CompareType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "smart" => Self::Smart,
-            _ => Self::Always,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "lowercase")]
-enum NullType {
-    #[default]
-    Always,
-    Never,
-    Ignore,
-}
-
-impl NullType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "never" => Self::Never,
-            _ => Self::Ignore,
-        }
-    }
-}
-
 impl Eqeqeq {
     fn report_inverse_null_comparison(&self, binary_expr: &BinaryExpression, ctx: &LintContext) {
-        if !matches!(self.null_type, NullType::Never) {
+        if !matches!(self.1.null, NullType::Never) {
             return;
         }
         let operator = binary_expr.operator.as_str();
@@ -216,26 +193,17 @@ impl Eqeqeq {
 
 impl Rule for Eqeqeq {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let first_arg = value.get(0).and_then(serde_json::Value::as_str);
-
-        let null_type = value
-            .get(usize::from(first_arg.is_some()))
-            .and_then(|v| v.get("null"))
-            .and_then(serde_json::Value::as_str)
-            .map(NullType::from)
-            .unwrap_or_default();
-
-        let compare_type = first_arg.map(CompareType::from).unwrap_or_default();
-
-        Ok(Self { compare_type, null_type })
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(binary_expr) = node.kind() else {
             return;
         };
+        let Eqeqeq(compare_type, options) = self;
+
         let is_null_comparison = is_null_check(binary_expr);
-        let must_enforce_null = matches!(self.null_type, NullType::Always);
+        let must_enforce_null = matches!(options.null, NullType::Always);
 
         if !matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             if is_null_comparison {
@@ -251,7 +219,7 @@ impl Rule for Eqeqeq {
         //  - Comparing two literal values
         //  - Evaluating the value of typeof
         //  - Comparing against null
-        if matches!(self.compare_type, CompareType::Smart)
+        if matches!(compare_type, CompareType::Smart)
             && (is_typeof_check || is_same_type_literals || is_null_comparison)
         {
             return;
@@ -361,13 +329,11 @@ fn test() {
         ("foo == null", Some(json!(["smart"]))),
         ("foo === null", None),
         // Always use === or !== with `null`
-        ("null === null", Some(json!(["always", {"null": "always"}]))),
+        ("null === null", Some(json!(["always", { "null": "always" }]))),
         // Never use === or !== with `null`
-        ("null == null", Some(json!(["always", {"null": "never"}]))),
+        ("null == null", Some(json!(["always", { "null": "never" }]))),
         // Do not apply this rule to `null`.
-        ("null == null", Some(json!(["smart", {"null": "ignore"}]))),
-        // Issue: <https://github.com/oxc-project/oxc/issues/8773>
-        ("href != null", Some(json!([{"null": "ignore"}]))),
+        ("null == null", Some(json!(["smart", { "null": "ignore" }]))),
         ("a === b", Some(serde_json::json!(["always"]))),
         ("typeof a == 'number'", Some(serde_json::json!(["smart"]))),
         ("'string' != typeof a", Some(serde_json::json!(["smart"]))),
@@ -376,6 +342,7 @@ fn test() {
         ("true == true", Some(serde_json::json!(["smart"]))),
         ("null == a", Some(serde_json::json!(["smart"]))),
         ("a == null", Some(serde_json::json!(["smart"]))),
+        // We intentionally do not support this option because it is deprecated in ESLint.
         // ("null == a", Some(serde_json::json!(["allow-null"]))),
         // ("a == null", Some(serde_json::json!(["allow-null"]))),
         ("a == null", Some(serde_json::json!(["always", { "null": "ignore" }]))),
@@ -389,11 +356,15 @@ fn test() {
         ("null != null", Some(serde_json::json!(["always", { "null": "never" }]))),
         ("foo === /abc/u", Some(serde_json::json!(["always", { "null": "never" }]))), // { "ecmaVersion": 2015 },
         ("foo === 1n", Some(serde_json::json!(["always", { "null": "never" }]))), // { "ecmaVersion": 2020 }
+        // Originally for issue: <https://github.com/oxc-project/oxc/issues/8773>
+        // We previously allowed exclusion of the first value, but that
+        // causes difficulties in validation, so let's not.
+        ("href != null", Some(json!(["always", { "null": "ignore" }]))),
     ];
 
     let fail = vec![
         // ESLint will perform like below case
-        ("null >= 1", Some(json!(["always", {"null": "never"}]))),
+        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
         ("typeof foo == 'undefined'", None),
         ("'hello' != 'world'", None),
         ("0 == 0", None),
@@ -403,7 +374,7 @@ fn test() {
         ("foo == true", None),
         ("bananas != 1", None),
         ("value == undefined", None),
-        ("null == null", Some(json!(["always", {"null": "always"}]))),
+        ("null == null", Some(json!(["always", { "null": "always" }]))),
     ];
 
     let fix = vec![
