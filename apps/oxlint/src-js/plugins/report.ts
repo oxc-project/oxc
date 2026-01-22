@@ -48,7 +48,7 @@ interface LocationWithOptionalEnd {
 /**
  * Data to interpolate into a diagnostic message.
  */
-export type DiagnosticData = Record<string, string | number>;
+export type DiagnosticData = Record<string, string | number | boolean | bigint | null | undefined>;
 
 /**
  * Suggested fix.
