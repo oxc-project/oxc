@@ -3,7 +3,7 @@ commit: fc58af40
 parser_babel Summary:
 AST Parsed     : 2217/2223 (99.73%)
 Positive Passed: 2204/2223 (99.15%)
-Negative Passed: 1649/1689 (97.63%)
+Negative Passed: 1654/1689 (97.93%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
@@ -55,16 +55,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-in-script/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
@@ -13323,6 +13313,66 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                          ─
    ╰────
 
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   set bar(foo?: string);
+   ·           ────────────
+ 3 │ }
+   ╰────
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts:2:10]
+ 1 │ interface Foo {
+ 2 │   get foo(param): string;
+   ·          ───────
+ 3 │   set foo();
+   ╰────
+  help: Remove these parameters here
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts:3:10]
+ 2 │   get foo(param): string;
+ 3 │   set foo();
+   ·          ──
+ 4 │ }
+   ╰────
+  help: Add a parameter here
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·           ────
+ 3 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter/input.ts:2:10]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·          ──────
+ 3 │ }
+   ╰────
+  help: Add a parameter here
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·           ────
+ 3 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:10]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·          ──────
+ 3 │ }
+   ╰────
+  help: Add a parameter here
+
   × TS(1095): A 'set' accessor cannot have a return type annotation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-return-types/input.ts:2:17]
  1 │ interface Foo {
@@ -13330,6 +13380,31 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                 ────────
  3 │ }
    ╰────
+
+  × TS(2784): 'get' and 'set' accessors cannot declare 'this' parameters.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   get bar(this: Foo);
+   ·           ─────────
+ 3 │   set bar(this: Foo);
+   ╰────
+
+  × TS(2784): 'get' and 'set' accessors cannot declare 'this' parameters.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts:3:11]
+ 2 │   get bar(this: Foo);
+ 3 │   set bar(this: Foo);
+   ·           ─────────
+ 4 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts:3:10]
+ 2 │   get bar(this: Foo);
+ 3 │   set bar(this: Foo);
+   ·          ───────────
+ 4 │ }
+   ╰────
+  help: Add a parameter here
 
   × Expected `(` but found `<`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-type-parameters/input.ts:2:10]

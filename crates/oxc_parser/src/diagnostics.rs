@@ -1145,6 +1145,16 @@ pub fn getter_parameters(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
+}
+
+#[cold]
+pub fn accessor_cannot_have_this_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("2784", "'get' and 'set' accessors cannot declare 'this' parameters.").with_label(span)
+}
+
+#[cold]
 pub fn variable_declarator_definite(span: Span) -> OxcDiagnostic {
     ts_error(
         "1263",
