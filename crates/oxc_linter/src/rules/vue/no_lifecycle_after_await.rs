@@ -220,6 +220,12 @@ impl<'a> Visit<'a> for LifecycleAfterAwaitVisitor<'a> {
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(
+        &mut self,
+        _func: &oxc_ast::ast::ArrowFunctionExpression<'a>,
+    ) {
+    }
 }
 
 #[test]
@@ -228,7 +234,7 @@ fn test() {
     use std::path::PathBuf;
 
     let pass = vec![
-        ("
+            ("
 			      <script>
 			      import {onMounted} from 'vue'
 			      export default {
@@ -240,7 +246,7 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-                  ("
+                      ("
 			      <script>
 			      import {onMounted} from 'vue'
                   let a = {
@@ -252,7 +258,7 @@ fn test() {
 			      export default a;
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-                  ("
+                      ("
 			      <script>
 			      import {onMounted} from 'vue'
 			      export default {
@@ -263,7 +269,7 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-                  ("
+                      ("
 			      <script>
 			      import {onMounted} from 'vue'
 			      export default {
@@ -277,8 +283,8 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-                  (
-                    "
+                      (
+                        "
                         <script>
                         import {onMounted} from 'vue'
                         export default {
@@ -291,12 +297,12 @@ fn test() {
                         }
                         </script>
                     ",
-                    None,
-                    None,
-                    Some(PathBuf::from("test.vue"))
-                  ),
-                  (
-                    "
+                        None,
+                        None,
+                        Some(PathBuf::from("test.vue"))
+                      ),
+                      (
+                        "
                         <script>
                         import {onMounted} from 'vue'
                         export default {
@@ -310,11 +316,11 @@ fn test() {
                         }
                         </script>
                     ",
-                    None,
-                    None,
-                    Some(PathBuf::from("test.vue"))
-                  ),
-("
+                        None,
+                        None,
+                        Some(PathBuf::from("test.vue"))
+                      ),
+    ("
 			      <script>
 			      import {onMounted} from 'vue'
 			      export default {
@@ -324,7 +330,7 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-("
+    ("
 			      <script>
 			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
 			      export default {
@@ -346,7 +352,7 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-                  ("
+                      ("
 			      <script>
                   import { h } from 'vue'
 			      export default {
@@ -367,7 +373,7 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-("
+    ("
 			      <script>
 			      import {onMounted} from 'vue'
 			      export default {
@@ -379,14 +385,14 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-("
+    ("
 			      <script setup>
 			      import {onMounted} from 'vue'
 			      onMounted(() => { /* ... */ })
 			      await doSomething()
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
-("
+    ("
 			      <script setup>
 			      await doSomething()
 			      </script>
@@ -395,7 +401,7 @@ fn test() {
 			      onMounted(() => { /* ... */ }) // not error
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
-("
+    ("
 			      <script setup>
 			      </script>
 			      <script>
@@ -404,7 +410,7 @@ fn test() {
 			      onMounted(() => { /* ... */ }) // not error
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
-("
+    ("
 			      <script setup>
 			      import {onMounted} from 'vue'
 			      await doSomething()
@@ -412,7 +418,7 @@ fn test() {
 			      onMounted(() => { /* ... */ }) // not error
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))), // { "ecmaVersion": 2022 },
-("
+    ("
 			      <script>
 			      import {onMounted} from 'vue'
 			      export default {
@@ -428,7 +434,7 @@ fn test() {
 			      }
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-                  ("
+                      ("
 			      <script>
 			      import {onMounted} from 'vue'
 			      let a = {
@@ -440,7 +446,7 @@ fn test() {
 			      export default a;
 			      </script>
 			      ", None, None, Some(PathBuf::from("test.vue"))),
-                  ("
+                      ("
 			      <script>
 			      import {onBeforeMount, onBeforeUnmount, onBeforeUpdate, onErrorCaptured, onMounted, onRenderTracked, onRenderTriggered, onUnmounted, onUpdated, onActivated, onDeactivated} from 'vue'
 			      export default {
@@ -461,8 +467,25 @@ fn test() {
 			        }
 			      }
 			      </script>
+			      ", None, None, Some(PathBuf::from("test.vue"))),
+                  // https://github.com/oxc-project/oxc/issues/18298
+                      ("
+			      <script>
+                  import { onMounted } from 'vue';
+                  export default {
+                    async setup() {
+                        const doNothing = async () => {
+                            await doSomething();
+                        };
+
+                        onMounted(() => {
+                        /* ... */
+                        }); // error
+                    },
+                  };
+                  </script>
 			      ", None, None, Some(PathBuf::from("test.vue")))
-    ];
+        ];
 
     let fail = vec![
         ("
