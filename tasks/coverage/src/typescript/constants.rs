@@ -632,3 +632,9 @@ pub static NOT_SUPPORTED_ERROR_CODES: phf::Set<&'static str> = phf::phf_set![
     "18057", // String literal import and export names are not supported when the '--module' flag is set to 'es2015' or 'es2020'.
 ];
 // spellchecker:on
+
+/// Error messages that can be suppressed by `@ts-ignore` or `@ts-expect-error` comments.
+/// These are errors that TypeScript would normally report, but are intentionally ignored
+/// in the test cases using directive comments.
+pub static TS_IGNORE_SUPPRESSIBLE_ERRORS: phf::Set<&'static str> =
+    phf::phf_set!["'with' statements are not allowed",];

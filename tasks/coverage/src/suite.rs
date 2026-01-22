@@ -11,7 +11,7 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc::{
-    diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource},
+    diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
     span::SourceType,
 };
 use oxc_tasks_common::{Snapshot, normalize_path};
@@ -32,6 +32,9 @@ pub enum TestResult {
     CorrectError(String, /* panicked */ bool),
     GenericError(/* case */ &'static str, /* error */ String),
 }
+
+/// Result from parsing: Ok if no errors, Err with (diagnostics, formatted_output, panicked)
+pub type ParseResult = Result<(), (Vec<OxcDiagnostic>, String, bool)>;
 
 pub struct CoverageReport<'a, T> {
     failed_positives: Vec<&'a T>,
@@ -331,7 +334,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     /// Async version of run
     async fn run_async(&mut self) {}
 
-    fn parse(&self, code: &str, source_type: SourceType) -> Result<(), (String, bool)> {
+    fn parse(&self, code: &str, source_type: SourceType) -> ParseResult {
         let path = self.path();
 
         let mut driver = Driver {
@@ -357,14 +360,14 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
             let handler =
                 GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
             let mut output = String::new();
-            for error in errors {
-                let error = error.with_source_code(NamedSource::new(
+            for error in &errors {
+                let error = error.clone().with_source_code(NamedSource::new(
                     normalize_path(path),
                     source_text.to_string(),
                 ));
                 handler.render_report(&mut output, error.as_ref()).unwrap();
             }
-            Err((output, driver.panicked))
+            Err((errors, output, driver.panicked))
         }
     }
 
@@ -374,11 +377,11 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         self.evaluate_result(result)
     }
 
-    fn evaluate_result(&self, result: Result<(), (String, bool)>) -> TestResult {
+    fn evaluate_result(&self, result: ParseResult) -> TestResult {
         let should_fail = self.should_fail();
         match result {
-            Err((err, panicked)) if should_fail => TestResult::CorrectError(err, panicked),
-            Err((err, panicked)) if !should_fail => TestResult::ParseError(err, panicked),
+            Err((_, err, panicked)) if should_fail => TestResult::CorrectError(err, panicked),
+            Err((_, err, panicked)) if !should_fail => TestResult::ParseError(err, panicked),
             Ok(()) if should_fail => TestResult::IncorrectlyPassed,
             Ok(()) if !should_fail => TestResult::Passed,
             _ => unreachable!(),
