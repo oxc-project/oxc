@@ -611,11 +611,12 @@ const _: () = {
     assert!(align_of::<FormalParameterKind>() == 1);
 
     // Padding: 0 bytes
-    assert!(size_of::<FormalParameterRest>() == 40);
+    assert!(size_of::<FormalParameterRest>() == 64);
     assert!(align_of::<FormalParameterRest>() == 8);
     assert!(offset_of!(FormalParameterRest, span) == 0);
-    assert!(offset_of!(FormalParameterRest, rest) == 8);
-    assert!(offset_of!(FormalParameterRest, type_annotation) == 32);
+    assert!(offset_of!(FormalParameterRest, decorators) == 8);
+    assert!(offset_of!(FormalParameterRest, rest) == 32);
+    assert!(offset_of!(FormalParameterRest, type_annotation) == 56);
 
     // Padding: 0 bytes
     assert!(size_of::<FunctionBody>() == 56);
@@ -2233,11 +2234,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(align_of::<FormalParameterKind>() == 1);
 
     // Padding: 0 bytes
-    assert!(size_of::<FormalParameterRest>() == 28);
+    assert!(size_of::<FormalParameterRest>() == 44);
     assert!(align_of::<FormalParameterRest>() == 4);
     assert!(offset_of!(FormalParameterRest, span) == 0);
-    assert!(offset_of!(FormalParameterRest, rest) == 8);
-    assert!(offset_of!(FormalParameterRest, type_annotation) == 24);
+    assert!(offset_of!(FormalParameterRest, decorators) == 8);
+    assert!(offset_of!(FormalParameterRest, rest) == 24);
+    assert!(offset_of!(FormalParameterRest, type_annotation) == 40);
 
     // Padding: 0 bytes
     assert!(size_of::<FunctionBody>() == 40);

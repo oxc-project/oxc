@@ -6177,19 +6177,26 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `decorators`
     /// * `rest`
     /// * `type_annotation`
     #[inline]
     pub fn formal_parameter_rest<T1>(
         self,
         span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
         rest: BindingRestElement<'a>,
         type_annotation: T1,
     ) -> FormalParameterRest<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
-        FormalParameterRest { span, rest, type_annotation: type_annotation.into_in(self.allocator) }
+        FormalParameterRest {
+            span,
+            decorators,
+            rest,
+            type_annotation: type_annotation.into_in(self.allocator),
+        }
     }
 
     /// Build a [`FormalParameterRest`], and store it in the memory arena.
@@ -6199,19 +6206,24 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
+    /// * `decorators`
     /// * `rest`
     /// * `type_annotation`
     #[inline]
     pub fn alloc_formal_parameter_rest<T1>(
         self,
         span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
         rest: BindingRestElement<'a>,
         type_annotation: T1,
     ) -> Box<'a, FormalParameterRest<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
     {
-        Box::new_in(self.formal_parameter_rest(span, rest, type_annotation), self.allocator)
+        Box::new_in(
+            self.formal_parameter_rest(span, decorators, rest, type_annotation),
+            self.allocator,
+        )
     }
 
     /// Build a [`FunctionBody`].

@@ -1,8 +1,8 @@
 commit: f5ccf434
 
 parser_typescript Summary:
-AST Parsed     : 9844/9845 (99.99%)
-Positive Passed: 9839/9845 (99.94%)
+AST Parsed     : 9845/9845 (100.00%)
+Positive Passed: 9840/9845 (99.95%)
 Negative Passed: 1500/2549 (58.85%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
@@ -2101,16 +2101,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uni
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsPropertyNames.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
-
-  × Unexpected token
-    ╭─[typescript/tests/cases/compiler/sourceMapValidationDecorators.ts:18:7]
- 17 │       @ParameterDecorator2(30) 
- 18 │       ...b: string[]) {
-    ·       ───
- 19 │     }
-    ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncWithVarShadowing_es6.ts
 

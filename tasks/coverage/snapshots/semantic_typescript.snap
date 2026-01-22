@@ -26334,7 +26334,78 @@ after transform: SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), R
 rebuilt        : SymbolId(4): [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(12)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
-Unexpected token
+Bindings mismatch:
+after transform: ScopeId(0): ["ClassDecorator1", "ClassDecorator2", "Greeter", "ParameterDecorator1", "ParameterDecorator2", "PropertyDecorator1", "PropertyDecorator2", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty"]
+rebuilt        : ScopeId(0): ["Greeter", "_decorate", "_decorateMetadata", "_decorateParam", "_defineProperty"]
+Scope children mismatch:
+after transform: ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(4), ScopeId(5), ScopeId(7), ScopeId(8), ScopeId(10)]
+rebuilt        : ScopeId(0): [ScopeId(1)]
+Symbol span mismatch for "Greeter":
+after transform: SymbolId(23): Span { start: 638, end: 645 }
+rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
+Symbol span mismatch for "Greeter":
+after transform: SymbolId(32): Span { start: 0, end: 0 }
+rebuilt        : SymbolId(5): Span { start: 638, end: 645 }
+Reference symbol mismatch for "ParameterDecorator1":
+after transform: SymbolId(14) "ParameterDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "ParameterDecorator2":
+after transform: SymbolId(18) "ParameterDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator1":
+after transform: SymbolId(5) "PropertyDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator2":
+after transform: SymbolId(9) "PropertyDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator1":
+after transform: SymbolId(5) "PropertyDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator2":
+after transform: SymbolId(9) "PropertyDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator1":
+after transform: SymbolId(5) "PropertyDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator2":
+after transform: SymbolId(9) "PropertyDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "ParameterDecorator1":
+after transform: SymbolId(14) "ParameterDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "ParameterDecorator2":
+after transform: SymbolId(18) "ParameterDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator1":
+after transform: SymbolId(5) "PropertyDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "PropertyDecorator2":
+after transform: SymbolId(9) "PropertyDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "ParameterDecorator1":
+after transform: SymbolId(14) "ParameterDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "ParameterDecorator2":
+after transform: SymbolId(18) "ParameterDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "ClassDecorator1":
+after transform: SymbolId(0) "ClassDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "ClassDecorator2":
+after transform: SymbolId(2) "ClassDecorator2"
+rebuilt        : <None>
+Reference symbol mismatch for "ParameterDecorator1":
+after transform: SymbolId(14) "ParameterDecorator1"
+rebuilt        : <None>
+Reference symbol mismatch for "ParameterDecorator2":
+after transform: SymbolId(18) "ParameterDecorator2"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["Array", "Function", "Number", "Object", "PropertyDescriptor", "String", "require"]
+rebuilt        : ["Array", "ClassDecorator1", "ClassDecorator2", "Function", "Number", "ParameterDecorator1", "ParameterDecorator2", "PropertyDecorator1", "PropertyDecorator2", "String", "require"]
+Unresolved reference IDs mismatch for "Function":
+after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(32), ReferenceId(46)]
+rebuilt        : [ReferenceId(15), ReferenceId(37)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDestructuringForArrayBindingPattern.ts
 Bindings mismatch:

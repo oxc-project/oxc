@@ -2264,6 +2264,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         param.bind(self);
         self.visit_span(&param.span);
+        self.visit_decorators(&param.decorators);
         self.visit_binding_rest_element(&param.rest);
         if let Some(type_annotation) = &param.type_annotation {
             self.visit_ts_type_annotation(type_annotation);

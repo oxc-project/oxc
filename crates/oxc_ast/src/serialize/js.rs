@@ -242,7 +242,7 @@ impl ESTree for FormalParameterRest<'_> {
         let rest = self;
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("RestElement"));
-        state.serialize_ts_field("decorators", &EmptyArray(()));
+        state.serialize_ts_field("decorators", &rest.decorators);
         state.serialize_field("argument", &rest.rest.argument);
         state.serialize_ts_field("optional", &false);
         state.serialize_ts_field("typeAnnotation", &rest.type_annotation);

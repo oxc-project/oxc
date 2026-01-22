@@ -2127,12 +2127,12 @@ function deserializeFormalParameters(pos) {
       rest = (parent = {
         type: "RestElement",
         argument: null,
-        start: (start = deserializeU32(pos + 8)),
-        end: (end = deserializeU32(pos + 12)),
+        start: (start = deserializeU32(pos + 32)),
+        end: (end = deserializeU32(pos + 36)),
         range: [start, end],
         parent: previousParent,
       });
-    rest.argument = deserializeBindingPattern(pos + 16);
+    rest.argument = deserializeBindingPattern(pos + 40);
     params.push(rest);
     parent = previousParent;
   }
