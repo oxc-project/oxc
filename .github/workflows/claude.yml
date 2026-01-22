@@ -25,7 +25,7 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           assignee_trigger: "boshen"
-          assignee_trigger_prompt: |
+          prompt: |
             Analyze this issue and determine if it can be fixed. Your task:
             1. Read and understand the issue description
             2. Search the codebase to gather relevant context (related files, existing implementations, tests)
