@@ -123,7 +123,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     return Some(ConstantValue::Number(f64::NAN));
                 }
 
-                if let Some(value) = prev_members.get(&ident.name) {
+                if let Some(value) = prev_members.get(ident.name.as_str()) {
                     return Some(value.clone());
                 }
 

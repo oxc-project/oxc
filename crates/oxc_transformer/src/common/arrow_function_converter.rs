@@ -1066,7 +1066,7 @@ impl<'a> ArrowFunctionConverter<'a> {
             ctx.scoping_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }
 
-        ident.name = binding.name;
+        ident.name = binding.name.into();
     }
 
     /// Transform the binding identifier for `arguments` if it's affected after transformation.
@@ -1085,12 +1085,12 @@ impl<'a> ArrowFunctionConverter<'a> {
 
         self.arguments_var_stack.last_or_init(|| {
             let arguments_name = ctx.generate_uid_name("arguments");
-            ident.name = arguments_name;
+            ident.name = arguments_name.into();
             let symbol_id = ident.symbol_id();
             Self::rename_arguments_symbol(symbol_id, arguments_name, ctx);
             // Record the symbol ID as a renamed `arguments` variable.
             self.renamed_arguments_symbol_ids.insert(symbol_id);
-            BoundIdentifier::new(ident.name, symbol_id)
+            BoundIdentifier::new(arguments_name, symbol_id)
         });
     }
 

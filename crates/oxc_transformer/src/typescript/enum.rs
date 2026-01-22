@@ -84,7 +84,7 @@ impl<'a> TypeScriptEnum<'a> {
         let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scoping().scope_flags(ctx.current_scope_id()).is_top();
 
-        let enum_name = decl.id.name;
+        let enum_name: Atom = decl.id.name.into();
         let func_scope_id = decl.body.scope_id();
         let param_binding =
             ctx.generate_binding(enum_name, func_scope_id, SymbolFlags::FunctionScopedVariable);
@@ -375,7 +375,7 @@ impl<'a> TypeScriptEnum<'a> {
             match_member_expression!(Expression) => {
                 let expr = expr.to_member_expression();
                 let Expression::Identifier(ident) = expr.object() else { return None };
-                let members = self.enums.get(&ident.name)?;
+                let members = self.enums.get(&Atom::from(ident.name))?;
                 let property = expr.static_property_name()?;
                 *members.get(property)?
             }
@@ -386,7 +386,7 @@ impl<'a> TypeScriptEnum<'a> {
                     return Some(ConstantValue::Number(f64::NAN));
                 }
 
-                if let Some(value) = prev_members.get(&ident.name) {
+                if let Some(value) = prev_members.get(&Atom::from(ident.name)) {
                     return *value;
                 }
 
@@ -585,7 +585,7 @@ impl<'a, 'ctx, 'members> IdentifierReferenceRename<'a, 'ctx, 'members> {
 impl IdentifierReferenceRename<'_, '_, '_> {
     fn should_reference_enum_member(&self, ident: &IdentifierReference<'_>) -> bool {
         // Don't need to rename the identifier if it's not a member of the enum,
-        if !self.previous_enum_members.contains_key(&ident.name) {
+        if !self.previous_enum_members.contains_key(&Atom::from(ident.name)) {
             return false;
         }
 

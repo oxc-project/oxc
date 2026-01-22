@@ -444,7 +444,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         stmts.retain(move |&stmt| match stmt {
             Statement::FunctionDeclaration(func) => {
-                let name = func
+                let name: Atom<'a> = func
                     .id
                     .as_ref()
                     .unwrap_or_else(|| {
@@ -452,10 +452,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             "Only export default function declaration is allowed to have no name"
                         )
                     })
-                    .name;
+                    .name
+                    .into();
 
                 if func.body.is_some() {
-                    if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
+                    if last_function_name.as_ref().is_some_and(|last_name| *last_name == name) {
                         return false;
                     }
                 } else {
@@ -465,7 +466,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Statement::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::FunctionDeclaration(func)) = &decl.declaration {
-                    let name = func
+                    let name: Atom<'a> = func
                         .id
                         .as_ref()
                         .unwrap_or_else(|| {
@@ -473,9 +474,10 @@ impl<'a> IsolatedDeclarations<'a> {
                             "Only export default function declaration is allowed to have no name"
                         )
                         })
-                        .name;
+                        .name
+                        .into();
                     if func.body.is_some() {
-                        if last_function_name.as_ref().is_some_and(|&last_name| last_name == name) {
+                        if last_function_name.as_ref().is_some_and(|last_name| *last_name == name) {
                             return false;
                         }
                     } else {
@@ -534,33 +536,33 @@ impl<'a> IsolatedDeclarations<'a> {
                         for declarator in &var.declarations {
                             if let Some(name) = declarator.id.get_identifier_name() {
                                 assignable_properties_for_namespace
-                                    .entry(&ident.name)
+                                    .entry(ident.name.as_str())
                                     .or_default()
-                                    .insert(name);
+                                    .insert(name.into());
                             }
                         }
                     }
                     Some(Declaration::FunctionDeclaration(func)) => {
                         if let Some(name) = func.name() {
                             assignable_properties_for_namespace
-                                .entry(&ident.name)
+                                .entry(ident.name.as_str())
                                 .or_default()
-                                .insert(name);
+                                .insert(name.into());
                         }
                     }
                     Some(Declaration::ClassDeclaration(cls)) => {
                         if let Some(id) = cls.id.as_ref() {
                             assignable_properties_for_namespace
-                                .entry(&ident.name)
+                                .entry(ident.name.as_str())
                                 .or_default()
-                                .insert(id.name);
+                                .insert(id.name.into());
                         }
                     }
                     Some(Declaration::TSEnumDeclaration(decl)) => {
                         assignable_properties_for_namespace
-                            .entry(&ident.name)
+                            .entry(ident.name.as_str())
                             .or_default()
-                            .insert(decl.id.name);
+                            .insert(decl.id.name.into());
                     }
                     _ => {}
                 }
@@ -629,11 +631,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         && let AssignmentTarget::StaticMemberExpression(static_member_expr) =
                             &assignment.left
                         && let Expression::Identifier(ident) = &static_member_expr.object
-                        && can_expando_function_names.contains(&ident.name)
+                        && can_expando_function_names.contains(ident.name.as_str())
                         && !assignable_properties_for_namespace
-                            .get(&ident.name.as_str())
+                            .get(ident.name.as_str())
                             .is_some_and(|properties| {
-                                properties.contains(&static_member_expr.property.name)
+                                properties.contains(static_member_expr.property.name.as_str())
                             })
                     {
                         self.error(function_with_assigning_properties(static_member_expr.span));

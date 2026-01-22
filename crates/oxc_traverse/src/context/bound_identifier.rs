@@ -50,7 +50,7 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `BoundIdentifier` from a `BindingIdentifier`
     pub fn from_binding_ident(ident: &BindingIdentifier<'a>) -> Self {
-        Self { name: ident.name, symbol_id: ident.symbol_id() }
+        Self { name: ident.name.into(), symbol_id: ident.symbol_id() }
     }
 
     /// Convert `BoundIdentifier` to `MaybeBoundIdentifier`
