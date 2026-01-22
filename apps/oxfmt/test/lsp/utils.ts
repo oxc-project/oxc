@@ -86,7 +86,7 @@ export async function formatFixture(
   fixturesDir: string,
   fixturePath: string,
   languageId: string,
-  initializationOptions?: unknown,
+  initializationOptions?: OxfmtLSPConfig,
 ): Promise<string> {
   const filePath = join(fixturesDir, fixturePath);
   const dirPath = dirname(filePath);
@@ -97,7 +97,12 @@ export async function formatFixture(
 
   await client.initialize(
     [{ uri: pathToFileURL(dirPath).href, name: "test" }],
-    initializationOptions,
+    [
+      {
+        workspaceUri: pathToFileURL(dirPath).href,
+        options: initializationOptions,
+      },
+    ],
   );
   await client.didOpen(fileUri, languageId, content);
 
@@ -118,8 +123,8 @@ export async function formatFixtureAfterConfigChange(
   fixturesDir: string,
   fixturePath: string,
   languageId: string,
-  initializationOptions: unknown,
-  configurationChangeOptions: unknown,
+  initializationOptions: OxfmtLSPConfig,
+  configurationChangeOptions: OxfmtLSPConfig,
 ): Promise<string> {
   const filePath = join(fixturesDir, fixturePath);
   const dirPath = dirname(filePath);
@@ -164,6 +169,11 @@ ${formatted2}
 }
 
 // ---
+
+// aligned with https://github.com/oxc-project/oxc/blob/7e6c15baaebf206ab540191da0e4e103e4fabf06/apps/oxfmt/src/lsp/options.rs
+type OxfmtLSPConfig = {
+  "fmt.configPath"?: string | null;
+};
 
 function applyEdits(content: string, edits: TextEdit[] | null, languageId: string): string | null {
   if (edits === null || edits.length === 0) return null;
