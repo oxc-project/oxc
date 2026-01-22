@@ -7,7 +7,8 @@ use oxc_ast::ast::{Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
     GlobalContext,
     side_effects::{
-        MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects, is_pure_function,
+        MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects,
+        PropertyWriteSideEffects, is_pure_function,
     },
 };
 use oxc_parser::Parser;
@@ -18,6 +19,7 @@ struct Ctx {
     annotation: bool,
     pure_function_names: Vec<String>,
     property_read_side_effects: PropertyReadSideEffects,
+    property_write_side_effects: PropertyWriteSideEffects,
     unknown_global_side_effects: bool,
 }
 
@@ -32,6 +34,7 @@ impl Default for Ctx {
             annotation: true,
             pure_function_names: vec![],
             property_read_side_effects: PropertyReadSideEffects::All,
+            property_write_side_effects: PropertyWriteSideEffects::All,
             unknown_global_side_effects: true,
         }
     }
@@ -54,6 +57,10 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
         self.property_read_side_effects
+    }
+
+    fn property_write_side_effects(&self) -> PropertyWriteSideEffects {
+        self.property_write_side_effects
     }
 
     fn unknown_global_side_effects(&self) -> bool {

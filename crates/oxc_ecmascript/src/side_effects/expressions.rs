@@ -5,7 +5,10 @@ use crate::{
     to_primitive::ToPrimitive,
 };
 
-use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
+use super::{
+    MayHaveSideEffects, PropertyReadSideEffects, SideEffectInfo,
+    context::MayHaveSideEffectsContext, known_globals::is_known_global_ident,
+};
 
 impl<'a> MayHaveSideEffects<'a> for Expression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
@@ -71,6 +74,36 @@ impl<'a> MayHaveSideEffects<'a> for IdentifierReference<'a> {
             // NOTE: we ignore TDZ errors
             _ => ctx.unknown_global_side_effects() && ctx.is_global_reference(self),
         }
+    }
+
+    fn side_effect_info(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectInfo {
+        let name = self.name.as_str();
+        let mut info = SideEffectInfo::empty();
+
+        // Track global variable access separately
+        let is_global = ctx.is_global_reference(self);
+        if is_global {
+            info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
+        }
+
+        // Determine if there's a side effect
+        let has_side_effect = match name {
+            "NaN" | "Infinity" | "undefined" => false,
+            _ => {
+                // Known safe globals don't have side effects even when accessed
+                if is_known_global_ident(name) {
+                    false
+                } else {
+                    ctx.unknown_global_side_effects() && is_global
+                }
+            }
+        };
+
+        if has_side_effect {
+            info |= SideEffectInfo::SIDE_EFFECT;
+        }
+
+        info
     }
 }
 
@@ -637,9 +670,33 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         true
     }
+
+    fn side_effect_info(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectInfo {
+        let mut info = SideEffectInfo::empty();
+
+        // Track pure annotation
+        let has_pure_annotation = self.pure && ctx.annotations();
+        if has_pure_annotation {
+            info |= SideEffectInfo::PURE_ANNOTATION;
+        }
+
+        // Track global variable access from callee
+        if let Expression::Identifier(ident) = &self.callee {
+            if ctx.is_global_reference(ident) {
+                info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
+            }
+        }
+
+        // Determine if there's a side effect
+        if self.may_have_side_effects(ctx) {
+            info |= SideEffectInfo::SIDE_EFFECT;
+        }
+
+        info
+    }
 }
 
-// `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
+//// `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
 impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
@@ -653,6 +710,30 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
         true
+    }
+
+    fn side_effect_info(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> SideEffectInfo {
+        let mut info = SideEffectInfo::empty();
+
+        // Track pure annotation
+        let has_pure_annotation = self.pure && ctx.annotations();
+        if has_pure_annotation {
+            info |= SideEffectInfo::PURE_ANNOTATION;
+        }
+
+        // Track global variable access from callee
+        if let Expression::Identifier(ident) = &self.callee {
+            if ctx.is_global_reference(ident) {
+                info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
+            }
+        }
+
+        // Determine if there's a side effect
+        if self.may_have_side_effects(ctx) {
+            info |= SideEffectInfo::SIDE_EFFECT;
+        }
+
+        info
     }
 }
 

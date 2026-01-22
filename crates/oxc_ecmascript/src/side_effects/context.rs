@@ -11,6 +11,15 @@ pub enum PropertyReadSideEffects {
     All,
 }
 
+#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum PropertyWriteSideEffects {
+    /// Treat all property write accesses as side effect free.
+    None,
+    /// Treat all property write accesses as possible side effects.
+    #[default]
+    All,
+}
+
 pub trait MayHaveSideEffectsContext<'a>: GlobalContext<'a> {
     /// Whether to respect the pure annotations.
     ///
@@ -32,6 +41,11 @@ pub trait MayHaveSideEffectsContext<'a>: GlobalContext<'a> {
     ///
     /// <https://rollupjs.org/configuration-options/#treeshake-propertyreadsideeffects>
     fn property_read_side_effects(&self) -> PropertyReadSideEffects;
+
+    /// Whether property write accesses have side effects.
+    ///
+    /// <https://rollupjs.org/configuration-options/#treeshake-propertywritesideeffects>
+    fn property_write_side_effects(&self) -> PropertyWriteSideEffects;
 
     /// Whether accessing a global variable has side effects.
     ///
