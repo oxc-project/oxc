@@ -78,7 +78,7 @@
     "@napi-rs/cli": "catalog:",
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",
-    "@typescript-eslint/visitor-keys": "^8.44.0",
+    "@typescript-eslint/visitor-keys": "^8.53.1",
     "@vitest/browser": "4.0.15",
     "@vitest/browser-playwright": "4.0.15",
     "esbuild": "^0.27.0",
