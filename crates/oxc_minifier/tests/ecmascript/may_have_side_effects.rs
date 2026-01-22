@@ -1206,7 +1206,7 @@ fn test_side_effect_info_pure_annotation() {
 
     // Pure annotation with side-effectful argument (argument accesses global)
     let ctx = Ctx {
-        global_variable_names: ["bar"].iter().copied().collect(),
+        global_variable_names: std::iter::once("bar").collect(),
         unknown_global_side_effects: true,
         ..Default::default()
     };
@@ -1221,7 +1221,7 @@ fn test_side_effect_info_pure_annotation() {
 fn test_side_effect_info_combined() {
     // Unknown global with side effect
     let ctx = Ctx {
-        global_variable_names: ["unknownGlobal"].iter().copied().collect(),
+        global_variable_names: std::iter::once("unknownGlobal").collect(),
         unknown_global_side_effects: true,
         ..Default::default()
     };

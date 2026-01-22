@@ -25,6 +25,12 @@ pub struct TreeShakeOptions {
     #[napi(ts_type = "boolean | 'always'")]
     pub property_read_side_effects: Option<Either<bool, String>>,
 
+    /// Whether property write accesses have side effects.
+    ///
+    /// @default 'always'
+    #[napi(ts_type = "boolean | 'always'")]
+    pub property_write_side_effects: Option<Either<bool, String>>,
+
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
@@ -63,6 +69,17 @@ impl TryFrom<&TreeShakeOptions> for oxc_minifier::TreeShakeOptions {
                     ));
                 }
                 None => default.property_read_side_effects,
+            },
+            property_write_side_effects: match &o.property_write_side_effects {
+                Some(Either::A(false)) => oxc_minifier::PropertyWriteSideEffects::None,
+                Some(Either::A(true)) => oxc_minifier::PropertyWriteSideEffects::All,
+                Some(Either::B(s)) if s == "always" => oxc_minifier::PropertyWriteSideEffects::All,
+                Some(Either::B(s)) => {
+                    return Err(format!(
+                        "Invalid propertyWriteSideEffects value: '{s}'. Expected 'always'."
+                    ));
+                }
+                None => default.property_write_side_effects,
             },
             unknown_global_side_effects: o
                 .unknown_global_side_effects
