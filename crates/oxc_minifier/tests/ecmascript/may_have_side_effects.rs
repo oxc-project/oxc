@@ -1196,10 +1196,7 @@ fn test_side_effect_info_pure_annotation() {
     );
 
     // Pure annotation on call with local callee (no GLOBAL_VAR_ACCESS)
-    test_side_effect_info(
-        "/* #__PURE__ */ localFunc()",
-        SideEffectInfo::PURE_ANNOTATION,
-    );
+    test_side_effect_info("/* #__PURE__ */ localFunc()", SideEffectInfo::PURE_ANNOTATION);
 
     // Pure annotation on new expression with global callee
     test_side_effect_info(
@@ -1235,9 +1232,6 @@ fn test_side_effect_info_combined() {
     );
 
     // Known global with unknown_global_side_effects = false: no side effect
-    let ctx = Ctx {
-        unknown_global_side_effects: false,
-        ..Default::default()
-    };
+    let ctx = Ctx { unknown_global_side_effects: false, ..Default::default() };
     test_side_effect_info_with_ctx("JSON", &ctx, SideEffectInfo::GLOBAL_VAR_ACCESS);
 }
