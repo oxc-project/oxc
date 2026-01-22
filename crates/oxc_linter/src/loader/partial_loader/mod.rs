@@ -30,12 +30,34 @@ impl PartialLoader {
     /// Extract js section of special files.
     /// Returns `None` if the special file does not have a js section.
     pub fn parse<'a>(ext: &str, source_text: &'a str) -> Option<Vec<JavaScriptSource<'a>>> {
-        match ext {
-            "vue" => Some(VuePartialLoader::new(source_text).parse()),
-            "astro" => Some(AstroPartialLoader::new(source_text).parse()),
-            "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
-            _ => None,
-        }
+        let sources = match ext {
+            "vue" => {
+                let sources = VuePartialLoader::new(source_text).parse();
+                if sources.is_empty() {
+                    // No <script> section found. Determine how to handle:
+                    // - If it's a Vue SFC (has <template> or <style>), return empty
+                    //   to skip JS linting (valid SFC without script)
+                    // - If not a Vue SFC (e.g., raw JS in .vue extension), return None
+                    //   to fallback to treating entire file as JavaScript
+                    if Self::is_vue_sfc(source_text) {
+                        return Some(vec![]);
+                    }
+                    return None;
+                }
+                sources
+            }
+            "astro" => AstroPartialLoader::new(source_text).parse(),
+            "svelte" => SveltePartialLoader::new(source_text).parse(),
+            _ => return None,
+        };
+        Some(sources)
+    }
+
+    /// Heuristically check if the source text appears to be a Vue SFC.
+    /// Uses simple substring matching for `<template` or `<style` tags.
+    /// Note: May have false positives for JS files containing these substrings.
+    fn is_vue_sfc(source_text: &str) -> bool {
+        source_text.contains("<template") || source_text.contains("<style")
     }
 }
 
