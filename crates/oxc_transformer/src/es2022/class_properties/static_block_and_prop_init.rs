@@ -70,7 +70,6 @@ impl<'a> ClassProperties<'a, '_> {
         {
             return self.convert_static_block_with_single_expression_to_expression(
                 &mut stmt.expression,
-                scope_id,
                 make_sloppy_mode,
                 ctx,
             );
@@ -93,16 +92,12 @@ impl<'a> ClassProperties<'a, '_> {
     fn convert_static_block_with_single_expression_to_expression(
         &mut self,
         expr: &mut Expression<'a>,
-        scope_id: ScopeId,
         make_sloppy_mode: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // Note: Reparent scopes
         let mut replacer = StaticVisitor::new(make_sloppy_mode, true, self, ctx);
         replacer.visit_expression(expr);
-
-        // Delete scope for static block
-        ctx.scoping_mut().delete_scope(scope_id);
 
         expr.take_in(ctx.ast)
     }

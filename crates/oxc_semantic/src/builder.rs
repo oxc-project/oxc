@@ -191,12 +191,6 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    #[must_use]
-    pub fn with_scope_tree_child_ids(mut self, yes: bool) -> Self {
-        self.scoping.scope_build_child_ids = yes;
-        self
-    }
-
     /// Provide statistics about AST to optimize memory usage of semantic analysis.
     ///
     /// Accurate statistics can greatly improve performance, especially for large ASTs.
