@@ -1,4 +1,4 @@
-js compatibility: 740/754 (98.14%)
+js compatibility: 741/754 (98.28%)
 
 # Failed
 
@@ -17,4 +17,3 @@ js compatibility: 740/754 (98.14%)
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
 | js/sequence-expression/ignored.js | 💥 | 25.00% |
 | js/strings/template-literals.js | 💥💥 | 98.01% |
-| jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |

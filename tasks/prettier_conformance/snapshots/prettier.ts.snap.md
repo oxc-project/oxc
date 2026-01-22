@@ -1,10 +1,9 @@
-ts compatibility: 585/601 (97.34%)
+ts compatibility: 586/601 (97.50%)
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
-| jsx/jsx/quotes.js | 💥💥💥💥 | 79.41% |
 | typescript/arrow/comments.ts | 💥✨ | 44.44% |
 | typescript/arrow/comments/issue-11100.ts | 💥 | 84.00% |
 | typescript/as/break-after-keyword/18148.ts | 💥 | 82.22% |
