@@ -129,7 +129,7 @@ where
                     // Collapse any whitespace so we emit a single-line message.
                     if let Ok(value_str) = serde_json::to_string_pretty(&v) {
                         let compact = value_str.split_whitespace().collect::<Vec<_>>().join(" ");
-                        D::Error::custom(format!("{e}, received `{compact}`"))
+                        D::Error::custom(format!("{e}\n  received config: `{compact}`"))
                     } else {
                         D::Error::custom(e)
                     }

@@ -7,7 +7,9 @@ working directory: fixtures/invalid_config_extra_options
 ----------
 Failed to parse oxlint configuration file.
 
-  x Invalid configuration for rule `jest/no-hooks`: unknown field `foo`, expected `allow`, received `{ "foo": "bar" }`
+  x Invalid configuration for rule `jest/no-hooks`:
+  |   unknown field `foo`, expected `allow`
+  |   received config: `{ "foo": "bar" }`
 
 ----------
 CLI result: InvalidOptionConfig

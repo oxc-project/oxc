@@ -7,7 +7,9 @@ working directory: fixtures/invalid_config_complex_enum
 ----------
 Failed to parse oxlint configuration file.
 
-  x Invalid configuration for rule `react/jsx-fragments`: data did not match any variant of untagged enum JsxFragments, received `"somethingelse"`
+  x Invalid configuration for rule `react/jsx-fragments`:
+  |   data did not match any variant of untagged enum JsxFragments
+  |   received config: `"somethingelse"`
 
 ----------
 CLI result: InvalidOptionConfig

@@ -3,7 +3,7 @@ source: apps/oxlint/src/tester.rs
 ---
 ########## 
 arguments: 
-working directory: fixtures/invalid_config_type_difference
+working directory: fixtures/extends_invalid_config
 ----------
 Failed to parse oxlint configuration file.
 
