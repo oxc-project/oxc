@@ -5,6 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::{scope::ScopeId, symbol::SymbolId};
 
@@ -131,31 +132,38 @@ impl Rule for BlockScopedVar {
         if decl.kind != VariableDeclarationKind::Var {
             return;
         }
-        let scope_id = node.scope_id();
-        if !ctx.scoping().scope_flags(scope_id).is_strict_mode() {
+        let node_scope_id = node.scope_id();
+
+        // Exit early for top-level `var` declarations.
+        //
+        // Top-level `var` bindings are not block-scoped, so this rule intentionally
+        // does not perform "used outside its declaration block" checks for them.
+        // This is a deliberate semantic choice (not just a performance optimization):
+        // only non–top-level `var` declarations are subject to block-scope validation.
+        if ctx.scoping().scope_flags(node_scope_id).is_top() {
             return;
         }
-        // `scope_ids` contains all the scopes that are children of the current scope
-        // we should eliminate all of them
-        let scope_ids = ctx.scoping().iter_all_scope_child_ids(node.scope_id()).collect::<Vec<_>>();
 
         for item in &decl.declarations {
-            run_for_declaration(&item.id, &scope_ids, node, ctx);
+            run_for_declaration(&item.id, node_scope_id, ctx);
         }
     }
 }
 
 fn run_for_all_references(
     (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
-    scope_ids: &[ScopeId],
-    node: &AstNode,
+    declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
     ctx.scoping()
         .get_resolved_references(*symbol)
         .filter(|reference| {
             let reference_scope_id = reference.scope_id();
-            reference_scope_id != node.scope_id() && !scope_ids.contains(&reference_scope_id)
+            check_if_has_reference_outside_scope(
+                declare_scope_id,
+                reference_scope_id,
+                ctx.scoping(),
+            )
         })
         .for_each(|reference| {
             ctx.diagnostic(use_outside_scope_diagnostic(
@@ -168,8 +176,7 @@ fn run_for_all_references(
 
 fn run_for_all_redeclarations(
     (pattern, name, symbol): (&BindingPattern, &str, &SymbolId),
-    scope_ids: &[ScopeId],
-    node: &AstNode,
+    declare_scope_id: ScopeId,
     ctx: &LintContext,
 ) {
     ctx.scoping()
@@ -177,24 +184,22 @@ fn run_for_all_redeclarations(
         .iter()
         .filter(|redeclaration| {
             let redeclare_scope_id = ctx.nodes().get_node(redeclaration.declaration).scope_id();
-
-            redeclare_scope_id != node.scope_id() && !scope_ids.contains(&redeclare_scope_id)
+            check_if_has_reference_outside_scope(
+                declare_scope_id,
+                redeclare_scope_id,
+                ctx.scoping(),
+            )
         })
         .for_each(|redeclaration| {
             ctx.diagnostic(redeclaration_diagnostic(pattern.span(), redeclaration.span, name));
         });
 }
 
-fn run_for_declaration(
-    pattern: &BindingPattern,
-    scope_ids: &[ScopeId],
-    node: &AstNode,
-    ctx: &LintContext,
-) {
+fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &LintContext) {
     // e.g. "var [a, b] = [1, 2]"
     for ident in pattern.get_binding_identifiers() {
         let name = ident.name.as_str();
-        let Some(symbol) = ctx.scoping().find_binding(node.scope_id(), name) else {
+        let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
             continue;
         };
 
@@ -203,11 +208,29 @@ fn run_for_declaration(
         // e.g. "if (true) { var a = 4; } else { var a = 4; }"
         // in this case we can't find the reference of 'a' by call `get_resolved_references`
         // so I use `symbol_redeclarations` to find all the redeclarations
-        run_for_all_redeclarations(binding, scope_ids, node, ctx);
+        run_for_all_redeclarations(binding, node_scope_id, ctx);
 
         // e.g. "var a = 4; console.log(a);"
-        run_for_all_references(binding, scope_ids, node, ctx);
+        run_for_all_references(binding, node_scope_id, ctx);
     }
+}
+
+/// Returns true if the reference is outside the declaration scope
+fn check_if_has_reference_outside_scope(
+    declare_scope_id: ScopeId,
+    reference_scope_id: ScopeId,
+    scoping: &Scoping,
+) -> bool {
+    // Walk up the scope chain from the reference scope to see if we reach the declaration scope,
+    // if we do, then the reference is inside the scope, otherwise it's outside
+    for ancestor_scope_id in scoping.scope_ancestors(reference_scope_id) {
+        // Already reached the declaration scope, so the reference is inside the scope
+        if ancestor_scope_id == declare_scope_id {
+            return false;
+        }
+    }
+
+    true
 }
 
 #[test]
