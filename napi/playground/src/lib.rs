@@ -392,10 +392,8 @@ impl Oxc {
             let mut external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = semantic_ret.semantic;
-            let lint_config = if linter_options.config.is_some() {
-                let oxlintrc =
-                    Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().clone())
-                        .unwrap_or_default();
+            let lint_config = if let Some(config) = &linter_options.config {
+                let oxlintrc = Oxlintrc::from_string(config).unwrap_or_default();
                 let config_builder = ConfigStoreBuilder::from_oxlintrc(
                     false,
                     oxlintrc,
