@@ -53,10 +53,6 @@ impl SideEffectInfo {
 impl From<bool> for SideEffectInfo {
     #[inline]
     fn from(has_side_effect: bool) -> Self {
-        if has_side_effect {
-            Self::SIDE_EFFECT
-        } else {
-            Self::empty()
-        }
+        if has_side_effect { Self::SIDE_EFFECT } else { Self::empty() }
     }
 }
