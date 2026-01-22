@@ -1,10 +1,10 @@
 import Tinypool from "tinypool";
-import { resolvePlugins } from "../libs/prettier";
+import { resolvePlugins } from "../libs/apis";
 import type {
   FormatEmbeddedCodeParam,
   FormatFileParam,
   SortTailwindClassesArgs,
-} from "../libs/prettier";
+} from "../libs/apis";
 import type { Options } from "prettier";
 
 // Worker pool for parallel Prettier formatting
@@ -15,6 +15,10 @@ export async function initExternalFormatter(numThreads: number): Promise<string[
     filename: new URL("./cli-worker.js", import.meta.url).href,
     minThreads: numThreads,
     maxThreads: numThreads,
+    // XXX: Use `child_process` instead of `worker_threads`.
+    // Not sure why, but when using `worker_threads`,
+    // calls from NAPI (CLI) -> worker threads -> NAPI (prettier-plugin-oxfmt) causes a hang...
+    runtime: "child_process",
   });
 
   return resolvePlugins();
