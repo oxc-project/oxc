@@ -7,6 +7,7 @@
     // Ignore `fixtures` directories except for `apps/oxlint/test/fixtures`
     "**/fixtures/**",
     "!apps/oxlint/test/fixtures/**",
+    "apps/oxlint/test/fixtures/bom/files/**",
     "**/dist/**",
     "**/generated/**",
     "**/CHANGELOG.md",

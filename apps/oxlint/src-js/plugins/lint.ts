@@ -5,6 +5,7 @@ import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
+import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
@@ -154,7 +155,7 @@ export function lintFileImpl(
   //
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
-  const hasBOM = false; // TODO: Set this correctly
+  const hasBOM = buffer[HAS_BOM_FLAG_POS] === 1;
   const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
   setupSourceForFile(buffer, hasBOM, parserServices);
 

@@ -151,7 +151,7 @@ unsafe fn parse_raw_impl(
 
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
-    let program_offset = {
+    let (program_offset, has_bom) = {
         // SAFETY: We checked above that `source_len` does not exceed length of buffer
         let source_text = unsafe { buffer.get_unchecked(..source_len) };
         // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
@@ -179,22 +179,46 @@ unsafe fn parse_raw_impl(
 
         if parsing_failed {
             // Use sentinel value for program offset to indicate that parsing failed
-            PARSE_FAIL_SENTINEL
+            (PARSE_FAIL_SENTINEL, false)
         } else {
-            // Convert spans to UTF-16
-            let span_converter = Utf8ToUtf16::new(source_text);
+            // If has BOM, remove it
+            const BOM: &str = "\u{feff}";
+            const BOM_LEN: usize = BOM.len();
+
+            let mut source_text = program.source_text;
+            let has_bom = source_text.starts_with(BOM);
+            if has_bom {
+                source_text = &source_text[BOM_LEN..];
+                program.source_text = source_text;
+            }
+
+            // Convert spans to UTF-16.
+            // If source starts with BOM, create converter which ignores the BOM.
+            let span_converter = if has_bom {
+                #[expect(clippy::cast_possible_truncation)]
+                Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+            } else {
+                Utf8ToUtf16::new(source_text)
+            };
+
             span_converter.convert_program(program);
             span_converter.convert_comments(&mut program.comments);
 
             // Return offset of `Program` within buffer (bottom 32 bits of pointer)
-            ptr::from_ref(program) as u32
+            let program_offset = ptr::from_ref(program) as u32;
+
+            (program_offset, has_bom)
         }
     };
 
     // Write metadata into end of buffer
     #[allow(clippy::cast_possible_truncation)]
-    let metadata =
-        RawTransferMetadata::new(program_offset, source_type.is_typescript(), source_type.is_jsx());
+    let metadata = RawTransferMetadata::new(
+        program_offset,
+        source_type.is_typescript(),
+        source_type.is_jsx(),
+        has_bom,
+    );
     const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
     const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.

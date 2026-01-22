@@ -22,7 +22,7 @@ impl Utf8ToUtf16 {
 
         translations.push(Translation { utf8_offset: 0, utf16_difference: 0 });
 
-        build_translations(source_text, &mut translations);
+        build_translations(source_text, &mut translations, 0);
 
         // If no translations have been added after the first `0, 0` dummy, then source is entirely ASCII.
         // Remove the dummy entry.
@@ -36,6 +36,24 @@ impl Utf8ToUtf16 {
                 translations.clear();
             }
         }
+
+        Self { translations }
+    }
+
+    /// Create new [`Utf8ToUtf16`] conversion table from source text with an offset.
+    ///
+    /// `offset` is the number of bytes to subtract from UTF-8 offsets before converting to UTF-16.
+    /// These bytes should not be part of `source_text` string.
+    ///
+    /// If file starts with a BOM and UTF-16 offsets should be for the source text without the BOM,
+    /// pass `source_text` with the BOM trimmed from the start, and `offset` as 3 (length of BOM in UTF-8 bytes).
+    pub fn new_with_offset(source_text: &str, offset: u32) -> Self {
+        let mut translations = Vec::with_capacity(16);
+
+        translations.push(Translation { utf8_offset: 0, utf16_difference: 0 });
+        translations.push(Translation { utf8_offset: offset, utf16_difference: offset });
+
+        build_translations(source_text, &mut translations, offset);
 
         Self { translations }
     }

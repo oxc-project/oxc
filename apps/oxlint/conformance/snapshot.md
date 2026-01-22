@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   289 |  99.0% |
-| Partially passing |     3 |   1.0% |
+| Fully passing     |   291 |  99.7% |
+| Partially passing |     1 |   0.3% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33090 | 100.0% |
-| Passing     | 32803 |  99.1% |
-| Failing     |     5 |   0.0% |
+| Passing     | 32807 |  99.1% |
+| Failing     |     1 |   0.0% |
 | Skipped     |   282 |   0.9% |
 
 ## Fully Passing Rules
@@ -156,6 +156,7 @@
 - `no-inner-declarations` (68 tests)
 - `no-invalid-regexp` (108 tests)
 - `no-invalid-this` (562 tests) (4 skipped)
+- `no-irregular-whitespace` (280 tests)
 - `no-iterator` (9 tests)
 - `no-label-var` (5 tests)
 - `no-labels` (29 tests)
@@ -306,6 +307,7 @@
 - `symbol-description` (8 tests)
 - `template-curly-spacing` (57 tests)
 - `template-tag-spacing` (63 tests)
+- `unicode-bom` (7 tests)
 - `use-isnan` (214 tests)
 - `valid-typeof` (54 tests)
 - `vars-on-top` (61 tests)
@@ -317,8 +319,6 @@
 ## Rules with Failures
 
 - `no-eval` - 100 / 101 (99.0%)
-- `no-irregular-whitespace` - 279 / 280 (99.6%)
-- `unicode-bom` - 4 / 7 (57.1%)
 
 ## Rules with Failures Detail
 
@@ -345,149 +345,6 @@ function foo() { ('use strict'); this.eval; }
       "messageId": "unexpected",
       "column": 39,
       "endColumn": 43
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `no-irregular-whitespace`
-
-Pass: 279 / 280 (99.6%)
-Fail: 1 / 280 (0.4%)
-Skip: 0 / 280 (0.0%)
-
-#### no-irregular-whitespace > valid
-
-```js
-﻿console.log('hello BOM');
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-irregular-whitespace',
-    message: 'Irregular whitespace not allowed.',
-    messageId: 'noIrregularWhitespace',
-    severity: 1,
-    nodeType: null,
-    line: 1,
-    column: 0,
-    endLine: 1,
-    endColumn: 1,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `unicode-bom`
-
-Pass: 4 / 7 (57.1%)
-Fail: 3 / 7 (42.9%)
-Skip: 0 / 7 (0.0%)
-
-#### unicode-bom > valid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "options": [
-    "always"
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/unicode-bom',
-    message: 'Expected Unicode BOM (Byte Order Mark).',
-    messageId: 'expected',
-    severity: 1,
-    nodeType: null,
-    line: 1,
-    column: 0,
-    endLine: 1,
-    endColumn: 0,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### unicode-bom > invalid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "output": " var a = 123;",
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### unicode-bom > invalid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "output": " var a = 123;",
-  "options": [
-    "never"
-  ],
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "line": 1,
-      "column": 1
     }
   ]
 }
