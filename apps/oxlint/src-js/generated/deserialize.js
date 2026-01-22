@@ -8,7 +8,8 @@ let uint8,
   float64,
   sourceText,
   sourceIsAscii,
-  sourceByteLen,
+  sourceStartPos,
+  sourceEndPos,
   astId = 0,
   parent = null,
   getLoc;
@@ -25,16 +26,23 @@ const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
     },
   });
 
-export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc) {
+export function deserializeProgramOnly(
+  buffer,
+  sourceText,
+  sourceStartPosInput,
+  sourceByteLen,
+  getLoc,
+) {
+  sourceStartPos = sourceStartPosInput;
+  sourceEndPos = sourceStartPosInput + sourceByteLen;
   return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
-  sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
   getLoc = getLocInput;
   return deserialize(uint32[536870902]);
@@ -5921,7 +5929,9 @@ function deserializeStr(pos) {
     len = uint32[pos32 + 2];
   if (len === 0) return "";
   pos = uint32[pos32];
-  if (sourceIsAscii && pos < sourceByteLen) return sourceText.substr(pos, len);
+  if (sourceIsAscii && pos < sourceEndPos)
+    // Source text may not start at position 0, so `pos - sourceStartPos` is the index into `sourceText` string
+    return sourceText.substr(pos - sourceStartPos, len);
   // Longer strings use `TextDecoder`
   // TODO: Find best switch-over point
   let end = pos + len;

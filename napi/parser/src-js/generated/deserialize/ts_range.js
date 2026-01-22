@@ -1,24 +1,24 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/raw_transfer.rs`.
 
-let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
+let uint8, uint32, float64, sourceText, sourceIsAscii, sourceEndPos;
 
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   decodeStr = textDecoder.decode.bind(textDecoder),
   { fromCodePoint } = String;
 
 export function deserialize(buffer, sourceText, sourceByteLen) {
+  sourceEndPos = sourceByteLen;
   let data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
   resetBuffer();
   return data;
 }
 
-function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {
+function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {
   uint8 = buffer;
   uint32 = buffer.uint32;
   float64 = buffer.float64;
   sourceText = sourceTextInput;
-  sourceByteLen = sourceByteLenInput;
   sourceIsAscii = sourceText.length === sourceByteLen;
   return deserialize(uint32[536870902]);
 }
@@ -5412,7 +5412,7 @@ function deserializeStr(pos) {
     len = uint32[pos32 + 2];
   if (len === 0) return "";
   pos = uint32[pos32];
-  if (sourceIsAscii && pos < sourceByteLen) return sourceText.substr(pos, len);
+  if (sourceIsAscii && pos < sourceEndPos) return sourceText.substr(pos, len);
   // Longer strings use `TextDecoder`
   // TODO: Find best switch-over point
   let end = pos + len;
