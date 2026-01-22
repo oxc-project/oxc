@@ -1519,6 +1519,13 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_invalid_config_sort_imports() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_sort_imports".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_valid_complex_config() {
         Tester::new().with_cwd("fixtures/valid_complex_config".into()).test_and_snapshot(&[]);
     }
