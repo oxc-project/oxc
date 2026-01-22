@@ -1,0 +1,177 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:66]
+ 1 │ function Component() { const foo = {}; return (<Context.Provider value={foo}></Context.Provider>) }
+   ·                                                                  ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:66]
+ 1 │ function Component() { const foo = []; return (<Context.Provider value={foo}></Context.Provider>) }
+   ·                                                                  ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:72]
+ 1 │ function Component() { const foo = () => {}; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                        ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:80]
+ 1 │ function Component() { const foo = function bar(){}; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                                ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:81]
+ 1 │ function Component() { const foo = class SomeClass{}; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                                 ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:79]
+ 1 │ function Component() { const foo = new SomeClass(); return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                               ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:69]
+ 1 │ function Component() { function foo() {}; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                     ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:82]
+ 1 │ function Component() { const foo = true ? {} : "fine"; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                                  ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:73]
+ 1 │ function Component() { const foo = bar || {}; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                         ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:73]
+ 1 │ function Component() { const foo = bar && {}; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                         ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:92]
+ 1 │ function Component() { const foo = bar ? baz ? {} : null : null; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                                            ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:64]
+ 1 │ function Component() { let foo = {}; return (<Context.Provider value={foo}></Context.Provider>) }
+   ·                                                                ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:64]
+ 1 │ function Component() { var foo = {}; return (<Context.Provider value={foo}></Context.Provider>)}
+   ·                                                                ───────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:5:41]
+ 4 │               a = 10;
+ 5 │               return (<Context.Provider value={a}></Context.Provider>);
+   ·                                         ─────────
+ 6 │             }
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:5:41]
+ 4 │               const bar = foo;
+ 5 │               return (<Context.Provider value={bar}></Context.Provider>);
+   ·                                         ───────────
+ 6 │             }
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:4:41]
+ 3 │               let bar = true ? foo : {};
+ 4 │               return (<Context.Provider value={bar}></Context.Provider>);
+   ·                                         ───────────
+ 5 │             }
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:50]
+ 1 │ function Component() { return (<Context.Provider value={{foo: "bar"}}></Context.Provider>);}
+   ·                                                  ────────────────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:82]
+ 1 │ function Component() { const Wrapper = (<SomeComp />); return (<Context.Provider value={Wrapper}></Context.Provider>);}
+   ·                                                                                  ───────────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:1:82]
+ 1 │ function Component() { const someRegex = /HelloWorld/; return (<Context.Provider value={someRegex}></Context.Provider>);}
+   ·                                                                                  ─────────────────
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:5:41]
+ 4 │               let bar = x = () => {};
+ 5 │               return (<Context.Provider value={bar}></Context.Provider>);
+   ·                                         ───────────
+ 6 │             }
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:7:32]
+ 6 │               function foo() {};
+ 7 │               return (<Context value={foo}></Context>)
+   ·                                ───────────
+ 8 │             }
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:3:71]
+ 2 │             const MyContext = createContext();
+ 3 │             function Component() { const foo = {}; return (<MyContext value={foo}></MyContext>) }
+   ·                                                                       ───────────
+ 4 │         
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
+
+  ⚠ eslint-plugin-react(jsx-no-constructed-context-values): The Context value prop should not be constructed. Move it out of the render pass, use a constant value, or wrap with useMemo.
+   ╭─[jsx_no_constructed_context_values.tsx:3:55]
+ 2 │             const MyContext = createContext();
+ 3 │             function Component() { return (<MyContext value={{foo: "bar"}}></MyContext>); }
+   ·                                                       ────────────────────
+ 4 │         
+   ╰────
+  help: Wrap the value prop in useMemo() or useCallback() to prevent unnecessary rerenders. Alternatively, move the value outside the render function if it doesn't depend on props or state.
