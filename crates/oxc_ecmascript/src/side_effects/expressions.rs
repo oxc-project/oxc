@@ -694,9 +694,10 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
 
         // Track global variable access from callee
         if let Expression::Identifier(ident) = &self.callee
-            && ctx.is_global_reference(ident) {
-                info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
-            }
+            && ctx.is_global_reference(ident)
+        {
+            info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
+        }
 
         // Determine if there's a side effect
         if self.may_have_side_effects(ctx) {
@@ -734,9 +735,10 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
 
         // Track global variable access from callee
         if let Expression::Identifier(ident) = &self.callee
-            && ctx.is_global_reference(ident) {
-                info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
-            }
+            && ctx.is_global_reference(ident)
+        {
+            info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
+        }
 
         // Determine if there's a side effect
         if self.may_have_side_effects(ctx) {
