@@ -693,11 +693,10 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
         }
 
         // Track global variable access from callee
-        if let Expression::Identifier(ident) = &self.callee {
-            if ctx.is_global_reference(ident) {
+        if let Expression::Identifier(ident) = &self.callee
+            && ctx.is_global_reference(ident) {
                 info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
             }
-        }
 
         // Determine if there's a side effect
         if self.may_have_side_effects(ctx) {
@@ -708,7 +707,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
     }
 }
 
-//// `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
+/// `[ValueProperties]: PURE` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
 impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
         if (self.pure && ctx.annotations()) || ctx.manual_pure_functions(&self.callee) {
@@ -734,11 +733,10 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         }
 
         // Track global variable access from callee
-        if let Expression::Identifier(ident) = &self.callee {
-            if ctx.is_global_reference(ident) {
+        if let Expression::Identifier(ident) = &self.callee
+            && ctx.is_global_reference(ident) {
                 info |= SideEffectInfo::GLOBAL_VAR_ACCESS;
             }
-        }
 
         // Determine if there's a side effect
         if self.may_have_side_effects(ctx) {
