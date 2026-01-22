@@ -11,6 +11,11 @@ use crate::{
     typescript::TypeScriptCase,
 };
 
+/// Check if a string contains any non-ASCII characters (bytes > 0x7F).
+fn contains_non_ascii(s: &str) -> bool {
+    s.bytes().any(|b| b > 0x7F)
+}
+
 /// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let result = Driver { codegen: true, ..Driver::default() }.idempotency(
@@ -26,6 +31,20 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
         .idempotency("Minify", source_text, source_type);
     if result != TestResult::Passed {
         return result;
+    }
+
+    // Test ascii_only mode: output must not contain any non-ASCII characters.
+    // Skip this test if the source contains non-ASCII, since comments are preserved
+    // as-is and may contain non-ASCII characters (e.g., author names).
+    if !contains_non_ascii(source_text) {
+        let mut driver = Driver { codegen: true, ascii_only: true, ..Driver::default() };
+        driver.run(source_text, source_type);
+        if contains_non_ascii(&driver.printed) {
+            return TestResult::GenericError(
+                "AsciiOnly",
+                format!("Output contains non-ASCII characters: {:?}", driver.printed),
+            );
+        }
     }
 
     TestResult::Passed

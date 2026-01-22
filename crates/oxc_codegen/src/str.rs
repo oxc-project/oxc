@@ -9,6 +9,15 @@ use oxc_syntax::{
 
 use crate::Codegen;
 
+/// Check if a string contains any non-BMP characters (code points > U+FFFF).
+///
+/// Non-BMP characters are encoded as 4-byte UTF-8 sequences starting with 0xF0-0xF7.
+/// In `ascii_only` mode, these must use computed syntax for property access.
+#[inline]
+pub fn contains_non_bmp(s: &str) -> bool {
+    s.bytes().any(|b| b >= 0xF0)
+}
+
 /// Quote character.
 #[derive(Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -48,12 +57,14 @@ impl Codegen<'_> {
         // Loop through bytes, looking for any which need to be escaped.
         // String is written to buffer in chunks.
         let bytes = s.value.as_bytes().iter();
+        let ascii_only = self.options.ascii_only;
         let mut state = PrintStringState {
             chunk_start: bytes.ptr(),
             bytes,
             quote,
             lone_surrogates: s.lone_surrogates,
             allow_backtick,
+            ascii_only,
         };
 
         // Loop through bytes.
@@ -61,14 +72,22 @@ impl Codegen<'_> {
             // Look up whether byte needs escaping
             let escape = ESCAPES.0[b as usize];
             if escape == Escape::__ {
-                // No escape required.
-                // SAFETY: We just checked there's a byte to consume.
-                // If byte is not ASCII, this will temporarily leave `bytes` iterator not on a UTF-8
-                // character boundary, but if so next turns of the loop will consume the rest of
-                // the Unicode character.
-                // All bytes which produce an `Escape` which isn't `Escape::__` are 1st byte
-                // of a UTF-8 character sequence.
-                unsafe { state.consume_byte_unchecked() };
+                // Check for non-ASCII bytes when ascii_only mode is enabled
+                if ascii_only && b >= 0x80 {
+                    // Handle non-ASCII character - escape it
+                    cold_branch(|| {
+                        print_non_ascii_escape(self, &mut state);
+                    });
+                } else {
+                    // No escape required.
+                    // SAFETY: We just checked there's a byte to consume.
+                    // If byte is not ASCII, this will temporarily leave `bytes` iterator not on a UTF-8
+                    // character boundary, but if so next turns of the loop will consume the rest of
+                    // the Unicode character.
+                    // All bytes which produce an `Escape` which isn't `Escape::__` are 1st byte
+                    // of a UTF-8 character sequence.
+                    unsafe { state.consume_byte_unchecked() };
+                }
             } else {
                 // Escape may be required. Execute byte handler.
                 // Characters requiring escape are relatively rare, so cold branch.
@@ -89,6 +108,93 @@ impl Codegen<'_> {
         let quote = unsafe { state.quote.unwrap_unchecked() };
         quote.print(self);
     }
+
+    /// Print an identifier, escaping non-ASCII characters when in `ascii_only` mode.
+    ///
+    /// When `ascii_only` is enabled:
+    /// - BMP characters (U+0080-U+FFFF) are escaped as `\uXXXX`
+    /// - Non-BMP characters (U+10000+) are escaped as `\u{XXXXXX}`
+    #[expect(clippy::cast_possible_truncation)]
+    pub(crate) fn print_identifier(&mut self, name: &str) {
+        if self.options.ascii_only {
+            for c in name.chars() {
+                let cp = c as u32;
+                if cp > 0x7F {
+                    self.print_unicode_escape(cp);
+                } else {
+                    self.code.print_ascii_byte(cp as u8);
+                }
+            }
+        } else {
+            self.print_str(name);
+        }
+    }
+
+    /// Print a string value (without surrounding quotes), escaping non-ASCII characters when in `ascii_only` mode.
+    ///
+    /// This is used for printing string content that originated from an identifier
+    /// (e.g., when converting `x.𐀀` to `x["𐀀"]` in ascii_only mode).
+    #[expect(clippy::cast_possible_truncation)]
+    pub(crate) fn print_string_value(&mut self, value: &str) {
+        if self.options.ascii_only {
+            for c in value.chars() {
+                let cp = c as u32;
+                if cp > 0x7F {
+                    self.print_unicode_escape(cp);
+                } else {
+                    self.code.print_ascii_byte(cp as u8);
+                }
+            }
+        } else {
+            self.print_str(value);
+        }
+    }
+
+    /// Print a Unicode code point as an escape sequence.
+    /// - BMP characters (U+0000-U+FFFF) are escaped as `\uXXXX`
+    /// - Non-BMP characters (U+10000+) are escaped as `\u{XXXXXX}`
+    pub(crate) fn print_unicode_escape(&mut self, cp: u32) {
+        if cp > 0xFFFF {
+            self.print_str("\\u{");
+            self.print_hex_upper(cp);
+            self.print_ascii_byte(b'}');
+        } else {
+            self.print_str("\\u");
+            self.print_hex_upper_4(cp);
+        }
+    }
+
+    /// Print a number as uppercase hexadecimal (no leading zeros).
+    fn print_hex_upper(&mut self, mut n: u32) {
+        const HEX_CHARS: &[u8; 16] = b"0123456789ABCDEF";
+        if n == 0 {
+            self.code.print_ascii_byte(b'0');
+            return;
+        }
+        let mut digits = [0u8; 8];
+        let mut len = 0;
+        while n > 0 {
+            digits[len] = HEX_CHARS[(n & 0xF) as usize];
+            n >>= 4;
+            len += 1;
+        }
+        for i in (0..len).rev() {
+            self.code.print_ascii_byte(digits[i]);
+        }
+    }
+
+    /// Print a number as 4-digit uppercase hexadecimal (with leading zeros).
+    fn print_hex_upper_4(&mut self, n: u32) {
+        const HEX_CHARS: &[u8; 16] = b"0123456789ABCDEF";
+        let d0 = ((n >> 12) & 0xF) as usize;
+        let d1 = ((n >> 8) & 0xF) as usize;
+        let d2 = ((n >> 4) & 0xF) as usize;
+        let d3 = (n & 0xF) as usize;
+        self.code.print_ascii_byte(HEX_CHARS[d0]);
+        self.code.print_ascii_byte(HEX_CHARS[d1]);
+        self.code.print_ascii_byte(HEX_CHARS[d2]);
+        self.code.print_ascii_byte(HEX_CHARS[d3]);
+    }
 }
 
 /// String printer state.
@@ -101,6 +207,7 @@ struct PrintStringState<'s> {
     quote: Option<Quote>,
     lone_surrogates: bool,
     allow_backtick: bool,
+    ascii_only: bool,
 }
 
 impl PrintStringState<'_> {
@@ -607,9 +714,20 @@ unsafe fn print_ls_or_ps(codegen: &mut Codegen, state: &mut PrintStringState) {
         LS_LAST_2_BYTES => "\\u2028",
         PS_LAST_2_BYTES => "\\u2029",
         _ => {
-            // Some other character starting with 0xE2. Advance past it.
-            // SAFETY: 0xE2 is always the start of a 3-byte Unicode character
-            unsafe { state.consume_bytes_unchecked(3) };
+            // Some other character starting with 0xE2.
+            if state.ascii_only {
+                // In ascii_only mode, escape this non-ASCII character
+                state.flush(codegen);
+                let (cp, byte_len) = decode_utf8_char(state.bytes.as_slice());
+                codegen.print_unicode_escape(cp);
+                // SAFETY: decode_utf8_char returns valid byte length for the UTF-8 sequence
+                unsafe { state.consume_bytes_unchecked(byte_len) };
+                state.start_chunk();
+            } else {
+                // Advance past the character.
+                // SAFETY: 0xE2 is always the start of a 3-byte Unicode character
+                unsafe { state.consume_bytes_unchecked(3) };
+            }
             return;
         }
     };
@@ -631,6 +749,14 @@ unsafe fn print_non_breaking_space(codegen: &mut Codegen, state: &mut PrintStrin
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
         unsafe { state.flush_and_consume_bytes(codegen, 2) };
         codegen.print_str("\\xA0");
+    } else if state.ascii_only {
+        // Some other character starting with 0xC2. In ascii_only mode, escape it.
+        state.flush(codegen);
+        let (cp, byte_len) = decode_utf8_char(state.bytes.as_slice());
+        codegen.print_unicode_escape(cp);
+        // SAFETY: decode_utf8_char returns valid byte length for the UTF-8 sequence
+        unsafe { state.consume_bytes_unchecked(byte_len) };
+        state.start_chunk();
     } else {
         // Some other character starting with 0xC2. Advance past it.
         // SAFETY: 0xC2 is always the start of a 2-byte Unicode character.
@@ -696,9 +822,79 @@ unsafe fn print_lossy_replacement(codegen: &mut Codegen, state: &mut PrintString
     }
 
     // `lone_surrogates` is `false` or character is some other character starting with 0xEF.
-    // Advance past the character.
-    // SAFETY: 0xEF is always the start of a 3-byte Unicode character
-    unsafe { state.consume_bytes_unchecked(3) };
+    // When ascii_only is enabled, escape non-ASCII characters (like BOM U+FEFF).
+    if state.ascii_only {
+        // Flush bytes before this character
+        state.flush(codegen);
+
+        // Decode UTF-8 character and print escape sequence
+        let (cp, byte_len) = decode_utf8_char(state.bytes.as_slice());
+        codegen.print_unicode_escape(cp);
+
+        // Skip past the UTF-8 bytes
+        // SAFETY: decode_utf8_char returns valid byte length for the UTF-8 sequence
+        unsafe { state.consume_bytes_unchecked(byte_len) };
+        state.start_chunk();
+    } else {
+        // Advance past the character.
+        // SAFETY: 0xEF is always the start of a 3-byte Unicode character
+        unsafe { state.consume_bytes_unchecked(3) };
+    }
+}
+
+/// Escape a non-ASCII character for ascii_only mode.
+///
+/// This function decodes the UTF-8 character at the current position and prints
+/// the appropriate escape sequence:
+/// - BMP characters (U+0000-U+FFFF) use `\uXXXX` format
+/// - Non-BMP characters (U+10000+) use `\u{XXXXXX}` format
+fn print_non_ascii_escape(codegen: &mut Codegen, state: &mut PrintStringState) {
+    // First byte determines UTF-8 sequence length
+    let first = state.peek().unwrap();
+    debug_assert!(first > 0x7F);
+
+    // Flush bytes before this character
+    state.flush(codegen);
+
+    // Decode UTF-8 character
+    let (cp, byte_len) = decode_utf8_char(state.bytes.as_slice());
+
+    // Print the escape sequence
+    codegen.print_unicode_escape(cp);
+
+    // Skip past the UTF-8 bytes
+    // SAFETY: decode_utf8_char returns valid byte length for the UTF-8 sequence
+    unsafe { state.consume_bytes_unchecked(byte_len) };
+    state.start_chunk();
+}
+
+/// Decode a UTF-8 character from a byte slice.
+/// Returns the code point and the number of bytes consumed.
+fn decode_utf8_char(bytes: &[u8]) -> (u32, usize) {
+    let first = bytes[0];
+    if first & 0b1111_0000 == 0b1111_0000 {
+        // 4-byte sequence (non-BMP)
+        let b0 = u32::from(first & 0b0000_0111);
+        let b1 = u32::from(bytes[1] & 0b0011_1111);
+        let b2 = u32::from(bytes[2] & 0b0011_1111);
+        let b3 = u32::from(bytes[3] & 0b0011_1111);
+        let cp = (b0 << 18) | (b1 << 12) | (b2 << 6) | b3;
+        (cp, 4)
+    } else if first & 0b1110_0000 == 0b1110_0000 {
+        // 3-byte sequence (BMP)
+        let b0 = u32::from(first & 0b0000_1111);
+        let b1 = u32::from(bytes[1] & 0b0011_1111);
+        let b2 = u32::from(bytes[2] & 0b0011_1111);
+        let cp = (b0 << 12) | (b1 << 6) | b2;
+        (cp, 3)
+    } else {
+        // 2-byte sequence (BMP)
+        debug_assert!(first & 0b1100_0000 == 0b1100_0000);
+        let b0 = u32::from(first & 0b0001_1111);
+        let b1 = u32::from(bytes[1] & 0b0011_1111);
+        let cp = (b0 << 6) | b1;
+        (cp, 2)
+    }
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.

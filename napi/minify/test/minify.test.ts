@@ -154,3 +154,76 @@ describe("worker", () => {
     expect(code).toBe(0);
   });
 });
+
+// ASCII-only mode comprehensive test
+// See: https://github.com/oxc-project/oxc/issues/17068
+describe("asciiOnly option", () => {
+  it("escapes all non-ASCII variants", () => {
+    const testCases: Array<{ input: string; expected: string; description: string }> = [
+      // BMP characters in identifiers (\uXXXX)
+      { input: "let π = 1", expected: "let \\u03C0=1;", description: "BMP identifier" },
+      {
+        input: "let _π = 1",
+        expected: "let _\\u03C0=1;",
+        description: "BMP identifier with underscore prefix",
+      },
+      {
+        input: "let π_ = 1",
+        expected: "let \\u03C0_=1;",
+        description: "BMP identifier with underscore suffix",
+      },
+
+      // BMP characters in strings (\uXXXX)
+      { input: "'π'", expected: '"\\u03C0";', description: "BMP string" },
+      { input: "'中文'", expected: '"\\u4E2D\\u6587";', description: "CJK string" },
+
+      // Non-BMP characters in strings (\u{XXXXXX})
+      { input: "'🐈'", expected: '"\\u{1F408}";', description: "Non-BMP emoji string" },
+      { input: "'𐀀'", expected: '"\\u{10000}";', description: "Non-BMP string" },
+
+      // Non-BMP identifiers (\u{XXXXXX})
+      { input: "var 𐀀", expected: "var \\u{10000};", description: "Non-BMP identifier" },
+
+      // BMP property access (identifier syntax preserved with \uXXXX)
+      { input: "x.π", expected: "x.\\u03C0;", description: "BMP property access" },
+
+      // Non-BMP property access -> computed syntax
+      { input: "x.𐀀", expected: 'x["\\u{10000}"];', description: "Non-BMP property access" },
+
+      // BMP object keys (identifier syntax preserved with \uXXXX)
+      // Use assignment to prevent dead code elimination
+      {
+        input: "const x = {π: 1}",
+        expected: "const x={\\u03C0:1};",
+        description: "BMP object key",
+      },
+
+      // Non-BMP object keys -> string keys
+      {
+        input: "const x = {𐀀: 1}",
+        expected: 'const x={"\\u{10000}":1};',
+        description: "Non-BMP object key",
+      },
+
+      // BOM (U+FEFF) - only escaped in ascii_only mode
+      { input: "'\uFEFF'", expected: '"\\uFEFF";', description: "BOM" },
+
+      // Always escaped characters (regardless of asciiOnly) - line terminators in JS
+      { input: "'\u2028'", expected: '"\\u2028";', description: "Line separator always escaped" },
+      {
+        input: "'\u2029'",
+        expected: '"\\u2029";',
+        description: "Paragraph separator always escaped",
+      },
+    ];
+
+    for (const { input, expected, description } of testCases) {
+      const ret = minifySync("test.js", input, {
+        mangle: false,
+        codegen: { asciiOnly: true },
+      });
+      expect(ret.code, description).toBe(expected);
+      expect(ret.errors.length, `${description} should have no errors`).toBe(0);
+    }
+  });
+});

@@ -78,6 +78,38 @@ pub fn test_minify_same(source_text: &str) {
     test_minify(source_text, source_text);
 }
 
+/// Test with `ascii_only: true` option
+#[track_caller]
+pub fn test_ascii(source_text: &str, expected: &str) {
+    let source_type = SourceType::tsx();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    let result = Codegen::new()
+        .with_options(CodegenOptions { ascii_only: true, ..default_options() })
+        .build(&ret.program)
+        .code;
+    assert_eq!(result, expected, "\nfor ascii source: {source_text:?}");
+}
+
+/// Test with `ascii_only: true` and `minify: true` options
+#[track_caller]
+pub fn test_minify_ascii(source_text: &str, expected: &str) {
+    let source_type = SourceType::tsx();
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    assert!(ret.errors.is_empty(), "Parse errors: {:?}", ret.errors);
+    let result = Codegen::new()
+        .with_options(CodegenOptions {
+            ascii_only: true,
+            minify: true,
+            ..CodegenOptions::default()
+        })
+        .build(&ret.program)
+        .code;
+    assert_eq!(result, expected, "\nfor minify ascii source: {source_text:?}");
+}
+
 #[track_caller]
 pub fn codegen(source_text: &str) -> String {
     codegen_options(source_text, &default_options()).code

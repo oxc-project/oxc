@@ -12,6 +12,7 @@ use oxc_syntax::{
 use crate::{
     Codegen, Context, Operator, Quote,
     binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
+    str::contains_non_bmp,
 };
 
 const PURE_COMMENT: &str = "/* @__PURE__ */ ";
@@ -95,7 +96,8 @@ impl Gen for Directive<'_> {
             }
         }
         quote.print(p);
-        p.print_str(directive);
+        // When ascii_only is enabled, escape non-ASCII characters in the directive
+        p.print_string_value(directive);
         quote.print(p);
         p.print_ascii_byte(b';');
         p.print_soft_newline();
@@ -1268,7 +1270,7 @@ impl Gen for IdentifierReference<'_> {
         let name = p.get_identifier_reference_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_identifier(name);
     }
 }
 
@@ -1276,7 +1278,7 @@ impl Gen for IdentifierName<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_identifier(self.name.as_str());
     }
 }
 
@@ -1285,7 +1287,7 @@ impl Gen for BindingIdentifier<'_> {
         let name = p.get_binding_identifier_name(self);
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
-        p.print_str(name);
+        p.print_identifier(name);
     }
 }
 
@@ -1293,7 +1295,7 @@ impl Gen for LabelIdentifier<'_> {
     fn r#gen(&self, p: &mut Codegen, _ctx: Context) {
         p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_identifier(self.name.as_str());
     }
 }
 
@@ -1435,6 +1437,29 @@ impl GenExpr for ComputedMemberExpression<'_> {
 
 impl GenExpr for StaticMemberExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, _precedence: Precedence, ctx: Context) {
+        // In ascii_only mode, non-BMP characters must use computed syntax
+        // e.g., `x.𐀀` becomes `x["\u{10000}"]`
+        if p.options.ascii_only && contains_non_bmp(&self.property.name) {
+            // `(let[0] = 100);` -> `(let)[0] = 100`;
+            let wrap = self.object.get_identifier_reference().is_some_and(|r| r.name == "let");
+            p.wrap(wrap, |p| {
+                self.object.print_expr(
+                    p,
+                    Precedence::Postfix,
+                    ctx.intersection(Context::FORBID_CALL),
+                );
+            });
+            if self.optional {
+                p.print_str("?.");
+            }
+            p.print_ascii_byte(b'[');
+            p.print_ascii_byte(b'"');
+            p.print_string_value(&self.property.name);
+            p.print_ascii_byte(b'"');
+            p.print_ascii_byte(b']');
+            return;
+        }
+
         self.object.print_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_ascii_byte(b'?');
@@ -1655,8 +1680,14 @@ impl Gen for ObjectProperty<'_> {
             }
         }
 
+        // In ascii_only mode, non-BMP keys must be printed as strings
+        // e.g., `{𐀀: 1}` becomes `{"\u{10000}": 1}`
+        let key_has_non_bmp = p.options.ascii_only
+            && matches!(&self.key, PropertyKey::StaticIdentifier(key) if contains_non_bmp(&key.name));
+
         let mut shorthand = false;
-        if let PropertyKey::StaticIdentifier(key) = &self.key {
+        // In ascii_only mode, non-BMP keys use string syntax and can't use shorthand
+        if !key_has_non_bmp && let PropertyKey::StaticIdentifier(key) = &self.key {
             if key.name == "__proto__" {
                 shorthand = self.shorthand;
             } else if let Expression::Identifier(ident) = self.value.without_parentheses()
@@ -1681,7 +1712,16 @@ impl Gen for ObjectProperty<'_> {
             if computed {
                 p.print_ascii_byte(b'[');
             }
-            self.key.print(p, ctx);
+            // In ascii_only mode, print non-BMP keys as escaped string literals
+            if key_has_non_bmp {
+                if let PropertyKey::StaticIdentifier(key) = &self.key {
+                    p.print_ascii_byte(b'"');
+                    p.print_string_value(&key.name);
+                    p.print_ascii_byte(b'"');
+                }
+            } else {
+                self.key.print(p, ctx);
+            }
             if computed {
                 p.print_ascii_byte(b']');
             }
@@ -2420,7 +2460,14 @@ impl Gen for JSXIdentifier<'_> {
 impl Gen for JSXMemberExpressionObject<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
-            Self::IdentifierReference(ident) => ident.print(p, ctx),
+            Self::IdentifierReference(ident) => {
+                // JSX member expression objects should NOT be escaped even in ascii_only mode
+                // because JSX doesn't support Unicode escape syntax in element names.
+                let name = p.get_identifier_reference_name(ident);
+                p.print_space_before_identifier();
+                p.add_source_mapping_for_name(ident.span, name);
+                p.print_str(name);
+            }
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
         }
@@ -2439,7 +2486,15 @@ impl Gen for JSXElementName<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         match self {
             Self::Identifier(identifier) => identifier.print(p, ctx),
-            Self::IdentifierReference(identifier) => identifier.print(p, ctx),
+            Self::IdentifierReference(identifier) => {
+                // JSX element names should NOT be escaped even in ascii_only mode
+                // because JSX doesn't support Unicode escape syntax in element names.
+                // Print the identifier directly without using print_identifier.
+                let name = p.get_identifier_reference_name(identifier);
+                p.print_space_before_identifier();
+                p.add_source_mapping_for_name(identifier.span, name);
+                p.print_str(name);
+            }
             Self::NamespacedName(namespaced_name) => namespaced_name.print(p, ctx),
             Self::MemberExpression(member_expr) => member_expr.print(p, ctx),
             Self::ThisExpression(expr) => expr.print(p, ctx),
@@ -2826,9 +2881,9 @@ impl Gen for PrivateIdentifier<'_> {
                 .find_map(|class_id| mappings.get(class_id).and_then(|m| m.get(self.name.as_str())))
                 .cloned()
         }) {
-            p.print_str(mangled.as_str());
+            p.print_identifier(mangled.as_str());
         } else {
-            p.print_str(self.name.as_str());
+            p.print_identifier(self.name.as_str());
         }
     }
 }
