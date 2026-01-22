@@ -240,6 +240,10 @@ fn test() {
           ));
         ",
         r"things.map((thing, index) => (
+            <Hello thing={thing} key={index} />
+          ));
+        ",
+        r"things.map((thing, index) => (
             React.cloneElement(thing, { key: index })
           ));
         ",
