@@ -1,0 +1,10 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+---
+########## 
+Linted file: fixtures/lsp/tsgolint/nested_type_aware/test-root.ts
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/tsgolint/nested_type_aware/test-root.ts
+
+########### Code Actions/Commands

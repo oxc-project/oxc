@@ -320,6 +320,26 @@ impl ConfigStore {
         self.base.base.config.plugins
     }
 
+    /// Whether the configuration file has type-aware rules enabled.
+    // This will return true if the root config enables type-aware rules or if any nested
+    // configuration enables type-aware rules. This allows nested configs to turn on
+    // type-aware rules even when the root config has them disabled or unset.
+    //
+    // TODO: We need to somehow distinguish between "use tsgolint anywhere and so activate type-aware rules"
+    // vs "type-aware rules are explicitly enabled for this file based on the nearest oxlint config".
+    // Otherwise we just enable it for everything even if you explicitly set it to false in some nested configs.
+    pub fn type_aware_enabled(&self) -> bool {
+        // If the root config explicitly enables it, enable it for everything.
+        if self.base.base.config.linter_options.type_aware.unwrap_or(false) {
+            return true;
+        }
+
+        // Any nested config enabling it should enable type-aware behavior as well.
+        self.nested_configs
+            .values()
+            .any(|config| config.base.config.linter_options.type_aware.unwrap_or(false))
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
@@ -373,7 +393,7 @@ mod test {
     use crate::{
         AllowWarnDeny, ExternalOptionsId, ExternalPluginStore, LintPlugins, RuleCategory, RuleEnum,
         config::{
-            LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+            LintConfig, LinterOptions, OxlintEnv, OxlintGlobals, OxlintSettings,
             categories::OxlintCategories,
             config_store::{Config, ResolvedOxlintOverride, ResolvedOxlintOverrideRules},
             overrides::GlobSet,
@@ -782,6 +802,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories to enable restriction rules
@@ -869,6 +890,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories
@@ -974,6 +996,7 @@ mod test {
             settings: OxlintSettings::default(),
             globals: OxlintGlobals::default(),
             path: None,
+            ..Default::default()
         };
 
         // Set up categories
@@ -1136,5 +1159,121 @@ mod test {
         assert_eq!(severity, AllowWarnDeny::Deny);
         // `options_id` should not equal the base options ID
         assert_ne!(options_id, base_options_id);
+    }
+
+    #[test]
+    fn test_type_aware_enabled_considers_nested_configs() {
+        // Root config has no type_aware set
+        let base_config = LintConfig::default();
+        let nested_lint_config = LintConfig {
+            linter_options: LinterOptions { type_aware: Some(true) },
+            ..Default::default()
+        };
+
+        let mut nested = FxHashMap::default();
+        nested.insert(
+            PathBuf::from("nested"),
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                nested_lint_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+        );
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                base_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            nested,
+            ExternalPluginStore::default(),
+        );
+
+        assert!(store.type_aware_enabled());
+    }
+
+    #[test]
+    fn test_type_aware_enabled_nested_true_overrides_root_false() {
+        let base_config = LintConfig {
+            linter_options: LinterOptions { type_aware: Some(false) },
+            ..Default::default()
+        };
+        let nested_lint_config = LintConfig {
+            linter_options: LinterOptions { type_aware: Some(true) },
+            ..Default::default()
+        };
+
+        let mut nested = FxHashMap::default();
+        nested.insert(
+            PathBuf::from("nested"),
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                nested_lint_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+        );
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                base_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            nested,
+            ExternalPluginStore::default(),
+        );
+
+        assert!(store.type_aware_enabled());
+    }
+
+    #[test]
+    fn test_type_aware_enabled_false_when_not_enabled_in_any_config() {
+        let base_config = LintConfig {
+            linter_options: LinterOptions { type_aware: Some(false) },
+            ..Default::default()
+        };
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                base_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        assert!(!store.type_aware_enabled());
+    }
+
+    #[test]
+    fn test_type_aware_default_disabled_when_unset_in_any_config() {
+        // If neither the root nor any nested config sets `type_aware`, it should default to disabled
+        let base_config = LintConfig::default();
+
+        let store = ConfigStore::new(
+            Config::new(
+                vec![],
+                vec![],
+                OxlintCategories::default(),
+                base_config,
+                ResolvedOxlintOverrides::new(vec![]),
+            ),
+            FxHashMap::default(),
+            ExternalPluginStore::default(),
+        );
+
+        assert!(!store.type_aware_enabled());
     }
 }

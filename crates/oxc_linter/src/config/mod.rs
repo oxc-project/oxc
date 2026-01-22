@@ -23,6 +23,8 @@ pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
+use crate::config::oxlintrc::LinterOptions;
+
 #[derive(Debug, Default, Clone)]
 pub struct LintConfig {
     pub(crate) plugins: LintPlugins,
@@ -33,6 +35,8 @@ pub struct LintConfig {
     pub(crate) globals: OxlintGlobals,
     /// Absolute path to the configuration file (may be `None` if there is no file).
     pub(crate) path: Option<PathBuf>,
+    /// Options for controlling linter behavior.
+    pub(crate) linter_options: LinterOptions,
 }
 
 impl From<Oxlintrc> for LintConfig {
@@ -43,6 +47,7 @@ impl From<Oxlintrc> for LintConfig {
             env: config.env,
             globals: config.globals,
             path: Some(config.path),
+            linter_options: config.linter_options,
         }
     }
 }

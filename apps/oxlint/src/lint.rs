@@ -312,6 +312,11 @@ impl CliRunner {
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
+        // Determine whether type-aware rules should be enabled.
+        // CLI flag has precedence; otherwise fall back to configuration file.
+        let effective_type_aware =
+            if self.options.type_aware { true } else { config_store.type_aware_enabled() };
+
         // If the user requested `--rules`, print a CLI-specific table that
         // includes an "Enabled?" column based on the resolved configuration.
         if self.options.list_rules {
@@ -382,12 +387,12 @@ impl CliRunner {
             }
         }
 
-        let number_of_rules = linter.number_of_rules(self.options.type_aware);
+        let number_of_rules = linter.number_of_rules(effective_type_aware);
 
         // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
-            .with_type_aware(self.options.type_aware)
+            .with_type_aware(effective_type_aware)
             .with_type_check(self.options.type_check)
             .with_silent(misc_options.silent)
             .with_fix_kind(fix_options.fix_kind())
@@ -1387,6 +1392,51 @@ mod test {
     fn test_tsgolint_config() {
         // TODO: test with other rules as well once diagnostics are more stable
         let args = &["--type-aware", "-c", "config-test.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_via_config_file() {
+        // config file should be able to enable type-aware linting without CLI flag
+        let args = &["-c", "config-type-aware.json"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_applies_to_overrides() {
+        // top-level typeAware should enable type-aware rules for overrides as well
+        // The fixture sets the rule off globally and turns it on in an override for ts files.
+        let args = &["-c", "config-type-aware-with-overrides.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false() {
+        // When top-level typeAware is false, type-aware rules should be disabled.
+        let args = &["-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_overridden_by_cli_flag() {
+        // If the config file sets `typeAware: false`, the CLI `--type-aware` flag should still
+        // be able to enable type-aware linting.
+        let args =
+            &["--type-aware", "-c", "config-type-aware-false.json", "no-floating-promises.ts"];
+        Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_config_type_aware_false_disables_overrides() {
+        // When top-level typeAware is false, type-aware rules should be disabled
+        // even if an override sets the rule to error for *.ts files.
+        let args =
+            &["-c", "config-type-aware-false-with-overrides.json", "no-floating-promises.ts"];
         Tester::new().with_cwd("fixtures/tsgolint".into()).test_and_snapshot(args);
     }
 

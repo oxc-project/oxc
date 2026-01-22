@@ -1,0 +1,10 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+---
+########## 
+Linted file: fixtures/lsp/tsgolint/type_aware_config/test-with-lsp-config.ts
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/tsgolint/type_aware_config/test-with-lsp-config.ts
+
+########### Code Actions/Commands
