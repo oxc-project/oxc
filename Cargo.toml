@@ -55,6 +55,9 @@ infinite_loop = "warn"
 map_with_unused_argument_over_ranges = "warn"
 unused_result_ok = "warn"
 pathbuf_init_then_push = "warn"
+pub_underscore_fields = "warn"
+non_zero_suggestions = "warn"
+precedence_bits = "warn"
 # I want to write the best Rust code so pedantic is enabled.
 # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
 pedantic = { level = "warn", priority = -1 }
@@ -96,7 +99,6 @@ unused_peekable = "warn"
 too_long_first_doc_paragraph = "warn"
 suspicious_operation_groupings = "warn"
 redundant_clone = "warn"
-zero_sized_map_values = "allow" # FIXME https://github.com/rust-lang/rust-clippy/issues/15429 - False positive with serde skip_serializing
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
