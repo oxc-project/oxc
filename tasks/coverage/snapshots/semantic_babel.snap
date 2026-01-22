@@ -1,8 +1,8 @@
 commit: fc58af40
 
 semantic_babel Summary:
-AST Parsed     : 2223/2223 (100.00%)
-Positive Passed: 2022/2223 (90.96%)
+AST Parsed     : 2221/2221 (100.00%)
+Positive Passed: 2022/2221 (91.04%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -159,14 +159,6 @@ rebuilt        : ScopeId(4): ["using"]
 Symbol scope ID mismatch for "using":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(5): ScopeId(4)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
-Keywords cannot contain escape characters
-Expected `)` but found `of`
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
-Keywords cannot contain escape characters
-Expected `)` but found `of`
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 'abstract' modifier cannot be used with a private identifier.

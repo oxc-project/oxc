@@ -1,8 +1,8 @@
 commit: fc58af40
 
 parser_babel Summary:
-AST Parsed     : 2217/2223 (99.73%)
-Positive Passed: 2204/2223 (99.15%)
+AST Parsed     : 2217/2221 (99.82%)
+Positive Passed: 2204/2221 (99.23%)
 Negative Passed: 1654/1689 (97.93%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
@@ -73,38 +73,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
-
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs:1:18]
- 1 │ for await (using \u006ff of of);
-   ·                  ───────
-   ╰────
-
-  × Expected `)` but found `of`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs:1:29]
- 1 │ for await (using \u006ff of of);
-   ·           ┬                 ─┬
-   ·           │                  ╰── `)` expected
-   ·           ╰── Opened here
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
-
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js:1:12]
- 1 │ for (using o\u0066 of of);
-   ·            ───────
-   ╰────
-
-  × Expected `)` but found `of`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js:1:23]
- 1 │ for (using o\u0066 of of);
-   ·     ┬                 ─┬
-   ·     │                  ╰── `)` expected
-   ·     ╰── Opened here
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 

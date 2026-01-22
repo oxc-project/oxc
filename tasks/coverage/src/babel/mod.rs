@@ -53,6 +53,9 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "typescript/cast/satisfies-const-error",
             // Babel's heuristic for detecting module via unambiguous `await` - not in ES spec, we follow TypeScript
             "es2022/top-level-await-unambiguous",
+            // Escaped `of` binding in using declarations - not worth supporting
+            "explicit-resource-management/valid-for-await-using-binding-escaped-of-of",
+            "explicit-resource-management/valid-for-using-binding-escaped-of-of",
         ]
         .iter()
         .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));
