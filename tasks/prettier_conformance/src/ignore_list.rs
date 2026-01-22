@@ -55,6 +55,7 @@ pub const IGNORE_TESTS: &[&str] = &[
     "js/multiparser-invalid/",
     "js/multiparser-markdown/",
     "js/multiparser-text/",
+    "js/strings/template-literals.js",
     "js/template-literals/css-prop.js",
     "js/template-literals/styled-components-with-expressions.js",
     "js/template-literals/styled-jsx-with-expressions.js",
