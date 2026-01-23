@@ -16,14 +16,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Make sure there is an empty new line before the test block
 
-  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test block
-   ╭─[padding_around_test_blocks.tsx:3:1]
- 2 │ fit('bar', () => {});
- 3 │ test('baz', () => {});
-   · ▲
-   ╰────
-  help: Make sure there is an empty new line before the test block
-
   ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before fit block
    ╭─[padding_around_test_blocks.tsx:2:1]
  1 │ it('foo', () => {});
@@ -33,14 +25,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Make sure there is an empty new line before the fit block
 
-  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before xit block
-    ╭─[padding_around_test_blocks.tsx:26:2]
- 25 │    .skip('skippy skip', () => {});
- 26 │  xit('bar foo', () => {});
-    ·  ▲
- 27 │             
-    ╰────
-  help: Make sure there is an empty new line before the xit block
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test block
+   ╭─[padding_around_test_blocks.tsx:3:1]
+ 2 │ fit('bar', () => {});
+ 3 │ test('baz', () => {});
+   · ▲
+   ╰────
+  help: Make sure there is an empty new line before the test block
 
   ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before it block
    ╭─[padding_around_test_blocks.tsx:4:1]
@@ -68,24 +59,6 @@ source: crates/oxc_linter/src/tester.rs
  23 │  });xtest('weird', () => {});
     ╰────
   help: Make sure there is an empty new line before the it block
-
-  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before xtest block
-    ╭─[padding_around_test_blocks.tsx:23:5]
- 22 │      it.skip('skipping too', () => {});
- 23 │  });xtest('weird', () => {});
-    ·     ▲
- 24 │  test
-    ╰────
-  help: Make sure there is an empty new line before the xtest block
-
-  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before fit block
-   ╭─[padding_around_test_blocks.tsx:7:1]
- 6 │ });
- 7 │ fit('bar', () => {
-   · ▲
- 8 │   // stuff
-   ╰────
-  help: Make sure there is an empty new line before the fit block
 
   ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test block
     ╭─[padding_around_test_blocks.tsx:10:1]
@@ -131,6 +104,33 @@ source: crates/oxc_linter/src/tester.rs
  25 │    .skip('skippy skip', () => {});
     ╰────
   help: Make sure there is an empty new line before the test block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before xit block
+    ╭─[padding_around_test_blocks.tsx:26:2]
+ 25 │    .skip('skippy skip', () => {});
+ 26 │  xit('bar foo', () => {});
+    ·  ▲
+ 27 │             
+    ╰────
+  help: Make sure there is an empty new line before the xit block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before xtest block
+    ╭─[padding_around_test_blocks.tsx:23:5]
+ 22 │      it.skip('skipping too', () => {});
+ 23 │  });xtest('weird', () => {});
+    ·     ▲
+ 24 │  test
+    ╰────
+  help: Make sure there is an empty new line before the xtest block
+
+  ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before fit block
+   ╭─[padding_around_test_blocks.tsx:7:1]
+ 6 │ });
+ 7 │ fit('bar', () => {
+   · ▲
+ 8 │   // stuff
+   ╰────
+  help: Make sure there is an empty new line before the fit block
 
   ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before it block
    ╭─[padding_around_test_blocks.tsx:5:5]

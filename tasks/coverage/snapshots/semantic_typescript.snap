@@ -4569,12 +4569,12 @@ rebuilt        : SymbolId(10): [ReferenceId(36), ReferenceId(39)]
 Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(40), ReferenceId(45)]
 rebuilt        : [ReferenceId(30), ReferenceId(34)]
-Unresolved reference IDs mismatch for "Promise":
-after transform: [ReferenceId(1), ReferenceId(20)]
-rebuilt        : [ReferenceId(13)]
 Unresolved reference IDs mismatch for "Set":
 after transform: [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(7), ReferenceId(10), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(24), ReferenceId(25), ReferenceId(28), ReferenceId(31), ReferenceId(32), ReferenceId(34), ReferenceId(37)]
 rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(10), ReferenceId(19), ReferenceId(23), ReferenceId(26)]
+Unresolved reference IDs mismatch for "Promise":
+after transform: [ReferenceId(1), ReferenceId(20)]
+rebuilt        : [ReferenceId(13)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowManyConsecutiveConditionsNoTimeout.ts
 Bindings mismatch:
@@ -10610,9 +10610,6 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/esNextWeakRefs_It
 Unresolved references mismatch:
 after transform: ["FinalizationRegistry", "Generator", "Iterable", "Object", "Set", "Symbol", "WeakMap", "WeakRef", "undefined"]
 rebuilt        : ["FinalizationRegistry", "Object", "Set", "Symbol", "WeakMap", "WeakRef", "undefined"]
-Unresolved reference IDs mismatch for "WeakRef":
-after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(11), ReferenceId(15), ReferenceId(33)]
-rebuilt        : [ReferenceId(26)]
 Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(8), ReferenceId(55), ReferenceId(69), ReferenceId(72)]
 rebuilt        : [ReferenceId(81), ReferenceId(84)]
@@ -10622,6 +10619,9 @@ rebuilt        : [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(7)
 Unresolved reference IDs mismatch for "Set":
 after transform: [ReferenceId(1), ReferenceId(14)]
 rebuilt        : [ReferenceId(10)]
+Unresolved reference IDs mismatch for "WeakRef":
+after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(11), ReferenceId(15), ReferenceId(33)]
+rebuilt        : [ReferenceId(26)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/eventEmitterPatternWithRecordOfFunction.ts
 Unresolved references mismatch:
@@ -15713,12 +15713,12 @@ rebuilt        : SymbolId(9): [ReferenceId(30), ReferenceId(39), ReferenceId(40)
 Unresolved references mismatch:
 after transform: ["Boolean", "Number", "Object", "String", "require"]
 rebuilt        : ["Boolean", "Number", "Object", "require"]
-Unresolved reference IDs mismatch for "Boolean":
-after transform: [ReferenceId(22), ReferenceId(23), ReferenceId(28)]
-rebuilt        : [ReferenceId(14)]
 Unresolved reference IDs mismatch for "Object":
 after transform: [ReferenceId(0), ReferenceId(18), ReferenceId(29), ReferenceId(51), ReferenceId(55), ReferenceId(63)]
 rebuilt        : [ReferenceId(9), ReferenceId(19), ReferenceId(42), ReferenceId(47), ReferenceId(57)]
+Unresolved reference IDs mismatch for "Boolean":
+after transform: [ReferenceId(22), ReferenceId(23), ReferenceId(28)]
+rebuilt        : [ReferenceId(14)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataOfUnionWithNull.ts
 Symbol reference IDs mismatch for "A":
@@ -23829,21 +23829,21 @@ after transform: ["Iterable"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardConstructorPrimitiveTypes.ts
-Unresolved reference IDs mismatch for "Number":
-after transform: [ReferenceId(4), ReferenceId(19), ReferenceId(27)]
-rebuilt        : [ReferenceId(4), ReferenceId(22)]
 Unresolved reference IDs mismatch for "Symbol":
 after transform: [ReferenceId(13), ReferenceId(21), ReferenceId(33)]
 rebuilt        : [ReferenceId(13), ReferenceId(28)]
-Unresolved reference IDs mismatch for "BigInt":
-after transform: [ReferenceId(16), ReferenceId(22), ReferenceId(36)]
-rebuilt        : [ReferenceId(16), ReferenceId(31)]
+Unresolved reference IDs mismatch for "Number":
+after transform: [ReferenceId(4), ReferenceId(19), ReferenceId(27)]
+rebuilt        : [ReferenceId(4), ReferenceId(22)]
 Unresolved reference IDs mismatch for "Boolean":
 after transform: [ReferenceId(7), ReferenceId(20), ReferenceId(30)]
 rebuilt        : [ReferenceId(7), ReferenceId(25)]
 Unresolved reference IDs mismatch for "String":
 after transform: [ReferenceId(1), ReferenceId(18), ReferenceId(24)]
 rebuilt        : [ReferenceId(1), ReferenceId(19)]
+Unresolved reference IDs mismatch for "BigInt":
+after transform: [ReferenceId(16), ReferenceId(22), ReferenceId(36)]
+rebuilt        : [ReferenceId(16), ReferenceId(31)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/typeGuardNarrowByMutableUntypedField.ts
 Bindings mismatch:
@@ -24772,12 +24772,12 @@ after transform: SymbolId(3): [ReferenceId(2), ReferenceId(7)]
 rebuilt        : SymbolId(4): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unionWithIndexSignature.ts
-Unresolved reference IDs mismatch for "Int32Array":
-after transform: [ReferenceId(6), ReferenceId(8), ReferenceId(11)]
-rebuilt        : [ReferenceId(2)]
 Unresolved reference IDs mismatch for "Uint8Array":
 after transform: [ReferenceId(7), ReferenceId(9), ReferenceId(13)]
 rebuilt        : [ReferenceId(4)]
+Unresolved reference IDs mismatch for "Int32Array":
+after transform: [ReferenceId(6), ReferenceId(8), ReferenceId(11)]
+rebuilt        : [ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/uniqueSymbolAssignmentOnGlobalAugmentationSuceeds.ts
 Symbol reference IDs mismatch for "FOO_SYMBOL":
@@ -24938,36 +24938,36 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/valueOfTypedArray.ts
-Unresolved reference IDs mismatch for "Int16Array":
-after transform: [ReferenceId(4), ReferenceId(5)]
-rebuilt        : [ReferenceId(2)]
+Unresolved reference IDs mismatch for "Float32Array":
+after transform: [ReferenceId(12), ReferenceId(13)]
+rebuilt        : [ReferenceId(6)]
 Unresolved reference IDs mismatch for "Int8Array":
 after transform: [ReferenceId(0), ReferenceId(1)]
 rebuilt        : [ReferenceId(0)]
-Unresolved reference IDs mismatch for "Uint16Array":
-after transform: [ReferenceId(6), ReferenceId(7)]
-rebuilt        : [ReferenceId(3)]
-Unresolved reference IDs mismatch for "Float64Array":
-after transform: [ReferenceId(14), ReferenceId(15)]
-rebuilt        : [ReferenceId(7)]
-Unresolved reference IDs mismatch for "BigInt64Array":
-after transform: [ReferenceId(16), ReferenceId(17)]
-rebuilt        : [ReferenceId(8)]
+Unresolved reference IDs mismatch for "Uint8Array":
+after transform: [ReferenceId(2), ReferenceId(3)]
+rebuilt        : [ReferenceId(1)]
 Unresolved reference IDs mismatch for "Int32Array":
 after transform: [ReferenceId(8), ReferenceId(9)]
 rebuilt        : [ReferenceId(4)]
 Unresolved reference IDs mismatch for "Uint32Array":
 after transform: [ReferenceId(10), ReferenceId(11)]
 rebuilt        : [ReferenceId(5)]
-Unresolved reference IDs mismatch for "Float32Array":
-after transform: [ReferenceId(12), ReferenceId(13)]
-rebuilt        : [ReferenceId(6)]
+Unresolved reference IDs mismatch for "Int16Array":
+after transform: [ReferenceId(4), ReferenceId(5)]
+rebuilt        : [ReferenceId(2)]
+Unresolved reference IDs mismatch for "Uint16Array":
+after transform: [ReferenceId(6), ReferenceId(7)]
+rebuilt        : [ReferenceId(3)]
+Unresolved reference IDs mismatch for "Float64Array":
+after transform: [ReferenceId(14), ReferenceId(15)]
+rebuilt        : [ReferenceId(7)]
 Unresolved reference IDs mismatch for "BigUint64Array":
 after transform: [ReferenceId(18), ReferenceId(19)]
 rebuilt        : [ReferenceId(9)]
-Unresolved reference IDs mismatch for "Uint8Array":
-after transform: [ReferenceId(2), ReferenceId(3)]
-rebuilt        : [ReferenceId(1)]
+Unresolved reference IDs mismatch for "BigInt64Array":
+after transform: [ReferenceId(16), ReferenceId(17)]
+rebuilt        : [ReferenceId(8)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/vardecl.ts
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
@@ -38155,12 +38155,12 @@ rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "M":
 after transform: SymbolId(6): [ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(35), ReferenceId(36)]
 rebuilt        : SymbolId(5): [ReferenceId(11), ReferenceId(12), ReferenceId(23), ReferenceId(24)]
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(10), ReferenceId(11)]
-rebuilt        : [ReferenceId(14)]
 Unresolved reference IDs mismatch for "Date":
 after transform: [ReferenceId(8), ReferenceId(9)]
 rebuilt        : [ReferenceId(13)]
+Unresolved reference IDs mismatch for "Object":
+after transform: [ReferenceId(10), ReferenceId(11)]
+rebuilt        : [ReferenceId(14)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/everyTypeWithInitializer.ts
 Scope flags mismatch:
@@ -38487,12 +38487,12 @@ rebuilt        : SymbolId(5): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "M":
 after transform: SymbolId(6): [ReferenceId(26), ReferenceId(27), ReferenceId(28), ReferenceId(29), ReferenceId(30), ReferenceId(35), ReferenceId(36)]
 rebuilt        : SymbolId(5): [ReferenceId(11), ReferenceId(12), ReferenceId(23), ReferenceId(24)]
-Unresolved reference IDs mismatch for "Object":
-after transform: [ReferenceId(10), ReferenceId(11)]
-rebuilt        : [ReferenceId(14)]
 Unresolved reference IDs mismatch for "Date":
 after transform: [ReferenceId(8), ReferenceId(9)]
 rebuilt        : [ReferenceId(13)]
+Unresolved reference IDs mismatch for "Object":
+after transform: [ReferenceId(10), ReferenceId(11)]
+rebuilt        : [ReferenceId(14)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/statements/forStatements/forStatementsMultipleValidDecl.ts
 Symbol reference IDs mismatch for "p":

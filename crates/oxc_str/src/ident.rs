@@ -18,7 +18,8 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 use crate::{Atom, CompactStr};
 
 /// Multiplier constant for incremental hashing.
-const K: usize = 0xf135_7aea_2e62_a9c5;
+/// Uses u64 to ensure consistent behavior on 32-bit and 64-bit platforms.
+const K: u64 = 0xf135_7aea_2e62_a9c5;
 
 /// Incremental hasher for computing Ident hashes byte-by-byte.
 ///
@@ -26,7 +27,7 @@ const K: usize = 0xf135_7aea_2e62_a9c5;
 /// avoiding a second pass over the data.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct IncrementalIdentHasher {
-    state: usize,
+    state: u64,
 }
 
 impl IncrementalIdentHasher {
@@ -39,7 +40,7 @@ impl IncrementalIdentHasher {
     /// Add a byte to the hash.
     #[inline]
     pub fn write_byte(&mut self, byte: u8) {
-        self.state = self.state.wrapping_add(byte as usize).wrapping_mul(K);
+        self.state = self.state.wrapping_add(byte as u64).wrapping_mul(K);
     }
 
     /// Add multiple bytes to the hash.
@@ -64,10 +65,10 @@ impl IncrementalIdentHasher {
 /// This is a const-compatible version for `Ident::new_const`.
 const fn compute_hash(s: &str) -> u32 {
     let bytes = s.as_bytes();
-    let mut state: usize = 0;
+    let mut state: u64 = 0;
     let mut i = 0;
     while i < bytes.len() {
-        state = state.wrapping_add(bytes[i] as usize).wrapping_mul(K);
+        state = state.wrapping_add(bytes[i] as u64).wrapping_mul(K);
         i += 1;
     }
     // 0xff marker
