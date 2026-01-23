@@ -14,7 +14,7 @@ use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
+    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
 };
 
 #[cfg(feature = "napi")]
@@ -343,8 +343,12 @@ impl CliRunner {
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+        let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
+            &output_formatter,
+            &warning_options,
+            &misc_options,
+            &root_config,
+        );
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
@@ -464,13 +468,14 @@ impl CliRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
+        root_config: &Oxlintrc,
     ) -> (DiagnosticService, DiagnosticSender) {
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
                 .with_silent(misc_options.silent)
-                .with_max_warnings(warning_options.max_warnings),
+                .with_max_warnings(warning_options.max_warnings.or(root_config.max_warnings)),
             sender,
         )
     }

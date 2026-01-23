@@ -170,6 +170,9 @@ pub struct Oxlintrc {
     #[serde(skip)]
     #[schemars(skip)]
     pub extends_configs: Vec<Oxlintrc>,
+    /// Maximum number of warnings allowed before the linter exits with a non-zero code.
+    #[serde(rename = "maxWarnings", default, skip_serializing_if = "Option::is_none")]
+    pub max_warnings: Option<usize>,
 }
 
 impl Oxlintrc {
@@ -301,6 +304,7 @@ impl Oxlintrc {
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
             extends_configs: self.extends_configs.clone(),
+            max_warnings: self.max_warnings.or(other.max_warnings),
         }
     }
 
@@ -408,6 +412,28 @@ mod test {
 
         let config: Oxlintrc = serde_json::from_str(r#"{"extends": []}"#).unwrap();
         assert_eq!(0, config.extends.len());
+    }
+
+    #[test]
+    fn test_oxlintrc_max_warnings() {
+        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        assert_eq!(config.max_warnings, Some(10));
+
+        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 0}"#).unwrap();
+        assert_eq!(config.max_warnings, Some(0));
+
+        let config: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        assert_eq!(config.max_warnings, None);
+
+        let config1: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 20}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.max_warnings, Some(10));
+
+        let config1: Oxlintrc = serde_json::from_str(r#"{}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 20}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.max_warnings, Some(20));
     }
 
     #[test]

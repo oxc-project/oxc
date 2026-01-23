@@ -298,6 +298,7 @@ impl<'a> ConfigLoader<'a> {
     fn load_many(
         &mut self,
         paths: impl IntoIterator<Item = DiscoveredConfig>,
+        root_config_path: Option<&Path>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
@@ -353,6 +354,16 @@ impl<'a> ConfigLoader<'a> {
         let mut built_configs = Vec::new();
 
         for config in configs {
+            if root_config_path.is_some_and(|root_config_path| config.path != root_config_path)
+                && config.max_warnings.is_some()
+            {
+                errors.push(ConfigLoadError::Diagnostic(OxcDiagnostic::error(format!(
+                    "`maxWarnings` is only allowed in the root configuration file. Nested config found at {}",
+                    config.path.display()
+                ))));
+                continue;
+            }
+
             let path = config.path.clone();
             let dir = path.parent().unwrap().to_path_buf();
             let ignore_patterns = config.ignore_patterns.clone();
@@ -395,7 +406,7 @@ impl<'a> ConfigLoader<'a> {
         &mut self,
         configs: impl IntoIterator<Item = DiscoveredConfig>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
-        self.load_many(configs)
+        self.load_many(configs, None)
     }
 
     /// Try to load config from a specific directory.
@@ -544,7 +555,7 @@ impl<'a> ConfigLoader<'a> {
             paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
         let discovered_configs = discover_configs_in_ancestors(&config_paths);
 
-        let (configs, errors) = self.load_many(discovered_configs);
+        let (configs, errors) = self.load_many(discovered_configs, Some(&oxlintrc.path));
 
         // Fail if any config failed (CLI requires all configs to be valid)
         if !errors.is_empty() {
