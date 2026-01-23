@@ -127,6 +127,9 @@ pub struct Oxlintrc {
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,
+    /// Maximum number of warnings allowed before the linter exits with a non-zero code.
+    #[serde(rename = "maxWarnings", default, skip_serializing_if = "Option::is_none")]
+    pub max_warnings: Option<usize>,
 }
 
 impl Oxlintrc {
@@ -276,6 +279,7 @@ impl Oxlintrc {
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
+            max_warnings: self.max_warnings.or(other.max_warnings),
         }
     }
 }
