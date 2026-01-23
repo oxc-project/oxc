@@ -12,7 +12,7 @@
     "**/generated/**",
     "**/CHANGELOG.md",
     "**/*.snap.md",
-    "apps/oxlint/conformance/snapshot.md",
+    "apps/oxlint/conformance/snapshots/**",
     "tasks/coverage/node-compat-table",
     "tasks/coverage/misc",
     "tasks/coverage/src/runtime/babelHelpers.js",

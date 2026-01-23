@@ -3,8 +3,7 @@
  */
 
 import { join as pathJoin, sep as pathSep } from "node:path";
-import { pathToFileURL } from "node:url";
-import { CONFORMANCE_DIR_PATH } from "./run.ts";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import type { RuleResult, TestResult } from "./capture.ts";
 import type { TestCase } from "./rule_tester.ts";
@@ -12,7 +11,7 @@ import type { TestCase } from "./rule_tester.ts";
 // Number of lines of stack trace to show in report for each error
 const STACK_TRACE_LINES = 4;
 
-const ROOT_DIR_PATH = pathJoin(CONFORMANCE_DIR_PATH, "../../../");
+const ROOT_DIR_PATH = pathJoin(fileURLToPath(import.meta.url), "../../../../../");
 const ROOT_DIR_URL = pathToFileURL(ROOT_DIR_PATH).href;
 const DIST_DIR_SUBPATH = "apps/oxlint/dist";
 
@@ -25,7 +24,7 @@ const normalizeSlashes =
  * @param results - Results of running tests
  * @returns Report as markdown
  */
-export function generateReport(results: RuleResult[]): string {
+export function generateReport(groupName: string, results: RuleResult[]): string {
   // Categorize rules
   const loadErrorRules: RuleResult[] = [],
     noTestRules: RuleResult[] = [],
@@ -120,7 +119,7 @@ export function generateReport(results: RuleResult[]): string {
   }
 
   block(`
-    # ESLint Rule Tester Conformance Results
+    # Conformance test results - ${groupName}
 
     ## Summary
 

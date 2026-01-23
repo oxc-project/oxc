@@ -2,6 +2,7 @@
  * `describe` and `it` functions for capturing test results.
  */
 
+import type { TestGroup } from "./main.ts";
 import type { TestCase } from "./rule_tester.ts";
 
 /**
@@ -28,6 +29,18 @@ export interface TestResult {
 
 // Tracks what nested `describe` blocks currently in
 const describeStack: string[] = [];
+
+// Current test group
+let currentGroup: TestGroup | null = null;
+
+/**
+ * Set the current group being tested.
+ * Call before starting running tests for a test group.
+ * @param group - `TestGroup` object
+ */
+export function setCurrentGroup(group: TestGroup): void {
+  currentGroup = group;
+}
 
 // Current rule being tested
 let currentRule: RuleResult | null = null;
@@ -134,47 +147,9 @@ function shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Err
   // We cannot support custom parsers
   if (err.message === "Custom parsers are not supported") return true;
 
-  // Skip test cases which start with `/* global */`, `/* globals */`, `/* exported */`, or `/* eslint */` comments.
-  // Oxlint does not support defining globals inline.
-  // `RuleTester` does not support enabling other rules beyond the rule under test.
-  if (code.match(/^\s*\/\*\s*(globals?|exported|eslint)\s/)) return true;
-
-  // Skip test cases which include `// eslint-disable` comments.
-  // These are not handled by `RuleTester`.
-  if (code.match(/\/\/\s*eslint-disable((-next)?-line)?(\s|$)/)) return true;
-
-  // Tests rely on directives being parsed as plain `StringLiteral`s in ES3.
-  // Oxc parser does not support parsing as ES3.
-  if (
-    (ruleName === "no-eval" ||
-      ruleName === "no-invalid-this" ||
-      ruleName === "no-unused-expressions") &&
-    test.languageOptions?.ecmaVersion === 3
-  ) {
-    return true;
-  }
-
-  // Test relies on scope analysis to follow ES5 semantics where function declarations in blocks are bound in parent scope.
-  // TS-ESLint scope manager does not support ES5. Oxc also doesn't support parsing/semantic as ES5.
-  if (
-    ruleName === "no-use-before-define" &&
-    code === '"use strict"; a(); { function a() {} }' &&
-    test.languageOptions?.ecmaVersion === 5
-  ) {
-    return true;
-  }
-
-  // Code contains unrecoverable syntax error - `function (x, this: context) {}`
-  if (
-    ruleName === "no-invalid-this" &&
-    code.includes("function (x, this: context) {") &&
-    err?.message === "Parsing failed"
-  ) {
-    return true;
-  }
-
-  // TypeScript parser does not support HTML comments
-  if (ruleName === "prefer-object-spread" && code.includes("<!--")) return true;
+  // Defer to `TestGroup`'s `shouldSkipTest` method to determine if test should be skipped
+  const { shouldSkipTest } = currentGroup!;
+  if (shouldSkipTest != null) return shouldSkipTest(ruleName, test, code, err);
 
   return false;
 }

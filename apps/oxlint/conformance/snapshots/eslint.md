@@ -1,4 +1,4 @@
-# ESLint Rule Tester Conformance Results
+# Conformance test results - eslint
 
 ## Summary
 
