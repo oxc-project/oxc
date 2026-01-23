@@ -26,26 +26,28 @@ use crate::{
 };
 
 fn component_display_name_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Component definition is missing display name")
-        .with_help("Add a displayName property to the component")
+    OxcDiagnostic::warn("Component definition is missing display name.")
+        .with_help("Add a `displayName` property to the component.")
         .with_label(span)
 }
 
 fn context_display_name_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Context definition is missing display name")
-        .with_help("Add a displayName property to the context")
+    OxcDiagnostic::warn("Context definition is missing display name.")
+        .with_help("Add a `displayName` property to the context.")
         .with_label(span)
 }
 
 declare_oxc_lint!(
     /// ### What it does
-    /// Enforces that React components have a displayName property.
+    ///
+    /// Enforces that React components have a `displayName` property.
     ///
     /// ### Why is this bad?
-    /// React DevTools uses displayName to show component names in the component tree.
-    /// Without displayName, components will show up as "Unknown" in DevTools.
     ///
-    /// ### Example
+    /// React DevTools uses `displayName` to show component names in the component tree.
+    /// Without `displayName`, components will show up as "Unknown" in DevTools.
+    ///
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
@@ -117,13 +119,16 @@ impl VersionCache {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct DisplayNameConfig {
-    /// When `true`, the rule will ignore the name set by the transpiler and require a `displayName` property in this case.
+    /// When `true`, the rule will ignore the name set by the transpiler
+    /// and require a `displayName` property in this case.
     ignore_transpiler_name: bool,
-    /// When `true`, this rule will warn on context objects without a `displayName`.
+    /// When `true`, this rule will warn on context objects
+    /// without a `displayName`.
     ///
-    /// `displayName` allows you to [name your context](https://reactjs.org/docs/context.html#contextdisplayname) object. This name is used in the React dev tools for the context's `Provider` and `Consumer`.
+    /// `displayName` allows you to [name your context](https://reactjs.org/docs/context.html#contextdisplayname) object.
+    /// This name is used in the React DevTools for the context's `Provider` and `Consumer`.
     check_context_objects: bool,
 }
 
