@@ -22,7 +22,7 @@ init:
 
 # Clone or update submodules
 submodules:
-  .github/scripts/clone-parallel.sh
+  node .github/scripts/clone-parallel.mjs
   just update-transformer-fixtures
 
 # Install git pre-commit hook to format files
