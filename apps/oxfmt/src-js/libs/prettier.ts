@@ -33,7 +33,7 @@ export async function resolvePlugins(): Promise<string[]> {
 export type FormatEmbeddedCodeParam = {
   code: string;
   parserName: string;
-  options: Options;
+  options: Options & { _tailwindPluginEnabled?: boolean };
 };
 
 /**
@@ -52,6 +52,10 @@ export async function formatEmbeddedCode({
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   options.parser = parserName;
+
+  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS)
+  // when `options._tailwindPluginEnabled` is set
+  await setupTailwindPlugin(options);
 
   // NOTE: This will throw if:
   // - Specified parser is not available

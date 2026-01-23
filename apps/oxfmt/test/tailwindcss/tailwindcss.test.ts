@@ -1118,3 +1118,18 @@ describe("Tailwind CSS Sorting works with other options", () => {
     `);
   });
 });
+
+describe("Tailwind CSS Sorting in Embedded HTML (Tagged Template Literals)", () => {
+  test("should sort Tailwind classes in html tagged template literal", async () => {
+    const input = `const view = html\`<div class="p-4 flex bg-red-500">Hello</div>\`;`;
+
+    const result = await format("test.ts", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // After sorting, flex should come before p-4 (display before spacing)
+    expect(result.code).toContain('class="flex');
+    expect(result.code).not.toContain('class="p-4 flex');
+    expect(result.errors).toStrictEqual([]);
+  });
+});
