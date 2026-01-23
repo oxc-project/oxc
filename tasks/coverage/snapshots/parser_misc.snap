@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 64/64 (100.00%)
 Positive Passed: 64/64 (100.00%)
-Negative Passed: 131/131 (100.00%)
+Negative Passed: 133/133 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -125,6 +125,19 @@ Negative Passed: 131/131 (100.00%)
    · ───────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/html-comment-in-module.mjs:1:1]
+ 1 │ <!-- comment
+   · ────
+   ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/html-comment-with-esm.js:1:1]
+ 1 │ <!-- comment
+   · ────
+ 2 │ import foo from "bar";
+   ╰────
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]

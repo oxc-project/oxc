@@ -24480,11 +24480,11 @@ Negative Passed: 4581/4581 (100.00%)
     ·   ─
     ╰────
 
-  × Unexpected token
+  × HTML comments are not allowed in modules
     ╭─[test262/test/language/module-code/comment-single-line-html-open.js:16:1]
  15 │ 
  16 │ <!--
-    · ─
+    · ────
     ╰────
 
   × Duplicated export 'z'

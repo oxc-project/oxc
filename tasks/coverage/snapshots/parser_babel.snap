@@ -3532,10 +3532,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ─────────
    ╰────
 
-  × Unexpected token
+  × HTML comments are not allowed in modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/invalid-xml-comment-in-module/input.js:1:1]
  1 │ <!--bar-->
-   · ─
+   · ────
    ╰────
 
   × Expected `,` or `}` but found `Identifier`

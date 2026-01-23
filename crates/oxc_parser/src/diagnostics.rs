@@ -59,6 +59,11 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn html_comment_in_module(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("HTML comments are not allowed in modules").with_label(span)
+}
+
+#[cold]
 pub fn merge_conflict_marker(
     start_span: Span,
     middle_span: Option<Span>,
