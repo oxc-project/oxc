@@ -12,4 +12,6 @@
 
 ## Third-Party
 
+[Emacs](https://github.com/nstfkc/lsp-oxlint.el)
+
 > We look forward to your contributions. Feel free to open a PR to add a link to this page if you are working on an IDE extension for Oxlint and/or Oxfmt.
