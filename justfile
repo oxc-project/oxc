@@ -22,7 +22,7 @@ init:
 
 # Clone or update submodules
 submodules:
-  .github/scripts/clone-parallel.sh
+  node .github/scripts/clone-parallel.mjs
   just update-transformer-fixtures
 
 # Install git pre-commit hook to format files
@@ -128,8 +128,12 @@ codecov:
 # This is necessary because JS generators use `oxc_*` crates (e.g. `oxc_minifier`), and those crates may not compile
 # unless Rust code is generated first.
 # See: https://github.com/oxc-project/oxc/issues/15564
+[unix]
 ast:
   cargo run -p oxc_ast_tools || { cargo run -p oxc_ast_tools --no-default-features && cargo run -p oxc_ast_tools; }
+[windows]
+ast:
+  try { cargo run -p oxc_ast_tools } catch { cargo run -p oxc_ast_tools --no-default-features; cargo run -p oxc_ast_tools }
 
 # ==================== PARSER ====================
 

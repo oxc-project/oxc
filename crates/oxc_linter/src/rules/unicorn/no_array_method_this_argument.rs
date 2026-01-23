@@ -243,8 +243,8 @@ fn test() {
         "Array.fromAsync(iterableOrArrayLike, new Callback, thisArgument)",
         "Array.from(iterableOrArrayLike, 1, thisArgument)",
         "Array.fromAsync(iterableOrArrayLike, 1, thisArgument)",
-        "Array.from(iterableOrArrayLike, await callback, thisArgument)",
-        "Array.fromAsync(iterableOrArrayLike, await callback, thisArgument)",
+        "async () => Array.from(iterableOrArrayLike, await callback, thisArgument)",
+        "async () => Array.fromAsync(iterableOrArrayLike, await callback, thisArgument)",
     ];
 
     let fail = vec![

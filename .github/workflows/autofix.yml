@@ -37,7 +37,7 @@ jobs:
           fi
 
       - name: Check and update lock file
-        run: cargo check --workspace --all-features --all-targets
+        run: cargo check --all-features --all-targets
         if: ${{ steps.shear.outputs.shear == 'true' }}
 
       - run: just fmt

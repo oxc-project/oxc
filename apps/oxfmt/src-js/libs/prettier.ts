@@ -30,24 +30,10 @@ export async function resolvePlugins(): Promise<string[]> {
 
 // ---
 
-const TAG_TO_PARSER: Record<string, string> = {
-  // CSS
-  css: "css",
-  styled: "css",
-  // GraphQL
-  gql: "graphql",
-  graphql: "graphql",
-  // HTML
-  html: "html",
-  // Markdown
-  md: "markdown",
-  markdown: "markdown",
-};
-
 export type FormatEmbeddedCodeParam = {
   code: string;
-  tagName: string;
-  options: Options;
+  parserName: string;
+  options: Options & { _tailwindPluginEnabled?: boolean };
 };
 
 /**
@@ -59,19 +45,16 @@ export type FormatEmbeddedCodeParam = {
  */
 export async function formatEmbeddedCode({
   code,
-  tagName,
+  parserName,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
-  // TODO: This should be resolved in Rust side
-  const parserName = TAG_TO_PARSER[tagName];
-
-  // Unknown tag, return original code
-  if (!parserName) return code;
-
   const prettier = await loadPrettier();
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   options.parser = parserName;
+
+  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
+  await setupTailwindPlugin(options);
 
   // NOTE: This will throw if:
   // - Specified parser is not available
@@ -86,7 +69,7 @@ export type FormatFileParam = {
   code: string;
   parserName: string;
   fileName: string;
-  options: Options & { experimentalTailwindcss?: TailwindcssOptions };
+  options: Options & { _tailwindPluginEnabled?: boolean };
 };
 
 /**
@@ -108,7 +91,7 @@ export async function formatFile({
   // But some plugins rely on `filepath`, so we set it too
   options.filepath = fileName;
 
-  // Enable Tailwind CSS plugin for non-JS files when experimentalTailwindcss is set
+  // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
 
   return prettier.format(code, options);
@@ -120,7 +103,6 @@ export async function formatFile({
 
 // Import types only to avoid runtime error if plugin is not installed
 import type { TransformerEnv } from "prettier-plugin-tailwindcss";
-import type { TailwindcssOptions } from "../index";
 
 // Shared cache for prettier-plugin-tailwindcss
 let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
@@ -134,52 +116,29 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
 
 // ---
 
-// Oxfmt to Prettier option name mapping (adds `tailwind` prefix)
-export const TAILWIND_OPTION_MAPPING: Record<string, string> = {
-  config: "tailwindConfig",
-  stylesheet: "tailwindStylesheet",
-  functions: "tailwindFunctions",
-  attributes: "tailwindAttributes",
-  preserveWhitespace: "tailwindPreserveWhitespace",
-  preserveDuplicates: "tailwindPreserveDuplicates",
-};
+const TAILWIND_RELEVANT_PARSERS = new Set(["html", "vue", "angular", "glimmer"]);
 
 /**
- * Map Oxfmt Tailwind options to Prettier format.
- */
-function mapTailwindOptions(
-  tailwindcss: TailwindcssOptions,
-  target: Record<string, unknown>,
-): void {
-  for (const [oxfmtKey, prettierKey] of Object.entries(TAILWIND_OPTION_MAPPING)) {
-    const value = tailwindcss[oxfmtKey as keyof TailwindcssOptions];
-    if (value !== undefined) {
-      target[prettierKey] = value;
-    }
-  }
-}
-
-// ---
-
-/**
- * Set up Tailwind CSS plugin for Prettier when experimentalTailwindcss is enabled.
- * Loads the plugin lazily and maps Oxfmt config options to Prettier format.
+ * Set up Tailwind CSS plugin for Prettier when:
+ * - `options._tailwindPluginEnabled` is set
+ * - And, the parser is relevant for Tailwind CSS
+ * Loads the plugin lazily. Option mapping is done in Rust side.
  */
 async function setupTailwindPlugin(
-  options: Options & { experimentalTailwindcss?: TailwindcssOptions },
+  options: Options & { _tailwindPluginEnabled?: boolean },
 ): Promise<void> {
-  const tailwindcss = options.experimentalTailwindcss;
-  if (!tailwindcss) return;
+  if (!options._tailwindPluginEnabled) return;
+
+  // Clean up internal flag
+  delete options._tailwindPluginEnabled;
+
+  // PERF: Skip loading Tailwind plugin for parsers that don't use it
+  if (!TAILWIND_RELEVANT_PARSERS.has(options.parser as string)) return;
 
   const tailwindPlugin = await loadTailwindPlugin();
 
-  // Cast to `any` because the module type is not compatible with Prettier's plugin type
   options.plugins = options.plugins || [];
   options.plugins.push(tailwindPlugin as Plugin);
-  mapTailwindOptions(tailwindcss, options as Record<string, unknown>);
-
-  // Clean up experimentalTailwindcss from options to avoid passing it to Prettier
-  delete options.experimentalTailwindcss;
 }
 
 // ---
@@ -187,11 +146,12 @@ async function setupTailwindPlugin(
 export interface SortTailwindClassesArgs {
   filepath: string;
   classes: string[];
-  options?: { experimentalTailwindcss?: TailwindcssOptions } & Record<string, unknown>;
+  options?: Record<string, unknown>;
 }
 
 /**
  * Process Tailwind CSS classes found in JSX attributes.
+ * Option mapping (`experimentalTailwindcss.xxx` → `tailwindXxx`) is done in Rust side.
  * @param args - Object containing filepath, classes, and options
  * @returns Array of sorted class strings (same order/length as input)
  */
@@ -202,19 +162,15 @@ export async function sortTailwindClasses({
 }: SortTailwindClassesArgs): Promise<string[]> {
   const tailwindPlugin = await loadTailwindPlugin();
 
-  const tailwindcss = options.experimentalTailwindcss || {};
-  const configOptions: Record<string, unknown> = { filepath, ...options };
-  mapTailwindOptions(tailwindcss, configOptions);
+  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
+  options.filepath = filepath;
 
   // Load Tailwind context
-  const tailwindContext = await tailwindPlugin.getTailwindConfig(configOptions);
-  if (!tailwindContext) return classes;
+  const context = await tailwindPlugin.getTailwindConfig(options);
+  if (!context) return classes;
 
   // Create transformer env with options
-  const env: TransformerEnv = {
-    context: tailwindContext,
-    options: configOptions,
-  };
+  const env: TransformerEnv = { context, options };
 
   // Sort all classes
   return classes.map((classStr) => {

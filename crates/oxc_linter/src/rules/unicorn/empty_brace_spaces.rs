@@ -29,12 +29,15 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
+    /// <!-- prettier-ignore-start -->
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// const a = {  };
     /// class A {
     /// }
     /// ```
+    ///
+    /// <!-- prettier-ignore-end -->
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript

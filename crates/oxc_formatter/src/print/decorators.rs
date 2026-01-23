@@ -19,7 +19,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, Decorator<'a>>> {
         }
 
         // Check parent to determine formatting context
-        match self.parent {
+        match self.parent() {
             AstNodes::PropertyDefinition(_)
             | AstNodes::MethodDefinition(_)
             | AstNodes::AccessorProperty(_) => {

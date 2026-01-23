@@ -121,11 +121,16 @@ impl Rule for NoInnerDeclarations {
                     && let Some(block_scoped_functions) = self.block_scoped_functions
                     && block_scoped_functions == BlockScopedFunctions::Allow
                 {
-                    let is_module = ctx.source_type().is_module();
+                    // Modules are always strict mode.
+                    // This check is redundant, because in modules, the scope will have strict mode flag set,
+                    // but checking source type is cheaper than scope flags lookup, so do the quick check first.
+                    if ctx.source_type().is_module() {
+                        return;
+                    }
+
                     let scope_id = node.scope_id();
                     let is_strict = ctx.scoping().scope_flags(scope_id).is_strict_mode();
-
-                    if is_module || is_strict {
+                    if is_strict {
                         return;
                     }
                 }
@@ -328,5 +333,6 @@ fn test() {
     ];
 
     Tester::new(NoInnerDeclarations::NAME, NoInnerDeclarations::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .test_and_snapshot();
 }

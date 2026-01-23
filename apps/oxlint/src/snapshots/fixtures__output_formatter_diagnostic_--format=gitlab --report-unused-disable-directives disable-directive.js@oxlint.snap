@@ -1,0 +1,50 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=gitlab --report-unused-disable-directives disable-directive.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+[
+  {
+    "description": "Unused eslint-disable directive (no problems were reported).",
+    "check_name": "",
+    "fingerprint": "6460b46f54ac436d",
+    "severity": "major",
+    "location": {
+      "path": "apps/oxlint/disable-directive.js",
+      "lines": {
+        "begin": 9,
+        "end": 9
+      }
+    }
+  },
+  {
+    "description": "Unused eslint-disable directive (no problems were reported).",
+    "check_name": "",
+    "fingerprint": "74c434632ebc59be",
+    "severity": "major",
+    "location": {
+      "path": "apps/oxlint/disable-directive.js",
+      "lines": {
+        "begin": 12,
+        "end": 12
+      }
+    }
+  },
+  {
+    "description": "Unused eslint-disable directive (no problems were reported).",
+    "check_name": "",
+    "fingerprint": "9854c19736e51e0c",
+    "severity": "major",
+    "location": {
+      "path": "apps/oxlint/disable-directive.js",
+      "lines": {
+        "begin": 15,
+        "end": 15
+      }
+    }
+  }
+]----------
+CLI result: LintSucceeded
+----------

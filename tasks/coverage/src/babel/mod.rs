@@ -43,6 +43,19 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "async-do-expression",
             "export-ns-from",
             "annex-b/disabled",
+            // Call expressions as assignment targets in non-strict mode - oxc intentionally does not support
+            "annex-b/enabled/valid-assignment-target-type",
+            // Module blocks are stage 1
+            "module-block",
+            // Babel failed to parse, but this is valid syntax
+            "typescript/arrow-function/arrow-like-in-conditional-2",
+            // TypeScript allows `satisfies const`, Babel doesn't
+            "typescript/cast/satisfies-const-error",
+            // Babel's heuristic for detecting module via unambiguous `await` - not in ES spec, we follow TypeScript
+            "es2022/top-level-await-unambiguous",
+            // Escaped `of` binding in using declarations - not worth supporting
+            "explicit-resource-management/valid-for-await-using-binding-escaped-of-of",
+            "explicit-resource-management/valid-for-using-binding-escaped-of-of",
         ]
         .iter()
         .any(|p| path.to_string_lossy().replace('\\', "/").contains(p));
@@ -190,6 +203,9 @@ impl Case for BabelCase {
         has_not_supported_plugins
             || self.options.allow_await_outside_function
             || self.options.allow_undeclared_exports
+            || self.options.allow_new_target_outside_function
+            || self.options.allow_super_outside_method
+            || self.options.has_disallow_ambiguous_jsx_like()
     }
 
     fn run(&mut self) {

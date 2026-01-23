@@ -1,7 +1,7 @@
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
@@ -211,13 +211,13 @@ fn add_configuration_forbid_from_object(
 
 // Match /^[A-Z_]/
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L109
-fn is_valid_identifier(str: &Atom) -> bool {
+fn is_valid_identifier(str: &str) -> bool {
     str.chars().next().is_some_and(|c| c.is_uppercase() || c == '_')
 }
 
 // Match /^[a-z][^.]*$/
 // https://github.com/jsx-eslint/eslint-plugin-react/blob/master/lib/rules/forbid-elements.js#L111
-fn is_valid_literal(str: &Atom) -> bool {
+fn is_valid_literal(str: &str) -> bool {
     str.chars().next().is_some_and(char::is_lowercase) && !str.contains('.')
 }
 

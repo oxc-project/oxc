@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- ee9f6a4 mangler: Use `retain` instead of `truncate` to remove empty frequency slots (#18225) (Dunqing)
+
+## [0.109.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f69b6da mangler: Reserve names from eval-containing scopes (#18037) (camc314)
+
+### ⚡ Performance
+
+- 91c143f mangler: Remove `frequencies` items if they are unused (#18183) (Dunqing)
+- 9af52c6 mangler: Turn off `scope_tree_child_ids` for `SemanticBuilder` (#18122) (Dunqing)
+
 ## [0.107.0] - 2026-01-05
 
 ### 🚀 Features

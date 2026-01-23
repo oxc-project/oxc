@@ -8,7 +8,7 @@ use crate::rule::{DefaultRuleConfig, Rule};
 pub struct PreferOptionalChain(Box<PreferOptionalChainConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferOptionalChainConfig {
     /// Allow autofixers that will change the return type of the expression.
     /// This option is considered unsafe as it may break the build.
@@ -58,6 +58,10 @@ declare_oxc_lint!(
     /// Enforce using concise optional chain expressions instead of chained logical AND
     /// operators, negated logical OR operators, or empty objects.
     ///
+    /// Note that this rule is in the nursery category while we ensure it is working
+    /// correctly in as many edge-case scenarios as possible. The logic for this is
+    /// complex and the autofix may cause logic changes in some edge-cases.
+    ///
     /// ### Why is this bad?
     ///
     /// TypeScript 3.7 introduced optional chaining (`?.`) which provides a more concise
@@ -89,16 +93,14 @@ declare_oxc_lint!(
     /// ```
     PreferOptionalChain(tsgolint),
     typescript,
-    style,
+    nursery, // move to style after we've confirmed this works correctly on as many edge-cases as possible.
     fix,
     config = PreferOptionalChainConfig,
 );
 
 impl Rule for PreferOptionalChain {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

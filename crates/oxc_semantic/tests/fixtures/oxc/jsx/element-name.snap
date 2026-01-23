@@ -7,13 +7,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/element-name.jsx
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
+        "flags": "ScopeFlags(Function | Arrow)",
         "id": 1,
         "node": "ArrowFunctionExpression",
         "symbols": []
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": [
@@ -27,13 +27,15 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/jsx/element-name.jsx
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Component",
-            "node_id": 16
+            "node_id": 16,
+            "scope_id": 0
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "Component",
-            "node_id": 18
+            "node_id": 18,
+            "scope_id": 0
           }
         ]
       }

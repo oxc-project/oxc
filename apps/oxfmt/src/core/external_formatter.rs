@@ -28,10 +28,10 @@ pub type JsInitExternalFormatterCb = ThreadsafeFunction<
 >;
 
 /// Type alias for the callback function signature.
-/// Takes (options, tag_name, code) as separate arguments and returns formatted code.
+/// Takes (options, parser_name, code) as separate arguments and returns formatted code.
 pub type JsFormatEmbeddedCb = ThreadsafeFunction<
     // Input arguments
-    FnArgs<(Value, String, String)>, // (options, tag_name, code)
+    FnArgs<(Value, String, String)>, // (options, parser_name, code)
     // Return type (what JS function returns)
     Promise<String>,
     // Arguments (repeated)
@@ -68,7 +68,7 @@ pub type JsSortTailwindClassesCb = ThreadsafeFunction<
 >;
 
 /// Callback function type for formatting embedded code with config.
-/// Takes (options, tag_name, code) and returns formatted code or an error.
+/// Takes (options, parser_name, code) and returns formatted code or an error.
 type FormatEmbeddedWithConfigCallback =
     Arc<dyn Fn(&Value, &str, &str) -> Result<String, String> + Send + Sync>;
 
@@ -144,8 +144,13 @@ impl ExternalFormatter {
         let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
             let format_embedded = Arc::clone(&self.format_embedded);
             let options_for_embedded = options.clone();
-            Some(Arc::new(move |tag_name: &str, code: &str| {
-                (format_embedded)(&options_for_embedded, tag_name, code)
+            Some(Arc::new(move |language: &str, code: &str| {
+                let Some(parser_name) = language_to_prettier_parser(language) else {
+                    // NOTE: Do not return `Ok(original)` here.
+                    // We need to keep unsupported content as-is.
+                    return Err(format!("Unsupported language: {language}"));
+                };
+                (format_embedded)(&options_for_embedded, parser_name, code)
             }))
         } else {
             None
@@ -193,6 +198,23 @@ impl ExternalFormatter {
 
 // ---
 
+/// Mapping from `oxc_formatter` language identifiers to Prettier `parser` names.
+/// This is the single source of truth for supported embedded languages.
+fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
+    match language {
+        // TODO: "tagged-css" should use `scss` parser to support quasis
+        "tagged-css" | "styled-jsx" => Some("css"),
+        "tagged-graphql" => Some("graphql"),
+        "tagged-html" => Some("html"),
+        "tagged-markdown" => Some("markdown"),
+        "angular-template" => Some("angular"),
+        "angular-styles" => Some("scss"),
+        _ => None,
+    }
+}
+
+// ---
+
 // NOTE: These methods are all wrapped by `block_on` to run the async JS calls in a blocking manner.
 //
 // When called from `rayon` worker threads (Mode::Cli), this works fine.
@@ -230,13 +252,13 @@ fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFo
 
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
 fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallback {
-    Arc::new(move |options: &Value, tag_name: &str, code: &str| {
-        debug_span!("oxfmt::external::format_embedded", tag = %tag_name).in_scope(|| {
+    Arc::new(move |options: &Value, parser_name: &str, code: &str| {
+        debug_span!("oxfmt::external::format_embedded", parser = %parser_name).in_scope(|| {
             block_on(async {
                 let status = cb
                     .call_async(FnArgs::from((
                         options.clone(),
-                        tag_name.to_string(),
+                        parser_name.to_string(),
                         code.to_string(),
                     )))
                     .await;
@@ -249,11 +271,11 @@ fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallb
                             Ok(formatted_code)
                         }
                         Err(err) => Err(format!(
-                            "JS formatter promise rejected for tag '{tag_name}': {err}"
+                            "JS formatter promise rejected for parser '{parser_name}': {err}"
                         )),
                     },
                     Err(err) => Err(format!(
-                        "Failed to call JS formatting callback for tag '{tag_name}': {err}"
+                        "Failed to call JS formatting callback for parser '{parser_name}': {err}"
                     )),
                 }
             })

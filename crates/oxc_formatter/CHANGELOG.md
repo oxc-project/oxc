@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- fd2c792 formatter: Support css prop, styled jsx, and member/computed `styled.tags` (#17990) (magic-akari)
+- c4c55cc formatter: Add `oxfmt-ignore` ignore comment support (#17916) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3e141f0 formatter: Normalize `ChainExpression` with `TSNonNullExpression` to match Prettier (#18061) (Boshen)
+- 9b902b6 formatter: Use soft indent for empty objects in JSX spread attributes (#18063) (Boshen)
+- 8da749b formatter: Allow parameters to break in angular test wrappers (#18060) (Boshen)
+- 125962d formatter: Fix 4 prettier conformance tests (#18057) (Boshen)
+- bbadb8e oxfmt/sort-imports: Hard line inside multiline import leads to i… (#17880) (nilptr)
+
+### ⚡ Performance
+
+- 138637c formatter: Use VecDeque for member chain groups (#18094) (Boshen)
+
 ## [0.24.0] - 2026-01-12
 
 ### 🚀 Features

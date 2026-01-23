@@ -1,0 +1,18 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=json --report-unused-disable-directives disable-directive.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+{ "diagnostics": [{"message": "Unused eslint-disable directive (no problems were reported).","severity": "warning","causes": [],"filename": "disable-directive.js","labels": [{"span": {"offset": 233,"length": 37,"line": 9,"column": 3}}],"related": []},
+{"message": "Unused eslint-disable directive (no problems were reported).","severity": "warning","causes": [],"filename": "disable-directive.js","labels": [{"span": {"offset": 289,"length": 37,"line": 12,"column": 3}}],"related": []},
+{"message": "Unused eslint-disable directive (no problems were reported).","severity": "warning","causes": [],"filename": "disable-directive.js","labels": [{"span": {"offset": 345,"length": 44,"line": 15,"column": 3}}],"related": []}],
+              "number_of_files": 1,
+              "number_of_rules": 2,
+              "threads_count": 1,
+              "start_time": <variable>
+            }
+            ----------
+CLI result: LintSucceeded
+----------

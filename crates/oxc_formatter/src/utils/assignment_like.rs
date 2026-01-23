@@ -311,6 +311,29 @@ impl<'a> AssignmentLike<'a, '_> {
                     f,
                 );
 
+                // For single-element union/intersection types (e.g., `type A = /*1*/ | C`),
+                // Prettier relocates the single leading comment to after the identifier,
+                // producing `type A /*1*/ = C;`. Skip complex nested cases.
+                let type_span = match &declaration.type_annotation {
+                    TSType::TSUnionType(u) if u.types.len() == 1 => (!matches!(
+                        u.types.first().unwrap(),
+                        TSType::TSParenthesizedType(_) | TSType::TSUnionType(_)
+                    ))
+                    .then_some(u.span),
+                    TSType::TSIntersectionType(i) if i.types.len() == 1 => (!matches!(
+                        i.types.first().unwrap(),
+                        TSType::TSParenthesizedType(_) | TSType::TSIntersectionType(_)
+                    ))
+                    .then_some(i.span),
+                    _ => None,
+                };
+                if let Some(span) = type_span {
+                    let comments = f.context().comments().comments_before(span.start);
+                    if comments.len() == 1 {
+                        write!(f, [FormatTrailingComments::Comments(comments)]);
+                    }
+                }
+
                 false
             }
         }
@@ -477,13 +500,13 @@ impl<'a> AssignmentLike<'a, '_> {
             // First, we check if the current node is an assignment expression
             if let Self::AssignmentExpression(assignment) = self {
                 // Then we check if the parent is assignment expression or variable declarator
-                let parent = assignment.parent;
+                let parent = assignment.parent();
                 // Determine if the chain is eligible based on the following checks:
                 // 1. For variable declarators: only continue if this isn't the final assignment in the chain
                 (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
                 // 2. For assignment expressions: continue unless this is the final assignment in an expression statement
                 matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
-                    if !right_is_tail || !matches!(parent_assignment.parent, AstNodes::ExpressionStatement(_))
+                    if !right_is_tail || !matches!(parent_assignment.parent(), AstNodes::ExpressionStatement(_))
                 )
             } else {
                 false

@@ -22,7 +22,7 @@
 //! # Performance
 //!
 //! The following optimization techniques are used:
-//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+//! * AST is allocated in a memory arena ([oxc_allocator](https://docs.rs/oxc_allocator)) for fast AST drop
 //! * [`oxc_span::Span`] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
@@ -92,7 +92,7 @@ use oxc_ast::{
     ast::{Expression, Program},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{ModuleKind, SourceType, Span};
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
@@ -369,6 +369,13 @@ struct ParserImpl<'a> {
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
 
+    /// Errors that are only valid if the file is determined to be a Script (not a Module).
+    /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
+    /// until we know whether the file is ESM or Script.
+    /// If resolved to Module → discard these errors.
+    /// If resolved to Script → emit these errors.
+    deferred_script_errors: Vec<OxcDiagnostic>,
+
     fatal_error: Option<FatalError>,
 
     /// The current parsing token
@@ -412,6 +419,7 @@ impl<'a> ParserImpl<'a> {
             source_type,
             source_text,
             errors: vec![],
+            deferred_script_errors: vec![],
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
@@ -477,11 +485,17 @@ impl<'a> ParserImpl<'a> {
 
         let source_type = program.source_type;
         if source_type.is_unambiguous() {
-            program.source_type = if module_record.has_module_syntax {
-                source_type.with_module(true)
+            if module_record.has_module_syntax {
+                // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
+                // but emit deferred module errors (HTML comments are invalid in ESM)
+                program.source_type = source_type.with_module(true);
+                errors.append(&mut self.lexer.deferred_module_errors);
             } else {
-                source_type.with_script(true)
-            };
+                // Resolved to Script - emit deferred script errors
+                // discard deferred module errors (HTML comments are valid in scripts)
+                program.source_type = source_type.with_script(true);
+                errors.extend(self.deferred_script_errors);
+            }
         }
 
         ParserReturn {
@@ -516,8 +530,19 @@ impl<'a> ParserImpl<'a> {
         self.token = self.lexer.first_token();
 
         let hashbang = self.parse_hashbang();
-        let (directives, statements) =
+        let (directives, mut statements) =
             self.parse_directives_and_statements(/* is_top_level */ true);
+
+        // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
+        // we need to reparse statements that were originally parsed with `await` as identifier.
+        // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
+        // await expression with regex when ESM is detected.
+        if self.source_type.is_unambiguous()
+            && self.module_record_builder.has_module_syntax()
+            && !self.state.potential_await_reparse.is_empty()
+        {
+            self.reparse_potential_top_level_awaits(&mut statements);
+        }
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
@@ -532,9 +557,35 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
+    /// Reparse statements that may contain top-level await expressions.
+    ///
+    /// In unambiguous mode, statements like `await /x/u` are initially parsed as
+    /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
+    /// we need to reparse them with the await context enabled.
+    fn reparse_potential_top_level_awaits(
+        &mut self,
+        statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
+    ) {
+        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        for (stmt_index, checkpoint) in checkpoints {
+            // Rewind to the checkpoint
+            self.rewind(checkpoint);
+
+            // Parse the statement with await context enabled
+            let stmt = self.context_add(Context::Await, |p| {
+                p.parse_statement_list_item(StatementContext::TopLevelStatementList)
+            });
+
+            // Replace the statement if the index is valid
+            if stmt_index < statements.len() {
+                statements[stmt_index] = stmt;
+            }
+        }
+    }
+
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
-        if source_type.module_kind() == ModuleKind::Module {
+        if source_type.is_module() {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }

@@ -1,0 +1,31 @@
+diff --git a/dist/scope/ScopeBase.js b/dist/scope/ScopeBase.js
+index 5e07a7c3fb4670b2ce4fa405798d2f27c0084fef..b90f28311dc4a464243a017a51aeffc0e7409e21 100644
+--- a/dist/scope/ScopeBase.js
++++ b/dist/scope/ScopeBase.js
+@@ -59,23 +59,15 @@ function isStrictScope(scope, block, isMethodDefinition) {
+         return false;
+     }
+     // Search 'use strict' directive.
++    // This check has been modified from @typescript-eslint/scope-manager's original code.
++    // See: https://github.com/typescript-eslint/typescript-eslint/issues/11993
+     for (const stmt of body.body) {
+-        if (stmt.type !== types_1.AST_NODE_TYPES.ExpressionStatement) {
++        if (stmt.type !== types_1.AST_NODE_TYPES.ExpressionStatement || stmt.directive == null) {
+             break;
+         }
+         if (stmt.directive === 'use strict') {
+             return true;
+         }
+-        const expr = stmt.expression;
+-        if (expr.type !== types_1.AST_NODE_TYPES.Literal) {
+-            break;
+-        }
+-        if (expr.raw === '"use strict"' || expr.raw === "'use strict'") {
+-            return true;
+-        }
+-        if (expr.value === 'use strict') {
+-            return true;
+-        }
+     }
+     return false;
+ }

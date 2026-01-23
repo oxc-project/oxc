@@ -15,8 +15,7 @@ pub struct NoUnusedLabels;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow unused labels
-    ///
+    /// Disallow unused labels.
     ///
     /// ### Why is this bad?
     ///

@@ -26,6 +26,7 @@ fn no_unassigned_import_diagnostic(span: Span, msg: &str) -> OxcDiagnostic {
 pub struct NoUnassignedImport(Box<NoUnassignedImportConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct NoUnassignedImportConfig {
     /// A list of glob patterns to allow unassigned imports for specific modules.
     /// For example:
@@ -84,9 +85,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUnassignedImport {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

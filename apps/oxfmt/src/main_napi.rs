@@ -38,7 +38,7 @@ pub async fn run_cli(
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
     )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
@@ -134,7 +134,7 @@ pub async fn format(
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
     )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(

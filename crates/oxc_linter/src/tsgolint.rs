@@ -743,6 +743,7 @@ impl Message {
                     content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
+                    kind: crate::fixer::FixKind::Fix,
                 })
                 .collect();
 
@@ -768,6 +769,7 @@ impl Message {
                         content: Cow::Owned(fix.text),
                         span: Span::new(fix.range.pos, fix.range.end),
                         message: Some(Cow::Owned(message)),
+                        kind: crate::fixer::FixKind::Suggestion,
                     }
                 })
                 .collect();
@@ -1278,6 +1280,7 @@ mod test {
                 content: "fixedhello".into(),
                 span: Span::new(0, 10),
                 message: None,
+                kind: crate::fixer::FixKind::Fix
             })
         );
     }
@@ -1326,11 +1329,13 @@ mod test {
                     content: "hello".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: crate::fixer::FixKind::Suggestion
                 },
                 crate::fixer::Fix {
                     content: "helloworld".into(),
                     span: Span::new(0, 10),
                     message: Some("Suggestion 2".into()),
+                    kind: crate::fixer::FixKind::Suggestion
                 },
             ])
         );
@@ -1364,11 +1369,17 @@ mod test {
         assert_eq!(
             message.fixes,
             PossibleFixes::Multiple(vec![
-                crate::fixer::Fix { content: "fixed".into(), span: Span::new(0, 5), message: None },
+                crate::fixer::Fix {
+                    content: "fixed".into(),
+                    span: Span::new(0, 5),
+                    message: None,
+                    kind: crate::fixer::FixKind::Fix
+                },
                 crate::fixer::Fix {
                     content: "Suggestion 1".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: crate::fixer::FixKind::Suggestion,
                 },
             ])
         );

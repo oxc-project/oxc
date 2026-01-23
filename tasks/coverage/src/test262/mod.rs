@@ -33,7 +33,10 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
         // ignore markdown files
         path.ends_with(".md") ||
         // ignore fixtures
-        path.contains("_FIXTURE")
+        path.contains("_FIXTURE") ||
+        // AnnexB assignmenttargettype tests cannot be fixed - they require call expressions
+        // to be valid assignment targets in non-strict mode, which oxc intentionally does not support
+        path.contains("annexB/language/expressions/assignmenttargettype")
     }
 
     fn save_test_cases(&mut self, cases: Vec<T>) {
@@ -140,7 +143,7 @@ impl Case for Test262Case {
     // https://github.com/tc39/test262/blob/05c45a4c430ab6fee3e0c7f0d47d8a30d8876a6d/INTERPRETING.md#strict-mode
     fn run(&mut self) {
         let flags = &self.meta.flags;
-        let source_type = SourceType::cjs();
+        let source_type = SourceType::cjs().with_script(true);
 
         self.result = if flags.contains(&TestFlag::OnlyStrict) {
             self.always_strict = true;

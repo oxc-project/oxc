@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct NoMeaninglessVoidOperator(Box<NoMeaninglessVoidOperatorConfig>);
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMeaninglessVoidOperatorConfig {
     /// Whether to check `void` applied to expressions of type `never`.
     pub check_never: bool,
@@ -65,9 +65,7 @@ declare_oxc_lint!(
 
 impl Rule for NoMeaninglessVoidOperator {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

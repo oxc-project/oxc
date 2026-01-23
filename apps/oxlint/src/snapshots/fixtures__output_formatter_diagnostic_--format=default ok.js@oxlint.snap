@@ -1,0 +1,12 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=default ok.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+Found 0 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

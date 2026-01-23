@@ -1,0 +1,17 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=stylish --report-unused-disable-directives disable-directive.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+
+[4mdisable-directive.js[0m
+  [2m9:3 [0m  [33mwarning[0m  Unused eslint-disable directive (no problems were reported).  [2m[0m
+  [2m12:3[0m  [33mwarning[0m  Unused eslint-disable directive (no problems were reported).  [2m[0m
+  [2m15:3[0m  [33mwarning[0m  Unused eslint-disable directive (no problems were reported).  [2m[0m
+
+[33m✖ 3 problems (0 errors, 3 warnings)[0m
+----------
+CLI result: LintSucceeded
+----------

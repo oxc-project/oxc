@@ -6,7 +6,7 @@ arguments: -c eslintrc.json
 working directory: fixtures/config_ignore_patterns/ignore_directory
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/unicorn/no-empty-file.html\eslint-plugin-unicorn(no-empty-file)]8;;\: Empty files are not allowed.
+  ! eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.
    ,-[main.js:1:1]
  1 | 
    : ^

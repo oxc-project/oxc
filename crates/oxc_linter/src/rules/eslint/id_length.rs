@@ -98,7 +98,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
+    /// /* id-length: "error" */     // default is minimum 2-chars ({ "min": 2 })
     ///
     /// const x = 5;
     /// obj.e = document.body;
@@ -127,7 +127,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
+    /// /* id-length: "error" */     // default is minimum 2-chars ({ "min": 2 })
     ///
     /// const num = 5;
     /// function _f() { return 42; }

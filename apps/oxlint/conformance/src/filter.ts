@@ -10,4 +10,4 @@ export const FILTER_ONLY_RULE: Filter | null = null;
 export const FILTER_ONLY_CODE: Filter | null = null;
 
 // Filter out rules where test failures are expected
-export const FILTER_EXCLUDE_RULE: Filter | null = [];
+export const FILTER_EXCLUDE_RULE: Filter | null = null;

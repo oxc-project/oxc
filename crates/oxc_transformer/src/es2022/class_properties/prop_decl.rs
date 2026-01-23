@@ -78,7 +78,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let private_props = self.current_class().private_props.as_ref().unwrap();
-        let prop = &private_props[&ident.name];
+        let prop = &private_props[&Atom::from(ident.name)];
         let arguments = ctx.ast.vec_from_array([
             Argument::from(ctx.ast.expression_this(SPAN)),
             Argument::from(prop.binding.create_read_expression(ctx)),
@@ -211,7 +211,7 @@ impl<'a> ClassProperties<'a, '_> {
         // Insert after class
         let class_details = self.current_class();
         let private_props = class_details.private_props.as_ref().unwrap();
-        let prop_binding = &private_props[&ident.name].binding;
+        let prop_binding = &private_props[&Atom::from(ident.name)].binding;
 
         if class_details.is_declaration {
             // `var _prop = {_: value};`
@@ -258,7 +258,7 @@ impl<'a> ClassProperties<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         // In-built static props `name` and `length` need to be set with `_defineProperty`
-        let needs_define = |name| is_static && (name == "name" || name == "length");
+        let needs_define = |name: &str| is_static && (name == "name" || name == "length");
 
         let left = match &mut prop.key {
             PropertyKey::StaticIdentifier(ident) => {
@@ -378,7 +378,7 @@ impl<'a> ClassProperties<'a, '_> {
         );
 
         let private_props = self.current_class().private_props.as_ref().unwrap();
-        let prop_binding = &private_props[&ident.name].binding;
+        let prop_binding = &private_props[&Atom::from(ident.name)].binding;
         let arguments = ctx.ast.vec_from_array([
             Argument::from(assignee),
             Argument::from(prop_binding.create_read_expression(ctx)),

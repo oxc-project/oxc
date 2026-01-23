@@ -35,13 +35,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             write!(f, [space(), FormatTrailingComments::Comments(comments)]);
         }
 
-        let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent {
+        let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent()
+        {
             can_avoid_parentheses(arrow, f)
         } else {
             false
         };
 
-        let this_param = get_this_param(self.parent);
+        let this_param = get_this_param(self.parent());
 
         let has_any_decorated_parameter =
             self.items.iter().any(|param| !param.decorators.is_empty());
@@ -53,7 +54,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameters<'a>> {
             ParameterLayout::NoParameters
         } else if can_hug || {
             // `self`: FormalParameters
-            // `self.parent`: ArrowFunctionExpression/Function
+            // `self.parent()`: ArrowFunctionExpression/Function
             // `self.grand_parent()`: CallExpression
             if let AstNodes::CallExpression(call) = self.grand_parent() {
                 // Check if parent is a test call, but exclude angular test wrappers
@@ -131,11 +132,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
             }
         });
 
-        let is_hug_parameter = matches!(self.parent, AstNodes::FormalParameters(params) if {
-            let (parentheses_not_needed, this_param) = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent {
+        let is_hug_parameter = matches!(self.parent(), AstNodes::FormalParameters(params) if {
+            let (parentheses_not_needed, this_param) = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent() {
                 (can_avoid_parentheses(arrow, f), None)
             } else {
-                (false, get_this_param(params.parent))
+                (false, get_this_param(params.parent()))
             };
             should_hug_function_parameters(params, this_param, parentheses_not_needed, f)
         });

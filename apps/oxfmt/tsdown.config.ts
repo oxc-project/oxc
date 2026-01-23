@@ -21,8 +21,11 @@ export default defineConfig({
     "prettier-plugin-tailwindcss",
     /^prettier\/plugins\//,
 
-    // Cannot bundle: worker.js runs in separate thread and can't resolve bundled chunks
+    // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
     // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!
     // "tinypool",
   ],
+  // tsdown warns about final bundled modules by `noExternal`.
+  // But we know what we are doing, just suppress the warnings.
+  inlineOnly: false,
 });

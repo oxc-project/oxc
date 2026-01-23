@@ -1,0 +1,10 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=unix ok.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+----------
+CLI result: LintSucceeded
+----------

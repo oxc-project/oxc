@@ -64,23 +64,23 @@ fn check_jsx_element<'a>(
 
     for attr in &jsx.opening_element.attributes {
         let JSXAttributeItem::Attribute(attr) = attr else {
-            return;
+            continue;
         };
 
         let JSXAttributeName::Identifier(ident) = &attr.name else {
-            return;
+            continue;
         };
 
         if ident.name.as_str() != prop_name {
-            return;
+            continue;
         }
 
         let Some(JSXAttributeValue::ExpressionContainer(container)) = &attr.value else {
-            return;
+            continue;
         };
 
         let JSXExpression::Identifier(expr) = &container.expression else {
-            return;
+            continue;
         };
 
         if expr.name.as_str() == index_param_name {
@@ -237,6 +237,10 @@ fn test() {
     let fail = vec![
         r"things.map((thing, index) => (
             <Hello key={index} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello thing={thing} key={index} />
           ));
         ",
         r"things.map((thing, index) => (

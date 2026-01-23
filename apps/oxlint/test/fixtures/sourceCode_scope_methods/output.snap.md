@@ -54,7 +54,7 @@
   | isStrict: false
   | variables: [arguments, innerFunction]
   | through: [Object]
-  | upper type: global
+  | upper type: function
     ,-[files/index.cjs:5:1]
   4 |     
   5 | ,-> function topLevelFunction() {

@@ -17,7 +17,7 @@ fn no_undef_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct NoUndef {
     /// When set to `true`, warns on undefined variables used in a `typeof` expression.
     #[serde(rename = "typeof")]
@@ -53,9 +53,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUndef {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -83,7 +81,7 @@ impl Rule for NoUndef {
                 if name == "arguments"
                     && ctx
                         .scoping()
-                        .scope_ancestors(ctx.nodes().get_node(reference.node_id()).scope_id())
+                        .scope_ancestors(reference.scope_id())
                         .map(|id| ctx.scoping().scope_flags(id))
                         .any(|scope_flags| scope_flags.is_function() && !scope_flags.is_arrow())
                 {

@@ -6,7 +6,7 @@ arguments: --type-aware
 working directory: fixtures/tsgolint_rule_options
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-deprecated.html\typescript-eslint(no-deprecated)]8;;\: `notAllowedDeprecated` is deprecated. Use anotherNewFunction instead
+  x typescript-eslint(no-deprecated): `notAllowedDeprecated` is deprecated. Use anotherNewFunction instead
     ,-[test.ts:36:1]
  35 | // This SHOULD error because notAllowedDeprecated is NOT in the allow list
  36 | notAllowedDeprecated();
@@ -14,7 +14,7 @@ working directory: fixtures/tsgolint_rule_options
  37 | 
     `----
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-misused-spread.html\typescript-eslint(no-misused-spread)]8;;\: Using the spread operator on a function without additional properties can cause unexpected behavior. Did you forget to call the function?
+  x typescript-eslint(no-misused-spread): Using the spread operator on a function without additional properties can cause unexpected behavior. Did you forget to call the function?
     ,-[test.ts:47:28]
  46 | // This SHOULD error because notAllowedFunc is NOT in the allow list
  47 | const notAllowedSpread = { ...notAllowedFunc };
@@ -22,7 +22,7 @@ working directory: fixtures/tsgolint_rule_options
  48 | 
     `----
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-unsafe-member-access.html\typescript-eslint(no-unsafe-member-access)]8;;\: Unsafe member access .bar on an `any` value.
+  x typescript-eslint(no-unsafe-member-access): Unsafe member access .bar on an `any` value.
     ,-[test.ts:58:31]
  57 | // This SHOULD error because it's not using optional chaining
  58 | const unsafeAccess = anyValue.bar;
@@ -30,7 +30,7 @@ working directory: fixtures/tsgolint_rule_options
  59 | 
     `----
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/typescript/no-base-to-string.html\typescript-eslint(no-base-to-string)]8;;\: 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
+  x typescript-eslint(no-base-to-string): 'unknownValue' may use Object's default stringification format ('[object Object]') when stringified.
     ,-[test.ts:63:20]
  62 | // This SHOULD error because checkUnknown is true
  63 | const unknownStr = unknownValue.toString();

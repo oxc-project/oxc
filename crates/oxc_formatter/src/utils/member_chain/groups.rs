@@ -1,4 +1,5 @@
 use std::cell::{Cell, RefCell};
+use std::collections::VecDeque;
 
 use oxc_span::GetSpan;
 
@@ -8,7 +9,7 @@ use crate::formatter::{Format, Formatter, prelude::*};
 #[derive(Default)]
 pub(super) struct MemberChainGroupsBuilder<'a, 'b> {
     /// keeps track of the groups created
-    groups: Vec<MemberChainGroup<'a, 'b>>,
+    groups: VecDeque<MemberChainGroup<'a, 'b>>,
     /// keeps track of the current group that is being created/updated
     current_group: Option<MemberChainGroup<'a, 'b>>,
 }
@@ -33,7 +34,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
     /// clears the current group, and adds it to the groups collection
     pub fn close_group(&mut self) {
         if let Some(group) = self.current_group.take() {
-            self.groups.push(group);
+            self.groups.push_back(group);
         }
     }
 
@@ -41,7 +42,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
         let mut groups = self.groups;
 
         if let Some(group) = self.current_group {
-            groups.push(group);
+            groups.push_back(group);
         }
 
         TailChainGroups { groups }
@@ -53,7 +54,7 @@ impl<'a, 'b> MemberChainGroupsBuilder<'a, 'b> {
 /// May be empty if all members are part of the head group
 #[derive(Debug)]
 pub(super) struct TailChainGroups<'a, 'b> {
-    groups: Vec<MemberChainGroup<'a, 'b>>,
+    groups: VecDeque<MemberChainGroup<'a, 'b>>,
 }
 
 impl<'a, 'b> TailChainGroups<'a, 'b> {
@@ -69,17 +70,17 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
 
     /// Returns the first group
     pub(crate) fn first(&self) -> Option<&MemberChainGroup<'a, 'b>> {
-        self.groups.first()
+        self.groups.front()
     }
 
     /// Returns the last group
     pub(crate) fn last(&self) -> Option<&MemberChainGroup<'a, 'b>> {
-        self.groups.last()
+        self.groups.back()
     }
 
     /// Removes the first group and returns it
     pub(super) fn pop_first(&mut self) -> Option<MemberChainGroup<'a, 'b>> {
-        if self.groups.is_empty() { None } else { Some(self.groups.remove(0)) }
+        self.groups.pop_front()
     }
 
     /// Here we check if the length of the groups exceeds the cutoff or there are comments
@@ -96,7 +97,8 @@ impl<'a, 'b> TailChainGroups<'a, 'b> {
 
     /// Test if any group except the last group [break](FormatElements::will_break).
     pub(super) fn any_except_last_will_break(&self, f: &Formatter<'_, 'a>) -> bool {
-        for group in &self.groups[..self.groups.len().saturating_sub(1)] {
+        let count = self.groups.len().saturating_sub(1);
+        for group in self.groups.iter().take(count) {
             if group.will_break(f) {
                 return true;
             }

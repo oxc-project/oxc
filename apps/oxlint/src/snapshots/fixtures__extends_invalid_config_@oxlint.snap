@@ -1,0 +1,16 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/extends_invalid_config
+----------
+Failed to parse oxlint configuration file.
+
+  x Invalid configuration for rule `jest/no-hooks`:
+  |   invalid type: boolean `true`, expected a string
+  |   received config: `{ "allow": [ true, false ] }`
+
+----------
+CLI result: InvalidOptionConfig
+----------

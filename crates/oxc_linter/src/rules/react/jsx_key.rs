@@ -57,7 +57,7 @@ fn duplicate_key_prop(key_value: &str, span: Span) -> OxcDiagnostic {
 pub struct JsxKey(Box<JsxKeyConfig>);
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 #[derive(Default)]
 pub struct JsxKeyConfig {
     /// When true, require key prop to be placed before any spread props
@@ -109,9 +109,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxKey {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

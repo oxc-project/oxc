@@ -814,3 +814,9 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                ─────────────────────────
  4 │             }
    ╰────
+
+  ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:1:81]
+ 1 │ const Foo3 = hoc(function NamedComp(props) { if (props.cond) { const [_a, _b] = useState(false); } });
+   ·                                                                                 ───────────────
+   ╰────

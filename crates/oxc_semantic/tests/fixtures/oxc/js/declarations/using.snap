@@ -7,7 +7,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
     "children": [
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 1,
         "node": "BlockStatement",
         "symbols": [
@@ -22,7 +22,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 2,
         "node": "BlockStatement",
         "symbols": [
@@ -37,7 +37,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 3,
         "node": "BlockStatement",
         "symbols": [
@@ -52,7 +52,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
       },
       {
         "children": [],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 4,
         "node": "BlockStatement",
         "symbols": [
@@ -69,13 +69,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(0x0)",
             "id": 6,
             "node": "BlockStatement",
             "symbols": []
           }
         ],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 5,
         "node": "ForOfStatement",
         "symbols": [
@@ -92,13 +92,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         "children": [
           {
             "children": [],
-            "flags": "ScopeFlags(StrictMode)",
+            "flags": "ScopeFlags(0x0)",
             "id": 8,
             "node": "BlockStatement",
             "symbols": []
           }
         ],
-        "flags": "ScopeFlags(StrictMode)",
+        "flags": "ScopeFlags(0x0)",
         "id": 7,
         "node": "ForOfStatement",
         "symbols": [
@@ -112,7 +112,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/js/declarations/using.js
         ]
       }
     ],
-    "flags": "ScopeFlags(StrictMode | Top)",
+    "flags": "ScopeFlags(Top)",
     "id": 0,
     "node": "Program",
     "symbols": []

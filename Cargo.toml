@@ -15,7 +15,7 @@ description = "A collection of JavaScript tools written in Rust."
 edition = "2024"
 # MSRV Policy N-2 (12 weeks).
 # Balance between the core contributors enjoying the latest version of rustc, while waiting for dependents to catch up.
-rust-version = "1.90.0"
+rust-version = "1.91.0"
 
 # <https://doc.rust-lang.org/rustc/lints/listing/allowed-by-default.html>
 [workspace.lints.rust]
@@ -55,6 +55,9 @@ infinite_loop = "warn"
 map_with_unused_argument_over_ranges = "warn"
 unused_result_ok = "warn"
 pathbuf_init_then_push = "warn"
+pub_underscore_fields = "warn"
+non_zero_suggestions = "warn"
+precedence_bits = "warn"
 # I want to write the best Rust code so pedantic is enabled.
 # We should only disable rules globally if they are either false positives, chaotic, or does not make sense.
 pedantic = { level = "warn", priority = -1 }
@@ -96,42 +99,42 @@ unused_peekable = "warn"
 too_long_first_doc_paragraph = "warn"
 suspicious_operation_groupings = "warn"
 redundant_clone = "warn"
-zero_sized_map_values = "allow" # FIXME https://github.com/rust-lang/rust-clippy/issues/15429 - False positive with serde skip_serializing
 # cargo
 cargo = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
 
 [workspace.dependencies]
 # publish = true
-oxc = { version = "0.108.0", path = "crates/oxc" } # Main entry point
-oxc_allocator = { version = "0.108.0", path = "crates/oxc_allocator" } # Memory management
-oxc_ast = { version = "0.108.0", path = "crates/oxc_ast" } # AST definitions
-oxc_ast_macros = { version = "0.108.0", path = "crates/oxc_ast_macros" } # AST proc macros
-oxc_ast_visit = { version = "0.108.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
-oxc_cfg = { version = "0.108.0", path = "crates/oxc_cfg" } # Control flow graph
-oxc_codegen = { version = "0.108.0", path = "crates/oxc_codegen", default-features = false } # Code generation
-oxc_compat = { version = "0.108.0", path = "crates/oxc_compat" } # Browser compatibility
-oxc_data_structures = { version = "0.108.0", path = "crates/oxc_data_structures" } # Shared data structures
-oxc_diagnostics = { version = "0.108.0", path = "crates/oxc_diagnostics" } # Error reporting
-oxc_ecmascript = { version = "0.108.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
-oxc_estree = { version = "0.108.0", path = "crates/oxc_estree" } # ESTree format
-oxc_isolated_declarations = { version = "0.108.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
-oxc_mangler = { version = "0.108.0", path = "crates/oxc_mangler" } # Name mangling
-oxc_minifier = { version = "0.108.0", path = "crates/oxc_minifier" } # Code minification
-oxc_minify_napi = { version = "0.108.0", path = "napi/minify" } # Node.js minifier binding
-oxc_napi = { version = "0.108.0", path = "crates/oxc_napi" } # NAPI utilities
-oxc_parser = { version = "0.108.0", path = "crates/oxc_parser", features = [
+oxc = { version = "0.110.0", path = "crates/oxc" } # Main entry point
+oxc_allocator = { version = "0.110.0", path = "crates/oxc_allocator" } # Memory management
+oxc_ast = { version = "0.110.0", path = "crates/oxc_ast" } # AST definitions
+oxc_ast_macros = { version = "0.110.0", path = "crates/oxc_ast_macros" } # AST proc macros
+oxc_ast_visit = { version = "0.110.0", path = "crates/oxc_ast_visit" } # AST visitor pattern
+oxc_cfg = { version = "0.110.0", path = "crates/oxc_cfg" } # Control flow graph
+oxc_codegen = { version = "0.110.0", path = "crates/oxc_codegen", default-features = false } # Code generation
+oxc_compat = { version = "0.110.0", path = "crates/oxc_compat" } # Browser compatibility
+oxc_data_structures = { version = "0.110.0", path = "crates/oxc_data_structures" } # Shared data structures
+oxc_diagnostics = { version = "0.110.0", path = "crates/oxc_diagnostics" } # Error reporting
+oxc_ecmascript = { version = "0.110.0", path = "crates/oxc_ecmascript" } # ECMAScript operations
+oxc_estree = { version = "0.110.0", path = "crates/oxc_estree" } # ESTree format
+oxc_isolated_declarations = { version = "0.110.0", path = "crates/oxc_isolated_declarations" } # TS declaration generation
+oxc_mangler = { version = "0.110.0", path = "crates/oxc_mangler" } # Name mangling
+oxc_minifier = { version = "0.110.0", path = "crates/oxc_minifier" } # Code minification
+oxc_minify_napi = { version = "0.110.0", path = "napi/minify" } # Node.js minifier binding
+oxc_napi = { version = "0.110.0", path = "crates/oxc_napi" } # NAPI utilities
+oxc_parser = { version = "0.110.0", path = "crates/oxc_parser", features = [
   "regular_expression",
 ] } # JS/TS parser
-oxc_parser_napi = { version = "0.108.0", path = "napi/parser" } # Node.js parser binding
-oxc_regular_expression = { version = "0.108.0", path = "crates/oxc_regular_expression" } # Regex parser
-oxc_semantic = { version = "0.108.0", path = "crates/oxc_semantic" } # Semantic analysis
-oxc_span = { version = "0.108.0", path = "crates/oxc_span" } # Source positions
-oxc_syntax = { version = "0.108.0", path = "crates/oxc_syntax" } # Syntax utilities
-oxc_transform_napi = { version = "0.108.0", path = "napi/transform" } # Node.js transformer binding
-oxc_transformer = { version = "0.108.0", path = "crates/oxc_transformer" } # Code transformation
-oxc_transformer_plugins = { version = "0.108.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
-oxc_traverse = { version = "0.108.0", path = "crates/oxc_traverse" } # AST traversal
+oxc_parser_napi = { version = "0.110.0", path = "napi/parser" } # Node.js parser binding
+oxc_regular_expression = { version = "0.110.0", path = "crates/oxc_regular_expression" } # Regex parser
+oxc_semantic = { version = "0.110.0", path = "crates/oxc_semantic" } # Semantic analysis
+oxc_span = { version = "0.110.0", path = "crates/oxc_span" } # Source positions
+oxc_str = { version = "0.110.0", path = "crates/oxc_str" } # String types
+oxc_syntax = { version = "0.110.0", path = "crates/oxc_syntax" } # Syntax utilities
+oxc_transform_napi = { version = "0.110.0", path = "napi/transform" } # Node.js transformer binding
+oxc_transformer = { version = "0.110.0", path = "crates/oxc_transformer" } # Code transformation
+oxc_transformer_plugins = { version = "0.110.0", path = "crates/oxc_transformer_plugins" } # Transformer plugins
+oxc_traverse = { version = "0.110.0", path = "crates/oxc_traverse" } # AST traversal
 
 # publish = false
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
@@ -170,11 +173,6 @@ allocator-api2 = "=0.2.21" # Allocator trait
 base64 = "0.22.1" # Base64 encoding
 bitflags = "2.10.0" # Bitflag types
 bpaf = "0.9.20" # CLI parser
-# `bumpalo` must be pinned to exactly version 3.19.0.
-# `Allocator::from_raw_parts` (used in raw transfer) depends on internal implementation details
-# of `bumpalo` which may change in a future version.
-# This is a temporary situation - we'll replace `bumpalo` with our own allocator.
-bumpalo = "=3.19.1" # Bump allocator
 compact_str = "0.9.0" # Compact string type
 console = "0.16.2" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation
@@ -239,7 +237,7 @@ walkdir = "2.5.0" # Directory traversal
 editorconfig-parser = "0.0.3"
 natord = "1.0.9"
 oxfmt = { path = "apps/oxfmt" }
-sort-package-json = "0.0.8"
+sort-package-json = "0.0.10"
 oxc-toml = "0.14.2"
 unicode-width = "0.2"
 website_common = { path = "tasks/website_common" }

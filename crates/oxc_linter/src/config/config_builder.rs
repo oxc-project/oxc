@@ -712,7 +712,7 @@ impl Display for ConfigBuilderError {
             ConfigBuilderError::RuleConfigurationErrors { errors } => {
                 for (i, error) in errors.iter().enumerate() {
                     if i > 0 {
-                        f.write_str("\n")?;
+                        f.write_str("\n\n")?;
                     }
                     write!(f, "{error}")?;
                 }

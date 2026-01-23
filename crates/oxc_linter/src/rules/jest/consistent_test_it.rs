@@ -95,7 +95,7 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// ```javascript
-    /// /*eslint jest/consistent-test-it: ["error", {"fn": "test"}]*/
+    /// /* jest/consistent-test-it: ["error", {"fn": "test"}] */
     /// test('foo'); // valid
     /// test.only('foo'); // valid
     ///
@@ -104,7 +104,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```javascript
-    /// /*eslint jest/consistent-test-it: ["error", {"fn": "it"}]*/
+    /// /* jest/consistent-test-it: ["error", {"fn": "it"}] */
     /// it('foo'); // valid
     /// it.only('foo'); // valid
     /// test('foo'); // invalid
@@ -112,7 +112,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// ```javascript
-    /// /*eslint jest/consistent-test-it: ["error", {"fn": "it", "withinDescribe": "test"}]*/
+    /// /* jest/consistent-test-it: ["error", {"fn": "it", "withinDescribe": "test"}] */
     /// it('foo'); // valid
     /// describe('foo', function () {
     ///     test('bar'); // valid

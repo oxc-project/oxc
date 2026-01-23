@@ -337,12 +337,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `substring` with `slice`.
 
-  ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
-   ╭─[prefer_string_slice.tsx:1:5]
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[prefer_string_slice.tsx:1:18]
  1 │ foo.substring(0, await 1)
-   ·     ─────────
+   ·                  ─────
    ╰────
-  help: Replace `substring` with `slice`.
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]

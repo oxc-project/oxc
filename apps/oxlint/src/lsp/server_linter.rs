@@ -180,6 +180,9 @@ impl ToolBuilder for ServerLinterBuilder {
         if !code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC) {
             code_action_kinds.push(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC);
         }
+        if !code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL) {
+            code_action_kinds.push(CodeActionKind::SOURCE_FIX_ALL);
+        }
 
         // override code action kinds if the code action provider is already set
         capabilities.code_action_provider =
@@ -517,10 +520,13 @@ impl Tool for ServerLinter {
 
         let actions =
             actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
-        let is_source_fix_all_oxc = only_code_action_kinds
-            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+        // if `source.fixAll.oxc` or `source.fixAll` is requested, return a single code action that applies all fixes
+        let is_source_fix_all = only_code_action_kinds.is_some_and(|only| {
+            only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC)
+                || only.contains(&CodeActionKind::SOURCE_FIX_ALL)
+        });
 
-        if is_source_fix_all_oxc {
+        if is_source_fix_all {
             return apply_all_fix_code_action(actions, uri.clone())
                 .map_or(vec![], |code_actions| {
                     vec![CodeActionOrCommand::CodeAction(code_actions)]
@@ -697,7 +703,8 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 2);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 3);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -728,7 +735,8 @@ mod tests_builder {
                 assert!(code_action_kinds.contains(&CodeActionKind::REFACTOR));
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 3);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 4);
                 assert_eq!(options.resolve_provider, Some(true));
             }
             _ => panic!("Expected code action provider options"),
@@ -754,7 +762,8 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 2);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 3);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -776,7 +785,8 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 2);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 3);
             }
             _ => panic!("Expected code action provider options"),
         }

@@ -29,8 +29,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
                 joiner.entries(expressions);
             });
 
-            if matches!(self.parent, AstNodes::ForStatement(_))
-                || (matches!(self.parent, AstNodes::ExpressionStatement(statement)
+            if matches!(self.parent(), AstNodes::ForStatement(_))
+                || (matches!(self.parent(), AstNodes::ExpressionStatement(statement)
                     if !statement.is_arrow_function_body()))
             {
                 write!(f, [indent(&rest)]);

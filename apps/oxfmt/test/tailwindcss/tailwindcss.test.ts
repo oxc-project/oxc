@@ -2,20 +2,26 @@ import { format } from "../../dist/index.js";
 import { describe, expect, test } from "vitest";
 
 describe("Tailwind CSS Sorting", () => {
-  test("should sort Tailwind classes when experimentalTailwindcss is enabled", async () => {
-    // Unsorted: p-4 comes before flex
-    const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
+  // First test triggers Tailwind CSS initialization which is slow on Windows CI
+  // https://github.com/oxc-project/oxc/issues/18072
+  test(
+    "should sort Tailwind classes when experimentalTailwindcss is enabled",
+    { timeout: 30_000 },
+    async () => {
+      // Unsorted: p-4 comes before flex
+      const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
 
-    const result = await format("test.tsx", input, {
-      experimentalTailwindcss: {},
-    });
+      const result = await format("test.tsx", input, {
+        experimentalTailwindcss: {},
+      });
 
-    // After sorting, flex should come before p-4 (display before spacing)
-    // The exact order of bg-red-500 and text-white may vary by Tailwind version
-    expect(result.code).toContain('className="flex');
-    expect(result.code).not.toContain('className="p-4 flex'); // p-4 should not be before flex
-    expect(result.errors).toStrictEqual([]);
-  });
+      // After sorting, flex should come before p-4 (display before spacing)
+      // The exact order of bg-red-500 and text-white may vary by Tailwind version
+      expect(result.code).toContain('className="flex');
+      expect(result.code).not.toContain('className="p-4 flex'); // p-4 should not be before flex
+      expect(result.errors).toStrictEqual([]);
+    },
+  );
 
   test("should NOT sort Tailwind classes when experimentalTailwindcss is disabled (default)", async () => {
     const input = `const A = <div className="p-4 flex bg-red-500 text-white">Hello</div>;`;
@@ -1110,5 +1116,20 @@ describe("Tailwind CSS Sorting works with other options", () => {
       <div className='text-md before:content-["hello"]'>Hello</div>;
       "
     `);
+  });
+});
+
+describe("Tailwind CSS Sorting in Embedded HTML (Tagged Template Literals)", () => {
+  test("should sort Tailwind classes in html tagged template literal", async () => {
+    const input = `const view = html\`<div class="p-4 flex bg-red-500">Hello</div>\`;`;
+
+    const result = await format("test.ts", input, {
+      experimentalTailwindcss: {},
+    });
+
+    // After sorting, flex should come before p-4 (display before spacing)
+    expect(result.code).toContain('class="flex');
+    expect(result.code).not.toContain('class="p-4 flex');
+    expect(result.errors).toStrictEqual([]);
   });
 });

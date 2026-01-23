@@ -1,684 +1,9 @@
-commit: 6f55d0c2
+commit: fff41f05
 
 parser_test262 Summary:
-AST Parsed     : 46555/46563 (99.98%)
-Positive Passed: 46547/46563 (99.97%)
-Negative Passed: 4579/4581 (99.96%)
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js
-
-Expect Syntax Error: tasks/coverage/test262/test/language/statements/using/syntax/using-not-allowed-at-top-level-of-script.js
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js:27:8]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   for (f() in [1]) {}
-    ·        ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js:27:8]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   for (f() of [1]) {}
-    ·        ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js:33:3]
- 32 │ assert.throws(ReferenceError, function() {
- 33 │   f() += g();
-    ·   ───
- 34 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js:27:3]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   f()++;
-    ·   ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js:27:5]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   ++f();
-    ·     ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js:33:3]
- 32 │ assert.throws(ReferenceError, function() {
- 33 │   f() = g();
-    ·   ───
- 34 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js:20:3]
- 19 │ assert.throws(ReferenceError, function() {
- 20 │   async() = 1;
-    ·   ───────
- 21 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:24:15]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script=Beria_Erfe}+$/u,
-    ·               ──────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:29:15]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script=Berf}+$/u,
-    ·               ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:34:11]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{sc=Beria_Erfe}+$/u,
-    ·           ──────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:39:11]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{sc=Berf}+$/u,
-    ·           ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:55:15]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script=Beria_Erfe}+$/u,
-    ·               ──────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:60:15]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script=Berf}+$/u,
-    ·               ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:65:11]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{sc=Beria_Erfe}+$/u,
-    ·           ──────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:70:11]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{sc=Berf}+$/u,
-    ·           ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:23:15]
- 22 │ testPropertyEscapes(
- 23 │   /^\p{Script=Sidetic}+$/u,
-    ·               ───────
- 24 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:28:15]
- 27 │ testPropertyEscapes(
- 28 │   /^\p{Script=Sidt}+$/u,
-    ·               ────
- 29 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:33:11]
- 32 │ testPropertyEscapes(
- 33 │   /^\p{sc=Sidetic}+$/u,
-    ·           ───────
- 34 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:38:11]
- 37 │ testPropertyEscapes(
- 38 │   /^\p{sc=Sidt}+$/u,
-    ·           ────
- 39 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:53:15]
- 52 │ testPropertyEscapes(
- 53 │   /^\P{Script=Sidetic}+$/u,
-    ·               ───────
- 54 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:58:15]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script=Sidt}+$/u,
-    ·               ────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:63:11]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{sc=Sidetic}+$/u,
-    ·           ───────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:68:11]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{sc=Sidt}+$/u,
-    ·           ────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:25:15]
- 24 │ testPropertyEscapes(
- 25 │   /^\p{Script=Tai_Yo}+$/u,
-    ·               ──────
- 26 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:30:15]
- 29 │ testPropertyEscapes(
- 30 │   /^\p{Script=Tayo}+$/u,
-    ·               ────
- 31 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:35:11]
- 34 │ testPropertyEscapes(
- 35 │   /^\p{sc=Tai_Yo}+$/u,
-    ·           ──────
- 36 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:40:11]
- 39 │ testPropertyEscapes(
- 40 │   /^\p{sc=Tayo}+$/u,
-    ·           ────
- 41 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:58:15]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script=Tai_Yo}+$/u,
-    ·               ──────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:63:15]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{Script=Tayo}+$/u,
-    ·               ────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:68:11]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{sc=Tai_Yo}+$/u,
-    ·           ──────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:73:11]
- 72 │ testPropertyEscapes(
- 73 │   /^\P{sc=Tayo}+$/u,
-    ·           ────
- 74 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:24:15]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script=Tolong_Siki}+$/u,
-    ·               ───────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:29:15]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script=Tols}+$/u,
-    ·               ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:34:11]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{sc=Tolong_Siki}+$/u,
-    ·           ───────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:39:11]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{sc=Tols}+$/u,
-    ·           ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:55:15]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script=Tolong_Siki}+$/u,
-    ·               ───────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:60:15]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script=Tols}+$/u,
-    ·               ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:65:11]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{sc=Tolong_Siki}+$/u,
-    ·           ───────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:70:11]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{sc=Tols}+$/u,
-    ·           ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:24:26]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script_Extensions=Beria_Erfe}+$/u,
-    ·                          ──────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:29:26]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script_Extensions=Berf}+$/u,
-    ·                          ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:34:12]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{scx=Beria_Erfe}+$/u,
-    ·            ──────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:39:12]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{scx=Berf}+$/u,
-    ·            ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:55:26]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script_Extensions=Beria_Erfe}+$/u,
-    ·                          ──────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:60:26]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script_Extensions=Berf}+$/u,
-    ·                          ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:65:12]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{scx=Beria_Erfe}+$/u,
-    ·            ──────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:70:12]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{scx=Berf}+$/u,
-    ·            ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:23:26]
- 22 │ testPropertyEscapes(
- 23 │   /^\p{Script_Extensions=Sidetic}+$/u,
-    ·                          ───────
- 24 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:28:26]
- 27 │ testPropertyEscapes(
- 28 │   /^\p{Script_Extensions=Sidt}+$/u,
-    ·                          ────
- 29 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:33:12]
- 32 │ testPropertyEscapes(
- 33 │   /^\p{scx=Sidetic}+$/u,
-    ·            ───────
- 34 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:38:12]
- 37 │ testPropertyEscapes(
- 38 │   /^\p{scx=Sidt}+$/u,
-    ·            ────
- 39 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:53:26]
- 52 │ testPropertyEscapes(
- 53 │   /^\P{Script_Extensions=Sidetic}+$/u,
-    ·                          ───────
- 54 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:58:26]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script_Extensions=Sidt}+$/u,
-    ·                          ────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:63:12]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{scx=Sidetic}+$/u,
-    ·            ───────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:68:12]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{scx=Sidt}+$/u,
-    ·            ────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:25:26]
- 24 │ testPropertyEscapes(
- 25 │   /^\p{Script_Extensions=Tai_Yo}+$/u,
-    ·                          ──────
- 26 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:30:26]
- 29 │ testPropertyEscapes(
- 30 │   /^\p{Script_Extensions=Tayo}+$/u,
-    ·                          ────
- 31 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:35:12]
- 34 │ testPropertyEscapes(
- 35 │   /^\p{scx=Tai_Yo}+$/u,
-    ·            ──────
- 36 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:40:12]
- 39 │ testPropertyEscapes(
- 40 │   /^\p{scx=Tayo}+$/u,
-    ·            ────
- 41 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:58:26]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script_Extensions=Tai_Yo}+$/u,
-    ·                          ──────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:63:26]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{Script_Extensions=Tayo}+$/u,
-    ·                          ────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:68:12]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{scx=Tai_Yo}+$/u,
-    ·            ──────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:73:12]
- 72 │ testPropertyEscapes(
- 73 │   /^\P{scx=Tayo}+$/u,
-    ·            ────
- 74 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:24:26]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script_Extensions=Tolong_Siki}+$/u,
-    ·                          ───────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:29:26]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script_Extensions=Tols}+$/u,
-    ·                          ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:34:12]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{scx=Tolong_Siki}+$/u,
-    ·            ───────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:39:12]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{scx=Tols}+$/u,
-    ·            ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:55:26]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script_Extensions=Tolong_Siki}+$/u,
-    ·                          ───────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:60:26]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script_Extensions=Tols}+$/u,
-    ·                          ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:65:12]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{scx=Tolong_Siki}+$/u,
-    ·            ───────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:70:12]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{scx=Tols}+$/u,
-    ·            ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
-
-  × Unexpected token
-    ╭─[test262/test/language/statements/using/syntax/using-for-statement.js:14:15]
- 13 │ // handled similar to `for (let of = null;;)`:
- 14 │ for (using of = null;;) break;
-    ·               ─
-    ╰────
-
+AST Parsed     : 46595/46595 (100.00%)
+Positive Passed: 46595/46595 (100.00%)
+Negative Passed: 4581/4581 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -18798,11 +18123,11 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     · ───────────
     ╰────
 
-  × Unexpected right-hand side of private-in expression
+  × Unexpected private identifier
     ╭─[test262/test/language/expressions/in/private-field-in-nested.js:26:15]
  25 │   constructor() {
  26 │     #field in #field in this;
-    ·               ──────────────
+    ·               ──────
  27 │   }
     ╰────
 
@@ -21198,7 +20523,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·   ──────────
  38 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[test262/test/language/global-code/new.target.js:21:1]
@@ -21206,7 +20531,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[test262/test/language/global-code/return.js:23:1]
@@ -25155,11 +24480,11 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·   ─
     ╰────
 
-  × Unexpected token
+  × HTML comments are not allowed in modules
     ╭─[test262/test/language/module-code/comment-single-line-html-open.js:16:1]
  15 │ 
  16 │ <!--
-    · ─
+    · ────
     ╰────
 
   × Duplicated export 'z'
@@ -25405,7 +24730,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/module-code/early-strict-mode.js:15:5]
@@ -27403,6 +26728,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ }
     ╰────
   help: Try inserting a semicolon here
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ await using x = null;
+    · ─────────────────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/await-using/syntax/block-scope-syntax-await-using-declarations-mixed-with-without-initializer.js:30:25]
@@ -40033,6 +39366,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ }
     ╰────
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/using-not-allowed-at-top-level-of-script.js:23:1]
+ 22 │ $DONOTEVALUATE();
+ 23 │ using x = null;
+    · ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declaration cannot appear in the bare case statement.
     ╭─[test262/test/language/statements/using/syntax/with-initializer-case-expression-statement-list.js:20:28]
  19 │ $DONOTEVALUATE();
@@ -40057,6 +39398,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-do-statement-while-expression.js:17:4]
+ 16 │ $DONOTEVALUATE();
+ 17 │ do using x = 1; while (false)
+    ·    ────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-for-statement.js:17:15]
  16 │ $DONOTEVALUATE();
@@ -40073,6 +39422,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement-else-statement.js:17:19]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) {} else using x = null;
+    ·                   ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement.js:17:11]
  16 │ $DONOTEVALUATE();
@@ -40080,6 +39437,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·           ───────────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-if-expression-statement.js:17:11]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) using x = null;
+    ·           ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-label-statement.js:17:8]
@@ -40089,6 +39454,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-label-statement.js:17:8]
+ 16 │ $DONOTEVALUATE();
+ 17 │ label: using x = null;
+    ·        ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/with-initializer-while-expression-statement.js:17:15]
  16 │ $DONOTEVALUATE();
@@ -40096,6 +39469,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·               ───────────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/with-initializer-while-expression-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ while (false) using x = null;
+    ·               ───────────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-do-statement-while-expression.js:17:10]
@@ -40112,6 +39493,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·    ────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-do-statement-while-expression.js:17:4]
+ 16 │ $DONOTEVALUATE();
+ 17 │ do using x; while (false)
+    ·    ────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Lexical declaration cannot appear in a single-statement context
     ╭─[test262/test/language/statements/using/syntax/without-initializer-for-statement.js:17:15]
@@ -40137,6 +39526,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement-else-statement.js:17:19]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) {} else using x;
+    ·                   ────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement.js:17:17]
  16 │ $DONOTEVALUATE();
@@ -40152,6 +39549,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·           ────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-if-expression-statement.js:17:11]
+ 16 │ $DONOTEVALUATE();
+ 17 │ if (true) using x;
+    ·           ────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-label-statement.js:17:14]
@@ -40169,6 +39574,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Wrap this declaration in a block statement
 
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-label-statement.js:17:8]
+ 16 │ $DONOTEVALUATE();
+ 17 │ label: using x;
+    ·        ────────
+    ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/without-initializer-while-expression-statement.js:17:21]
  16 │ $DONOTEVALUATE();
@@ -40184,6 +39597,14 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·               ────────
     ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+    ╭─[test262/test/language/statements/using/syntax/without-initializer-while-expression-statement.js:17:15]
+ 16 │ $DONOTEVALUATE();
+ 17 │ while (false) using x;
+    ·               ────────
+    ╰────
+  help: Wrap this code in a block or use a module
 
   × Cannot assign to 'eval' in strict mode
     ╭─[test262/test/language/statements/variable/12.2.1-1gs.js:18:10]

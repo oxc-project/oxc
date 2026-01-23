@@ -4476,8 +4476,10 @@ function walkTSMappedType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionTSType(pos + 16, ast, visitors);
-  walkOptionTSType(pos + 32, ast, visitors);
+  walkBindingIdentifier(pos + 8, ast, visitors);
+  walkTSType(pos + 40, ast, visitors);
+  walkOptionTSType(pos + 56, ast, visitors);
+  walkOptionTSType(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }

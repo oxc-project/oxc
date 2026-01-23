@@ -163,16 +163,16 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 pub const fn format_trailing_comments<'a>(
     enclosing_span: Span,
     preceding_span: Span,
-    following_span: Option<Span>,
+    following_span_start: u32,
 ) -> FormatTrailingComments<'a> {
-    FormatTrailingComments::Node((enclosing_span, preceding_span, following_span))
+    FormatTrailingComments::Node((enclosing_span, preceding_span, following_span_start))
 }
 
 /// Formats the trailing comments of `node`
 #[derive(Debug, Clone, Copy)]
 pub enum FormatTrailingComments<'a> {
-    // (enclosing_span, preceding_span, following_span)
-    Node((Span, Span, Option<Span>)),
+    // (enclosing_span, preceding_span, following_span_start)
+    Node((Span, Span, u32)),
     Comments(&'a [Comment]),
 }
 
@@ -252,11 +252,11 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
         }
 
         match self {
-            Self::Node((enclosing_span, preceding_span, following_span)) => {
+            Self::Node((enclosing_span, preceding_span, following_span_start)) => {
                 let comments = f.context().comments().get_trailing_comments(
                     *enclosing_span,
                     *preceding_span,
-                    *following_span,
+                    *following_span_start,
                 );
 
                 if comments.is_empty() {

@@ -10,25 +10,25 @@ use serde::Deserialize;
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
     ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterSetupConfigsCb, LintFileResult, LoadPluginResult,
+    ExternalLinterSetupRuleConfigsCb, LintFileResult, LoadPluginResult,
 };
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb, JsSetupConfigsCb},
+    run::{JsLintFileCb, JsLoadPluginCb, JsSetupRuleConfigsCb},
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
 pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
-    setup_configs: JsSetupConfigsCb,
+    setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
-    let rust_setup_configs = wrap_setup_configs(setup_configs);
+    let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
 
-    ExternalLinter::new(rust_load_plugin, rust_setup_configs, rust_lint_file)
+    ExternalLinter::new(rust_load_plugin, rust_setup_rule_configs, rust_lint_file)
 }
 
 /// Result returned by `loadPlugin` JS callback.
@@ -74,12 +74,12 @@ fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
     })
 }
 
-/// Wrap `setupConfigs` JS callback as a normal Rust function.
+/// Wrap `setupRuleConfigs` JS callback as a normal Rust function.
 ///
-/// The JS-side `setupConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
+/// The JS-side `setupRuleConfigs` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
 /// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side,
-/// and block current thread until `setupConfigs` completes execution.
-fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
+/// and block current thread until `setupRuleConfigs` completes execution.
+fn wrap_setup_rule_configs(cb: JsSetupRuleConfigsCb) -> ExternalLinterSetupRuleConfigsCb {
     Box::new(move |options_json: String| {
         let (tx, rx) = channel();
 
@@ -92,7 +92,7 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
                 // This closure is a `FnOnce`, so it can't be called more than once, so only 1 message can be sent.
                 // Therefore, `rx` cannot be dropped before this call.
                 let res = tx.send(result);
-                debug_assert!(res.is_ok(), "Failed to send result of `setupConfigs`");
+                debug_assert!(res.is_ok(), "Failed to send result of `setupRuleConfigs`");
                 Ok(())
             },
         );
@@ -103,15 +103,15 @@ fn wrap_setup_configs(cb: JsSetupConfigsCb) -> ExternalLinterSetupConfigsCb {
                 Ok(Ok(None)) => Ok(()),
                 // Setup failed
                 Ok(Ok(Some(err))) => Err(err),
-                // `setupConfigs` threw an error - should be impossible because it should be infallible
-                Ok(Err(err)) => Err(format!("`setupConfigs` threw an error: {err}")),
+                // `setupRuleConfigs` threw an error - should be impossible because it should be infallible
+                Ok(Err(err)) => Err(format!("`setupRuleConfigs` threw an error: {err}")),
                 // Sender "hung up" - should be impossible because closure passed to `call_with_return_value`
                 // takes ownership of the sender `tx`. Unless NAPI-RS drops the closure without calling it,
                 // `tx.send()` always happens before `tx` is dropped.
-                Err(err) => Err(format!("`setupConfigs` did not respond: {err}")),
+                Err(err) => Err(format!("`setupRuleConfigs` did not respond: {err}")),
             }
         } else {
-            Err(format!("Failed to schedule `setupConfigs` callback: {status:?}"))
+            Err(format!("Failed to schedule `setupRuleConfigs` callback: {status:?}"))
         }
     })
 }
@@ -147,8 +147,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
             // `AllocatorPool::new_fixed_size`, so all `Allocator`s are created via `FixedSizeAllocator`.
             // This is somewhat sketchy, as we don't have a type-level guarantee of this invariant,
             // but it does hold at present.
-            // When we replace `bumpalo` with a custom allocator, we can close this soundness hole.
-            // TODO: Do that.
+            // TODO: Close this soundness hole with type-level guarantees.
             let (buffer_id, buffer) = unsafe { get_buffer(allocator) };
 
             // Send data to JS

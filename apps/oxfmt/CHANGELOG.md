@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.26.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 864b4ab oxfmt: Use `format_config` for `external_options` override (#18252) (leaysgur)
+- 90ce4b7 oxfmt: Restore `customGroups` handling lost (#18243) (leaysgur)
+
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- a95b9bb oxfmt: Support oxfmtrc `overrides` config (#18068) (leaysgur)
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- fd2c792 formatter: Support css prop, styled jsx, and member/computed `styled.tags` (#17990) (magic-akari)
+- 361a8f1 oxfmt: Upgrade `prettier` to 3.8.0 (#18024) (Dunqing)
+- 873c683 oxfmt: Add more tracing logs (#18015) (Yuji Sugiura)
+- cc3e74b oxfmt: Add Prettier specific fields in `Oxfmtrc` (#17981) (leaysgur)
+- 6ffe315 oxfmt: Add more `Oxfmtrc` fields description (#17979) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2a397f8 oxlint/lsp: Don't send `workspace/diagnostic/refresh` notification on watched file changes (#17885) (Sysix)
+- efacb13 oxfmt: Do not wrap with `block_indent()` if `format_embedded` fails (#17975) (leaysgur)
+- 9d0f551 oxfmt: Do not panic with subdirectry and config (#17955) (leaysgur)
+- 9d96cc6 oxfmt: Use `std(out/err)._handle.setBlocking(true)` to handle `WouldBlock` error in Rust (#17950) (leaysgur)
+
 ## [0.24.0] - 2026-01-12
 
 ### 🚀 Features

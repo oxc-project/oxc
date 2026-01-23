@@ -342,7 +342,7 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            let res = config_store.external_plugin_store().setup_rule_configs(external_linter);
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
@@ -1486,13 +1486,24 @@ export { redundant };
     }
 
     #[test]
+    // Ensure the config validation works with vitest/no-hooks, which
+    // is an alias of jest/no-hooks.
+    fn test_invalid_config_invalid_config_with_rule_alias() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_with_rule_alias".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_invalid_config_in_override() {
         Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
     }
 
     #[test]
     fn test_invalid_config_invalid_config_multiple_rules() {
-        Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_multiple_rules".into())
+            .test_and_snapshot(&[]);
     }
 
     #[test]
@@ -1500,5 +1511,34 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/invalid_config_type_difference".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_extends() {
+        Tester::new().with_cwd("fixtures/extends_invalid_config".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_sort_imports() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_sort_imports".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_valid_complex_config() {
+        Tester::new().with_cwd("fixtures/valid_complex_config".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_complex_enum() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_complex_enum".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_tuple_rules() {
+        Tester::new().with_cwd("fixtures/invalid_config_tuple_rules".into()).test_and_snapshot(&[]);
     }
 }

@@ -20,7 +20,7 @@ fn no_autofocus_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(default)]
+#[serde(default, deny_unknown_fields)]
 pub struct NoAutofocus {
     /// Determines if developer-created components are checked.
     #[serde(rename = "ignoreNonDOM")]
@@ -56,15 +56,13 @@ declare_oxc_lint!(
     NoAutofocus,
     jsx_a11y,
     correctness,
-    fix,
+    suggestion,
     config = NoAutofocus,
 );
 
 impl Rule for NoAutofocus {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -81,7 +79,7 @@ impl Rule for NoAutofocus {
             if HTML_TAG.contains(element_type.as_ref())
                 && let JSXAttributeItem::Attribute(attr) = autofocus
             {
-                ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+                ctx.diagnostic_with_suggestion(no_autofocus_diagnostic(attr.span), |fixer| {
                     fixer.delete(&attr.span)
                 });
             }
@@ -89,7 +87,7 @@ impl Rule for NoAutofocus {
         }
 
         if let JSXAttributeItem::Attribute(attr) = autofocus {
-            ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+            ctx.diagnostic_with_suggestion(no_autofocus_diagnostic(attr.span), |fixer| {
                 fixer.delete(&attr.span)
             });
         }

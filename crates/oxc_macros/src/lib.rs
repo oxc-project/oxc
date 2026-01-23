@@ -3,7 +3,6 @@
 use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
-mod declare_all_lint_rules;
 mod declare_oxc_lint;
 
 /// Macro used to declare an oxc lint rule
@@ -129,15 +128,4 @@ pub fn declare_oxc_lint_test(input: TokenStream) -> TokenStream {
     let mut metadata = parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
     metadata.used_in_test = true;
     declare_oxc_lint::declare_oxc_lint(metadata)
-}
-
-/// Declare all lint rules in a single macro.
-///
-/// This create the `RuleEnum` struct, which is effectively a compile-time v-table for all lint rules.
-/// This bypasses object-safety requirements and allows for compile-time dispatch
-/// over a heterogeneous set of known lint rules.
-#[proc_macro]
-pub fn declare_all_lint_rules(input: TokenStream) -> TokenStream {
-    let metadata = parse_macro_input!(input as declare_all_lint_rules::AllLintRulesMeta);
-    declare_all_lint_rules::declare_all_lint_rules(metadata)
 }

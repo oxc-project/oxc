@@ -118,3 +118,22 @@ TextEdit: TextEdit {
     },
     new_text: "// oxlint-disable no-useless-escape\n",
 }
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 16,
+        },
+        end: Position {
+            line: 0,
+            character: 18,
+        },
+    },
+    new_text: "/",
+}

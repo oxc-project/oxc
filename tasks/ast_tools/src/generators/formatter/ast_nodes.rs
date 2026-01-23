@@ -86,7 +86,7 @@ impl Generator for FormatterAstNodesGenerator {
         });
 
         let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
-            quote! { Self::#name(n) => n.parent, }
+            quote! { Self::#name(n) => n.parent(), }
         });
 
         let ast_nodes_debug_names = ast_nodes_names.iter().map(|(name, _)| {
@@ -108,7 +108,7 @@ impl Generator for FormatterAstNodesGenerator {
             ///@@line_break
             use oxc_allocator::Vec;
             use oxc_ast::ast::*;
-            use oxc_span::GetSpan;
+            use oxc_span::{GetSpan, Ident};
             ///@@line_break
             use crate::ast_nodes::AstNode;
             use crate::formatter::{
@@ -122,12 +122,13 @@ impl Generator for FormatterAstNodesGenerator {
             #transmute_self
 
             ///@@line_break
+            #[derive(Clone, Copy)]
             pub enum AstNodes<'a> {
                 Dummy(),
                 #(#ast_nodes_variants)*
             }
 
-            impl <'a> AstNodes<'a> {
+            impl AstNodes<'_> {
                 #[inline]
                 pub fn span(&self) -> Span {
                     match self {
@@ -137,7 +138,7 @@ impl Generator for FormatterAstNodesGenerator {
                 }
 
                 #[inline]
-                pub fn parent(&self) -> &'a Self {
+                pub fn parent(&self) -> &Self {
                     match self {
                         #dummy_variant
                         #(#parent_match_arms)*
@@ -234,7 +235,7 @@ fn generate_struct_impls(
         };
 
         let parent_expr = if has_kind {
-            quote! { self.allocator.alloc(AstNodes::#struct_name(transmute_self(self))) }
+            quote! { AstNodes::#struct_name(transmute_self(self)) }
         } else {
             quote! { self.parent }
         };
@@ -265,60 +266,88 @@ fn generate_struct_impls(
 
             let should_not_have_following_node =
                 no_following_node_type_ids.contains(&struct_def.id);
-            let mut following_span = if should_not_have_following_node {
-                quote! {
-                    None
-                }
-            } else {
-                quote! {
-                    self.following_span
-                }
-            };
 
+            // Find the next field that can provide a following_span_start
             let mut next_field_index = index + 1;
+            let mut following_span_start = None;
+            let mut is_optional_chain = false;
+
             while let Some(next_field) = fields.get(next_field_index) {
                 let next_field_type_def = next_field.type_def(schema);
                 if let Some(next_following_node_tmp) =
-                    generate_next_following_node(next_field, next_field_type_def, schema)
+                    generate_next_following_node_start(next_field, next_field_type_def, schema)
                 {
-                    following_span = if next_field_type_def.is_option()
-                        || next_field_type_def.is_vec()
-                    {
+                    if next_field_type_def.is_option() || next_field_type_def.is_vec() {
                         let or_else_following_nodes = build_following_node_chain_until_non_option(
                             &fields[next_field_index + 1..],
                             should_not_have_following_node,
                             schema,
                         );
-                        quote! {
-                            #next_following_node_tmp #or_else_following_nodes
+                        // Check if we have an actual chain or a simple case
+                        if or_else_following_nodes.is_empty() {
+                            // Simple case - use map_or pattern directly (returns u32)
+                            following_span_start = Some(
+                                generate_simple_following_node_start(
+                                    next_field,
+                                    next_field_type_def,
+                                    schema,
+                                )
+                                .unwrap(),
+                            );
+                            // is_optional_chain stays false since we use map_or
+                        } else {
+                            is_optional_chain = true;
+                            following_span_start = Some(quote! {
+                                #next_following_node_tmp #or_else_following_nodes
+                            });
                         }
                     } else {
-                        next_following_node_tmp
-                    };
+                        // Non-optional field - we get a definite u32 value
+                        following_span_start = Some(next_following_node_tmp);
+                    }
                     break;
                 }
-
                 next_field_index += 1;
             }
 
+            // Generate the final following_span_start expression
+            let following_span_start_expr = match (following_span_start, is_optional_chain) {
+                (Some(expr), true) => {
+                    // Optional chain - need .unwrap_or(0)
+                    quote! { let following_span_start = #expr.unwrap_or(0); }
+                }
+                (Some(expr), false) => {
+                    // Direct u32 value (from non-optional field or map_or pattern)
+                    quote! { let following_span_start = #expr; }
+                }
+                (None, _) if should_not_have_following_node => {
+                    // No following node and type shouldn't have one
+                    quote! { let following_span_start = 0; }
+                }
+                (None, _) => {
+                    // No next field found, use parent's following_span_start
+                    quote! { let following_span_start = self.following_span_start; }
+                }
+            };
+
             if is_option {
                 quote! {
-                    let following_span = #following_span;
+                    #following_span_start_expr
                     self.allocator.alloc(self.inner.#field_name.as_ref().map(|inner| AstNode {
                         inner: #inner_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
-                        following_span
+                        following_span_start
                     })).as_ref()
                 }
             } else {
                 quote! {
-                    let following_span = #following_span;
+                    #following_span_start_expr
                     self.allocator.alloc(AstNode {
                         inner: #field_access,
                         allocator: self.allocator,
                         parent: #parent_expr,
-                        following_span
+                        following_span_start
                     })
                 }
             }
@@ -363,7 +392,7 @@ fn generate_struct_impls(
                 format_trailing_comments(
                     self.parent.span(),
                     self.inner.span(),
-                    self.following_span,
+                    self.following_span_start,
                 )
                 .fmt(f);
             }
@@ -371,7 +400,8 @@ fn generate_struct_impls(
     }
 }
 
-fn generate_next_following_node(
+/// Generates code that returns `Option<u32>` for the start position of the following node.
+fn generate_next_following_node_start(
     next_field: &FieldDef,
     next_field_type_def: &TypeDef,
     schema: &Schema,
@@ -390,9 +420,12 @@ fn generate_next_following_node(
         return None;
     }
 
-    let following_span = match next_field_type_def {
+    // For non-optional fields, return plain u32 expression
+    // For optional/vec fields, return Option<u32> expression
+    let following_span_start = match next_field_type_def {
         TypeDef::Box(_) | TypeDef::Struct(_) | TypeDef::Enum(_) => {
-            quote! { Some(#next_field_accessor.span()) }
+            // Non-optional: returns plain u32
+            quote! { #next_field_accessor.span().start }
         }
         TypeDef::Option(option_def) => {
             let inner_type = option_def.inner_type(schema);
@@ -401,15 +434,49 @@ fn generate_next_following_node(
             } else {
                 quote! { as_ref() }
             };
-            quote! { #next_field_accessor.#inner_type_call.map(GetSpan::span) }
+            // Optional: returns Option<u32>
+            quote! { #next_field_accessor.#inner_type_call.map(|n| n.span().start) }
         }
         TypeDef::Vec(_) => {
-            quote! { #next_field_accessor.first().map(GetSpan::span) }
+            // Vec: returns Option<u32>
+            quote! { #next_field_accessor.first().map(|n| n.span().start) }
         }
         _ => return None,
     };
 
-    Some(following_span)
+    Some(following_span_start)
+}
+
+/// Generate a simple following_span_start expression using map_or (returns u32 directly).
+/// Used when there's no chain (just a single optional/vec field).
+fn generate_simple_following_node_start(
+    next_field: &FieldDef,
+    next_field_type_def: &TypeDef,
+    schema: &Schema,
+) -> Option<TokenStream> {
+    let next_field_ident = next_field.ident();
+    let next_field_accessor = quote! { self.inner.#next_field_ident };
+
+    // Generate map_or pattern for Optional/Vec fields (returns u32 directly)
+    let following_span_start = match next_field_type_def {
+        TypeDef::Option(option_def) => {
+            let inner_type = option_def.inner_type(schema);
+            let inner_type_call = if inner_type.is_box() {
+                quote! { as_deref() }
+            } else {
+                quote! { as_ref() }
+            };
+            // Using map_or: returns u32 directly
+            quote! { #next_field_accessor.#inner_type_call.map_or(0, |n| n.span().start) }
+        }
+        TypeDef::Vec(_) => {
+            // Using map_or: returns u32 directly
+            quote! { #next_field_accessor.first().map_or(0, |n| n.span().start) }
+        }
+        _ => return None,
+    };
+
+    Some(following_span_start)
 }
 
 fn build_following_node_chain_until_non_option(
@@ -421,11 +488,20 @@ fn build_following_node_chain_until_non_option(
 
     for field in fields {
         let field_type_def = field.type_def(schema);
-        if let Some(following_span) = generate_next_following_node(field, field_type_def, schema) {
-            result = quote! {
-                #result.or_else(|| #following_span)
-            };
-            if !field_type_def.is_option() && !field_type_def.is_vec() {
+        if let Some(following_span_start) =
+            generate_next_following_node_start(field, field_type_def, schema)
+        {
+            // Non-optional fields return plain u32, need to wrap in Some() for .or_else()
+            // Optional/Vec fields return Option<u32>, use directly
+            if field_type_def.is_option() || field_type_def.is_vec() {
+                result = quote! {
+                    #result.or_else(|| #following_span_start)
+                };
+            } else {
+                // Non-optional field terminates the chain
+                result = quote! {
+                    #result.or_else(|| Some(#following_span_start))
+                };
                 return result;
             }
         }
@@ -434,7 +510,7 @@ fn build_following_node_chain_until_non_option(
     if should_not_have_following_node {
         result
     } else {
-        quote! { #result.or(self.following_span) }
+        quote! { #result.or(Some(self.following_span_start)) }
     }
 }
 
@@ -464,7 +540,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: #inner_expr,
                     parent,
                     allocator: self.allocator,
-                    following_span: self.following_span,
+                    following_span_start: self.following_span_start,
                 }))
             }
         } else {
@@ -492,7 +568,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: it.#to_fn_ident(),
                     parent,
                     allocator: self.allocator,
-                    following_span: self.following_span,
+                    following_span_start: self.following_span_start,
                 }))
             }
         } else {
@@ -501,7 +577,7 @@ fn generate_enum_impls(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
                     inner: it.#to_fn_ident(),
                     parent,
                     allocator: self.allocator,
-                    following_span: self.following_span,
+                    following_span_start: self.following_span_start,
                 }).as_ast_nodes();
             }
         };

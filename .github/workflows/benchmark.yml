@@ -86,12 +86,12 @@ jobs:
               --bench minifier --bench codegen --bench formatter \
               --no-default-features --features ${{ matrix.feature }} --features codspeed
           fi
-          mkdir -p target/codspeed/simulation/oxc_benchmark
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/simulation/oxc_benchmark
-          rm target/codspeed/simulation/oxc_benchmark/*.d
+          mkdir -p target/codspeed/analysis/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/analysis/oxc_benchmark
+          rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@dbda7111f8ac363564b0c51b992d4ce76bb89f2f # v4.5.2
+        uses: CodSpeedHQ/action@e736f0d2aeb36da38e9f08eca4dff7967408d154 # v4.8.2
         timeout-minutes: 30
         with:
           mode: simulation

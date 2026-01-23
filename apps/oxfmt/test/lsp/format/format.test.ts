@@ -82,9 +82,7 @@ describe("LSP formatting", () => {
           "custom_config_path/semicolons-as-needed.ts",
           "typescript",
           {
-            settings: {
-              "fmt.configPath": "./format.json",
-            },
+            "fmt.configPath": "./format.json",
           },
         ),
       ).toMatchSnapshot();

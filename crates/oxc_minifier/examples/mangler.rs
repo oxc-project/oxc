@@ -43,7 +43,7 @@ fn main() -> std::io::Result<()> {
     let source_type = SourceType::from_path(path).unwrap();
 
     let options = MangleOptions {
-        top_level: source_type.is_module(),
+        top_level: !source_type.is_script(),
         keep_names: MangleOptionsKeepNames { function: keep_names, class: keep_names },
         debug,
     };

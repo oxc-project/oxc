@@ -26,7 +26,7 @@ fn no_null_diagnostic(null: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoNull {
     /// When set to `true`, the rule will also check strict equality/inequality comparisons (`===` and `!==`) against `null`.
     check_strict_equality: bool,
@@ -58,7 +58,7 @@ declare_oxc_lint!(
     NoNull,
     unicorn,
     style,
-    conditional_fix,
+    conditional_dangerous_fix,
     config = NoNull
 );
 
@@ -84,7 +84,7 @@ impl NoNull {
         match binary_expr.operator {
             // `if (foo != null) {}`
             BinaryOperator::Equality | BinaryOperator::Inequality => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fix_null(fixer, null_literal)
                 });
             }
@@ -92,13 +92,14 @@ impl NoNull {
             // `if (foo !== null) {}`
             BinaryOperator::StrictEquality | BinaryOperator::StrictInequality => {
                 if self.check_strict_equality {
-                    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
-                        fix_null(fixer, null_literal)
-                    });
+                    ctx.diagnostic_with_dangerous_fix(
+                        no_null_diagnostic(null_literal.span),
+                        |fixer| fix_null(fixer, null_literal),
+                    );
                 }
             }
             _ => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fix_null(fixer, null_literal)
                 });
             }
@@ -116,7 +117,7 @@ fn diagnose_variable_declarator(
     if matches!(&variable_declarator.init, Some(Expression::NullLiteral(expr)) if expr.span == null_literal.span)
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
-        ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+        ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
             fixer.delete_range(Span::new(variable_declarator.id.span().end, null_literal.span.end))
         });
 
@@ -124,7 +125,7 @@ fn diagnose_variable_declarator(
     }
 
     // `const foo = null`
-    ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+    ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
         fix_null(fixer, null_literal)
     });
 }
@@ -173,9 +174,7 @@ fn match_call_expression_pass_case(null_literal: &NullLiteral, call_expr: &CallE
 
 impl Rule for NoNull {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -185,7 +184,7 @@ impl Rule for NoNull {
 
         let mut parents = iter_outer_expressions(ctx.nodes(), node.id());
         let Some(parent_kind) = parents.next() else {
-            ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+            ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                 fix_null(fixer, null_literal)
             });
             return;
@@ -205,7 +204,7 @@ impl Rule for NoNull {
                 diagnose_variable_declarator(ctx, null_literal, decl, grandparent_kind);
             }
             (AstKind::ReturnStatement(_), _) => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     let mut null_span = null_literal.span;
                     // Find the last parent that is a TSAsExpression (`null as any`) or TSNonNullExpression (`null!`)
                     for parent in ctx.nodes().ancestors(node.id()) {
@@ -225,12 +224,12 @@ impl Rule for NoNull {
                 });
             }
             (AstKind::SwitchCase(_), Some(AstKind::SwitchStatement(switch))) => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     try_fix_case(fixer, null_literal, switch)
                 });
             }
             _ => {
-                ctx.diagnostic_with_fix(no_null_diagnostic(null_literal.span), |fixer| {
+                ctx.diagnostic_with_dangerous_fix(no_null_diagnostic(null_literal.span), |fixer| {
                     fix_null(fixer, null_literal)
                 });
             }

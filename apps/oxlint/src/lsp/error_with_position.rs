@@ -7,7 +7,7 @@ use tower_lsp_server::ls_types::{
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::{OxcCode, Severity};
-use oxc_linter::{Fix, Message, PossibleFixes};
+use oxc_linter::{Fix, FixKind, Message, PossibleFixes};
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -26,13 +26,14 @@ pub struct FixedContent {
     pub message: String,
     pub code: String,
     pub range: Range,
+    pub kind: FixKind,
 }
 
 // clippy: the source field is checked and assumed to be less than 4GB, and
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn message_to_lsp_diagnostic(
-    mut message: Message,
+    message: Message,
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
@@ -112,20 +113,20 @@ pub fn message_to_lsp_diagnostic(
 
     let mut fixed_content = vec![];
     // Convert PossibleFixes directly to PossibleFixContent
-    match &mut message.fixes {
+    match message.fixes {
         PossibleFixes::None => {}
-        PossibleFixes::Single(fix) => {
+        PossibleFixes::Single(mut fix) => {
             if fix.message.is_none() {
                 fix.message = Some(alternative_fix_title);
             }
-            fixed_content.push(fix_to_fixed_content(fix, rope, source_text));
+            fixed_content.push(fix_to_fixed_content(&fix, rope, source_text));
         }
         PossibleFixes::Multiple(fixes) => {
-            fixed_content.extend(fixes.iter_mut().map(|fix| {
+            fixed_content.extend(fixes.into_iter().map(|mut fix| {
                 if fix.message.is_none() {
                     fix.message = Some(alternative_fix_title.clone());
                 }
-                fix_to_fixed_content(fix, rope, source_text)
+                fix_to_fixed_content(&fix, rope, source_text)
             }));
         }
     }
@@ -175,6 +176,7 @@ fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedConte
         message: fix.message.as_ref().map(std::string::ToString::to_string).unwrap_or_default(),
         code: fix.content.to_string(),
         range: Range::new(start_position, end_position),
+        kind: fix.kind,
     }
 }
 
@@ -333,6 +335,7 @@ fn disable_for_this_line(
             "{content_prefix}{whitespace_string}// oxlint-disable-next-line {rule_name}\n"
         ),
         range: Range::new(position, position),
+        kind: FixKind::SafeFix,
     }
 }
 
@@ -354,6 +357,7 @@ fn disable_for_this_section(
         message: format!("Disable {rule_name} for this whole file"),
         code: content,
         range: Range::new(position, position),
+        kind: FixKind::SafeFix,
     }
 }
 

@@ -7,7 +7,7 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ExternalCallbacks, IndentWidth,
+    IndentWidth,
     ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
@@ -29,6 +29,11 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
+        // Angular `@Component({ template, styles })`
+        if try_format_angular_component(self, f) {
+            return;
+        }
+        // styled-jsx: <style jsx>{`...`}</style> or <div css={`...`} />
         if try_format_css_template(self, f) {
             return;
         }
@@ -774,11 +779,11 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
 
 fn format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
-    tag_name: &str,
+    language: &str,
     template_content: &str,
 ) -> bool {
     let Some(Ok(formatted)) =
-        f.context().external_callbacks().format_embedded(tag_name, template_content)
+        f.context().external_callbacks().format_embedded(language, template_content)
     else {
         return false;
     };
@@ -802,29 +807,28 @@ fn format_embedded_template<'a>(
 }
 
 /// Try to format a tagged template with the embedded formatter if supported.
-/// Returns `Some(result)` if formatting was attempted, `None` if not applicable.
+/// Returns `true` if formatting was performed, `false` if not applicable.
 fn try_format_embedded_template<'a>(
     tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
     let quasi = &tagged.quasi;
+    // TODO: Support expressions in the template
     if !quasi.is_no_substitution_template() {
         return false;
     }
 
-    let Some(tag_name) = get_tag_name(&tagged.tag) else {
-        return false;
+    let language = match get_tag_name(&tagged.tag) {
+        Some("css" | "styled") => "tagged-css",
+        Some("gql" | "graphql") => "tagged-graphql",
+        Some("html") => "tagged-html",
+        Some("md" | "markdown") => "tagged-markdown",
+        _ => return false,
     };
 
-    // Check if the tag is supported by the embedded formatter
-    if !ExternalCallbacks::is_supported_tag(tag_name) {
-        return false;
-    }
-
-    // Get the external callbacks from the context
     let template_content = quasi.quasis[0].value.raw.as_str();
 
-    format_embedded_template(f, tag_name, template_content)
+    format_embedded_template(f, language, template_content)
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
@@ -834,11 +838,11 @@ fn try_format_embedded_template<'a>(
 /// <style jsx>{`div { color: red; }`}</style>
 /// ```
 fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
-    let AstNodes::JSXExpressionContainer(container) = node.parent else {
+    let AstNodes::JSXExpressionContainer(container) = node.parent() else {
         return false;
     };
 
-    match container.parent {
+    match container.parent() {
         AstNodes::JSXAttribute(attribute) => {
             if let JSXAttributeName::Identifier(ident) = &attribute.name
                 && ident.name == "css"
@@ -867,6 +871,7 @@ fn try_format_css_template<'a>(
     template_literal: &AstNode<'a, TemplateLiteral<'a>>,
     f: &mut Formatter<'_, 'a>,
 ) -> bool {
+    // TODO: Support expressions in the template
     if !template_literal.is_no_substitution_template() {
         return false;
     }
@@ -878,5 +883,80 @@ fn try_format_css_template<'a>(
     let quasi = template_literal.quasis();
     let template_content = quasi[0].value.raw.as_str();
 
-    format_embedded_template(f, "css", template_content)
+    format_embedded_template(f, "styled-jsx", template_content)
+}
+
+/// Try to format a template literal inside Angular @Component's template/styles property.
+/// Returns `true` if formatting was performed, `false` if not applicable.
+fn try_format_angular_component<'a>(
+    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    f: &mut Formatter<'_, 'a>,
+) -> bool {
+    // TODO: Support expressions in the template
+    if !template_literal.is_no_substitution_template() {
+        return false;
+    }
+
+    // Check if inside `@Component` decorator's `template/styles` property
+    let Some(language) = get_angular_component_language(template_literal) else {
+        return false;
+    };
+
+    let quasi = template_literal.quasis();
+    let template_content = quasi[0].value.raw.as_str();
+
+    format_embedded_template(f, language, template_content)
+}
+
+/// Check if this template literal is one of:
+/// ```ts
+/// @Component({
+///   template: `...`,
+///   styles: `...`,
+///   // or styles: [`...`]
+/// })
+/// ```
+fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Option<&'static str> {
+    let prop = match node.parent() {
+        AstNodes::ObjectProperty(prop) => prop,
+        AstNodes::ArrayExpression(arr) => {
+            let AstNodes::ObjectProperty(prop) = arr.parent() else {
+                return None;
+            };
+            prop
+        }
+        _ => return None,
+    };
+
+    // Skip computed properties
+    if prop.computed {
+        return None;
+    }
+    let PropertyKey::StaticIdentifier(key) = &prop.key else {
+        return None;
+    };
+
+    // Check parent chain: ObjectExpression -> CallExpression(Component) -> Decorator
+    let AstNodes::ObjectExpression(obj) = prop.parent() else {
+        return None;
+    };
+    let AstNodes::CallExpression(call) = obj.parent() else {
+        return None;
+    };
+    let Expression::Identifier(ident) = &call.callee else {
+        return None;
+    };
+    if ident.name.as_str() != "Component" {
+        return None;
+    }
+    if !matches!(call.parent(), AstNodes::Decorator(_)) {
+        return None;
+    }
+
+    let language = match key.name.as_str() {
+        "template" => "angular-template",
+        "styles" => "angular-styles",
+        _ => return None,
+    };
+    Some(language)
 }

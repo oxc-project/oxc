@@ -1,0 +1,10 @@
+{
+  "plugins": ["eslint"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    // Invalid config, memberSyntaxSortOrder must have all 4 values.
+    "eslint/sort-imports": ["error", { "memberSyntaxSortOrder": ["none", "all", "multiple"] }]
+  }
+}

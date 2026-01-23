@@ -54,6 +54,12 @@ pub struct BabelOptions {
     #[serde(default)]
     pub allow_undeclared_exports: bool,
 
+    #[serde(default)]
+    pub allow_new_target_outside_function: bool,
+
+    #[serde(default)]
+    pub allow_super_outside_method: bool,
+
     #[serde(default = "default_as_true")]
     pub external_helpers: bool,
 }
@@ -180,6 +186,10 @@ impl BabelOptions {
 
     pub fn is_typescript_definition(&self) -> bool {
         self.plugins.syntax_typescript.is_some_and(|o| o.dts)
+    }
+
+    pub fn has_disallow_ambiguous_jsx_like(&self) -> bool {
+        self.plugins.syntax_typescript.is_some_and(|o| o.disallow_ambiguous_jsx_like)
     }
 
     pub fn is_module(&self) -> bool {

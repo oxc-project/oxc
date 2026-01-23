@@ -1,13 +1,34 @@
 {
-  "plugins": ["jest"],
+  "plugins": ["jest", "vue", "import", "typescript", "vitest"],
   "categories": {
     "correctness": "off"
   },
   "rules": {
-    // First invalid rule: unknown option field `foo`
+    // Unknown option field `foo`
     "jest/no-hooks": ["error", { "foo": "bar" }],
 
-    // Second invalid rule: invalid enum value
-    "eslint/no-return-assign": ["error", "foobar"]
+    // Invalid enum value
+    "eslint/no-return-assign": ["error", "foobar"],
+
+    // Invalid enum value inside object
+    "vue/define-emits-declaration": ["error", { "declaration": 0 }],
+
+    // preferInline should be boolean
+    "import/no-duplicates": ["error", { "preferInline": "maybe" }],
+
+    // Invalid value for enum, cannot be a number.
+    "eslint/no-cond-assign": ["error", 123],
+
+    // Unknown option field `foobar`
+    "import/no-absolute-path": ["error", { "foobar": true }],
+
+    // Invalid enum value, should not be a boolean.
+    "typescript/consistent-indexed-object-style": ["error", true],
+
+    // No extra values allowed.
+    "eslint/no-console": ["error", { "allow": ["info"], "extra": "value" }],
+
+    // Invalid enum value, cannot be "other".
+    "vitest/consistent-vitest-vi": ["error", { "fn": "other" }],
   }
 }

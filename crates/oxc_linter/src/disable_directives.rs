@@ -6,7 +6,7 @@ use oxc_span::Span;
 use rust_lapper::{Interval, Lapper};
 use rustc_hash::FxHashMap;
 
-use crate::fixer::Fix;
+use crate::{FixKind, fixer::Fix};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 enum DisabledRule {
@@ -114,7 +114,8 @@ impl RuleCommentRule {
             return Fix::delete(Span::new(
                 self.name_span.start - comma_before_offset,
                 self.name_span.end,
-            ));
+            ))
+            .with_kind(FixKind::Fix);
         }
 
         let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
@@ -136,7 +137,8 @@ impl RuleCommentRule {
             return Fix::delete(Span::new(
                 self.name_span.start,
                 self.name_span.end + comma_after_offset,
-            ));
+            ))
+            .with_kind(FixKind::Fix);
         }
 
         unreachable!(

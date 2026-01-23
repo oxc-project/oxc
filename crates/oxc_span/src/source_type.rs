@@ -193,8 +193,12 @@ impl From<FileExtension> for SourceType {
         };
 
         let module_kind = match file_ext {
-            Js | Tsx | Ts | Jsx | Mts | Mjs => ModuleKind::Module,
-            Cjs | Cts => ModuleKind::Script,
+            // Ambiguous extensions need content-based detection (import/export → ESM, otherwise Script)
+            Js | Jsx | Ts | Tsx => ModuleKind::Unambiguous,
+            // Explicit ESM extensions
+            Mts | Mjs => ModuleKind::Module,
+            // Explicit CommonJS extensions
+            Cjs | Cts => ModuleKind::CommonJS,
         };
 
         let variant = match file_ext {
@@ -207,12 +211,10 @@ impl From<FileExtension> for SourceType {
 }
 
 impl SourceType {
-    /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.
+    /// Creates a [`SourceType`] representing a [`JavaScript`] file using CommonJS
+    /// modules. This is akin to a file with an `.cjs` extension.
     ///
-    /// This file could be a vanilla script (no module system of any kind) or a
-    /// CommonJS file.
-    ///
-    /// The resulting source type is not a [`module`], nor does it support [`JSX`].
+    /// The resulting source type does not support [`JSX`].
     /// Use [`SourceType::jsx`] for [`JSX`] sources.
     ///
     /// ## Example
@@ -221,17 +223,16 @@ impl SourceType {
     ///
     /// let js = SourceType::cjs();
     /// assert!(js.is_javascript());
-    /// assert!(js.is_script()); // not a module
+    /// assert!(js.is_commonjs());
     /// assert!(!js.is_jsx());
     /// ```
     ///
     /// [`JavaScript`]: Language::JavaScript
-    /// [`module`]: ModuleKind::Module
     /// [`JSX`]: LanguageVariant::Jsx
     pub const fn cjs() -> Self {
         Self {
             language: Language::JavaScript,
-            module_kind: ModuleKind::Script,
+            module_kind: ModuleKind::CommonJS,
             variant: LanguageVariant::Standard,
         }
     }
@@ -550,12 +551,12 @@ impl SourceType {
     /// for TypeScript files, only `.tsx` files are treated as JSX.
     ///
     /// Note that this behavior deviates from [`SourceType::cjs`], which produces
-    /// [`scripts`].
+    /// [`commonjs`].
     ///
     /// ### Modules vs. Scripts.
     /// Oxc has partial support for Node's
     /// [CommonJS](https://nodejs.org/api/modules.html#enabling) detection
-    /// strategy. Any file with a `.c[tj]s` extension is treated as a [`script`].
+    /// strategy. Any file with a `.c[tj]s` extension is treated as a [`commonjs`].
     /// All other files are treated as [`modules`].
     ///
     /// # Errors
@@ -565,8 +566,7 @@ impl SourceType {
     ///     "mts", "cts", "tsx". See [`VALID_EXTENSIONS`] for the list of valid
     ///     extensions.
     ///
-    /// [`script`]: ModuleKind::Script
-    /// [`scripts`]: ModuleKind::Script
+    /// [`commonjs`]: ModuleKind::CommonJS
     /// [`modules`]: ModuleKind::Module
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, UnknownExtension> {
         let file_name = path
@@ -656,22 +656,19 @@ mod tests {
             assert!(!ty.is_javascript());
         }
 
-        assert_eq!(SourceType::ts(), ts);
-
-        assert!(ts.is_module());
+        // .ts and .tsx use Unambiguous (content-based detection)
+        assert!(ts.is_unambiguous());
+        assert!(tsx.is_unambiguous());
+        // .mts is explicit ESM
         assert!(mts.is_module());
-        assert!(!cts.is_module());
-        assert!(tsx.is_module());
+        // .cts is explicit CommonJS
+        assert!(cts.is_commonjs());
 
-        assert!(!ts.is_script());
-        assert!(!mts.is_script());
-        assert!(cts.is_script());
-        assert!(!tsx.is_script());
-
-        assert!(ts.is_strict());
+        // Only explicit modules are strict
+        assert!(!ts.is_strict()); // Unambiguous is not strict until resolved
         assert!(mts.is_strict());
         assert!(!cts.is_strict());
-        assert!(tsx.is_strict());
+        assert!(!tsx.is_strict()); // Unambiguous is not strict until resolved
 
         assert!(!ts.is_jsx());
         assert!(!mts.is_jsx());
@@ -692,17 +689,16 @@ mod tests {
             assert!(!ty.is_javascript());
         }
 
-        assert_eq!(SourceType::d_ts(), dts);
-
-        assert!(dts.is_module());
+        // .d.ts uses Unambiguous (content-based detection)
+        assert!(dts.is_unambiguous());
+        assert!(arbitrary.is_unambiguous());
+        // .d.mts is explicit ESM
         assert!(dmts.is_module());
-        assert!(!dcts.is_module());
+        // .d.cts is explicit CommonJS
+        assert!(dcts.is_commonjs());
 
-        assert!(!dts.is_script());
-        assert!(!dmts.is_script());
-        assert!(dcts.is_script());
-
-        assert!(dts.is_strict());
+        // Only explicit modules are strict
+        assert!(!dts.is_strict());
         assert!(dmts.is_strict());
         assert!(!dcts.is_strict());
 
@@ -727,18 +723,21 @@ mod tests {
             assert!(!ty.is_typescript(), "{ty:?}");
         }
 
-        assert_eq!(SourceType::mjs(), js);
-        assert_eq!(SourceType::jsx().with_module(true), jsx);
+        assert_eq!(SourceType::mjs(), mjs);
 
-        assert!(js.is_module());
+        // .js and .jsx use Unambiguous (content-based detection)
+        assert!(js.is_unambiguous());
+        assert!(jsx.is_unambiguous());
+        // .mjs is explicit ESM
         assert!(mjs.is_module());
+        // .cjs is explicit CommonJS
         assert!(!cjs.is_module());
-        assert!(jsx.is_module());
 
-        assert!(js.is_strict());
+        // Only explicit modules are strict
+        assert!(!js.is_strict()); // Unambiguous is not strict until resolved
         assert!(mjs.is_strict());
         assert!(!cjs.is_strict());
-        assert!(jsx.is_strict());
+        assert!(!jsx.is_strict()); // Unambiguous is not strict until resolved
 
         assert!(js.is_javascript());
         assert!(mjs.is_javascript());

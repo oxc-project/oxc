@@ -43,7 +43,7 @@ export type JsLoadPluginCb =
   ((arg0: string, arg1: string | undefined | null, arg2: boolean) => Promise<string>)
 
 /** JS callback to setup configs. */
-export type JsSetupConfigsCb =
+export type JsSetupRuleConfigsCb =
   ((arg: string) => string | null)
 
 /**
@@ -52,12 +52,12 @@ export type JsSetupConfigsCb =
  * JS side passes in:
  * 1. `args`: Command line arguments (process.argv.slice(2))
  * 2. `load_plugin`: Load a JS plugin from a file path.
- * 3. `setup_configs`: Setup configuration options.
+ * 3. `setup_rule_configs`: Setup configuration options.
  * 4. `lint_file`: Lint a file.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupConfigs: JsSetupConfigsCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
@@ -91,7 +91,7 @@ export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */
   lang?: 'js' | 'jsx' | 'ts' | 'tsx' | 'dts'
   /** Treat the source text as `script` or `module` code. */
-  sourceType?: 'script' | 'module' | 'unambiguous' | undefined
+  sourceType?: 'script' | 'module' | 'commonjs' | 'unambiguous' | undefined
   /** Ignore non-fatal parsing errors */
   ignoreNonFatalErrors?: boolean
 }
