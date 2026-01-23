@@ -649,7 +649,7 @@ impl Linter {
                             // That's possible if UTF-16 offset points to middle of a surrogate pair.
                             let mut span = Span::new(fix.range[0], fix.range[1]);
                             span_converter.convert_span_back(&mut span);
-                            Fix::new(fix.text, span)
+                            Fix::new(fix.text, span).with_kind(FixKind::Fix)
                         });
 
                         if is_single {

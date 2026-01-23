@@ -319,7 +319,9 @@ impl<'a> ContextHost<'a> {
                         OxcDiagnostic::error(message_for_disable)
                             .with_label(span)
                             .with_severity(rule_severity),
-                        PossibleFixes::Single(Fix::delete(span).with_message(fix_message)),
+                        PossibleFixes::Single(
+                            Fix::delete(span).with_kind(FixKind::Fix).with_message(fix_message),
+                        ),
                     ));
                 }
                 RuleCommentType::Single(rules_vec) => {
