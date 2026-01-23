@@ -75,6 +75,8 @@ export function describe(name: string, fn: () => void): void {
   }
 }
 
+(globalThis as any).describe = describe;
+
 /**
  * `it` function that runs and records individual tests.
  * @param name - Name of the test
@@ -117,6 +119,8 @@ export function it(code: string, fn: () => void): void {
 
   currentRule!.tests.push(testResult);
 }
+
+(globalThis as any).it = it;
 
 /**
  * Determine if failing test case should be skipped.
