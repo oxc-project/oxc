@@ -243,7 +243,8 @@ let sharedConfig: Config = {};
 
 // List of keys that `ValidTestCase` or `InvalidTestCase` can have.
 // Must be kept in sync with properties of `ValidTestCase` and `InvalidTestCase` interfaces.
-const TEST_CASE_PROP_KEYS = new Set([
+// The type constraints enforce this.
+const TEST_CASE_PROP_KEYS_ARRAY = [
   "code",
   "name",
   "only",
@@ -256,7 +257,13 @@ const TEST_CASE_PROP_KEYS = new Set([
   "errors",
   // Not a valid key for `TestCase` interface, but present here to prevent prototype pollution in `createConfigForRun`
   "__proto__",
-]);
+] as const satisfies readonly (TestCaseOwnKeys | "__proto__")[];
+
+type TestCaseOwnKeys = Exclude<keyof ValidTestCase | keyof InvalidTestCase, keyof Config>;
+type MissingKeys = Exclude<TestCaseOwnKeys, (typeof TEST_CASE_PROP_KEYS_ARRAY)[number]>;
+type KeysSet = MissingKeys extends never ? Set<string> : never;
+
+const TEST_CASE_PROP_KEYS: KeysSet = new Set(TEST_CASE_PROP_KEYS_ARRAY);
 
 /**
  * Test case.
