@@ -22,6 +22,7 @@ import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
+import type { Settings } from "../plugins/settings.ts";
 import type { ParseOptions } from "./parse.ts";
 
 // ------------------------------------------------------------------------------
@@ -248,6 +249,7 @@ const TEST_CASE_PROP_KEYS = new Set([
   "only",
   "filename",
   "options",
+  "settings",
   "before",
   "after",
   "output",
@@ -265,6 +267,7 @@ interface TestCase extends Config {
   only?: boolean;
   filename?: string;
   options?: Options;
+  settings?: Settings;
   before?: (this: this) => void;
   after?: (this: this) => void;
 }
@@ -985,8 +988,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     if (CONFORMANCE) setEcmaVersionAndFeatures(test);
 
     // Get globals and settings
-    const globalsJSON: string = getGlobalsJson(test);
-    const settingsJSON = "{}"; // TODO
+    const globalsJSON = getGlobalsJson(test);
+    const settingsJSON = JSON.stringify(test.settings ?? {});
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.

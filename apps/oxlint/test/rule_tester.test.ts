@@ -3109,4 +3109,65 @@ describe("RuleTester", () => {
       });
     });
   });
+
+  describe("settings", () => {
+    const settingsReporterRule: Rule = {
+      create(context) {
+        return {
+          Program(node) {
+            context.report({
+              message: `settings: ${JSON.stringify(context.settings)}`,
+              node,
+            });
+          },
+        };
+      },
+    };
+
+    it("is empty object if no settings defined", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", settingsReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            errors: [
+              {
+                message: "settings: {}",
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("reflects defined settings", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", settingsReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            settings: { foo: 123, nested: { bar: true, qux: null } },
+            errors: [
+              {
+                message: 'settings: {"foo":123,"nested":{"bar":true,"qux":null}}',
+              },
+            ],
+          },
+          {
+            code: "",
+            settings: { x: "y" },
+            errors: [
+              {
+                message: 'settings: {"x":"y"}',
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null, null]);
+    });
+  });
 });
