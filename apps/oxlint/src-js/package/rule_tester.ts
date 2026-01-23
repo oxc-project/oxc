@@ -480,7 +480,7 @@ export class RuleTester {
   }
 }
 
-// In debug builds only, we provide a hook to modify test cases before they're run.
+// In conformance build only, we provide a hook to modify test cases before they're run.
 // Hook can be registered by calling `RuleTester.registerModifyTestCaseHook`.
 // This is used in conformance tester.
 let modifyTestCase: ((test: TestCase) => void) | null = null;
