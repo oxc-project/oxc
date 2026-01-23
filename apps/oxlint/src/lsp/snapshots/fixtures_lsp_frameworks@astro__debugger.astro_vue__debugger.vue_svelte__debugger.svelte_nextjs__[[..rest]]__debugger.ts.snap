@@ -268,6 +268,64 @@ TextEdit: TextEdit {
 }
 
 
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 8,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 10,
+            character: 2,
+        },
+        end: Position {
+            line: 10,
+            character: 10,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 14,
+            character: 2,
+        },
+        end: Position {
+            line: 14,
+            character: 10,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 18,
+            character: 2,
+        },
+        end: Position {
+            line: 18,
+            character: 10,
+        },
+    },
+    new_text: "",
+}
+
+
 ########## 
 Linted file: fixtures/lsp/frameworks/vue/debugger.vue
 ----------
@@ -402,6 +460,38 @@ TextEdit: TextEdit {
         },
     },
     new_text: "// oxlint-disable no-debugger\n",
+}
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 4,
+            character: 8,
+        },
+        end: Position {
+            line: 4,
+            character: 17,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 8,
+            character: 4,
+        },
+        end: Position {
+            line: 8,
+            character: 13,
+        },
+    },
+    new_text: "",
 }
 
 
@@ -571,6 +661,25 @@ TextEdit: TextEdit {
 }
 
 
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 1,
+        },
+        end: Position {
+            line: 1,
+            character: 10,
+        },
+    },
+    new_text: "",
+}
+
+
 ########## 
 Linted file: fixtures/lsp/frameworks/nextjs/[[..rest]]/debugger.ts
 ----------
@@ -640,4 +749,23 @@ TextEdit: TextEdit {
         },
     },
     new_text: "// oxlint-disable no-debugger\n",
+}
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 9,
+        },
+    },
+    new_text: "",
 }
