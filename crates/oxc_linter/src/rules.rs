@@ -682,6 +682,7 @@ pub(crate) mod vitest {
     pub mod prefer_to_be_object;
     pub mod prefer_to_be_truthy;
     pub mod require_local_test_context_for_concurrent_snapshots;
+    pub mod valid_title;
     pub mod warn_todo;
 }
 
@@ -710,6 +711,10 @@ pub(crate) mod vue {
     pub mod require_typed_ref;
     pub mod valid_define_emits;
     pub mod valid_define_props;
+}
+
+pub(crate) mod shared {
+    pub mod valid_title;
 }
 
 // Re-export RuleEnum, RULES, and all rule type aliases from generated code

@@ -35,6 +35,7 @@ fn test_rules_with_custom_configuration_have_schema() {
         "eslint/no-warning-comments",
         // jest
         "jest/valid-title",
+        "vitest/valid-title",
         // react
         "react/forbid-dom-props",
     ];

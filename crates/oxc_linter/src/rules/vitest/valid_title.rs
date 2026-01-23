@@ -11,10 +11,10 @@ pub struct ValidTitle(Box<SharedValidTitle::ValidTitleConfig>);
 
 declare_oxc_lint!(
     ValidTitle,
-    jest,
+    vitest,
     correctness,
     conditional_fix,
-    docs = SharedValidTitle::DOCUMENTATION,
+    docs = SharedValidTitle::DOCUMENTATION
 );
 
 impl Rule for ValidTitle {
@@ -696,7 +696,7 @@ fn test() {
     ];
 
     Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }
