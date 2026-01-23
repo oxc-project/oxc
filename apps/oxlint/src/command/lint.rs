@@ -127,6 +127,11 @@ pub struct BasicOptions {
     #[bpaf(argument("./tsconfig.json"), hide_usage)]
     pub tsconfig: Option<PathBuf>,
 
+    /// Change the current working directory.
+    /// This affects config file discovery and relative path resolution.
+    #[bpaf(long, argument("PATH"), hide_usage)]
+    pub cwd: Option<PathBuf>,
+
     /// Initialize oxlint configuration with default values
     #[bpaf(switch, hide_usage)]
     pub init: bool,

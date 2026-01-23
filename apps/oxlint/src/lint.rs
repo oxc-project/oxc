@@ -37,11 +37,25 @@ pub struct CliRunner {
 impl CliRunner {
     /// # Panics
     pub fn new(options: LintCommand, external_linter: Option<ExternalLinter>) -> Self {
-        Self {
-            options,
-            cwd: env::current_dir().expect("Failed to get current working directory"),
-            external_linter,
-        }
+        let cwd = if let Some(ref cwd_arg) = options.basic_options.cwd {
+            let resolved = if cwd_arg.is_absolute() {
+                cwd_arg.clone()
+            } else {
+                env::current_dir().expect("Failed to get current working directory").join(cwd_arg)
+            };
+
+            assert!(
+                resolved.is_dir(),
+                "--cwd path '{}' does not exist or is not a directory",
+                resolved.display()
+            );
+
+            resolved
+        } else {
+            env::current_dir().expect("Failed to get current working directory")
+        };
+
+        Self { options, cwd, external_linter }
     }
 
     /// # Panics

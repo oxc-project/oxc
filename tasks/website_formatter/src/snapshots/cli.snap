@@ -35,6 +35,8 @@ search: false
 ## Config Options
 - **`-c`**, **`--config`**=_`PATH`_ &mdash; 
   Path to the configuration file
+- **`    --cwd`**=_`PATH`_ &mdash; 
+  Change the current working directory. This affects config file discovery and relative path resolution.
 
 
 

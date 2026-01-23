@@ -141,6 +141,11 @@ pub struct ConfigOptions {
     /// Path to the configuration file
     #[bpaf(short, long, argument("PATH"))]
     pub config: Option<PathBuf>,
+
+    /// Change the current working directory.
+    /// This affects config file discovery and relative path resolution.
+    #[bpaf(long, argument("PATH"), hide_usage)]
+    pub cwd: Option<PathBuf>,
 }
 
 /// Ignore Options

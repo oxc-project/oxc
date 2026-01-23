@@ -25,11 +25,30 @@ impl FormatRunner {
     /// Creates a new FormatRunner instance.
     ///
     /// # Panics
-    /// Panics if the current working directory cannot be determined.
+    /// Panics if the current working directory cannot be determined or if the
+    /// `--cwd` path does not exist or is not a directory.
     pub fn new(options: FormatCommand) -> Self {
+        let cwd = if let Some(ref cwd_arg) = options.config_options.cwd {
+            let resolved = if cwd_arg.is_absolute() {
+                cwd_arg.clone()
+            } else {
+                env::current_dir().expect("Failed to get current working directory").join(cwd_arg)
+            };
+
+            assert!(
+                resolved.is_dir(),
+                "--cwd path '{}' does not exist or is not a directory",
+                resolved.display()
+            );
+
+            resolved
+        } else {
+            env::current_dir().expect("Failed to get current working directory")
+        };
+
         Self {
             options,
-            cwd: env::current_dir().expect("Failed to get current working directory"),
+            cwd,
             #[cfg(feature = "napi")]
             external_formatter: None,
         }

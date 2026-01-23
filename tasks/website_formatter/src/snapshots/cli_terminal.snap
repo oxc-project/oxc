@@ -18,6 +18,8 @@ Output Options:
 
 Config Options
     -c, --config=PATH        Path to the configuration file
+        --cwd=PATH           Change the current working directory. This affects config file
+                             discovery and relative path resolution.
 
 Ignore Options
         --ignore-path=PATH   Path to ignore file(s). Can be specified multiple times. If not
