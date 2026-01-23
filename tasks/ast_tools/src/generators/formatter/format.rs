@@ -278,7 +278,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_span: self.following_span,
+                    following_span_start: self.following_span_start,
                 }).fmt(f);
             },
         })
@@ -301,7 +301,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_span: self.following_span,
+                    following_span_start: self.following_span_start,
                 }).fmt(f);
             },
         };

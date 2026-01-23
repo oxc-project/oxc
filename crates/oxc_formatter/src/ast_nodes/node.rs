@@ -14,7 +14,8 @@ pub struct AstNode<'a, T> {
     pub(super) inner: &'a T,
     pub parent: &'a AstNodes<'a>,
     pub(super) allocator: &'a Allocator,
-    pub(super) following_span: Option<Span>,
+    /// The start position of the following sibling node, or 0 if none.
+    pub(super) following_span_start: u32,
 }
 
 impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {
@@ -22,7 +23,7 @@ impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {
         f.debug_struct("AstNode")
             .field("inner", &self.inner)
             .field("parent", &self.parent.debug_name())
-            .field("following_span", &self.following_span)
+            .field("following_span_start", &self.following_span_start)
             .finish()
     }
 }
@@ -48,7 +49,7 @@ impl<'a, T> AstNode<'a, Option<T>> {
                 inner,
                 parent: self.parent,
                 allocator: self.allocator,
-                following_span: self.following_span,
+                following_span_start: self.following_span_start,
             }))
             .as_ref()
     }
@@ -110,7 +111,7 @@ impl<'a, T> AstNode<'a, T> {
 
 impl<'a> AstNode<'a, Program<'a>> {
     pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
-        AstNode { inner, parent, allocator, following_span: None }
+        AstNode { inner, parent, allocator, following_span_start: 0 }
     }
 }
 
@@ -170,7 +171,7 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         }
 
         let arguments_ref = self.allocator.alloc(arguments);
-        let following_span = self.following_span;
+        let following_span_start = self.following_span_start;
 
         self.allocator.alloc(AstNode {
             inner: arguments_ref,
@@ -184,7 +185,7 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
                     >(self)
                 }
             })),
-            following_span,
+            following_span_start,
         })
     }
 }
