@@ -14,6 +14,14 @@ working directory: fixtures/overrides_with_plugin
    `----
   help: Write a meaningful title for your test
 
+  x eslint-plugin-vitest(valid-title): Should not have an empty title
+   ,-[index.test.ts:1:10]
+ 1 | describe("", () => {
+   :          ^^
+ 2 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
+   `----
+  help: Write a meaningful title for your test
+
   ! eslint-plugin-jest(expect-expect): Test has no assertions
    ,-[index.test.ts:4:3]
  3 | 
@@ -32,6 +40,15 @@ working directory: fixtures/overrides_with_plugin
    `----
   help: Write a meaningful title for your test
 
+  x eslint-plugin-vitest(valid-title): Should not have an empty title
+   ,-[index.test.ts:4:6]
+ 3 | 
+ 4 |   it("", () => {});
+   :      ^^
+ 5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
+   `----
+  help: Write a meaningful title for your test
+
   ! eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ,-[index.ts:1:7]
  1 | const foo = 123;
@@ -41,7 +58,7 @@ working directory: fixtures/overrides_with_plugin
    `----
   help: Consider removing this declaration.
 
-Found 2 warnings and 2 errors.
+Found 2 warnings and 4 errors.
 Finished in <variable>ms on 2 files with 90 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors

@@ -58,7 +58,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ValidTitle,
-    jest,
+    vitest,
     correctness,
     conditional_fix
 );
@@ -742,7 +742,7 @@ fn test() {
     ];
 
     Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
-        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }
