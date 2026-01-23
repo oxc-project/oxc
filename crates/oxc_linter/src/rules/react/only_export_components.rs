@@ -12,18 +12,14 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-const SCOPE: &str = "eslint-plugin-react-refresh";
-
 fn export_all_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("This rule can't verify that `export *` only exports components.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn named_export_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn anonymous_components_diagnostic(span: Span) -> OxcDiagnostic {
@@ -31,25 +27,21 @@ fn anonymous_components_diagnostic(span: Span) -> OxcDiagnostic {
         "Fast refresh can't handle anonymous components. Add a name to your export.",
     )
     .with_label(span)
-    .with_error_code_scope(SCOPE)
 }
 
 fn local_components_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Move your component(s) to a separate file.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn no_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file has exports. Move your component(s) to a separate file.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 fn react_context_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fast refresh only works when a file only exports components. Move your React context(s) to a separate file.")
         .with_label(span)
-        .with_error_code_scope(SCOPE)
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -99,6 +91,8 @@ declare_oxc_lint!(
     /// Concretely, it validates the shape of your module’s exports and common entrypoints
     /// (e.g. `createRoot(...).render(<App />)`) to match what integrations like
     /// `react-refresh` expect.
+    ///
+    /// This rule is based on the rule from `eslint-plugin-react-refresh`.
     ///
     /// ### Why is this bad?
     ///
