@@ -119,19 +119,20 @@ impl VersionCache {
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct DisplayNameConfig {
+    /// When `true`, the rule will ignore the name set by the transpiler and require a `displayName` property in this case.
     ignore_transpiler_name: bool,
+    /// When `true`, this rule will warn on context objects without a `displayName`.
+    ///
+    /// `displayName` allows you to [name your context](https://reactjs.org/docs/context.html#contextdisplayname) object. This name is used in the React dev tools for the context's `Provider` and `Consumer`.
     check_context_objects: bool,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub struct DisplayName(Box<DisplayNameConfig>);
 
 impl Rule for DisplayName {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = serde_json::from_value::<DefaultRuleConfig<DisplayNameConfig>>(value)
-            .unwrap_or_default()
-            .into_inner();
-        Ok(Self(Box::new(config)))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
