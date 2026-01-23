@@ -11,8 +11,6 @@ import { FILTER_ONLY_RULE, FILTER_EXCLUDE_RULE } from "./filter.ts";
 
 import type { RuleResult } from "./capture.ts";
 
-const { isArray } = Array;
-
 // Paths
 export const CONFORMANCE_DIR_PATH = pathJoin(fileURLToPath(import.meta.url), "../..");
 export const ESLINT_ROOT_DIR_PATH = pathJoin(CONFORMANCE_DIR_PATH, "submodules/eslint");
@@ -74,11 +72,11 @@ function findTestFiles(): string[] {
 
   let ruleNameMatchesFilter = null;
   if (FILTER_ONLY_RULE !== null) {
-    ruleNameMatchesFilter = isArray(FILTER_ONLY_RULE)
+    ruleNameMatchesFilter = Array.isArray(FILTER_ONLY_RULE)
       ? (ruleName: string) => FILTER_ONLY_RULE!.includes(ruleName)
       : (ruleName: string) => ruleName === FILTER_ONLY_RULE;
   } else if (FILTER_EXCLUDE_RULE !== null) {
-    ruleNameMatchesFilter = isArray(FILTER_EXCLUDE_RULE)
+    ruleNameMatchesFilter = Array.isArray(FILTER_EXCLUDE_RULE)
       ? (ruleName: string) => !FILTER_EXCLUDE_RULE!.includes(ruleName)
       : (ruleName: string) => ruleName !== FILTER_EXCLUDE_RULE;
   }

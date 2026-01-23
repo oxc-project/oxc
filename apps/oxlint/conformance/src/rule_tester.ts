@@ -22,8 +22,6 @@ type InvalidTestCase = RuleTester.InvalidTestCase;
 type Globals = RuleTester.Globals;
 export type TestCase = ValidTestCase | InvalidTestCase;
 
-const { isArray } = Array;
-
 // Get `@typescript-eslint/parser` module.
 // Load the instance which would be loaded by files in ESLint's `tests/lib/rules` directory.
 const require = createRequire(ESLINT_RULES_TESTS_DIR_PATH);
@@ -67,7 +65,7 @@ class RuleTesterShim extends RuleTester {
   // Apply filter to test cases.
   run(ruleName: string, rule: Rule, tests: TestCases): void {
     if (FILTER_ONLY_CODE !== null) {
-      const codeMatchesFilter = isArray(FILTER_ONLY_CODE)
+      const codeMatchesFilter = Array.isArray(FILTER_ONLY_CODE)
         ? (code: string) => FILTER_ONLY_CODE!.includes(code)
         : (code: string) => code === FILTER_ONLY_CODE;
 
