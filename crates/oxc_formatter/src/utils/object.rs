@@ -14,7 +14,7 @@ use crate::{
 pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
     if let PropertyKey::StringLiteral(s) = key.as_ref() {
         // `"constructor"` property in the class should be kept quoted
-        let kind = if matches!(key.parent, AstNodes::PropertyDefinition(_))
+        let kind = if matches!(key.parent(), AstNodes::PropertyDefinition(_))
             && matches!(key.as_ref(), PropertyKey::StringLiteral(string) if string.value == "constructor")
         {
             StringLiteralParentKind::Expression

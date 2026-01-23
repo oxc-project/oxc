@@ -838,11 +838,11 @@ fn try_format_embedded_template<'a>(
 /// <style jsx>{`div { color: red; }`}</style>
 /// ```
 fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
-    let AstNodes::JSXExpressionContainer(container) = node.parent else {
+    let AstNodes::JSXExpressionContainer(container) = node.parent() else {
         return false;
     };
 
-    match container.parent {
+    match container.parent() {
         AstNodes::JSXAttribute(attribute) => {
             if let JSXAttributeName::Identifier(ident) = &attribute.name
                 && ident.name == "css"
@@ -917,10 +917,10 @@ fn try_format_angular_component<'a>(
 /// })
 /// ```
 fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Option<&'static str> {
-    let prop = match node.parent {
+    let prop = match node.parent() {
         AstNodes::ObjectProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {
-            let AstNodes::ObjectProperty(prop) = arr.parent else {
+            let AstNodes::ObjectProperty(prop) = arr.parent() else {
                 return None;
             };
             prop
@@ -937,10 +937,10 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
     };
 
     // Check parent chain: ObjectExpression -> CallExpression(Component) -> Decorator
-    let AstNodes::ObjectExpression(obj) = prop.parent else {
+    let AstNodes::ObjectExpression(obj) = prop.parent() else {
         return None;
     };
-    let AstNodes::CallExpression(call) = obj.parent else {
+    let AstNodes::CallExpression(call) = obj.parent() else {
         return None;
     };
     let Expression::Identifier(ident) = &call.callee else {
@@ -949,7 +949,7 @@ fn get_angular_component_language(node: &AstNode<'_, TemplateLiteral<'_>>) -> Op
     if ident.name.as_str() != "Component" {
         return None;
     }
-    if !matches!(call.parent, AstNodes::Decorator(_)) {
+    if !matches!(call.parent(), AstNodes::Decorator(_)) {
         return None;
     }
 

@@ -12,7 +12,7 @@ use super::AstNodes;
 
 pub struct AstNode<'a, T> {
     pub(super) inner: &'a T,
-    pub parent: &'a AstNodes<'a>,
+    pub(super) parent: &'a AstNodes<'a>,
     pub(super) allocator: &'a Allocator,
     /// The start position of the following sibling node, or 0 if none.
     pub(super) following_span_start: u32,
@@ -22,7 +22,7 @@ impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AstNode")
             .field("inner", &self.inner)
-            .field("parent", &self.parent.debug_name())
+            .field("parent", &self.parent().debug_name())
             .field("following_span_start", &self.following_span_start)
             .finish()
     }
@@ -73,7 +73,7 @@ impl<'a, T> AstNode<'a, T> {
     /// The iteration includes the current node and proceeds upward through the tree,
     /// terminating after yielding the root `Program` node.
     ///
-    /// This is a convenience method that delegates to `self.parent.ancestors()`.
+    /// This is a convenience method that delegates to `self.parent().ancestors()`.
     ///
     /// # Example
     /// ```text
@@ -98,14 +98,20 @@ impl<'a, T> AstNode<'a, T> {
     ///     .any(|p| matches!(p, AstNodes::ArrowFunctionExpression(_)));
     /// ```
     pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'a>> {
-        self.parent.ancestors()
+        self.parent().ancestors()
+    }
+
+    /// Returns the parent node.
+    #[inline]
+    pub fn parent(&self) -> &'a AstNodes<'a> {
+        self.parent
     }
 
     /// Returns the grandparent node (parent's parent).
     ///
-    /// This is a convenience method equivalent to `self.parent.parent()`.
+    /// This is a convenience method equivalent to `self.parent().parent()`.
     pub fn grand_parent(&self) -> &AstNodes<'a> {
-        self.parent.parent()
+        self.parent().parent()
     }
 }
 
@@ -118,7 +124,7 @@ impl<'a> AstNode<'a, Program<'a>> {
 impl<T: GetSpan> AstNode<'_, T> {
     /// Check if this node is the callee of a CallExpression or NewExpression
     pub fn is_call_like_callee(&self) -> bool {
-        let callee = match self.parent {
+        let callee = match self.parent() {
             AstNodes::CallExpression(call) => &call.callee,
             AstNodes::NewExpression(new) => &new.callee,
             _ => return false,
@@ -129,7 +135,7 @@ impl<T: GetSpan> AstNode<'_, T> {
 
     /// Check if this node is the callee of a NewExpression
     pub fn is_new_callee(&self) -> bool {
-        matches!(self.parent, AstNodes::NewExpression(new) if new.callee.span() == self.span())
+        matches!(self.parent(), AstNodes::NewExpression(new) if new.callee.span() == self.span())
     }
 }
 
@@ -143,7 +149,7 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
     /// `() => { return expression; }`
     ///         ^^^^^^^^^^^^^^^^^^^^ This ExpressionStatement is NOT the body of an arrow function
     pub fn is_arrow_function_body(&self) -> bool {
-        matches!(self.parent.parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
+        matches!(self.parent().parent(), AstNodes::ArrowFunctionExpression(arrow) if arrow.expression)
     }
 }
 

@@ -230,8 +230,8 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         parent = stmt.grand_parent();
     }
     let maybe_jsx_expression_child = match parent {
-        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent {
-            AstNodes::CallExpression(call) => call.parent,
+        AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent() {
+            AstNodes::CallExpression(call) => call.parent(),
             _ => return false,
         },
         _ => return false,
@@ -239,7 +239,7 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
     matches!(
         maybe_jsx_expression_child.without_chain_expression(),
         AstNodes::JSXExpressionContainer(container)
-        if matches!(container.parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_))
+        if matches!(container.parent(), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_))
     )
 }
 
@@ -278,8 +278,8 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
 
     fn parent(&self) -> &'b AstNodes<'a> {
         match self {
-            Self::Element(element) => element.parent,
-            Self::Fragment(fragment) => fragment.parent,
+            Self::Element(element) => element.parent(),
+            Self::Fragment(fragment) => fragment.parent(),
         }
     }
 

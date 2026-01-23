@@ -29,16 +29,16 @@ impl NeedsParentheses<'_> for AstNode<'_, TSType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSFunctionType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        function_like_type_needs_parentheses(self.span(), self.parent, Some(&self.return_type))
+        function_like_type_needs_parentheses(self.span(), self.parent(), Some(&self.return_type))
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent {
+        match self.parent() {
             AstNodes::TSIntersectionType(_) | AstNodes::TSUnionType(_) => true,
             AstNodes::TSRestType(_) => false,
-            _ => operator_type_or_higher_needs_parens(self.span, self.parent),
+            _ => operator_type_or_higher_needs_parens(self.span, self.parent()),
         }
     }
 }
@@ -46,13 +46,13 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInferType<'_>> {
 impl NeedsParentheses<'_> for AstNode<'_, TSConstructorType<'_>> {
     #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        function_like_type_needs_parentheses(self.span(), self.parent, Some(&self.return_type))
+        function_like_type_needs_parentheses(self.span(), self.parent(), Some(&self.return_type))
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSUnionType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent {
+        match self.parent() {
             AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
             AstNodes::TSIntersectionType(intersection) => {
                 self.types.len() > 1 && intersection.types.len() > 1
@@ -75,7 +75,7 @@ fn function_like_type_needs_parentheses<'a>(
     match parent {
         // Arrow function return types need parens
         AstNodes::TSTypeAnnotation(type_annotation) => {
-            matches!(type_annotation.parent, AstNodes::ArrowFunctionExpression(_))
+            matches!(type_annotation.parent(), AstNodes::ArrowFunctionExpression(_))
         }
         // In conditional types
         AstNodes::TSConditionalType(conditional) => {
@@ -125,7 +125,7 @@ fn operator_type_or_higher_needs_parens(span: Span, parent: &AstNodes) -> bool {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent {
+        match self.parent() {
             AstNodes::TSUnionType(union) => self.types.len() > 1 && union.types.len() > 1,
             AstNodes::TSIntersectionType(intersection) => {
                 self.types.len() > 1 && intersection.types.len() > 1
@@ -137,26 +137,26 @@ impl NeedsParentheses<'_> for AstNode<'_, TSIntersectionType<'_>> {
 
 impl NeedsParentheses<'_> for AstNode<'_, TSConditionalType<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent {
+        match self.parent() {
             AstNodes::TSConditionalType(ty) => {
                 ty.extends_type().span() == self.span() || ty.check_type().span() == self.span()
             }
             AstNodes::TSUnionType(union) => union.types.len() > 1,
             AstNodes::TSIntersectionType(intersection) => intersection.types.len() > 1,
-            _ => operator_type_or_higher_needs_parens(self.span, self.parent),
+            _ => operator_type_or_higher_needs_parens(self.span, self.parent()),
         }
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSTypeOperator<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        operator_type_or_higher_needs_parens(self.span(), self.parent)
+        operator_type_or_higher_needs_parens(self.span(), self.parent())
     }
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, TSTypeQuery<'_>> {
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        match self.parent {
+        match self.parent() {
             AstNodes::TSArrayType(_) => true,
             // Typeof operators are parenthesized when used as an object type in an indexed access
             // to avoid ambiguity of precedence, as it's higher than the JS equivalent:
