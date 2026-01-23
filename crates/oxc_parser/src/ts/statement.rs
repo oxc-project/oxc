@@ -100,8 +100,11 @@ impl<'a> ParserImpl<'a> {
                 self.fatal_error(error)
             }
             _ => {
-                let ident_name = self.parse_identifier_name();
-                TSEnumMemberName::Identifier(self.alloc(ident_name))
+                if !self.cur_kind().is_identifier_name() {
+                    return self.unexpected();
+                }
+                let (span, name) = self.parse_identifier_kind(Kind::Ident);
+                TSEnumMemberName::Identifier(self.identifier_pool.alloc_identifier_name(span, name))
             }
         }
     }

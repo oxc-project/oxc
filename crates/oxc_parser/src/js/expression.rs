@@ -56,11 +56,6 @@ impl<'a> ParserImpl<'a> {
 
     /// `PrimaryExpression`: Identifier Reference
     pub(crate) fn parse_identifier_expression(&mut self) -> Expression<'a> {
-        let ident = self.parse_identifier_reference();
-        Expression::Identifier(self.alloc(ident))
-    }
-
-    pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
         if !kind.is_identifier_reference(false, false) {
@@ -72,7 +67,7 @@ impl<'a> ParserImpl<'a> {
         }
         self.check_identifier(kind, self.ctx);
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
-        self.ast.identifier_reference(span, name)
+        Expression::Identifier(self.identifier_pool.alloc_identifier_reference(span, name))
     }
 
     /// `BindingIdentifier` : Identifier

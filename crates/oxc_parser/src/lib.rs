@@ -69,6 +69,7 @@
 mod context;
 mod cursor;
 mod error_handler;
+mod identifier_pool;
 mod modifiers;
 mod module_record;
 mod state;
@@ -98,6 +99,7 @@ use oxc_syntax::module_record::ModuleRecord;
 use crate::{
     context::{Context, StatementContext},
     error_handler::FatalError,
+    identifier_pool::IdentifierPool,
     lexer::{Lexer, Token},
     module_record::ModuleRecordBuilder,
     state::ParserState,
@@ -393,6 +395,9 @@ struct ParserImpl<'a> {
     /// Ast builder for creating AST nodes
     ast: AstBuilder<'a>,
 
+    /// Pre-allocated identifier pool for reducing allocation overhead
+    identifier_pool: IdentifierPool<'a>,
+
     /// Module Record Builder
     module_record_builder: ModuleRecordBuilder<'a>,
 
@@ -426,6 +431,7 @@ impl<'a> ParserImpl<'a> {
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
+            identifier_pool: IdentifierPool::new(allocator),
             module_record_builder: ModuleRecordBuilder::new(allocator, source_type),
             is_ts: source_type.is_typescript(),
         }

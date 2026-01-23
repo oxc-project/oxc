@@ -176,8 +176,13 @@ impl<'a> ParserImpl<'a> {
                 PropertyKey::from(self.parse_computed_property_name())
             }
             _ => {
-                let ident = self.parse_identifier_name();
-                PropertyKey::StaticIdentifier(self.alloc(ident))
+                if !self.cur_kind().is_identifier_name() {
+                    return (self.unexpected(), false);
+                }
+                let (span, name) = self.parse_identifier_kind(Kind::Ident);
+                PropertyKey::StaticIdentifier(
+                    self.identifier_pool.alloc_identifier_name(span, name),
+                )
             }
         };
         (key, computed)

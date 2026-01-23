@@ -35,8 +35,19 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_binding_pattern_identifier(&mut self) -> BindingPattern<'a> {
-        let ident = self.parse_binding_identifier();
-        BindingPattern::BindingIdentifier(self.alloc(ident))
+        let cur = self.cur_kind();
+        if !cur.is_binding_identifier() {
+            return if cur.is_reserved_keyword() {
+                let error =
+                    diagnostics::identifier_reserved_word(self.cur_token().span(), cur.to_str());
+                self.fatal_error(error)
+            } else {
+                self.unexpected()
+            };
+        }
+        self.check_identifier(cur, self.ctx);
+        let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        BindingPattern::BindingIdentifier(self.identifier_pool.alloc_binding_identifier(span, name))
     }
 
     /// Section 14.3.3 Object Binding Pattern

@@ -500,8 +500,10 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_constructor_name(&mut self) -> Option<PropertyKey<'a>> {
         if self.at(Kind::Constructor) {
-            let ident = self.parse_identifier_name();
-            return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
+            let (span, name) = self.parse_identifier_kind(Kind::Ident);
+            return Some(PropertyKey::StaticIdentifier(
+                self.identifier_pool.alloc_identifier_name(span, name),
+            ));
         }
         if self.at(Kind::Str) && self.lexer.peek_token().kind() == Kind::LParen {
             return self.try_parse(|p| {

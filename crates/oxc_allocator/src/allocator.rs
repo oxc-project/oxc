@@ -353,6 +353,35 @@ impl Allocator {
         self.bump.alloc_slice_copy(src)
     }
 
+    /// Allocates a new slice of size `len` into this [`Allocator`] and returns an
+    /// exclusive reference to it.
+    ///
+    /// The elements of the slice are initialized using the supplied closure.
+    /// The closure argument is the position in the slice.
+    ///
+    /// # Panics
+    ///
+    /// Panics if reserving space for the slice fails.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_allocator::Allocator;
+    /// let allocator = Allocator::default();
+    /// let x = allocator.alloc_slice_fill_with(5, |i| i * 2);
+    /// assert_eq!(x, &[0, 2, 4, 6, 8]);
+    /// ```
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub fn alloc_slice_fill_with<T, F>(&self, len: usize, f: F) -> &mut [T]
+    where
+        F: FnMut(usize) -> T,
+    {
+        #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
+        self.stats.record_allocation();
+
+        self.bump.alloc_slice_fill_with(len, f)
+    }
+
     /// Allocate space for an object with the given [`Layout`].
     ///
     /// The returned pointer points at uninitialized memory, and should be initialized with
