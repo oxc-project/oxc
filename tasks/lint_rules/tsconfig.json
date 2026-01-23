@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
+    "noEmit": true,
+    "lib": ["esnext"],
+    "target": "esnext",
+    "resolveJsonModule": true,
+    "strict": true,
+    "allowImportingTsExtensions": true
+  }
+}

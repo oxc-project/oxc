@@ -2,12 +2,13 @@
   "name": "lint_rules",
   "version": "0.0.0",
   "private": true,
-  "main": "./src/main.mjs",
+  "type": "module",
+  "main": "./src/main.ts",
   "dependencies": {
     "@next/eslint-plugin-next": "latest",
     "@typescript-eslint/eslint-plugin": "latest",
     "@vitest/eslint-plugin": "latest",
-    "eslint": "^9.13.0",
+    "eslint": "^9.39.0",
     "eslint-plugin-import": "latest",
     "eslint-plugin-jest": "latest",
     "eslint-plugin-jsdoc": "latest",
@@ -19,5 +20,8 @@
     "eslint-plugin-react-perf": "^3.3.3",
     "eslint-plugin-unicorn": "latest",
     "eslint-plugin-vue": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9"
   }
 }

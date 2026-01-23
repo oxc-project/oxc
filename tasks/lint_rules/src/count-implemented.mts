@@ -1,6 +1,6 @@
 // oxlint-disable no-console
 
-import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mjs";
+import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mts";
 import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
@@ -9,7 +9,7 @@ import {
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
-} from "./oxlint-rules.mjs";
+} from "./oxlint-rules.mts";
 
 // Initialize linter and load plugin rules
 const linter = createESLintLinter();
@@ -26,7 +26,7 @@ await syncVitestPluginStatusWithJestPluginStatus(ruleEntries);
 syncUnicornPluginStatusWithEslintPluginStatus(ruleEntries);
 
 // Helper to gather stats for a plugin
-const statsForPlugin = (pluginName) => {
+const statsForPlugin = (pluginName: string) => {
   const prefix = `${pluginName}/`;
   const entries = Array.from(ruleEntries.entries()).filter(([name]) => name.startsWith(prefix));
   const filtered = entries.filter(([_, e]) => !e.isNotSupported);

@@ -1,8 +1,8 @@
 // oxlint-disable no-console
 
 import { parseArgs } from "node:util";
-import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mjs";
-import { renderMarkdown } from "./markdown-renderer.mjs";
+import { ALL_TARGET_PLUGINS, createESLintLinter, loadTargetPluginRules } from "./eslint-rules.mts";
+import { renderMarkdown } from "./markdown-renderer.mts";
 import {
   createRuleEntries,
   overrideTypeScriptPluginStatusWithEslintPluginStatus as syncTypeScriptPluginStatusWithEslintPluginStatus,
@@ -11,8 +11,8 @@ import {
   updateImplementedStatus,
   updateNotSupportedStatus,
   updatePendingFixStatus,
-} from "./oxlint-rules.mjs";
-import { updateGitHubIssue } from "./result-reporter.mjs";
+} from "./oxlint-rules.mts";
+import { updateGitHubIssue } from "./result-reporter.mts";
 
 const HELP = `
 Usage:
@@ -41,7 +41,7 @@ void (async () => {
 
   if (values.help) return console.log(HELP);
 
-  const targetPluginNames = new Set(values.target ?? ALL_TARGET_PLUGINS.keys());
+  const targetPluginNames = new Set<string>(values.target ?? ALL_TARGET_PLUGINS.keys());
   for (const pluginName of targetPluginNames) {
     if (!ALL_TARGET_PLUGINS.has(pluginName)) {
       console.error(`Unknown plugin name: ${String(pluginName)}`);
@@ -71,15 +71,12 @@ void (async () => {
   //
   const results = await Promise.allSettled(
     Array.from(targetPluginNames).map((pluginName) => {
-      const pluginMeta =
-        /** @type {import("./eslint-rules.mjs").TargetPluginMeta} */ (
-          ALL_TARGET_PLUGINS.get(pluginName)
-        );
-      const content = renderMarkdown(pluginName, pluginMeta, ruleEntries);
+      const pluginMeta = ALL_TARGET_PLUGINS.get(pluginName);
+      const content = renderMarkdown(pluginName, pluginMeta!, ruleEntries);
 
       if (!values.update) return Promise.resolve(content);
       // Requires `env.GITHUB_TOKEN`
-      return updateGitHubIssue(pluginMeta, content);
+      return updateGitHubIssue(pluginMeta!, content);
     }),
   );
   for (const result of results) {
