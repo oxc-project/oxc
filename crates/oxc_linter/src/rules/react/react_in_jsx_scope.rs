@@ -65,11 +65,11 @@ impl Rule for ReactInJsxScope {
         };
         let scope = ctx.scoping();
         let react_name = "React";
-        if scope.get_binding(scope.root_scope_id(), react_name).is_some() {
+        if scope.get_binding_by_name(scope.root_scope_id(), react_name).is_some() {
             return;
         }
 
-        if scope.find_binding(node.scope_id(), react_name).is_none() {
+        if scope.find_binding_by_name(node.scope_id(), react_name).is_none() {
             ctx.diagnostic(react_in_jsx_scope_diagnostic(node_span));
         }
     }

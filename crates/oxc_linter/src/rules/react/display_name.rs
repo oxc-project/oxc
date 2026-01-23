@@ -209,9 +209,10 @@ impl Rule for DisplayName {
         }
 
         // Check for CommonJS module.exports by looking at references to 'module' global
-        if let Some(module_reference_ids) = ctx.scoping().root_unresolved_references().get("module")
+        if let Some(module_reference_ids) =
+            ctx.scoping().get_root_unresolved_reference_by_name("module")
         {
-            for &reference_id in module_reference_ids {
+            for reference_id in module_reference_ids {
                 let reference = ctx.scoping().get_reference(reference_id);
                 let node = ctx.nodes().get_node(reference.node_id());
 

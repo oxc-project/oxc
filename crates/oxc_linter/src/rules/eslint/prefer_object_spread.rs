@@ -87,12 +87,12 @@ impl Rule for PreferObjectSpread {
             return;
         };
 
-        let unresolved_references = ctx.scoping().root_unresolved_references();
-
         match callee.object().get_inner_expression() {
             Expression::Identifier(ident) => {
                 if ident.name != "Object"
-                    || !unresolved_references.contains_key(ident.name.as_str())
+                    || !ctx
+                        .scoping()
+                        .root_unresolved_references_contains_by_name(ident.name.as_str())
                 {
                     return;
                 }
@@ -100,7 +100,9 @@ impl Rule for PreferObjectSpread {
             Expression::StaticMemberExpression(member_expr) => {
                 if let Expression::Identifier(ident) = member_expr.object.get_inner_expression() {
                     if ident.name != "globalThis"
-                        || !unresolved_references.contains_key(ident.name.as_str())
+                        || !ctx
+                            .scoping()
+                            .root_unresolved_references_contains_by_name(ident.name.as_str())
                     {
                         return;
                     }

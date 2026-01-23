@@ -143,8 +143,8 @@ impl<'a> UidGenerator<'a> {
         for name in scoping.symbol_names() {
             generator.add(name);
         }
-        for &name in scoping.root_unresolved_references().keys() {
-            generator.add(name);
+        for name in scoping.root_unresolved_references().keys() {
+            generator.add(name.as_str());
         }
 
         generator

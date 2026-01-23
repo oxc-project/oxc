@@ -45,7 +45,8 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let decl = semantic.scoping().get_binding(semantic.scoping().root_scope_id(), target);
+        let decl =
+            semantic.scoping().get_binding_by_name(semantic.scoping().root_scope_id(), target);
         let data = decl.map_or_else(
             || Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             Ok,
@@ -67,7 +68,9 @@ impl<'a> SymbolTester<'a> {
         let mut symbols_with_target_name: Vec<SymbolId> = semantic
             .scoping()
             .iter_bindings()
-            .filter_map(|(_, bindings)| bindings.get(target).copied())
+            .filter_map(|(_, bindings)| {
+                bindings.iter().find(|(k, _)| k.as_str() == target).map(|(_, &v)| v)
+            })
             .collect();
 
         let data = match symbols_with_target_name.len() {

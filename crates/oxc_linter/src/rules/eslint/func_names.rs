@@ -264,7 +264,7 @@ fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) ->
         return false;
     };
 
-    if let Some(binding) = ctx.scoping().find_binding(func_scope_id, func_name) {
+    if let Some(binding) = ctx.scoping().find_binding_by_name(func_scope_id, func_name) {
         return ctx.semantic().symbol_references(binding).any(|reference| {
             let parent = ctx.nodes().parent_node(reference.node_id());
             // Check if this reference is the callee of a call expression (direct recursive call)
@@ -431,7 +431,7 @@ fn is_invalid_function(
 
 /// Returns whether it's safe to insert a function name without breaking shadowing rules
 fn can_safely_apply_fix(func: &Function, name: &str, ctx: &LintContext) -> bool {
-    !ctx.scoping().find_binding(func.scope_id(), name).is_some_and(|shadowed_var| {
+    !ctx.scoping().find_binding_by_name(func.scope_id(), name).is_some_and(|shadowed_var| {
         ctx.semantic().symbol_references(shadowed_var).any(|reference| {
             func.span.contains_inclusive(ctx.nodes().get_node(reference.node_id()).kind().span())
         })

@@ -106,7 +106,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},
@@ -430,7 +430,11 @@ impl<'a> ClassProperties<'a, '_> {
             // Save replacement name in `clashing_symbols`
             *name = new_name;
             // Rename symbol and binding
-            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name.as_str());
+            ctx.scoping_mut().rename_symbol(
+                symbol_id,
+                constructor_scope_id,
+                Ident::from(new_name.as_str()),
+            );
         }
 
         // Rename identifiers for clashing symbols in constructor params and body

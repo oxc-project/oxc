@@ -94,7 +94,7 @@ fn is_expr_global_builtin<'a, 'b>(
     let expr = expr.without_parentheses();
     if let Expression::Identifier(ident) = expr {
         let name = ident.name.as_str();
-        if !ctx.scoping().root_unresolved_references().contains_key(name) {
+        if !ctx.scoping().root_unresolved_references_contains_by_name(name) {
             return None;
         }
 

@@ -163,7 +163,7 @@ impl<'a> RegExp<'a, '_> {
         }
 
         let callee = {
-            let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "RegExp");
+            let symbol_id = ctx.scoping().find_binding_by_name(ctx.current_scope_id(), "RegExp");
             ctx.create_ident_expr(SPAN, Atom::from("RegExp"), symbol_id, ReferenceFlags::read())
         };
 

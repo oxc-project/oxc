@@ -529,6 +529,79 @@ macro_rules! format_ident {
     }}
 }
 
+/// Hash map keyed by [`Ident`].
+///
+/// This uses [`IdentHasher`] which leverages the precomputed hash stored in `Ident`,
+/// making hash map operations very fast.
+#[expect(clippy::disallowed_types)]
+pub type IdentHashMap<'a, V> = std::collections::HashMap<Ident<'a>, V, IdentHasher>;
+
+/// Arena-allocated hash map keyed by [`Ident`].
+///
+/// This uses [`IdentHasher`] which leverages the precomputed hash stored in `Ident`,
+/// making hash map operations very fast, and stores entries in the arena allocator.
+pub type ArenaIdentHashMap<'alloc, V> =
+    oxc_allocator::hash_map::HashMapImpl<'alloc, Ident<'alloc>, V, IdentHasher>;
+
+/// Hash set of [`Ident`].
+///
+/// This uses [`IdentHasher`] which leverages the precomputed hash stored in `Ident`,
+/// making hash set operations very fast.
+#[expect(clippy::disallowed_types)]
+pub type IdentHashSet<'a> = std::collections::HashSet<Ident<'a>, IdentHasher>;
+
+/// Hasher for use in hash maps keyed by [`Ident`].
+///
+/// This hasher simply stores the precomputed hash from `Ident::hash()`,
+/// making it essentially a no-op hasher for maximum performance.
+#[derive(Debug)]
+pub struct IdentHasher(u64);
+
+impl IdentHasher {
+    #[inline]
+    fn new() -> Self {
+        Self(0)
+    }
+}
+
+impl hash::Hasher for IdentHasher {
+    #[inline]
+    fn write_u64(&mut self, n: u64) {
+        self.0 = n;
+    }
+
+    #[inline]
+    fn write(&mut self, _: &[u8]) {}
+
+    #[inline]
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+
+impl hash::BuildHasher for IdentHasher {
+    type Hasher = Self;
+
+    #[inline]
+    fn build_hasher(&self) -> Self::Hasher {
+        Self::new()
+    }
+}
+
+impl Default for IdentHasher {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Clone for IdentHasher {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -686,5 +759,22 @@ mod test {
                 "Hash mismatch for {s:?}: const={const_hash:#x}, runtime={runtime_hash:#x}"
             );
         }
+    }
+
+    #[test]
+    fn ident_hashmap_lookup() {
+        let mut map: IdentHashMap<i32> = IdentHashMap::default();
+
+        // Insert with one Ident
+        let foo1 = Ident::new("foo");
+        map.insert(foo1, 42);
+
+        // Look up with a new Ident created from the same string
+        let foo2 = Ident::new("foo");
+        assert_eq!(map.get(&foo2), Some(&42));
+
+        // Verify that a different key is not found
+        let bar = Ident::new("bar");
+        assert_eq!(map.get(&bar), None);
     }
 }

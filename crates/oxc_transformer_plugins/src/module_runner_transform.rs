@@ -624,7 +624,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         let BindingIdentifier { name, symbol_id, .. } = ident;
 
         let scopes = ctx.scoping_mut();
-        scopes.remove_binding(scopes.root_scope_id(), &name);
+        scopes.remove_binding(scopes.root_scope_id(), name);
 
         let symbol_id = symbol_id.get().unwrap();
         // Do not need to insert if there no identifiers that point to this symbol

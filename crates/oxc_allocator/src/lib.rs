@@ -71,7 +71,7 @@ pub use bitset::BitSet;
 pub use boxed::Box;
 pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
-pub use hash_map::HashMap;
+pub use hash_map::{HashMap, HashMapImpl};
 pub use hash_set::HashSet;
 #[cfg(feature = "pool")]
 pub use pool::*;

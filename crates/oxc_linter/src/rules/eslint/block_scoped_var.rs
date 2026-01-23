@@ -199,7 +199,7 @@ fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &L
     // e.g. "var [a, b] = [1, 2]"
     for ident in pattern.get_binding_identifiers() {
         let name = ident.name.as_str();
-        let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
+        let Some(symbol) = ctx.scoping().find_binding_by_name(node_scope_id, name) else {
             continue;
         };
 

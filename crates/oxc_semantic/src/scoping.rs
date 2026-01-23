@@ -3,9 +3,9 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, FromIn, HashMap as ArenaHashMap, Vec as ArenaVec};
+use oxc_allocator::{Allocator, CloneIn, FromIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
-use oxc_span::{Atom, Span};
+use oxc_span::{ArenaIdentHashMap, Atom, Ident, Span};
 use oxc_syntax::{
     node::NodeId,
     reference::{Reference, ReferenceId},
@@ -13,8 +13,8 @@ use oxc_syntax::{
     symbol::{SymbolFlags, SymbolId},
 };
 
-pub type Bindings<'a> = ArenaHashMap<'a, &'a str, SymbolId>;
-pub type UnresolvedReferences<'a> = ArenaHashMap<'a, &'a str, ArenaVec<'a, ReferenceId>>;
+pub type Bindings<'a> = ArenaIdentHashMap<'a, SymbolId>;
+pub type UnresolvedReferences<'a> = ArenaIdentHashMap<'a, ArenaVec<'a, ReferenceId>>;
 
 #[derive(Clone, Debug)]
 pub struct Redeclaration {
@@ -608,6 +608,28 @@ impl Scoping {
         &self.cell.borrow_dependent().root_unresolved_references
     }
 
+    /// Check if a name is in the root unresolved references.
+    ///
+    /// This is a convenience method that accepts `&str`. If you already have an `Ident`,
+    /// prefer using `root_unresolved_references().contains_key(&ident)` for better performance.
+    #[inline]
+    pub fn root_unresolved_references_contains_by_name(&self, name: &str) -> bool {
+        self.root_unresolved_references().contains_key(&Ident::from(name))
+    }
+
+    /// Get the reference IDs for an unresolved reference by name.
+    ///
+    /// This is a convenience method that accepts `&str`. If you already have an `Ident`,
+    /// prefer using `root_unresolved_references().get(&ident)` for better performance.
+    ///
+    /// Returns a `Vec` (copy) of the reference IDs since the lookup key is temporary.
+    #[inline]
+    pub fn get_root_unresolved_reference_by_name(&self, name: &str) -> Option<Vec<ReferenceId>> {
+        self.root_unresolved_references()
+            .get(&Ident::from(name))
+            .map(|v| v.iter().copied().collect())
+    }
+
     pub fn root_unresolved_references_ids(
         &self,
     ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
@@ -616,11 +638,11 @@ impl Scoping {
 
     pub(crate) fn set_root_unresolved_references<'a>(
         &mut self,
-        entries: impl Iterator<Item = (&'a str, ReferenceIds)>,
+        entries: impl Iterator<Item = (Ident<'a>, ReferenceIds)>,
     ) {
         self.cell.with_dependent_mut(|allocator, cell| {
             for (k, v) in entries {
-                let k = allocator.alloc_str(k);
+                let k = k.clone_in(allocator);
                 let v = ArenaVec::from_iter_in(v, allocator);
                 cell.root_unresolved_references.insert(k, v);
             }
@@ -635,16 +657,17 @@ impl Scoping {
     /// # Panics
     /// Panics if there is no unresolved reference for provided `name` and `reference_id`.
     #[inline]
-    pub fn delete_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
+    pub fn delete_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         // It would be better to use `Entry` API to avoid 2 hash table lookups when deleting,
-        // but `map.entry` requires an owned key to be provided. Currently we use `CompactStr`s as keys
-        // which are not cheap to construct, so this is best we can do at present.
-        // TODO: Switch to `Entry` API once we use `&str`s or `Atom`s as keys.
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            let reference_ids = cell.root_unresolved_references.get_mut(name).unwrap();
+        // but `map.entry` requires an owned key to be provided.
+        let name_str = name.as_str();
+        self.cell.with_dependent_mut(|allocator, cell| {
+            // Reconstruct Ident inside the closure with allocator lifetime
+            let name = Ident::from(allocator.alloc_str(name_str));
+            let reference_ids = cell.root_unresolved_references.get_mut(&name).unwrap();
             if reference_ids.len() == 1 {
                 assert_eq!(reference_ids[0], reference_id);
-                cell.root_unresolved_references.remove(name);
+                cell.root_unresolved_references.remove(&name);
             } else {
                 let index = reference_ids.iter().position(|&id| id == reference_id).unwrap();
                 reference_ids.swap_remove(index);
@@ -686,13 +709,14 @@ impl Scoping {
 
     /// Get a variable binding by name that was declared in the top-level scope
     #[inline]
-    pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {
+    pub fn get_root_binding(&self, name: &Ident) -> Option<SymbolId> {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(&mut self, name: &str, reference_id: ReferenceId) {
+    pub fn add_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
+        let name_str = name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = allocator.alloc_str(name);
+            let name = Ident::from(allocator.alloc_str(name_str));
             cell.root_unresolved_references
                 .entry(name)
                 .or_insert_with(|| ArenaVec::new_in(allocator))
@@ -701,7 +725,7 @@ impl Scoping {
     }
 
     /// Check if a symbol is declared in a certain scope.
-    pub fn scope_has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
+    pub fn scope_has_binding(&self, scope_id: ScopeId, name: &Ident) -> bool {
         self.cell.borrow_dependent().bindings[scope_id].contains_key(name)
     }
 
@@ -713,7 +737,7 @@ impl Scoping {
     /// binding that might be declared in a parent scope, use [`find_binding`].
     ///
     /// [`find_binding`]: Scoping::find_binding
-    pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+    pub fn get_binding(&self, scope_id: ScopeId, name: &Ident) -> Option<SymbolId> {
         self.cell.borrow_dependent().bindings[scope_id].get(name).copied()
     }
 
@@ -721,13 +745,50 @@ impl Scoping {
     ///
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
-    pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+    pub fn find_binding(&self, scope_id: ScopeId, name: &Ident) -> Option<SymbolId> {
         for scope_id in self.scope_ancestors(scope_id) {
             if let Some(symbol_id) = self.get_binding(scope_id, name) {
                 return Some(symbol_id);
             }
         }
         None
+    }
+
+    // ==================== Convenience methods for `&str` lookups ====================
+    // These methods create an `Ident` from `&str` and use the fast-path methods above.
+    // Use these when you don't already have an `Ident` (e.g., in linter rules).
+
+    /// Get a variable binding by name that was declared in the top-level scope.
+    ///
+    /// This is a convenience method that accepts `&str`. If you already have an `Ident`,
+    /// prefer using [`Self::get_root_binding`] for better performance.
+    #[inline]
+    pub fn get_root_binding_by_name(&self, name: &str) -> Option<SymbolId> {
+        self.get_root_binding(&Ident::from(name))
+    }
+
+    /// Check if a symbol is declared in a certain scope.
+    ///
+    /// This is a convenience method that accepts `&str`. If you already have an `Ident`,
+    /// prefer using [`Self::scope_has_binding`] for better performance.
+    pub fn scope_has_binding_by_name(&self, scope_id: ScopeId, name: &str) -> bool {
+        self.scope_has_binding(scope_id, &Ident::from(name))
+    }
+
+    /// Get the symbol bound to an identifier name in a scope.
+    ///
+    /// This is a convenience method that accepts `&str`. If you already have an `Ident`,
+    /// prefer using [`Self::get_binding`] for better performance.
+    pub fn get_binding_by_name(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        self.get_binding(scope_id, &Ident::from(name))
+    }
+
+    /// Find a binding by name in a scope or its ancestors.
+    ///
+    /// This is a convenience method that accepts `&str`. If you already have an `Ident`,
+    /// prefer using [`Self::find_binding`] for better performance.
+    pub fn find_binding_by_name(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        self.find_binding(scope_id, &Ident::from(name))
     }
 
     /// Get all bound identifiers in a scope.
@@ -759,14 +820,6 @@ impl Scoping {
         self.cell.borrow_dependent().bindings[scope_id].values().copied()
     }
 
-    #[inline]
-    pub(crate) fn insert_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
-        self.cell.with_dependent_mut(|allocator, cell| {
-            let name = allocator.alloc_str(name);
-            cell.bindings[scope_id].insert(name, symbol_id);
-        });
-    }
-
     /// Create a scope.
     #[inline]
     pub fn add_scope(
@@ -786,25 +839,40 @@ impl Scoping {
     }
 
     /// Add a binding to a scope.
-    pub fn add_binding(&mut self, scope_id: ScopeId, name: &str, symbol_id: SymbolId) {
+    pub fn add_binding(&mut self, scope_id: ScopeId, name: Ident<'_>, symbol_id: SymbolId) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = allocator.alloc_str(name);
+            let name = name.clone_in(allocator);
             cell.bindings[scope_id].insert(name, symbol_id);
         });
     }
 
+    /// Insert a binding directly into a scope (when name is already in the allocator).
+    #[inline]
+    pub(crate) fn insert_binding(
+        &mut self,
+        scope_id: ScopeId,
+        name: Ident<'_>,
+        symbol_id: SymbolId,
+    ) {
+        self.add_binding(scope_id, name, symbol_id);
+    }
+
     /// Remove an existing binding from a scope.
-    pub fn remove_binding(&mut self, scope_id: ScopeId, name: &str) {
-        self.cell.with_dependent_mut(|_allocator, cell| {
-            cell.bindings[scope_id].remove(name);
+    pub fn remove_binding(&mut self, scope_id: ScopeId, name: Ident<'_>) {
+        let name_str = name.as_str();
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = Ident::from(allocator.alloc_str(name_str));
+            cell.bindings[scope_id].remove(&name);
         });
     }
 
     /// Move a binding from one scope to another.
-    pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: &str) {
-        self.cell.with_dependent_mut(|_allocator, cell| {
+    pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: Ident<'_>) {
+        let name_str = name.as_str();
+        self.cell.with_dependent_mut(|allocator, cell| {
+            let name = Ident::from(allocator.alloc_str(name_str));
             let from_map = &mut cell.bindings[from];
-            if let Some((name, symbol_id)) = from_map.remove_entry(name) {
+            if let Some((name, symbol_id)) = from_map.remove_entry(&name) {
                 cell.bindings[to].insert(name, symbol_id);
             }
         });
@@ -822,14 +890,17 @@ impl Scoping {
         &mut self,
         scope_id: ScopeId,
         symbol_id: SymbolId,
-        old_name: &str,
-        new_name: &str,
+        old_name: Ident<'_>,
+        new_name: Ident<'_>,
     ) {
+        let old_name_str = old_name.as_str();
+        let new_name_str = new_name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
             let bindings = &mut cell.bindings[scope_id];
-            let old_symbol_id = bindings.remove(old_name);
+            let old_name = Ident::from(allocator.alloc_str(old_name_str));
+            let old_symbol_id = bindings.remove(&old_name);
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
-            let new_name = allocator.alloc_str(new_name);
+            let new_name = Ident::from(allocator.alloc_str(new_name_str));
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
@@ -842,18 +913,21 @@ impl Scoping {
     /// * No binding already exists in scope for `new_name`.
     ///
     /// Panics in debug mode if either of the above are not satisfied.
-    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: &str) {
+    pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: Ident<'_>) {
+        let new_name_str = new_name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
             // Rename symbol
-            let new_name = Atom::from_in(new_name, allocator);
-            let old_name = mem::replace(&mut cell.symbol_names[symbol_id.index()], new_name);
+            let new_name_atom = Atom::from_in(new_name_str, allocator);
+            let old_name = mem::replace(&mut cell.symbol_names[symbol_id.index()], new_name_atom);
 
             // Rename binding, same as `Self::rename_binding`, we cannot call it directly
             // because the `old_name` borrowed `cell`.
             let bindings = &mut cell.bindings[scope_id];
-            let old_symbol_id = bindings.remove(old_name.as_str());
+            let old_name_ident = Ident::from(old_name.as_str());
+            let old_symbol_id = bindings.remove(&old_name_ident);
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
-            let existing_symbol_id = bindings.insert(new_name.as_str(), symbol_id);
+            let new_name = Ident::from(allocator.alloc_str(new_name_str));
+            let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
     }
@@ -906,11 +980,24 @@ impl Scoping {
                     bindings: cell
                         .bindings
                         .iter()
-                        .map(|map| map.clone_in_with_semantic_ids(allocator))
+                        .map(|map| {
+                            let mut new_map = Bindings::new_in(allocator);
+                            for (k, v) in map {
+                                new_map.insert(k.clone_in(allocator), *v);
+                            }
+                            new_map
+                        })
                         .collect(),
-                    root_unresolved_references: cell
-                        .root_unresolved_references
-                        .clone_in_with_semantic_ids(allocator),
+                    root_unresolved_references: {
+                        let mut new_map = UnresolvedReferences::new_in(allocator);
+                        for (k, v) in &cell.root_unresolved_references {
+                            new_map.insert(
+                                k.clone_in(allocator),
+                                v.clone_in_with_semantic_ids(allocator),
+                            );
+                        }
+                        new_map
+                    },
                 })
             },
         }

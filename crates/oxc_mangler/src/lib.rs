@@ -333,8 +333,8 @@ impl<'t> Mangler<'t> {
             // Scopes with direct eval: collect binding names as reserved (they can be
             // accessed by eval at runtime) and skip slot assignment (keep original names).
             if scoping.scope_flags(scope_id).contains_direct_eval() {
-                for (&name, _) in bindings {
-                    eval_reserved_names.insert(name);
+                for (name, _) in bindings {
+                    eval_reserved_names.insert(name.as_str());
                 }
                 continue;
             }
@@ -449,8 +449,7 @@ impl<'t> Mangler<'t> {
             &slots,
         );
 
-        let root_unresolved_references = scoping.root_unresolved_references();
-        let root_bindings = scoping.get_bindings(scoping.root_scope_id());
+        let root_scope_id = scoping.root_scope_id();
 
         // Generate reserved names only for slots that have symbols (frequencies.len())
         // instead of all slots. This avoids generating unused names.
@@ -469,8 +468,8 @@ impl<'t> Mangler<'t> {
                 let n = name.as_str();
                 if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
-                    && !root_unresolved_references.contains_key(n)
-                    && !(root_bindings.contains_key(n)
+                    && !scoping.root_unresolved_references_contains_by_name(n)
+                    && !(scoping.scope_has_binding_by_name(root_scope_id, n)
                         && (!self.options.top_level || exported_names.contains(n)))
                     // TODO: only skip the names that are kept in the current scope
                     && !keep_name_names.contains(n)

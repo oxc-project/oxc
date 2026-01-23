@@ -75,7 +75,8 @@ impl Rule for PreferObjectHasOwn {
 
         let object_property_name = object.static_property_name();
         let is_object = has_left_hand_object(object);
-        let is_global_scope = ctx.scoping().find_binding(node.scope_id(), "Object").is_none();
+        let is_global_scope =
+            ctx.scoping().find_binding_by_name(node.scope_id(), "Object").is_none();
 
         if is_method_call(call_expr, None, Some(&["call"]), Some(2), Some(2))
             && object_property_name == Some("hasOwnProperty")

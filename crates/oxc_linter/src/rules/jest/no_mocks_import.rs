@@ -70,12 +70,13 @@ impl Rule for NoMocksImport {
             }
         }
 
-        let Some(require_reference_ids) = ctx.scoping().root_unresolved_references().get("require")
+        let Some(require_reference_ids) =
+            ctx.scoping().get_root_unresolved_reference_by_name("require")
         else {
             return;
         };
 
-        for &reference_id in require_reference_ids {
+        for reference_id in require_reference_ids {
             let reference = ctx.scoping().get_reference(reference_id);
             let AstKind::CallExpression(call_expr) = ctx.nodes().parent_kind(reference.node_id())
             else {
