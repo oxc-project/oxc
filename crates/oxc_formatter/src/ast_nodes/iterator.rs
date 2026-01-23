@@ -14,7 +14,7 @@ use super::{AstNode, AstNodes};
 
 pub struct AstNodeIterator<'a, T> {
     inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
-    parent: &'a AstNodes<'a>,
+    parent: AstNodes<'a>,
     allocator: &'a Allocator,
 }
 
@@ -305,7 +305,7 @@ impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
                 parent: self.parent,
                 allocator: self.allocator,
                 following_span_start: inner_iter.next().map_or_else(
-                    || get_following_span_start_for_directive_parent(self.parent),
+                    || get_following_span_start_for_directive_parent(&self.parent),
                     |n| n.span().start,
                 ),
             }))
@@ -317,7 +317,7 @@ impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
                 inner,
                 parent: self.parent,
                 allocator: self.allocator,
-                following_span_start: get_following_span_start_for_directive_parent(self.parent),
+                following_span_start: get_following_span_start_for_directive_parent(&self.parent),
             }))
             .as_ref()
     }
@@ -332,7 +332,7 @@ impl<'a> Iterator for AstNodeIterator<'a, Directive<'a>> {
                 inner,
                 allocator,
                 following_span_start: self.inner.peek().map_or_else(
-                    || get_following_span_start_for_directive_parent(self.parent),
+                    || get_following_span_start_for_directive_parent(&self.parent),
                     |n| n.span().start,
                 ),
             }))

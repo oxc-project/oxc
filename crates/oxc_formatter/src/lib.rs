@@ -58,8 +58,7 @@ impl<'a> Formatter<'a> {
         program: &'a Program<'a>,
         external_callbacks: Option<ExternalCallbacks>,
     ) -> Formatted<'a> {
-        let parent = self.allocator.alloc(AstNodes::Dummy());
-        let program_node = AstNode::new(program, parent, self.allocator);
+        let program_node = AstNode::new(program, AstNodes::Dummy(), self.allocator);
 
         let context = FormatContext::new(
             program.source_text,

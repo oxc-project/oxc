@@ -12,7 +12,7 @@ use super::AstNodes;
 
 pub struct AstNode<'a, T> {
     pub(super) inner: &'a T,
-    pub(super) parent: &'a AstNodes<'a>,
+    pub(super) parent: AstNodes<'a>,
     pub(super) allocator: &'a Allocator,
     /// The start position of the following sibling node, or 0 if none.
     pub(super) following_span_start: u32,
@@ -103,8 +103,8 @@ impl<'a, T> AstNode<'a, T> {
 
     /// Returns the parent node.
     #[inline]
-    pub fn parent(&self) -> &'a AstNodes<'a> {
-        self.parent
+    pub fn parent(&self) -> &AstNodes<'a> {
+        &self.parent
     }
 
     /// Returns the grandparent node (parent's parent).
@@ -116,7 +116,7 @@ impl<'a, T> AstNode<'a, T> {
 }
 
 impl<'a> AstNode<'a, Program<'a>> {
-    pub fn new(inner: &'a Program<'a>, parent: &'a AstNodes<'a>, allocator: &'a Allocator) -> Self {
+    pub fn new(inner: &'a Program<'a>, parent: AstNodes<'a>, allocator: &'a Allocator) -> Self {
         AstNode { inner, parent, allocator, following_span_start: 0 }
     }
 }
@@ -182,7 +182,7 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
         self.allocator.alloc(AstNode {
             inner: arguments_ref,
             allocator: self.allocator,
-            parent: self.allocator.alloc(AstNodes::ImportExpression({
+            parent: AstNodes::ImportExpression({
                 // SAFETY: `self` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
                 unsafe {
                     transmute::<
@@ -190,7 +190,7 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
                         &'a AstNode<'a, ImportExpression<'a>>,
                     >(self)
                 }
-            })),
+            }),
             following_span_start,
         })
     }

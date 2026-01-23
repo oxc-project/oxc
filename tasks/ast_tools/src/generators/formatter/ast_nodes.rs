@@ -86,7 +86,7 @@ impl Generator for FormatterAstNodesGenerator {
         });
 
         let parent_match_arms = ast_nodes_names.iter().map(|(name, _)| {
-            quote! { Self::#name(n) => n.parent, }
+            quote! { Self::#name(n) => n.parent(), }
         });
 
         let ast_nodes_debug_names = ast_nodes_names.iter().map(|(name, _)| {
@@ -122,12 +122,13 @@ impl Generator for FormatterAstNodesGenerator {
             #transmute_self
 
             ///@@line_break
+            #[derive(Clone, Copy)]
             pub enum AstNodes<'a> {
                 Dummy(),
                 #(#ast_nodes_variants)*
             }
 
-            impl <'a> AstNodes<'a> {
+            impl AstNodes<'_> {
                 #[inline]
                 pub fn span(&self) -> Span {
                     match self {
@@ -137,7 +138,7 @@ impl Generator for FormatterAstNodesGenerator {
                 }
 
                 #[inline]
-                pub fn parent(&self) -> &'a Self {
+                pub fn parent(&self) -> &Self {
                     match self {
                         #dummy_variant
                         #(#parent_match_arms)*
@@ -234,7 +235,7 @@ fn generate_struct_impls(
         };
 
         let parent_expr = if has_kind {
-            quote! { self.allocator.alloc(AstNodes::#struct_name(transmute_self(self))) }
+            quote! { AstNodes::#struct_name(transmute_self(self)) }
         } else {
             quote! { self.parent }
         };
