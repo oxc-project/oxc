@@ -3,7 +3,7 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Ident, Span};
 
 use crate::{
     Context, ParserImpl, diagnostics,
@@ -72,6 +72,12 @@ impl<'a> ParserImpl<'a> {
     /// Get current string
     pub(crate) fn cur_string(&self) -> &'a str {
         self.lexer.get_string(self.token)
+    }
+
+    /// Get current identifier with precomputed hash
+    #[inline]
+    pub(crate) fn cur_ident(&self) -> Ident<'a> {
+        self.lexer.get_ident(self.token)
     }
 
     /// Get current template string
