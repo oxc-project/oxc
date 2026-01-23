@@ -14,7 +14,7 @@ use oxc::{
     span::{SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
 };
-use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
+use oxc_tasks_common::{normalize_path, print_text_diff, project_root};
 
 use crate::{
     TestRunnerOptions,
@@ -363,7 +363,7 @@ impl TestCase {
                     if !passed {
                         let diff = TextDiff::from_lines(&output, actual_errors);
                         println!("Diff:\n");
-                        print_diff_in_terminal(&diff);
+                        print_text_diff(&diff);
                     }
                 }
             } else {
@@ -378,7 +378,7 @@ impl TestCase {
                 if !passed {
                     let diff = TextDiff::from_lines(&output, &self.transformed_code);
                     println!("Diff:\n");
-                    print_diff_in_terminal(&diff);
+                    print_text_diff(&diff);
                 }
             }
 

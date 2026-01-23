@@ -1931,6 +1931,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_tasks_common",
  "phf",
  "pico-args",
  "rustc-hash",
