@@ -14,8 +14,19 @@ use crate::{
 
 /// Idempotency test
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    Driver { compress: Some(CompressOptions::smallest()), codegen: true, ..Driver::default() }
-        .idempotency("Compress", source_text, source_type)
+    let mut driver =
+        Driver { compress: Some(CompressOptions::smallest()), codegen: true, ..Driver::default() };
+    driver.run(source_text, source_type);
+    let printed1 = driver.printed.clone();
+    // Use detected source type from first pass (preserves module/script detection for unambiguous mode)
+    let detected_source_type = driver.source_type.unwrap_or(source_type);
+    driver.run(&printed1, detected_source_type);
+    let printed2 = driver.printed.clone();
+    if printed1 == printed2 {
+        TestResult::Passed
+    } else {
+        TestResult::Mismatch("Compress", printed1, printed2)
+    }
 }
 
 pub struct MinifierTest262Case {

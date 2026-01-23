@@ -38,6 +38,8 @@ pub struct Driver {
     pub panicked: bool,
     pub errors: Vec<OxcDiagnostic>,
     pub printed: String,
+    /// The source type detected after parsing (for unambiguous mode)
+    pub source_type: Option<SourceType>,
 }
 
 impl CompilerInterface for Driver {
@@ -74,6 +76,7 @@ impl CompilerInterface for Driver {
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
         let ParserReturn { program, panicked, errors, .. } = parser_return;
         self.panicked = *panicked;
+        self.source_type = Some(program.source_type);
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());

@@ -1476,7 +1476,7 @@ impl<'a> ParserImpl<'a> {
 
     /// ``AwaitExpression`[Yield]` :
     ///     await `UnaryExpression`[?Yield, +Await]
-    fn parse_await_expression(&mut self, lhs_span: u32) -> Expression<'a> {
+    pub(crate) fn parse_await_expression(&mut self, lhs_span: u32) -> Expression<'a> {
         let span = self.start_span();
         if !self.ctx.has_await() {
             // For `ModuleKind::Unambiguous`, defer the error until we know whether
@@ -1541,6 +1541,11 @@ impl<'a> ParserImpl<'a> {
         if self.at(Kind::Await) {
             if self.ctx.has_await() {
                 return true;
+            }
+            // In Script mode (not module, not unambiguous), `await` at top level is just an identifier.
+            // Only check lookahead for Module (top-level await) or Unambiguous mode (detection).
+            if !self.source_type.is_module() && !self.source_type.is_unambiguous() {
+                return false;
             }
             return self.lookahead(|p| {
                 Self::next_token_is_identifier_or_keyword_or_literal_on_same_line(p, true)

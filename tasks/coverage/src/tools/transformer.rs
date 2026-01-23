@@ -31,11 +31,13 @@ fn get_result(
         driver.run(source_text, source_type);
         driver.printed.clone()
     };
-    // Second pass with only JavaScript syntax
+    // Second pass with detected source type from first pass (preserves module/script detection)
+    let detected_source_type = driver.source_type.unwrap_or(source_type);
     let transformed2 = {
-        driver.run(&transformed1, SourceType::default().with_module(source_type.is_module()));
+        driver.run(&transformed1, detected_source_type);
         driver.printed.clone()
     };
+
     if transformed1 == transformed2 {
         TestResult::Passed
     } else {

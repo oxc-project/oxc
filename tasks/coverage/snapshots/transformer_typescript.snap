@@ -2,8 +2,24 @@ commit: 7f6a8467
 
 transformer_typescript Summary:
 AST Parsed     : 9843/9843 (100.00%)
-Positive Passed: 9841/9843 (99.98%)
+Positive Passed: 9833/9843 (99.90%)
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxEmptyExpressionNotCountedAsChild.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/jsxPartialSpread.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/reactImportUnusedInNewJSXEmit.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tsxNoTypeAnnotatedSFC.tsx
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessor2.ts
 
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/declarationEmit/leaveOptionalParameterAsWritten.ts
+
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.9.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/checkJsxGenericTagHasCorrectInferences.tsx
 

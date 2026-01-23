@@ -155,6 +155,13 @@ impl<'a> ParserImpl<'a> {
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(stmt_ctx),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(stmt_ctx),
+            Kind::Await
+                if stmt_ctx.is_top_level()
+                    && self.source_type.is_unambiguous()
+                    && self.is_unambiguous_await_statement() =>
+            {
+                self.parse_await_statement()
+            }
             Kind::Interface
             | Kind::Type
             | Kind::Module
@@ -231,6 +238,73 @@ impl<'a> ParserImpl<'a> {
                 return self.ast.statement_labeled(self.end_span(span), label, body);
             }
         }
+        self.parse_expression_statement(span, expr)
+    }
+
+    /// Check if `await` starts an unambiguous await statement.
+    ///
+    /// Returns true if:
+    /// - We're at `await`
+    /// - Not in await context (not already in async/module)
+    /// - Next token is NOT ambiguous (not +, -, (, [, /, template, of, using, newline)
+    ///
+    /// This is used in unambiguous mode to detect that `await expr` at top level
+    /// definitively makes this file an ES module.
+    pub(crate) fn is_unambiguous_await_statement(&mut self) -> bool {
+        debug_assert!(self.at(Kind::Await));
+        if self.ctx.has_await() {
+            return false;
+        }
+        self.lookahead(Self::peek_is_unambiguous_await_argument)
+    }
+
+    /// Check if the token following `await` is unambiguous (not ambiguous).
+    ///
+    /// Ambiguous tokens are those that could produce different ASTs depending on whether
+    /// the file is parsed as a script or module:
+    /// - Line break: `await\n0` could be two expression statements
+    /// - `+` / `-`: `await + 0` could be binary expression or await of unary
+    /// - `(`: `await(0)` could be call expression or await of parenthesized
+    /// - `[`: `await[0]` could be member expression or await of array
+    /// - `/`: `await /x/` could be division or await of regex
+    /// - Template: `await\`\`` could be tagged template or await of template
+    /// - `of`: `for (await of [])` ambiguity
+    /// - `using`: `await using` has special declaration semantics
+    /// - `%`: `await %x(0)` is always modulo in script mode (`await % x(0)`)
+    /// - `;`: `await;` is identifier statement, not await expression (await needs argument)
+    fn peek_is_unambiguous_await_argument(&mut self) -> bool {
+        self.bump_any(); // skip `await`
+        let token = self.cur_token();
+        if token.is_on_new_line() {
+            return false;
+        }
+        !matches!(
+            token.kind(),
+            Kind::Plus
+                | Kind::Minus
+                | Kind::LParen
+                | Kind::LBrack
+                | Kind::Slash
+                | Kind::Percent
+                | Kind::Semicolon
+                | Kind::TemplateHead
+                | Kind::NoSubstitutionTemplate
+                | Kind::Of
+                | Kind::Using
+        )
+    }
+
+    /// Parse a top-level await statement in unambiguous mode.
+    ///
+    /// This marks the file as ESM (since unambiguous await proves this is a module)
+    /// and parses the full expression (which starts with await) as an expression statement.
+    pub(crate) fn parse_await_statement(&mut self) -> Statement<'a> {
+        let span = self.start_span();
+        // Mark as ESM - unambiguous await proves this is a module
+        self.module_record_builder.found_unambiguous_await();
+        // Enable await context and parse the full expression (not just the await part)
+        // This handles cases like `await a ? b : c` where the await is part of a larger expression
+        let expr = self.context_add(Context::Await, Self::parse_expr);
         self.parse_expression_statement(span, expr)
     }
 

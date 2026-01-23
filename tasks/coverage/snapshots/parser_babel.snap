@@ -1,8 +1,8 @@
 commit: 6ef16ca4
 
 parser_babel Summary:
-AST Parsed     : 2217/2221 (99.82%)
-Positive Passed: 2204/2221 (99.23%)
+AST Parsed     : 2221/2225 (99.82%)
+Positive Passed: 2208/2225 (99.24%)
 Negative Passed: 1654/1689 (97.93%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
@@ -1186,12 +1186,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: In strict mode code, functions can only be declared at top level or inside a block
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-top-level-await/input.js:1:1]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-top-level-await/input.js:1:6]
  1 │ await Promise.resolve();
-   · ─────
+   ·      ▲
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
   × A 'yield' expression is only allowed in a generator body.
    ╭─[babel/packages/babel-parser/test/fixtures/core/sourcetype-commonjs/invalid-top-level-yield/input.js:1:1]
@@ -5128,21 +5128,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/9/input.js:1:25]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/9/input.js:1:30]
  1 │ function foo(promise) { await promise; }
-   ·                         ─────
+   ·                              ▲
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/allow-await-outside-function-throw/input.js:2:10]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/allow-await-outside-function-throw/input.js:2:15]
  1 │ function a() {
  2 │   return await 1
-   ·          ─────
+   ·               ▲
  3 │ }
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
   × Cannot use `await` as an identifier in an async context
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/async-await-as-arrow-binding-identifier/input.js:1:7]
@@ -5186,12 +5186,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-arrow-expression-disallowed/input.js:1:9]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-arrow-expression-disallowed/input.js:1:14]
  1 │ () => { await x }
-   ·         ─────
+   ·              ▲
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
   × await expression not allowed in formal parameter
    ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-parameters/input.js:1:23]
@@ -5225,21 +5225,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-parameters-of-nested-function/input.js:2:20]
+  × Expected `,` or `)` but found `decimal`
+   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-parameters-of-nested-function/input.js:2:26]
  1 │ async function foo() {
  2 │   function bar(x = await 2) {}
-   ·                    ─────
- 3 │ }
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × await expression not allowed in formal parameter
-   ╭─[babel/packages/babel-parser/test/fixtures/es2017/async-functions/await-inside-parameters-of-nested-function/input.js:2:20]
- 1 │ async function foo() {
- 2 │   function bar(x = await 2) {}
-   ·                    ───┬───
-   ·                       ╰── await expression not allowed in formal parameter
+   ·               ┬          ┬
+   ·               │          ╰── `,` or `)` expected
+   ·               ╰── Opened here
  3 │ }
    ╰────
 
@@ -8422,12 +8414,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-script/top-level/input.js:1:1]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-script/top-level/input.js:1:6]
  1 │ await 0;
-   · ─────
+   ·      ▲
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
   × Invalid regular expression: Invalid unicode flags combination `u` and `v`
    ╭─[babel/packages/babel-parser/test/fixtures/es2024/regexp-unicode-sets/uv-error/input.js:1:6]

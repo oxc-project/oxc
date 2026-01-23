@@ -72,13 +72,13 @@ Negative Passed: 131/131 (100.00%)
    · ──────
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[misc/fail/commonjs-top-level-await.cjs:2:1]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/commonjs-top-level-await.cjs:2:6]
  1 │ // CommonJS does NOT allow top-level await (only ES modules do)
  2 │ await Promise.resolve();
-   · ─────
+   ·      ▲
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]

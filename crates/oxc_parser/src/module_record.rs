@@ -199,6 +199,14 @@ impl<'a> ModuleRecordBuilder<'a> {
         self.module_record.import_metas.push(span);
     }
 
+    /// Mark as ESM when an unambiguous top-level await is encountered.
+    ///
+    /// In unambiguous mode, `await expr` where `expr` is clearly an expression (not ambiguous
+    /// like `+`, `-`, `(`, `[`, etc.) indicates this is definitely an ES module.
+    pub fn found_unambiguous_await(&mut self) {
+        self.module_record.has_module_syntax = true;
+    }
+
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
         let module_request = NameSpan::new(decl.source.value, decl.source.span);
 

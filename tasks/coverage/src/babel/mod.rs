@@ -51,8 +51,6 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
             "typescript/arrow-function/arrow-like-in-conditional-2",
             // TypeScript allows `satisfies const`, Babel doesn't
             "typescript/cast/satisfies-const-error",
-            // Babel's heuristic for detecting module via unambiguous `await` - not in ES spec, we follow TypeScript
-            "es2022/top-level-await-unambiguous",
             // Escaped `of` binding in using declarations - not worth supporting
             "explicit-resource-management/valid-for-await-using-binding-escaped-of-of",
             "explicit-resource-management/valid-for-using-binding-escaped-of-of",
