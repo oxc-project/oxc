@@ -10,7 +10,7 @@ use rustc_hash::FxHashMap;
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{SourceType, Span};
+use oxc_span::{IncrementalIdentHasher, SourceType, Span};
 
 use crate::{UniquePromise, diagnostics};
 
@@ -47,6 +47,7 @@ pub struct LexerCheckpoint<'a> {
     errors_snapshot: ErrorSnapshot,
     has_pure_comment: bool,
     has_no_side_effects_comment: bool,
+    identifier_hasher: IncrementalIdentHasher,
 }
 
 #[derive(Debug, Clone)]
@@ -95,6 +96,10 @@ pub struct Lexer<'a> {
 
     /// `memchr` Finder for end of multi-line comments. Created lazily when first used.
     multi_line_comment_end_finder: Option<memchr::memmem::Finder<'static>>,
+
+    /// Incremental hasher for current identifier.
+    /// Used to compute hash during lexing for efficient `Ident` creation.
+    pub(crate) identifier_hasher: IncrementalIdentHasher,
 }
 
 impl<'a> Lexer<'a> {
@@ -124,6 +129,7 @@ impl<'a> Lexer<'a> {
             escaped_strings: FxHashMap::default(),
             escaped_templates: FxHashMap::default(),
             multi_line_comment_end_finder: None,
+            identifier_hasher: IncrementalIdentHasher::new(),
         }
     }
 
@@ -165,6 +171,7 @@ impl<'a> Lexer<'a> {
             errors_snapshot,
             has_pure_comment: self.trivia_builder.has_pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            identifier_hasher: self.identifier_hasher,
         }
     }
 
@@ -182,6 +189,7 @@ impl<'a> Lexer<'a> {
             errors_snapshot,
             has_pure_comment: self.trivia_builder.has_pure_comment,
             has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
+            identifier_hasher: self.identifier_hasher,
         }
     }
 
@@ -196,6 +204,7 @@ impl<'a> Lexer<'a> {
         self.token = checkpoint.token;
         self.trivia_builder.has_pure_comment = checkpoint.has_pure_comment;
         self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
+        self.identifier_hasher = checkpoint.identifier_hasher;
     }
 
     pub fn peek_token(&mut self) -> Token {

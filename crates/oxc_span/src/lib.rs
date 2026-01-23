@@ -11,7 +11,8 @@ mod span;
 pub use cmp::ContentEq;
 pub use oxc_str::{
     ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet, IdentHasher,
-    MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str, format_ident,
+    IncrementalIdentHasher, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str,
+    format_ident,
 };
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,

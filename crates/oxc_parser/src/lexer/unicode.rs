@@ -12,6 +12,8 @@ use oxc_syntax::{
     line_terminator::{CR, LF, LS, PS, is_irregular_line_terminator},
 };
 
+use oxc_span::IncrementalIdentHasher;
+
 use super::{Kind, Lexer, Span};
 
 /// A Unicode escape sequence.
@@ -36,7 +38,10 @@ impl<'a> Lexer<'a> {
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
                 self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
+                let id = self.identifier_tail_after_unicode(start_pos);
+                // Hash the full identifier for get_ident()
+                self.identifier_hasher = IncrementalIdentHasher::new();
+                self.identifier_hasher.write_bytes(id.as_bytes());
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),
