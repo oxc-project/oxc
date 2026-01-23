@@ -224,9 +224,9 @@ impl<'a> Dummy<'a> for TemplateElementValue<'a> {
 impl<'a> Dummy<'a> for MemberExpression<'a> {
     /// Create a dummy [`MemberExpression`].
     ///
-    /// Has cost of making 2 allocations (64 bytes).
+    /// Has cost of making 3 allocations (64 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::StaticMemberExpression(Dummy::dummy(allocator))
+        Self::ComputedMemberExpression(Dummy::dummy(allocator))
     }
 }
 
@@ -1318,9 +1318,9 @@ impl<'a> Dummy<'a> for StaticBlock<'a> {
 impl<'a> Dummy<'a> for ModuleDeclaration<'a> {
     /// Create a dummy [`ModuleDeclaration`].
     ///
-    /// Has cost of making 1 allocation (32 bytes).
+    /// Has cost of making 2 allocations (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::TSNamespaceExportDeclaration(Dummy::dummy(allocator))
+        Self::ExportDefaultDeclaration(Dummy::dummy(allocator))
     }
 }
 

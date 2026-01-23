@@ -329,6 +329,10 @@ fn calculate_layout_for_enum(type_id: TypeId, schema: &mut Schema) -> Layout {
     layout_64.size += layout_64.align;
     layout_32.size += layout_32.align;
 
+    // Round up size to alignment
+    layout_64.size = layout_64.size.next_multiple_of(layout_64.align);
+    layout_32.size = layout_32.size.next_multiple_of(layout_32.align);
+
     // Any unused discriminant values at start of end of the range form a niche.
     // Note: The unused discriminants must be at start or end of range, *not* in the middle.
     // `#[repr(u8)] enum Foo { A = 0, B = 255 }` has no niche.
@@ -445,6 +449,13 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
         layout_32: PlatformLayout::from_size_align_niche(8, 4, Niche::new(0, 4, 1, 0)),
     };
+    // `Ident` is `NonNull<u8>` + `u32` (len) + `u32` (hash). Niche for 0 on the pointer field.
+    // On 64-bit: 8 (ptr) + 4 (len) + 4 (hash) = 16 bytes, align 8
+    // On 32-bit: 4 (ptr) + 4 (len) + 4 (hash) = 12 bytes, align 4
+    let ident_layout = Layout {
+        layout_64: PlatformLayout::from_size_align_niche(16, 8, Niche::new(0, 8, 1, 0)),
+        layout_32: PlatformLayout::from_size_align_niche(12, 4, Niche::new(0, 4, 1, 0)),
+    };
     // `usize` and `isize` are pointer-sized, but with no niche
     let usize_layout = Layout {
         layout_64: PlatformLayout::from_size_align(8, 8),
@@ -475,7 +486,7 @@ fn calculate_layout_for_primitive(primitive_def: &PrimitiveDef) -> Layout {
         "f64" => Layout::from_type::<f64>(),
         "&str" => str_layout,
         "Atom" => str_layout,
-        "Ident" => str_layout,
+        "Ident" => ident_layout,
         "NonZeroU8" => Layout::from_type_with_niche_for_zero::<num::NonZeroU8>(),
         "NonZeroU16" => Layout::from_type_with_niche_for_zero::<num::NonZeroU16>(),
         "NonZeroU32" => Layout::from_type_with_niche_for_zero::<num::NonZeroU32>(),
