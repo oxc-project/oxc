@@ -12,14 +12,18 @@ import { FILTER_ONLY_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
 import type { LanguageOptionsInternal } from "../../src-js/package/rule_tester.ts";
-export type { LanguageOptionsInternal };
 
 type DescribeFn = RuleTester.DescribeFn;
 type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
-type ValidTestCase = RuleTester.ValidTestCase;
-type InvalidTestCase = RuleTester.InvalidTestCase;
 type Globals = RuleTester.Globals;
+
+interface TestCaseExtension {
+  languageOptions?: LanguageOptionsInternal;
+}
+
+export type ValidTestCase = RuleTester.ValidTestCase & TestCaseExtension;
+export type InvalidTestCase = RuleTester.InvalidTestCase & TestCaseExtension;
 export type TestCase = ValidTestCase | InvalidTestCase;
 
 // Get `@typescript-eslint/parser` module.
@@ -96,7 +100,7 @@ function modifyTestCase(test: TestCase): void {
   test.eslintCompat = true;
 
   // Ignore parsing errors. ESLint's test cases include invalid code.
-  const languageOptions = { ...test.languageOptions } as LanguageOptionsInternal;
+  const languageOptions = { ...test.languageOptions };
   test.languageOptions = languageOptions;
 
   const parserOptions = { ...languageOptions.parserOptions };
