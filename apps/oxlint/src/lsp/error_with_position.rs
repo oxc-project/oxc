@@ -7,7 +7,7 @@ use tower_lsp_server::ls_types::{
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::{OxcCode, Severity};
-use oxc_linter::{Fix, Message, PossibleFixes};
+use oxc_linter::{Fix, FixKind, Message, PossibleFixes};
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -26,6 +26,7 @@ pub struct FixedContent {
     pub message: String,
     pub code: String,
     pub range: Range,
+    pub kind: FixKind,
 }
 
 // clippy: the source field is checked and assumed to be less than 4GB, and
@@ -175,6 +176,7 @@ fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedConte
         message: fix.message.as_ref().map(std::string::ToString::to_string).unwrap_or_default(),
         code: fix.content.to_string(),
         range: Range::new(start_position, end_position),
+        kind: fix.kind,
     }
 }
 
@@ -333,6 +335,7 @@ fn disable_for_this_line(
             "{content_prefix}{whitespace_string}// oxlint-disable-next-line {rule_name}\n"
         ),
         range: Range::new(position, position),
+        kind: FixKind::SafeFix,
     }
 }
 
@@ -354,6 +357,7 @@ fn disable_for_this_section(
         message: format!("Disable {rule_name} for this whole file"),
         code: content,
         range: Range::new(position, position),
+        kind: FixKind::SafeFix,
     }
 }
 
