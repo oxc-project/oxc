@@ -7,123 +7,73 @@
     clippy::cast_lossless
 )]
 
-use std::{borrow::Cow, fmt, hash, hash::Hasher, marker::PhantomData, ops::Deref, ptr::NonNull};
+use std::{borrow::Cow, fmt, hash, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
 #[cfg(feature = "serialize")]
 use oxc_estree::{ESTree, Serializer as ESTreeSerializer};
-use rustc_hash::FxHasher;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{Atom, CompactStr};
 
-/// Compute FxHash of a string at compile time.
+/// Multiplier constant for incremental hashing.
+const K: usize = 0xf135_7aea_2e62_a9c5;
+
+/// Incremental hasher for computing Ident hashes byte-by-byte.
 ///
-/// This matches what `hash::Hash::hash(&s, &mut FxHasher)` produces at runtime
-/// with rustc-hash v2.x, which uses a wyhash-inspired algorithm.
-///
-/// The `str` Hash impl: writes bytes, then 0xff marker, then length.
-const fn const_fx_hash_str(s: &str) -> u64 {
-    // rustc-hash v2.x constants
-    const SEED1: u64 = 0x243f_6a88_85a3_08d3;
-    const SEED2: u64 = 0x1319_8a2e_0370_7344;
-    const PREVENT_TRIVIAL_ZERO_COLLAPSE: u64 = 0xa409_3822_299f_31d0;
-    const K: u64 = 0xf135_7aea_2e62_a9c5;
-
-    // Folded multiplication: (x * y) XOR'd with its high bits
-    const fn multiply_mix(x: u64, y: u64) -> u64 {
-        let full = (x as u128) * (y as u128);
-        (full as u64) ^ ((full >> 64) as u64)
-    }
-
-    // Read u64 from bytes in little-endian
-    const fn read_u64_le(bytes: &[u8], offset: usize) -> u64 {
-        u64::from_le_bytes([
-            bytes[offset],
-            bytes[offset + 1],
-            bytes[offset + 2],
-            bytes[offset + 3],
-            bytes[offset + 4],
-            bytes[offset + 5],
-            bytes[offset + 6],
-            bytes[offset + 7],
-        ])
-    }
-
-    // Read u32 from bytes in little-endian
-    const fn read_u32_le(bytes: &[u8], offset: usize) -> u32 {
-        u32::from_le_bytes([bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3]])
-    }
-
-    // Hash bytes using rustc-hash v2.x algorithm (wyhash-inspired)
-    const fn hash_bytes(bytes: &[u8]) -> u64 {
-        let len = bytes.len();
-        let mut s0 = SEED1;
-        let mut s1 = SEED2;
-
-        if len <= 16 {
-            if len >= 8 {
-                s0 ^= read_u64_le(bytes, 0);
-                s1 ^= read_u64_le(bytes, len - 8);
-            } else if len >= 4 {
-                s0 ^= read_u32_le(bytes, 0) as u64;
-                s1 ^= read_u32_le(bytes, len - 4) as u64;
-            } else if len > 0 {
-                let lo = bytes[0];
-                let mid = bytes[len / 2];
-                let hi = bytes[len - 1];
-                s0 ^= lo as u64;
-                s1 ^= ((hi as u64) << 8) | mid as u64;
-            }
-        } else {
-            // Handle bulk (can partially overlap with suffix)
-            let mut off = 0;
-            while off < len - 16 {
-                let x = read_u64_le(bytes, off);
-                let y = read_u64_le(bytes, off + 8);
-                let t = multiply_mix(s0 ^ x, PREVENT_TRIVIAL_ZERO_COLLAPSE ^ y);
-                s0 = s1;
-                s1 = t;
-                off += 16;
-            }
-            // Process suffix
-            s0 ^= read_u64_le(bytes, len - 16);
-            s1 ^= read_u64_le(bytes, len - 8);
-        }
-
-        multiply_mix(s0, s1) ^ (len as u64)
-    }
-
-    // add_to_hash in rustc-hash v2.x: hash = (hash + i).wrapping_mul(K)
-    const fn add_to_hash(hash: u64, i: u64) -> u64 {
-        hash.wrapping_add(i).wrapping_mul(K)
-    }
-
-    let bytes = s.as_bytes();
-
-    // str's Hash impl:
-    // 1. write(bytes) -> write_u64(hash_bytes(bytes)) -> add_to_hash(hash_bytes_result)
-    let mut state: u64 = 0;
-    state = add_to_hash(state, hash_bytes(bytes));
-
-    // 2. write_u8(0xff) -> add_to_hash(0xff)
-    state = add_to_hash(state, 0xff);
-
-    // Note: str's Hash impl does NOT call write_usize(len) anymore
-    // (changed in recent Rust versions)
-
-    state
+/// This allows computing hash while scanning identifier bytes in the lexer,
+/// avoiding a second pass over the data.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct IncrementalIdentHasher {
+    state: usize,
 }
 
-/// Compute the hash of a string, taking top 32 bits which have highest entropy with FxHasher.
-/// This matches what `Ident::new` computes at runtime.
+impl IncrementalIdentHasher {
+    /// Create a new hasher with initial state.
+    #[inline]
+    pub const fn new() -> Self {
+        Self { state: 0 }
+    }
+
+    /// Add a byte to the hash.
+    #[inline]
+    pub fn write_byte(&mut self, byte: u8) {
+        self.state = self.state.wrapping_add(byte as usize).wrapping_mul(K);
+    }
+
+    /// Add multiple bytes to the hash.
+    #[inline]
+    pub fn write_bytes(&mut self, bytes: &[u8]) {
+        for &byte in bytes {
+            self.write_byte(byte);
+        }
+    }
+
+    /// Finalize and return the hash value.
+    #[inline]
+    pub fn finish(self) -> u32 {
+        // 0xff marker (like str's Hash impl)
+        let state = self.state.wrapping_add(0xff).wrapping_mul(K);
+        // Rotate and extract top 32 bits
+        (state.rotate_left(26) >> 32) as u32
+    }
+}
+
+/// Compute the hash of a string using the incremental algorithm.
+/// This is a const-compatible version for `Ident::new_const`.
 const fn compute_hash(s: &str) -> u32 {
-    // const_fx_hash_str computes the internal state, but FxHasher::finish()
-    // rotates left by 26 bits before returning.
-    let internal_state = const_fx_hash_str(s);
-    let finished = internal_state.rotate_left(26);
-    (finished >> 32) as u32
+    let bytes = s.as_bytes();
+    let mut state: usize = 0;
+    let mut i = 0;
+    while i < bytes.len() {
+        state = state.wrapping_add(bytes[i] as usize).wrapping_mul(K);
+        i += 1;
+    }
+    // 0xff marker
+    state = state.wrapping_add(0xff).wrapping_mul(K);
+    // Rotate and extract top 32 bits
+    (state.rotate_left(26) >> 32) as u32
 }
 
 /// An identifier string for oxc_allocator.
@@ -166,14 +116,22 @@ impl<'a> Ident<'a> {
         let ptr = NonNull::from(s).cast::<u8>();
         let len = s.len() as u32;
 
-        // Produce a hash of the string
-        let hash = {
-            let mut hasher = FxHasher::default();
-            hash::Hash::hash(&s, &mut hasher);
-            // Take top 32 bits which have highest entropy with FxHasher
-            (hasher.finish() >> 32) as u32
-        };
+        // Compute hash using incremental hasher
+        let mut hasher = IncrementalIdentHasher::new();
+        hasher.write_bytes(s.as_bytes());
+        let hash = hasher.finish();
 
+        Self { ptr, len, hash, _marker: PhantomData }
+    }
+
+    /// Create a new [`Ident`] from a string slice with a precomputed hash.
+    ///
+    /// This is useful when the hash has already been computed incrementally
+    /// during lexing.
+    #[inline]
+    pub fn new_with_hash(s: &'a str, hash: u32) -> Self {
+        let ptr = NonNull::from(s).cast::<u8>();
+        let len = s.len() as u32;
         Self { ptr, len, hash, _marker: PhantomData }
     }
 
@@ -738,25 +696,22 @@ mod test {
     }
 
     #[test]
-    fn const_fx_hash_matches_runtime() {
-        // Directly test the const_fx_hash_str function against runtime FxHasher
-        // const_fx_hash_str returns internal state (before rotation)
-        // FxHasher::finish() returns state.rotate_left(26)
+    fn incremental_hasher_matches_const() {
+        // Test that IncrementalIdentHasher produces the same hash as compute_hash
         let test_cases: &[&str] = &["", "a", "ab", "abc", "abcdefgh", "hello_world"];
 
         for s in test_cases {
-            // const_fx_hash_str returns internal state, apply rotation to match finish()
-            let const_hash = const_fx_hash_str(s).rotate_left(26);
+            let const_hash = compute_hash(s);
 
-            let runtime_hash = {
-                let mut hasher = FxHasher::default();
-                hash::Hash::hash(&s, &mut hasher);
+            let incremental_hash = {
+                let mut hasher = IncrementalIdentHasher::new();
+                hasher.write_bytes(s.as_bytes());
                 hasher.finish()
             };
 
             assert_eq!(
-                const_hash, runtime_hash,
-                "Hash mismatch for {s:?}: const={const_hash:#x}, runtime={runtime_hash:#x}"
+                const_hash, incremental_hash,
+                "Hash mismatch for {s:?}: const={const_hash:#x}, incremental={incremental_hash:#x}"
             );
         }
     }
