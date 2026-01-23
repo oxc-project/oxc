@@ -45,8 +45,24 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             && arrow.expression
         {
             f.context().comments().comments_before(arrow.span.end)
-        } else if matches!(self.parent(), AstNodes::ConditionalExpression(_)) {
-            f.context().comments().end_of_line_comments_after(self.span().end)
+        } else if let AstNodes::ConditionalExpression(conditional) = self.parent() {
+            if self.span() == conditional.alternate.span() {
+                // Since `preserveParens` is disabled, `conditional.alternate.span` only covers
+                // `<Success />`, not the surrounding parentheses or comments within them:
+                // ```jsx
+                // false ? (
+                //   <Error />
+                // ) : (
+                //   <Success />
+                //   /* comment */
+                // )
+                // ```
+                // To capture comments like the one above, we get all comments before the
+                // conditional expression's end (which includes the closing paren).
+                f.context().comments().comments_before(conditional.span.end)
+            } else {
+                f.context().comments().end_of_line_comments_after(self.span().end)
+            }
         } else {
             // Fall back to default trailing comments behavior
             return match self {
