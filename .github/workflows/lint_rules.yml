@@ -14,7 +14,7 @@ on:
 
 jobs:
   lint_rules:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       contents: read
       issues: write

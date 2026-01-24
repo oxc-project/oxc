@@ -31,7 +31,7 @@ concurrency:
 jobs:
   determine-matrix:
     name: Determine Benchmark
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, '0-merge') }}
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}

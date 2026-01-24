@@ -20,7 +20,7 @@ defaults:
 jobs:
   check:
     name: Check version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       version: ${{ steps.check.outputs.version }}
       version_changed: ${{ steps.check.outputs.version_changed }}
@@ -38,7 +38,7 @@ jobs:
     env:
       version: ${{ needs.check.outputs.version }}
     name: Package
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
 
@@ -64,7 +64,7 @@ jobs:
 
   publish-vsce:
     name: Publish to Microsoft Marketplace
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: build
     environment: marketplace
     permissions:
@@ -89,7 +89,7 @@ jobs:
   # A different job so we can retry if the other publish fails.
   publish-ovsx:
     name: Publish to Open VSX Registry
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: build
     environment: marketplace
     permissions:

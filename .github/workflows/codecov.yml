@@ -53,7 +53,7 @@ jobs:
   # codecov often fails, use another workflow for retry
   upload-codecov:
     name: Upload coverage file
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: coverage
     # Check if the event is not triggered by a fork by checking whether CODECOV_TOKEN is set
     env:
