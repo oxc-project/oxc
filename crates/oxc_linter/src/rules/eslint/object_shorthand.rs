@@ -446,7 +446,9 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             if !property.span.contains_inclusive(comment.span) {
                 return false;
             }
-            comment.is_jsdoc()
+            // eslint checks `@type`
+            // https://github.com/eslint/eslint/blob/f9c3e7adf7550441341e05dc60ab23bd5307d568/lib/rules/object-shorthand.js#L592
+            comment.is_jsdoc() && self.ctx.source_range(comment.span).contains("@type")
         }) {
             return;
         }
@@ -762,11 +764,6 @@ fn test() {
         ("var x = {bar, ...baz}", Some(json!(["consistent-as-needed"]))),
         ("var x = {bar: baz, ...qux}", Some(json!(["consistent-as-needed"]))),
         ("var x = {...foo, bar, baz}", Some(json!(["consistent-as-needed"]))),
-        // jsdoc
-        ("var x = {x: /** */ x}", None),
-        ("var x = {x: (/** */ x)}", None),
-        ("var x = {'x': /** */ x}", None),
-        ("var x = {'x': (/** */ x)}", None),
     ];
 
     let fail = vec![
@@ -939,11 +936,62 @@ fn test() {
         ("var x = {a, b, c(){}, x: x}", "var x = {a, b, c(){}, x}", Some(json!(["properties"]))),
         ("({ a: (function(){ return foo; }) })", "({ a(){ return foo; } })", None),
         ("({ a: async function*() {} })", "({ async *a() {} })", Some(json!(["always"]))),
+        (
+            "var x = {foo: foo, bar: baz, ...qux}",
+            "var x = {foo, bar: baz, ...qux}",
+            Some(json!(["always"])),
+        ),
     ];
 
     Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_jsdoc() {
+    use crate::tester::Tester;
+
+    // JSDoc @type annotation
+    let pass = vec![
+        ("({ val: /** @type {number} */ (val) })", None),
+        ("({ 'prop': /** @type {string} */ (prop) })", None),
+        ("({ val: /**\n * @type {number}\n */ (val) })", None),
+        ("({ val: /**\n  * @type {number}\n  */ (val) })", None),
+        ("({ val: /**\n   * @type {number}\n   */ (val) })", None),
+        ("({ val: /**\n\t* @type {number}\n\t*/ (val) })", None),
+        ("({ val: /**\n\t * @type {number}\n\t */ (val) })", None),
+        ("({ val: /**\n  *  @type   {number}  \n  */ (val) })", None),
+        ("({ val: /**\n *  @type   {string} myParam\n */ (val) })", None),
+        ("({ val: /**\n  *  @type   {Object} options\n  */ (val) })", None),
+        ("({ val: /**\n\t *\t@type\t{Array}\n\t */ (val) })", None),
+        (
+            "({ val: /**\n   *\n   * @type {Function}\n   * @param {string} name\n   */ (val) })",
+            None,
+        ),
+    ];
+
+    let fail = vec![
+        ("({ val: /** regular comment */ (val) })", None),
+        ("({ val: /** @param {string} name */ (val) })", None),
+        ("({ val: /** @returns {number} */ (val) })", None),
+        ("({ val: /** @description some text */ (val) })", None),
+        ("({ val: /**\n * @param {string} name\n */ (val) })", None),
+        ("({ val: /**\n  * @returns {number}\n  */ (val) })", None),
+        ("({ val: /**\n   * @description some text\n   */ (val) })", None),
+        ("({ val: /**\n\t* @param {string} name\n\t*/ (val) })", None),
+        ("({ val: /**\n\t * @returns {number}\n\t */ (val) })", None),
+        ("({ val: /**\n  *  @param   {string}  name  \n  */ (val) })", None),
+        ("({ val: /**\n *  @returns   {number} result\n */ (val) })", None),
+        (
+            "({ val: /**\n   *\n   * @param {string} name\n   * @returns {number}\n   */ (val) })",
+            None,
+        ),
+    ];
+
+    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
 }
 
 #[test]
