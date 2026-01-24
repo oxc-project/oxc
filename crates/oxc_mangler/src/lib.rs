@@ -9,9 +9,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use base54::base54;
 use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
-use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr};
+use oxc_span::{Atom, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -279,7 +278,9 @@ impl<'t> Mangler<'t> {
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
-        let class_private_mappings = Self::collect_private_members_from_semantic(semantic);
+        let temp_allocator = self.temp_allocator.as_ref();
+        let class_private_mappings =
+            Self::collect_private_members_from_semantic(semantic, temp_allocator);
         if self.options.debug {
             self.build_with_semantic_impl(semantic, program, debug_name);
         } else {
@@ -288,7 +289,7 @@ impl<'t> Mangler<'t> {
         class_private_mappings
     }
 
-    fn build_with_semantic_impl<const CAPACITY: usize, G: Fn(u32) -> InlineString<CAPACITY, u8>>(
+    fn build_with_semantic_impl<G: for<'a> Fn(u32, &'a Allocator) -> Ident<'a>>(
         self,
         semantic: &mut Semantic<'_>,
         program: &Program<'_>,
@@ -459,7 +460,7 @@ impl<'t> Mangler<'t> {
         let mut count = 0;
         for _ in 0..names_needed {
             let name = loop {
-                let name = generate_name(count);
+                let name = generate_name(count, temp_allocator);
                 count += 1;
                 // Do not mangle keywords, unresolved references, and names from eval scopes.
                 // Variables in direct-eval-containing scopes keep their original names
@@ -497,10 +498,10 @@ impl<'t> Mangler<'t> {
 
         let mut freq_iter = frequencies.iter();
         let mut symbols_renamed_in_this_batch = Vec::with_capacity_in(100, temp_allocator);
-        let mut slice_of_same_len_strings = Vec::with_capacity_in(100, temp_allocator);
+        let mut slice_of_same_len_strings: Vec<'_, Ident<'_>> =
+            Vec::with_capacity_in(100, temp_allocator);
         // 2. "N number of vars are going to be assigned names of the same length"
-        for (_, slice_of_same_len_strings_group) in
-            &reserved_names.into_iter().chunk_by(InlineString::len)
+        for (_, slice_of_same_len_strings_group) in &reserved_names.into_iter().chunk_by(Ident::len)
         {
             // 1. "The most frequent vars get the shorter names"
             // (freq_iter is sorted by frequency from highest to lowest,
@@ -524,7 +525,7 @@ impl<'t> Mangler<'t> {
                 symbols_renamed_in_this_batch.iter().zip(slice_of_same_len_strings.iter());
 
             // rename the variables
-            for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
+            for (symbol_to_rename, &new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
                     scoping.set_symbol_name(symbol_id, new_name);
                 }
@@ -614,6 +615,7 @@ impl<'t> Mangler<'t> {
     /// Returns a Vec where each element corresponds to a class in declaration order
     fn collect_private_members_from_semantic(
         semantic: &Semantic<'_>,
+        allocator: &Allocator,
     ) -> IndexVec<ClassId, FxHashMap<String, CompactStr>> {
         let classes = semantic.classes();
 
@@ -661,7 +663,7 @@ impl<'t> Mangler<'t> {
                             // We can improve this by reusing names that are not used in child classes,
                             // but nesting a class inside another class is not common
                             // and that would require liveness analysis.
-                            base54((parent_private_member_count + i) as u32).as_str(),
+                            base54((parent_private_member_count + i) as u32, allocator).as_str(),
                         );
                         (name, mangled)
                     })
@@ -688,10 +690,10 @@ impl<'t> SlotFrequency<'t> {
     }
 }
 
-// Maximum length of string is 15 (`slot_4294967295` for `u32::MAX`).
-fn debug_name(n: u32) -> InlineString<15, u8> {
+fn debug_name<'a>(n: u32, allocator: &'a Allocator) -> Ident<'a> {
     // Using `format!` here allocates a string unnecessarily.
     // But this function is not for use in production, so let's not worry about it.
     // We shouldn't resort to unsafe code, when it's not critical for performance.
-    InlineString::from_str(&format!("slot_{n}"))
+    let s = allocator.alloc_str(&format!("slot_{n}"));
+    Ident::from(s)
 }

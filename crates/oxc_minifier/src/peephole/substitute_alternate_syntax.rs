@@ -7,8 +7,7 @@ use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue, Det
 use oxc_ecmascript::side_effects::MayHaveSideEffectsContext;
 use oxc_ecmascript::{ToJsString, ToNumber, side_effects::MayHaveSideEffects};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::GetSpan;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, Ident, SPAN};
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     number::NumberBase,
@@ -19,6 +18,8 @@ use oxc_traverse::Ancestor;
 use crate::ctx::Ctx;
 
 use super::PeepholeOptimizations;
+
+const IDENT_OBJECT: Ident<'static> = Ident::new_const("Object");
 
 /// A peephole optimization that minimizes code by simplifying conditional
 /// expressions, replacing IFs with HOOKs, replacing object constructors
@@ -1225,7 +1226,7 @@ impl<'a> PeepholeOptimizations {
                     .as_member_expression()
                     .is_some_and(|mem_expr| mem_expr.is_specific_member_access("window", "Object"))
             {
-                let reference_id = ctx.create_unbound_reference("Object", ReferenceFlags::Read);
+                let reference_id = ctx.create_unbound_reference(IDENT_OBJECT, ReferenceFlags::Read);
                 call_expr.callee = ctx.ast.expression_identifier_with_reference_id(
                     call_expr.callee.span(),
                     "Object",

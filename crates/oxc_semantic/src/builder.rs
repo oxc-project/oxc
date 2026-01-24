@@ -411,13 +411,8 @@ impl<'a> SemanticBuilder<'a> {
             return symbol_id;
         }
 
-        let symbol_id = self.scoping.create_symbol(
-            span,
-            name.as_str(),
-            includes,
-            scope_id,
-            self.current_node_id,
-        );
+        let symbol_id =
+            self.scoping.create_symbol(span, name, includes, scope_id, self.current_node_id);
 
         self.scoping.add_binding(scope_id, name, symbol_id);
         symbol_id
@@ -501,7 +496,7 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         let symbol_id = self.scoping.create_symbol(
             span,
-            name.as_str(),
+            name,
             includes,
             self.current_scope_id,
             self.current_node_id,

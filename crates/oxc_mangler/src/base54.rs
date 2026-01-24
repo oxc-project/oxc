@@ -1,4 +1,6 @@
+use oxc_allocator::Allocator;
 use oxc_data_structures::inline_string::InlineString;
+use oxc_span::{Ident, IncrementalIdentHasher};
 
 #[repr(C, align(64))]
 struct Aligned64([u8; 64]);
@@ -30,16 +32,19 @@ struct Aligned64([u8; 64]);
 const BASE54_CHARS: Aligned64 =
     Aligned64(*b"etnriaoscludfpmhg_vybxSCwTEDOkAjMNPFILRzBVHUWGKqJYXZQ$1024368579");
 
-/// Get the shortest mangled name for a given n.
+/// Get the shortest mangled name for a given n, with precomputed hash.
 /// Code adapted from [terser](https://github.com/terser/terser/blob/8b966d687395ab493d2c6286cc9dd38650324c11/lib/scope.js#L1041-L1051)
+///
+/// The hash is computed incrementally while building the name, avoiding rehashing later.
 //
 // Maximum length of string is 6 (`xKrTKr` for `u32::MAX`), but set `CAPACITY` as 7,
 // so the total size of `InlineString` is 8, including the `u8` length field.
 // Then initializing the `InlineString` is a single instruction, and with luck it'll sit in a register
 // throughout this function.
 #[expect(clippy::items_after_statements)]
-pub fn base54(n: u32) -> InlineString<7, u8> {
-    let mut str = InlineString::new();
+pub fn base54<'a>(n: u32, allocator: &'a Allocator) -> Ident<'a> {
+    let mut str = InlineString::<7, u8>::new();
+    let mut hasher = IncrementalIdentHasher::new();
 
     let mut num = n as usize;
 
@@ -49,6 +54,7 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
     let byte = BASE54_CHARS.0[num % FIRST_BASE];
     // SAFETY: All `BASE54_CHARS` are ASCII. This is first byte we push, so can't be out of bounds.
     unsafe { str.push_unchecked(byte) };
+    hasher.write_byte(byte);
     num /= FIRST_BASE;
 
     // Base 64 for the rest because after the first character we can also use 0-9 too
@@ -60,23 +66,29 @@ pub fn base54(n: u32) -> InlineString<7, u8> {
         // SAFETY: All `BASE54_CHARS` are ASCII.
         // String for `u64::MAX` is `ZrN6rN6rN6r` (11 bytes), so cannot push more than `CAPACITY` (12).
         unsafe { str.push_unchecked(byte) };
+        hasher.write_byte(byte);
         num /= REST_BASE;
     }
 
-    str
+    // Allocate string in arena and create Ident with precomputed hash
+    let s = allocator.alloc_str(str.as_str());
+    Ident::new_with_hash(s, hasher.finish())
 }
 
 #[cfg(test)]
 mod test {
+    use oxc_allocator::Allocator;
+
     use super::base54;
 
     #[test]
     fn test_base54() {
-        assert_eq!(&*base54(0), "e");
-        assert_eq!(&*base54(52), "Q");
-        assert_eq!(&*base54(53), "$");
-        assert_eq!(&*base54(54), "ee");
-        assert_eq!(&*base54(55), "te");
-        assert_eq!(&*base54(u32::MAX), "xKrTKr");
+        let allocator = Allocator::default();
+        assert_eq!(base54(0, &allocator).as_str(), "e");
+        assert_eq!(base54(52, &allocator).as_str(), "Q");
+        assert_eq!(base54(53, &allocator).as_str(), "$");
+        assert_eq!(base54(54, &allocator).as_str(), "ee");
+        assert_eq!(base54(55, &allocator).as_str(), "te");
+        assert_eq!(base54(u32::MAX, &allocator).as_str(), "xKrTKr");
     }
 }

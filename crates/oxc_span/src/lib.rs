@@ -10,9 +10,11 @@ mod span;
 
 pub use cmp::ContentEq;
 pub use oxc_str::{
-    ArenaIdentHashMap, Atom, CompactStr, Ident, IdentHashMap, IdentHashSet, IdentHasher,
-    IncrementalIdentHasher, MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str,
-    format_ident,
+    ArenaIdentHashMap, Atom, CompactStr, IDENT_AGGREGATE_ERROR, IDENT_ARRAY, IDENT_DATE,
+    IDENT_ERROR, IDENT_EXPORTS, IDENT_FUNCTION, IDENT_GLOBAL_THIS, IDENT_MATH, IDENT_MODULE,
+    IDENT_NUMBER, IDENT_PROCESS, IDENT_REGEXP, IDENT_REQUIRE, IDENT_STRING, IDENT_TYPE_ERROR,
+    Ident, IdentHashMap, IdentHashSet, IdentHasher, IncrementalIdentHasher,
+    MAX_INLINE_LEN as ATOM_MAX_INLINE_LEN, format_atom, format_compact_str, format_ident,
 };
 pub use source_type::{
     FileExtension, Language, LanguageVariant, ModuleKind, SourceType, UnknownExtension,
