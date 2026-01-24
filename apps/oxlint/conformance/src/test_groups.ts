@@ -5,10 +5,11 @@ export const TEST_GROUPS: TestGroup[] = [
   // ESLint
   {
     name: "eslint",
+
     submoduleName: "eslint",
     testFilesDirPath: "tests/lib/rules",
 
-    transformTestFilename: (filename: string) => {
+    transformTestFilename(filename: string) {
       if (!filename.endsWith(".js")) return null;
       if (filename.startsWith("utils/")) return null;
       return filename.slice(0, -3);
@@ -70,10 +71,11 @@ export const TEST_GROUPS: TestGroup[] = [
   // React
   {
     name: "react-hooks",
+
     submoduleName: "react",
     testFilesDirPath: "packages/eslint-plugin-react-hooks/__tests__",
 
-    transformTestFilename: (filename: string) => {
+    transformTestFilename(filename: string) {
       switch (filename) {
         case "ESLintRuleExhaustiveDeps-test.js":
           return "exhaustive-deps";
@@ -86,7 +88,7 @@ export const TEST_GROUPS: TestGroup[] = [
       }
     },
 
-    prepare(require, mock) {
+    prepare(require: NodeJS.Require, mock: (path: string, value: unknown) => void) {
       // Add `default` export to `eslint-plugin-react-hooks` module
       const plugin = require("eslint-plugin-react-hooks") as any;
       plugin.default = plugin;
