@@ -66,24 +66,69 @@ class RuleTesterShim extends RuleTester {
     throw new Error("Cannot override `itOnly` property");
   }
 
-  // Apply filter to test cases.
+  // Apply filter to test cases and add `before` hook to store test case in `currentTest`
   run(ruleName: string, rule: Rule, tests: TestCases): void {
     tests = {
-      valid: tests.valid.filter((test) => {
-        const code = typeof test === "string" ? test : test.code;
-        return !SHOULD_SKIP_CODE(code);
-      }),
-      invalid: tests.invalid.filter((test) => !SHOULD_SKIP_CODE(test.code)),
+      valid: tests.valid
+        .map((test) => {
+          if (typeof test === "string") test = { code: test };
+          return addBeforeHook(test);
+        })
+        .filter(shouldRunTestCase),
+      invalid: tests.invalid.map(addBeforeHook).filter(shouldRunTestCase),
     };
 
     super.run(ruleName, rule, tests);
   }
 }
 
+/**
+ * Add `before` hook to test case to store test case in `currentTest`.
+ * @param test - Test case
+ * @returns Test case
+ */
+function addBeforeHook<T extends TestCase>(test: T): T {
+  // Clone test in case `after` hook modifies it (edge case)
+  const clonedTest = { ...test };
+
+  if (Object.hasOwn(test, "before")) {
+    const originalBefore = test.before;
+    test.before = function (this) {
+      setCurrentTest(clonedTest);
+      originalBefore!.call(this);
+    };
+  } else {
+    // Non-enumerable property so that test case remains serializable
+    // (for `isSerializable` check in `assertNotDuplicateTestCase`)
+    Object.defineProperty(test, "before", {
+      value: () => setCurrentTest(clonedTest),
+      writable: true,
+      configurable: true,
+      enumerable: false,
+    });
+  }
+
+  return test;
+}
+
+/**
+ * Check if test case should run.
+ * @param test - Test case
+ * @returns `true` if test case should run, `false` if is filtered out
+ */
+function shouldRunTestCase(test: TestCase): boolean {
+  return !SHOULD_SKIP_CODE(test.code);
+}
+
 // Register hook to modify test cases before they are run.
 // `registerModifyTestCaseHook` is only present in debug builds, so it's not part of the `RuleTester` type def.
 (RuleTester as any).registerModifyTestCaseHook(modifyTestCase);
 
+/**
+ * Modify test case before running it.
+ * Store test case in `currentTest` so it can be accessed in `it` function.
+ * @param test - Test case
+ */
 function modifyTestCase(test: TestCase): void {
   let { languageOptions } = test;
 
