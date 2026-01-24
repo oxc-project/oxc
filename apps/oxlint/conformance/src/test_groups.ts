@@ -1,4 +1,4 @@
-import type { TestGroup } from "./main.ts";
+import type { TestGroup } from "./index.ts";
 import type { TestCase } from "./rule_tester.ts";
 
 export const TEST_GROUPS: TestGroup[] = [

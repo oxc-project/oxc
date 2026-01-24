@@ -2,7 +2,7 @@
  * `describe` and `it` functions for capturing test results.
  */
 
-import type { TestGroup } from "./main.ts";
+import type { TestGroup } from "./index.ts";
 import type { TestCase } from "./rule_tester.ts";
 
 /**

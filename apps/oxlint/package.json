@@ -20,7 +20,7 @@
     "build-js": "node scripts/build.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
-    "conformance": "tsx ./conformance/src/index.ts"
+    "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx ./conformance/src/index.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
