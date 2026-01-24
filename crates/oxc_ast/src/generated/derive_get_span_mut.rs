@@ -2113,7 +2113,6 @@ impl GetSpanMut for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::IdentifierReference(it) => GetSpanMut::span_mut(&mut **it),
             Self::QualifiedName(it) => GetSpanMut::span_mut(&mut **it),
-            Self::ThisExpression(it) => GetSpanMut::span_mut(&mut **it),
         }
     }
 }

@@ -3,7 +3,7 @@ commit: 6ef16ca4
 parser_babel Summary:
 AST Parsed     : 2217/2221 (99.82%)
 Positive Passed: 2204/2221 (99.23%)
-Negative Passed: 1654/1689 (97.93%)
+Negative Passed: 1655/1689 (97.99%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
@@ -59,8 +59,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts
 
@@ -13630,6 +13628,21 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts:2:12]
+ 1 │ import X = Y.if;
+ 2 │ import A = this.A;
+   ·            ────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-disallowed/input.ts:2:16]
+ 1 │ import X = Y.if;
+ 2 │ import A = this.A;
+   ·                ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Identifier `A` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-class/input.ts:1:7]

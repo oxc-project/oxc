@@ -3111,7 +3111,6 @@ impl ESTree for TSModuleReference<'_> {
             Self::ExternalModuleReference(it) => it.serialize(serializer),
             Self::IdentifierReference(it) => it.serialize(serializer),
             Self::QualifiedName(it) => it.serialize(serializer),
-            Self::ThisExpression(it) => it.serialize(serializer),
         }
     }
 }

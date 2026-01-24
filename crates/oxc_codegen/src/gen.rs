@@ -3844,7 +3844,8 @@ impl Gen for TSModuleReference<'_> {
                 p.print_string_literal(&decl.expression, false);
                 p.print_ascii_byte(b')');
             }
-            match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
+            Self::IdentifierReference(ident) => ident.print(p, ctx),
+            Self::QualifiedName(qualified) => qualified.print(p, ctx),
         }
     }
 }

@@ -5519,10 +5519,19 @@ impl<'a> Format<'a> for AstNode<'a, TSModuleReference<'a>> {
                     })
                     .fmt(f);
             }
-            it @ match_ts_type_name!(TSModuleReference) => {
-                let inner = it.to_ts_type_name();
+            TSModuleReference::IdentifierReference(inner) => {
                 allocator
-                    .alloc(AstNode::<'a, TSTypeName> {
+                    .alloc(AstNode::<IdentifierReference> {
+                        inner,
+                        parent,
+                        allocator,
+                        following_span_start: self.following_span_start,
+                    })
+                    .fmt(f);
+            }
+            TSModuleReference::QualifiedName(inner) => {
+                allocator
+                    .alloc(AstNode::<TSQualifiedName> {
                         inner,
                         parent,
                         allocator,

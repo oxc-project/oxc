@@ -573,8 +573,7 @@ impl<'a> ParserImpl<'a> {
                 expression,
             )
         } else {
-            let type_name = self.parse_ts_type_name();
-            TSModuleReference::from(type_name)
+            self.parse_ts_module_reference(reference_span)
         };
 
         self.asi();
@@ -586,6 +585,39 @@ impl<'a> ParserImpl<'a> {
         }
 
         self.ast.declaration_ts_import_equals(span, identifier, module_reference, import_kind)
+    }
+
+    /// Parse `TSModuleReference` for `import x = foo` or `import x = foo.bar`.
+    ///
+    /// Unlike `parse_ts_type_name`, this does not allow `this` as the identifier.
+    fn parse_ts_module_reference(&mut self, span: u32) -> TSModuleReference<'a> {
+        // Check for invalid `this` keyword
+        if self.at(Kind::This) {
+            let this_span = self.cur_token().span();
+            self.error(diagnostics::identifier_reserved_word(this_span, "this"));
+            self.bump_any();
+            // Recover by creating a dummy identifier
+            let ident = self.ast.alloc_identifier_reference(this_span, "this");
+            return TSModuleReference::IdentifierReference(ident);
+        }
+
+        let ident = self.parse_identifier_name();
+        let left = self.ast.ts_type_name_identifier_reference(ident.span, ident.name);
+
+        // Parse qualified name: foo.bar.baz
+        let type_name =
+            if self.at(Kind::Dot) { self.parse_ts_qualified_type_name(span, left) } else { left };
+
+        // Convert TSTypeName to TSModuleReference
+        match type_name {
+            TSTypeName::IdentifierReference(ident) => TSModuleReference::IdentifierReference(ident),
+            TSTypeName::QualifiedName(qualified) => TSModuleReference::QualifiedName(qualified),
+            TSTypeName::ThisExpression(_) => {
+                // This shouldn't happen since we check for `this` above,
+                // but handle it for completeness
+                unreachable!("ThisExpression should have been caught earlier")
+            }
+        }
     }
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> TSThisParameter<'a> {

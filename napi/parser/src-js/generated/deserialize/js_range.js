@@ -4474,13 +4474,11 @@ function deserializeTSImportEqualsDeclaration(pos) {
 function deserializeTSModuleReference(pos) {
   switch (uint8[pos]) {
     case 0:
-      return deserializeBoxIdentifierReference(pos + 8);
-    case 1:
-      return deserializeBoxTSQualifiedName(pos + 8);
-    case 2:
-      return deserializeBoxThisExpression(pos + 8);
-    case 3:
       return deserializeBoxTSExternalModuleReference(pos + 8);
+    case 1:
+      return deserializeBoxIdentifierReference(pos + 8);
+    case 2:
+      return deserializeBoxTSQualifiedName(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for TSModuleReference`);
   }

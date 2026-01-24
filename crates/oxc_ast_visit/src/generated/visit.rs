@@ -4127,9 +4127,8 @@ pub mod walk {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
             }
-            match_ts_type_name!(TSModuleReference) => {
-                visitor.visit_ts_type_name(it.to_ts_type_name())
-            }
+            TSModuleReference::IdentifierReference(it) => visitor.visit_identifier_reference(it),
+            TSModuleReference::QualifiedName(it) => visitor.visit_ts_qualified_name(it),
         }
     }
 

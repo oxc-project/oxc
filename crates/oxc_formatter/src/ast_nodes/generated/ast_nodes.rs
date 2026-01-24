@@ -9433,16 +9433,21 @@ impl<'a> AstNode<'a, TSModuleReference<'a>> {
                     following_span_start: self.following_span_start,
                 }))
             }
-            it @ match_ts_type_name!(TSModuleReference) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_ts_type_name(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+            TSModuleReference::IdentifierReference(s) => {
+                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
+            }
+            TSModuleReference::QualifiedName(s) => {
+                AstNodes::TSQualifiedName(self.allocator.alloc(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    allocator: self.allocator,
+                    following_span_start: self.following_span_start,
+                }))
             }
         };
         self.allocator.alloc(node)

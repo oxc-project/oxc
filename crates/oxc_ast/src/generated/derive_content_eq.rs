@@ -2434,7 +2434,6 @@ impl ContentEq for TSModuleReference<'_> {
             (Self::ExternalModuleReference(a), Self::ExternalModuleReference(b)) => a.content_eq(b),
             (Self::IdentifierReference(a), Self::IdentifierReference(b)) => a.content_eq(b),
             (Self::QualifiedName(a), Self::QualifiedName(b)) => a.content_eq(b),
-            (Self::ThisExpression(a), Self::ThisExpression(b)) => a.content_eq(b),
             _ => false,
         }
     }

@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 64/64 (100.00%)
 Positive Passed: 64/64 (100.00%)
-Negative Passed: 133/133 (100.00%)
+Negative Passed: 134/134 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -252,6 +252,13 @@ Negative Passed: 133/133 (100.00%)
  1 │ import defer 'module';
    ·              ────┬───
    ·                  ╰── `from` expected
+   ╰────
+
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
+   ╭─[misc/fail/import-equals-this.ts:2:12]
+ 1 │ // `this` is not valid in import equals declaration
+ 2 │ import x = this;
+   ·            ────
    ╰────
 
   × Expected `from` but found `string`

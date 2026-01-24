@@ -120,13 +120,27 @@ impl<'a> TypeScriptModule<'a, '_> {
         flags.remove(SymbolFlags::Import);
 
         let (kind, init) = match &mut decl.module_reference {
-            type_name @ match_ts_type_name!(TSModuleReference) => {
+            TSModuleReference::IdentifierReference(ident) => {
                 flags.insert(SymbolFlags::FunctionScopedVariable);
 
-                (
-                    VariableDeclarationKind::Var,
-                    self.transform_ts_type_name(&mut *type_name.to_ts_type_name_mut(), ctx),
-                )
+                let ident = ident.clone();
+                let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
+                *reference.flags_mut() = ReferenceFlags::Read;
+                (VariableDeclarationKind::Var, Expression::Identifier(ctx.alloc(ident)))
+            }
+            TSModuleReference::QualifiedName(qualified_name) => {
+                flags.insert(SymbolFlags::FunctionScopedVariable);
+
+                let init = ctx
+                    .ast
+                    .member_expression_static(
+                        SPAN,
+                        self.transform_ts_type_name(&mut qualified_name.left, ctx),
+                        qualified_name.right.clone(),
+                        false,
+                    )
+                    .into();
+                (VariableDeclarationKind::Var, init)
             }
             TSModuleReference::ExternalModuleReference(reference) => {
                 flags.insert(SymbolFlags::BlockScopedVariable | SymbolFlags::ConstVariable);
@@ -237,9 +251,14 @@ impl<'a> TypeScriptModule<'a, '_> {
 
         // For `import foo = bar.baz`, change the reference to `bar` from Read to Type.
         // For `import foo = require('module')`, there's no identifier reference to change.
-        if let module_reference @ match_ts_type_name!(TSModuleReference) = &decl.module_reference
-            && let Some(ident) = module_reference.to_ts_type_name().get_identifier_reference()
-        {
+        let ident = match &decl.module_reference {
+            TSModuleReference::IdentifierReference(ident) => Some(ident.as_ref()),
+            TSModuleReference::QualifiedName(qualified) => {
+                qualified.left.get_identifier_reference()
+            }
+            TSModuleReference::ExternalModuleReference(_) => None,
+        };
+        if let Some(ident) = ident {
             let reference = ctx.scoping_mut().get_reference_mut(ident.reference_id());
             // The binding of TSImportEqualsDeclaration will be treated as unused
             // because there is no value reference, so it will be removed.

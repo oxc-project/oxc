@@ -1610,7 +1610,7 @@ export interface TSImportEqualsDeclaration extends Span {
   parent?: Node;
 }
 
-export type TSModuleReference = TSExternalModuleReference | TSTypeName;
+export type TSModuleReference = TSExternalModuleReference | IdentifierReference | TSQualifiedName;
 
 export interface TSExternalModuleReference extends Span {
   type: "TSExternalModuleReference";

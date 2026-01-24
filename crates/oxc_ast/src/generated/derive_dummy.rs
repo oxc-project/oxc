@@ -2798,7 +2798,7 @@ impl<'a> Dummy<'a> for TSTypeAssertion<'a> {
 impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
     /// Create a dummy [`TSImportEqualsDeclaration`].
     ///
-    /// Has cost of making 1 allocation (8 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2812,9 +2812,9 @@ impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
 impl<'a> Dummy<'a> for TSModuleReference<'a> {
     /// Create a dummy [`TSModuleReference`].
     ///
-    /// Has cost of making 1 allocation (8 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::ThisExpression(Dummy::dummy(allocator))
+        Self::IdentifierReference(Dummy::dummy(allocator))
     }
 }
 
