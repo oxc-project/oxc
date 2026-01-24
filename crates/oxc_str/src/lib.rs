@@ -10,7 +10,9 @@ mod ident;
 
 pub use atom::Atom;
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
-pub use ident::{ArenaIdentHashMap, Ident, IdentHashMap, IdentHashSet, IdentHasher};
+pub use ident::{
+    ArenaIdentHashMap, Ident, IdentHashMap, IdentHashSet, IdentHasher, IncrementalIdentHasher,
+};
 
 #[doc(hidden)]
 pub mod __internal {
