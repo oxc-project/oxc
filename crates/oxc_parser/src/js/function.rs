@@ -33,11 +33,9 @@ impl<'a> ParserImpl<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
 
-        self.state.function_depth += 1;
-        let (directives, statements) = self.context_add(Context::Return, |p| {
-            p.parse_directives_and_statements(/* is_top_level */ false)
-        });
-        self.state.function_depth -= 1;
+        // Add Return context, remove TopLevel context
+        let (directives, statements) =
+            self.context(Context::Return, Context::TopLevel, Self::parse_directives_and_statements);
 
         self.expect_closing(Kind::RCurly, opening_span);
         self.ast.alloc_function_body(self.end_span(span), directives, statements)

@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    ParserImpl, diagnostics,
+    Context, ParserImpl, diagnostics,
     js::{FunctionKind, VariableDeclarationParent},
     lexer::Kind,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
@@ -345,8 +345,9 @@ impl<'a> ParserImpl<'a> {
     fn parse_ts_module_block(&mut self) -> Box<'a, TSModuleBlock<'a>> {
         let span = self.start_span();
         self.expect(Kind::LCurly);
+        // Remove TopLevel context for module block
         let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ false);
+            self.context_remove(Context::TopLevel, Self::parse_directives_and_statements);
         self.expect(Kind::RCurly);
         self.ast.alloc_ts_module_block(self.end_span(span), directives, statements)
     }

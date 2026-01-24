@@ -1528,18 +1528,18 @@ impl<'a> ParserImpl<'a> {
         // Parse as await expression and report error for better diagnostics
         // This matches Babel's behavior: report "await only allowed in async" error
         //
-        // At top level (function_depth == 0) in unambiguous mode: unambiguous await
-        // upgrades the file to ESM (like Babel's `sawUnambiguousESM`). We defer the
-        // error with `error_on_script` - it will be discarded when we upgrade to ESM.
+        // At top level in unambiguous mode: unambiguous await upgrades the file to ESM
+        // (like Babel's `sawUnambiguousESM`). We defer the error with `error_on_script` -
+        // it will be discarded when we upgrade to ESM.
         //
-        // Inside a function (function_depth > 0): await is always invalid in non-async
-        // functions, even in ESM. Report error immediately.
+        // Inside a function: await is always invalid in non-async functions, even in ESM.
+        // Report error immediately.
         if self.is_unambiguous_await() {
             let span = self.start_span();
 
-            if self.state.function_depth == 0 {
-                // At top level - set flag for statement-level ESM upgrade check
-                self.state.encountered_unambiguous_await = true;
+            if self.ctx.has_top_level() {
+                // At top level - upgrade to ESM immediately (like Babel's `sawUnambiguousESM`)
+                self.module_record_builder.found_unambiguous_await();
                 // Defer error - will be discarded when we upgrade to ESM
                 self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
             } else {
