@@ -502,6 +502,9 @@ impl<'a> Visit<'a> for ObjectShorthandChecker<'a, '_> {
 
     fn visit_arrow_function_expression(&mut self, it: &oxc_ast::ast::ArrowFunctionExpression<'a>) {
         let scope_id = it.scope_id();
+        if self.lexical_scope_stack.is_empty() {
+            self.enter_function();
+        }
         self.lexical_scope_stack.iter_mut().nth(0).map(|scope| scope.insert(scope_id));
         walk::walk_arrow_function_expression(self, it);
         self.lexical_scope_stack.iter_mut().nth(0).map(|scope| scope.remove(&scope_id));
@@ -1058,6 +1061,8 @@ fn test_ignore_constructors() {
             Some(json!(["methods", { "ignoreConstructors": true }])),
         ),
         ("({ [foo.bar]: () => {} })", Some(json!(["always", { "ignoreConstructors": true }]))),
+        ("var x = {ConstructorFunction: function(){}, a: b}", Some(json!(["never"]))),
+        ("var x = {notConstructorFunction: function(){}, b: c}", Some(json!(["never"]))),
     ];
 
     let fix = vec![
@@ -1092,13 +1097,6 @@ fn test_ignore_constructors() {
         .expect_fix(fix)
         .with_snapshot_suffix("ignore-constructors")
         .test_and_snapshot();
-
-    let pass = vec![
-        ("var x = {ConstructorFunction: function(){}, a: b}", Some(json!(["never"]))),
-        ("var x = {notConstructorFunction: function(){}, b: c}", Some(json!(["never"]))),
-    ];
-
-    Tester::new(ObjectShorthand::NAME, ObjectShorthand::PLUGIN, pass, vec![]).test();
 }
 
 #[test]
@@ -1275,67 +1273,67 @@ fn test_avoid_explicit_return_arrows() {
         ),
         (
             "
-                class Foo extends Bar {
-                    constructor() {
-                        var foo = { x: () => { super(); } };
+                    class Foo extends Bar {
+                        constructor() {
+                            var foo = { x: () => { super(); } };
+                        }
                     }
-                }
-            ",
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
             "
-                class Foo extends Bar {
-                    baz() {
-                        var foo = { x: () => { super.baz(); } };
+                    class Foo extends Bar {
+                        baz() {
+                            var foo = { x: () => { super.baz(); } };
+                        }
                     }
-                }
-            ",
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
             "
-                function foo() {
-                    var x = { x: () => { new.target; } };
-                }
-            ",
+                    function foo() {
+                        var x = { x: () => { new.target; } };
+                    }
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
             "
-                function foo() {
-                    var x = {
-                        x: () => {
-                            var y = () => { this; };
-                        }
-                    };
-                }
-            ",
+                    function foo() {
+                        var x = {
+                            x: () => {
+                                var y = () => { this; };
+                            }
+                        };
+                    }
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
             "
-                function foo() {
-                    var x = {
-                        x: () => {
-                            var y = () => { this; };
-                            function foo() { this; }
-                        }
-                    };
-                }
-            ",
+                    function foo() {
+                        var x = {
+                            x: () => {
+                                var y = () => { this; };
+                                function foo() { this; }
+                            }
+                        };
+                    }
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
             "
-                function foo() {
-                    var x = {
-                        x: () => {
-                            return { y: () => { this; } };
-                        }
-                    };
-                }
-            ",
+                    function foo() {
+                        var x = {
+                            x: () => {
+                                return { y: () => { this; } };
+                            }
+                        };
+                    }
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
     ];
@@ -1398,48 +1396,48 @@ fn test_avoid_explicit_return_arrows() {
         ),
         (
             "
-                ({
-                    x: () => {
-                        class Foo extends Bar {
-                            constructor() {
-                                super();
+                    ({
+                        x: () => {
+                            class Foo extends Bar {
+                                constructor() {
+                                    super();
+                                }
                             }
                         }
-                    }
-                })
-            ",
+                    })
+                ",
             "
-                ({
-                    x() {
-                        class Foo extends Bar {
-                            constructor() {
-                                super();
+                    ({
+                        x() {
+                            class Foo extends Bar {
+                                constructor() {
+                                    super();
+                                }
                             }
                         }
-                    }
-                })
-            ",
+                    })
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
             "
-                ({
-                    x: () => {
-                        function foo() {
-                            new.target;
+                    ({
+                        x: () => {
+                            function foo() {
+                                new.target;
+                            }
                         }
-                    }
-                })
-            ",
+                    })
+                ",
             "
-                ({
-                    x() {
-                        function foo() {
-                            new.target;
+                    ({
+                        x() {
+                            function foo() {
+                                new.target;
+                            }
                         }
-                    }
-                })
-            ",
+                    })
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
@@ -1469,155 +1467,155 @@ fn test_avoid_explicit_return_arrows() {
         ),
         (
             "
-                function foo() {
-                    var x = {
-                        x: () => {
-                            this;
-                            return { y: () => { foo; } };
-                        }
-                    };
-                }
-            ",
+                    function foo() {
+                        var x = {
+                            x: () => {
+                                this;
+                                return { y: () => { foo; } };
+                            }
+                        };
+                    }
+                ",
             "
-                function foo() {
-                    var x = {
-                        x: () => {
-                            this;
-                            return { y() { foo; } };
-                        }
-                    };
-                }
-            ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                function foo() {
-                    var x = {
-                        x: () => {
-                            ({ y: () => { foo; } });
-                            this;
-                        }
-                    };
-                }
-            ",
-            "
-                function foo() {
-                    var x = {
-                        x: () => {
-                            ({ y() { foo; } });
-                            this;
-                        }
-                    };
-                }
-            ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (() => { return foo; }) })",
-            "({ a() { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: ((arg) => { return foo; }) })",
-            "({ a(arg) { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: ((arg, arg2) => { return foo; }) })",
-            "({ a(arg, arg2) { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (async () => { return foo; }) })",
-            "({ async a() { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (async (arg) => { return foo; }) })",
-            "({ async a(arg) { return foo; } })",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "({ a: (async (arg, arg2) => { return foo; }) })",
-            "({ async a(arg, arg2) { return foo; } })",
+                    function foo() {
+                        var x = {
+                            x: () => {
+                                this;
+                                return { y() { foo; } };
+                            }
+                        };
+                    }
+                ",
             Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
         (
             "
-                const test = {
-                    key: <T,>(): void => { },
-                    key: async <T,>(): Promise<void> => { },
-                    key: <T,>(arg: T): T => { return arg },
-                    key: async <T,>(arg: T): Promise<T> => { return arg },
-                }
-            ",
+                    function foo() {
+                        var x = {
+                            x: () => {
+                                ({ y: () => { foo; } });
+                                this;
+                            }
+                        };
+                    }
+                ",
             "
-                const test = {
-                    key<T,>(): void { },
-                    async key<T,>(): Promise<void> { },
-                    key<T,>(arg: T): T { return arg },
-                    async key<T,>(arg: T): Promise<T> { return arg },
-                }
-            ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-        ),
-        (
-            "
-                const test = {
-                    key: (): void => {x()},
-                    key: ( (): void => {x()} ),
-                    key: ( (): (void) => {x()} ),
+                    function foo() {
+                        var x = {
+                            x: () => {
+                                ({ y() { foo; } });
+                                this;
+                            }
+                        };
+                    }
+                ",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "({ a: (() => { return foo; }) })",
+                "({ a() { return foo; } })",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "({ a: ((arg) => { return foo; }) })",
+                "({ a(arg) { return foo; } })",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "({ a: ((arg, arg2) => { return foo; }) })",
+                "({ a(arg, arg2) { return foo; } })",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "({ a: (async () => { return foo; }) })",
+                "({ async a() { return foo; } })",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "({ a: (async (arg) => { return foo; }) })",
+                "({ async a(arg) { return foo; } })",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "({ a: (async (arg, arg2) => { return foo; }) })",
+                "({ async a(arg, arg2) { return foo; } })",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "
+                    const test = {
+                        key: <T,>(): void => { },
+                        key: async <T,>(): Promise<void> => { },
+                        key: <T,>(arg: T): T => { return arg },
+                        key: async <T,>(arg: T): Promise<T> => { return arg },
+                    }
+                ",
+                "
+                    const test = {
+                        key<T,>(): void { },
+                        async key<T,>(): Promise<void> { },
+                        key<T,>(arg: T): T { return arg },
+                        async key<T,>(arg: T): Promise<T> { return arg },
+                    }
+                ",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            ),
+            (
+                "
+                    const test = {
+                        key: (): void => {x()},
+                        key: ( (): void => {x()} ),
+                        key: ( (): (void) => {x()} ),
 
-                    key: (arg: t): void => {x()},
-                    key: ( (arg: t): void => {x()} ),
-                    key: ( (arg: t): (void) => {x()} ),
+                        key: (arg: t): void => {x()},
+                        key: ( (arg: t): void => {x()} ),
+                        key: ( (arg: t): (void) => {x()} ),
 
-                    key: (arg: t, arg2: t): void => {x()},
-                    key: ( (arg: t, arg2: t): void => {x()} ),
-                    key: ( (arg: t, arg2: t): (void) => {x()} ),
+                        key: (arg: t, arg2: t): void => {x()},
+                        key: ( (arg: t, arg2: t): void => {x()} ),
+                        key: ( (arg: t, arg2: t): (void) => {x()} ),
 
-                    key: async (): void => {x()},
-                    key: ( async (): void => {x()} ),
-                    key: ( async (): (void) => {x()} ),
+                        key: async (): void => {x()},
+                        key: ( async (): void => {x()} ),
+                        key: ( async (): (void) => {x()} ),
 
-                    key: async (arg: t): void => {x()},
-                    key: ( async (arg: t): void => {x()} ),
-                    key: ( async (arg: t): (void) => {x()} ),
+                        key: async (arg: t): void => {x()},
+                        key: ( async (arg: t): void => {x()} ),
+                        key: ( async (arg: t): (void) => {x()} ),
 
-                    key: async (arg: t, arg2: t): void => {x()},
-                    key: ( async (arg: t, arg2: t): void => {x()} ),
-                    key: ( async (arg: t, arg2: t): (void) => {x()} ),
-                }
-            ",
-            "
-                const test = {
-                    key(): void {x()},
-                    key(): void {x()},
-                    key(): (void) {x()},
+                        key: async (arg: t, arg2: t): void => {x()},
+                        key: ( async (arg: t, arg2: t): void => {x()} ),
+                        key: ( async (arg: t, arg2: t): (void) => {x()} ),
+                    }
+                ",
+                "
+                    const test = {
+                        key(): void {x()},
+                        key(): void {x()},
+                        key(): (void) {x()},
 
-                    key(arg: t): void {x()},
-                    key(arg: t): void {x()},
-                    key(arg: t): (void) {x()},
+                        key(arg: t): void {x()},
+                        key(arg: t): void {x()},
+                        key(arg: t): (void) {x()},
 
-                    key(arg: t, arg2: t): void {x()},
-                    key(arg: t, arg2: t): void {x()},
-                    key(arg: t, arg2: t): (void) {x()},
+                        key(arg: t, arg2: t): void {x()},
+                        key(arg: t, arg2: t): void {x()},
+                        key(arg: t, arg2: t): (void) {x()},
 
-                    async key(): void {x()},
-                    async key(): void {x()},
-                    async key(): (void) {x()},
+                        async key(): void {x()},
+                        async key(): void {x()},
+                        async key(): (void) {x()},
 
-                    async key(arg: t): void {x()},
-                    async key(arg: t): void {x()},
-                    async key(arg: t): (void) {x()},
+                        async key(arg: t): void {x()},
+                        async key(arg: t): void {x()},
+                        async key(arg: t): (void) {x()},
 
-                    async key(arg: t, arg2: t): void {x()},
-                    async key(arg: t, arg2: t): void {x()},
-                    async key(arg: t, arg2: t): (void) {x()},
-                }
-            ",
-            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+                        async key(arg: t, arg2: t): void {x()},
+                        async key(arg: t, arg2: t): void {x()},
+                        async key(arg: t, arg2: t): (void) {x()},
+                    }
+                ",
+                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
     ];
 
