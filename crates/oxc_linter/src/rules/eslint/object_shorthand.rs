@@ -561,7 +561,6 @@ impl<'a> Visit<'a> for ObjectShorthandChecker<'a, '_> {
     fn visit_object_property(&mut self, it: &ObjectProperty<'a>) {
         walk::walk_object_property(self, it);
         let property = it;
-        // if let AstKind::ObjectProperty(property) = node.kind() {
         let is_concise_property = property.shorthand || property.method;
 
         if !can_property_have_shorthand(property) {
