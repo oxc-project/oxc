@@ -661,10 +661,15 @@ impl ServerLinter {
             return Ok(Vec::new());
         }
 
-        let mut diagnostics = vec![];
-        let mut code_actions = vec![];
-
         let reports = self.lint_path(&uri_path, uri, content)?;
+
+        let mut diagnostics = Vec::with_capacity(reports.len());
+        // mostly all diagnostics will have code actions (fix + ignoring line/file), only following diagnostics won't:
+        // - inverted diagnostics (related spans for the diagnostics)
+        // - diagnostics with span(0,0) and no fixes
+        // - tsgolint internal diagnostics
+        // - unused directives diagnostics
+        let mut code_actions = vec![];
         for report in reports {
             diagnostics.push(report.diagnostic);
 
