@@ -10,6 +10,7 @@ export const TEST_GROUPS: TestGroup[] = [
 
     transformTestFilename: (filename: string) => {
       if (!filename.endsWith(".js")) return null;
+      if (filename.startsWith("utils/")) return null;
       return filename.slice(0, -3);
     },
 

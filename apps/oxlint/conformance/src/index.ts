@@ -21,7 +21,7 @@
 
 import Module from "node:module";
 import fs from "node:fs";
-import { join as pathJoin } from "node:path";
+import { join as pathJoin, sep as pathSep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TEST_GROUPS } from "./test_groups.ts";
 import { setCurrentGroup, setCurrentRule, resetCurrentRule } from "./capture.ts";
@@ -141,6 +141,9 @@ const SNAPSHOTS_DIR_PATH = pathJoin(CONFORMANCE_DIR_PATH, "snapshots");
 
 const { createRequire } = Module;
 const require = createRequire(import.meta.url);
+
+const normalizePath =
+  pathSep === "\\" ? (path: string) => path.replaceAll("\\", "/") : (path: string) => path;
 
 // `RuleTester` will be `module.exports`, so allow loading that module with either:
 // 1. `import RuleTester from "path/to/rule_tester.js";`
@@ -291,7 +294,8 @@ function runGroup(group: TestGroup, mocks: Mocks) {
  * @returns Test file details
  */
 function findTestFiles(group: TestGroup): TestFile[] {
-  const filenames = fs.readdirSync(group.testFilesDirPath);
+  const { testFilesDirPath } = group;
+  const fileObjs = fs.readdirSync(testFilesDirPath, { withFileTypes: true, recursive: true });
 
   let nameMatchesFilter = null;
   if (FILTER_ONLY_RULE !== null) {
@@ -305,7 +309,14 @@ function findTestFiles(group: TestGroup): TestFile[] {
   }
 
   const files: TestFile[] = [];
-  for (const filename of filenames) {
+  for (const fileObj of fileObjs) {
+    if (!fileObj.isFile()) continue;
+
+    let filename = fileObj.name;
+    if (fileObj.parentPath !== testFilesDirPath) {
+      filename = `${normalizePath(fileObj.parentPath.slice(testFilesDirPath.length + 1))}/${filename}`;
+    }
+
     const name = group.transformTestFilename(filename);
     if (name === null) continue;
     if (nameMatchesFilter !== null && !nameMatchesFilter(name)) continue;
