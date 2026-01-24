@@ -470,11 +470,13 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                 ObjectPropertyKind::SpreadProperty(_) => None,
             });
 
-        if properties.clone().count() > 0 {
-            let shorthand_properties = properties.clone().filter(|p| is_shorthand_property(p));
+        let properties_count = properties.clone().count();
+        if properties_count > 0 {
+            let shorthand_properties_count =
+                properties.clone().filter(|p| is_shorthand_property(p)).count();
 
-            if shorthand_properties.clone().count() != properties.clone().count() {
-                if shorthand_properties.count() > 0 {
+            if shorthand_properties_count != properties_count {
+                if shorthand_properties_count > 0 {
                     self.ctx.diagnostic(unexpected_mix(obj_expr.span));
                 } else if check_redundancy && properties.clone().all(|p| is_redundant_property(p)) {
                     self.ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
