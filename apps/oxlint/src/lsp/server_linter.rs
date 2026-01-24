@@ -664,7 +664,7 @@ impl ServerLinter {
         let mut diagnostics = vec![];
         let mut code_actions = vec![];
 
-        let reports = self.run_single(&uri_path, uri, content)?;
+        let reports = self.lint_path(&uri_path, uri, content)?;
         for report in reports {
             diagnostics.push(report.diagnostic);
 
@@ -678,30 +678,20 @@ impl ServerLinter {
         Ok(diagnostics)
     }
 
-    pub fn run_single(
+    fn lint_path(
         &self,
         path: &Path,
         uri: &Uri,
         content: Option<&str>,
     ) -> Result<Vec<DiagnosticReport>, String> {
+        debug!("lint {}", path.display());
+
         let source_text = if let Some(content) = content {
             content
         } else {
             &read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))?
         };
 
-        let mut diagnostics = self.lint_path(path, uri, source_text)?;
-        diagnostics.append(&mut generate_inverted_diagnostics(&diagnostics, uri));
-        Ok(diagnostics)
-    }
-
-    fn lint_path(
-        &self,
-        path: &Path,
-        uri: &Uri,
-        source_text: &str,
-    ) -> Result<Vec<DiagnosticReport>, String> {
-        debug!("lint {}", path.display());
         let rope = &Rope::from_str(source_text);
 
         let mut fs = LspFileSystem::default();
@@ -713,6 +703,8 @@ impl ServerLinter {
             .into_iter()
             .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
             .collect();
+
+        messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
         // Add unused directives if configured
         if let Some(severity) = self.unused_directives_severity
