@@ -24,18 +24,20 @@ use oxc_language_server::{
     ToolRestartChanges,
 };
 
-use crate::lsp::{
-    LINT_CONFIG_FILE,
-    code_actions::{
-        CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
-        fix_all_text_edit,
+use crate::{
+    DEFAULT_OXLINTRC,
+    lsp::{
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+            fix_all_text_edit,
+        },
+        commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
+        config_walker::ConfigWalker,
+        error_with_position::LinterCodeAction,
+        isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
+        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+        utils::normalize_path,
     },
-    commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
-    config_walker::ConfigWalker,
-    error_with_position::LinterCodeAction,
-    isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
-    options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
-    utils::normalize_path,
 };
 
 #[derive(Default)]
@@ -67,7 +69,7 @@ impl ServerLinterBuilder {
             &mut nested_ignore_patterns,
         );
         let config_path = match options.config_path.as_deref() {
-            Some("") | None => LINT_CONFIG_FILE,
+            Some("") | None => DEFAULT_OXLINTRC,
             Some(v) => v,
         };
         let config = normalize_path(root_path.join(config_path));

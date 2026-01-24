@@ -21,6 +21,7 @@ use oxc_linter::{
 };
 
 use crate::{
+    DEFAULT_OXLINTRC,
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
     walk::Walk,
@@ -271,7 +272,7 @@ impl CliRunner {
                     config_file
                 };
 
-                if fs::write(Self::DEFAULT_OXLINTRC, configuration).is_ok() {
+                if fs::write(DEFAULT_OXLINTRC, configuration).is_ok() {
                     print_and_flush_stdout(stdout, "Configuration file created\n");
                     return CliRunResult::ConfigFileInitSucceeded;
                 }
@@ -464,8 +465,6 @@ impl CliRunner {
 }
 
 impl CliRunner {
-    const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
-
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
@@ -624,7 +623,7 @@ impl CliRunner {
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
-        let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
+        let path: &Path = config.map_or(DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
         let full_path = cwd.join(path);
 
         if config.is_some() || full_path.exists() {
@@ -637,7 +636,7 @@ impl CliRunner {
     /// and returns `Err` if none exists or the file is invalid. Does not apply the default
     /// config file.
     fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let possible_config_path = dir.join(Self::DEFAULT_OXLINTRC);
+        let possible_config_path = dir.join(DEFAULT_OXLINTRC);
         if possible_config_path.is_file() {
             Oxlintrc::from_file(&possible_config_path).map(Some)
         } else {
@@ -671,7 +670,7 @@ mod test {
     use std::{fs, path::PathBuf};
 
     use super::CliRunner;
-    use crate::tester::Tester;
+    use crate::{DEFAULT_OXLINTRC, tester::Tester};
 
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
@@ -1046,14 +1045,14 @@ mod test {
 
     #[test]
     fn test_init_config() {
-        assert!(!fs::exists(CliRunner::DEFAULT_OXLINTRC).unwrap());
+        assert!(!fs::exists(DEFAULT_OXLINTRC).unwrap());
 
         let args = &["--init"];
         Tester::new().with_cwd("fixtures".into()).test(args);
 
-        assert!(fs::exists(CliRunner::DEFAULT_OXLINTRC).unwrap());
+        assert!(fs::exists(DEFAULT_OXLINTRC).unwrap());
 
-        fs::remove_file(CliRunner::DEFAULT_OXLINTRC).unwrap();
+        fs::remove_file(DEFAULT_OXLINTRC).unwrap();
     }
 
     #[test]

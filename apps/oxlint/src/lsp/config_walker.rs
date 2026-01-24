@@ -6,7 +6,7 @@ use std::{
 
 use ignore::DirEntry;
 
-use crate::lsp::LINT_CONFIG_FILE;
+use crate::DEFAULT_OXLINTRC;
 
 pub struct ConfigWalker {
     inner: ignore::WalkParallel,
@@ -56,7 +56,7 @@ impl WalkCollector {
         }
         let Some(file_name) = entry.path().file_name() else { return false };
 
-        file_name == LINT_CONFIG_FILE
+        file_name == DEFAULT_OXLINTRC
     }
 }
 

@@ -9,8 +9,6 @@ mod server_linter;
 mod tester;
 mod utils;
 
-const LINT_CONFIG_FILE: &str = ".oxlintrc.json";
-
 /// Run the language server
 pub async fn run_lsp() {
     oxc_language_server::run_server(
