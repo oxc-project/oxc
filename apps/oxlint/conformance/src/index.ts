@@ -15,6 +15,8 @@
  * 5. Outputting results to a markdown file.
  *
  * To add a new repo to be tested, add it to the `TEST_GROUPS` array in `test_groups.ts`.
+ *
+ * If you want to run only a subset of tests, alter the constants in `filter.ts`.
  */
 
 // oxlint-disable no-console
@@ -25,7 +27,7 @@ import { join as pathJoin, sep as pathSep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TEST_GROUPS } from "./test_groups.ts";
 import { setCurrentGroup, setCurrentRule, resetCurrentRule } from "./capture.ts";
-import { FILTER_ONLY_RULE, FILTER_EXCLUDE_RULE } from "./filter.ts";
+import { SHOULD_SKIP_GROUP, SHOULD_SKIP_RULE } from "./filter.ts";
 import { generateReport } from "./report.ts";
 import { RuleTester, parserModules, parserModulePaths } from "./rule_tester.ts";
 
@@ -188,6 +190,7 @@ function initMocks(): Mocks {
  */
 function runGroups(groups: TestGroup[], mocks: Mocks) {
   for (const group of groups) {
+    if (SHOULD_SKIP_GROUP(group.name)) continue;
     runGroup(group, mocks);
   }
 }
@@ -297,17 +300,6 @@ function findTestFiles(group: TestGroup): TestFile[] {
   const { testFilesDirPath } = group;
   const fileObjs = fs.readdirSync(testFilesDirPath, { withFileTypes: true, recursive: true });
 
-  let nameMatchesFilter = null;
-  if (FILTER_ONLY_RULE !== null) {
-    nameMatchesFilter = Array.isArray(FILTER_ONLY_RULE)
-      ? (name: string) => FILTER_ONLY_RULE!.includes(name)
-      : (name: string) => name === FILTER_ONLY_RULE;
-  } else if (FILTER_EXCLUDE_RULE !== null) {
-    nameMatchesFilter = Array.isArray(FILTER_EXCLUDE_RULE)
-      ? (name: string) => !FILTER_EXCLUDE_RULE!.includes(name)
-      : (name: string) => name !== FILTER_EXCLUDE_RULE;
-  }
-
   const files: TestFile[] = [];
   for (const fileObj of fileObjs) {
     if (!fileObj.isFile()) continue;
@@ -319,7 +311,7 @@ function findTestFiles(group: TestGroup): TestFile[] {
 
     const name = group.transformTestFilename(filename);
     if (name === null) continue;
-    if (nameMatchesFilter !== null && !nameMatchesFilter(name)) continue;
+    if (SHOULD_SKIP_RULE(name)) continue;
 
     const path = pathJoin(group.testFilesDirPath, filename);
     files.push({ name, path });

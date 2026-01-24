@@ -6,7 +6,7 @@
 import eslintGlobals from "../submodules/eslint/conf/globals.js";
 import { RuleTester } from "#oxlint";
 import { describe, it, setCurrentTest } from "./capture.ts";
-import { FILTER_ONLY_CODE } from "./filter.ts";
+import { SHOULD_SKIP_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
 import type { LanguageOptionsInternal } from "../../src-js/package/rule_tester.ts";
@@ -68,19 +68,13 @@ class RuleTesterShim extends RuleTester {
 
   // Apply filter to test cases.
   run(ruleName: string, rule: Rule, tests: TestCases): void {
-    if (FILTER_ONLY_CODE !== null) {
-      const codeMatchesFilter = Array.isArray(FILTER_ONLY_CODE)
-        ? (code: string) => FILTER_ONLY_CODE!.includes(code)
-        : (code: string) => code === FILTER_ONLY_CODE;
-
-      tests = {
-        valid: tests.valid.filter((test) => {
-          const code = typeof test === "string" ? test : test.code;
-          return codeMatchesFilter(code);
-        }),
-        invalid: tests.invalid.filter((test) => codeMatchesFilter(test.code)),
-      };
-    }
+    tests = {
+      valid: tests.valid.filter((test) => {
+        const code = typeof test === "string" ? test : test.code;
+        return !SHOULD_SKIP_CODE(code);
+      }),
+      invalid: tests.invalid.filter((test) => !SHOULD_SKIP_CODE(test.code)),
+    };
 
     super.run(ruleName, rule, tests);
   }
