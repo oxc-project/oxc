@@ -27,7 +27,6 @@ static TS_ERROR_CODES: Lazy<Regex> =
 // Returns matches for @ts-ignore or @ts-expect-error in comments (// or /* */)
 static TS_IGNORE_PATTERN: Lazy<Regex> = lazy_regex!(r"(?://|/\*).*?(@ts-ignore|@ts-expect-error)");
 
-#[expect(unused)]
 #[derive(Debug)]
 pub struct CompilerSettings {
     pub modules: Vec<String>,
@@ -298,7 +297,11 @@ impl TestCaseContent {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+// ================================
+// Baseline types for transpile tests
+// ================================
+
+#[derive(Debug, Default)]
 pub struct Baseline {
     pub name: String,
     pub original: String,
@@ -310,7 +313,7 @@ pub struct Baseline {
 impl Baseline {
     pub fn print_oxc(&mut self) {
         let allocator = Allocator::default();
-        let source_type = SourceType::from_path(Path::new(&self.name)).unwrap();
+        let source_type = SourceType::from_path(Path::new(&self.name)).unwrap_or_default();
         let ret = Parser::new(&allocator, &self.original, source_type).parse();
         let printed = Codegen::new().build(&ret.program).code;
         self.oxc_printed = printed;
@@ -366,7 +369,7 @@ impl BaselineFile {
                 }
                 continue;
             }
-            let last = files.last_mut().unwrap();
+            let Some(last) = files.last_mut() else { continue };
             if is_diagnostic {
                 // Skip details of the diagnostic
                 if line.is_empty() {
@@ -382,6 +385,7 @@ impl BaselineFile {
             }
         }
 
+        // Regenerate content through oxc's codegen for consistent formatting
         for file in &mut files {
             file.print_oxc();
         }
