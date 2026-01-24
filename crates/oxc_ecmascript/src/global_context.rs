@@ -1,4 +1,5 @@
 use oxc_ast::ast::{Expression, IdentifierReference};
+use oxc_span::Ident;
 use oxc_syntax::reference::ReferenceId;
 
 use crate::constant_evaluation::ConstantValue;
@@ -7,9 +8,9 @@ pub trait GlobalContext<'a>: Sized {
     /// Whether the reference is a global reference.
     fn is_global_reference(&self, reference: &IdentifierReference<'a>) -> bool;
 
-    fn is_global_expr(&self, name: &str, expr: &Expression<'a>) -> bool {
+    fn is_global_expr(&self, name: &Ident<'_>, expr: &Expression<'a>) -> bool {
         expr.get_identifier_reference()
-            .filter(|ident| ident.name == name)
+            .filter(|ident| ident.name == *name)
             .is_some_and(|ident| self.is_global_reference(ident))
     }
 

@@ -392,13 +392,13 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
         let name = match &self.id {
             TSEnumMemberName::Identifier(ident) => ident.name,
             TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => {
-                Ident::from(lit.value.as_str())
+                Ident::from(lit.value)
             }
             TSEnumMemberName::ComputedTemplateString(template) => {
                 let quasi = template.single_quasi().expect(
                     "`TSEnumMemberName::TemplateString` should have no substitution and at least one quasi",
                 );
-                Ident::from(quasi.as_str())
+                Ident::from(quasi)
             }
         };
         builder.declare_symbol(

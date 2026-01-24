@@ -4,7 +4,7 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
 };
 use oxc_semantic::Scoping;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, Ident, Span};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -414,7 +414,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     ) -> BoundIdentifier<'a> {
         // Get name for UID
         let name = self.generate_uid_name(name);
-        let symbol_id = self.scoping.add_binding(&name, scope_id, flags);
+        let symbol_id = self.scoping.add_binding(Ident::from(name), scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
 
@@ -536,7 +536,11 @@ impl<'a, State> TraverseCtx<'a, State> {
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
     #[inline]
-    pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
+    pub fn create_unbound_reference(
+        &mut self,
+        name: Ident<'_>,
+        flags: ReferenceFlags,
+    ) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flags)
     }
 
@@ -547,7 +551,7 @@ impl<'a, State> TraverseCtx<'a, State> {
         name: Atom<'a>,
         flags: ReferenceFlags,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.as_str(), flags);
+        let reference_id = self.create_unbound_reference(Ident::from(name), flags);
         self.ast.identifier_reference_with_reference_id(span, name, reference_id)
     }
 
@@ -571,7 +575,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     #[inline]
     pub fn create_reference(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         symbol_id: Option<SymbolId>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
@@ -620,7 +624,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     #[inline]
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         flags: ReferenceFlags,
     ) -> ReferenceId {
         self.scoping.create_reference_in_current_scope(name, flags)
@@ -631,7 +635,7 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// Provided `name` must match `reference_id`.
     ///
     /// This is a shortcut for `ctx.scoping.delete_reference`.
-    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: &str) {
+    pub fn delete_reference(&mut self, reference_id: ReferenceId, name: Ident<'_>) {
         self.scoping.delete_reference(reference_id, name);
     }
 

@@ -430,11 +430,7 @@ impl<'a> ClassProperties<'a, '_> {
             // Save replacement name in `clashing_symbols`
             *name = new_name;
             // Rename symbol and binding
-            ctx.scoping_mut().rename_symbol(
-                symbol_id,
-                constructor_scope_id,
-                Ident::from(new_name.as_str()),
-            );
+            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, Ident::from(new_name));
         }
 
         // Rename identifiers for clashing symbols in constructor params and body

@@ -54,7 +54,7 @@ use oxc_allocator::{Allocator, Box as ArenaBox, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, Scoping, SymbolFlags, SymbolId};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::identifier::is_identifier_name;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse, traverse_mut};
 
@@ -329,7 +329,8 @@ impl<'a> ModuleRunnerTransform<'a> {
                 let mut local = specifier.unbox().local;
                 local.name = self.generate_import_binding_name(ctx).into();
                 let binding = BoundIdentifier::from_binding_ident(&local);
-                ctx.scoping_mut().set_symbol_name(binding.symbol_id, &binding.name);
+                ctx.scoping_mut()
+                    .set_symbol_name(binding.symbol_id, Ident::from(binding.name.as_str()));
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
 
                 BindingPattern::BindingIdentifier(ctx.alloc(local))

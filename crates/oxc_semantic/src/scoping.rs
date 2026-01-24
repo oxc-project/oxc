@@ -3,9 +3,9 @@ use std::{collections::hash_map::Entry, fmt, mem};
 use rustc_hash::{FxHashMap, FxHashSet};
 use self_cell::self_cell;
 
-use oxc_allocator::{Allocator, CloneIn, FromIn, Vec as ArenaVec};
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_index::IndexVec;
-use oxc_span::{ArenaIdentHashMap, Atom, Ident, Span};
+use oxc_span::{ArenaIdentHashMap, Ident, Span};
 use oxc_syntax::{
     node::NodeId,
     reference::{Reference, ReferenceId},
@@ -249,7 +249,7 @@ use crate::unresolved_stack::ReferenceIds;
 
 pub struct ScopingInner<'cell> {
     /* Symbol Table Fields */
-    symbol_names: ArenaVec<'cell, Atom<'cell>>,
+    symbol_names: ArenaVec<'cell, Ident<'cell>>,
     resolved_references: ArenaVec<'cell, ArenaVec<'cell, ReferenceId>>,
     /// Redeclarations of a symbol.
     ///
@@ -282,7 +282,7 @@ impl Scoping {
     }
 
     pub fn symbol_names(&self) -> impl Iterator<Item = &str> + '_ {
-        self.cell.borrow_dependent().symbol_names.iter().map(Atom::as_str)
+        self.cell.borrow_dependent().symbol_names.iter().map(Ident::as_str)
     }
 
     pub fn resolved_references(&self) -> impl Iterator<Item = &ArenaVec<'_, ReferenceId>> + '_ {
@@ -310,16 +310,20 @@ impl Scoping {
     /// Get the identifier name a symbol is bound to.
     #[inline]
     pub fn symbol_name(&self, symbol_id: SymbolId) -> &str {
-        &self.cell.borrow_dependent().symbol_names[symbol_id.index()]
+        self.cell.borrow_dependent().symbol_names[symbol_id.index()].as_str()
+    }
+
+    /// Get the identifier (with precomputed hash) for a symbol.
+    #[inline]
+    pub fn symbol_ident(&self, symbol_id: SymbolId) -> Ident<'_> {
+        self.cell.borrow_dependent().symbol_names[symbol_id.index()]
     }
 
     /// Rename a symbol.
-    ///
-    /// Returns the old name.
     #[inline]
-    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: &str) {
+    pub fn set_symbol_name(&mut self, symbol_id: SymbolId, name: Ident<'_>) {
         self.cell.with_dependent_mut(|allocator, cell| {
-            cell.symbol_names[symbol_id.index()] = Atom::from_in(name, allocator);
+            cell.symbol_names[symbol_id.index()] = name.clone_in(allocator);
         });
     }
 
@@ -381,13 +385,13 @@ impl Scoping {
     pub fn create_symbol(
         &mut self,
         span: Span,
-        name: &str,
+        name: Ident<'_>,
         flags: SymbolFlags,
         scope_id: ScopeId,
         node_id: NodeId,
     ) -> SymbolId {
         self.cell.with_dependent_mut(|allocator, cell| {
-            cell.symbol_names.push(Atom::from_in(name, allocator));
+            cell.symbol_names.push(name.clone_in(allocator));
             cell.resolved_references.push(ArenaVec::new_in(allocator));
         });
         self.symbol_spans.push(span);
@@ -660,10 +664,8 @@ impl Scoping {
     pub fn delete_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
         // It would be better to use `Entry` API to avoid 2 hash table lookups when deleting,
         // but `map.entry` requires an owned key to be provided.
-        let name_str = name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
-            // Reconstruct Ident inside the closure with allocator lifetime
-            let name = Ident::from(allocator.alloc_str(name_str));
+            let name = name.clone_in(allocator);
             let reference_ids = cell.root_unresolved_references.get_mut(&name).unwrap();
             if reference_ids.len() == 1 {
                 assert_eq!(reference_ids[0], reference_id);
@@ -714,9 +716,8 @@ impl Scoping {
     }
 
     pub fn add_root_unresolved_reference(&mut self, name: Ident<'_>, reference_id: ReferenceId) {
-        let name_str = name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = Ident::from(allocator.alloc_str(name_str));
+            let name = name.clone_in(allocator);
             cell.root_unresolved_references
                 .entry(name)
                 .or_insert_with(|| ArenaVec::new_in(allocator))
@@ -859,18 +860,16 @@ impl Scoping {
 
     /// Remove an existing binding from a scope.
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: Ident<'_>) {
-        let name_str = name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = Ident::from(allocator.alloc_str(name_str));
+            let name = name.clone_in(allocator);
             cell.bindings[scope_id].remove(&name);
         });
     }
 
     /// Move a binding from one scope to another.
     pub fn move_binding(&mut self, from: ScopeId, to: ScopeId, name: Ident<'_>) {
-        let name_str = name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
-            let name = Ident::from(allocator.alloc_str(name_str));
+            let name = name.clone_in(allocator);
             let from_map = &mut cell.bindings[from];
             if let Some((name, symbol_id)) = from_map.remove_entry(&name) {
                 cell.bindings[to].insert(name, symbol_id);
@@ -893,14 +892,12 @@ impl Scoping {
         old_name: Ident<'_>,
         new_name: Ident<'_>,
     ) {
-        let old_name_str = old_name.as_str();
-        let new_name_str = new_name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
             let bindings = &mut cell.bindings[scope_id];
-            let old_name = Ident::from(allocator.alloc_str(old_name_str));
+            let old_name = old_name.clone_in(allocator);
             let old_symbol_id = bindings.remove(&old_name);
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
-            let new_name = Ident::from(allocator.alloc_str(new_name_str));
+            let new_name = new_name.clone_in(allocator);
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });
@@ -914,19 +911,18 @@ impl Scoping {
     ///
     /// Panics in debug mode if either of the above are not satisfied.
     pub fn rename_symbol(&mut self, symbol_id: SymbolId, scope_id: ScopeId, new_name: Ident<'_>) {
-        let new_name_str = new_name.as_str();
         self.cell.with_dependent_mut(|allocator, cell| {
-            // Rename symbol
-            let new_name_atom = Atom::from_in(new_name_str, allocator);
-            let old_name = mem::replace(&mut cell.symbol_names[symbol_id.index()], new_name_atom);
+            // Clone new_name into allocator (preserves hash)
+            let new_name = new_name.clone_in(allocator);
+
+            // Rename symbol - old_name is Ident with preserved hash
+            let old_name = mem::replace(&mut cell.symbol_names[symbol_id.index()], new_name);
 
             // Rename binding, same as `Self::rename_binding`, we cannot call it directly
             // because the `old_name` borrowed `cell`.
             let bindings = &mut cell.bindings[scope_id];
-            let old_name_ident = Ident::from(old_name.as_str());
-            let old_symbol_id = bindings.remove(&old_name_ident);
+            let old_symbol_id = bindings.remove(&old_name);
             debug_assert_eq!(old_symbol_id, Some(symbol_id));
-            let new_name = Ident::from(allocator.alloc_str(new_name_str));
             let existing_symbol_id = bindings.insert(new_name, symbol_id);
             debug_assert!(existing_symbol_id.is_none());
         });

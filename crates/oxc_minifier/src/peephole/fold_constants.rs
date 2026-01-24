@@ -5,7 +5,7 @@ use oxc_ecmascript::{
     constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
     side_effects::MayHaveSideEffects,
 };
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, IDENT_NUMBER, SPAN};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::ctx::Ctx;
@@ -523,7 +523,7 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_call_expression(expr: &mut Expression<'a>, ctx: &mut Ctx<'a, '_>) {
         let Expression::CallExpression(e) = expr else { return };
-        if !ctx.is_global_expr("Number", &e.callee) {
+        if !ctx.is_global_expr(&IDENT_NUMBER, &e.callee) {
             return;
         }
         if e.arguments.len() != 1 {

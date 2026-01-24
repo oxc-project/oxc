@@ -92,6 +92,11 @@ pub struct Ident<'a> {
     _marker: PhantomData<&'a str>,
 }
 
+// SAFETY: `Ident` only contains a pointer to immutable string data,
+// which is safe to share across threads.
+unsafe impl Sync for Ident<'_> {}
+unsafe impl Send for Ident<'_> {}
+
 impl Ident<'static> {
     /// Get an [`Ident`] containing a static string.
     #[expect(clippy::inline_always)]
@@ -420,6 +425,13 @@ impl hash::Hash for Ident<'_> {
         // This gives good entropy as long as HashMap contains less than 33 million entries.
         let hash = (self.hash as u64).rotate_left(64 - 7);
         hasher.write_u64(hash);
+    }
+}
+
+impl std::borrow::Borrow<str> for Ident<'_> {
+    #[inline]
+    fn borrow(&self) -> &str {
+        self.as_str()
     }
 }
 

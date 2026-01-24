@@ -7,12 +7,15 @@
 mod atom;
 mod compact_str;
 mod ident;
+#[expect(missing_docs)]
+mod ident_consts;
 
 pub use atom::Atom;
 pub use compact_str::{CompactStr, MAX_INLINE_LEN};
 pub use ident::{
     ArenaIdentHashMap, Ident, IdentHashMap, IdentHashSet, IdentHasher, IncrementalIdentHasher,
 };
+pub use ident_consts::*;
 
 #[doc(hidden)]
 pub mod __internal {
