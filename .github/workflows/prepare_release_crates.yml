@@ -80,7 +80,7 @@ jobs:
   ecosystem-ci:
     needs: prepare
     name: Trigger Monitor Oxc
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       issues: write
       pull-requests: write

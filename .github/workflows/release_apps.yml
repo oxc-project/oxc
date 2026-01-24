@@ -18,7 +18,7 @@ concurrency:
 jobs:
   check:
     name: Check version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       version_changed: ${{ steps.oxfmt.outputs.version_changed && steps.oxlint.outputs.version_changed }}
       oxfmt_version: ${{ steps.oxfmt.outputs.version }}
@@ -155,7 +155,7 @@ jobs:
   publish-oxlint:
     name: Publish Oxlint
     needs: [check, build-oxlint]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:
@@ -321,7 +321,7 @@ jobs:
   publish-oxfmt:
     name: Publish Oxfmt
     needs: [check, build-oxfmt]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:
@@ -374,7 +374,7 @@ jobs:
     needs: [check, build-oxlint, build-oxfmt, publish-oxlint, publish-oxfmt]
     permissions:
       contents: write # for softprops/action-gh-release@v1.3.1
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
@@ -490,7 +490,7 @@ jobs:
   bump:
     needs: [check, smoke]
     name: Bump oxlint dependents
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
 
