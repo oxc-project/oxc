@@ -4,40 +4,44 @@ import unsupportedRules from "./unsupported-rules.json" with { type: "json" };
 import { typescriptTypeCheckRules } from "./eslint-rules.mjs";
 
 const readAllImplementedRuleNames = async () => {
-  const rulesFile = await readFile(resolve("crates/oxc_linter/src/rules.rs"), "utf8");
+  const rulesFile = await readFile(
+    resolve("crates/oxc_linter/src/generated/rules_enum.rs"),
+    "utf8",
+  );
 
   /** @type {Set<string>} */
   const rules = new Set();
 
-  let found = false;
-  for (let line of rulesFile.split("\n")) {
-    line = line.trim();
+  // Parse lines like: pub use crate::rules::<plugin>::<rule_module>::<RuleName> as <PluginRuleName>;
+  const regex = /^pub use crate::rules::(\w+)::(\w+)::/;
 
-    // Skip commented out rules
-    if (line.startsWith("//")) continue;
+  for (const line of rulesFile.split("\n")) {
+    const match = line.match(regex);
+    if (!match) continue;
 
-    if (line === "oxc_macros::declare_all_lint_rules! {") {
-      found = true;
-      continue;
+    const [, plugin, ruleModule] = match;
+
+    // Convert snake_case to kebab-case for both plugin and rule name
+    const pluginName = plugin.replaceAll("_", "-");
+    const ruleName = ruleModule.replaceAll("_", "-");
+    let prefixedName = `${pluginName}/${ruleName}`;
+
+    // Ignore oxc rules (no reference rules)
+    if (prefixedName.startsWith("oxc/")) continue;
+
+    // Handle node -> n rename for eslint-plugin-n compatibility
+    if (prefixedName.startsWith("node/")) {
+      prefixedName = prefixedName.replace(/^node/, "n");
     }
-    if (found && line === "}") {
-      return rules;
-    }
 
-    if (found) {
-      let prefixedName = line.replaceAll(",", "").replaceAll("::", "/").replaceAll("_", "-");
-
-      // Ignore no reference rules
-      if (prefixedName.startsWith("oxc/")) continue;
-      if (prefixedName.startsWith("node/")) {
-        prefixedName = prefixedName.replace(/^node/, "n");
-      }
-
-      rules.add(prefixedName);
-    }
+    rules.add(prefixedName);
   }
 
-  throw new Error("Failed to find the end of the rules list");
+  if (rules.size === 0) {
+    throw new Error("Failed to find any rules in the generated rules_enum.rs file");
+  }
+
+  return rules;
 };
 
 /**

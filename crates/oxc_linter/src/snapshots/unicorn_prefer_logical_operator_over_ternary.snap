@@ -92,47 +92,40 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Switch to "||" or "??" operator
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[prefer_logical_operator_over_ternary.tsx:1:13]
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
  1 │ foo ? foo : await a
-   ·             ─────
+   · ───────────────────
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Switch to "||" or "??" operator
 
-  × `await` is only allowed within async functions and at the top levels of modules
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
  1 │ await a ? await a : foo
-   · ─────
+   · ───────────────────────
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Switch to "||" or "??" operator
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[prefer_logical_operator_over_ternary.tsx:1:11]
- 1 │ await a ? await a : foo
-   ·           ─────
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
  1 │ await a ? (await (a)) : (foo)
-   · ─────
+   · ─────────────────────────────
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Switch to "||" or "??" operator
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[prefer_logical_operator_over_ternary.tsx:1:2]
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
  1 │ (await a) ? await (a) : (foo)
-   ·  ─────
+   · ─────────────────────────────
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Switch to "||" or "??" operator
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[prefer_logical_operator_over_ternary.tsx:1:2]
+  ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
+   ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
  1 │ (await a) ? (await (a)) : (foo)
-   ·  ─────
+   · ───────────────────────────────
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Switch to "||" or "??" operator
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:2:10]

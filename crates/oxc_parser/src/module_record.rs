@@ -387,6 +387,12 @@ impl<'a> ModuleRecordBuilder<'a> {
     pub fn found_ts_export(&mut self) {
         self.module_record.has_module_syntax = true;
     }
+
+    /// Mark the file as ESM when unambiguous top-level await is detected.
+    /// This is similar to Babel's `sawUnambiguousESM` flag.
+    pub fn found_unambiguous_await(&mut self) {
+        self.module_record.has_module_syntax = true;
+    }
 }
 
 fn iter_binding_identifiers_of_declaration<'a, F>(decl: &Declaration<'a>, f: &mut F)

@@ -72,7 +72,7 @@ jobs:
   ecosystem-ci:
     needs: prepare
     name: Trigger Ecosystem CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       pull-requests: write
       contents: write
@@ -108,7 +108,7 @@ jobs:
   website:
     needs: prepare
     name: Update oxc.rs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       actions: write
     steps:

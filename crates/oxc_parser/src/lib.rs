@@ -530,8 +530,8 @@ impl<'a> ParserImpl<'a> {
         self.token = self.lexer.first_token();
 
         let hashbang = self.parse_hashbang();
-        let (directives, mut statements) =
-            self.parse_directives_and_statements(/* is_top_level */ true);
+        self.ctx |= Context::TopLevel;
+        let (directives, mut statements) = self.parse_directives_and_statements();
 
         // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
         // we need to reparse statements that were originally parsed with `await` as identifier.
@@ -571,9 +571,9 @@ impl<'a> ParserImpl<'a> {
             // Rewind to the checkpoint
             self.rewind(checkpoint);
 
-            // Parse the statement with await context enabled
+            // Parse the statement with await context enabled (TopLevel context is already set)
             let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::TopLevelStatementList)
+                p.parse_statement_list_item(StatementContext::StatementList)
             });
 
             // Replace the statement if the index is valid

@@ -13,7 +13,7 @@ on:
 jobs:
   check:
     name: Check version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       version_changed: ${{ steps.check.outputs.version_changed }}
     env:
@@ -213,7 +213,7 @@ jobs:
     needs:
       - build
       - build-freebsd
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       id-token: write # for `pnpm publish --provenance`
     env:

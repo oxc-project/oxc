@@ -50,6 +50,10 @@ harness = false
 name = "minifier"
 harness = false
 
+[[bench]]
+name = "pipeline"
+harness = false
+
 # Only run in CI
 [[bench]]
 name = "parser_napi"

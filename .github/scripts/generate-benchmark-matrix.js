@@ -20,6 +20,7 @@ const ALL_COMPONENTS = [
   "minifier",
   "codegen",
   "formatter",
+  "pipeline",
   "linter",
 ];
 

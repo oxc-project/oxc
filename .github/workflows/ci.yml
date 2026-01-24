@@ -263,7 +263,7 @@ jobs:
 
   typos:
     name: Spell Check
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
       - uses: crate-ci/typos@65120634e79d8374d1aa2f27e54baa0c364fff5a # v1.42.1

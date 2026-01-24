@@ -18,7 +18,7 @@ concurrency:
 jobs:
   check:
     name: Check version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     outputs:
       version: ${{ steps.check.outputs.version }}
       version_changed: ${{ steps.check.outputs.version_changed }}
@@ -34,7 +34,7 @@ jobs:
     needs: check
     if: needs.check.outputs.version_changed == 'true'
     name: Release @oxc-project/runtime
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:

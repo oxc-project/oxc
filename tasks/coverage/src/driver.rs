@@ -21,7 +21,7 @@ use oxc::{
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
-use crate::suite::TestResult;
+use crate::TestResult;
 
 #[expect(clippy::struct_excessive_bools)]
 #[derive(Default)]

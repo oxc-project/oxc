@@ -31,16 +31,12 @@ impl<'a> ParserImpl<'a> {
     ///     `StatementList`[?Yield, ?Await, ?Return] `StatementListItem`[?Yield, ?Await, ?Return]
     pub(crate) fn parse_directives_and_statements(
         &mut self,
-        is_top_level: bool,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
 
-        let stmt_ctx = if is_top_level {
-            StatementContext::TopLevelStatementList
-        } else {
-            StatementContext::StatementList
-        };
+        let is_top_level = self.ctx.has_top_level();
+        let stmt_ctx = StatementContext::StatementList;
 
         // Check if we need to track potential await reparsing.
         // This is only needed in unambiguous mode at top level when not in await context.
@@ -134,9 +130,7 @@ impl<'a> ParserImpl<'a> {
                 &Modifiers::empty(),
                 self.ast.vec(),
             ),
-            Kind::Export => {
-                self.parse_export_declaration(self.start_span(), self.ast.vec(), stmt_ctx)
-            }
+            Kind::Export => self.parse_export_declaration(self.start_span(), self.ast.vec()),
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => {
@@ -151,7 +145,7 @@ impl<'a> ParserImpl<'a> {
             Kind::At => self.parse_decorated_statement(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
-            Kind::Import => self.parse_import_statement(stmt_ctx),
+            Kind::Import => self.parse_import_statement(),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(stmt_ctx),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(stmt_ctx),
@@ -800,7 +794,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Parse import statement or import expression.
-    fn parse_import_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+    fn parse_import_statement(&mut self) -> Statement<'a> {
         let checkpoint = self.checkpoint();
         let span = self.start_span();
         self.bump_any();
@@ -809,7 +803,7 @@ impl<'a> ParserImpl<'a> {
             self.rewind(checkpoint);
             self.parse_expression_or_labeled_statement()
         } else {
-            self.parse_import_declaration(span, stmt_ctx.is_top_level())
+            self.parse_import_declaration(span, self.ctx.has_top_level())
         }
     }
 
@@ -835,7 +829,7 @@ impl<'a> ParserImpl<'a> {
         let kind = self.cur_kind();
         if kind == Kind::Export {
             // Export span.start starts after decorators.
-            return self.parse_export_declaration(self.start_span(), decorators, stmt_ctx);
+            return self.parse_export_declaration(self.start_span(), decorators);
         }
         let modifiers = self.parse_modifiers(false, false);
         if self.at(Kind::Class) {

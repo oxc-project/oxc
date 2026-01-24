@@ -135,7 +135,14 @@ fn parse_with_return(filename: &str, source_text: &str, options: &ParserOptions)
     ParseResult { program_and_fixes, module, comments, errors }
 }
 
-/// Parse synchronously.
+/// Parse JS/TS source synchronously on current thread.
+///
+/// This is generally preferable over `parse` (async) as it does not have the overhead
+/// of spawning a thread, and the majority of the workload cannot be parallelized anyway
+/// (see `parse` documentation for details).
+///
+/// If you need to parallelize parsing multiple files, it is recommended to use worker threads
+/// with `parseSync` rather than using `parse`.
 #[napi]
 #[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
 pub fn parse_sync(
@@ -168,9 +175,17 @@ impl Task for ResolveTask {
     }
 }
 
-/// Parse asynchronously.
+/// Parse JS/TS source asynchronously on a separate thread.
 ///
-/// Note: This function can be slower than `parseSync` due to the overhead of spawning a thread.
+/// Note that not all of the workload can happen on a separate thread.
+/// Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
+/// has to happen on current thread. This synchronous deserialization work typically outweighs
+/// the asynchronous parsing by a factor of between 3 and 20.
+///
+/// i.e. the majority of the workload cannot be parallelized by using this method.
+///
+/// Generally `parseSync` is preferable to use as it does not have the overhead of spawning a thread.
+/// If you need to parallelize parsing multiple files, it is recommended to use worker threads.
 #[napi]
 pub fn parse(
     filename: String,

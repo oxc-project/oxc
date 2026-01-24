@@ -1854,11 +1854,8 @@ name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
  "console 0.16.2",
- "constcat",
- "cow-utils",
  "encoding_rs",
  "encoding_rs_io",
- "futures",
  "itertools",
  "lazy-regex",
  "oxc",
@@ -1873,7 +1870,6 @@ dependencies = [
  "serde",
  "serde_json",
  "similar",
- "tokio",
  "walkdir",
 ]
 
