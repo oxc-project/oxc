@@ -61,16 +61,25 @@ impl<'a> ParserImpl<'a> {
             }
 
             // Take checkpoint for every statement when tracking await reparse.
-            // We reset the flag and only store the checkpoint if an await identifier
+            // We reset the flags and only store the checkpoint if an await identifier
             // was actually encountered during parsing.
             let checkpoint = if track_await_reparse {
                 self.state.encountered_await_identifier = false;
+                self.state.encountered_unambiguous_await = false;
                 Some((statements.len(), self.checkpoint()))
             } else {
                 None
             };
 
             let stmt = self.parse_statement_list_item(stmt_ctx);
+
+            // If unambiguous await was encountered at top level, upgrade to ESM
+            // This is like Babel's `sawUnambiguousESM` flag
+            if track_await_reparse && self.state.encountered_unambiguous_await {
+                self.module_record_builder.found_unambiguous_await();
+                track_await_reparse = false;
+                self.ctx = self.ctx.and_await(true);
+            }
 
             // Store checkpoint only if await identifier was encountered
             if let Some((stmt_index, checkpoint)) = checkpoint

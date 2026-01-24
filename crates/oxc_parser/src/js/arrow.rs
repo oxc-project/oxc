@@ -295,8 +295,11 @@ impl<'a> ParserImpl<'a> {
 
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
+            // Track function depth for expression bodies too
+            self.state.function_depth += 1;
             let expr = self
                 .parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+            self.state.function_depth -= 1;
             let span = expr.span();
             let expr_stmt = self.ast.statement_expression(span, expr);
             self.ast.alloc_function_body(span, self.ast.vec(), self.ast.vec1(expr_stmt))

@@ -438,14 +438,14 @@ Negative Passed: 133/133 (100.00%)
    ·                      ╰── `b` has already been declared here
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[misc/fail/oxc-10503.ts:4:1]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-10503.ts:4:6]
  3 │ 
  4 │ await using
-   · ─────
+   ·      ▲
  5 │ foo = bar();
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]

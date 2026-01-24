@@ -1,5 +1,3 @@
 codegen_misc Summary:
 AST Parsed     : 64/64 (100.00%)
-Positive Passed: 63/64 (98.44%)
-Normal: tasks/coverage/misc/pass/babel-16776-s.js
-
+Positive Passed: 64/64 (100.00%)

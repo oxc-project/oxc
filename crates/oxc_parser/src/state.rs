@@ -31,6 +31,14 @@ pub struct ParserState<'a> {
     /// Used to determine if a statement needs to be stored for potential reparsing
     /// in unambiguous mode.
     pub encountered_await_identifier: bool,
+
+    /// Flag to track if an unambiguous await expression was encountered during statement parsing.
+    /// Used to upgrade to ESM when top-level unambiguous await is detected.
+    pub encountered_unambiguous_await: bool,
+
+    /// Depth counter for function body parsing.
+    /// Used to detect if we're inside a function body (depth > 0) vs at top level (depth == 0).
+    pub function_depth: u32,
 }
 
 impl ParserState<'_> {
@@ -41,6 +49,8 @@ impl ParserState<'_> {
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),
             encountered_await_identifier: false,
+            encountered_unambiguous_await: false,
+            function_depth: 0,
         }
     }
 }
