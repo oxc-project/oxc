@@ -83,7 +83,7 @@ impl ObjectShorthandConfigJSON {
             avoid_explicit_return_arrows: self.avoid_explicit_return_arrows,
             methods_ignore_pattern: self
                 .methods_ignore_pattern
-                .and_then(|p| RegexBuilder::new(&format!(r"{p}")).build().ok()),
+                .and_then(|p| RegexBuilder::new(&p).build().ok()),
         }
     }
 }
@@ -187,7 +187,7 @@ impl Rule for ObjectShorthand {
         )))
     }
 
-    fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+    fn run_once(&self, ctx: &LintContext) {
         let mut checker = ObjectShorthandChecker::new(self, ctx);
         walk::walk_program(&mut checker, ctx.semantic().nodes().program());
     }
@@ -207,14 +207,14 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             .scoping()
             .root_unresolved_references()
             .get("arguments")
-            .map(|v| FxHashSet::from_iter(v.iter().map(|&id| id)))
+            .map(|v| v.iter().copied().collect())
             .unwrap_or_default();
 
         Self {
             rule,
             ctx,
-            lexical_scope_stack: Default::default(),
-            arrows_with_lexical_identifiers: Default::default(),
+            lexical_scope_stack: VecDeque::default(),
+            arrows_with_lexical_identifiers: FxHashSet::default(),
             arguments_identifiers,
         }
     }
@@ -244,10 +244,13 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                     (false, true) => "*",
                     (false, false) => "",
                 },
-                Either::Right(func) => match func.r#async {
-                    true => "async ",
-                    false => "",
-                },
+                Either::Right(func) => {
+                    if func.r#async {
+                        "async "
+                    } else {
+                        ""
+                    }
+                }
             };
 
             let property_key_span = property.key.span();
@@ -271,11 +274,11 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                     let next_token = if func.generator {
                         self.ctx
                             .find_next_token_from(property_key_span.end, "*")
-                            .map(|offset| offset + "*".len() as u32)
+                            .map(|offset| offset + 1 /* "*".len() */)
                     } else {
                         self.ctx
                             .find_next_token_from(property_key_span.end, "function")
-                            .map(|offset| offset + "function".len() as u32)
+                            .map(|offset| offset + 8 /* "function".len() */)
                     };
                     let Some(func_token) = next_token else {
                         return fixer.noop();
@@ -290,7 +293,7 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                     let next_token = self
                         .ctx
                         .find_prev_token_from(func.body.span.start, "=>")
-                        .map(|offset| offset + "=>".len() as u32);
+                        .map(|offset| offset + 2 /* "=>".len() */);
                     let Some(arrow_token) = next_token else {
                         return fixer.noop();
                     };
@@ -300,37 +303,29 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                     ));
                     let old_param_text = self.ctx.source_range(Span::new(
                         func.params.span.start,
-                        func.return_type
-                            .as_ref()
-                            .map(|p| p.span.end)
-                            .unwrap_or(func.params.span.end),
+                        func.return_type.as_ref().map_or(func.params.span.end, |p| p.span.end),
                     ));
                     let should_add_parens = if func.r#async {
                         if let Some(async_token) =
                             self.ctx.find_next_token_from(func.span.start, "async")
+                            && let Some(fist_param) = func.params.items.first()
                         {
-                            if let Some(fist_param) = func.params.items.first() {
-                                self.ctx
-                                    .find_next_token_within(
-                                        func.span.start + async_token,
-                                        fist_param.span.start,
-                                        "(",
-                                    )
-                                    .is_none()
-                            } else {
-                                false
-                            }
-                        } else {
-                            false
-                        }
-                    } else {
-                        if let Some(fist_param) = func.params.items.first() {
                             self.ctx
-                                .find_next_token_within(func.span.start, fist_param.span.start, "(")
+                                .find_next_token_within(
+                                    func.span.start + async_token,
+                                    fist_param.span.start,
+                                    "(",
+                                )
                                 .is_none()
                         } else {
                             false
                         }
+                    } else if let Some(fist_param) = func.params.items.first() {
+                        self.ctx
+                            .find_next_token_within(func.span.start, fist_param.span.start, "(")
+                            .is_none()
+                    } else {
+                        false
                     };
                     let new_param_text = if should_add_parens {
                         format!("({old_param_text})")
@@ -340,14 +335,13 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
                     let type_param = func
                         .type_parameters
                         .as_ref()
-                        .map(|t| self.ctx.source_range(t.span()))
-                        .unwrap_or("");
+                        .map_or("", |t| self.ctx.source_range(t.span()));
                     let ret =
                         format!("{key_prefix}{key_text}{type_param}{new_param_text}{arrow_body}");
                     fixer.replace(property.span, ret)
                 }
             }
-        })
+        });
     }
 
     fn make_function_long_form(&self, property: &ObjectProperty) {
@@ -390,16 +384,16 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
     fn check_longform_methods(&self, property: &ObjectProperty) {
         if self.rule.ignore_constructors
             && property.key.is_identifier()
-            && property.key.name().map(is_constructor).unwrap_or(false)
+            && property.key.name().is_some_and(is_constructor)
         {
             return;
         }
+
         if let (Some(pattern), Some(static_name)) =
             (self.rule.methods_ignore_pattern.as_ref(), property.key.static_name())
+            && pattern.is_match(static_name.as_ref())
         {
-            if pattern.is_match(static_name.as_ref()) {
-                return;
-            }
+            return;
         }
 
         let is_key_string_literal = is_property_key_string_literal(property);
@@ -411,24 +405,19 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             self.make_function_shorthand(property, Either::Left(func));
         }
 
-        if self.rule.avoid_explicit_return_arrows {
-            if let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
-                && !self.arrows_with_lexical_identifiers.contains(&func.scope_id())
-            {
-                if !func.expression {
-                    self.make_function_shorthand(property, Either::Right(func));
-                }
-            }
+        if self.rule.avoid_explicit_return_arrows
+            && let Expression::ArrowFunctionExpression(func) = &property.value.without_parentheses()
+            && !self.arrows_with_lexical_identifiers.contains(&func.scope_id())
+            && !func.expression
+        {
+            self.make_function_shorthand(property, Either::Right(func));
         }
     }
 
     fn check_shorthand_properties(&self, property: &ObjectProperty) {
         if let Some(property_name) = property.key.name() {
             self.ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
-                fixer.replace(
-                    property.span,
-                    property_name.to_string() + ": " + &property_name.to_string(),
-                )
+                fixer.replace(property.span, format!("{property_name}: {property_name}"))
             });
         }
     }
@@ -453,22 +442,22 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             return;
         }
 
-        if let Some(property_name) = property.key.name() {
-            if property_name == value_identifier.name {
-                self.ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
-                    // x: /* */ x
-                    // x: (/* */ x)
-                    // "x": /* */ x
-                    // "x": (/* */ x)
-                    if self.ctx.semantic().has_comments_between(Span::new(
-                        property.key.span().start,
-                        value_identifier.span.end,
-                    )) {
-                        return fixer.noop();
-                    }
-                    fixer.replace(property.span, property_name.to_string())
-                });
-            }
+        if let Some(property_name) = property.key.name()
+            && property_name == value_identifier.name
+        {
+            self.ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
+                // x: /* */ x
+                // x: (/* */ x)
+                // "x": /* */ x
+                // "x": (/* */ x)
+                if self.ctx.semantic().has_comments_between(Span::new(
+                    property.key.span().start,
+                    value_identifier.span.end,
+                )) {
+                    return fixer.noop();
+                }
+                fixer.replace(property.span, property_name.to_string())
+            });
         }
     }
 
@@ -476,9 +465,9 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
         let properties =
             obj_expr.properties.iter().filter_map(|property_kind| match property_kind {
                 ObjectPropertyKind::ObjectProperty(property) => {
-                    can_property_have_shorthand(property).then(|| property)
+                    can_property_have_shorthand(property).then_some(property)
                 }
-                _ => None,
+                ObjectPropertyKind::SpreadProperty(_) => None,
             });
 
         if properties.clone().count() > 0 {
@@ -487,10 +476,8 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             if shorthand_properties.clone().count() != properties.clone().count() {
                 if shorthand_properties.count() > 0 {
                     self.ctx.diagnostic(unexpected_mix(obj_expr.span));
-                } else if check_redundancy {
-                    if properties.clone().all(|p| is_redundant_property(p)) {
-                        self.ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
-                    }
+                } else if check_redundancy && properties.clone().all(|p| is_redundant_property(p)) {
+                    self.ctx.diagnostic(expected_all_properties_shorthanded(obj_expr.span));
                 }
             }
         }
@@ -505,10 +492,10 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
     }
 
     fn report_lexical_identifier(&mut self) {
-        let Some(scope) = self.lexical_scope_stack.iter().nth(0) else { return };
-        scope.iter().for_each(|item| {
-            self.arrows_with_lexical_identifiers.insert(item.clone());
-        });
+        let Some(scope) = self.lexical_scope_stack.front() else { return };
+        for &item in scope {
+            self.arrows_with_lexical_identifiers.insert(item);
+        }
     }
 }
 
@@ -524,9 +511,9 @@ impl<'a> Visit<'a> for ObjectShorthandChecker<'a, '_> {
         if self.lexical_scope_stack.is_empty() {
             self.enter_function();
         }
-        self.lexical_scope_stack.iter_mut().nth(0).map(|scope| scope.insert(scope_id));
+        self.lexical_scope_stack.get_mut(0).map(|scope| scope.insert(scope_id));
         walk::walk_arrow_function_expression(self, it);
-        self.lexical_scope_stack.iter_mut().nth(0).map(|scope| scope.remove(&scope_id));
+        self.lexical_scope_stack.get_mut(0).map(|scope| scope.remove(&scope_id));
     }
 
     fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
@@ -621,6 +608,7 @@ static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
 /// Determines if the first character of the name
 /// is a capital letter.
 /// * `name` - The name of the node to evaluate.
+///
 /// Returns true if the first character of the property name is a capital letter, false if not.
 fn is_constructor<N: AsRef<str>>(name: N) -> bool {
     // Not a constructor if name has no characters apart from '_', '$' and digits e.g. '_', '$$', '_8'
@@ -628,7 +616,7 @@ fn is_constructor<N: AsRef<str>>(name: N) -> bool {
         return false;
     };
 
-    name.as_ref().chars().nth(matched.start()).map(|ch| ch.is_uppercase()).unwrap_or(false)
+    name.as_ref().chars().nth(matched.start()).is_some_and(char::is_uppercase)
 }
 
 fn is_property_value_function(property: &ObjectProperty) -> bool {
@@ -679,7 +667,7 @@ fn can_property_have_shorthand(property: &ObjectProperty) -> bool {
         return false;
     }
 
-    return true;
+    true
 }
 
 #[test]
