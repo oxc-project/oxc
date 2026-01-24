@@ -351,7 +351,12 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
     }
 
     fn make_function_long_form(&self, property: &ObjectProperty) {
-        self.ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
+        let diagnostic = if self.rule.apply_never {
+            expected_method_longform(property.span)
+        } else {
+            expected_literal_method_longform(property.span)
+        };
+        self.ctx.diagnostic_with_fix(diagnostic, |fixer| {
             let property_key_span = property.key.span();
             let key_text_range = if property.computed {
                 let (Some(paren_start), Some(paren_end_offset)) = (
@@ -397,7 +402,8 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             }
         }
 
-        if self.rule.avoid_quotes && is_property_key_string_literal(property) {
+        let is_key_string_literal = is_property_key_string_literal(property);
+        if self.rule.avoid_quotes && is_key_string_literal {
             return;
         }
 
@@ -436,19 +442,30 @@ impl<'a, 'c> ObjectShorthandChecker<'a, 'c> {
             return;
         };
 
+        if self.ctx.comments().iter().any(|comment| {
+            if !property.span.contains_inclusive(comment.span) {
+                return false;
+            }
+            comment.is_jsdoc()
+        }) {
+            return;
+        }
+
         if let Some(property_name) = property.key.name() {
             if property_name == value_identifier.name {
-                if self.ctx.semantic().has_comments_between(Span::new(
-                    property.key.span().start,
-                    value_identifier.span.end,
-                )) {
-                    self.ctx.diagnostic(expected_property_shorthand(property.span));
-                } else {
-                    self.ctx
-                        .diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
-                            fixer.replace(property.span, property_name.to_string())
-                        });
-                }
+                self.ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
+                    // x: /* */ x
+                    // x: (/* */ x)
+                    // "x": /* */ x
+                    // "x": (/* */ x)
+                    if self.ctx.semantic().has_comments_between(Span::new(
+                        property.key.span().start,
+                        value_identifier.span.end,
+                    )) {
+                        return fixer.noop();
+                    }
+                    fixer.replace(property.span, property_name.to_string())
+                });
             }
         }
     }
@@ -599,7 +616,6 @@ impl ShorthandType {
 }
 
 static CTOR_PREFIX_REGEX: Lazy<Regex> = lazy_regex!(r"[^_$0-9]");
-static JSDOC_COMMENT_REGEX: Lazy<Regex> = lazy_regex!(r"^\s*\*");
 
 /// Determines if the first character of the name
 /// is a capital letter.
@@ -746,6 +762,11 @@ fn test() {
         ("var x = {bar, ...baz}", Some(json!(["consistent-as-needed"]))),
         ("var x = {bar: baz, ...qux}", Some(json!(["consistent-as-needed"]))),
         ("var x = {...foo, bar, baz}", Some(json!(["consistent-as-needed"]))),
+        // jsdoc
+        ("var x = {x: /** */ x}", None),
+        ("var x = {x: (/** */ x)}", None),
+        ("var x = {'x': /** */ x}", None),
+        ("var x = {'x': (/** */ x)}", None),
     ];
 
     let fail = vec![
@@ -1509,40 +1530,40 @@ fn test_avoid_explicit_return_arrows() {
                         };
                     }
                 ",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "({ a: (() => { return foo; }) })",
-                "({ a() { return foo; } })",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "({ a: ((arg) => { return foo; }) })",
-                "({ a(arg) { return foo; } })",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "({ a: ((arg, arg2) => { return foo; }) })",
-                "({ a(arg, arg2) { return foo; } })",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "({ a: (async () => { return foo; }) })",
-                "({ async a() { return foo; } })",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "({ a: (async (arg) => { return foo; }) })",
-                "({ async a(arg) { return foo; } })",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "({ a: (async (arg, arg2) => { return foo; }) })",
-                "({ async a(arg, arg2) { return foo; } })",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (() => { return foo; }) })",
+            "({ a() { return foo; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: ((arg) => { return foo; }) })",
+            "({ a(arg) { return foo; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: ((arg, arg2) => { return foo; }) })",
+            "({ a(arg, arg2) { return foo; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async () => { return foo; }) })",
+            "({ async a() { return foo; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async (arg) => { return foo; }) })",
+            "({ async a(arg) { return foo; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "({ a: (async (arg, arg2) => { return foo; }) })",
+            "({ async a(arg, arg2) { return foo; } })",
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
                     const test = {
                         key: <T,>(): void => { },
                         key: async <T,>(): Promise<void> => { },
@@ -1550,7 +1571,7 @@ fn test_avoid_explicit_return_arrows() {
                         key: async <T,>(arg: T): Promise<T> => { return arg },
                     }
                 ",
-                "
+            "
                     const test = {
                         key<T,>(): void { },
                         async key<T,>(): Promise<void> { },
@@ -1558,10 +1579,10 @@ fn test_avoid_explicit_return_arrows() {
                         async key<T,>(arg: T): Promise<T> { return arg },
                     }
                 ",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
-            ),
-            (
-                "
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+        ),
+        (
+            "
                     const test = {
                         key: (): void => {x()},
                         key: ( (): void => {x()} ),
@@ -1588,7 +1609,7 @@ fn test_avoid_explicit_return_arrows() {
                         key: ( async (arg: t, arg2: t): (void) => {x()} ),
                     }
                 ",
-                "
+            "
                     const test = {
                         key(): void {x()},
                         key(): void {x()},
@@ -1615,7 +1636,7 @@ fn test_avoid_explicit_return_arrows() {
                         async key(arg: t, arg2: t): (void) {x()},
                     }
                 ",
-                Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
+            Some(json!(["always", { "avoidExplicitReturnArrows": true }])),
         ),
     ];
 
