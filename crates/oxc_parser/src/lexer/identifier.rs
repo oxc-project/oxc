@@ -8,6 +8,8 @@ use oxc_syntax::identifier::{
 
 use crate::diagnostics;
 
+use oxc_span::IncrementalIdentHasher;
+
 use super::{
     Kind, Lexer, SourcePosition, cold_branch,
     search::{SafeByteMatchTable, byte_search, safe_byte_match_table},
@@ -48,16 +50,26 @@ impl<'a> Lexer<'a> {
     /// * `self.source` must not be exhausted (at least 1 char remaining).
     /// * Next char must be ASCII.
     pub(super) unsafe fn identifier_name_handler(&mut self) -> &'a str {
+        // Reset hasher and hash the first byte.
+        // SAFETY: Caller guarantees not at EOF.
+        let first_byte = unsafe { self.source.position().read() };
+        self.identifier_hasher = IncrementalIdentHasher::new();
+        self.identifier_hasher.write_byte(first_byte);
+
         // Advance past 1st byte.
         // SAFETY: Caller guarantees not at EOF, and next byte is ASCII.
         let after_first = unsafe { self.source.position().add(1) };
 
-        // Consume bytes which are part of identifier
+        // Consume bytes which are part of identifier, hashing as we go
         let next_byte = byte_search! {
             lexer: self,
             table: NOT_ASCII_ID_CONTINUE_TABLE,
             start: after_first,
+            hash_identifier: true,
             handle_eof: {
+                // Hash remaining bytes before returning
+                let remaining = self.source.str_from_pos_to_current(after_first);
+                self.identifier_hasher.write_bytes(remaining.as_bytes());
                 // Return identifier minus its first char.
                 // SAFETY: `lexer.source` is positioned at EOF, so there is no valid value
                 // of `after_first` which could be after current position.
@@ -74,7 +86,7 @@ impl<'a> Lexer<'a> {
                 // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
                 // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_tail_unicode(start_pos)[1..]
+                self.identifier_tail_unicode_with_hash(start_pos)
             });
         }
         if next_byte == b'\\' {
@@ -82,7 +94,7 @@ impl<'a> Lexer<'a> {
                 // SAFETY: `after_first` is position after consuming 1 byte, so subtracting 1
                 // makes `start_pos` `source`'s position as it was at start of this function
                 let start_pos = unsafe { after_first.sub(1) };
-                &self.identifier_backslash(start_pos, false)[1..]
+                self.identifier_backslash_with_hash(start_pos)
             });
         }
 
@@ -91,6 +103,29 @@ impl<'a> Lexer<'a> {
         // Searching only proceeds in forwards direction, so `lexer.source.position()`
         // cannot be before `after_first`.
         unsafe { self.source.str_from_pos_to_current_unchecked(after_first) }
+    }
+
+    /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
+    /// Continues hashing from current position. Returns identifier minus its first char.
+    fn identifier_tail_unicode_with_hash(&mut self, start_pos: SourcePosition<'a>) -> &'a str {
+        // Save position - bytes before this were already hashed by byte_search
+        let hash_start = self.source.position();
+        let id = self.identifier_tail_unicode(start_pos);
+        // Hash only the new bytes (from unicode char onwards)
+        let new_bytes = self.source.str_from_pos_to_current(hash_start);
+        self.identifier_hasher.write_bytes(new_bytes.as_bytes());
+        &id[1..]
+    }
+
+    /// Handle rest of identifier after a `\` escape is found.
+    /// Must recompute hash because escape sequences decode to different bytes.
+    /// Returns identifier minus its first char.
+    fn identifier_backslash_with_hash(&mut self, start_pos: SourcePosition<'a>) -> &'a str {
+        let id = self.identifier_backslash(start_pos, false);
+        // Must recompute: source has `\u0041` but string has `A`
+        self.identifier_hasher = IncrementalIdentHasher::new();
+        self.identifier_hasher.write_bytes(id.as_bytes());
+        &id[1..]
     }
 
     /// Handle rest of identifier after first byte of a multi-byte Unicode char found.
@@ -140,6 +175,11 @@ impl<'a> Lexer<'a> {
 
         // Process escape and get rest of identifier
         let id = self.identifier_on_backslash(str, true);
+
+        // Hash the unescaped identifier
+        self.identifier_hasher = IncrementalIdentHasher::new();
+        self.identifier_hasher.write_bytes(id.as_bytes());
+
         Kind::match_keyword(id)
     }
 

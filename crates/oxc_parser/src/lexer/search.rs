@@ -414,6 +414,29 @@ macro_rules! byte_search {
         }
     };
 
+    // With provided `start` position and identifier hashing.
+    // Delegates to main implementation, then hashes the scanned bytes.
+    (
+        lexer: $lexer:ident,
+        table: $table:ident,
+        start: $start:ident,
+        hash_identifier: true,
+        handle_eof: $eof_handler:expr,
+    ) => {{
+        let hash_start = $start;
+        let result = byte_search! {
+            lexer: $lexer,
+            table: $table,
+            start: $start,
+            continue_if: (byte, pos) false,
+            handle_eof: $eof_handler,
+        };
+        // Hash the bytes that were scanned (from start to current position)
+        let scanned = $lexer.source.str_from_pos_to_current(hash_start);
+        $lexer.identifier_hasher.write_bytes(scanned.as_bytes());
+        result
+    }};
+
     // Actual implementation - with both `start` and `continue_if`
     (
         lexer: $lexer:ident,
