@@ -1262,3 +1262,25 @@ pub fn only_default_import_allowed_in_source_phase(span: Span) -> OxcDiagnostic 
     OxcDiagnostic::error("Only a single default import is allowed in a source phase import.")
         .with_label(span)
 }
+
+/// TS7059: This syntax is reserved in files with the .mts or .cts extension.
+/// Use an `as` expression instead.
+#[cold]
+pub fn ts_type_assertion_in_mts_cts(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "7059",
+        "This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead.",
+    )
+    .with_label(span)
+}
+
+/// TS7060: This syntax is reserved in files with the .mts or .cts extension.
+/// Add a trailing comma or explicit constraint.
+#[cold]
+pub fn ts_arrow_type_param_in_mts_cts(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "7060",
+        "This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.",
+    )
+    .with_label(span)
+}

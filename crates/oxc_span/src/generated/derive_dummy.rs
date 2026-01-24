@@ -16,6 +16,7 @@ impl<'a> Dummy<'a> for SourceType {
             language: Dummy::dummy(allocator),
             module_kind: Dummy::dummy(allocator),
             variant: Dummy::dummy(allocator),
+            always_strict_module: Dummy::dummy(allocator),
         }
     }
 }

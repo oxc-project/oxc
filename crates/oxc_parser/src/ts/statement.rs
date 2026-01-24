@@ -547,6 +547,14 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Expression<'a> {
         let span = self.start_span();
+
+        // Check for JSX-like type assertion in .mts/.cts files (TS7059)
+        // Only emit error when module kind was explicitly from file extension (.mts/.cts)
+        // This matches TypeScript's impliedNodeFormat behavior
+        if self.source_type.is_always_strict_module() && !self.source_type.is_jsx() {
+            self.error(diagnostics::ts_type_assertion_in_mts_cts(self.cur_token().span()));
+        }
+
         self.expect(Kind::LAngle);
         let type_annotation = self.parse_ts_type();
         self.expect(Kind::RAngle);

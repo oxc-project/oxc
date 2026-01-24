@@ -16,11 +16,12 @@ const _: () = {
     assert!(offset_of!(Span, end) == 4);
 
     // Padding: 0 bytes
-    assert!(size_of::<SourceType>() == 3);
+    assert!(size_of::<SourceType>() == 4);
     assert!(align_of::<SourceType>() == 1);
     assert!(offset_of!(SourceType, language) == 0);
     assert!(offset_of!(SourceType, module_kind) == 1);
     assert!(offset_of!(SourceType, variant) == 2);
+    assert!(offset_of!(SourceType, always_strict_module) == 3);
 
     assert!(size_of::<Language>() == 1);
     assert!(align_of::<Language>() == 1);
@@ -41,11 +42,12 @@ const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
     assert!(offset_of!(Span, end) == 4);
 
     // Padding: 0 bytes
-    assert!(size_of::<SourceType>() == 3);
+    assert!(size_of::<SourceType>() == 4);
     assert!(align_of::<SourceType>() == 1);
     assert!(offset_of!(SourceType, language) == 0);
     assert!(offset_of!(SourceType, module_kind) == 1);
     assert!(offset_of!(SourceType, variant) == 2);
+    assert!(offset_of!(SourceType, always_strict_module) == 3);
 
     assert!(size_of::<Language>() == 1);
     assert!(align_of::<Language>() == 1);

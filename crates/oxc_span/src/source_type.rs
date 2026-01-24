@@ -30,6 +30,13 @@ pub struct SourceType {
     /// Support JSX for JavaScript and TypeScript? default without JSX
     #[estree(skip)]
     pub(super) variant: LanguageVariant,
+
+    /// Whether the module kind was explicitly set from file extension (.mts, .cts, .mjs, .cjs).
+    /// This is similar to TypeScript's `impliedNodeFormat` - it tracks whether the module
+    /// format was determined from the file extension rather than from config or content.
+    /// Used for TS7059/TS7060 error detection.
+    #[estree(skip)]
+    pub(super) always_strict_module: bool,
 }
 
 /// JavaScript or TypeScript
@@ -206,7 +213,11 @@ impl From<FileExtension> for SourceType {
             Js | Mjs | Cjs | Ts | Mts | Cts => LanguageVariant::Standard,
         };
 
-        SourceType { language, module_kind, variant }
+        // Track if module kind was explicitly from file extension
+        // This is similar to TypeScript's impliedNodeFormat
+        let always_strict_module = matches!(file_ext, Mts | Cts | Mjs | Cjs);
+
+        SourceType { language, module_kind, variant, always_strict_module }
     }
 }
 
@@ -234,6 +245,7 @@ impl SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::CommonJS,
             variant: LanguageVariant::Standard,
+            always_strict_module: false,
         }
     }
 
@@ -252,6 +264,7 @@ impl SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::Module,
             variant: LanguageVariant::Standard,
+            always_strict_module: false,
         }
     }
 
@@ -267,6 +280,7 @@ impl SourceType {
             language: Language::JavaScript,
             module_kind: ModuleKind::Unambiguous,
             variant: LanguageVariant::Standard,
+            always_strict_module: false,
         }
     }
 
@@ -310,6 +324,7 @@ impl SourceType {
             language: Language::TypeScript,
             module_kind: ModuleKind::Module,
             variant: LanguageVariant::Standard,
+            always_strict_module: false,
         }
     }
 
@@ -349,6 +364,7 @@ impl SourceType {
             language: Language::TypeScriptDefinition,
             module_kind: ModuleKind::Module,
             variant: LanguageVariant::Standard,
+            always_strict_module: false,
         }
     }
 
@@ -408,6 +424,17 @@ impl SourceType {
     /// Note that TSX is considered JSX in this context.
     pub fn is_jsx(self) -> bool {
         self.variant == LanguageVariant::Jsx
+    }
+
+    /// Returns `true` if the module kind was explicitly set from file extension.
+    ///
+    /// This is similar to TypeScript's `impliedNodeFormat` - it's `true` for
+    /// files with `.mts`, `.cts`, `.mjs`, or `.cjs` extensions where the module
+    /// format is determined by the extension rather than config or content.
+    ///
+    /// Used for TS7059/TS7060 error detection.
+    pub fn is_always_strict_module(self) -> bool {
+        self.always_strict_module
     }
 
     /// Does this source type implicitly use strict mode semantics?

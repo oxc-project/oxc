@@ -150,16 +150,30 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_parameters(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        self.parse_ts_type_parameters_impl().0
+    }
+
+    /// Parse type parameters and return whether there was a trailing comma.
+    /// Used for TS7060 checking in arrow functions.
+    pub(crate) fn parse_ts_type_parameters_with_trailing_comma_info(
+        &mut self,
+    ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
+        self.parse_ts_type_parameters_impl()
+    }
+
+    fn parse_ts_type_parameters_impl(
+        &mut self,
+    ) -> (Option<Box<'a, TSTypeParameterDeclaration<'a>>>, bool) {
         if !self.is_ts {
-            return None;
+            return (None, false);
         }
         if !self.at(Kind::LAngle) {
-            return None;
+            return (None, false);
         }
         let span = self.start_span();
         let opening_span = self.cur_token().span();
         self.expect(Kind::LAngle);
-        let (params, _) = self.parse_delimited_list(
+        let (params, trailing_comma) = self.parse_delimited_list(
             Kind::RAngle,
             Kind::Comma,
             opening_span,
@@ -170,7 +184,8 @@ impl<'a> ParserImpl<'a> {
         if params.is_empty() {
             self.error(diagnostics::ts_empty_type_parameter_list(span));
         }
-        Some(self.ast.alloc_ts_type_parameter_declaration(span, params))
+        let has_trailing_comma = trailing_comma.is_some();
+        (Some(self.ast.alloc_ts_type_parameter_declaration(span, params)), has_trailing_comma)
     }
 
     pub(crate) fn parse_ts_implements_clause(&mut self) -> Vec<'a, TSClassImplements<'a>> {

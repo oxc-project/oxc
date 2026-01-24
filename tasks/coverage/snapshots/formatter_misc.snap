@@ -1,3 +1,5 @@
 formatter_misc Summary:
-AST Parsed     : 64/64 (100.00%)
-Positive Passed: 64/64 (100.00%)
+AST Parsed     : 65/65 (100.00%)
+Positive Passed: 64/65 (98.46%)
+Expect to Parse: tasks/coverage/misc/pass/mts-jsx-like-valid.mts
+This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.

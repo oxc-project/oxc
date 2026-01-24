@@ -252,7 +252,30 @@ impl<'a> ParserImpl<'a> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
-        let type_parameters = self.parse_ts_type_parameters();
+        // Check if this is an .mts/.cts file (explicit module kind from extension, not JSX)
+        // This matches TypeScript's impliedNodeFormat behavior
+        let is_mts_or_cts = self.source_type.is_always_strict_module() && !self.source_type.is_jsx();
+
+        // Use trailing comma version for mts/cts checking
+        let (type_parameters, has_trailing_comma) = if is_mts_or_cts {
+            self.parse_ts_type_parameters_with_trailing_comma_info()
+        } else {
+            (self.parse_ts_type_parameters(), false)
+        };
+
+        // Check for JSX-looking generics in .mts/.cts files (TS7060)
+        // Match TypeScript's exact logic from checker.ts:
+        // Error only if: single param, no trailing comma, first has no constraint
+        if is_mts_or_cts
+            && let Some(ref type_params) = type_parameters
+        {
+            let params = &type_params.params;
+            let needs_error =
+                params.len() == 1 && !has_trailing_comma && params[0].constraint.is_none();
+            if needs_error {
+                self.error(diagnostics::ts_arrow_type_param_in_mts_cts(type_params.span));
+            }
+        }
 
         let (this_param, params) = self.parse_formal_parameters(
             FunctionKind::Expression,
