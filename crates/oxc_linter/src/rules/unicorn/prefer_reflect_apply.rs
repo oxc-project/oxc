@@ -20,6 +20,7 @@ pub struct PreferReflectApply;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallows the use of `Function.prototype.apply()` and suggests using `Reflect.apply()` instead.
     ///
     /// ### Why is this bad?
     ///

@@ -1,7 +1,6 @@
 use std::{
     borrow::Cow,
     fmt::{Display, Write},
-    str::FromStr,
 };
 
 use cow_utils::CowUtils;
@@ -10,10 +9,14 @@ use oxc_ast::ast::{ImportDeclaration, ImportDeclarationSpecifier, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn unexpected_syntax_order_diagnostic(
     curr_kind: &ImportKind,
@@ -35,11 +38,11 @@ fn sort_members_alphabetically_diagnostic(name: &str, span: Span) -> OxcDiagnost
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SortImports(Box<SortImportsOptions>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortImportsOptions {
     /// When `true`, the rule ignores case-sensitivity when sorting import names.
     ignore_case: bool,
@@ -50,7 +53,7 @@ pub struct SortImportsOptions {
     /// When `true`, the rule allows import groups separated by blank lines to be treated independently.
     allow_separated_groups: bool,
     /// Specifies the sort order of different import syntaxes.
-    /// Must include all 4 kinds or else this will fall back to default.
+    /// Must include all 4 kinds!
     member_syntax_sort_order: MemberSyntaxSortOrder,
 }
 
@@ -79,7 +82,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
-    /// import {b, a, c} from 'foo.js'
+    /// import { b, a, c } from 'foo.js'
     ///
     /// import d from 'foo.js';
     /// import e from 'bar.js';
@@ -93,56 +96,7 @@ declare_oxc_lint!(
 
 impl Rule for SortImports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let Some(config) = value.get(0) else {
-            return Ok(Self(Box::default()));
-        };
-
-        let ignore_case =
-            config.get("ignoreCase").and_then(serde_json::Value::as_bool).unwrap_or_default();
-        let ignore_member_sort =
-            config.get("ignoreMemberSort").and_then(serde_json::Value::as_bool).unwrap_or_default();
-        let ignore_declaration_sort = config
-            .get("ignoreDeclarationSort")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-        let allow_separated_groups = config
-            .get("allowSeparatedGroups")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or_default();
-
-        let member_syntax_sort_order = config
-            .get("memberSyntaxSortOrder")
-            .and_then(|v| v.as_array())
-            .map(|arr| {
-                // memberSyntaxSortOrder in config file must have 4 items
-                if arr.len() != 4 {
-                    return MemberSyntaxSortOrder::default();
-                }
-
-                let kinds: Vec<ImportKind> = arr
-                    .iter()
-                    .filter_map(|v| v.as_str())
-                    .map(ImportKind::from_str)
-                    .filter_map(Result::ok)
-                    .unique()
-                    .collect();
-
-                // 4 items must all unique and valid.
-                if kinds.len() != 4 {
-                    return MemberSyntaxSortOrder::default();
-                }
-
-                MemberSyntaxSortOrder(kinds)
-            })
-            .unwrap_or_default();
-
-        Ok(Self(Box::new(SortImportsOptions {
-            ignore_case,
-            ignore_declaration_sort,
-            ignore_member_sort,
-            allow_separated_groups,
-            member_syntax_sort_order,
-        })))
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -367,6 +321,29 @@ impl SortImports {
 #[schemars(transparent)]
 struct MemberSyntaxSortOrder(Vec<ImportKind>);
 
+impl<'de> serde::Deserialize<'de> for MemberSyntaxSortOrder {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let v = Vec::<ImportKind>::deserialize(deserializer)?;
+        if v.len() != 4 {
+            return Err(serde::de::Error::custom(format!(
+                "memberSyntaxSortOrder must contain exactly 4 kinds, got {}",
+                v.len()
+            )));
+        }
+        // Ensure the values are unique.
+        let set: FxHashSet<_> = v.iter().collect();
+        if set.len() != 4 {
+            return Err(serde::de::Error::custom(
+                "memberSyntaxSortOrder must contain 4 unique kinds, but duplicates were found",
+            ));
+        }
+        Ok(MemberSyntaxSortOrder(v))
+    }
+}
+
 impl Default for MemberSyntaxSortOrder {
     fn default() -> Self {
         MemberSyntaxSortOrder(vec![
@@ -417,7 +394,7 @@ impl MemberSyntaxSortOrder {
     }
 }
 
-#[derive(Debug, Default, Clone, Hash, Eq, PartialEq, JsonSchema, Serialize)]
+#[derive(Debug, Default, Clone, Hash, Eq, PartialEq, JsonSchema, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 enum ImportKind {
     // `import 'foo.js';`
@@ -429,20 +406,6 @@ enum ImportKind {
     Multiple,
     // `import a from 'foo.js';`
     Single,
-}
-
-impl FromStr for ImportKind {
-    type Err = &'static str;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "none" => Ok(ImportKind::None),
-            "all" => Ok(ImportKind::All),
-            "multiple" => Ok(ImportKind::Multiple),
-            "single" => Ok(ImportKind::Single),
-            _ => Err("Invalid import kind"),
-        }
-    }
 }
 
 impl Display for ImportKind {
@@ -850,4 +813,26 @@ import a from 'a';",
     Tester::new(SortImports::NAME, SortImports::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn member_syntax_sort_order_deserialize_valid() {
+    let json = r#"["none", "all", "multiple", "single"]"#;
+    let res: MemberSyntaxSortOrder = serde_json::from_str(json).unwrap();
+    assert_eq!(res.0.len(), 4);
+}
+
+#[test]
+fn member_syntax_sort_order_deserialize_invalid_len() {
+    let json = r#"["none", "all"]"#;
+    let res = serde_json::from_str::<MemberSyntaxSortOrder>(json);
+    assert!(res.is_err());
+}
+
+#[test]
+fn member_syntax_sort_order_deserialize_invalid_dupes() {
+    // 4 elements but contains duplicates -> should error
+    let json = r#"["none", "none", "all", "multiple"]"#;
+    let res = serde_json::from_str::<MemberSyntaxSortOrder>(json);
+    assert!(res.is_err());
 }

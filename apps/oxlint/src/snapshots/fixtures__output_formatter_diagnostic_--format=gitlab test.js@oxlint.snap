@@ -12,7 +12,7 @@ working directory: fixtures/output_formatter_diagnostic
     "fingerprint": "9333a3278325994",
     "severity": "critical",
     "location": {
-      "path": "test.js",
+      "path": "apps/oxlint/test.js",
       "lines": {
         "begin": 5,
         "end": 5
@@ -25,7 +25,7 @@ working directory: fixtures/output_formatter_diagnostic
     "fingerprint": "b1e9b343a9c1e457",
     "severity": "major",
     "location": {
-      "path": "test.js",
+      "path": "apps/oxlint/test.js",
       "lines": {
         "begin": 1,
         "end": 1
@@ -38,7 +38,7 @@ working directory: fixtures/output_formatter_diagnostic
     "fingerprint": "53ecf7c08335f91",
     "severity": "major",
     "location": {
-      "path": "test.js",
+      "path": "apps/oxlint/test.js",
       "lines": {
         "begin": 1,
         "end": 1

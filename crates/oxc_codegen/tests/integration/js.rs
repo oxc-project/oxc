@@ -5,7 +5,7 @@ use oxc_span::SPAN;
 
 use crate::tester::{
     test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
-    test_with_parse_options,
+    test_unambiguous, test_with_parse_options,
 };
 
 #[test]
@@ -731,4 +731,45 @@ fn template_literal_escape_when_building_ast() {
     // The raw value should have been escaped by template_element with escape_raw: true
     // backtick, ${, and backslash are all escaped
     assert_eq!(result, "`hello\\`world\\${foo}\\\\bar`;\n");
+}
+
+/// ECMAScript Annex B.1.1 HTML-like Comments
+#[test]
+fn html_comments() {
+    test_unambiguous(
+        "<!-- HTML comment\nconsole.log(\"test\");\n",
+        "<!-- HTML comment\nconsole.log(\"test\");\n",
+    );
+    test_unambiguous(
+        "console.log(\"test\");\n--> HTML comment\n",
+        "console.log(\"test\");\n--> HTML comment\n",
+    );
+    test_unambiguous(
+        "const test = '<!-- Hello World! -->';\n",
+        "const test = \"<!-- Hello World! -->\";\n",
+    );
+    test_unambiguous(
+        "const test = 'a'; <!-- comment\nconsole.log('test');\n",
+        "const test = \"a\";\nconsole.log(\"test\");\n",
+    );
+    test_unambiguous("const x = 1;\n--> comment\n", "const x = 1;\n--> comment\n");
+    test_unambiguous(
+        "<!-- comment 1\nconst x = 1;\n<!-- comment 2\nconst y = 2;\n",
+        "<!-- comment 1\nconst x = 1;\n<!-- comment 2\nconst y = 2;\n",
+    );
+    // `<!--` comments out rest of line - everything after is a comment
+    test_unambiguous(
+        "const test = 'a'; <!-- Test --> console.log('not executed'); //\n",
+        "const test = \"a\";\n",
+    );
+    // Injection: `<!--` comments out rest of line, but code on NEXT line executes
+    test_unambiguous(
+        "const test = 'a'; <!--\nconsole.log('injection');\n",
+        "const test = \"a\";\nconsole.log(\"injection\");\n",
+    );
+    // `-->` at start of line is also a comment
+    test_unambiguous(
+        "const x = 1;\n--> comment\nconst y = 2;\n",
+        "const x = 1;\n--> comment\nconst y = 2;\n",
+    );
 }

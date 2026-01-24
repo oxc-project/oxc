@@ -1,8 +1,8 @@
-commit: 6f55d0c2
+commit: fff41f05
 
 semantic_test262 Summary:
-AST Parsed     : 46556/46556 (100.00%)
-Positive Passed: 44920/46556 (96.49%)
+AST Parsed     : 46595/46595 (100.00%)
+Positive Passed: 44959/46595 (96.49%)
 semantic Error: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-iterator-next-rejected-promise-close.js
 Bindings mismatch:
 after transform: ScopeId(4): []
@@ -560,9 +560,6 @@ after transform: ScopeId(6): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(1): ScopeFlags(Function | Arrow)
@@ -575,14 +572,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(8)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-async-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -595,14 +586,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(8)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-computed-property-name-from-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -615,14 +600,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(8)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(1): ScopeFlags(Function | Arrow)
@@ -635,14 +614,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-async-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -655,14 +628,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/cpn-class-expr-fields-methods-computed-property-name-from-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -675,61 +642,31 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(3)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(3))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -742,34 +679,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -779,9 +704,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -790,9 +712,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -802,42 +721,24 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-throws.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -850,34 +751,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -887,9 +776,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -898,9 +784,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -910,64 +793,34 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(3)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(3))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -980,34 +833,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -1017,9 +858,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -1028,9 +866,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -1040,42 +875,24 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-throws.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -1088,34 +905,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -1125,9 +930,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -1136,9 +938,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -1148,9 +947,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -1191,9 +987,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(3)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
@@ -1203,14 +996,8 @@ rebuilt        : ScopeId(6): Some(ScopeId(5))
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(7): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -1220,9 +1007,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-init.js
 Scope flags mismatch:
@@ -1230,9 +1014,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -1242,9 +1023,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-exhausted.js
 Scope flags mismatch:
@@ -1252,9 +1030,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(5): ScopeFlags(Function | Arrow)
@@ -1264,17 +1039,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(10): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(4): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(10): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(4))
@@ -1290,17 +1059,11 @@ rebuilt        : ScopeId(7): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(9): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(10)
 rebuilt        : SymbolId(10): ScopeId(6)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -1316,17 +1079,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(8): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(4): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -1345,9 +1102,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -1356,9 +1110,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(8): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(4): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -1377,9 +1128,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -1938,9 +1686,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(5): ScopeFlags(Function | Arrow)
@@ -1950,17 +1695,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(10): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(4): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(10): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(4))
@@ -1976,17 +1715,11 @@ rebuilt        : ScopeId(7): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(9): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(10)
 rebuilt        : SymbolId(10): ScopeId(6)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -2002,17 +1735,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(8): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(4): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -2031,9 +1758,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -2042,9 +1766,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(8): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(4): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -2063,9 +1784,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -2209,9 +1927,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(3)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -2221,14 +1936,8 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -2238,9 +1947,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-init.js
 Scope flags mismatch:
@@ -2248,9 +1954,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -2260,9 +1963,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-exhausted.js
 Scope flags mismatch:
@@ -2270,9 +1970,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
@@ -2282,17 +1979,11 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(9): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(3): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(9): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
@@ -2308,17 +1999,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(8): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(9)
 rebuilt        : SymbolId(9): ScopeId(5)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -2334,17 +2019,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(7): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(3): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -2363,9 +2042,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(8): ScopeId(5)
@@ -2374,9 +2050,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(7): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(3): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -2395,9 +2068,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(8): ScopeId(5)
@@ -2956,9 +2626,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
@@ -2968,17 +2635,11 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(9): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(3): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(9): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
@@ -2994,17 +2655,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(8): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(9)
 rebuilt        : SymbolId(9): ScopeId(5)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -3020,17 +2675,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(7): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(3): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -3049,9 +2698,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(8): ScopeId(5)
@@ -3060,9 +2706,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/class/dstr/asyn
 Bindings mismatch:
 after transform: ScopeId(7): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(3): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -3081,9 +2724,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(8): ScopeId(5)
@@ -6362,12 +6002,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-field-shadowed-by-getter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(7)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
@@ -6376,12 +6010,6 @@ after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-field-shadowed-by-method-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(7), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
@@ -6390,12 +6018,6 @@ after transform: ScopeId(5): Some(ScopeId(1))
 rebuilt        : ScopeId(7): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-field-shadowed-by-setter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(7)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
@@ -6404,12 +6026,6 @@ after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-method-shadowed-by-getter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
@@ -6418,12 +6034,6 @@ after transform: ScopeId(5): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-method-shadowed-by-method-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
@@ -6432,12 +6042,6 @@ after transform: ScopeId(5): Some(ScopeId(1))
 rebuilt        : ScopeId(6): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/expressions/class/elements/private-static-method-shadowed-by-setter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
@@ -6941,56 +6545,29 @@ after transform: ScopeId(7): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(25): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(4): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(3): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(4): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(3): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(4): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(3): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(7): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(1): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
@@ -7003,34 +6580,22 @@ rebuilt        : ScopeId(3): Some(ScopeId(1))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(4): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(7)
 rebuilt        : SymbolId(6): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(5): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(1): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
@@ -7040,9 +6605,6 @@ rebuilt        : ScopeId(3): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(5)
 rebuilt        : SymbolId(5): ScopeId(3)
@@ -7051,9 +6613,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/asy
 Bindings mismatch:
 after transform: ScopeId(5): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(1): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
@@ -7063,42 +6622,24 @@ rebuilt        : ScopeId(3): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(5)
 rebuilt        : SymbolId(5): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-elem-id-init-throws.js
-Scope children mismatch:
-after transform: ScopeId(4): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(3): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(4): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2)]
-rebuilt        : ScopeId(3): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(7): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(1): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4), ScopeId(6)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
@@ -7111,34 +6652,22 @@ rebuilt        : ScopeId(3): Some(ScopeId(1))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(4): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(7)
 rebuilt        : SymbolId(6): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(5): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(1): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
@@ -7148,9 +6677,6 @@ rebuilt        : ScopeId(3): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(5)
 rebuilt        : SymbolId(5): ScopeId(3)
@@ -7159,9 +6685,6 @@ semantic Error: tasks/coverage/test262/test/language/expressions/object/dstr/asy
 Bindings mismatch:
 after transform: ScopeId(5): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(1): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(1)]
-rebuilt        : ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(1))
@@ -7171,9 +6694,6 @@ rebuilt        : ScopeId(3): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(1))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(5)
 rebuilt        : SymbolId(5): ScopeId(3)
@@ -7189,91 +6709,37 @@ after transform: ScopeId(5): ScopeFlags(Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function | DirectEval)
 
 semantic Error: tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-func-expression.js
-Scope children mismatch:
-after transform: ScopeId(14): [ScopeId(1)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(23): [ScopeId(5)]
-rebuilt        : ScopeId(15): [ScopeId(16), ScopeId(17)]
 Scope parent mismatch:
 after transform: ScopeId(6): Some(ScopeId(5))
 rebuilt        : ScopeId(16): Some(ScopeId(15))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(17): [ScopeId(18)]
-Scope children mismatch:
-after transform: ScopeId(32): [ScopeId(9)]
-rebuilt        : ScopeId(28): [ScopeId(29), ScopeId(30)]
 Scope parent mismatch:
 after transform: ScopeId(10): Some(ScopeId(9))
 rebuilt        : ScopeId(29): Some(ScopeId(28))
-Scope children mismatch:
-after transform: ScopeId(9): [ScopeId(10), ScopeId(11)]
-rebuilt        : ScopeId(30): [ScopeId(31)]
 
 semantic Error: tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-new-expr.js
-Scope children mismatch:
-after transform: ScopeId(14): [ScopeId(1)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(23): [ScopeId(5)]
-rebuilt        : ScopeId(15): [ScopeId(16), ScopeId(17)]
 Scope parent mismatch:
 after transform: ScopeId(6): Some(ScopeId(5))
 rebuilt        : ScopeId(16): Some(ScopeId(15))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(17): [ScopeId(18)]
-Scope children mismatch:
-after transform: ScopeId(32): [ScopeId(9)]
-rebuilt        : ScopeId(28): [ScopeId(29), ScopeId(30)]
 Scope parent mismatch:
 after transform: ScopeId(10): Some(ScopeId(9))
 rebuilt        : ScopeId(29): Some(ScopeId(28))
-Scope children mismatch:
-after transform: ScopeId(9): [ScopeId(10), ScopeId(11)]
-rebuilt        : ScopeId(30): [ScopeId(31)]
 
 semantic Error: tasks/coverage/test262/test/language/module-code/top-level-await/syntax/for-await-await-expr-obj-literal.js
-Scope children mismatch:
-after transform: ScopeId(14): [ScopeId(1)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(2): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3)]
-rebuilt        : ScopeId(4): [ScopeId(5)]
-Scope children mismatch:
-after transform: ScopeId(23): [ScopeId(5)]
-rebuilt        : ScopeId(15): [ScopeId(16), ScopeId(17)]
 Scope parent mismatch:
 after transform: ScopeId(6): Some(ScopeId(5))
 rebuilt        : ScopeId(16): Some(ScopeId(15))
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(17): [ScopeId(18)]
-Scope children mismatch:
-after transform: ScopeId(32): [ScopeId(9)]
-rebuilt        : ScopeId(28): [ScopeId(29), ScopeId(30)]
 Scope parent mismatch:
 after transform: ScopeId(10): Some(ScopeId(9))
 rebuilt        : ScopeId(29): Some(ScopeId(28))
-Scope children mismatch:
-after transform: ScopeId(9): [ScopeId(10), ScopeId(11)]
-rebuilt        : ScopeId(30): [ScopeId(31)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/async-function/eval-var-scope-syntax-err.js
 Scope flags mismatch:
@@ -7358,9 +6824,6 @@ after transform: SymbolId(5): ScopeId(6)
 rebuilt        : SymbolId(16): ScopeId(23)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(1): ScopeFlags(Function | Arrow)
@@ -7373,14 +6836,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(8)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-async-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -7393,14 +6850,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(8)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-computed-property-name-from-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(7)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(8)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -7413,14 +6864,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(3), ScopeId(8)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(1): ScopeFlags(Function | Arrow)
@@ -7433,14 +6878,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function | Arrow)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-async-arrow-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -7453,14 +6892,8 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/cpn-class-decl-fields-methods-computed-property-name-from-function-expression.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(5)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(2), ScopeId(3), ScopeId(6), ScopeId(7), ScopeId(8), ScopeId(9), ScopeId(10)]
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(1): ScopeFlags(Function)
@@ -7473,9 +6906,6 @@ rebuilt        : ScopeId(2): ScopeFlags(Function)
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(2): Some(ScopeId(0))
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4), ScopeId(10)]
-rebuilt        : ScopeId(3): [ScopeId(4)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/decorator/syntax/class-valid/decorator-member-expr-private-identifier.js
 Symbol span mismatch for "D":
@@ -7542,56 +6972,29 @@ after transform: SymbolId(8): Span { start: 0, end: 0 }
 rebuilt        : SymbolId(9): Span { start: 1739, end: 1740 }
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(3)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(3))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7604,34 +7007,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7641,9 +7032,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -7652,9 +7040,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7664,42 +7049,24 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-elem-id-init-throws.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7712,34 +7079,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7749,9 +7104,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -7760,9 +7112,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7772,64 +7121,34 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(3)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(3))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7842,34 +7161,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7879,9 +7186,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -7890,9 +7194,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7902,42 +7203,24 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-elem-id-init-throws.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(5): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(4): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(8): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7950,34 +7233,22 @@ rebuilt        : ScopeId(4): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(5): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(8)
 rebuilt        : SymbolId(6): ScopeId(4)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(6): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(2): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -7987,9 +7258,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -7998,9 +7266,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(6): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(2): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(3): Some(ScopeId(2))
@@ -8010,9 +7275,6 @@ rebuilt        : ScopeId(4): ["x"]
 Scope parent mismatch:
 after transform: ScopeId(4): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(2))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(5): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(6)
 rebuilt        : SymbolId(5): ScopeId(4)
@@ -8053,9 +7315,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(3)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
@@ -8065,14 +7324,8 @@ rebuilt        : ScopeId(6): Some(ScopeId(5))
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(7): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8082,9 +7335,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-init.js
 Scope flags mismatch:
@@ -8092,9 +7342,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8104,9 +7351,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-exhausted.js
 Scope flags mismatch:
@@ -8114,9 +7358,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(5): ScopeFlags(Function | Arrow)
@@ -8126,17 +7367,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(10): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(4): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(10): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(4))
@@ -8152,17 +7387,11 @@ rebuilt        : ScopeId(7): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(9): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(10)
 rebuilt        : SymbolId(10): ScopeId(6)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8178,17 +7407,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(8): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(4): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8207,9 +7430,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -8218,9 +7438,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(8): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(4): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8239,9 +7456,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -8800,9 +8014,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(5): ScopeFlags(Function | Arrow)
@@ -8812,17 +8023,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(10): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(4): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(10): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7), ScopeId(9)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(5): Some(ScopeId(4))
@@ -8838,17 +8043,11 @@ rebuilt        : ScopeId(7): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(9): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(9): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(10)
 rebuilt        : SymbolId(10): ScopeId(6)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8864,17 +8063,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(8): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(4): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8893,9 +8086,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -8904,9 +8094,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(8): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(4): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(8): [ScopeId(2)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6), ScopeId(7)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -8925,9 +8112,6 @@ rebuilt        : ScopeId(6): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(7): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(8)
 rebuilt        : SymbolId(9): ScopeId(6)
@@ -9071,9 +8255,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-init.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(3)]
-rebuilt        : ScopeId(4): [ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
@@ -9083,14 +8264,8 @@ rebuilt        : ScopeId(5): Some(ScopeId(4))
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(3): [ScopeId(4)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-empty-iter.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9100,9 +8275,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-init.js
 Scope flags mismatch:
@@ -9110,9 +8282,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-ary-rest-iter.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9122,9 +8291,6 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-exhausted.js
 Scope flags mismatch:
@@ -9132,9 +8298,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
@@ -9144,17 +8307,11 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(9): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(3): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(9): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
@@ -9170,17 +8327,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(8): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(9)
 rebuilt        : SymbolId(8): ScopeId(5)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9196,17 +8347,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(7): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(3): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9225,9 +8370,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(7): ScopeId(5)
@@ -9236,9 +8378,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(7): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(3): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9257,9 +8396,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(7): ScopeId(5)
@@ -9818,9 +8954,6 @@ after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-arrow.js
-Scope children mismatch:
-after transform: ScopeId(6): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function | Arrow)
 rebuilt        : ScopeId(4): ScopeFlags(Function | Arrow)
@@ -9830,17 +8963,11 @@ rebuilt        : ScopeId(4): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(5): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3)]
-rebuilt        : ScopeId(5): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-class.js
 Bindings mismatch:
 after transform: ScopeId(9): ["X", "cls", "xCls", "xCls2"]
 rebuilt        : ScopeId(3): ["cls", "xCls", "xCls2"]
-Scope children mismatch:
-after transform: ScopeId(9): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6), ScopeId(8)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(4): Some(ScopeId(3))
@@ -9856,17 +8983,11 @@ rebuilt        : ScopeId(6): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(8): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4), ScopeId(5)]
-rebuilt        : ScopeId(8): []
 Symbol scope ID mismatch for "X":
 after transform: SymbolId(5): ScopeId(9)
 rebuilt        : SymbolId(8): ScopeId(5)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-cover.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9882,17 +9003,11 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-obj-ptrn-id-init-fn-name-fn.js
 Bindings mismatch:
 after transform: ScopeId(7): ["fn", "x", "xFn"]
 rebuilt        : ScopeId(3): ["fn", "xFn"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9911,9 +9026,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(7): ScopeId(5)
@@ -9922,9 +9034,6 @@ semantic Error: tasks/coverage/test262/test/language/statements/class/dstr/async
 Bindings mismatch:
 after transform: ScopeId(7): ["gen", "x", "xGen"]
 rebuilt        : ScopeId(3): ["gen", "xGen"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(3): [ScopeId(4), ScopeId(5), ScopeId(6)]
 Scope flags mismatch:
 after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
@@ -9943,9 +9052,6 @@ rebuilt        : ScopeId(5): Some(ScopeId(3))
 Scope flags mismatch:
 after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(6): ScopeFlags(Function)
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(6): []
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(4): ScopeId(7)
 rebuilt        : SymbolId(7): ScopeId(5)
@@ -13244,12 +12350,6 @@ after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(4): ScopeFlags(Function)
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-field-shadowed-by-getter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(7)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -13258,12 +12358,6 @@ after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-field-shadowed-by-method-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -13272,12 +12366,6 @@ after transform: ScopeId(5): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-field-shadowed-by-setter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(6), ScopeId(3)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(7)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -13286,12 +12374,6 @@ after transform: ScopeId(4): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-method-shadowed-by-getter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -13300,12 +12382,6 @@ after transform: ScopeId(5): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-method-shadowed-by-method-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -13314,12 +12390,6 @@ after transform: ScopeId(5): Some(ScopeId(1))
 rebuilt        : ScopeId(3): Some(ScopeId(0))
 
 semantic Error: tasks/coverage/test262/test/language/statements/class/elements/private-static-method-shadowed-by-setter-on-nested-class.js
-Scope children mismatch:
-after transform: ScopeId(0): [ScopeId(1), ScopeId(7), ScopeId(2), ScopeId(4)]
-rebuilt        : ScopeId(0): [ScopeId(1), ScopeId(3), ScopeId(4), ScopeId(5), ScopeId(8)]
-Scope children mismatch:
-after transform: ScopeId(1): [ScopeId(3), ScopeId(5)]
-rebuilt        : ScopeId(1): [ScopeId(2)]
 Scope flags mismatch:
 after transform: ScopeId(5): ScopeFlags(StrictMode | Function)
 rebuilt        : ScopeId(3): ScopeFlags(Function)
@@ -13853,18 +12923,12 @@ semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/asy
 Bindings mismatch:
 after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
 rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
 Bindings mismatch:
 after transform: ScopeId(2): ["_step$value"]
 rebuilt        : ScopeId(7): []
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 Symbol scope ID mismatch for "_step$value":
 after transform: SymbolId(12): ScopeId(2)
 rebuilt        : SymbolId(14): ScopeId(3)
@@ -13958,37 +13022,19 @@ after transform: SymbolId(13): ScopeId(2)
 rebuilt        : SymbolId(15): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-const-obj-ptrn-rest-getter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-let-obj-ptrn-rest-getter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-dstr-var-obj-ptrn-rest-getter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-rest-descriptors.js
 Bindings mismatch:
@@ -14016,18 +13062,12 @@ semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/asy
 Bindings mismatch:
 after transform: ScopeId(1): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step"]
 rebuilt        : ScopeId(3): ["_didIteratorError", "_iterator", "_iteratorAbruptCompletion", "_iteratorError", "_step", "_step$value"]
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
 Bindings mismatch:
 after transform: ScopeId(2): ["_step$value"]
 rebuilt        : ScopeId(7): []
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 Symbol scope ID mismatch for "_step$value":
 after transform: SymbolId(13): ScopeId(2)
 rebuilt        : SymbolId(15): ScopeId(3)
@@ -14121,37 +13161,19 @@ after transform: SymbolId(14): ScopeId(2)
 rebuilt        : SymbolId(16): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-obj-ptrn-rest-getter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-let-obj-ptrn-rest-getter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-var-obj-ptrn-rest-getter.js
-Scope children mismatch:
-after transform: ScopeId(7): [ScopeId(2)]
-rebuilt        : ScopeId(5): [ScopeId(6), ScopeId(7)]
 Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(6): Some(ScopeId(5))
-Scope children mismatch:
-after transform: ScopeId(2): [ScopeId(3), ScopeId(4)]
-rebuilt        : ScopeId(7): [ScopeId(8)]
 
 semantic Error: tasks/coverage/test262/test/language/statements/for-await-of/let-block-with-newline.js
 Unresolved references mismatch:

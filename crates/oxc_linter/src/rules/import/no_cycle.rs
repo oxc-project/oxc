@@ -63,7 +63,7 @@ fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCycle {
     /// Maximum dependency depth to traverse
     max_depth: u32,
@@ -91,8 +91,8 @@ declare_oxc_lint!(
     ///
     /// Ensures that there is no resolvable path back to this module via its dependencies.
     ///
-    /// This includes cycles of depth 1 (imported module imports me) to "∞" (or Infinity),
-    /// if the `maxDepth` option is not set.
+    /// This includes cycles of depth 1 (imported module imports me) to an effectively
+    /// infinite value, if the `maxDepth` option is not set.
     ///
     /// ### Why is this bad?
     ///
@@ -136,9 +136,7 @@ declare_oxc_lint!(
 
 impl Rule for NoCycle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -329,8 +327,13 @@ fn test() {
         (r#"import one, { two, three } from "./es6/depth-three-star""#, None),
         (r#"import { bar } from "./es6/depth-three-indirect""#, None),
         (r#"import { bar } from "./es6/depth-three-indirect""#, None),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
+        // effectively unlimited:
+        (r#"import { foo } from "./es6/depth-two""#, None),
+        // Use default value, effectively unlimited:
+        (r#"import { foo } from "./es6/depth-two""#, Some(json!([]))),
+        // These are not valid config options and just fell back to the default value previously:
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
         (
             r#"import { foo } from "./es6/depth-one""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
@@ -384,19 +387,26 @@ fn test() {
             r#"import { bar } from "./es6/depth-three-indirect""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
         ),
+        // Equivalent to the commented tests below.
         (
             r#"import { foo } from "./es6/depth-two""#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":null}])),
+            Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
         ),
-        (
-            r#"import { foo } from "./es6/depth-two""#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":"∞"}])),
-        ),
+        // These are not valid config options and just fell back to the default value previously:
+        // (
+        //     r#"import { foo } from "./es6/depth-two""#,
+        //     Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":null}])),
+        // ),
+        // (
+        //     r#"import { foo } from "./es6/depth-two""#,
+        //     Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":"∞"}])),
+        // ),
         // TODO: dynamic import
         // (r#"import("./es6/depth-three-star")"#, None),
         // (r#"import("./es6/depth-three-indirect")"#, None),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
+        // These are not valid config options and just fell back to the default value previously:
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
         // TODO: dynamic import
         // (r#"function bar(){ return import("./es6/depth-one"); } // #2265 5"#, None),
         // (r#"import { foo } from "./es6/depth-one-dynamic"; // #2265 6"#, None),

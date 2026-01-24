@@ -25,6 +25,9 @@ const commonConfig = defineConfig({
   unbundle: false,
   hash: false,
   fixedExtension: false,
+  // tsdown warns about final bundled modules by `unbundle` + `external`.
+  // But we know what we are doing, just suppress the warnings.
+  inlineOnly: false,
 });
 
 const plugins = [createReplaceGlobalsPlugin()];
@@ -48,7 +51,7 @@ export default defineConfig([
       mangle: false,
       codegen: { removeWhitespace: false },
     },
-    dts: { resolve: true },
+    dts: true,
     attw: { profile: "esm-only" },
     define: {
       DEBUG: DEBUG ? "true" : "false",

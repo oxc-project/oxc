@@ -5,18 +5,20 @@ on:
     types: [assigned]
 
 jobs:
-  claude:
-    if: github.event.assignee.login == 'boshen' && github.event.sender.login == 'boshen'
+  analyze:
+    if: github.event.action == 'assigned' && github.event.assignee.login == 'boshen' && github.event.sender.login == 'boshen'
     runs-on: ubuntu-latest
     permissions:
       contents: read
       issues: write
+      id-token: write
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
-          fetch-depth: 1
-          persist-credentials: false
+          fetch-depth: 100
+          persist-credentials: true
 
       - name: Run Claude Code
         id: claude
@@ -24,15 +26,20 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           assignee_trigger: "boshen"
-          assignee_trigger_prompt: |
-            Analyze this issue and determine if it can be fixed. Your task:
-            1. Read and understand the issue description
-            2. Search the codebase to gather relevant context (related files, existing implementations, tests)
-            3. Determine if the issue is fixable and estimate the complexity
-            4. Comment on the issue with:
-               - A brief summary of your understanding of the issue
-               - Relevant files/code you found
-               - Whether this issue is fixable (yes/no/needs clarification)
-               - Ask for more context if the issue is unclear
-               - If fixable, provide a concrete implementation plan with specific steps
-               - Any potential concerns or blockers
+          claude_args: --allowedTools "Edit,Write,Read,Glob,Grep,Bash(gh:*),Bash(cargo:*),Bash(git:*),Bash(just:*),WebFetch,TodoWrite"
+          prompt: |
+            Analyze issue #${{ github.event.issue.number }} in ${{ github.repository }} and determine if it can be fixed.
+
+            First, use `gh issue view ${{ github.event.issue.number }}` to read the issue details.
+
+            Then:
+            1. Search the codebase to gather relevant context (related files, existing implementations, tests)
+            2. Determine if the issue is fixable and estimate the complexity
+
+            Finally, post a comment on the issue with:
+            - A brief summary of your understanding of the issue
+            - Relevant files/code you found
+            - Whether this issue is fixable (yes/no/needs clarification)
+            - If the issue is unclear, ask for more context
+            - If fixable, provide a concrete implementation plan with specific steps
+            - Any potential concerns or blockers

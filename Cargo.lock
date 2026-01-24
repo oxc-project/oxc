@@ -678,7 +678,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1512,7 +1512,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -1931,6 +1931,7 @@ dependencies = [
  "oxc_semantic",
  "oxc_span",
  "oxc_syntax",
+ "oxc_tasks_common",
  "phf",
  "pico-args",
  "rustc-hash",
@@ -2243,9 +2244,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "11.16.3"
+version = "11.16.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f94fecb526e0d5df25cb3ef214e482120f305765e20b2125404cca7083f510c2"
+checksum = "b903284699f550838a491118e58e9d9adb4941c2514f148aedff1ce4b4fbd578"
 dependencies = [
  "cfg-if",
  "fast-glob",
@@ -2329,6 +2330,18 @@ dependencies = [
  "oxc-schemars",
  "oxc_allocator",
  "oxc_ast_macros",
+ "oxc_estree",
+ "oxc_str",
+ "serde",
+]
+
+[[package]]
+name = "oxc_str"
+version = "0.110.0"
+dependencies = [
+ "compact_str",
+ "oxc-schemars",
+ "oxc_allocator",
  "oxc_estree",
  "serde",
 ]
@@ -2949,7 +2962,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3044,7 +3057,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b55fb86dfd3a2f5f76ea78310a88f96c4ea21a3031f8d212443d56123fd0521"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3239,9 +3252,9 @@ checksum = "b7c388c1b5e93756d0c740965c41e8822f866621d41acbdf6336a6a168f8840c"
 
 [[package]]
 name = "sort-package-json"
-version = "0.0.9"
+version = "0.0.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a2dee1e50f76b4774a6e04790105fb7c68a42a90a528b1287981092e95362cf5"
+checksum = "6624456f36aea09448b453e7c428c0f5a521c82b36a4485aa694e29ab8516655"
 dependencies = [
  "serde_json",
 ]
@@ -3333,7 +3346,7 @@ dependencies = [
  "getrandom 0.3.4",
  "once_cell",
  "rustix",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3878,7 +3891,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]

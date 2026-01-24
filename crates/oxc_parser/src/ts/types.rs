@@ -1213,13 +1213,40 @@ impl<'a> ParserImpl<'a> {
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
         let return_type = self.parse_ts_return_type_annotation();
         self.parse_type_member_semicolon();
-        if kind == TSMethodSignatureKind::Set
-            && let Some(return_type) = return_type.as_ref()
-        {
-            self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
-                return_type.span,
-            ));
+
+        if let Some(this_param) = &this_param {
+            self.error(diagnostics::accessor_cannot_have_this_parameter(this_param.span));
         }
+
+        match kind {
+            TSMethodSignatureKind::Get => {
+                if !params.items.is_empty() {
+                    self.error(diagnostics::getter_parameters(params.span));
+                }
+            }
+            TSMethodSignatureKind::Set => {
+                if let Some(return_type) = return_type.as_ref() {
+                    self.error(diagnostics::a_set_accessor_cannot_have_a_return_type_annotation(
+                        return_type.span,
+                    ));
+                }
+                if let Some(rest) = &params.rest {
+                    self.error(diagnostics::setter_with_rest_parameter(rest.span));
+                }
+                if params.items.len() != 1 {
+                    self.error(diagnostics::setter_with_parameters(
+                        params.span,
+                        params.items.len(),
+                    ));
+                } else if let Some(param) = params.items.first()
+                    && param.optional
+                {
+                    self.error(diagnostics::setter_with_optional_parameter(param.span));
+                }
+            }
+            TSMethodSignatureKind::Method => {}
+        }
+
         self.ast.ts_signature_method_signature(
             self.end_span(span),
             key,

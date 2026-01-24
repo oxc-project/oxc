@@ -251,23 +251,6 @@ export interface JsxOptions {
    */
   pragmaFrag?: string
   /**
-   * When spreading props, use `Object.assign` directly instead of an extend helper.
-   *
-   * Only used for `classic` {@link runtime}.
-   *
-   * @default false
-   */
-  useBuiltIns?: boolean
-  /**
-   * When spreading props, use inline object with spread elements directly
-   * instead of an extend helper or Object.assign.
-   *
-   * Only used for `classic` {@link runtime}.
-   *
-   * @default false
-   */
-  useSpread?: boolean
-  /**
    * Enable React Fast Refresh .
    *
    * Conforms to the implementation in {@link https://github.com/facebook/react/tree/v18.3.1/packages/react-refresh}

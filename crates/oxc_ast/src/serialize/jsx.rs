@@ -63,7 +63,7 @@ pub struct JSXElementIdentifierReference<'a, 'b>(pub &'b IdentifierReference<'a>
 
 impl ESTree for JSXElementIdentifierReference<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        JSXIdentifier { span: self.0.span, name: self.0.name }.serialize(serializer);
+        JSXIdentifier { span: self.0.span, name: self.0.name.into() }.serialize(serializer);
     }
 }
 

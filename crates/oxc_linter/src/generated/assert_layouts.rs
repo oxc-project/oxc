@@ -9,23 +9,25 @@ use crate::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
-    // Padding: 2 bytes
+    // Padding: 1 bytes
     assert!(size_of::<RawTransferMetadata2>() == 16);
     assert!(align_of::<RawTransferMetadata2>() == 8);
     assert!(offset_of!(RawTransferMetadata2, data_offset) == 8);
     assert!(offset_of!(RawTransferMetadata2, is_ts) == 12);
     assert!(offset_of!(RawTransferMetadata2, is_jsx) == 13);
+    assert!(offset_of!(RawTransferMetadata2, has_bom) == 14);
     assert!(offset_of!(RawTransferMetadata2, _padding) == 0);
 };
 
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
-    // Padding: 2 bytes
+    // Padding: 1 bytes
     assert!(size_of::<RawTransferMetadata2>() == 16);
     assert!(align_of::<RawTransferMetadata2>() == 8);
     assert!(offset_of!(RawTransferMetadata2, data_offset) == 8);
     assert!(offset_of!(RawTransferMetadata2, is_ts) == 12);
     assert!(offset_of!(RawTransferMetadata2, is_jsx) == 13);
+    assert!(offset_of!(RawTransferMetadata2, has_bom) == 14);
     assert!(offset_of!(RawTransferMetadata2, _padding) == 0);
 };
 

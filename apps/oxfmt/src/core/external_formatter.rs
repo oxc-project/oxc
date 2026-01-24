@@ -144,11 +144,11 @@ impl ExternalFormatter {
         let embedded_callback: Option<EmbeddedFormatterCallback> = if needs_embedded {
             let format_embedded = Arc::clone(&self.format_embedded);
             let options_for_embedded = options.clone();
-            Some(Arc::new(move |tag_name: &str, code: &str| {
-                let Some(parser_name) = tag_to_prettier_parser(tag_name) else {
+            Some(Arc::new(move |language: &str, code: &str| {
+                let Some(parser_name) = language_to_prettier_parser(language) else {
                     // NOTE: Do not return `Ok(original)` here.
                     // We need to keep unsupported content as-is.
-                    return Err(format!("Unsupported tag: {tag_name}"));
+                    return Err(format!("Unsupported language: {language}"));
                 };
                 (format_embedded)(&options_for_embedded, parser_name, code)
             }))
@@ -198,15 +198,17 @@ impl ExternalFormatter {
 
 // ---
 
-/// Mapping from template tag names to Prettier parser names.
+/// Mapping from `oxc_formatter` language identifiers to Prettier `parser` names.
 /// This is the single source of truth for supported embedded languages.
-fn tag_to_prettier_parser(tag_name: &str) -> Option<&'static str> {
-    match tag_name {
-        // TODO: This should be `scss` to support quasis
-        "css" | "styled" => Some("css"),
-        "gql" | "graphql" => Some("graphql"),
-        "html" => Some("html"),
-        "md" | "markdown" => Some("markdown"),
+fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
+    match language {
+        // TODO: "tagged-css" should use `scss` parser to support quasis
+        "tagged-css" | "styled-jsx" => Some("css"),
+        "tagged-graphql" => Some("graphql"),
+        "tagged-html" => Some("html"),
+        "tagged-markdown" => Some("markdown"),
+        "angular-template" => Some("angular"),
+        "angular-styles" => Some("scss"),
         _ => None,
     }
 }

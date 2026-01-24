@@ -9,6 +9,8 @@ File URI: file://<variable>/fixtures/lsp/cross_module_nested_config/dep-a.ts
 
 ########### Code Actions/Commands
 
+########### Fix All Action
+None
 ########## 
 Linted file: fixtures/lsp/cross_module_nested_config/folder/folder-dep-a.ts
 ----------
@@ -61,3 +63,7 @@ TextEdit: TextEdit {
     },
     new_text: "// oxlint-disable import/no-cycle\n",
 }
+
+
+########### Fix All Action
+None

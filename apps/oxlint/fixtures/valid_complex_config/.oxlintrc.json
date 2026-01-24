@@ -43,6 +43,11 @@
     "vue/define-emits-declaration": ["error", "type-based"],
     "vue/define-props-declaration": ["error", "runtime"],
 
-    "jsdoc/require-returns": ["error", { "exemptedBy": ["test"] }]
+    "jsdoc/require-returns": ["error", { "exemptedBy": ["test"] }],
+
+    // tuple config options
+    "eslint/sort-keys": ["error", "asc", { "allowLineSeparatedGroups": true }],
+    "eslint/yoda": ["error", "never", { "exceptRange": true }],
+    "eslint/eqeqeq": ["error", "always", { "null": "ignore" }]
   }
 }

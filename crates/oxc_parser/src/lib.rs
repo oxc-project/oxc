@@ -487,9 +487,12 @@ impl<'a> ParserImpl<'a> {
         if source_type.is_unambiguous() {
             if module_record.has_module_syntax {
                 // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
+                // but emit deferred module errors (HTML comments are invalid in ESM)
                 program.source_type = source_type.with_module(true);
+                errors.append(&mut self.lexer.deferred_module_errors);
             } else {
                 // Resolved to Script - emit deferred script errors
+                // discard deferred module errors (HTML comments are valid in scripts)
                 program.source_type = source_type.with_script(true);
                 errors.extend(self.deferred_script_errors);
             }

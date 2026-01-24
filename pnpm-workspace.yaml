@@ -18,8 +18,8 @@ catalog:
   cross-env: ^10.1.0
   eslint: 9.36.0
   publint: 0.3.15
-  rolldown: 1.0.0-beta.60
-  tsdown: 0.19.0
+  rolldown: 1.0.0-rc.1
+  tsdown: 0.20.1
   typescript: 5.9.3
   vitest: 4.0.15
 
@@ -28,6 +28,7 @@ onlyBuiltDependencies:
   - esbuild@0.25.11
 
 patchedDependencies:
+  "@typescript-eslint/scope-manager": patches/@typescript-eslint__scope-manager.patch
   prettier-plugin-tailwindcss@0.7.2: patches/prettier-plugin-tailwindcss@0.7.2.patch
 
 verifyDepsBeforeRun: install

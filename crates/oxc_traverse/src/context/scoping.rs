@@ -156,11 +156,6 @@ impl<'a> TraverseScoping<'a> {
         child_scope_ids: &[ScopeId],
         flags: ScopeFlags,
     ) -> ScopeId {
-        // Remove these scopes from parent's children
-        if self.scoping.has_scope_child_ids() {
-            self.scoping.remove_child_scopes(scope_id, child_scope_ids);
-        }
-
         // Create new scope as child of parent
         let new_scope_id = self.create_child_scope(scope_id, flags);
 
@@ -205,9 +200,6 @@ impl<'a> TraverseScoping<'a> {
             "Child scope must be a child of parent scope"
         );
 
-        if self.scoping.has_scope_child_ids() {
-            self.scoping.remove_child_scope(parent_id, child_id);
-        }
         self.scoping.set_scope_parent_id(child_id, Some(scope_id));
         scope_id
     }
@@ -234,8 +226,6 @@ impl<'a> TraverseScoping<'a> {
                 self.scoping.set_scope_parent_id(child_id, parent_id);
             }
         }
-
-        self.scoping.delete_scope(scope_id);
     }
 
     /// Add binding to `ScopeTree` and `SymbolTable`.

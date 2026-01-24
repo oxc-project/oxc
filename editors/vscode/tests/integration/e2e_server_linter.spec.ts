@@ -181,11 +181,10 @@ suite("E2E Server Linter", () => {
   // but to be safe that everything works, we will check the applied changes.
   // This way we can be sure that everything works as expected.
   test("auto detect changing `fixKind` with fixAll command", async () => {
-    const originalContent = "if (foo == null) { bar();}";
-
+    const originalContent = "if (x === -0) { bar();}";
     await createOxlintConfiguration({
       rules: {
-        "no-eq-null": "error",
+        "no-compare-neg-zero": "error",
       },
     });
 
@@ -206,7 +205,7 @@ suite("E2E Server Linter", () => {
     const content = await workspace.fs.readFile(fileUri);
 
     strictEqual(content.toString(), originalContent);
-    await workspace.getConfiguration("oxc").update("fixKind", "all");
+    await workspace.getConfiguration("oxc").update("fixKind", "safe_fix_or_suggestion");
     // wait for server to update the internal linter
     await sleep(500);
     await workspace.saveAll();
@@ -218,7 +217,7 @@ suite("E2E Server Linter", () => {
     await workspace.saveAll();
     const contentWithFixAll = await workspace.fs.readFile(fileUri);
 
-    strictEqual(contentWithFixAll.toString(), "if (foo === null) { bar();}");
+    strictEqual(contentWithFixAll.toString(), "if (Object.is(x, -0)) { bar();}");
   });
 
   test("nested configs severity", async () => {

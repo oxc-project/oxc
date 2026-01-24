@@ -52,7 +52,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
         // Here we check if the first element of Groups::groups can be moved inside the head.
         // If so, then we extract it and concatenate it together with the head.
-        member_chain.maybe_merge_with_first_group(call_expression.parent, f);
+        member_chain.maybe_merge_with_first_group(call_expression.parent(), f);
 
         member_chain
     }
@@ -392,8 +392,8 @@ pub fn is_member_call_chain<'a>(
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
 }
 
-fn has_short_name(name: &Atom, tab_width: u8) -> bool {
-    name.as_str().len() <= tab_width as usize
+fn has_short_name(name: &str, tab_width: u8) -> bool {
+    name.len() <= tab_width as usize
 }
 
 fn chain_members_iter<'a, 'b>(

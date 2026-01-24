@@ -9,6 +9,7 @@
 //! ```bash
 //! cargo run -p oxc_formatter --example formatter [filename]
 //! cargo run -p oxc_formatter --example formatter -- --no-semi [filename]
+//! cargo run -p oxc_formatter --example formatter -- --diff [filename]
 //! ```
 
 use std::{fs, path::Path};
@@ -19,6 +20,7 @@ use oxc_formatter::{
 };
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use oxc_tasks_common::print_diff_in_terminal;
 use pico_args::Arguments;
 
 /// Format a JavaScript or TypeScript file
@@ -26,6 +28,7 @@ fn main() -> Result<(), String> {
     let mut args = Arguments::from_env();
     let no_semi = args.contains("--no-semi");
     let show_ir = args.contains("--ir");
+    let show_diff = args.contains("--diff");
     let print_width = args.opt_value_from_str::<&'static str, u16>("--print-width").unwrap_or(None);
     let name = args.free_from_str().unwrap_or_else(|_| "test.js".to_string());
 
@@ -68,9 +71,17 @@ fn main() -> Result<(), String> {
         println!("--- End IR ---\n");
     }
 
-    println!("--- Formatted Code ---");
     let code = formatted.print().map_err(|e| e.to_string())?.into_code();
-    println!("{code}");
-    println!("--- End Formatted Code ---");
+
+    if show_diff {
+        println!("--- Diff ---");
+        print_diff_in_terminal(&source_text, &code);
+        println!("--- End Diff ---");
+    } else {
+        println!("--- Formatted Code ---");
+        println!("{code}");
+        println!("--- End Formatted Code ---");
+    }
+
     Ok(())
 }

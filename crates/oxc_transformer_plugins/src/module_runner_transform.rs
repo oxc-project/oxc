@@ -327,7 +327,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
                 // Reuse the `vue` binding identifier by renaming it to `__vite_ssr_import_0__`
                 let mut local = specifier.unbox().local;
-                local.name = self.generate_import_binding_name(ctx);
+                local.name = self.generate_import_binding_name(ctx).into();
                 let binding = BoundIdentifier::from_binding_ident(&local);
                 ctx.scoping_mut().set_symbol_name(binding.symbol_id, &binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
@@ -857,7 +857,7 @@ mod test {
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
-    use oxc_tasks_common::print_diff_in_terminal;
+    use oxc_tasks_common::print_text_diff;
     use oxc_transformer::{JsxRuntime, TransformOptions, Transformer};
 
     use super::ModuleRunnerTransform;
@@ -921,7 +921,7 @@ mod test {
         let result = transform(source_text, false).unwrap().code;
         if result != expected {
             let diff = TextDiff::from_lines(&expected, &result);
-            print_diff_in_terminal(&diff);
+            print_text_diff(&diff);
             panic!("Expected code does not match the result");
         }
     }
@@ -932,7 +932,7 @@ mod test {
         let result = transform(source_text, true).unwrap().code;
         if result != expected {
             let diff = TextDiff::from_lines(&expected, &result);
-            print_diff_in_terminal(&diff);
+            print_text_diff(&diff);
             panic!("Expected code does not match the result");
         }
     }
@@ -944,7 +944,7 @@ mod test {
             transform(source_text, false).unwrap();
         if code != expected {
             let diff = TextDiff::from_lines(&expected, &code);
-            print_diff_in_terminal(&diff);
+            print_text_diff(&diff);
             panic!("Expected code does not match the result");
         }
         for dep in deps {

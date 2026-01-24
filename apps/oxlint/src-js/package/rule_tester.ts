@@ -22,6 +22,7 @@ import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
+import type { Settings } from "../plugins/settings.ts";
 import type { ParseOptions } from "./parse.ts";
 
 // ------------------------------------------------------------------------------
@@ -242,19 +243,27 @@ let sharedConfig: Config = {};
 
 // List of keys that `ValidTestCase` or `InvalidTestCase` can have.
 // Must be kept in sync with properties of `ValidTestCase` and `InvalidTestCase` interfaces.
-const TEST_CASE_PROP_KEYS = new Set([
+// The type constraints enforce this.
+const TEST_CASE_PROP_KEYS_ARRAY = [
   "code",
   "name",
   "only",
   "filename",
   "options",
+  "settings",
   "before",
   "after",
   "output",
   "errors",
   // Not a valid key for `TestCase` interface, but present here to prevent prototype pollution in `createConfigForRun`
   "__proto__",
-]);
+] as const satisfies readonly (TestCaseOwnKeys | "__proto__")[];
+
+type TestCaseOwnKeys = Exclude<keyof ValidTestCase | keyof InvalidTestCase, keyof Config>;
+type MissingKeys = Exclude<TestCaseOwnKeys, (typeof TEST_CASE_PROP_KEYS_ARRAY)[number]>;
+type KeysSet = MissingKeys extends never ? Set<string> : never;
+
+const TEST_CASE_PROP_KEYS: KeysSet = new Set(TEST_CASE_PROP_KEYS_ARRAY);
 
 /**
  * Test case.
@@ -265,6 +274,7 @@ interface TestCase extends Config {
   only?: boolean;
   filename?: string;
   options?: Options;
+  settings?: Settings;
   before?: (this: this) => void;
   after?: (this: this) => void;
 }
@@ -470,7 +480,7 @@ export class RuleTester {
   }
 }
 
-// In debug builds only, we provide a hook to modify test cases before they're run.
+// In conformance build only, we provide a hook to modify test cases before they're run.
 // Hook can be registered by calling `RuleTester.registerModifyTestCaseHook`.
 // This is used in conformance tester.
 let modifyTestCase: ((test: TestCase) => void) | null = null;
@@ -985,8 +995,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     if (CONFORMANCE) setEcmaVersionAndFeatures(test);
 
     // Get globals and settings
-    const globalsJSON: string = getGlobalsJson(test);
-    const settingsJSON = "{}"; // TODO
+    const globalsJSON = getGlobalsJson(test);
+    const settingsJSON = JSON.stringify(test.settings ?? {});
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.

@@ -46,14 +46,14 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
         let leading_comments = f.context().comments().comments_before(self.span().start);
         let has_leading_comments = !leading_comments.is_empty();
         let mut union_type_at_top = self;
-        while let AstNodes::TSUnionType(parent) = union_type_at_top.parent
+        while let AstNodes::TSUnionType(parent) = union_type_at_top.parent()
             && parent.types().len() == 1
         {
             union_type_at_top = parent;
         }
 
         let should_indent = {
-            let parent = union_type_at_top.parent;
+            let parent = union_type_at_top.parent();
 
             // These parents have indent for their content, so we don't need to indent here
             match parent {
@@ -103,7 +103,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                 return write!(f, [indent(&types), soft_line_break()]);
             }
 
-            let is_inside_complex_tuple_type = match self.parent {
+            let is_inside_complex_tuple_type = match self.parent() {
                 AstNodes::TSTupleType(tuple) => tuple.element_types().len() > 1,
                 _ => false,
             };
@@ -217,7 +217,7 @@ fn format_union_types<'a>(
                 write!(f, [soft_line_break_or_space()]);
             }
             write!(f, ["|"]);
-        } else if let AstNodes::TSUnionType(parent) = element.parent
+        } else if let AstNodes::TSUnionType(parent) = element.parent()
             && parent.needs_parentheses(f)
         {
             // ```ts

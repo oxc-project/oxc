@@ -71,3 +71,22 @@ TextEdit: TextEdit {
     },
     new_text: "// oxlint-disable no-debugger\n",
 }
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 1,
+            character: 0,
+        },
+        end: Position {
+            line: 1,
+            character: 9,
+        },
+    },
+    new_text: "",
+}

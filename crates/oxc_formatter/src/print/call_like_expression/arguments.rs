@@ -47,7 +47,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                 [
                     l_paren_token,
                     // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
-                    format_dangling_comments(self.parent.span()).with_soft_block_indent(),
+                    format_dangling_comments(self.parent().span()).with_soft_block_indent(),
                     r_paren_token
                 ]
             );
@@ -56,7 +56,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
         let is_simple_module_import = is_simple_module_import(self, f.comments());
 
         let call_expression =
-            if !is_simple_module_import && let AstNodes::CallExpression(call) = self.parent {
+            if !is_simple_module_import && let AstNodes::CallExpression(call) = self.parent() {
                 Some(call)
             } else {
                 None
@@ -143,7 +143,7 @@ impl<'a> Format<'a> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
                     f.join_with(&separator).entries(self.iter());
                     write!(
                         f,
-                        [(!matches!(self.parent, AstNodes::ImportExpression(_)))
+                        [(!matches!(self.parent(), AstNodes::ImportExpression(_)))
                             .then_some(FormatTrailingCommas::All)]
                     );
                 })),
@@ -236,7 +236,7 @@ fn format_all_elements_broken_out<'a, 'b>(
 
                 write!(
                     f,
-                    [(!matches!(node.parent, AstNodes::ImportExpression(_)))
+                    [(!matches!(node.parent(), AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
                 );
             })),
@@ -270,7 +270,7 @@ fn format_all_args_broken_out<'a, 'b>(
 
                 write!(
                     f,
-                    [(!matches!(node.parent, AstNodes::ImportExpression(_)))
+                    [(!matches!(node.parent(), AstNodes::ImportExpression(_)))
                         .then_some(FormatTrailingCommas::All)]
                 );
             })),
@@ -968,7 +968,7 @@ pub fn is_simple_module_import(
         return false;
     }
 
-    match arguments.parent {
+    match arguments.parent() {
         AstNodes::ImportExpression(_) => {}
         AstNodes::CallExpression(call) => {
             match &call.callee {
@@ -1004,7 +1004,7 @@ pub fn is_simple_module_import(
     }
 
     matches!(arguments.as_ref()[0], Argument::StringLiteral(_))
-        && !comments.has_comment_before(arguments.parent.span().end)
+        && !comments.has_comment_before(arguments.parent().span().end)
 }
 
 /// Tests if amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
@@ -1044,7 +1044,7 @@ fn is_commonjs_or_amd_call(
             }
         }
         "define" => {
-            let in_statement = matches!(call.parent, AstNodes::ExpressionStatement(_));
+            let in_statement = matches!(call.parent(), AstNodes::ExpressionStatement(_));
             if in_statement {
                 match arguments.len() {
                     1 => true,
@@ -1120,7 +1120,7 @@ fn is_react_hook_with_deps_array(
             }
 
             // Is there a comment that isn't around the callback or deps?
-            !comments.comments_before(arguments.parent.span().end).iter().any(|comment| {
+            !comments.comments_before(arguments.parent().span().end).iter().any(|comment| {
                 !callback.span.contains_inclusive(comment.span)
                     && !deps.span.contains_inclusive(comment.span)
             })

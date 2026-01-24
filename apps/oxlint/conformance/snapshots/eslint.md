@@ -1,4 +1,4 @@
-# ESLint Rule Tester Conformance Results
+# Conformance test results - eslint
 
 ## Summary
 
@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   288 |  98.6% |
-| Partially passing |     4 |   1.4% |
+| Fully passing     |   292 | 100.0% |
+| Partially passing |     0 |   0.0% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -17,10 +17,10 @@
 
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
-| Total tests | 33090 | 100.0% |
-| Passing     | 32799 |  99.1% |
-| Failing     |     6 |   0.0% |
-| Skipped     |   285 |   0.9% |
+| Total tests | 33159 | 100.0% |
+| Passing     | 32873 |  99.1% |
+| Failing     |     0 |   0.0% |
+| Skipped     |   286 |   0.9% |
 
 ## Fully Passing Rules
 
@@ -91,7 +91,7 @@
 - `max-lines-per-function` (43 tests)
 - `max-lines` (47 tests)
 - `max-nested-callbacks` (14 tests)
-- `max-params` (45 tests)
+- `max-params` (53 tests)
 - `max-statements-per-line` (96 tests)
 - `max-statements` (42 tests)
 - `multiline-comment-style` (110 tests)
@@ -137,12 +137,13 @@
 - `no-empty-static-block` (10 tests)
 - `no-empty` (35 tests)
 - `no-eq-null` (5 tests)
+- `no-eval` (101 tests) (1 skipped)
 - `no-ex-assign` (8 tests)
 - `no-extend-native` (40 tests)
 - `no-extra-bind` (43 tests)
 - `no-extra-boolean-cast` (501 tests) (1 skipped)
 - `no-extra-label` (34 tests)
-- `no-extra-parens` (1072 tests) (5 skipped)
+- `no-extra-parens` (1072 tests) (1 skipped)
 - `no-extra-semi` (53 tests)
 - `no-fallthrough` (87 tests) (1 skipped)
 - `no-floating-decimal` (8 tests)
@@ -156,6 +157,7 @@
 - `no-inner-declarations` (68 tests)
 - `no-invalid-regexp` (108 tests)
 - `no-invalid-this` (562 tests) (4 skipped)
+- `no-irregular-whitespace` (280 tests)
 - `no-iterator` (9 tests)
 - `no-label-var` (5 tests)
 - `no-labels` (29 tests)
@@ -200,7 +202,7 @@
 - `no-regex-spaces` (73 tests)
 - `no-restricted-exports` (183 tests)
 - `no-restricted-globals` (166 tests)
-- `no-restricted-imports` (254 tests) (1 skipped)
+- `no-restricted-imports` (263 tests) (1 skipped)
 - `no-restricted-modules` (44 tests)
 - `no-restricted-properties` (89 tests)
 - `no-restricted-syntax` (32 tests)
@@ -224,7 +226,7 @@
 - `no-trailing-spaces` (54 tests)
 - `no-unassigned-vars` (23 tests)
 - `no-undef-init` (28 tests)
-- `no-undef` (94 tests) (6 skipped)
+- `no-undef` (103 tests) (7 skipped)
 - `no-undefined` (53 tests)
 - `no-underscore-dangle` (116 tests)
 - `no-unexpected-multiline` (56 tests) (4 skipped)
@@ -238,9 +240,9 @@
 - `no-unused-expressions` (124 tests) (4 skipped)
 - `no-unused-labels` (26 tests)
 - `no-unused-private-class-members` (39 tests)
-- `no-unused-vars` (436 tests) (21 skipped)
-- `no-use-before-define` (347 tests) (1 skipped)
-- `no-useless-assignment` (85 tests) (2 skipped)
+- `no-unused-vars` (448 tests) (21 skipped)
+- `no-use-before-define` (354 tests) (1 skipped)
+- `no-useless-assignment` (109 tests) (5 skipped)
 - `no-useless-backreference` (190 tests) (1 skipped)
 - `no-useless-call` (44 tests)
 - `no-useless-catch` (16 tests)
@@ -273,6 +275,7 @@
 - `prefer-named-capture-group` (57 tests)
 - `prefer-numeric-literals` (87 tests)
 - `prefer-object-has-own` (92 tests) (1 skipped)
+- `prefer-object-spread` (87 tests) (3 skipped)
 - `prefer-promise-reject-errors` (65 tests)
 - `prefer-reflect` (49 tests)
 - `prefer-regex-literals` (251 tests) (2 skipped)
@@ -305,6 +308,7 @@
 - `symbol-description` (8 tests)
 - `template-curly-spacing` (57 tests)
 - `template-tag-spacing` (63 tests)
+- `unicode-bom` (7 tests)
 - `use-isnan` (214 tests)
 - `valid-typeof` (54 tests)
 - `vars-on-top` (61 tests)
@@ -315,231 +319,4 @@
 
 ## Rules with Failures
 
-- `no-eval` - 100 / 101 (99.0%)
-- `no-irregular-whitespace` - 279 / 280 (99.6%)
-- `prefer-object-spread` - 86 / 87 (98.9%)
-- `unicode-bom` - 4 / 7 (57.1%)
-
-## Rules with Failures Detail
-
-### `no-eval`
-
-Pass: 99 / 101 (98.0%)
-Fail: 1 / 101 (1.0%)
-Skip: 1 / 101 (1.0%)
-
-#### no-eval > invalid
-
-```js
-function foo() { ('use strict'); this.eval; }
-```
-
-```json
-{
-  "languageOptions": {
-    "ecmaVersion": 5,
-    "sourceType": "script"
-  },
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "column": 39,
-      "endColumn": 43
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `no-irregular-whitespace`
-
-Pass: 279 / 280 (99.6%)
-Fail: 1 / 280 (0.4%)
-Skip: 0 / 280 (0.0%)
-
-#### no-irregular-whitespace > valid
-
-```js
-﻿console.log('hello BOM');
-```
-
-```json
-{}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/no-irregular-whitespace',
-    message: 'Irregular whitespace not allowed.',
-    messageId: 'noIrregularWhitespace',
-    severity: 1,
-    nodeType: null,
-    line: 1,
-    column: 0,
-    endLine: 1,
-    endColumn: 1,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-### `prefer-object-spread`
-
-Pass: 84 / 87 (96.6%)
-Fail: 1 / 87 (1.1%)
-Skip: 2 / 87 (2.3%)
-
-#### prefer-object-spread > invalid
-
-```js
-const test = Object.assign({ ...bar }, {
-                <!-- html comment
-                foo: 'bar',
-                baz: "cats"
-                --> weird
-            })
-```
-
-```json
-{
-  "languageOptions": {
-    "ecmaVersion": 2018,
-    "sourceType": "script"
-  },
-  "output": "const test = {...bar, <!-- html comment\n                foo: 'bar',\n                baz: \"cats\"\n                --> weird\n            }",
-  "errors": [
-    {
-      "messageId": "useSpreadMessage",
-      "line": 1,
-      "column": 14
-    }
-  ]
-}
-```
-
-Error: `tokensAndComments` is not correctly ordered
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.getTokenBefore (apps/oxlint/dist/lint.js)
-    at getStartWithSpaces (apps/oxlint/conformance/submodules/eslint/lib/rules/prefer-object-spread.js:143:32)
-
-
-### `unicode-bom`
-
-Pass: 4 / 7 (57.1%)
-Fail: 3 / 7 (42.9%)
-Skip: 0 / 7 (0.0%)
-
-#### unicode-bom > valid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "options": [
-    "always"
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have no errors but had 1: [
-  {
-    ruleId: 'rule-to-test/unicode-bom',
-    message: 'Expected Unicode BOM (Byte Order Mark).',
-    messageId: 'expected',
-    severity: 1,
-    nodeType: null,
-    line: 1,
-    column: 0,
-    endLine: 1,
-    endColumn: 0,
-    suggestions: null
-  }
-]
-
-1 !== 0
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertValidTestCasePasses (apps/oxlint/dist/index.js)
-    at runValidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### unicode-bom > invalid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "output": " var a = 123;",
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
-
-#### unicode-bom > invalid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "output": " var a = 123;",
-  "options": [
-    "never"
-  ],
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
-
-0 !== 1
-
-    at assertErrorCountIsCorrect (apps/oxlint/dist/index.js)
-    at assertInvalidTestCasePasses (apps/oxlint/dist/index.js)
-    at runInvalidTestCase (apps/oxlint/dist/index.js)
-    at apps/oxlint/dist/index.js
-
+No rules with failures

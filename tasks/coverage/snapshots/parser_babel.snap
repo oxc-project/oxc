@@ -1,9 +1,9 @@
-commit: fc58af40
+commit: 6ef16ca4
 
 parser_babel Summary:
-AST Parsed     : 2221/2227 (99.73%)
-Positive Passed: 2206/2227 (99.06%)
-Negative Passed: 1649/1689 (97.63%)
+AST Parsed     : 2217/2221 (99.82%)
+Positive Passed: 2204/2221 (99.23%)
+Negative Passed: 1654/1689 (97.93%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
@@ -56,16 +56,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/import/equals-require-in-script/input.ts
 
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts
-
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
@@ -83,62 +73,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js
-
-  × Identifier `x` has already been declared
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/duplicate-function-var-name/input.js:3:11]
- 2 │     static {
- 3 │       var x;
-   ·           ┬
-   ·           ╰── `x` has already been declared here
- 4 │       function x() {}
-   ·                ┬
-   ·                ╰── It can not be redeclared here
- 5 │     }
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/top-level-await-unambiguous/module/input.js:1:1]
- 1 │ await 0
-   · ─────
- 2 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs
-
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs:1:18]
- 1 │ for await (using \u006ff of of);
-   ·                  ───────
-   ╰────
-
-  × Expected `)` but found `of`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-await-using-binding-escaped-of-of/input.mjs:1:29]
- 1 │ for await (using \u006ff of of);
-   ·           ┬                 ─┬
-   ·           │                  ╰── `)` expected
-   ·           ╰── Opened here
-   ╰────
-
-Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js
-
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js:1:12]
- 1 │ for (using o\u0066 of of);
-   ·            ───────
-   ╰────
-
-  × Expected `)` but found `of`
-   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/valid-for-using-binding-escaped-of-of/input.js:1:23]
- 1 │ for (using o\u0066 of of);
-   ·     ┬                 ─┬
-   ·     │                  ╰── `)` expected
-   ·     ╰── Opened here
-   ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
@@ -3598,10 +3532,10 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·          ─────────
    ╰────
 
-  × Unexpected token
+  × HTML comments are not allowed in modules
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/modules/invalid-xml-comment-in-module/input.js:1:1]
  1 │ <!--bar-->
-   · ─
+   · ────
    ╰────
 
   × Expected `,` or `}` but found `Identifier`
@@ -13347,6 +13281,66 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                          ─
    ╰────
 
+  × TS(1051): A 'set' accessor cannot have an optional parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-optional-parameter/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   set bar(foo?: string);
+   ·           ────────────
+ 3 │ }
+   ╰────
+
+  × A 'get' accessor must not have any formal parameters.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts:2:10]
+ 1 │ interface Foo {
+ 2 │   get foo(param): string;
+   ·          ───────
+ 3 │   set foo();
+   ╰────
+  help: Remove these parameters here
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts:3:10]
+ 2 │   get foo(param): string;
+ 3 │   set foo();
+   ·          ──
+ 4 │ }
+   ╰────
+  help: Add a parameter here
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·           ────
+ 3 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter/input.ts:2:10]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·          ──────
+ 3 │ }
+   ╰────
+  help: Add a parameter here
+
+  × A 'set' accessor cannot have rest parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·           ────
+ 3 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:10]
+ 1 │ interface Foo {
+ 2 │   set bar(...v);
+   ·          ──────
+ 3 │ }
+   ╰────
+  help: Add a parameter here
+
   × TS(1095): A 'set' accessor cannot have a return type annotation.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-return-types/input.ts:2:17]
  1 │ interface Foo {
@@ -13354,6 +13348,31 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                 ────────
  3 │ }
    ╰────
+
+  × TS(2784): 'get' and 'set' accessors cannot declare 'this' parameters.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts:2:11]
+ 1 │ interface Foo {
+ 2 │   get bar(this: Foo);
+   ·           ─────────
+ 3 │   set bar(this: Foo);
+   ╰────
+
+  × TS(2784): 'get' and 'set' accessors cannot declare 'this' parameters.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts:3:11]
+ 2 │   get bar(this: Foo);
+ 3 │   set bar(this: Foo);
+   ·           ─────────
+ 4 │ }
+   ╰────
+
+  × A 'set' accessor must have exactly one parameter.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-this-parameters/input.ts:3:10]
+ 2 │   get bar(this: Foo);
+ 3 │   set bar(this: Foo);
+   ·          ───────────
+ 4 │ }
+   ╰────
+  help: Add a parameter here
 
   × Expected `(` but found `<`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-type-parameters/input.ts:2:10]

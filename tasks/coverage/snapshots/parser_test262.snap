@@ -1,8 +1,8 @@
-commit: 6f55d0c2
+commit: fff41f05
 
 parser_test262 Summary:
-AST Parsed     : 46556/46556 (100.00%)
-Positive Passed: 46556/46556 (100.00%)
+AST Parsed     : 46595/46595 (100.00%)
+Positive Passed: 46595/46595 (100.00%)
 Negative Passed: 4581/4581 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
@@ -24480,11 +24480,11 @@ Negative Passed: 4581/4581 (100.00%)
     ·   ─
     ╰────
 
-  × Unexpected token
+  × HTML comments are not allowed in modules
     ╭─[test262/test/language/module-code/comment-single-line-html-open.js:16:1]
  15 │ 
  16 │ <!--
-    · ─
+    · ────
     ╰────
 
   × Duplicated export 'z'

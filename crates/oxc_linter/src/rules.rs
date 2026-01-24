@@ -356,6 +356,7 @@ pub(crate) mod jest {
 pub(crate) mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod display_name;
     pub mod exhaustive_deps;
     pub mod forbid_dom_props;
     pub mod forbid_elements;

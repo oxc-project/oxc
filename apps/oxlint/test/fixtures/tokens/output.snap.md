@@ -343,15 +343,15 @@
   | Keyword           loc= 6:0 - 6:3    range= 72-75   "let"
   | Identifier        loc= 6:4 - 6:5    range= 76-77   "y"
   | Punctuator        loc= 6:6 - 6:7    range= 78-79   "="
-  | Numeric           loc= 6:8 - 6:9    range= 80-81   "2"
-  | Punctuator        loc= 6:9 - 6:10   range= 81-82   ";"
+  | RegularExpression loc= 6:8 - 6:15   range= 80-87   "/abc/gu"
+  | Punctuator        loc= 6:15 - 6:16  range= 87-88   ";"
    ,-[files/index.js:1:1]
  1 | ,-> // Leading comment
  2 | |   
  3 | |   let x = /* inline comment */ 1;
  4 | |   
  5 | |   // Another comment
- 6 | |   let y = 2;
+ 6 | |   let y = /abc/gu;
  7 | |   
  8 | `-> // Trailing comment
    `----
@@ -368,16 +368,16 @@
   | Keyword           loc= 6:0 - 6:3    range= 72-75   "let"
   | Identifier        loc= 6:4 - 6:5    range= 76-77   "y"
   | Punctuator        loc= 6:6 - 6:7    range= 78-79   "="
-  | Numeric           loc= 6:8 - 6:9    range= 80-81   "2"
-  | Punctuator        loc= 6:9 - 6:10   range= 81-82   ";"
-  | Line              loc= 8:0 - 8:19   range= 84-103  " Trailing comment"
+  | RegularExpression loc= 6:8 - 6:15   range= 80-87   "/abc/gu"
+  | Punctuator        loc= 6:15 - 6:16  range= 87-88   ";"
+  | Line              loc= 8:0 - 8:19   range= 90-109  " Trailing comment"
    ,-[files/index.js:1:1]
  1 | ,-> // Leading comment
  2 | |   
  3 | |   let x = /* inline comment */ 1;
  4 | |   
  5 | |   // Another comment
- 6 | |   let y = 2;
+ 6 | |   let y = /abc/gu;
  7 | |   
  8 | `-> // Trailing comment
    `----
@@ -435,13 +435,13 @@
  4 | 
  5 | // Another comment
    : ^^^^^^^^^^^^^^^^^^
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    `----
 
   x tokens-plugin(tokens): Keyword ("let")
    ,-[files/index.js:6:1]
  5 | // Another comment
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    : ^^^
  7 | 
    `----
@@ -449,7 +449,7 @@
   x tokens-plugin(tokens): Identifier ("y")
    ,-[files/index.js:6:5]
  5 | // Another comment
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    :     ^
  7 | 
    `----
@@ -457,24 +457,25 @@
   x tokens-plugin(tokens): Punctuator ("=")
    ,-[files/index.js:6:7]
  5 | // Another comment
- 6 | let y = 2;
+ 6 | let y = /abc/gu;
    :       ^
  7 | 
    `----
 
-  x tokens-plugin(tokens): Numeric ("2")
+  x tokens-plugin(tokens): RegularExpression ("/abc/gu")
+  |   regex: {"flags":"gu","pattern":"abc"}
    ,-[files/index.js:6:9]
  5 | // Another comment
- 6 | let y = 2;
-   :         ^
+ 6 | let y = /abc/gu;
+   :         ^^^^^^^
  7 | 
    `----
 
   x tokens-plugin(tokens): Punctuator (";")
-   ,-[files/index.js:6:10]
+   ,-[files/index.js:6:16]
  5 | // Another comment
- 6 | let y = 2;
-   :          ^
+ 6 | let y = /abc/gu;
+   :                ^
  7 | 
    `----
 
@@ -772,8 +773,306 @@
    :                     ^
    `----
 
-Found 0 warnings and 79 errors.
-Finished in Xms on 3 files with 1 rules using X threads.
+  x tokens-plugin(tokens): Keyword ("const")
+   ,-[files/keywords.js:1:1]
+ 1 | const obj = {
+   : ^^^^^
+ 2 |   // Identifier tokens
+   `----
+
+  x tokens-plugin(tokens): Tokens:
+  | Keyword           loc= 1:0 - 1:5    range= 0-5     "const"
+  | Identifier        loc= 1:6 - 1:9    range= 6-9     "obj"
+  | Punctuator        loc= 1:10 - 1:11  range= 10-11   "="
+  | Punctuator        loc= 1:12 - 1:13  range= 12-13   "{"
+  | Identifier        loc= 3:2 - 3:5    range= 39-42   "foo"
+  | Punctuator        loc= 3:5 - 3:6    range= 42-43   ":"
+  | Identifier        loc= 3:7 - 3:10   range= 44-47   "foo"
+  | Punctuator        loc= 3:10 - 3:11  range= 47-48   ","
+  | Identifier        loc= 4:2 - 4:7    range= 51-56   "async"
+  | Punctuator        loc= 4:7 - 4:8    range= 56-57   ":"
+  | Identifier        loc= 4:9 - 4:14   range= 58-63   "async"
+  | Punctuator        loc= 4:14 - 4:15  range= 63-64   ","
+  | Keyword           loc= 6:2 - 6:5    range= 87-90   "let"
+  | Punctuator        loc= 6:5 - 6:6    range= 90-91   ":"
+  | Keyword           loc= 6:7 - 6:10   range= 92-95   "let"
+  | Punctuator        loc= 6:10 - 6:11  range= 95-96   ","
+  | Keyword           loc= 7:2 - 7:8    range= 99-105  "static"
+  | Punctuator        loc= 7:8 - 7:9    range= 105-106 ":"
+  | Keyword           loc= 7:10 - 7:16  range= 107-113 "static"
+  | Punctuator        loc= 7:16 - 7:17  range= 113-114 ","
+  | Keyword           loc= 8:2 - 8:7    range= 117-122 "yield"
+  | Punctuator        loc= 8:7 - 8:8    range= 122-123 ":"
+  | Keyword           loc= 8:9 - 8:14   range= 124-129 "yield"
+  | Punctuator        loc= 8:14 - 8:15  range= 129-130 ","
+  | Punctuator        loc= 9:0 - 9:1    range= 131-132 "}"
+  | Punctuator        loc= 9:1 - 9:2    range= 132-133 ";"
+   ,-[files/keywords.js:1:1]
+ 1 | ,-> const obj = {
+ 2 | |     // Identifier tokens
+ 3 | |     foo: foo,
+ 4 | |     async: async,
+ 5 | |     // Keyword tokens
+ 6 | |     let: let,
+ 7 | |     static: static,
+ 8 | |     yield: yield,
+ 9 | `-> };
+   `----
+
+  x tokens-plugin(tokens): Tokens and comments:
+  | Keyword           loc= 1:0 - 1:5    range= 0-5     "const"
+  | Identifier        loc= 1:6 - 1:9    range= 6-9     "obj"
+  | Punctuator        loc= 1:10 - 1:11  range= 10-11   "="
+  | Punctuator        loc= 1:12 - 1:13  range= 12-13   "{"
+  | Line              loc= 2:2 - 2:22   range= 16-36   " Identifier tokens"
+  | Identifier        loc= 3:2 - 3:5    range= 39-42   "foo"
+  | Punctuator        loc= 3:5 - 3:6    range= 42-43   ":"
+  | Identifier        loc= 3:7 - 3:10   range= 44-47   "foo"
+  | Punctuator        loc= 3:10 - 3:11  range= 47-48   ","
+  | Identifier        loc= 4:2 - 4:7    range= 51-56   "async"
+  | Punctuator        loc= 4:7 - 4:8    range= 56-57   ":"
+  | Identifier        loc= 4:9 - 4:14   range= 58-63   "async"
+  | Punctuator        loc= 4:14 - 4:15  range= 63-64   ","
+  | Line              loc= 5:2 - 5:19   range= 67-84   " Keyword tokens"
+  | Keyword           loc= 6:2 - 6:5    range= 87-90   "let"
+  | Punctuator        loc= 6:5 - 6:6    range= 90-91   ":"
+  | Keyword           loc= 6:7 - 6:10   range= 92-95   "let"
+  | Punctuator        loc= 6:10 - 6:11  range= 95-96   ","
+  | Keyword           loc= 7:2 - 7:8    range= 99-105  "static"
+  | Punctuator        loc= 7:8 - 7:9    range= 105-106 ":"
+  | Keyword           loc= 7:10 - 7:16  range= 107-113 "static"
+  | Punctuator        loc= 7:16 - 7:17  range= 113-114 ","
+  | Keyword           loc= 8:2 - 8:7    range= 117-122 "yield"
+  | Punctuator        loc= 8:7 - 8:8    range= 122-123 ":"
+  | Keyword           loc= 8:9 - 8:14   range= 124-129 "yield"
+  | Punctuator        loc= 8:14 - 8:15  range= 129-130 ","
+  | Punctuator        loc= 9:0 - 9:1    range= 131-132 "}"
+  | Punctuator        loc= 9:1 - 9:2    range= 132-133 ";"
+   ,-[files/keywords.js:1:1]
+ 1 | ,-> const obj = {
+ 2 | |     // Identifier tokens
+ 3 | |     foo: foo,
+ 4 | |     async: async,
+ 5 | |     // Keyword tokens
+ 6 | |     let: let,
+ 7 | |     static: static,
+ 8 | |     yield: yield,
+ 9 | `-> };
+   `----
+
+  x tokens-plugin(tokens): Identifier ("obj")
+   ,-[files/keywords.js:1:7]
+ 1 | const obj = {
+   :       ^^^
+ 2 |   // Identifier tokens
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("=")
+   ,-[files/keywords.js:1:11]
+ 1 | const obj = {
+   :           ^
+ 2 |   // Identifier tokens
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("{")
+   ,-[files/keywords.js:1:13]
+ 1 | const obj = {
+   :             ^
+ 2 |   // Identifier tokens
+   `----
+
+  x tokens-plugin(tokens): Line (" Identifier tokens")
+   ,-[files/keywords.js:2:3]
+ 1 | const obj = {
+ 2 |   // Identifier tokens
+   :   ^^^^^^^^^^^^^^^^^^^^
+ 3 |   foo: foo,
+   `----
+
+  x tokens-plugin(tokens): Identifier ("foo")
+   ,-[files/keywords.js:3:3]
+ 2 |   // Identifier tokens
+ 3 |   foo: foo,
+   :   ^^^
+ 4 |   async: async,
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/keywords.js:3:6]
+ 2 |   // Identifier tokens
+ 3 |   foo: foo,
+   :      ^
+ 4 |   async: async,
+   `----
+
+  x tokens-plugin(tokens): Identifier ("foo")
+   ,-[files/keywords.js:3:8]
+ 2 |   // Identifier tokens
+ 3 |   foo: foo,
+   :        ^^^
+ 4 |   async: async,
+   `----
+
+  x tokens-plugin(tokens): Punctuator (",")
+   ,-[files/keywords.js:3:11]
+ 2 |   // Identifier tokens
+ 3 |   foo: foo,
+   :           ^
+ 4 |   async: async,
+   `----
+
+  x tokens-plugin(tokens): Identifier ("async")
+   ,-[files/keywords.js:4:3]
+ 3 |   foo: foo,
+ 4 |   async: async,
+   :   ^^^^^
+ 5 |   // Keyword tokens
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/keywords.js:4:8]
+ 3 |   foo: foo,
+ 4 |   async: async,
+   :        ^
+ 5 |   // Keyword tokens
+   `----
+
+  x tokens-plugin(tokens): Identifier ("async")
+   ,-[files/keywords.js:4:10]
+ 3 |   foo: foo,
+ 4 |   async: async,
+   :          ^^^^^
+ 5 |   // Keyword tokens
+   `----
+
+  x tokens-plugin(tokens): Punctuator (",")
+   ,-[files/keywords.js:4:15]
+ 3 |   foo: foo,
+ 4 |   async: async,
+   :               ^
+ 5 |   // Keyword tokens
+   `----
+
+  x tokens-plugin(tokens): Line (" Keyword tokens")
+   ,-[files/keywords.js:5:3]
+ 4 |   async: async,
+ 5 |   // Keyword tokens
+   :   ^^^^^^^^^^^^^^^^^
+ 6 |   let: let,
+   `----
+
+  x tokens-plugin(tokens): Keyword ("let")
+   ,-[files/keywords.js:6:3]
+ 5 |   // Keyword tokens
+ 6 |   let: let,
+   :   ^^^
+ 7 |   static: static,
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/keywords.js:6:6]
+ 5 |   // Keyword tokens
+ 6 |   let: let,
+   :      ^
+ 7 |   static: static,
+   `----
+
+  x tokens-plugin(tokens): Keyword ("let")
+   ,-[files/keywords.js:6:8]
+ 5 |   // Keyword tokens
+ 6 |   let: let,
+   :        ^^^
+ 7 |   static: static,
+   `----
+
+  x tokens-plugin(tokens): Punctuator (",")
+   ,-[files/keywords.js:6:11]
+ 5 |   // Keyword tokens
+ 6 |   let: let,
+   :           ^
+ 7 |   static: static,
+   `----
+
+  x tokens-plugin(tokens): Keyword ("static")
+   ,-[files/keywords.js:7:3]
+ 6 |   let: let,
+ 7 |   static: static,
+   :   ^^^^^^
+ 8 |   yield: yield,
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/keywords.js:7:9]
+ 6 |   let: let,
+ 7 |   static: static,
+   :         ^
+ 8 |   yield: yield,
+   `----
+
+  x tokens-plugin(tokens): Keyword ("static")
+   ,-[files/keywords.js:7:11]
+ 6 |   let: let,
+ 7 |   static: static,
+   :           ^^^^^^
+ 8 |   yield: yield,
+   `----
+
+  x tokens-plugin(tokens): Punctuator (",")
+   ,-[files/keywords.js:7:17]
+ 6 |   let: let,
+ 7 |   static: static,
+   :                 ^
+ 8 |   yield: yield,
+   `----
+
+  x tokens-plugin(tokens): Keyword ("yield")
+   ,-[files/keywords.js:8:3]
+ 7 |   static: static,
+ 8 |   yield: yield,
+   :   ^^^^^
+ 9 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator (":")
+   ,-[files/keywords.js:8:8]
+ 7 |   static: static,
+ 8 |   yield: yield,
+   :        ^
+ 9 | };
+   `----
+
+  x tokens-plugin(tokens): Keyword ("yield")
+   ,-[files/keywords.js:8:10]
+ 7 |   static: static,
+ 8 |   yield: yield,
+   :          ^^^^^
+ 9 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator (",")
+   ,-[files/keywords.js:8:15]
+ 7 |   static: static,
+ 8 |   yield: yield,
+   :               ^
+ 9 | };
+   `----
+
+  x tokens-plugin(tokens): Punctuator ("}")
+   ,-[files/keywords.js:9:1]
+ 8 |   yield: yield,
+ 9 | };
+   : ^
+   `----
+
+  x tokens-plugin(tokens): Punctuator (";")
+   ,-[files/keywords.js:9:2]
+ 8 |   yield: yield,
+ 9 | };
+   :  ^
+   `----
+
+Found 0 warnings and 109 errors.
+Finished in Xms on 4 files with 1 rules using X threads.
 ```
 
 # stderr

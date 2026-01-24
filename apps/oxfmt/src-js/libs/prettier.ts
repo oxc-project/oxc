@@ -33,7 +33,7 @@ export async function resolvePlugins(): Promise<string[]> {
 export type FormatEmbeddedCodeParam = {
   code: string;
   parserName: string;
-  options: Options;
+  options: Options & { _tailwindPluginEnabled?: boolean };
 };
 
 /**
@@ -52,6 +52,9 @@ export async function formatEmbeddedCode({
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   options.parser = parserName;
+
+  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
+  await setupTailwindPlugin(options);
 
   // NOTE: This will throw if:
   // - Specified parser is not available
@@ -88,8 +91,7 @@ export async function formatFile({
   // But some plugins rely on `filepath`, so we set it too
   options.filepath = fileName;
 
-  // Enable Tailwind CSS plugin for non-JS files
-  // when `options._tailwindPluginEnabled` is set
+  // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
 
   return prettier.format(code, options);
@@ -114,8 +116,12 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
 
 // ---
 
+const TAILWIND_RELEVANT_PARSERS = new Set(["html", "vue", "angular", "glimmer"]);
+
 /**
- * Set up Tailwind CSS plugin for Prettier when _tailwindPluginEnabled is set.
+ * Set up Tailwind CSS plugin for Prettier when:
+ * - `options._tailwindPluginEnabled` is set
+ * - And, the parser is relevant for Tailwind CSS
  * Loads the plugin lazily. Option mapping is done in Rust side.
  */
 async function setupTailwindPlugin(
@@ -123,13 +129,16 @@ async function setupTailwindPlugin(
 ): Promise<void> {
   if (!options._tailwindPluginEnabled) return;
 
+  // Clean up internal flag
+  delete options._tailwindPluginEnabled;
+
+  // PERF: Skip loading Tailwind plugin for parsers that don't use it
+  if (!TAILWIND_RELEVANT_PARSERS.has(options.parser as string)) return;
+
   const tailwindPlugin = await loadTailwindPlugin();
 
   options.plugins = options.plugins || [];
   options.plugins.push(tailwindPlugin as Plugin);
-
-  // Clean up internal flag for sure
-  delete options._tailwindPluginEnabled;
 }
 
 // ---

@@ -59,6 +59,11 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn html_comment_in_module(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("HTML comments are not allowed in modules").with_label(span)
+}
+
+#[cold]
 pub fn merge_conflict_marker(
     start_span: Span,
     middle_span: Option<Span>,
@@ -1142,6 +1147,16 @@ pub fn getter_parameters(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.")
         .with_label(span)
         .with_help("Remove these parameters here")
+}
+
+#[cold]
+pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
+}
+
+#[cold]
+pub fn accessor_cannot_have_this_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("2784", "'get' and 'set' accessors cannot declare 'this' parameters.").with_label(span)
 }
 
 #[cold]

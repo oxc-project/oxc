@@ -1,0 +1,181 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP formatting after config change > config formatting > should handle default-config to specific config in config-semi/test.ts 1`] = `
+"--- FILE -----------
+config-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER FIRST FORMAT ----------
+const x = 1;
+
+--- AFTER SECOND FORMAT ----------
+const x = 1
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle default-config to specific config in config-sort-imports/test.js 1`] = `
+"--- FILE -----------
+config-sort-imports/test.js
+--- BEFORE ---------
+import { z } from "z";
+import { a } from "a";
+
+--- AFTER FIRST FORMAT ----------
+import { z } from "z";
+import { a } from "a";
+
+--- AFTER SECOND FORMAT ----------
+import { a } from "a";
+import { z } from "z";
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle default-config to specific config in config-sort-tailwindcss/test.tsx 1`] = `
+"--- FILE -----------
+config-sort-tailwindcss/test.tsx
+--- BEFORE ---------
+const App = () => <div className="p-4 flex m-2">Hello</div>;
+
+--- AFTER FIRST FORMAT ----------
+const App = () => <div className="p-4 flex m-2">Hello</div>;
+
+--- AFTER SECOND FORMAT ----------
+const App = () => <div className="m-2 flex p-4">Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle default-config to specific config in config-sort-tailwindcss/test.vue 1`] = `
+"--- FILE -----------
+config-sort-tailwindcss/test.vue
+--- BEFORE ---------
+<template>
+  <div class="p-4 flex m-2">Hello</div>
+</template>
+
+--- AFTER FIRST FORMAT ----------
+<template>
+  <div class="p-4 flex m-2">Hello</div>
+</template>
+
+--- AFTER SECOND FORMAT ----------
+<template>
+  <div class="m-2 flex p-4">Hello</div>
+</template>
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle default-config to specific config in config-vue-indent/test.vue 1`] = `
+"--- FILE -----------
+config-vue-indent/test.vue
+--- BEFORE ---------
+<script>
+const x = 1;
+</script>
+
+--- AFTER FIRST FORMAT ----------
+<script>
+const x = 1;
+</script>
+
+--- AFTER SECOND FORMAT ----------
+<script>
+  const x = 1;
+</script>
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle specific config to default config in config-semi/test.ts 1`] = `
+"--- FILE -----------
+config-semi/test.ts
+--- BEFORE ---------
+const x = 1;
+
+--- AFTER FIRST FORMAT ----------
+const x = 1
+
+--- AFTER SECOND FORMAT ----------
+const x = 1;
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle specific config to default config in config-sort-imports/test.js 1`] = `
+"--- FILE -----------
+config-sort-imports/test.js
+--- BEFORE ---------
+import { z } from "z";
+import { a } from "a";
+
+--- AFTER FIRST FORMAT ----------
+import { a } from "a";
+import { z } from "z";
+
+--- AFTER SECOND FORMAT ----------
+import { a } from "a";
+import { z } from "z";
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle specific config to default config in config-sort-tailwindcss/test.tsx 1`] = `
+"--- FILE -----------
+config-sort-tailwindcss/test.tsx
+--- BEFORE ---------
+const App = () => <div className="p-4 flex m-2">Hello</div>;
+
+--- AFTER FIRST FORMAT ----------
+const App = () => <div className="m-2 flex p-4">Hello</div>;
+
+--- AFTER SECOND FORMAT ----------
+const App = () => <div className="m-2 flex p-4">Hello</div>;
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle specific config to default config in config-sort-tailwindcss/test.vue 1`] = `
+"--- FILE -----------
+config-sort-tailwindcss/test.vue
+--- BEFORE ---------
+<template>
+  <div class="p-4 flex m-2">Hello</div>
+</template>
+
+--- AFTER FIRST FORMAT ----------
+<template>
+  <div class="m-2 flex p-4">Hello</div>
+</template>
+
+--- AFTER SECOND FORMAT ----------
+<template>
+  <div class="m-2 flex p-4">Hello</div>
+</template>
+
+--------------------"
+`;
+
+exports[`LSP formatting after config change > config formatting > should handle specific config to default config in config-vue-indent/test.vue 1`] = `
+"--- FILE -----------
+config-vue-indent/test.vue
+--- BEFORE ---------
+<script>
+const x = 1;
+</script>
+
+--- AFTER FIRST FORMAT ----------
+<script>
+  const x = 1;
+</script>
+
+--- AFTER SECOND FORMAT ----------
+<script>
+const x = 1;
+</script>
+
+--------------------"
+`;

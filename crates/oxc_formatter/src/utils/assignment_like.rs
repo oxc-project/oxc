@@ -500,13 +500,13 @@ impl<'a> AssignmentLike<'a, '_> {
             // First, we check if the current node is an assignment expression
             if let Self::AssignmentExpression(assignment) = self {
                 // Then we check if the parent is assignment expression or variable declarator
-                let parent = assignment.parent;
+                let parent = assignment.parent();
                 // Determine if the chain is eligible based on the following checks:
                 // 1. For variable declarators: only continue if this isn't the final assignment in the chain
                 (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
                 // 2. For assignment expressions: continue unless this is the final assignment in an expression statement
                 matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
-                    if !right_is_tail || !matches!(parent_assignment.parent, AstNodes::ExpressionStatement(_))
+                    if !right_is_tail || !matches!(parent_assignment.parent(), AstNodes::ExpressionStatement(_))
                 )
             } else {
                 false

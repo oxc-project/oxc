@@ -53,7 +53,7 @@ impl<'a> JSXElementName<'a> {
     pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
         match self {
             Self::Identifier(id) => Some(id.as_ref().name),
-            Self::IdentifierReference(id) => Some(id.as_ref().name),
+            Self::IdentifierReference(id) => Some(id.as_ref().name.into()),
             _ => None,
         }
     }

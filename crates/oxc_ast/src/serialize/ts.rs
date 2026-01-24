@@ -275,7 +275,7 @@ pub struct TSGlobalDeclarationId<'a, 'b>(pub &'b TSGlobalDeclaration<'a>);
 
 impl ESTree for TSGlobalDeclarationId<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ident = IdentifierName { span: self.0.global_span, name: Atom::from("global") };
+        let ident = IdentifierName { span: self.0.global_span, name: Atom::from("global").into() };
         ident.serialize(serializer);
     }
 }

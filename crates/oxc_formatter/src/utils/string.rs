@@ -196,12 +196,45 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 
     fn normalize_text(&self, source_type: SourceType) -> Cow<'a, str> {
+        // Handle JSX attribute strings specially - they use HTML entity escaping
+        if self.token.jsx && self.token.parent_kind == StringLiteralParentKind::Expression {
+            return self.normalize_jsx_attribute();
+        }
+
         let str_info = self.token.compute_string_information(self.chosen_quote_style);
         match self.token.parent_kind {
             StringLiteralParentKind::Expression => self.normalize_string_literal(str_info),
             StringLiteralParentKind::Directive => self.normalize_directive(str_info),
             StringLiteralParentKind::ImportAttribute => self.normalize_import_attribute(str_info),
             StringLiteralParentKind::Member => self.normalize_type_member(str_info, source_type),
+        }
+    }
+
+    /// Normalizes a JSX attribute string value using HTML entity escaping.
+    fn normalize_jsx_attribute(&self) -> Cow<'a, str> {
+        let raw_content = self.raw_content();
+        let current_quote =
+            self.token.string.bytes().next().and_then(QuoteStyle::from_byte).unwrap_or_default();
+
+        let (normalized, chosen_quote) = normalize_jsx_string(raw_content, self.chosen_quote_style);
+
+        let quote_char = chosen_quote.as_char();
+
+        match normalized {
+            Cow::Borrowed(s) if s == raw_content && current_quote == chosen_quote => {
+                // No changes needed, return original
+                normalize_newlines(self.token.string, ['\r'])
+            }
+            Cow::Borrowed(s) => {
+                // Content unchanged but quotes need swapping
+                let normalized_newlines = normalize_newlines(s, ['\r']);
+                Cow::Owned(std::format!("{quote_char}{normalized_newlines}{quote_char}"))
+            }
+            Cow::Owned(s) => {
+                // Content changed
+                let normalized_newlines = normalize_newlines(&s, ['\r']);
+                Cow::Owned(std::format!("{quote_char}{normalized_newlines}{quote_char}"))
+            }
         }
     }
 
@@ -416,6 +449,129 @@ pub fn normalize_string(
     }
 }
 
+/// Counts actual single and double quotes in JSX attribute content,
+/// accounting for HTML entities `&apos;` and `&quot;`.
+fn count_jsx_quotes(raw_content: &str) -> (u32, u32) {
+    let mut single_count = 0u32;
+    let mut double_count = 0u32;
+    let mut i = 0;
+    let bytes = raw_content.as_bytes();
+
+    while i < bytes.len() {
+        if bytes[i] == b'\'' {
+            single_count += 1;
+            i += 1;
+        } else if bytes[i] == b'"' {
+            double_count += 1;
+            i += 1;
+        } else if bytes[i] == b'&' {
+            // Check for HTML entities
+            if raw_content[i..].starts_with("&apos;") {
+                single_count += 1;
+                i += 6; // len of "&apos;"
+            } else if raw_content[i..].starts_with("&quot;") {
+                double_count += 1;
+                i += 6; // len of "&quot;"
+            } else {
+                i += 1;
+            }
+        } else {
+            i += 1;
+        }
+    }
+
+    (single_count, double_count)
+}
+
+/// Normalizes a JSX attribute string value using HTML entity escaping.
+///
+/// Algorithm (matching Prettier):
+/// 1. Unescape `&apos;` → `'` and `&quot;` → `"`
+/// 2. Count quotes to pick the style that minimizes escaping
+/// 3. Escape only the chosen quote type using HTML entities
+///
+/// Returns the normalized content (without quotes) and the chosen quote style.
+fn normalize_jsx_string(
+    raw_content: &str,
+    preferred_quote: QuoteStyle,
+) -> (Cow<'_, str>, QuoteStyle) {
+    // Count quotes (accounting for HTML entities)
+    let (single_count, double_count) = count_jsx_quotes(raw_content);
+
+    // Choose quote that minimizes escaping, preferring the configured quote when counts are equal
+    let chosen_quote = if preferred_quote == QuoteStyle::Double {
+        if double_count > single_count { QuoteStyle::Single } else { QuoteStyle::Double }
+    } else if single_count > double_count {
+        QuoteStyle::Double
+    } else {
+        QuoteStyle::Single
+    };
+
+    // Fast path: check if any HTML entities or quotes that need escaping exist
+    let has_apos_entity = raw_content.contains("&apos;");
+    let has_quot_entity = raw_content.contains("&quot;");
+    let has_raw_single = raw_content.as_bytes().contains(&b'\'');
+    let has_raw_double = raw_content.as_bytes().contains(&b'"');
+
+    let needs_unescape = has_apos_entity || has_quot_entity;
+    let needs_escape = match chosen_quote {
+        QuoteStyle::Double => has_raw_double,
+        QuoteStyle::Single => has_raw_single,
+    };
+
+    // Fast path: no changes needed
+    if !needs_unescape && !needs_escape {
+        return (Cow::Borrowed(raw_content), chosen_quote);
+    }
+
+    // Slow path: allocate and transform
+    // First unescape HTML entities, then escape the chosen quote type
+    let mut result = String::with_capacity(raw_content.len());
+    let mut chars = raw_content.char_indices();
+
+    while let Some((i, ch)) = chars.next() {
+        if ch == '&' {
+            if raw_content[i..].starts_with("&apos;") {
+                // Unescape &apos; to '
+                if chosen_quote == QuoteStyle::Single {
+                    // Need to keep it escaped
+                    result.push_str("&apos;");
+                } else {
+                    result.push('\'');
+                }
+                // Skip the remaining 5 chars of "&apos;" (we already consumed '&')
+                for _ in 0..5 {
+                    chars.next();
+                }
+            } else if raw_content[i..].starts_with("&quot;") {
+                // Unescape &quot; to "
+                if chosen_quote == QuoteStyle::Double {
+                    // Need to keep it escaped
+                    result.push_str("&quot;");
+                } else {
+                    result.push('"');
+                }
+                // Skip the remaining 5 chars of "&quot;" (we already consumed '&')
+                for _ in 0..5 {
+                    chars.next();
+                }
+            } else {
+                result.push('&');
+            }
+        } else if ch == '\'' && chosen_quote == QuoteStyle::Single {
+            // Escape raw single quote
+            result.push_str("&apos;");
+        } else if ch == '"' && chosen_quote == QuoteStyle::Double {
+            // Escape raw double quote
+            result.push_str("&quot;");
+        } else {
+            result.push(ch);
+        }
+    }
+
+    (Cow::Owned(result), chosen_quote)
+}
+
 /// `is_identifier_name` patched with KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
 /// Otherwise `({ 'x・': 0 })` gets converted to `({ x・: 0 })`, which breaks in Unicode 4.1 to
 /// 15.
@@ -468,5 +624,113 @@ mod tests {
         assert_eq!(normalize_string("\"", QuoteStyle::Single, false), "\"");
         assert_eq!(normalize_string("\\'", QuoteStyle::Single, false), "\\'");
         assert_eq!(normalize_string("\\\"", QuoteStyle::Single, false), "\\\"");
+    }
+
+    #[test]
+    fn jsx_count_quotes() {
+        // Raw quotes
+        assert_eq!(count_jsx_quotes("'"), (1, 0));
+        assert_eq!(count_jsx_quotes("\""), (0, 1));
+        assert_eq!(count_jsx_quotes("' \""), (1, 1));
+
+        // HTML entities
+        assert_eq!(count_jsx_quotes("&apos;"), (1, 0));
+        assert_eq!(count_jsx_quotes("&quot;"), (0, 1));
+        assert_eq!(count_jsx_quotes("&apos; &quot;"), (1, 1));
+
+        // Mixed
+        assert_eq!(count_jsx_quotes("' &apos;"), (2, 0));
+        assert_eq!(count_jsx_quotes("\" &quot;"), (0, 2));
+
+        // No quotes
+        assert_eq!(count_jsx_quotes("foo"), (0, 0));
+        assert_eq!(count_jsx_quotes("&amp;"), (0, 0));
+    }
+
+    #[test]
+    fn jsx_normalize_no_changes() {
+        // No quotes, no entities - should return borrowed
+        let (result, quote) = normalize_jsx_string("foo", QuoteStyle::Double);
+        assert!(matches!(result, Cow::Borrowed(_)));
+        assert_eq!(result, "foo");
+        assert_eq!(quote, QuoteStyle::Double);
+    }
+
+    #[test]
+    fn jsx_normalize_unescape_entities() {
+        // &apos; should be unescaped when using double quotes
+        let (result, quote) = normalize_jsx_string("&apos;", QuoteStyle::Double);
+        assert_eq!(result, "'");
+        assert_eq!(quote, QuoteStyle::Double);
+
+        // &quot; should be unescaped when using single quotes
+        let (result, quote) = normalize_jsx_string("&quot;", QuoteStyle::Single);
+        assert_eq!(result, "\"");
+        assert_eq!(quote, QuoteStyle::Single);
+    }
+
+    #[test]
+    fn jsx_normalize_escape_raw_quotes() {
+        // Raw ' with single quote preference -> switches to double quotes to avoid escaping
+        let (result, quote) = normalize_jsx_string("'", QuoteStyle::Single);
+        assert_eq!(result, "'");
+        assert_eq!(quote, QuoteStyle::Double);
+
+        // Raw " with double quote preference -> switches to single quotes to avoid escaping
+        let (result, quote) = normalize_jsx_string("\"", QuoteStyle::Double);
+        assert_eq!(result, "\"");
+        assert_eq!(quote, QuoteStyle::Single);
+
+        // When both quotes are present and counts are equal, use preferred and escape
+        // ' " with single preferred -> use single, escape the '
+        let (result, quote) = normalize_jsx_string("' \"", QuoteStyle::Single);
+        assert_eq!(result, "&apos; \"");
+        assert_eq!(quote, QuoteStyle::Single);
+
+        // ' " with double preferred -> use double, escape the "
+        let (result, quote) = normalize_jsx_string("' \"", QuoteStyle::Double);
+        assert_eq!(result, "' &quot;");
+        assert_eq!(quote, QuoteStyle::Double);
+    }
+
+    #[test]
+    fn jsx_normalize_prefer_less_escaping() {
+        // When preferred is double but double quotes are more common, switch to single
+        // Input: ' " " -> 1 single, 2 double
+        let (result, quote) = normalize_jsx_string("' \" \"", QuoteStyle::Double);
+        assert_eq!(quote, QuoteStyle::Single);
+        assert_eq!(result, "&apos; \" \"");
+
+        // When preferred is single but single quotes are more common, switch to double
+        // Input: ' ' " -> 2 single, 1 double
+        let (result, quote) = normalize_jsx_string("' ' \"", QuoteStyle::Single);
+        assert_eq!(quote, QuoteStyle::Double);
+        assert_eq!(result, "' ' &quot;");
+    }
+
+    #[test]
+    fn jsx_normalize_with_entities_and_raw() {
+        // &apos; " -> 1 single, 1 double - prefer double quotes
+        let (result, quote) = normalize_jsx_string("&apos; \"", QuoteStyle::Double);
+        assert_eq!(quote, QuoteStyle::Double);
+        assert_eq!(result, "' &quot;");
+
+        // ' &quot; -> 1 single, 1 double - prefer single quotes
+        let (result, quote) = normalize_jsx_string("' &quot;", QuoteStyle::Single);
+        assert_eq!(quote, QuoteStyle::Single);
+        assert_eq!(result, "&apos; \"");
+    }
+
+    #[test]
+    fn jsx_normalize_other_entities_preserved() {
+        // &amp; and other entities should be preserved
+        let (result, quote) = normalize_jsx_string("&amp;", QuoteStyle::Double);
+        assert_eq!(result, "&amp;");
+        assert_eq!(quote, QuoteStyle::Double);
+
+        // Mixed entities
+        let (result, quote) = normalize_jsx_string("&apos;&amp;&quot;", QuoteStyle::Double);
+        assert_eq!(quote, QuoteStyle::Double);
+        assert_eq!(result, "'&amp;&quot;");
     }
 }

@@ -231,8 +231,11 @@ function getTokenType(token: ts.Identifier | ts.Token<ts.SyntaxKind>): Token["ty
         : "String";
     }
 
+    /*
+    // Not needed. Handled in `convertToken` instead.
     case tsSyntaxKind.RegularExpressionLiteral:
       return "RegularExpression";
+    */
 
     case tsSyntaxKind.Identifier: {
       // Some JSX tokens have to be determined based on their parent
@@ -244,6 +247,13 @@ function getTokenType(token: ts.Identifier | ts.Token<ts.SyntaxKind>): Token["ty
       ) {
         return "JSXIdentifier";
       }
+
+      // `espree` (ESLint's parser) produces `Keyword` tokens for `let`, `static`, and `yield`.
+      // TS-ESLint parser produces `Identifier` tokens for these keywords, but we go with ESLint's behavior.
+      // https://github.com/typescript-eslint/typescript-eslint/issues/11989
+      // @ts-expect-error - `escapedText` is not public
+      const name = token.escapedText;
+      if (name === "let" || name === "static" || name === "yield") return "Keyword";
     }
 
     /*

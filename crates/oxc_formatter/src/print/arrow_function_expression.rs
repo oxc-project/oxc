@@ -197,7 +197,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                     let should_add_soft_line = is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        || (matches!(self.arrow.parent, AstNodes::JSXExpressionContainer(container)
+                        || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
                     write!(
@@ -603,7 +603,7 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
         let format_tail_body = format_with(|f| {
             // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
             let should_add_soft_line =
-                matches!(self.head.parent, AstNodes::JSXExpressionContainer(_));
+                matches!(self.head.parent(), AstNodes::JSXExpressionContainer(_));
 
             if body_on_separate_line {
                 write!(

@@ -32,8 +32,8 @@ impl<'a> ConditionalLike<'a, '_> {
     #[inline]
     fn parent(&self) -> &AstNodes<'a> {
         match self {
-            ConditionalLike::ConditionalExpression(expr) => expr.parent,
-            ConditionalLike::TSConditionalType(ty) => ty.parent,
+            ConditionalLike::ConditionalExpression(expr) => expr.parent(),
+            ConditionalLike::TSConditionalType(ty) => ty.parent(),
         }
     }
 
@@ -251,7 +251,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
         };
 
         let mut expression_span = expr.span;
-        let mut parent = expr.parent;
+        let mut parent = expr.parent();
 
         // This tries to find the start of a member chain by iterating over all ancestors of the conditional.
         // The iteration "breaks" as soon as a non-member-chain node is found.
@@ -260,7 +260,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::ChainExpression(chain) => {
                     if chain.expression.span() == expression_span {
                         expression_span = chain.span();
-                        parent = chain.parent;
+                        parent = chain.parent();
                     } else {
                         break;
                     }
@@ -268,7 +268,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::StaticMemberExpression(member) => {
                     if member.object.span() == expression_span {
                         expression_span = member.span();
-                        parent = member.parent;
+                        parent = member.parent();
                     } else {
                         break;
                     }
@@ -276,7 +276,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::ComputedMemberExpression(member) => {
                     if member.object.span() == expression_span {
                         expression_span = member.span();
-                        parent = member.parent;
+                        parent = member.parent();
                     } else {
                         break;
                     }
@@ -284,7 +284,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::CallExpression(call) => {
                     if call.callee.span() == expression_span {
                         expression_span = call.span();
-                        parent = call.parent;
+                        parent = call.parent();
                     } else {
                         break;
                     }
@@ -292,27 +292,27 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::TSNonNullExpression(assertion) => {
                     if assertion.expression.span() == expression_span {
                         expression_span = assertion.span();
-                        parent = assertion.parent;
+                        parent = assertion.parent();
                     } else {
                         break;
                     }
                 }
                 AstNodes::NewExpression(new_expr) => {
-                    parent = new_expr.parent;
+                    parent = new_expr.parent();
                     if new_expr.callee.span() == expression_span {
                         expression_span = new_expr.span();
                     }
                     break;
                 }
                 AstNodes::TSAsExpression(as_expr) => {
-                    parent = as_expr.parent;
+                    parent = as_expr.parent();
                     if as_expr.expression.span() == expression_span {
                         expression_span = as_expr.span();
                     }
                     break;
                 }
                 AstNodes::TSSatisfiesExpression(satisfies) => {
-                    parent = satisfies.parent;
+                    parent = satisfies.parent();
                     if satisfies.expression.span() == expression_span {
                         expression_span = satisfies.span();
                     }

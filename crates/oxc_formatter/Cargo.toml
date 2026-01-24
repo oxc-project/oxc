@@ -37,6 +37,7 @@ unicode-width = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+oxc_tasks_common = { path = "../../tasks/common" }
 pico-args = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true, features = ["derive"] }

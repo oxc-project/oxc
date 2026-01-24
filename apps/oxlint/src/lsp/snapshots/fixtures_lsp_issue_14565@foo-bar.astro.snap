@@ -19,3 +19,6 @@ source: Some("oxc")
 tags: None
 
 ########### Code Actions/Commands
+
+########### Fix All Action
+None

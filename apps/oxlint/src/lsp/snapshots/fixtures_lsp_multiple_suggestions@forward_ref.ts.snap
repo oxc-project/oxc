@@ -89,3 +89,22 @@ TextEdit: TextEdit {
     },
     new_text: "// oxlint-disable react/forward-ref-uses-ref\n",
 }
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 25,
+        },
+    },
+    new_text: "(props) => {}",
+}

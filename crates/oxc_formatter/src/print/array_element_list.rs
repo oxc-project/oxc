@@ -27,7 +27,7 @@ impl<'a, 'b> ArrayElementList<'a, 'b> {
 impl<'a> Format<'a> for ArrayElementList<'a, '_> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         let layout =
-            if can_concisely_print_array_list(self.elements.parent.span(), self.elements, f) {
+            if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
                 ArrayLayout::Fill
             } else {
                 ArrayLayout::OnePerLine

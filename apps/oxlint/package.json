@@ -20,7 +20,7 @@
     "build-js": "node scripts/build.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
-    "conformance": "node ./conformance/src/index.ts"
+    "conformance": "tsx ./conformance/src/index.ts"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
@@ -31,7 +31,7 @@
     "@types/json-schema": "^7.0.15",
     "@types/json-stable-stringify-without-jsonify": "^1.0.2",
     "@types/node": "catalog:",
-    "@typescript-eslint/scope-manager": "8.48.1",
+    "@typescript-eslint/scope-manager": "8.53.1",
     "ajv": "^6.12.6",
     "cross-env": "catalog:",
     "eslint": "catalog:",
@@ -41,6 +41,7 @@
     "oxc-parser": "^0.110.0",
     "rolldown": "catalog:",
     "tsdown": "catalog:",
+    "tsx": "^4.21.0",
     "type-fest": "^5.2.0",
     "typescript": "catalog:",
     "vitest": "catalog:"

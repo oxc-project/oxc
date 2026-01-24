@@ -1,9 +1,9 @@
-commit: f5ccf434
+commit: 7f6a8467
 
 parser_typescript Summary:
-AST Parsed     : 9844/9845 (99.99%)
-Positive Passed: 9836/9845 (99.91%)
-Negative Passed: 1500/2549 (58.85%)
+AST Parsed     : 9842/9843 (99.99%)
+Positive Passed: 9837/9843 (99.94%)
+Negative Passed: 1500/2555 (58.71%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -158,6 +158,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionExp
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndVar.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commonSourceDirectory_dts.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedGenericRecursiveBaseClassReference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1.ts
@@ -215,6 +217,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitIndexTypeNotFound.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMonorepoBaseUrl.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRelativeModuleError.ts
 
@@ -753,6 +761,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overshifts.t
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterDecoratorsEmitCrash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_realRootFile.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_noAliasWithRoot_realRootFile.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation4.ts
 
@@ -2102,16 +2114,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uni
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts:23:1]
- 22 │ // @ts-ignore suppress `with` statement error
- 23 │ with (window)
-    · ────
- 24 │     const enum H {}
-    ╰────
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
   × Unexpected token
@@ -2121,15 +2123,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidat
     ·       ───
  19 │     }
     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
-
-  × 'with' statements are not allowed
-   ╭─[typescript/tests/cases/compiler/withStatementInternalComments.ts:2:7]
- 1 │ // @ts-ignore
- 2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
-   ·       ────
-   ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncWithVarShadowing_es6.ts
 
@@ -2153,16 +2146,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport
  2 │ function arguments() { } // this is allow as the file doesn't have implicit "use strict"
    ·          ─────────
    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts:64:1]
- 63 │ // @ts-ignore
- 64 │ with (_) {
-    · ────
- 65 │     var y = _;
-    ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 

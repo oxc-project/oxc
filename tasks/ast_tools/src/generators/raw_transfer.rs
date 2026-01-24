@@ -138,7 +138,7 @@ fn generate_deserializers(
         import {{ tokens, initTokens }} from '../plugins/tokens.js';
         /* END_IF */
 
-        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceByteLen;
+        let uint8, uint32, float64, sourceText, sourceIsAscii, sourceStartPos, sourceEndPos;
 
         let astId = 0;
         let parent = null;
@@ -162,6 +162,7 @@ fn generate_deserializers(
 
         /* IF !LINTER */
         export function deserialize(buffer, sourceText, sourceByteLen) {{
+            sourceEndPos = sourceByteLen;
             const data = deserializeWith(buffer, sourceText, sourceByteLen, null, deserializeRawTransferData);
             resetBuffer();
             return data;
@@ -169,18 +170,19 @@ fn generate_deserializers(
         /* END_IF */
 
         /* IF LINTER */
-        export function deserializeProgramOnly(buffer, sourceText, sourceByteLen, getLoc) {{
+        export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen, getLoc) {{
+            sourceStartPos = sourceStartPosInput;
+            sourceEndPos = sourceStartPosInput + sourceByteLen;
             return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
         }}
         /* END_IF */
 
-        function deserializeWith(buffer, sourceTextInput, sourceByteLenInput, getLocInput, deserialize) {{
+        function deserializeWith(buffer, sourceTextInput, sourceByteLen, getLocInput, deserialize) {{
             uint8 = buffer;
             uint32 = buffer.uint32;
             float64 = buffer.float64;
 
             sourceText = sourceTextInput;
-            sourceByteLen = sourceByteLenInput;
             sourceIsAscii = sourceText.length === sourceByteLen;
 
             if (LOC) getLoc = getLocInput;
@@ -211,6 +213,7 @@ fn generate_deserializers(
         export declare function deserializeProgramOnly(
             buffer: BufferWithArrays,
             sourceText: string,
+            sourceStartPosInput: number,
             sourceByteLen: number,
             getLoc: GetLoc
         ): Program;
@@ -821,7 +824,7 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
-        "Atom" => return,
+        "Atom" | "Ident" => return,
         // Dummy type
         "PointerAlign" => return,
         "bool" => "return uint8[pos] === 1;",
@@ -868,7 +871,16 @@ static STR_DESERIALIZER_BODY: &str = "
     if (len === 0) return '';
 
     pos = uint32[pos32];
-    if (sourceIsAscii && pos < sourceByteLen) return sourceText.substr(pos, len);
+    if (sourceIsAscii && pos < sourceEndPos) {
+        /* IF LINTER */
+        // Source text may not start at position 0, so `pos - sourceStartPos` is the index into `sourceText` string
+        return sourceText.substr(pos - sourceStartPos, len);
+        /* END_IF */
+
+        /* IF !LINTER */
+        return sourceText.substr(pos, len);
+        /* END_IF */
+    }
 
     // Longer strings use `TextDecoder`
     // TODO: Find best switch-over point
@@ -1246,8 +1258,8 @@ impl_deser_name_concat!(VecDef, "Vec");
 impl DeserializeFunctionName for PrimitiveDef {
     fn plain_name<'s>(&'s self, _schema: &'s Schema) -> Cow<'s, str> {
         let type_name = self.name();
-        if matches!(type_name, "&str" | "Atom") {
-            // Use 1 deserializer for both `&str` and `Atom`
+        if matches!(type_name, "&str" | "Atom" | "Ident") {
+            // Use 1 deserializer for `&str`, `Atom`, and `Ident`
             Cow::Borrowed("Str")
         } else if let Some(type_name) = type_name.strip_prefix("NonZero") {
             // Use zeroed type's deserializer for `NonZero*` types
@@ -1286,8 +1298,12 @@ struct Constants {
     is_ts_pos: u32,
     /// Offset within buffer of `bool` indicating if AST is JSX
     is_jsx_pos: u32,
+    /// Offset within buffer of `bool` indicating if source text has BOM
+    has_bom_pos: u32,
     /// Offset of `Program` in buffer, relative to position of `RawTransferData`
     program_offset: u32,
+    /// Offset of `u32` source text start pos, relative to position of `Program`
+    source_start_offset: u32,
     /// Offset of `u32` source text length, relative to position of `Program`
     source_len_offset: u32,
     /// Size of `RawTransferData` in bytes
@@ -1301,7 +1317,9 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         data_pointer_pos,
         is_ts_pos,
         is_jsx_pos,
+        has_bom_pos,
         program_offset,
+        source_start_offset,
         source_len_offset,
         raw_metadata_size,
     } = consts;
@@ -1315,7 +1333,9 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
         export const IS_TS_FLAG_POS = {is_ts_pos};
         export const IS_JSX_FLAG_POS = {is_jsx_pos};
+        export const HAS_BOM_FLAG_POS = {has_bom_pos};
         export const PROGRAM_OFFSET = {program_offset};
+        export const SOURCE_START_OFFSET = {source_start_offset};
         export const SOURCE_LEN_OFFSET = {source_len_offset};
     ");
 
@@ -1349,6 +1369,7 @@ fn get_constants(schema: &Schema) -> Constants {
     let mut data_offset_field = None;
     let mut is_ts_field = None;
     let mut is_jsx_field = None;
+    let mut has_bom_field = None;
     for (field1, field2) in raw_metadata_struct.fields.iter().zip(&raw_metadata2_struct.fields) {
         assert_eq!(field1.name(), field2.name());
         assert_eq!(field1.type_id, field2.type_id);
@@ -1357,12 +1378,14 @@ fn get_constants(schema: &Schema) -> Constants {
             "data_offset" => data_offset_field = Some(field1),
             "is_ts" => is_ts_field = Some(field1),
             "is_jsx" => is_jsx_field = Some(field1),
+            "has_bom" => has_bom_field = Some(field1),
             _ => {}
         }
     }
     let data_offset_field = data_offset_field.unwrap();
     let is_ts_field = is_ts_field.unwrap();
     let is_jsx_field = is_jsx_field.unwrap();
+    let has_bom_field = has_bom_field.unwrap();
 
     let raw_metadata_size = raw_metadata_struct.layout_64().size;
 
@@ -1379,6 +1402,7 @@ fn get_constants(schema: &Schema) -> Constants {
     let data_pointer_pos = raw_metadata_pos + data_offset_field.offset_64();
     let is_ts_pos = raw_metadata_pos + is_ts_field.offset_64();
     let is_jsx_pos = raw_metadata_pos + is_jsx_field.offset_64();
+    let has_bom_pos = raw_metadata_pos + has_bom_field.offset_64();
 
     let program_offset = schema
         .type_by_name("RawTransferData")
@@ -1387,20 +1411,23 @@ fn get_constants(schema: &Schema) -> Constants {
         .field_by_name("program")
         .offset_64();
 
-    let source_len_offset = schema
+    let source_start_offset = schema
         .type_by_name("Program")
         .as_struct()
         .unwrap()
         .field_by_name("source_text")
-        .offset_64()
-        + STR_LEN_OFFSET;
+        .offset_64();
+
+    let source_len_offset = source_start_offset + STR_LEN_OFFSET;
 
     Constants {
         buffer_size,
         data_pointer_pos,
         is_ts_pos,
         is_jsx_pos,
+        has_bom_pos,
         program_offset,
+        source_start_offset,
         source_len_offset,
         raw_metadata_size,
     }

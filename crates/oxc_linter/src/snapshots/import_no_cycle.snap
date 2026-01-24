@@ -301,48 +301,6 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
- 1 │ import { foo } from "./es6/depth-two"
-   ·                     ─────────────────
-   ╰────
-  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
-  note: These paths form a cycle:
-           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
-           │         ⬇ imports
-           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
-           │         ⬇ imports
-           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
-           ╰─────────╯ imports the current file
-
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:21]
- 1 │ import { foo } from "./es6/depth-two"
-   ·                     ─────────────────
-   ╰────
-  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
-  note: These paths form a cycle:
-           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
-           │         ⬇ imports
-           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
-           │         ⬇ imports
-           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
-           ╰─────────╯ imports the current file
-
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:21]
- 1 │ import { foo } from "./es6/depth-two"
-   ·                     ─────────────────
-   ╰────
-  help: Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.
-  note: These paths form a cycle:
-           ╭──▶ ./es6/depth-two (fixtures/import/cycles/es6/depth-two.js)
-           │         ⬇ imports
-           │    ./depth-one (fixtures/import/cycles/es6/depth-one.js)
-           │         ⬇ imports
-           │    ../depth-zero (fixtures/import/cycles/depth-zero.js)
-           ╰─────────╯ imports the current file
-
-  ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
-   ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./intermediate-ignore"
    ·                     ───────────────────────
    ╰────

@@ -298,16 +298,16 @@ impl Rule for ExhaustiveDeps {
         let dependencies_node = call_expr.arguments.get(callback_index + 1);
 
         let Some(callback_node) = callback_node else {
-            ctx.diagnostic(missing_callback_diagnostic(hook_name.as_str(), call_expr.span()));
+            ctx.diagnostic(missing_callback_diagnostic(hook_name, call_expr.span()));
             return;
         };
 
-        let is_effect = hook_name.as_str().contains("Effect");
+        let is_effect = hook_name.contains("Effect");
 
         if dependencies_node.is_none() && !is_effect {
-            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name.as_str()) {
+            if HOOKS_USELESS_WITHOUT_DEPENDENCIES.contains(&hook_name) {
                 ctx.diagnostic_with_fix(
-                    dependency_array_required_diagnostic(hook_name.as_str(), call_expr.span()),
+                    dependency_array_required_diagnostic(hook_name, call_expr.span()),
                     |fixer| fixer.insert_text_after(callback_node, ", []"),
                 );
             }
@@ -316,10 +316,7 @@ impl Rule for ExhaustiveDeps {
 
         let callback_node = match callback_node {
             Argument::SpreadElement(_) => {
-                ctx.diagnostic(unknown_dependencies_diagnostic(
-                    hook_name.as_str(),
-                    call_expr.callee.span(),
-                ));
+                ctx.diagnostic(unknown_dependencies_diagnostic(hook_name, call_expr.callee.span()));
                 None
             }
             match_expression!(Argument) => {
@@ -403,7 +400,7 @@ impl Rule for ExhaustiveDeps {
                     }
                     _ => {
                         ctx.diagnostic(unknown_dependencies_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             call_expr.callee.span(),
                         ));
                         None
@@ -424,7 +421,7 @@ impl Rule for ExhaustiveDeps {
         let dependencies_node = dependencies_node.and_then(|node| match node {
             Argument::SpreadElement(_) => {
                 ctx.diagnostic(dependency_array_not_array_literal_diagnostic(
-                    hook_name.as_str(),
+                    hook_name,
                     node.span(),
                 ));
                 None
@@ -441,7 +438,7 @@ impl Rule for ExhaustiveDeps {
                     }
                     _ => {
                         ctx.diagnostic(dependency_array_not_array_literal_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             node.span(),
                         ));
                         None
@@ -503,7 +500,7 @@ impl Rule for ExhaustiveDeps {
 
                 if contains_set_state_call {
                     ctx.diagnostic(infinite_rerender_call_to_set_state_diagnostic(
-                        hook_name.as_str(),
+                        hook_name,
                         call_expr.callee.span(),
                     ));
                 }
@@ -517,7 +514,7 @@ impl Rule for ExhaustiveDeps {
                 ArrayExpressionElement::Elision(_) => None,
                 ArrayExpressionElement::SpreadElement(_) => {
                     ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
-                        hook_name.as_str(),
+                        hook_name,
                         elem.span(),
                     ));
                     None
@@ -532,7 +529,7 @@ impl Rule for ExhaustiveDeps {
                         None
                     } else {
                         ctx.diagnostic(complex_expression_in_dependency_array_diagnostic(
-                            hook_name.as_str(),
+                            hook_name,
                             elem.span(),
                         ));
                         None
@@ -770,15 +767,15 @@ impl ExhaustiveDeps {
     }
 }
 
-fn get_node_name_without_react_namespace<'a, 'b>(expr: &'b Expression<'a>) -> Option<&'b Atom<'a>> {
+fn get_node_name_without_react_namespace<'a>(expr: &Expression<'a>) -> Option<&'a str> {
     match expr {
         Expression::StaticMemberExpression(member) => {
             if let Expression::Identifier(_ident) = &member.object {
-                return Some(&member.property.name);
+                return Some(member.property.name.as_str());
             }
             None
         }
-        Expression::Identifier(ident) => Some(&ident.name),
+        Expression::Identifier(ident) => Some(ident.name.as_str()),
         _ => None,
     }
 }
@@ -865,7 +862,7 @@ fn analyze_property_chain<'a, 'b>(
     match expr.get_inner_expression() {
         Expression::Identifier(ident) => Ok(Some(Dependency {
             span: ident.span(),
-            name: ident.name,
+            name: ident.name.into(),
             reference_id: ident.reference_id(),
             chain: vec![],
             symbol_id: semantic.scoping().get_reference(ident.reference_id()).symbol_id(),
@@ -889,7 +886,7 @@ fn concat_members<'a, 'b>(
         return Ok(None);
     };
 
-    let new_chain = Vec::from([member_expr.property.name]);
+    let new_chain = Vec::from([Atom::from(member_expr.property.name)]);
 
     Ok(Some(Dependency {
         span: member_expr.span,
@@ -925,51 +922,39 @@ fn is_identifier_a_dependency_impl<'a>(
     component_scope_id: ScopeId,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    // if it is a global e.g. `console` or `window`, then it's not a dependency
-    if ctx.scoping().root_unresolved_references().contains_key(ident_name.as_str()) {
-        return false;
-    }
-
     let Some(declaration) = get_declaration_from_reference_id(ident_reference_id, ctx) else {
+        // No declaration means it's a global variable, e.g. `console` or `window`,
+        // which are not dependencies
         return false;
     };
 
-    let semantic = ctx.semantic();
-    let scopes = semantic.scoping();
-
-    // if the variable was declared in the root scope, then it's not a dependency
-    if declaration.scope_id() == scopes.root_scope_id() {
+    // As long as the variable is not declared inside the component, it is not a dependency.
+    if declaration.scope_id() != component_scope_id {
+        // 1. Variable was declared outside the component scope
+        // ```tsx
+        // const id = crypto.randomUUID();
+        // function MyComponent() {
+        //   useEffect(() => {
+        //     console.log(id);
+        //   }, []);
+        //   return <div />;
+        // }
+        // ```
+        //
+        // 2. Variable was declared inside a child scope
+        // ```tsx
+        // function MyComponent() {
+        //   useEffect(() => {
+        //     const id = crypto.randomUUID();
+        //     console.log(id);
+        //   }, []);
+        //  return <div />;
+        // }
+        // ```
         return false;
     }
 
-    // Variable was declared outside the component scope
-    // ```tsx
-    // const id = crypto.randomUUID();
-    // function MyComponent() {
-    //   useEffect(() => {
-    //     console.log(id);
-    //   }, []);
-    //   return <div />;
-    // }
-    // ```
-    if scopes
-        .scope_ancestors(component_scope_id)
-        .skip(1)
-        .any(|parent| parent == declaration.scope_id())
-    {
-        return false;
-    }
-
-    // Variable was declared inside a child scope
-    // ```tsx
-    // function MyComponent() {
-    //   useEffect(() => {
-    //     const id = crypto.randomUUID();
-    //     console.log(id);
-    //   }, []);
-    //  return <div />;
-    // }
-    if scopes.iter_all_scope_child_ids(component_scope_id).any(|id| id == declaration.scope_id()) {
+    if declaration.span().contains_inclusive(ident_span) {
         return false;
     }
 
@@ -981,17 +966,6 @@ fn is_identifier_a_dependency_impl<'a>(
         component_scope_id,
         visited,
     ) {
-        return false;
-    }
-
-    // Using a declaration recursively is ok
-    // ```tsx
-    // function MyComponent() {
-    //     const recursive = useCallback((n: number): number => (n <= 0 ? 0 : n + recursive(n - 1)), []);
-    //     return recursive
-    // }
-    // ```
-    if declaration.span().contains_inclusive(ident_span) {
         return false;
     }
 
@@ -1155,9 +1129,7 @@ fn is_function_stable<'a, 'b>(
 }
 
 // https://github.com/facebook/react/blob/fee786a057774ab687aff765345dd86fce534ab2/packages/eslint-plugin-react-hooks/src/ExhaustiveDeps.js#L1742
-fn func_call_without_react_namespace<'a>(
-    call_expr: &'a CallExpression<'a>,
-) -> Option<&'a Atom<'a>> {
+fn func_call_without_react_namespace<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a str> {
     let inner_exp = call_expr.callee.get_inner_expression();
 
     if let Expression::Identifier(ident) = inner_exp {
@@ -1361,7 +1333,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
                 if is_parent_call_expr {
                     self.found_dependencies.insert(source);
                 } else {
-                    let new_chain = Vec::from([it.property.name]);
+                    let new_chain = Vec::from([Atom::from(it.property.name)]);
 
                     let mut destructured_props: Vec<Atom<'a>> = vec![];
                     let mut did_see_ref = false;
@@ -1442,7 +1414,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
             .unwrap_or(true);
         if needs_full_identifier || (destructured_props.is_empty() && !did_see_ref) {
             self.found_dependencies.insert(Dependency {
-                name: ident.name,
+                name: ident.name.into(),
                 reference_id,
                 span: ident.span,
                 chain: vec![],
@@ -1451,7 +1423,7 @@ impl<'a> Visit<'a> for ExhaustiveDepsVisitor<'a, '_> {
         } else {
             for prop in destructured_props {
                 self.found_dependencies.insert(Dependency {
-                    name: ident.name,
+                    name: ident.name.into(),
                     reference_id,
                     span: ident.span,
                     chain: vec![prop],

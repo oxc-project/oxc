@@ -191,12 +191,6 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
-    #[must_use]
-    pub fn with_scope_tree_child_ids(mut self, yes: bool) -> Self {
-        self.scoping.scope_build_child_ids = yes;
-        self
-    }
-
     /// Provide statistics about AST to optimize memory usage of semantic analysis.
     ///
     /// Accurate statistics can greatly improve performance, especially for large ASTs.
@@ -2524,7 +2518,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, self.current_scope_id, flags);
-        let reference_id = self.declare_reference(ident.name, reference);
+        let reference_id = self.declare_reference(ident.name.into(), reference);
         ident.reference_id.set(Some(reference_id));
     }
 
