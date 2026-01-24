@@ -62,12 +62,18 @@ impl ServerLinterBuilder {
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
         let mut nested_ignore_patterns = Vec::new();
-        let (nested_configs, mut extended_paths) = self.create_nested_configs(
-            &root_path,
-            &options,
-            &mut external_plugin_store,
-            &mut nested_ignore_patterns,
-        );
+        let mut extended_paths = FxHashSet::default();
+        let nested_configs = if options.use_nested_configs() {
+            Self::create_nested_configs(
+                &root_path,
+                self.external_linter.as_ref(),
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+            )
+        } else {
+            FxHashMap::default()
+        };
         let config_path = match options.config_path.as_deref() {
             Some("") | None => DEFAULT_OXLINTRC,
             Some(v) => v,
@@ -104,7 +110,7 @@ impl ServerLinterBuilder {
 
         let use_cross_module = config_builder.plugins().has_import()
             || (use_nested_config
-                && nested_configs.pin().values().any(|config| config.plugins().has_import()));
+                && nested_configs.values().any(|config| config.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
@@ -121,19 +127,7 @@ impl ServerLinterBuilder {
             },
             ..Default::default()
         };
-        let config_store = ConfigStore::new(
-            base_config,
-            if use_nested_config {
-                let nested_configs = nested_configs.pin();
-                nested_configs
-                    .iter()
-                    .map(|(key, value)| (key.clone(), value.clone()))
-                    .collect::<FxHashMap<_, _>>()
-            } else {
-                FxHashMap::default()
-            },
-            external_plugin_store,
-        );
+        let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
 
         let isolated_linter = IsolatedLintHandler::new(
             lint_options,
@@ -254,21 +248,15 @@ impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
     fn create_nested_configs(
-        &self,
         root_path: &Path,
-        options: &LSPLintOptions,
+        external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
-    ) -> (ConcurrentHashMap<PathBuf, Config>, FxHashSet<PathBuf>) {
-        let mut extended_paths = FxHashSet::default();
-        // nested config is disabled, no need to search for configs
-        if !options.use_nested_configs() {
-            return (ConcurrentHashMap::default(), extended_paths);
-        }
-
+        extended_paths: &mut FxHashSet<PathBuf>,
+    ) -> FxHashMap<PathBuf, Config> {
         let paths = ConfigWalker::new(root_path).paths();
-        let nested_configs =
-            ConcurrentHashMap::with_capacity_and_hasher(paths.capacity(), FxBuildHasher);
+        let mut nested_configs =
+            FxHashMap::with_capacity_and_hasher(paths.capacity(), FxBuildHasher);
 
         for path in paths {
             let file_path = Path::new(&path);
@@ -285,7 +273,7 @@ impl ServerLinterBuilder {
             let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
                 false,
                 oxlintrc,
-                self.external_linter.as_ref(),
+                external_linter,
                 external_plugin_store,
             ) else {
                 warn!("Skipping config (builder failed): {}", file_path.display());
@@ -296,10 +284,10 @@ impl ServerLinterBuilder {
                 warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
                 ConfigStoreBuilder::empty().build(external_plugin_store).unwrap()
             });
-            nested_configs.pin().insert(dir_path.to_path_buf(), config);
+            nested_configs.insert(dir_path.to_path_buf(), config);
         }
 
-        (nested_configs, extended_paths)
+        nested_configs
     }
 
     #[expect(clippy::filetype_is_file)]
@@ -1019,42 +1007,29 @@ mod test_watchers {
 
 #[cfg(test)]
 mod test {
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     use oxc_linter::ExternalPluginStore;
+    use rustc_hash::FxHashSet;
     use serde_json::json;
 
     use crate::lsp::{
-        options::LintOptions,
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
 
     #[test]
-    fn test_create_nested_configs_with_disabled_nested_configs() {
-        let mut nested_ignore_patterns = Vec::new();
-        let mut external_plugin_store = ExternalPluginStore::new(false);
-        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
-            Path::new("/root/"),
-            &LintOptions { disable_nested_config: true, ..LintOptions::default() },
-            &mut external_plugin_store,
-            &mut nested_ignore_patterns,
-        );
-
-        assert!(configs.is_empty());
-    }
-
-    #[test]
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
         let mut external_plugin_store = ExternalPluginStore::new(false);
-        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
+        let mut extended_paths = FxHashSet::default();
+        let configs = ServerLinterBuilder::create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
-            &LintOptions::default(),
+            None,
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
+            &mut extended_paths,
         );
-        let configs = configs.pin();
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results
         configs_dirs.sort();
