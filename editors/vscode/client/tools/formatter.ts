@@ -134,6 +134,7 @@ export default class FormatterTool implements ToolInterface {
       "yyp",
       // JSONC
       "jsonc",
+      "json5",
       "code-snippets",
       "code-workspace",
       "sublime-build",
