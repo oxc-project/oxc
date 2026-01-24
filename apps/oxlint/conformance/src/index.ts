@@ -14,7 +14,9 @@
  * 4. Recording success/failure of each test.
  * 5. Outputting results to a markdown file.
  *
- * To add a new repo to be tested, add it to the `TEST_GROUPS` array in `test_groups.ts`.
+ * To add a new repo to be tested:
+ * - Add a file to `groups` directory.
+ * - Add setup for cloning the repo to `init.sh`.
  *
  * If you want to run only a subset of tests, alter the constants in `filter.ts`.
  */
@@ -25,7 +27,7 @@ import Module from "node:module";
 import fs from "node:fs";
 import { join as pathJoin, sep as pathSep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { TEST_GROUPS } from "./test_groups.ts";
+import { TEST_GROUPS } from "./groups/index.ts";
 import { setCurrentGroup, setCurrentRule, resetCurrentRule } from "./capture.ts";
 import { SHOULD_SKIP_GROUP, SHOULD_SKIP_RULE } from "./filter.ts";
 import { generateReport } from "./report.ts";
