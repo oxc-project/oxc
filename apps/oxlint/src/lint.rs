@@ -197,6 +197,7 @@ impl CliRunner {
                 external_linter,
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
+                &oxlintrc.path,
             ) {
                 Ok(v) => v,
                 Err(v) => return v,
@@ -223,7 +224,7 @@ impl CliRunner {
 
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
-            oxlintrc,
+            oxlintrc.clone(),
             external_linter,
             &mut external_plugin_store,
         ) {
@@ -309,7 +310,7 @@ impl CliRunner {
             _ => None,
         };
         let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
+            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options, &oxlintrc);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
@@ -475,13 +476,14 @@ impl CliRunner {
         reporter: &OutputFormatter,
         warning_options: &WarningOptions,
         misc_options: &MiscOptions,
+        oxlintrc: &Oxlintrc,
     ) -> (DiagnosticService, DiagnosticSender) {
         let (service, sender) = DiagnosticService::new(reporter.get_diagnostic_reporter());
         (
             service
                 .with_quiet(warning_options.quiet)
                 .with_silent(misc_options.silent)
-                .with_max_warnings(warning_options.max_warnings),
+                .with_max_warnings(warning_options.max_warnings.or(oxlintrc.max_warnings)),
             sender,
         )
     }
@@ -534,6 +536,7 @@ impl CliRunner {
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
+        root_config_path: &Path,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
@@ -562,6 +565,22 @@ impl CliRunner {
             #[expect(clippy::match_same_arms)]
             match Self::find_oxlint_config_in_directory(directory) {
                 Ok(Some(v)) => {
+                    if v.path != root_config_path && v.max_warnings.is_some() {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to parse oxlint configuration file.\n{}\n",
+                                render_report(
+                                    handler,
+                                    &OxcDiagnostic::error(format!(
+                                        "`maxWarnings` is only allowed in the root configuration file. Nested config found at {}",
+                                        v.path.display()
+                                    ))
+                                )
+                            ),
+                        );
+                        return Err(CliRunResult::InvalidOptionConfig);
+                    }
                     nested_oxlintrc.insert(directory, v);
                 }
                 Ok(None) => {}
