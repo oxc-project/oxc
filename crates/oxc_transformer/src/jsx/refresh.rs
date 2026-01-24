@@ -351,7 +351,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             if let Some(binding_name) = binding_name {
                 self.non_builtin_hooks_callee.entry(current_scope_id).or_default().push(
                     ctx.scoping()
-                        .find_binding(
+                        .find_binding_by_name(
                             ctx.scoping().scope_parent_id(ctx.current_scope_id()).unwrap(),
                             binding_name.as_str(),
                         )

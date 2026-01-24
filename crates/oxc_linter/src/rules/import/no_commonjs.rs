@@ -233,7 +233,11 @@ impl Rule for NoCommonjs {
                     return;
                 }
 
-                if ctx.scoping().find_binding(ctx.scoping().root_scope_id(), "require").is_some() {
+                if ctx
+                    .scoping()
+                    .find_binding_by_name(ctx.scoping().root_scope_id(), "require")
+                    .is_some()
+                {
                     return;
                 }
 

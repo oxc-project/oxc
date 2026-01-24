@@ -57,7 +57,7 @@ use oxc_allocator::{Box as ArenaBox, StringBuilder as ArenaStringBuilder, TakeIn
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{Atom, GetSpan, Ident, SPAN};
 use oxc_syntax::{
     identifier::{is_identifier_name, is_identifier_part, is_identifier_start},
     keyword::is_reserved_keyword,
@@ -651,7 +651,7 @@ impl<'a, 'ctx> AsyncGeneratorExecutor<'a, 'ctx> {
         bound_ident: &BoundIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "arguments");
+        let symbol_id = ctx.scoping().find_binding_by_name(ctx.current_scope_id(), "arguments");
         let arguments_ident = Argument::from(ctx.create_ident_expr(
             SPAN,
             Atom::from("arguments"),
@@ -889,7 +889,11 @@ impl<'a> Visit<'a> for BindingMover<'a, '_> {
         let symbol_id = ident.symbol_id();
         let current_scope_id = symbols.symbol_scope_id(symbol_id);
         let scopes = self.ctx.scoping_mut();
-        scopes.move_binding(current_scope_id, self.target_scope_id, ident.name.as_str());
+        scopes.move_binding(
+            current_scope_id,
+            self.target_scope_id,
+            Ident::from(ident.name.as_str()),
+        );
         let symbols = self.ctx.scoping_mut();
         symbols.set_symbol_scope_id(symbol_id, self.target_scope_id);
     }

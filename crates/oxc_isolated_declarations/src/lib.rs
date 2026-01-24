@@ -13,7 +13,7 @@ use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, GetSpan, SPAN, SourceType};
+use oxc_span::{Atom, GetSpan, IdentHashSet, SPAN, SourceType};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 
@@ -575,7 +575,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 
-        let mut can_expando_function_names = FxHashSet::default();
+        let mut can_expando_function_names = IdentHashSet::default();
         for stmt in stmts {
             match stmt {
                 Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
@@ -610,7 +610,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 Statement::FunctionDeclaration(func) => {
                     if func.body.is_some()
                         && let Some(name) = func.name()
-                        && self.scope.has_value_reference(&name)
+                        && self.scope.has_value_reference(name)
                     {
                         can_expando_function_names.insert(name);
                     }
@@ -620,7 +620,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         if declarator.type_annotation.is_none()
                             && declarator.init.as_ref().is_some_and(Expression::is_function)
                             && let Some(name) = declarator.id.get_identifier_name()
-                            && self.scope.has_value_reference(&name)
+                            && self.scope.has_value_reference(name)
                         {
                             can_expando_function_names.insert(name);
                         }

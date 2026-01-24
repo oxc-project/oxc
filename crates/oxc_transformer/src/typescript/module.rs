@@ -109,7 +109,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
             let scope_id = ctx.current_scope_id();
-            ctx.scoping_mut().remove_binding(scope_id, &decl.id.name);
+            ctx.scoping_mut().remove_binding(scope_id, decl.id.name);
             return None;
         }
 
@@ -136,7 +136,7 @@ impl<'a> TypeScriptModule<'a, '_> {
                 }
 
                 let require_symbol_id =
-                    ctx.scoping().find_binding(ctx.current_scope_id(), "require");
+                    ctx.scoping().find_binding_by_name(ctx.current_scope_id(), "require");
                 let callee = ctx.create_ident_expr(
                     SPAN,
                     Atom::from("require"),

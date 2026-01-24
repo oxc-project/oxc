@@ -181,8 +181,7 @@ impl NoConstantBinaryExpression {
                     return ["Boolean", "String", "Number"].contains(&ident.name.as_str())
                         && ctx
                             .scoping()
-                            .root_unresolved_references()
-                            .contains_key(ident.name.as_str());
+                            .root_unresolved_references_contains_by_name(ident.name.as_str());
                 }
                 false
             }
@@ -305,16 +304,14 @@ impl NoConstantBinaryExpression {
             },
             Expression::CallExpression(call_expr) => {
                 if let Expression::Identifier(ident) = &call_expr.callee {
-                    let unresolved_references = ctx.scoping().root_unresolved_references();
-                    if (ident.name == "String" || ident.name == "Number")
-                        && unresolved_references.contains_key(ident.name.as_str())
-                    {
+                    let is_unresolved = ctx
+                        .scoping()
+                        .root_unresolved_references_contains_by_name(ident.name.as_str());
+                    if (ident.name == "String" || ident.name == "Number") && is_unresolved {
                         return true;
                     }
 
-                    if ident.name == "Boolean"
-                        && unresolved_references.contains_key(ident.name.as_str())
-                    {
+                    if ident.name == "Boolean" && is_unresolved {
                         return call_expr
                             .arguments
                             .iter()
@@ -358,8 +355,7 @@ impl NoConstantBinaryExpression {
                     return ctx.env_contains_var(ident.name.as_str())
                         && ctx
                             .scoping()
-                            .root_unresolved_references()
-                            .contains_key(ident.name.as_str());
+                            .root_unresolved_references_contains_by_name(ident.name.as_str());
                 }
                 false
             }

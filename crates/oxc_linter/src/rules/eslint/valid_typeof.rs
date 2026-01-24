@@ -135,7 +135,7 @@ impl Rule for ValidTypeof {
 
         if let Expression::Identifier(ident) = sibling
             && ident.name == "undefined"
-            && ctx.scoping().root_unresolved_references().contains_key(ident.name.as_str())
+            && ctx.scoping().root_unresolved_references_contains_by_name(ident.name.as_str())
         {
             ctx.diagnostic_with_fix(
                 if self.require_string_literals {
