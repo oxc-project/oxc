@@ -318,8 +318,12 @@ impl CliRunner {
             // Preserve previous behavior of `--rules` output when `-f` is set
             if self.options.output_options.format == OutputFormat::Default {
                 // Build the set of enabled builtin rule names from the resolved config.
-                let enabled: FxHashSet<&str> =
-                    config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
+                let enabled: FxHashSet<&str> = config_store
+                    .rules()
+                    .iter()
+                    .filter(|(rule, _)| self.options.type_aware || !rule.is_tsgolint_rule())
+                    .map(|(rule, _)| rule.name())
+                    .collect();
 
                 let table = RuleTable::default();
                 for section in &table.sections {
