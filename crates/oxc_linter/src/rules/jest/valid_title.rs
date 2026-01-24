@@ -284,10 +284,10 @@ enum MatchKind {
     Test,
 }
 
-#[derive(Copy, Clone)]
-enum MatcherPattern<'a> {
-    String(&'a serde_json::Value),
-    Vec(&'a Vec<serde_json::Value>),
+#[derive(Clone)]
+enum MatcherPattern {
+    String(CompactStr),
+    Vec(Vec<CompactStr>),
 }
 
 impl MatchKind {
@@ -312,7 +312,10 @@ fn compile_matcher_patterns(
                 let obj = matcher_patterns.as_object()?;
                 let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
                 for (key, value) in obj {
-                    let Some(v) = compile_matcher_pattern(MatcherPattern::String(value)) else {
+                    let string = value.as_str()?;
+                    let Some(v) =
+                        compile_matcher_pattern(MatcherPattern::String(CompactStr::from(string)))
+                    else {
                         continue;
                     };
                     if let Some(kind) = MatchKind::from(key) {
@@ -325,7 +328,9 @@ fn compile_matcher_patterns(
             |value| {
                 // for `["/pattern/", "message"]`
                 let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
-                let v = &compile_matcher_pattern(MatcherPattern::Vec(value))?;
+                let compact_vec: Vec<CompactStr> =
+                    value.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect();
+                let v = &compile_matcher_pattern(MatcherPattern::Vec(compact_vec))?;
                 map.insert(MatchKind::Describe, v.clone());
                 map.insert(MatchKind::Test, v.clone());
                 map.insert(MatchKind::It, v.clone());
@@ -337,9 +342,7 @@ fn compile_matcher_patterns(
                 // for `"/pattern/"`
                 let string = matcher_patterns.as_str()?;
                 let mut map: FxHashMap<MatchKind, CompiledMatcherAndMessage> = FxHashMap::default();
-                let v = &compile_matcher_pattern(MatcherPattern::String(
-                    &serde_json::Value::String(string.to_string()),
-                ))?;
+                let v = &compile_matcher_pattern(MatcherPattern::String(CompactStr::from(string)))?;
                 map.insert(MatchKind::Describe, v.clone());
                 map.insert(MatchKind::Test, v.clone());
                 map.insert(MatchKind::It, v.clone());
@@ -352,10 +355,8 @@ fn compile_matcher_patterns(
 fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAndMessage> {
     match pattern {
         MatcherPattern::String(pattern) => {
-            let pattern_str = pattern.as_str()?;
-
             // Check for JS regex literal: /pattern/flags
-            if let Some(stripped) = pattern_str.strip_prefix('/')
+            if let Some(stripped) = pattern.strip_prefix('/')
                 && let Some(end) = stripped.rfind('/')
             {
                 let (pat, _flags) = stripped.split_at(end);
@@ -365,12 +366,12 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
             }
 
             // Fallback: treat as a normal Rust regex with Unicode support
-            let reg_str = format!("(?u){pattern_str}");
+            let reg_str = format!("(?u){pattern}");
             let reg = Regex::new(&reg_str).ok()?;
             Some((reg, None))
         }
         MatcherPattern::Vec(pattern) => {
-            let pattern_str = pattern.first().and_then(|v| v.as_str())?;
+            let pattern_str = pattern.first()?;
 
             // Check for JS regex literal: /pattern/flags
             let regex = if let Some(stripped) = pattern_str.strip_prefix('/')
@@ -383,7 +384,7 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
                 Regex::new(&reg_str).ok()?
             };
 
-            let message = pattern.get(1).and_then(serde_json::Value::as_str).map(CompactStr::from);
+            let message = pattern.get(1).cloned();
             Some((regex, message))
         }
     }
@@ -452,9 +453,9 @@ fn validate_title(
         && !regex.is_match(title)
     {
         let raw_pattern = regex.as_str();
-        let message = match message.as_ref() {
-            Some(message) => message.as_str(),
-            None => &format!("{un_prefixed_name} should match {raw_pattern}"),
+        let message = match message {
+            Some(message) => message,
+            None => &CompactStr::from(format!("{un_prefixed_name} should match {raw_pattern}")),
         };
         ctx.diagnostic(must_match_diagnostic(message, span));
     }
@@ -463,9 +464,9 @@ fn validate_title(
         && regex.is_match(title)
     {
         let raw_pattern = regex.as_str();
-        let message = match message.as_ref() {
-            Some(message) => message.as_str(),
-            None => &format!("{un_prefixed_name} should not match {raw_pattern}"),
+        let message = match message {
+            Some(message) => message,
+            None => &CompactStr::from(format!("{un_prefixed_name} should not match {raw_pattern}")),
         };
 
         ctx.diagnostic(must_not_match_diagnostic(message, span));
