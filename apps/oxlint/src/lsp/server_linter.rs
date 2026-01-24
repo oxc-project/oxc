@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
+use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
 use tower_lsp_server::{
@@ -16,7 +17,8 @@ use tracing::{debug, warn};
 
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    FixKind, LintIgnoreMatcher, LintOptions, Oxlintrc,
+    FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder,
+    LintServiceOptions, Linter, Oxlintrc, read_to_string,
 };
 
 use oxc_language_server::{
@@ -33,8 +35,11 @@ use crate::{
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
         config_walker::ConfigWalker,
-        error_with_position::LinterCodeAction,
-        isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
+        error_with_position::{
+            DiagnosticReport, LinterCodeAction, create_unused_directives_messages,
+            generate_inverted_diagnostics, message_to_lsp_diagnostic,
+        },
+        lsp_file_system::LspFileSystem,
         options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
         utils::normalize_path,
     },
@@ -128,29 +133,45 @@ impl ServerLinterBuilder {
             ..Default::default()
         };
         let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
+        let config_store_clone = config_store.clone();
 
-        let isolated_linter = IsolatedLintHandler::new(
-            lint_options,
-            config_store,
-            &IsolatedLintHandlerOptions {
-                use_cross_module,
-                type_aware: options.type_aware,
-                fix_kind,
-                root_path: root_path.to_path_buf(),
-                tsconfig_path: options.ts_config_path.as_ref().map(|path| {
-                    let path = Path::new(path).to_path_buf();
-                    if path.is_relative() { root_path.join(path) } else { path }
-                }),
-            },
-        );
+        let linter = Linter::new(lint_options, config_store, None);
+        let mut lint_service_options =
+            LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
+
+        if let Some(ts_path) = options.ts_config_path.as_ref() {
+            let ts_path = Path::new(ts_path).to_path_buf();
+            let ts_path = if ts_path.is_relative() { root_path.join(ts_path) } else { ts_path };
+            if ts_path.is_file() {
+                lint_service_options = lint_service_options.with_tsconfig(&ts_path);
+            }
+        }
+
+        let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
+            .with_type_aware(options.type_aware)
+            .with_fix_kind(fix_kind)
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(e) => {
+                warn!("Failed to initialize type-aware linting: {e}");
+                let linter = Linter::new(lint_options, config_store_clone, None);
+                LintRunnerBuilder::new(lint_service_options, linter)
+                    .with_type_aware(false)
+                    .with_fix_kind(fix_kind)
+                    .build()
+                    .expect("Failed to build LintRunner without type-aware linting")
+            }
+        };
 
         ServerLinter::new(
             options.run,
             root_path.to_path_buf(),
-            isolated_linter,
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
+            runner,
+            lint_options.report_unused_directive,
         )
     }
 }
@@ -328,11 +349,12 @@ impl ServerLinterBuilder {
 pub struct ServerLinter {
     run: Run,
     cwd: PathBuf,
-    isolated_linter: IsolatedLintHandler,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
+    runner: LintRunner,
+    unused_directives_severity: Option<AllowWarnDeny>,
 }
 
 impl Tool for ServerLinter {
@@ -570,19 +592,21 @@ impl ServerLinter {
     pub fn new(
         run: Run,
         cwd: PathBuf,
-        isolated_linter: IsolatedLintHandler,
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
+        runner: LintRunner,
+        unused_directives_severity: Option<AllowWarnDeny>,
     ) -> Self {
         Self {
             run,
             cwd,
-            isolated_linter,
             ignore_matcher,
             gitignore_glob,
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
+            runner,
+            unused_directives_severity,
         }
     }
 
@@ -595,13 +619,24 @@ impl ServerLinter {
         }
     }
 
-    fn is_ignored(&self, uri: &Uri) -> bool {
-        let Some(uri_path) = uri.to_file_path() else {
-            return true;
-        };
+    fn is_lintable_extension(path: &Path) -> bool {
+        static WANTED_EXTENSIONS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
+        let wanted_exts =
+            WANTED_EXTENSIONS.get_or_init(|| LINTABLE_EXTENSIONS.iter().copied().collect());
 
-        if self.ignore_matcher.should_ignore(&uri_path) {
-            debug!("ignored: {uri:?}");
+        path.extension()
+            .and_then(std::ffi::OsStr::to_str)
+            .is_some_and(|ext| wanted_exts.contains(ext))
+    }
+
+    fn is_ignored(&self, uri_path: &Path) -> bool {
+        if !Self::is_lintable_extension(uri_path) {
+            debug!("ignored (unsupported extension): {uri_path:?}");
+            return true;
+        }
+
+        if self.ignore_matcher.should_ignore(uri_path) {
+            debug!("ignored: {uri_path:?}");
             return true;
         }
 
@@ -609,8 +644,8 @@ impl ServerLinter {
             if !uri_path.starts_with(gitignore.path()) {
                 continue;
             }
-            if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
-                debug!("ignored: {uri:?}");
+            if gitignore.matched_path_or_any_parents(uri_path, uri_path.is_dir()).is_ignore() {
+                debug!("ignored: {uri_path:?}");
                 return true;
             }
         }
@@ -619,14 +654,17 @@ impl ServerLinter {
 
     /// Lint a single file, returning an empty diagnostics list if the file is ignored.
     fn run_file(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<Diagnostic>, String> {
-        if self.is_ignored(uri) {
+        let Some(uri_path) = uri.to_file_path() else {
+            return Ok(Vec::new());
+        };
+        if self.is_ignored(&uri_path) {
             return Ok(Vec::new());
         }
 
         let mut diagnostics = vec![];
         let mut code_actions = vec![];
 
-        let reports = self.isolated_linter.run_single(uri, content)?;
+        let reports = self.run_single(&uri_path, uri, content)?;
         for report in reports {
             diagnostics.push(report.diagnostic);
 
@@ -638,6 +676,60 @@ impl ServerLinter {
         self.code_actions.pin().insert(uri.clone(), Some(code_actions));
 
         Ok(diagnostics)
+    }
+
+    pub fn run_single(
+        &self,
+        path: &Path,
+        uri: &Uri,
+        content: Option<&str>,
+    ) -> Result<Vec<DiagnosticReport>, String> {
+        let source_text = if let Some(content) = content {
+            content
+        } else {
+            &read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))?
+        };
+
+        let mut diagnostics = self.lint_path(path, uri, source_text)?;
+        diagnostics.append(&mut generate_inverted_diagnostics(&diagnostics, uri));
+        Ok(diagnostics)
+    }
+
+    fn lint_path(
+        &self,
+        path: &Path,
+        uri: &Uri,
+        source_text: &str,
+    ) -> Result<Vec<DiagnosticReport>, String> {
+        debug!("lint {}", path.display());
+        let rope = &Rope::from_str(source_text);
+
+        let mut fs = LspFileSystem::default();
+        fs.add_file(path.to_path_buf(), Arc::from(source_text));
+
+        let mut messages: Vec<DiagnosticReport> = self
+            .runner
+            .run_source(&[Arc::from(path.as_os_str())], &fs)?
+            .into_iter()
+            .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
+            .collect();
+
+        // Add unused directives if configured
+        if let Some(severity) = self.unused_directives_severity
+            && let Some(directives) = self.runner.directives_coordinator().get(path)
+        {
+            messages.extend(
+                create_unused_directives_messages(&directives, severity, source_text)
+                    .into_iter()
+                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
+            );
+        }
+
+        // Clear any stale directives because they are no longer needed.
+        // This prevents using outdated directive spans if the new linting run fails.
+        self.runner.directives_coordinator().remove(path);
+
+        Ok(messages)
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
