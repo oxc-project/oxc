@@ -55,7 +55,7 @@ fn unexpected_mix(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ObjectShorthand(Box<ObjectShorthandConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Clone, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct ObjectShorthandConfigJSON {
     apply_to_methods: bool,
@@ -88,7 +88,7 @@ impl ObjectShorthandConfigJSON {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct ObjectShorthandConfig {
     apply_to_methods: bool,
     apply_to_properties: bool,
@@ -99,6 +99,22 @@ pub struct ObjectShorthandConfig {
     ignore_constructors: bool,
     avoid_explicit_return_arrows: bool,
     methods_ignore_pattern: Option<Regex>,
+}
+
+impl Default for ObjectShorthandConfig {
+    fn default() -> Self {
+        Self {
+            apply_to_methods: true,
+            apply_to_properties: true,
+            apply_never: false,
+            apply_consistent: false,
+            apply_consistent_as_needed: false,
+            avoid_quotes: false,
+            ignore_constructors: false,
+            avoid_explicit_return_arrows: false,
+            methods_ignore_pattern: None,
+        }
+    }
 }
 
 impl std::ops::Deref for ObjectShorthand {
