@@ -1133,7 +1133,7 @@ pub fn setter_with_parameters(span: Span, parameters_count: usize) -> OxcDiagnos
 
 #[cold]
 pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
+    ts_error("1053", "A 'set' accessor cannot have rest parameter.").with_label(span)
 }
 #[cold]
 pub fn setter_with_initializer(span: Span) -> OxcDiagnostic {

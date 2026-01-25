@@ -11997,7 +11997,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                  ──────
    ╰────
 
-  × A 'set' accessor cannot have rest parameter.
+  × TS(1053): A 'set' accessor cannot have rest parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/rest-parameter/invalid-setter-rest/input.js:1:13]
  1 │ x = { set f(...y) {} }
    ·             ────
@@ -13305,7 +13305,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor cannot have rest parameter.
+  × TS(1053): A 'set' accessor cannot have rest parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter/input.ts:2:11]
  1 │ interface Foo {
  2 │   set bar(...v);
@@ -13322,7 +13322,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor cannot have rest parameter.
+  × TS(1053): A 'set' accessor cannot have rest parameter.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-reset-parameter-babel-7/input.ts:2:11]
  1 │ interface Foo {
  2 │   set bar(...v);

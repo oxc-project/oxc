@@ -2494,7 +2494,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  4 │ }
    ╰────
 
-  × A 'set' accessor cannot have rest parameter.
+  × TS(1053): A 'set' accessor cannot have rest parameter.
    ╭─[typescript/tests/cases/compiler/accessorWithRestParam.ts:2:11]
  1 │ class C {
  2 │     set X(...v) { }
@@ -2502,7 +2502,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     static set X(...v2) { }
    ╰────
 
-  × A 'set' accessor cannot have rest parameter.
+  × TS(1053): A 'set' accessor cannot have rest parameter.
    ╭─[typescript/tests/cases/compiler/accessorWithRestParam.ts:3:18]
  2 │     set X(...v) { }
  3 │     static set X(...v2) { }
@@ -22529,7 +22529,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × A 'set' accessor cannot have rest parameter.
+  × TS(1053): A 'set' accessor cannot have rest parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration18.ts:2:12]
  1 │ class C {
  2 │    set Foo(...a) { }
