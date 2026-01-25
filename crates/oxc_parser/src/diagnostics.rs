@@ -1115,11 +1115,9 @@ pub fn interface_extend(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
-    )
-    .with_label(span)
-    .with_help("v flag enables additional syntax over u flag")
+    ts_error("1502", "The 'u' and 'v' regular expression flags cannot be enabled at the same time")
+        .with_label(span)
+        .with_help("v flag enables additional syntax over u flag")
 }
 
 #[cold]

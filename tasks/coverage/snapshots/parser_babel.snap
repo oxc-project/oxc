@@ -8434,7 +8434,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: The `v` flag is a superset of `u`. Use only either of them
 
-  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+  × TS(1502): The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[babel/packages/babel-parser/test/fixtures/es2024/regexp-unicode-sets/uv-error/input.js:1:1]
  1 │ /a/ugv;
    · ──────
@@ -8448,7 +8448,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: The `v` flag is a superset of `u`. Use only either of them
 
-  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+  × TS(1502): The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[babel/packages/babel-parser/test/fixtures/es2024/regexp-unicode-sets/vu-error/input.js:1:1]
  1 │ /a/vu;
    · ─────

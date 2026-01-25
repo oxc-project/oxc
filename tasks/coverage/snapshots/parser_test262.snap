@@ -1594,7 +1594,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: The `v` flag is a superset of `u`. Use only either of them
 
-  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+  × TS(1502): The 'u' and 'v' regular expression flags cannot be enabled at the same time
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:18:1]
  17 │ 
  18 │ /./uv;
