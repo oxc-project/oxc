@@ -1132,12 +1132,18 @@ pub fn setter_with_parameters(span: Span, parameters_count: usize) -> OxcDiagnos
 }
 
 #[cold]
-pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1053", "A 'set' accessor cannot have rest parameter.").with_label(span)
+pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
 }
+
 #[cold]
 pub fn setter_with_initializer(span: Span) -> OxcDiagnostic {
     ts_error("1052", "A 'set' accessor cannot have an initializer.").with_label(span)
+}
+
+#[cold]
+pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1053", "A 'set' accessor cannot have rest parameter.").with_label(span)
 }
 
 #[cold]
@@ -1145,11 +1151,6 @@ pub fn getter_parameters(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.")
         .with_label(span)
         .with_help("Remove these parameters here")
-}
-
-#[cold]
-pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
 }
 
 #[cold]
