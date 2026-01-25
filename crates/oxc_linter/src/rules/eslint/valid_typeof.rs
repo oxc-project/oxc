@@ -14,7 +14,7 @@ use crate::{
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     let mut d =
-        OxcDiagnostic::warn("Typeof comparisons should be to string literals.").with_label(span);
+        OxcDiagnostic::warn("`typeof` comparisons should be to string literals.").with_label(span);
     if let Some(x) = help {
         d = d.with_help(x);
     }
@@ -22,7 +22,7 @@ fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
 }
 
 fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn("Invalid typeof comparison value.").with_label(span);
+    let mut d = OxcDiagnostic::warn("Invalid `typeof` comparison value.").with_label(span);
     if let Some(x) = help {
         d = d.with_help(x);
     }
@@ -93,6 +93,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidTypeof {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // match on `typeof` unary expression for better performance
         let _unary_expr = match node.kind() {
@@ -156,10 +160,6 @@ impl Rule for ValidTypeof {
         {
             ctx.diagnostic(not_string(None, sibling.span()));
         }
-    }
-
-    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
