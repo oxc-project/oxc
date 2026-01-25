@@ -254,6 +254,9 @@ function runGroup(group: TestGroup, mocks: Mocks) {
     const path = resolveFromTestsDir(parserDetails.specifier);
     const parser = require(path);
 
+    // Set `default` export on parser module to work around apparent bug in `tsx`
+    if (parser && parser.default === undefined) parser.default = parser;
+
     parserModules.set(parser, parserDetails);
     parserModulePaths.set(path, parserDetails);
   }
