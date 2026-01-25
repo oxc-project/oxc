@@ -733,7 +733,10 @@ pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuil
     for case in &stmt.cases {
         if case.test.is_none() {
             if let Some(previous_span) = previous_default {
-                ctx.error(diagnostics::redeclaration("default", previous_span, case.span));
+                ctx.error(diagnostics::switch_stmt_cannot_have_multiple_default_case(
+                    previous_span,
+                    case.span,
+                ));
                 break;
             }
             previous_default.replace(case.span);

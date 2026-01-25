@@ -1716,12 +1716,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─
    ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[babel/packages/babel-parser/test/fixtures/core/uncategorised/427/input.js:1:14]
  1 │ switch (c) { default: default: }
    ·              ────┬─── ────┬───
-   ·                  │        ╰── It can not be redeclared here
-   ·                  ╰── `default` has already been declared here
+   ·                  │        ╰── Another 'default' clause cannot appear here.
+   ·                  ╰── First 'default' clause is here.
    ╰────
 
   × Unexpected token
@@ -11147,12 +11147,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Wrap this declaration in a block statement
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[babel/packages/babel-parser/test/fixtures/esprima/invalid-syntax/migrated_0143/input.js:1:14]
  1 │ switch (c) { default: default: }
    ·              ────┬─── ────┬───
-   ·                  │        ╰── It can not be redeclared here
-   ·                  ╰── `default` has already been declared here
+   ·                  │        ╰── Another 'default' clause cannot appear here.
+   ·                  ╰── First 'default' clause is here.
    ╰────
 
   × Unexpected token

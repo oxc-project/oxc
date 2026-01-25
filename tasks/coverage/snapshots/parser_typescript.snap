@@ -11474,39 +11474,39 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  28 │             default: default:
     ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:6:5]
  5 │         case 2:
  6 │ ╭─▶     default:    // No issues.
  7 │ ├─▶         break;
-   · ╰──── `default` has already been declared here
+   · ╰──── First 'default' clause is here.
  8 │         default:    // Error; second 'default' clause.
    ·         ────┬───
-   ·             ╰── It can not be redeclared here
+   ·             ╰── Another 'default' clause cannot appear here.
  9 │         default:    // Error; third 'default' clause.
    ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
     ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:19:13]
  18 │             switch (x * x) {
  19 │                 default:    // No issues.
     ·                 ────┬───
-    ·                     ╰── `default` has already been declared here
+    ·                     ╰── First 'default' clause is here.
  20 │ ╭─▶             default:    // Error; second 'default' clause.
  21 │ ├─▶                 break;
-    · ╰──── It can not be redeclared here
+    · ╰──── Another 'default' clause cannot appear here.
  22 │                 case 10000:
     ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults1.ts:6:9]
  5 │             case 2:
  6 │ ╭─▶         default:    // No issues.
  7 │ ├─▶             break;
-   · ╰──── `default` has already been declared here
+   · ╰──── First 'default' clause is here.
  8 │             default:    // Error; second 'default' clause.
    ·             ────┬───
-   ·                 ╰── It can not be redeclared here
+   ·                 ╰── Another 'default' clause cannot appear here.
  9 │             default:    // Error; third 'default' clause.
    ╰────
 

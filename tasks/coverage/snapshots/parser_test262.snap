@@ -38454,17 +38454,17 @@ Negative Passed: 4581/4581 (100.00%)
  22 │ }
     ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
     ╭─[test262/test/language/statements/switch/S12.11_A2_T1.js:22:5]
  21 │           result += 2;
  22 │ ╭─▶     default:
  23 │ │         result += 32;
  24 │ ├─▶       break;
-    · ╰──── `default` has already been declared here
+    · ╰──── First 'default' clause is here.
  25 │ ╭─▶     default:
  26 │ │         result += 32;
  27 │ ├─▶       break;
-    · ╰──── It can not be redeclared here
+    · ╰──── Another 'default' clause cannot appear here.
  28 │       }
     ╰────
 
