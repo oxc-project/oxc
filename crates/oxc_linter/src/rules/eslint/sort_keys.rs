@@ -1172,6 +1172,8 @@ fn test() {
         ("var obj = {2:1, a:2, 1:3}", "var obj = {1:3, 2:1, a:2}"),
         // Spreading at the start
         ("var obj = {...z, b:1, a:2}", "var obj = {...z, a:2, b:1}"),
+        // Spreading at the start when one of the keys is the empty string
+        ("var obj = {...z, a:1, '':2}", "var obj = {...z, '':2, a:1}"),
         // Spreading multiple times at the start
         ("var obj = {...z, ...y, b:1, a:2,}", "var obj = {...z, ...y, a:2, b:1,}"),
         // Spreading at the end
