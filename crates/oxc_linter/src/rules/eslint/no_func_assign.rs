@@ -94,25 +94,25 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("function foo() { var foo = bar; }", None),
-        ("function foo(foo) { foo = bar; }", None),
-        ("function foo() { var foo; foo = bar; }", None),
-        ("var foo = () => {}; foo = bar;", None),
-        ("var foo = function() {}; foo = bar;", None),
-        ("var foo = function() { foo = bar; };", None),
-        ("import bar from 'bar'; function foo() { var foo = bar; }", None),
+        "function foo() { var foo = bar; }",
+        "function foo(foo) { foo = bar; }",
+        "function foo() { var foo; foo = bar; }",
+        "var foo = () => {}; foo = bar;", // { "ecmaVersion": 6 },
+        "var foo = function() {}; foo = bar;",
+        "var foo = function() { foo = bar; };",
+        "import bar from 'bar'; function foo() { var foo = bar; }", // { "ecmaVersion": 6, "sourceType": "module" }
     ];
 
     let fail = vec![
-        ("function foo() {}; foo = bar;", None),
-        ("function foo() { foo = bar; }", None),
-        ("foo = bar; function foo() { };", None),
-        ("[foo] = bar; function foo() { };", None),
-        ("({x: foo = 0} = bar); function foo() { };", None),
-        ("function foo() { [foo] = bar; }", None),
-        ("(function() { ({x: foo = 0} = bar); function foo() { }; })();", None),
-        ("var a = function foo() { foo = 123; };", None),
-        ("let a = function hello() { hello = 123;};", None),
+        "function foo() {}; foo = bar;",
+        "function foo() { foo = bar; }",
+        "foo = bar; function foo() { };",
+        "[foo] = bar; function foo() { };", // { "ecmaVersion": 6 },
+        "({x: foo = 0} = bar); function foo() { };", // { "ecmaVersion": 6 },
+        "function foo() { [foo] = bar; }",  // { "ecmaVersion": 6 },
+        "(function() { ({x: foo = 0} = bar); function foo() { }; })();", // { "ecmaVersion": 6 },
+        "var a = function foo() { foo = 123; };",
+        "let a = function hello() { hello = 123;};",
     ];
 
     Tester::new(NoFuncAssign::NAME, NoFuncAssign::PLUGIN, pass, fail).test_and_snapshot();

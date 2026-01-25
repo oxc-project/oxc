@@ -11,11 +11,13 @@ use crate::{
 pub struct OnlyThrowError(Box<OnlyThrowErrorConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct OnlyThrowErrorConfig {
     /// An array of type or value specifiers for additional types that are allowed to be thrown.
     /// Use this to allow throwing custom error types.
     pub allow: Vec<TypeOrValueSpecifier>,
+    /// Whether to allow rethrowing caught values that are not Error objects.
+    pub allow_rethrowing: bool,
     /// Whether to allow throwing values typed as `any`.
     pub allow_throwing_any: bool,
     /// Whether to allow throwing values typed as `unknown`.
@@ -24,7 +26,12 @@ pub struct OnlyThrowErrorConfig {
 
 impl Default for OnlyThrowErrorConfig {
     fn default() -> Self {
-        Self { allow: Vec::new(), allow_throwing_any: true, allow_throwing_unknown: true }
+        Self {
+            allow: Vec::new(),
+            allow_rethrowing: true,
+            allow_throwing_any: true,
+            allow_throwing_unknown: true,
+        }
     }
 }
 
@@ -86,10 +93,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for OnlyThrowError {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<OnlyThrowError>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

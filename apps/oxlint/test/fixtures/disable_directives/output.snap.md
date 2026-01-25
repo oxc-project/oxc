@@ -10,7 +10,7 @@
  2 | 
    `----
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
     ,-[files/index.js:10:1]
   9 | // should trigger an error
  10 | debugger;
@@ -43,7 +43,7 @@
     `----
 
 Found 0 warnings and 5 errors.
-Finished in Xms on 1 file using X threads.
+Finished in Xms on 1 file with 2 rules using X threads.
 ```
 
 # stderr

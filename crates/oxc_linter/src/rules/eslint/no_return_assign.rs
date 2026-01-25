@@ -72,10 +72,8 @@ fn is_sentinel_node(ast_kind: AstKind) -> bool {
 }
 
 impl Rule for NoReturnAssign {
-    fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoReturnAssign>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -221,4 +219,23 @@ fn test() {
     ];
 
     Tester::new(NoReturnAssign::NAME, NoReturnAssign::PLUGIN, pass, fail).test_and_snapshot();
+}
+
+#[test]
+fn invalid_configs_error_in_from_configuration() {
+    // An array with an object should produce an error, since the rule only accepts a string.
+    let invalid = serde_json::json!([{ "foo": "bar" }]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+
+    // String that isn't one of the allowed options should produce an error
+    let invalid = serde_json::json!(["foobar"]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+    let invalid = serde_json::json!(["ExceptParens"]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+    let invalid = serde_json::json!(["Always"]);
+    assert!(NoReturnAssign::from_configuration(invalid).is_err());
+
+    // Valid configs should not produce an error
+    let valid = serde_json::json!(["except-parens"]);
+    assert!(NoReturnAssign::from_configuration(valid).is_ok());
 }

@@ -130,7 +130,7 @@ impl<'a> ClassesStack<'a> {
         // TODO: Check there are tests for bindings in enclosing classes.
         for class in self.stack[1..].iter_mut().rev() {
             if let Some(private_props) = &mut class.private_props
-                && let Some(prop) = private_props.get(&ident.name)
+                && let Some(prop) = private_props.get(&Atom::from(ident.name))
             {
                 return ret_fn(prop, &mut class.bindings, class.is_declaration);
             }

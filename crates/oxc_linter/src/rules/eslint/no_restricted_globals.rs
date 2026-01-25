@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// `event`, but using this variable has been considered as a bad practice for a long time. Restricting
     /// this will make sure this variable isn't used in browser code.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// If we have options:
     ///
@@ -63,7 +63,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoRestrictedGlobals {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let list = match value {
             Value::Array(arr) => arr.iter().fold(FxHashMap::default(), |mut acc, v| match v {
                 // "no-restricted-globals": ["error", "event"]
@@ -83,7 +83,7 @@ impl Rule for NoRestrictedGlobals {
             _ => FxHashMap::default(),
         };
 
-        Self { restricted_globals: Box::new(list) }
+        Ok(Self { restricted_globals: Box::new(list) })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

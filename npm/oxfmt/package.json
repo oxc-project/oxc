@@ -1,9 +1,16 @@
 {
   "name": "oxfmt",
-  "version": "0.20.0",
+  "version": "0.26.0",
   "description": "Formatter for the JavaScript Oxidation Compiler",
-  "keywords": [],
-  "homepage": "https://oxc.rs",
+  "keywords": [
+    "formatter",
+    "javascript",
+    "oxc",
+    "oxfmt",
+    "prettier",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/formatter",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "license": "MIT",
   "author": "Boshen and oxc contributors",

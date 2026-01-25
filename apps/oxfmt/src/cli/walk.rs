@@ -5,7 +5,7 @@ use std::{
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
-use crate::core::FormatFileStrategy;
+use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
 
 pub struct Walk {
     inner: ignore::WalkParallel,
@@ -120,15 +120,16 @@ impl Walk {
         }
 
         //
-        // Filter paths by formatter ignores
+        // Filter positional paths by formatter ignores
         //
-        // NOTE: Base paths passed to `WalkBuilder` are not filtered by `filter_entry()`,
+        // Base paths passed to `WalkBuilder` are not filtered by `filter_entry()`,
         // so we need to filter them here before passing to the walker.
         // This is needed for cases like `husky`, may specify ignored paths as staged files.
         // NOTE: Git ignored paths are not filtered here.
+        // But it's OK because in cases like `husky`, they are never staged.
         let target_paths: Vec<_> = target_paths
             .into_iter()
-            .filter(|path| !is_ignored(&matchers, path, path.is_dir()))
+            .filter(|path| !is_ignored(&matchers, path, path.is_dir(), true))
             .collect();
 
         // If no target paths remain after filtering, return `None`.
@@ -170,7 +171,7 @@ impl Walk {
             }
 
             // Check ignore files, patterns
-            if is_ignored(&matchers, entry.path(), is_dir) {
+            if is_ignored(&matchers, entry.path(), is_dir, false) {
                 return false;
             }
 
@@ -224,9 +225,22 @@ impl Walk {
 
 /// Check if a path should be ignored by any of the matchers.
 /// A path is ignored if any matcher says it's ignored (and not whitelisted in that same matcher).
-fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool) -> bool {
+///
+/// When `check_ancestors: true`, also checks if any parent directory is ignored.
+/// This is more expensive, but necessary when paths (to be ignored) are passed directly via CLI arguments.
+/// For normal walking, walk is done in a top-down manner, so only the current path needs to be checked.
+fn is_ignored(matchers: &[Gitignore], path: &Path, is_dir: bool, check_ancestors: bool) -> bool {
     for matcher in matchers {
-        let matched = matcher.matched(path, is_dir);
+        let matched = if check_ancestors {
+            // `matched_path_or_any_parents()` panics if path is not under matcher's root.
+            // Skip this matcher if the path is outside its scope.
+            if !path.starts_with(matcher.path()) {
+                continue;
+            }
+            matcher.matched_path_or_any_parents(path, is_dir)
+        } else {
+            matcher.matched(path, is_dir)
+        };
         if matched.is_ignore() && !matched.is_whitelist() {
             return true;
         }
@@ -239,7 +253,7 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf
     if !ignore_paths.is_empty() {
         let mut result = Vec::with_capacity(ignore_paths.len());
         for path in ignore_paths {
-            let path = if path.is_absolute() { path.clone() } else { cwd.join(path) };
+            let path = normalize_relative_path(cwd, path);
             if !path.exists() {
                 return Err(format!("{}: File not found", path.display()));
             }

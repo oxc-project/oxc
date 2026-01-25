@@ -19,21 +19,21 @@ This is the linter for Oxc. The currently supported features are listed below.
 - Command to fix all auto-fixable content within the current text editor.
 - Support for `source.fixAll.oxc` as a code action provider. Configure this in your settings `editor.codeActionsOnSave`
   to automatically apply fixes when saving the file.
-- Support for multi root workspaces
+- Support for multi-root workspaces.
+- Support for type-aware linting when the `oxlint-tsgolint` package is installed and the `oxc.typeAware` setting is set to true.
 
 ## Oxfmt
 
 This is the formatter for Oxc. The currently supported features are listed below.
 
-- Experimental formatting with `oxc.fmt.experimental`
-
-To enable it, use a VSCode `settings.json` like:
+To enable it as your default formatter, use a VS Code `settings.json` like:
 
 ```json
 {
-  "oxc.fmt.experimental": true,
-  "editor.defaultFormatter": "oxc.oxc-vscode"
-  // Or enable it for specific files:
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file" // tell oxfmt to format the whole file, not only the modified lines
+  // Or enable it for specific file types:
   // "[javascript]": {
   //   "editor.defaultFormatter": "oxc.oxc-vscode"
   // },
@@ -48,16 +48,16 @@ To enable it, use a VSCode `settings.json` like:
 
 Following configurations are supported via `settings.json` and affect the window editor:
 
-| Key                 | Default Value | Possible Values                  | Description                                                                                      |
-| ------------------- | ------------- | -------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `oxc.enable`        | `true`        | `true` \| `false`                | Enable oxc language server                                                                       |
-| `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the language server `PATH` environment.               |
-| `oxc.path.oxfmt`    | -             | `<string>`                       | Path to an Oxc formatter binary. Will be used by the language server instead of the bundled one. |
-| `oxc.path.oxlint`   | -             | `<string>`                       | Path to an Oxc linter binary. Will be used by the language server instead of the bundled one.    |
-| `oxc.path.tsgolint` | -             | `<string>`                       | Path to an Oxc tsgolint binary. Will be used by the language server instead of the bundled one.  |
-| `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                                |
-| Deprecated          |               |                                  |                                                                                                  |
-| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.                      |
+| Key                 | Default Value | Possible Values                  | Description                                                                             |
+| ------------------- | ------------- | -------------------------------- | --------------------------------------------------------------------------------------- |
+| `oxc.enable`        | `true`        | `true` \| `false`                | Enable oxc language server                                                              |
+| `oxc.path.node`     | -             | `<string>`                       | Path to a Node.js binary. Will be added to the `oxfmt` and `oxlint` `PATH` environment. |
+| `oxc.path.oxfmt`    | -             | `<string>`                       | Path to an Oxc formatter binary. Default: auto detection in `node_modules`.             |
+| `oxc.path.oxlint`   | -             | `<string>`                       | Path to an Oxc linter binary. Default: auto detection in `node_modules`.                |
+| `oxc.path.tsgolint` | -             | `<string>`                       | Path to an Oxc tsgolint binary. Default: auto detection from `oxlint`.                  |
+| `oxc.trace.server`  | `off`         | `off` \| `messages` \| `verbose` | Traces the communication between VS Code and the language server.                       |
+| Deprecated          |               |                                  |                                                                                         |
+| `oxc.path.server`   | -             | `<string>`                       | Path to Oxc language server binary. Mostly for testing the language server.             |
 
 ### Workspace Configuration
 
@@ -76,7 +76,7 @@ Following configurations are supported via `settings.json` and can be changed fo
 | `oxc.unusedDisableDirectives` | `allow`       | `allow` \| `warn` \| `deny`                                                                                   | Define how directive comments like `// oxlint-disable-line` should be reported, when no errors would have been reported on that line anyway.                                 |
 | Deprecated                    |               |                                                                                                               |                                                                                                                                                                              |
 | `oxc.flags`                   | `{}`          | `Record<string, string>`                                                                                      | Specific Oxlint flags to pass to the language server.                                                                                                                        |
-| `oxc.fmt.experimental`        | `true`        | `true` \| `false`                                                                                             | Enable experimental formatting support. This feature is experimental and might not work as expected.                                                                         |
+| `oxc.fmt.experimental`        | `true`        | `true` \| `false`                                                                                             | Enable Oxfmt formatting support.                                                                                                                                             |
 
 #### FixKind
 
@@ -88,8 +88,3 @@ Following configurations are supported via `settings.json` and can be changed fo
 - `"all"`
 
 <!-- END_GENERATED_CONFIGURATION -->
-
-## Testing
-
-Run `pnpm server:build:debug` to build the language server.
-After that, you can test the vscode plugin + E2E Tests with `pnpm test`.

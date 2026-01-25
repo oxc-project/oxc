@@ -18,9 +18,10 @@ use crate::{
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
+        rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
+    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
     rules::RULES,
 };
 
@@ -227,15 +228,12 @@ impl ConfigStoreBuilder {
         {
             let all_rules = builder.get_all_rules();
 
-            oxlintrc
-                .rules
-                .override_rules(
-                    &mut builder.rules,
-                    &mut builder.external_rules,
-                    &all_rules,
-                    external_plugin_store,
-                )
-                .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+            oxlintrc.rules.override_rules(
+                &mut builder.rules,
+                &mut builder.external_rules,
+                &all_rules,
+                external_plugin_store,
+            )?;
         }
 
         Ok(builder)
@@ -402,9 +400,7 @@ impl ConfigStoreBuilder {
         }
 
         let overrides = std::mem::take(&mut self.overrides);
-        let resolved_overrides = self
-            .resolve_overrides(overrides, external_plugin_store)
-            .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+        let resolved_overrides = self.resolve_overrides(overrides, external_plugin_store)?;
 
         let mut rules: Vec<_> = self
             .rules
@@ -432,7 +428,7 @@ impl ConfigStoreBuilder {
         &self,
         overrides: OxlintOverrides,
         external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
+    ) -> Result<ResolvedOxlintOverrides, Vec<OverrideRulesError>> {
         let resolved = overrides
             .into_iter()
             .map(|override_config| {
@@ -459,7 +455,7 @@ impl ConfigStoreBuilder {
                         .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity)),
                 );
 
-                Ok(ResolvedOxlintOverride {
+                Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
@@ -578,6 +574,14 @@ impl ConfigStoreBuilder {
             None
         };
 
+        if let Some(plugin_name) = &plugin_name
+            && LintPlugins::try_from(plugin_name.as_str()).is_ok()
+        {
+            return Err(ConfigBuilderError::ReservedExternalPluginName {
+                plugin_name: plugin_name.clone(),
+            });
+        }
+
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
         let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
@@ -598,6 +602,14 @@ impl ConfigStoreBuilder {
             );
             Ok(())
         } else {
+            // TODO: If a plugin with a reserved name reaches this point, it has already been
+            // loaded on the JS/NAPI side but is not registered in `ExternalPluginStore` on
+            // the Rust side. This leaves the NAPI-side rule list longer than the Rust-side
+            // rule list, so a later call to `register_plugin` can hit the offset assertion
+            // because the expected rule count no longer matches. Consider explicitly
+            // unloading or rolling back the plugin here to keep both sides in sync. We
+            // currently avoid this situation in practice by checking for reserved names
+            // before calling `load_plugin` above.
             Err(ConfigBuilderError::ReservedExternalPluginName { plugin_name })
         }
     }
@@ -636,12 +648,16 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
         error: String,
     },
-    ExternalRuleLookupError(ExternalRuleLookupError),
     NoExternalLinterConfigured {
         plugin_specifier: String,
     },
     ReservedExternalPluginName {
         plugin_name: String,
+    },
+    /// Multiple errors parsing rule configuration options
+    RuleConfigurationErrors {
+        /// The errors that occurred
+        errors: Vec<OverrideRulesError>,
     },
 }
 
@@ -693,12 +709,26 @@ impl Display for ConfigBuilderError {
                 )?;
                 Ok(())
             }
-            ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
+            ConfigBuilderError::RuleConfigurationErrors { errors } => {
+                for (i, error) in errors.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str("\n\n")?;
+                    }
+                    write!(f, "{error}")?;
+                }
+                Ok(())
+            }
         }
     }
 }
 
 impl std::error::Error for ConfigBuilderError {}
+
+impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
+    fn from(errors: Vec<OverrideRulesError>) -> Self {
+        ConfigBuilderError::RuleConfigurationErrors { errors }
+    }
+}
 
 #[cfg(test)]
 mod test {
@@ -783,6 +813,7 @@ mod test {
             assert_eq!(*severity, AllowWarnDeny::Deny);
         }
     }
+
     // turn on a rule that isn't configured yet and set it to "warn"
     // note that this is an eslint rule, a plugin that's already turned on.
     #[test]

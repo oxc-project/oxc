@@ -553,125 +553,104 @@ fn test() {
         r#"const {length} = "🦄".split("")"#,
     ];
 
-    let expect_fix = vec![
+    let fix = vec![
         // `Array.from()`
-        ("const x = Array.from(set);", "const x = [...set];", None),
-        ("Array.from(new Set([1, 2])).map(() => {});", "[...new Set([1, 2])].map(() => {});", None),
+        ("const x = Array.from(set);", "const x = [...set];"),
+        ("Array.from(new Set([1, 2])).map(() => {});", "[...new Set([1, 2])].map(() => {});"),
         // `Array.from()` - ASI hazard cases (need semicolon prefix)
         (
             "const foo = bar\nArray.from(set).map(() => {})",
             "const foo = bar\n;[...set].map(() => {})",
-            None,
         ),
-        (
-            "foo()\nArray.from(set).forEach(doSomething)",
-            "foo()\n;[...set].forEach(doSomething)",
-            None,
-        ),
+        ("foo()\nArray.from(set).forEach(doSomething)", "foo()\n;[...set].forEach(doSomething)"),
         // `Array.from()` - No ASI hazard (semicolon already present)
         (
             "const foo = bar;\nArray.from(set).map(() => {})",
             "const foo = bar;\n[...set].map(() => {})",
-            None,
         ),
         // `Array.from()` - ASI hazard with comments before
         (
             "foo() /* comment */\nArray.from(set).map(() => {})",
             "foo() /* comment */\n;[...set].map(() => {})",
-            None,
         ),
         (
             "foo() // comment\nArray.from(set).map(() => {})",
             "foo() // comment\n;[...set].map(() => {})",
-            None,
         ),
         // `array.slice()`
-        ("array.slice()", "[...array]", None),
-        ("array.slice(1).slice()", "[...array.slice(1)]", None),
+        ("array.slice()", "[...array]"),
+        ("array.slice(1).slice()", "[...array.slice(1)]"),
         // `array.slice()` - ASI hazard cases
-        ("foo()\narray.slice()", "foo()\n;[...array]", None),
+        ("foo()\narray.slice()", "foo()\n;[...array]"),
         // `array.toSpliced()`
-        ("array.toSpliced()", "[...array]", None),
-        ("const copy = array.toSpliced()", "const copy = [...array]", None),
+        ("array.toSpliced()", "[...array]"),
+        ("const copy = array.toSpliced()", "const copy = [...array]"),
         // `array.toSpliced()` - ASI hazard cases
-        ("foo()\narray.toSpliced()", "foo()\n;[...array]", None),
+        ("foo()\narray.toSpliced()", "foo()\n;[...array]"),
         // `string.split()`
-        (r#""🦄".split("")"#, r#"[..."🦄"]"#, None),
-        (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#, None),
+        (r#""🦄".split("")"#, r#"[..."🦄"]"#),
+        (r#""foo bar baz".split("")"#, r#"[..."foo bar baz"]"#),
         // `string.split()` - ASI hazard cases
-        ("foo()\nstr.split(\"\")", "foo()\n;[...str]", None),
+        ("foo()\nstr.split(\"\")", "foo()\n;[...str]"),
         (
             r"Array.from(path.matchAll(/\{([^{}?]+\??)\}/g))",
             "[...path.matchAll(/\\{([^{}?]+\\??)\\}/g)]",
-            None,
         ),
         // Cases where NO semicolon should be added (not an ExpressionStatement)
-        ("return Array.from(set)", "return [...set]", None),
-        ("const x = Array.from(set)", "const x = [...set]", None),
-        ("foo(Array.from(set))", "foo([...set])", None),
-        ("if (Array.from(set).length) {}", "if ([...set].length) {}", None),
+        ("return Array.from(set)", "return [...set]"),
+        ("const x = Array.from(set)", "const x = [...set]"),
+        ("foo(Array.from(set))", "foo([...set])"),
+        ("if (Array.from(set).length) {}", "if ([...set].length) {}"),
         // `Array.from()` - ASI hazard with multi-byte Unicode identifiers
-        ("日本語\nArray.from(set).map(() => {})", "日本語\n;[...set].map(() => {})", None),
+        ("日本語\nArray.from(set).map(() => {})", "日本語\n;[...set].map(() => {})"),
         (
             "const foo = 日本語\nArray.from(set).map(() => {})",
             "const foo = 日本語\n;[...set].map(() => {})",
-            None,
         ),
-        ("/**/Array.from(set).map(() => {})", "/**/[...set].map(() => {})", None),
-        ("/regex/\nArray.from(set).map(() => {})", "/regex/\n;[...set].map(() => {})", None),
-        ("/regex/g\nArray.from(set).map(() => {})", "/regex/g\n;[...set].map(() => {})", None),
-        ("0.\nArray.from(set).map(() => {})", "0.\n;[...set].map(() => {})", None),
-        (
-            "foo()\u{00A0}\nArray.from(set).map(() => {})",
-            "foo()\u{00A0}\n;[...set].map(() => {})",
-            None,
-        ),
-        (
-            "foo()\u{FEFF}\nArray.from(set).map(() => {})",
-            "foo()\u{FEFF}\n;[...set].map(() => {})",
-            None,
-        ),
-        ("foo() /* a */ /* b */\nArray.from(set)", "foo() /* a */ /* b */\n;[...set]", None),
-        ("x++\narray.slice()", "x++\n;[...array]", None),
-        ("x--\narray.slice()", "x--\n;[...array]", None),
-        ("arr[0]\narray.slice()", "arr[0]\n;[...array]", None),
-        ("obj.prop\narray.slice()", "obj.prop\n;[...array]", None),
-        ("while (array.slice().length) {}", "while ([...array].length) {}", None),
-        ("do {} while (array.slice().length)", "do {} while ([...array].length)", None),
-        ("for (array.slice();;) {}", "for ([...array];;) {}", None),
-        ("switch (array.slice()[0]) {}", "switch ([...array][0]) {}", None),
-        ("`template`\narray.toSpliced()", "`template`\n;[...array]", None),
+        ("/**/Array.from(set).map(() => {})", "/**/[...set].map(() => {})"),
+        ("/regex/\nArray.from(set).map(() => {})", "/regex/\n;[...set].map(() => {})"),
+        ("/regex/g\nArray.from(set).map(() => {})", "/regex/g\n;[...set].map(() => {})"),
+        ("0.\nArray.from(set).map(() => {})", "0.\n;[...set].map(() => {})"),
+        ("foo()\u{00A0}\nArray.from(set).map(() => {})", "foo()\u{00A0}\n;[...set].map(() => {})"),
+        ("foo()\u{FEFF}\nArray.from(set).map(() => {})", "foo()\u{FEFF}\n;[...set].map(() => {})"),
+        ("foo() /* a */ /* b */\nArray.from(set)", "foo() /* a */ /* b */\n;[...set]"),
+        ("x++\narray.slice()", "x++\n;[...array]"),
+        ("x--\narray.slice()", "x--\n;[...array]"),
+        ("arr[0]\narray.slice()", "arr[0]\n;[...array]"),
+        ("obj.prop\narray.slice()", "obj.prop\n;[...array]"),
+        ("while (array.slice().length) {}", "while ([...array].length) {}"),
+        ("do {} while (array.slice().length)", "do {} while ([...array].length)"),
+        ("for (array.slice();;) {}", "for ([...array];;) {}"),
+        ("switch (array.slice()[0]) {}", "switch ([...array][0]) {}"),
+        ("`template`\narray.toSpliced()", "`template`\n;[...array]"),
         (
             r#"'string'
 str.split("")"#,
             "'string'\n;[...str]",
-            None,
         ),
         (
             r#""string"
 str.split("")"#,
             r#""string"
 ;[...str]"#,
-            None,
         ),
         (
             "foo()\nArray.from(set).map(x => x).filter(Boolean).length",
             "foo()\n;[...set].map(x => x).filter(Boolean).length",
-            None,
         ),
-        ("const fn = () => Array.from(set)", "const fn = () => [...set]", None),
-        ("foo ? Array.from(a) : b", "foo ? [...a] : b", None),
-        ("foo || Array.from(set)", "foo || [...set]", None),
-        ("foo && Array.from(set)", "foo && [...set]", None),
-        ("foo + Array.from(set).length", "foo + [...set].length", None),
-        ("x = Array.from(set)", "x = [...set]", None),
-        ("const obj = { arr: Array.from(set) }", "const obj = { arr: [...set] }", None),
-        ("(foo, Array.from(set))", "(foo, [...set])", None),
-        ("[Array.from(set)]", "[[...set]]", None),
-        ("async () => await Array.from(set)", "async () => await [...set]", None),
+        ("const fn = () => Array.from(set)", "const fn = () => [...set]"),
+        ("foo ? Array.from(a) : b", "foo ? [...a] : b"),
+        ("foo || Array.from(set)", "foo || [...set]"),
+        ("foo && Array.from(set)", "foo && [...set]"),
+        ("foo + Array.from(set).length", "foo + [...set].length"),
+        ("x = Array.from(set)", "x = [...set]"),
+        ("const obj = { arr: Array.from(set) }", "const obj = { arr: [...set] }"),
+        ("(foo, Array.from(set))", "(foo, [...set])"),
+        ("[Array.from(set)]", "[[...set]]"),
+        ("async () => await Array.from(set)", "async () => await [...set]"),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)
-        .expect_fix(expect_fix)
+        .expect_fix(fix)
         .test_and_snapshot();
 }

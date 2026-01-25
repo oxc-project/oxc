@@ -178,12 +178,12 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// #### `{ "consistent": true }`
+    /// #### `"consistent"`
     ///
-    /// When enabled, `consistent: true` enforces consistent use of braces within an `if-else` chain.
+    /// When enabled, `"consistent"` enforces consistent use of braces within an `if-else` chain.
     /// If one branch of the chain uses braces, then all branches must use braces, even if not strictly required by the first option.
     ///
-    /// Examples of **incorrect** code with `"multi"` and `consistent: true`:
+    /// Examples of **incorrect** code with `"multi"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi", "consistent"] */
     ///
@@ -199,7 +199,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **correct** code with `"multi"` and `consistent: true`:
+    /// Examples of **correct** code with `"multi"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi", "consistent"] */
     ///
@@ -218,7 +218,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **incorrect** code with `"multi-line"` and `consistent: true`:
+    /// Examples of **incorrect** code with `"multi-line"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-line", "consistent"] */
     ///
@@ -228,7 +228,7 @@ declare_oxc_lint!(
     ///   baz();
     /// ```
     ///
-    /// Examples of **correct** code with `"multi-line"` and `consistent: true`:
+    /// Examples of **correct** code with `"multi-line"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-line", "consistent"] */
     ///
@@ -239,7 +239,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     ///
-    /// Examples of **incorrect** code with `"multi-or-nest"` and `consistent: true`:
+    /// Examples of **incorrect** code with `"multi-or-nest"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-or-nest", "consistent"] */
     ///
@@ -248,7 +248,7 @@ declare_oxc_lint!(
     /// } else qux();
     /// ```
     ///
-    /// Examples of **correct** code with `"multi-or-nest"` and `consistent: true`:
+    /// Examples of **correct** code with `"multi-or-nest"` and `"consistent"`:
     /// ```js
     /// /* curly: ["error", "multi-or-nest", "consistent"] */
     ///
@@ -266,14 +266,14 @@ declare_oxc_lint!(
 );
 
 impl Rule for Curly {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let curly_type =
             value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
 
         let consistent =
             value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
 
-        Self(CurlyConfig { curly_type, consistent })
+        Ok(Self(CurlyConfig { curly_type, consistent }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

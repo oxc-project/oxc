@@ -111,7 +111,7 @@ impl Rule for MaxNestedCallbacks {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
         let max = if let Some(max) = config
             .and_then(Value::as_number)
@@ -128,7 +128,7 @@ impl Rule for MaxNestedCallbacks {
                     usize::try_from(v).unwrap_or(DEFAULT_MAX_NESTED_CALLBACKS)
                 })
         };
-        Self { max }
+        Ok(Self { max })
     }
 }
 

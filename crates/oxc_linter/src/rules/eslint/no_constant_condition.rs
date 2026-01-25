@@ -10,8 +10,8 @@ use crate::{AstNode, ast_util::IsConstant, context::LintContext, rule::Rule};
 
 fn no_constant_condition_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected constant condition")
-        .with_help("Constant expression as a test condition is not allowed")
-        .with_label(span)
+        .with_help("Update the condition to not be constant, or remove the condition entirely")
+        .with_label(span.label("this expression will always evaluate to the same value"))
 }
 
 #[derive(Debug, Default, Clone, PartialEq, JsonSchema, Deserialize, Serialize)]
@@ -107,15 +107,15 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstantCondition {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let obj = value.get(0);
 
-        Self {
+        Ok(Self {
             check_loops: obj
                 .and_then(|v| v.get("checkLoops"))
                 .and_then(CheckLoops::from)
                 .unwrap_or_default(),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

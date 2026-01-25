@@ -24,7 +24,7 @@ fn no_absolute_path_diagnostic(span: Span) -> OxcDiagnostic {
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.31.0/docs/rules/no-absolute-path.md>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoAbsolutePath {
     /// If set to `true`, dependency paths for ES module import statements will be resolved:
     ///
@@ -41,7 +41,7 @@ pub struct NoAbsolutePath {
     /// If set to `true`, dependency paths for AMD-style define and require calls will be resolved:
     ///
     /// ```js
-    /// /* eslint import/no-absolute-path: ['error', { commonjs: false, amd: true }] */
+    /// /* import/no-absolute-path: ["error", { "commonjs": false, "amd": true }] */
     /// define(['/foo'], function (foo) { /*...*/ }) // reported
     /// require(['/foo'], function (foo) { /*...*/ }) // reported
     ///
@@ -107,10 +107,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAbsolutePath {
-    fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoAbsolutePath>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

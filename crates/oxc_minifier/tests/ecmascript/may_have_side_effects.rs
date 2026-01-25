@@ -207,9 +207,14 @@ fn closure_compiler_tests() {
     test("templateFunction`template`", true);
     test("st = `${name}template`", true);
     test("tempFunc = templateFunction`template`", true);
-    test("new RegExp('foobar', 'i')", false);
-    test("new RegExp('foobar', 2)", true);
-    test("new RegExp(SomethingWacky(), 'i')", true);
+    // RegExp is validated using the regex parser to determine if it's pure.
+    // Valid patterns are pure, invalid patterns have side effects (throw SyntaxError).
+    // https://github.com/oxc-project/oxc/issues/18050
+    test("new RegExp('foobar', 'i')", false); // Valid pattern and flags
+    test("new RegExp('foobar', 2)", true); // Non-string flags, can't validate
+    test("new RegExp(SomethingWacky(), 'i')", true); // Non-literal pattern, can't validate
+    test("new RegExp('[')", true); // Invalid pattern
+    test("new RegExp('a', 'xyz')", true); // Invalid flags
     // test("new Array()", false);
     // test("new Array", false);
     // test("new Array(4)", false);
@@ -785,6 +790,7 @@ fn test_property_access() {
 fn test_new_expressions() {
     test("new AggregateError", true);
     test("new DataView", true);
+    test("new Symbol", true);
     test("new Set", false);
     test("new Map", false);
     test("new WeakSet", false);
@@ -796,6 +802,7 @@ fn test_new_expressions() {
     test("new EvalError", false);
     test("new RangeError", false);
     test("new ReferenceError", false);
+    // RegExp() with no arguments is valid (returns /(?:)/)
     test("new RegExp", false);
     test("new SyntaxError", false);
     test("new TypeError", false);
@@ -803,7 +810,6 @@ fn test_new_expressions() {
     test("new Number", false);
     test("new Object", false);
     test("new String", false);
-    test("new Symbol", false);
 }
 
 // `PF` in <https://github.com/rollup/rollup/blob/master/src/ast/nodes/shared/knownGlobals.ts>
@@ -822,6 +828,7 @@ fn test_call_expressions() {
     test("EvalError()", false);
     test("RangeError()", false);
     test("ReferenceError()", false);
+    // RegExp() with no arguments is valid (returns /(?:)/)
     test("RegExp()", false);
     test("SyntaxError()", false);
     test("TypeError()", false);

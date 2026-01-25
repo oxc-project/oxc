@@ -3,7 +3,7 @@ use oxc_cfg::{
     EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
     graph::{
         Direction,
-        visit::{Control, DfsEvent, EdgeRef, depth_first_search},
+        visit::{Control, DfsEvent, EdgeRef, set_depth_first_search},
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -77,7 +77,7 @@ impl Rule for NoUnreachable {
         // In our first path we first check if each block is definitely unreachable, If it is then
         // we set it as such, If we encounter an infinite loop we keep its end block since it can
         // prevent other reachable blocks from ever getting executed.
-        let _: Control<()> = depth_first_search(graph, Some(root_cfg_id), |event| {
+        let _: Control<()> = set_depth_first_search(graph, Some(root_cfg_id), |event| {
             if let DfsEvent::Finish(node, _) = event {
                 let unreachable = cfg.basic_block(node).is_unreachable();
                 unreachables[node.index()] = unreachable;
@@ -115,7 +115,7 @@ impl Rule for NoUnreachable {
                 .collect();
 
             // Search with all `Normal` edges as starting point(s).
-            let _: Control<()> = depth_first_search(graph, starts, |event| match event {
+            let _: Control<()> = set_depth_first_search(graph, starts, |event| match event {
                 DfsEvent::Discover(node, _) => {
                     let mut incoming = graph.edges_directed(node, Direction::Incoming);
                     if incoming.any(|e| match e.weight() {

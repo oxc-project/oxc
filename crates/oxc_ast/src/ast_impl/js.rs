@@ -4,7 +4,7 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, GetSpan, Ident, Span};
 use oxc_syntax::{operator::UnaryOperator, scope::ScopeFlags};
 
 use crate::ast::*;
@@ -502,7 +502,7 @@ impl<'a> PropertyKey<'a> {
     ///
     /// - `#a: 1` in `class C { #a: 1 }` would return `a`
     /// - `a: 1` in `{ a: 1 }` would return `None`
-    pub fn private_name(&self) -> Option<Atom<'a>> {
+    pub fn private_name(&self) -> Option<Ident<'a>> {
         match self {
             Self::PrivateIdentifier(ident) => Some(ident.name),
             _ => None,
@@ -1259,7 +1259,7 @@ impl<'a> BindingPattern<'a> {
     /// - calling on `a = 1` in `let a = 1` would return `Some("a")`
     /// - calling on `a = 1` in `let {a = 1} = c` would return `Some("a")`
     /// - calling on `a: b` in `let {a: b} = c` would return `None`
-    pub fn get_identifier_name(&self) -> Option<Atom<'a>> {
+    pub fn get_identifier_name(&self) -> Option<Ident<'a>> {
         match self {
             Self::BindingIdentifier(ident) => Some(ident.name),
             Self::AssignmentPattern(assign) => assign.left.get_identifier_name(),
@@ -1323,6 +1323,41 @@ impl<'a> BindingPattern<'a> {
         let mut idents = vec![];
         self.append_binding_identifiers(&mut idents);
         idents
+    }
+
+    /// Returns `true` if all binding identifiers in this pattern satisfy the given predicate.
+    ///
+    /// This method is more efficient than [`BindingPattern::get_binding_identifiers`] followed by [`Iterator::all`]
+    /// when you only need to check a condition, as it does not allocate a `Vec` and can
+    /// short-circuit on the first `false` result.
+    ///
+    /// If the pattern contains no binding identifiers, returns `true`.
+    pub fn all_binding_identifiers<F>(&self, predicate: &mut F) -> bool
+    where
+        F: FnMut(&BindingIdentifier<'a>) -> bool,
+    {
+        match self {
+            Self::BindingIdentifier(ident) => predicate(ident),
+            Self::AssignmentPattern(assign) => assign.left.all_binding_identifiers(predicate),
+            Self::ArrayPattern(pattern) => {
+                pattern
+                    .elements
+                    .iter()
+                    .filter_map(|item| item.as_ref())
+                    .all(|item| item.all_binding_identifiers(predicate))
+                    && pattern
+                        .rest
+                        .as_ref()
+                        .is_none_or(|rest| rest.argument.all_binding_identifiers(predicate))
+            }
+            Self::ObjectPattern(pattern) => {
+                pattern.properties.iter().all(|item| item.value.all_binding_identifiers(predicate))
+                    && pattern
+                        .rest
+                        .as_ref()
+                        .is_none_or(|rest| rest.argument.all_binding_identifiers(predicate))
+            }
+        }
     }
 
     /// Returns `true` if this binding pattern is destructuring.
@@ -1389,7 +1424,7 @@ impl ArrayPattern<'_> {
 impl<'a> Function<'a> {
     /// Returns this [`Function`]'s name, if it has one.
     #[inline]
-    pub fn name(&self) -> Option<Atom<'a>> {
+    pub fn name(&self) -> Option<Ident<'a>> {
         self.id.as_ref().map(|id| id.name)
     }
 
@@ -1545,7 +1580,7 @@ impl<'a> ArrowFunctionExpression<'a> {
 impl<'a> Class<'a> {
     /// Returns this [`Class`]'s name, if it has one.
     #[inline]
-    pub fn name(&self) -> Option<Atom<'a>> {
+    pub fn name(&self) -> Option<Ident<'a>> {
         self.id.as_ref().map(|id| id.name)
     }
 
@@ -1892,7 +1927,7 @@ impl<'a> ImportAttributeKey<'a> {
     /// Returns the string value of this import attribute key.
     pub fn as_atom(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(identifier) => identifier.name,
+            Self::Identifier(identifier) => identifier.name.into(),
             Self::StringLiteral(literal) => literal.value,
         }
     }
@@ -1953,8 +1988,8 @@ impl<'a> ModuleExportName<'a> {
     /// - `export { foo as "anything" }` => `"anything"`
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::IdentifierName(identifier) => identifier.name,
-            Self::IdentifierReference(identifier) => identifier.name,
+            Self::IdentifierName(identifier) => identifier.name.into(),
+            Self::IdentifierReference(identifier) => identifier.name.into(),
             Self::StringLiteral(literal) => literal.value,
         }
     }
@@ -1966,7 +2001,7 @@ impl<'a> ModuleExportName<'a> {
     /// - `export { foo }` => `Some("foo")`
     /// - `export { foo as bar }` => `Some("bar")`
     /// - `export { foo as "anything" }` => `None`
-    pub fn identifier_name(&self) -> Option<Atom<'a>> {
+    pub fn identifier_name(&self) -> Option<Ident<'a>> {
         match self {
             Self::IdentifierName(identifier) => Some(identifier.name),
             Self::IdentifierReference(identifier) => Some(identifier.name),

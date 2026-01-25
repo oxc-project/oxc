@@ -301,7 +301,7 @@ impl TestRunner {
                             "{}",
                             path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
                         );
-                        oxc_tasks_common::print_diff_in_terminal(&diff);
+                        oxc_tasks_common::print_text_diff(&diff);
                     }
                     println!();
                 }

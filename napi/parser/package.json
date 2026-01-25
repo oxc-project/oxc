@@ -1,12 +1,16 @@
 {
   "name": "oxc-parser",
-  "version": "0.105.0",
+  "version": "0.110.0",
   "description": "Oxc Parser Node API",
   "keywords": [
+    "ast",
+    "estree",
+    "javascript",
     "oxc",
-    "parser"
+    "parser",
+    "typescript"
   ],
-  "homepage": "https://oxc.rs",
+  "homepage": "https://oxc.rs/docs/guide/usage/parser",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "license": "MIT",
   "author": "Boshen and oxc contributors",
@@ -78,7 +82,7 @@
     "@napi-rs/cli": "catalog:",
     "@napi-rs/wasm-runtime": "catalog:",
     "@types/node": "catalog:",
-    "@typescript-eslint/visitor-keys": "^8.44.0",
+    "@typescript-eslint/visitor-keys": "^8.53.1",
     "@vitest/browser": "4.0.15",
     "@vitest/browser-playwright": "4.0.15",
     "esbuild": "^0.27.0",

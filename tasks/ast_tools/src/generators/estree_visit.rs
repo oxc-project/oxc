@@ -216,11 +216,9 @@ fn generate(codegen: &Codegen) -> Codes {
         }
         /* END_IF */
 
-        const { isArray } = Array;
-
         function walkNode(node, visitors) {
             if (node == null) return;
-            if (isArray(node)) {
+            if (Array.isArray(node)) {
                 const len = node.length;
                 for (let i = 0; i < len; i++) {
                     walkNode(node[i], visitors);

@@ -52,7 +52,7 @@ fn unknown_prop(span: Span) -> OxcDiagnostic {
 pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnknownPropertyConfig {
     /// List of properties to ignore.
     ignore: FxHashSet<Cow<'static, str>>,
@@ -473,10 +473,8 @@ fn has_uppercase(name: &str) -> bool {
 }
 
 impl Rule for NoUnknownProperty {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoUnknownProperty>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -758,6 +756,26 @@ fn test() {
             None,
         ),
         ("<t onChñnge/>", None),
+    ];
+
+    // TODO: Add a fixer for this rule.
+    let _fix = vec![
+        (r#"<div class="bar"></div>;"#, r#"<div className="bar"></div>;"#, None::<()>),
+        (r#"<div for="bar"></div>;"#, r#"<div htmlFor="bar"></div>;"#, None),
+        (r#"<div accept-charset="bar"></div>;"#, r#"<div acceptCharset="bar"></div>;"#, None),
+        (r#"<div http-equiv="bar"></div>;"#, r#"<div httpEquiv="bar"></div>;"#, None),
+        (r#"<div accesskey="bar"></div>;"#, r#"<div accessKey="bar"></div>;"#, None),
+        (r#"<div onclick="bar"></div>;"#, r#"<div onClick="bar"></div>;"#, None),
+        (r#"<div onmousedown="bar"></div>;"#, r#"<div onMouseDown="bar"></div>;"#, None),
+        (r#"<div onMousedown="bar"></div>;"#, r#"<div onMouseDown="bar"></div>;"#, None),
+        (r#"<use xlink:href="bar" />;"#, r#"<use xlinkHref="bar" />;"#, None),
+        (
+            r#"<rect clip-path="bar" transform-origin="center" />;"#,
+            r#"<rect clipPath="bar" transform-origin="center" />;"#,
+            None,
+        ),
+        ("<script crossorigin nomodule />", "<script crossOrigin noModule />", None),
+        ("<div crossorigin />", "<div crossOrigin />", None),
     ];
 
     Tester::new(NoUnknownProperty::NAME, NoUnknownProperty::PLUGIN, pass, fail).test_and_snapshot();

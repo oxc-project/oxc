@@ -61,7 +61,7 @@ use oxc_ast::{Comment, CommentContent, CommentKind};
 use oxc_span::Span;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
-use crate::write;
+use crate::{JsLabels, write};
 
 use super::prelude::*;
 
@@ -163,16 +163,16 @@ impl<'a> Format<'a> for FormatLeadingComments<'a> {
 pub const fn format_trailing_comments<'a>(
     enclosing_span: Span,
     preceding_span: Span,
-    following_span: Option<Span>,
+    following_span_start: u32,
 ) -> FormatTrailingComments<'a> {
-    FormatTrailingComments::Node((enclosing_span, preceding_span, following_span))
+    FormatTrailingComments::Node((enclosing_span, preceding_span, following_span_start))
 }
 
 /// Formats the trailing comments of `node`
 #[derive(Debug, Clone, Copy)]
 pub enum FormatTrailingComments<'a> {
-    // (enclosing_span, preceding_span, following_span)
-    Node((Span, Span, Option<Span>)),
+    // (enclosing_span, preceding_span, following_span_start)
+    Node((Span, Span, u32)),
     Comments(&'a [Comment]),
 }
 
@@ -252,11 +252,11 @@ impl<'a> Format<'a> for FormatTrailingComments<'a> {
         }
 
         match self {
-            Self::Node((enclosing_span, preceding_span, following_span)) => {
+            Self::Node((enclosing_span, preceding_span, following_span_start)) => {
                 let comments = f.context().comments().get_trailing_comments(
                     *enclosing_span,
                     *preceding_span,
-                    *following_span,
+                    *following_span_start,
                 );
 
                 if comments.is_empty() {
@@ -422,6 +422,15 @@ impl<'a> Format<'a> for Comment {
         if self.is_multiline_block() {
             let mut lines = LineTerminatorSplitter::new(content);
             if is_alignable_comment(content) {
+                // Using `write_element` directly instead of `labelled()`
+                // to avoid allocating a `Vec` for `lines` iter
+                let sort_imports_enabled = f.options().experimental_sort_imports.is_some();
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::StartLabelled(LabelId::of(
+                        JsLabels::AlignableBlockComment,
+                    ))));
+                }
+
                 // `unwrap` is safe because `content` contains at least one line.
                 let first_line = lines.next().unwrap();
                 write!(f, [text(first_line.trim_end())]);
@@ -429,6 +438,10 @@ impl<'a> Format<'a> for Comment {
                 // Indent the remaining lines by one space so that all `*` are aligned.
                 for line in lines {
                     write!(f, [hard_line_break(), " ", text(line.trim())]);
+                }
+
+                if sort_imports_enabled {
+                    f.write_element(FormatElement::Tag(Tag::EndLabelled));
                 }
             } else {
                 // Normalize line endings `\r\n` to `\n`

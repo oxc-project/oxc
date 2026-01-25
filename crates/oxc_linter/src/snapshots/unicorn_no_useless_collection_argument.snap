@@ -2,163 +2,190 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:9]
+   ╭─[no_useless_collection_argument.mjs:1:9]
  1 │ new Set([])
    ·         ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty string is useless
-   ╭─[no_useless_collection_argument.tsx:1:9]
+   ╭─[no_useless_collection_argument.mjs:1:9]
  1 │ new Set("")
    ·         ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The undefined is useless
-   ╭─[no_useless_collection_argument.tsx:1:9]
+   ╭─[no_useless_collection_argument.mjs:1:9]
  1 │ new Set(undefined)
    ·         ─────────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The null is useless
-   ╭─[no_useless_collection_argument.tsx:1:9]
+   ╭─[no_useless_collection_argument.mjs:1:9]
  1 │ new Set(null)
    ·         ────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:13]
+   ╭─[no_useless_collection_argument.mjs:1:13]
  1 │ new WeakSet([])
    ·             ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:9]
+   ╭─[no_useless_collection_argument.mjs:1:9]
  1 │ new Map([])
    ·         ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:13]
+   ╭─[no_useless_collection_argument.mjs:1:13]
  1 │ new WeakMap([])
    ·             ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:12]
+   ╭─[no_useless_collection_argument.mjs:1:12]
  1 │ new Set( (([])) )
    ·            ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:9]
+   ╭─[no_useless_collection_argument.mjs:1:9]
  1 │ new Set([],)
    ·         ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:12]
+   ╭─[no_useless_collection_argument.mjs:1:12]
  1 │ new Set( (([])), )
    ·            ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:16]
+   ╭─[no_useless_collection_argument.mjs:1:16]
  1 │ new Set(foo ?? [])
    ·                ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty string is useless
-   ╭─[no_useless_collection_argument.tsx:1:16]
+   ╭─[no_useless_collection_argument.mjs:1:16]
  1 │ new Set(foo ?? "")
    ·                ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The undefined is useless
-   ╭─[no_useless_collection_argument.tsx:1:16]
+   ╭─[no_useless_collection_argument.mjs:1:16]
  1 │ new Set(foo ?? undefined)
    ·                ─────────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The null is useless
-   ╭─[no_useless_collection_argument.tsx:1:16]
+   ╭─[no_useless_collection_argument.mjs:1:16]
  1 │ new Set(foo ?? null)
    ·                ────
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:20]
+   ╭─[no_useless_collection_argument.mjs:1:20]
  1 │ new WeakSet(foo ?? [])
    ·                    ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:16]
+   ╭─[no_useless_collection_argument.mjs:1:16]
  1 │ new Map(foo ?? [])
    ·                ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:20]
+   ╭─[no_useless_collection_argument.mjs:1:20]
  1 │ new WeakMap(foo ?? [])
    ·                    ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:19]
+   ╭─[no_useless_collection_argument.mjs:1:19]
  1 │ new Set( ((foo ?? [])) )
    ·                   ──
    ╰────
+  help: Replace `((foo ?? []))` with `foo`.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:23]
+   ╭─[no_useless_collection_argument.mjs:1:23]
  1 │ new Set( (( foo )) ?? [] )
    ·                       ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:20]
+   ╭─[no_useless_collection_argument.mjs:1:20]
  1 │ new Set( foo ?? (( [] )) )
    ·                    ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:25]
+   ╭─[no_useless_collection_argument.mjs:1:25]
  1 │ new Set( (await foo) ?? [] )
    ·                         ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:22]
+   ╭─[no_useless_collection_argument.mjs:1:22]
  1 │ new Set( (0, foo) ?? [] )
    ·                      ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:25]
+   ╭─[no_useless_collection_argument.mjs:1:25]
  1 │ new Set( (( (0, foo) ?? [] )) )
    ·                         ──
    ╰────
+  help: Replace `(( (0, foo) ?? [] ))` with ` (0, foo) `.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:25]
+   ╭─[no_useless_collection_argument.mjs:1:25]
  1 │ new Set(document.all ?? [])
    ·                         ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty string is useless
-   ╭─[no_useless_collection_argument.tsx:1:15]
+   ╭─[no_useless_collection_argument.mjs:1:15]
  1 │ new Set([] ?? "")
    ·               ──
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:28]
+   ╭─[no_useless_collection_argument.mjs:1:28]
  1 │ new Set( (( (( "" )) ?? (( [] )) )) )
    ·                            ──
    ╰────
+  help: Replace `(( (( "" )) ?? (( [] )) ))` with ` (( "" )) `.
 
   ⚠ eslint-plugin-unicorn(no-useless-collection-argument): The empty array is useless
-   ╭─[no_useless_collection_argument.tsx:1:23]
+   ╭─[no_useless_collection_argument.mjs:1:23]
  1 │ new Set(foo ?? bar ?? [])
    ·                       ──
    ╰────
+  help: Delete this code.

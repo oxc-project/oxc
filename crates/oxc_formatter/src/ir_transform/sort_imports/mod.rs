@@ -1,5 +1,6 @@
 mod compute_metadata;
 mod group_config;
+mod group_matcher;
 pub mod options;
 mod partitioned_chunk;
 mod sortable_imports;
@@ -8,11 +9,14 @@ mod source_line;
 use oxc_allocator::{Allocator, Vec as ArenaVec};
 
 use crate::{
-    SortImportsOptions,
-    formatter::format_element::{FormatElement, LineMode, document::Document},
+    JsLabels, SortImportsOptions,
+    formatter::format_element::{
+        FormatElement, LineMode,
+        document::Document,
+        tag::{LabelId, Tag},
+    },
     ir_transform::sort_imports::{
-        group_config::parse_groups_from_strings, partitioned_chunk::PartitionedChunk,
-        source_line::SourceLine,
+        group_matcher::GroupMatcher, partitioned_chunk::PartitionedChunk, source_line::SourceLine,
     },
 };
 
@@ -32,14 +36,14 @@ impl SortImportsTransform {
         document: &Document<'a>,
         options: &SortImportsOptions,
         allocator: &'a Allocator,
-    ) -> Option<Document<'a>> {
+    ) -> Option<ArenaVec<'a, FormatElement<'a>>> {
         // Early return for empty files
         if document.len() == 1 && matches!(document[0], FormatElement::Line(LineMode::Hard)) {
             return None;
         }
 
         // Parse string based groups into our internal representation for performance
-        let groups = parse_groups_from_strings(&options.groups);
+        let group_matcher = GroupMatcher::new(&options.groups, &options.custom_groups);
         let prev_elements: &[FormatElement<'a>] = document;
 
         // Roughly speaking, sort-imports is a process of swapping lines.
@@ -65,19 +69,78 @@ impl SortImportsTransform {
         //   - If this is the case, we should check `Tag::StartLabelled(JsLabels::ImportDeclaration)`
         let mut lines = vec![];
         let mut current_line_start = 0;
+        // Track if we're inside an alignable block comment (identified by `JsLabels::AlignableBlockComment`)
+        let mut in_alignable_block_comment = false;
+        // Track if current line is a standalone alignable comment (no import on same line)
+        let mut is_standalone_alignable_comment = false;
+        // Track if current line is inside a multiline ImportDeclaration
+        let mut inside_multiline_import = false;
+
         for (idx, el) in prev_elements.iter().enumerate() {
+            // Check for alignable block comment boundaries.
+            // These comments are split across multiple lines with hard_line_break() between them,
+            // so we need to track when we're inside one to avoid flushing lines prematurely.
+            if let FormatElement::Tag(Tag::StartLabelled(id)) = el {
+                if *id == LabelId::of(JsLabels::AlignableBlockComment) {
+                    in_alignable_block_comment = true;
+                    is_standalone_alignable_comment = true;
+                } else if *id == LabelId::of(JsLabels::ImportDeclaration) {
+                    inside_multiline_import = true;
+                    // An import on the same line means the comment is attached to it, not standalone
+                    is_standalone_alignable_comment = false;
+                }
+            } else if matches!(el, FormatElement::Tag(Tag::EndLabelled)) {
+                // EndLabelled doesn't carry the label ID, but since AlignableBlockComment
+                // doesn't nest with other labels in practice, we can safely reset here.
+                if in_alignable_block_comment {
+                    in_alignable_block_comment = false;
+                } else if inside_multiline_import {
+                    // I'm not sure if ImportDeclaration will nest with other labels,
+                    // but this should be enough for now.
+                    inside_multiline_import = false;
+                }
+            }
+
             if let FormatElement::Line(mode) = el
                 && matches!(mode, LineMode::Empty | LineMode::Hard)
             {
+                // If we're inside an alignable block comment, don't flush the line yet.
+                // Wait until the comment is closed so the entire comment is treated as one line.
+                if in_alignable_block_comment {
+                    continue;
+                }
+
+                // If the linebreak falls within the body of a multiline ImportDeclaration,
+                // don't fush the line. e.g.
+                // ```
+                // import React {
+                //   useState,
+                //   // this is a comment followed by a FormatElement::Line(LineMode::Hard)
+                //   useEffect,
+                // } from 'react';
+                // ```
+                if inside_multiline_import {
+                    continue;
+                }
+
                 // Flush current line
                 if current_line_start < idx {
-                    lines.push(SourceLine::from_element_range(
-                        prev_elements,
-                        current_line_start..idx,
-                        *mode,
-                    ));
+                    let line = if is_standalone_alignable_comment {
+                        // Standalone alignable comment: directly create CommentOnly
+                        SourceLine::CommentOnly(current_line_start..idx, *mode)
+                    } else {
+                        SourceLine::from_element_range(
+                            prev_elements,
+                            current_line_start..idx,
+                            *mode,
+                        )
+                    };
+                    lines.push(line);
                 }
                 current_line_start = idx + 1;
+                is_standalone_alignable_comment = false;
+                // Explicitly reset the state after flushing lines to avoid stale state.
+                inside_multiline_import = false;
 
                 // We need this explicitly to detect boundaries later.
                 if matches!(mode, LineMode::Empty) {
@@ -181,7 +244,7 @@ impl SortImportsTransform {
                     // // chunk trailing
                     // ```
                     let (sorted_imports, orphan_contents, trailing_lines) =
-                        chunk.into_sorted_import_units(&groups, options);
+                        chunk.into_sorted_import_units(&group_matcher, options);
 
                     // Output leading orphan content (after_slot: None)
                     for orphan in &orphan_contents {
@@ -266,6 +329,6 @@ impl SortImportsTransform {
             }
         }
 
-        Some(Document::from(next_elements))
+        Some(next_elements)
     }
 }

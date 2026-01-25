@@ -198,48 +198,26 @@ fn test() {
     ];
 
     let fix = vec![
-        (
-            "expectTypeOf(({} instanceof Object)).toBeTruthy();",
-            "expectTypeOf(({})).toBeObject();",
-            None,
-        ),
-        (
-            "expectTypeOf({} instanceof Object).toBeTruthy();",
-            "expectTypeOf({}).toBeObject();",
-            None,
-        ),
+        ("expectTypeOf(({} instanceof Object)).toBeTruthy();", "expectTypeOf(({})).toBeObject();"),
+        ("expectTypeOf({} instanceof Object).toBeTruthy();", "expectTypeOf({}).toBeObject();"),
         (
             "expectTypeOf({} instanceof Object).not.toBeTruthy();",
             "expectTypeOf({}).not.toBeObject();",
-            None,
         ),
-        (
-            "expectTypeOf({} instanceof Object).toBeFalsy();",
-            "expectTypeOf({}).not.toBeObject();",
-            None,
-        ),
-        (
-            "expectTypeOf({} instanceof Object).not.toBeFalsy();",
-            "expectTypeOf({}).toBeObject();",
-            None,
-        ),
-        ("expectTypeOf({}).toBeInstanceOf(Object);", "expectTypeOf({}).toBeObject();", None),
-        (
-            "expectTypeOf({}).not.toBeInstanceOf(Object);",
-            "expectTypeOf({}).not.toBeObject();",
-            None,
-        ),
+        ("expectTypeOf({} instanceof Object).toBeFalsy();", "expectTypeOf({}).not.toBeObject();"),
+        ("expectTypeOf({} instanceof Object).not.toBeFalsy();", "expectTypeOf({}).toBeObject();"),
+        ("expectTypeOf({}).toBeInstanceOf(Object);", "expectTypeOf({}).toBeObject();"),
+        ("expectTypeOf({}).not.toBeInstanceOf(Object);", "expectTypeOf({}).not.toBeObject();"),
         (
             "expectTypeOf(requestValues()).resolves.toBeInstanceOf(Object);",
             "expectTypeOf(requestValues()).resolves.toBeObject();",
-            None,
         ),
         (
             "expectTypeOf(queryApi()).resolves.not.toBeInstanceOf(Object);",
             "expectTypeOf(queryApi()).resolves.not.toBeObject();",
-            None,
         ),
     ];
+
     Tester::new(PreferToBeObject::NAME, PreferToBeObject::PLUGIN, pass, fail)
         .with_vitest_plugin(true)
         .expect_fix(fix)

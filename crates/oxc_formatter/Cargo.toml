@@ -1,6 +1,6 @@
 [package]
 name = "oxc_formatter"
-version = "0.20.0"
+version = "0.26.0"
 authors.workspace = true
 categories.workspace = true
 edition.workspace = true
@@ -30,18 +30,17 @@ oxc_syntax = { workspace = true }
 
 cow-utils = { workspace = true }
 natord = { workspace = true }
+nodejs-built-in-modules = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
-schemars = { workspace = true }
-serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
 unicode-width = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
+oxc_tasks_common = { path = "../../tasks/common" }
 pico-args = { workspace = true }
-project-root = { workspace = true }
 serde_json = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 
 [build-dependencies]
 oxc_span = { workspace = true }

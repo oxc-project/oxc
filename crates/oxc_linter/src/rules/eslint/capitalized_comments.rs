@@ -141,9 +141,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for CapitalizedComments {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(arr) = value.as_array() else {
-            return Self::default();
+            return Ok(Self::default());
         };
 
         let capitalize =
@@ -155,7 +155,7 @@ impl Rule for CapitalizedComments {
         let line_config = options.line.unwrap_or_default().into_comment_config(&options.base);
         let block_config = options.block.unwrap_or_default().into_comment_config(&options.base);
 
-        Self(Box::new(CapitalizedCommentsConfig { capitalize, line_config, block_config }))
+        Ok(Self(Box::new(CapitalizedCommentsConfig { capitalize, line_config, block_config })))
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -184,10 +184,15 @@ impl Rule for CapitalizedComments {
                 continue; // No letter found, skip
             };
 
-            // Check if this is a directive comment (using original content, not normalized)
-            // ESLint only ignores directives when they start at the beginning (after whitespace)
-            // e.g., "// eslint-disable" is ignored, but "//* eslint-disable" is not
-            if is_directive_comment(content) {
+            // Check if this is a directive comment
+            // For block comments, we need to check both raw and normalized content
+            // to handle URLs in multiline comments with * markers
+            let is_directive = if comment.is_block() {
+                is_directive_comment(content) || is_url(normalized.trim_start())
+            } else {
+                is_directive_comment(content)
+            };
+            if is_directive {
                 continue;
             }
 
@@ -257,8 +262,11 @@ fn normalize_comment_text(content: &str) -> String {
         .lines()
         .map(|line| {
             let trimmed = line.trim_start();
-            // Remove leading * and following whitespace
-            trimmed.strip_prefix('*').map_or(trimmed, str::trim_start)
+            // Remove leading * and ONE following space (if present)
+            // This matches ESLint's behavior which only removes a single space
+            trimmed
+                .strip_prefix('*')
+                .map_or(trimmed, |after_star| after_star.strip_prefix(' ').unwrap_or(after_star))
         })
         .join("\n")
 }
@@ -301,9 +309,14 @@ fn is_directive_comment(content: &str) -> bool {
 
     // Check if it looks like a URL (any scheme://)
     // This matches ESLint's behavior which uses a general pattern
-    trimmed.find(':').is_some_and(|colon_pos| {
-        trimmed.get(colon_pos..colon_pos + 3) == Some("://") && {
-            let scheme = &trimmed[..colon_pos];
+    is_url(trimmed)
+}
+
+/// Check if the text starts with a URL
+fn is_url(text: &str) -> bool {
+    text.find(':').is_some_and(|colon_pos| {
+        text.get(colon_pos..colon_pos + 3) == Some("://") && {
+            let scheme = &text[..colon_pos];
             !scheme.is_empty()
                 && scheme
                     .chars()
@@ -598,6 +611,52 @@ fn test() {
         ),
         ("// https://github.com", Some(serde_json::json!(["always"]))),
         ("// HTTPS://GITHUB.COM", Some(serde_json::json!(["never"]))),
+        // URLs in different comment types should all be ignored
+        ("// https://oxc.rs", None),
+        ("//  https://oxc.rs", None),
+        ("//   https://oxc.rs", None),
+        ("/* https://oxc.rs */", None),
+        ("/*  https://oxc.rs */", None),
+        ("/*   https://oxc.rs */", None),
+        (
+            "/*
+			 * https://oxc.rs
+			 */",
+            None,
+        ),
+        ("/** https://oxc.rs */", None),
+        ("/**  https://oxc.rs */", None),
+        ("/**   https://oxc.rs */", None),
+        (
+            "/**
+			 * https://oxc.rs
+			 */",
+            None,
+        ),
+        (
+            "/*
+			 *  https://oxc.rs
+			 */",
+            None,
+        ),
+        (
+            "/**
+			 *  https://oxc.rs
+			 */",
+            None,
+        ),
+        (
+            "/*
+			 *   https://oxc.rs
+			 */",
+            None,
+        ),
+        (
+            "/**
+			 *   https://oxc.rs
+			 */",
+            None,
+        ),
         (
             "// Valid capitalized line comment
 			/* Valid capitalized block comment */

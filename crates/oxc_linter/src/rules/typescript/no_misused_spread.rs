@@ -11,7 +11,7 @@ use crate::{
 pub struct NoMisusedSpread(Box<NoMisusedSpreadConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema, Default)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoMisusedSpreadConfig {
     /// An array of type or value specifiers that are allowed to be spread
     /// even if they would normally be flagged as misused.
@@ -70,10 +70,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMisusedSpread {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoMisusedSpread>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

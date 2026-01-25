@@ -10,7 +10,7 @@ use base54::base54;
 use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
-use oxc_semantic::{AstNodes, Scoping, Semantic, SemanticBuilder, SymbolId};
+use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
 use oxc_span::{Atom, CompactStr};
 
 pub(crate) mod base54;
@@ -266,8 +266,7 @@ impl<'t> Mangler<'t> {
     /// Pass the symbol table to oxc_codegen to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
-        let mut semantic =
-            SemanticBuilder::new().with_scope_tree_child_ids(true).build(program).semantic;
+        let mut semantic = SemanticBuilder::new().build(program).semantic;
         let class_private_mappings = self.build_with_semantic(&mut semantic, program);
         ManglerReturn { scoping: semantic.into_scoping(), class_private_mappings }
     }
@@ -297,13 +296,6 @@ impl<'t> Mangler<'t> {
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
 
-        assert!(scoping.has_scope_child_ids(), "child_id needs to be generated");
-
-        // TODO: implement opt-out of direct-eval in a branch of scopes.
-        if scoping.root_scope_flags().contains_direct_eval() {
-            return;
-        }
-
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {
@@ -326,11 +318,24 @@ impl<'t> Mangler<'t> {
         let mut reusable_slots = Vec::new_in(temp_allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), temp_allocator);
+        // Reserved names from scopes containing direct eval - these names should not
+        // be used as mangled names to avoid shadowing variables that eval can access.
+        //
+        // TODO: This is conservative, ideally, we would reserve names per-slot.
+        let mut eval_reserved_names: FxHashSet<&str> = FxHashSet::default();
         // Walk down the scope tree and assign a slot number for each symbol.
         // It is possible to do this in a loop over the symbol list,
         // but walking down the scope tree seems to generate a better code.
         for (scope_id, bindings) in scoping.iter_bindings() {
             if bindings.is_empty() {
+                continue;
+            }
+            // Scopes with direct eval: collect binding names as reserved (they can be
+            // accessed by eval at runtime) and skip slot assignment (keep original names).
+            if scoping.scope_flags(scope_id).contains_direct_eval() {
+                for (&name, _) in bindings {
+                    eval_reserved_names.insert(name);
+                }
                 continue;
             }
 
@@ -398,9 +403,8 @@ impl<'t> Mangler<'t> {
                     .iter()
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
 
-                let referenced_scope_ids = scoping
-                    .get_resolved_references(symbol_id)
-                    .map(|reference| ast_nodes.get_node(reference.node_id()).scope_id());
+                let referenced_scope_ids =
+                    scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
 
                 // Calculate the scope ids that this symbol is alive in.
                 // For each used_scope_id, we walk up the ancestor chain and collect scopes
@@ -448,22 +452,29 @@ impl<'t> Mangler<'t> {
         let root_unresolved_references = scoping.root_unresolved_references();
         let root_bindings = scoping.get_bindings(scoping.root_scope_id());
 
-        let mut reserved_names = Vec::with_capacity_in(total_number_of_slots, temp_allocator);
+        // Generate reserved names only for slots that have symbols (frequencies.len())
+        // instead of all slots. This avoids generating unused names.
+        let names_needed = frequencies.len();
+        let mut reserved_names = Vec::with_capacity_in(names_needed, temp_allocator);
 
         let mut count = 0;
-        for _ in 0..total_number_of_slots {
+        for _ in 0..names_needed {
             let name = loop {
                 let name = generate_name(count);
                 count += 1;
-                // Do not mangle keywords and unresolved references
+                // Do not mangle keywords, unresolved references, and names from eval scopes.
+                // Variables in direct-eval-containing scopes keep their original names
+                // (those scopes are skipped during slot assignment), and we also reserve
+                // those names here to prevent mangled names from shadowing them.
                 let n = name.as_str();
                 if !oxc_syntax::keyword::is_reserved_keyword(n)
                     && !is_special_name(n)
                     && !root_unresolved_references.contains_key(n)
                     && !(root_bindings.contains_key(n)
                         && (!self.options.top_level || exported_names.contains(n)))
-                        // TODO: only skip the names that are kept in the current scope
-                        && !keep_name_names.contains(n)
+                    // TODO: only skip the names that are kept in the current scope
+                    && !keep_name_names.contains(n)
+                    && !eval_reserved_names.contains(n)
                 {
                     break name;
                 }
@@ -537,11 +548,15 @@ impl<'t> Mangler<'t> {
             temp_allocator,
         );
 
-        for (symbol_id, slot) in slots.iter().copied().enumerate() {
+        for (symbol_id, &slot) in slots.iter().enumerate() {
             let symbol_id = SymbolId::from_usize(symbol_id);
-            if scoping.symbol_scope_id(symbol_id) == root_scope_id
+            let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
+            if symbol_scope_id == root_scope_id
                 && (!self.options.top_level || exported_symbols.contains(&symbol_id))
             {
+                continue;
+            }
+            if scoping.scope_flags(symbol_scope_id).contains_direct_eval() {
                 continue;
             }
             if is_special_name(scoping.symbol_name(symbol_id)) {
@@ -555,6 +570,9 @@ impl<'t> Mangler<'t> {
             frequencies[index].frequency += scoping.get_resolved_reference_ids(symbol_id).len();
             frequencies[index].symbol_ids.push(symbol_id);
         }
+
+        // Remove slots that have no symbols to rename before sorting.
+        frequencies.retain(|x| !x.symbol_ids.is_empty());
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         frequencies
     }
@@ -580,7 +598,7 @@ impl<'t> Mangler<'t> {
                     itertools::Either::Right(decl.id().into_iter())
                 }
             })
-            .map(|id| (id.name, id.symbol_id()))
+            .map(|id| (Atom::from(id.name), id.symbol_id()))
             .collect()
     }
 

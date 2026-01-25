@@ -9,15 +9,17 @@ use crate::diagnostics;
 
 pub struct ModuleRecordBuilder<'a> {
     allocator: &'a Allocator,
+    source_type: SourceType,
     module_record: ModuleRecord<'a>,
     export_entries: Vec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: Vec<'a, NameSpan<'a>>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
+    pub fn new(allocator: &'a Allocator, source_type: SourceType) -> Self {
         Self {
             allocator,
+            source_type,
             module_record: ModuleRecord::new(allocator),
             export_entries: Vec::new_in(allocator),
             exported_bindings_duplicated: Vec::new_in(allocator),
@@ -32,35 +34,46 @@ impl<'a> ModuleRecordBuilder<'a> {
         (self.module_record, errors)
     }
 
+    /// Returns true if the file contains module syntax (import/export declarations or import.meta).
+    pub fn has_module_syntax(&self) -> bool {
+        self.module_record.has_module_syntax
+    }
+
     pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
         let module_record = &self.module_record;
 
-        // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
-        for name_span in &self.exported_bindings_duplicated {
-            let old_span = module_record.exported_bindings[&name_span.name];
-            errors.push(diagnostics::duplicate_export(&name_span.name, name_span.span, old_span));
+        // Skip checking for exports in TypeScript
+        if !self.source_type.is_typescript() {
+            // It is a Syntax Error if the ExportedNames of ModuleItemList contains any duplicate entries.
+            for name_span in &self.exported_bindings_duplicated {
+                let old_span = module_record.exported_bindings[&name_span.name];
+                errors.push(diagnostics::duplicate_export(
+                    &name_span.name,
+                    name_span.span,
+                    old_span,
+                ));
+            }
+
+            // Multiple default exports
+            // `export default foo`
+            // `export { default }`
+            let default_exports = module_record
+                .local_export_entries
+                .iter()
+                .filter_map(|export_entry| export_entry.export_name.default_export_span())
+                .chain(
+                    module_record
+                        .indirect_export_entries
+                        .iter()
+                        .filter_map(|export_entry| export_entry.export_name.default_export_span()),
+                );
+            if default_exports.clone().count() > 1 {
+                errors.push(diagnostics::duplicate_default_export(default_exports));
+            }
         }
 
-        // Multiple default exports
-        // `export default foo`
-        // `export { default }`
-        let default_exports = module_record
-            .local_export_entries
-            .iter()
-            .filter_map(|export_entry| export_entry.export_name.default_export_span())
-            .chain(
-                module_record
-                    .indirect_export_entries
-                    .iter()
-                    .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-            );
-        if default_exports.clone().count() > 1 {
-            errors.push(
-                OxcDiagnostic::error("Duplicated default export").with_labels(default_exports),
-            );
-        }
         errors
     }
 
@@ -197,17 +210,17 @@ impl<'a> ModuleRecordBuilder<'a> {
                             specifier.imported.name(),
                             specifier.imported.span(),
                         )),
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
                         ImportImportName::NamespaceObject,
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
                         ImportImportName::Default(specifier.span),
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                 };
@@ -271,20 +284,20 @@ impl<'a> ModuleRecordBuilder<'a> {
     ) {
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
-                ExportLocalName::Default(NameSpan::new(ident.name, ident.span))
+                ExportLocalName::Default(NameSpan::new(ident.name.into(), ident.span))
             }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                 func.id.as_ref().map_or_else(
                     || ExportLocalName::Null,
-                    |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
+                    |id| ExportLocalName::Name(NameSpan::new(id.name.into(), id.span)),
                 )
             }
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref().map_or_else(
                 || ExportLocalName::Null,
-                |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
+                |id| ExportLocalName::Name(NameSpan::new(id.name.into(), id.span)),
             ),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(t) => {
-                ExportLocalName::Name(NameSpan::new(t.id.name, t.id.span))
+                ExportLocalName::Name(NameSpan::new(t.id.name.into(), t.id.span))
             }
             _ => ExportLocalName::Null,
         };
@@ -319,8 +332,10 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         if let Some(d) = &decl.declaration {
             iter_binding_identifiers_of_declaration(d, &mut |ident| {
-                let export_name = ExportExportName::Name(NameSpan::new(ident.name, ident.span));
-                let local_name = ExportLocalName::Name(NameSpan::new(ident.name, ident.span));
+                let export_name =
+                    ExportExportName::Name(NameSpan::new(ident.name.into(), ident.span));
+                let local_name =
+                    ExportLocalName::Name(NameSpan::new(ident.name.into(), ident.span));
                 let export_entry = ExportEntry {
                     statement_span: decl.span,
                     span: d.span(),
@@ -331,7 +346,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     is_type: decl.export_kind.is_type(),
                 };
                 self.add_export_entry(export_entry);
-                self.add_export_binding(ident.name, ident.span);
+                self.add_export_binding(ident.name.into(), ident.span);
             });
         }
 
@@ -370,6 +385,12 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn found_ts_export(&mut self) {
+        self.module_record.has_module_syntax = true;
+    }
+
+    /// Mark the file as ESM when unambiguous top-level await is detected.
+    /// This is similar to Babel's `sawUnambiguousESM` flag.
+    pub fn found_unambiguous_await(&mut self) {
         self.module_record.has_module_syntax = true;
     }
 }

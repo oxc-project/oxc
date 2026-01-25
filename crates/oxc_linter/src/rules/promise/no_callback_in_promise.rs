@@ -91,14 +91,14 @@ const TIMEOUT_WHITELIST: [&str; 4] =
     ["setImmediate", "setTimeout", "requestAnimationFrame", "nextTick"];
 
 impl Rule for NoCallbackInPromise {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let mut config: NoCallbackInPromiseConfig = value
             .as_array()
             .and_then(|arr| arr.first())
             .and_then(|value| serde_json::from_value(value.clone()).ok())
             .unwrap_or_default();
         config.callbacks.retain(|item| !config.exceptions.contains(item));
-        Self(Box::new(config))
+        Ok(Self(Box::new(config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

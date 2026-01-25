@@ -6,7 +6,7 @@ arguments: -c .oxlintrc.json .
 working directory: fixtures/overrides_env_globals
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global 'globalThis' should not be modified.
+  ! eslint(no-global-assign): Read-only global 'globalThis' should not be modified.
    ,-[src/test.js:2:1]
  1 | // for env detection
  2 | globalThis = 'abc';
@@ -15,7 +15,7 @@ working directory: fixtures/overrides_env_globals
  3 | $ = 'abc';
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global 'globalThis' should not be modified.
+  ! eslint(no-global-assign): Read-only global 'globalThis' should not be modified.
    ,-[test.js:2:1]
  1 | // for env detection
  2 | globalThis = 'abc';
@@ -24,7 +24,7 @@ working directory: fixtures/overrides_env_globals
  3 | $ = 'abc';
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global '$' should not be modified.
+  ! eslint(no-global-assign): Read-only global '$' should not be modified.
    ,-[test.js:3:1]
  2 | globalThis = 'abc';
  3 | $ = 'abc';
@@ -33,7 +33,7 @@ working directory: fixtures/overrides_env_globals
  4 | 
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global 'Foo' should not be modified.
+  ! eslint(no-global-assign): Read-only global 'Foo' should not be modified.
    ,-[test.js:6:1]
  5 | // for globals detection
  6 | Foo = 'readable';
@@ -41,7 +41,7 @@ working directory: fixtures/overrides_env_globals
    :  `-- Read-only global 'Foo' should not be modified.
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-global-assign.html\eslint(no-global-assign)]8;;\: Read-only global 'globalThis' should not be modified.
+  ! eslint(no-global-assign): Read-only global 'globalThis' should not be modified.
    ,-[test.ts:2:1]
  1 | // for env detection
  2 | globalThis = 'abc';
@@ -51,7 +51,7 @@ working directory: fixtures/overrides_env_globals
    `----
 
 Found 5 warnings and 0 errors.
-Finished in <variable>ms on 3 files with 90 rules using 1 threads.
+Finished in <variable>ms on 3 files with 1 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
 ----------

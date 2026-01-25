@@ -1,4 +1,4 @@
-import type { Options } from "prettier";
+import type { Options, Plugin } from "prettier";
 
 // Lazy load Prettier
 //
@@ -6,6 +6,15 @@ import type { Options } from "prettier";
 // However, this issue has not been observed recently, possibly due to changes in the bundling configuration.
 // Anyway, we keep lazy loading for now to minimize initial load time.
 let prettierCache: typeof import("prettier");
+
+async function loadPrettier(): Promise<typeof import("prettier")> {
+  if (prettierCache) return prettierCache;
+
+  prettierCache = await import("prettier");
+  return prettierCache;
+}
+
+// ---
 
 /**
  * TODO: Plugins support
@@ -21,24 +30,10 @@ export async function resolvePlugins(): Promise<string[]> {
 
 // ---
 
-const TAG_TO_PARSER: Record<string, string> = {
-  // CSS
-  css: "css",
-  styled: "css",
-  // GraphQL
-  gql: "graphql",
-  graphql: "graphql",
-  // HTML
-  html: "html",
-  // Markdown
-  md: "markdown",
-  markdown: "markdown",
-};
-
 export type FormatEmbeddedCodeParam = {
   code: string;
-  tagName: string;
-  options: Options;
+  parserName: string;
+  options: Options & { _tailwindPluginEnabled?: boolean };
 };
 
 /**
@@ -50,25 +45,22 @@ export type FormatEmbeddedCodeParam = {
  */
 export async function formatEmbeddedCode({
   code,
-  tagName,
+  parserName,
   options,
 }: FormatEmbeddedCodeParam): Promise<string> {
-  // TODO: This should be resolved in Rust side
-  const parserName = TAG_TO_PARSER[tagName];
-
-  // Unknown tag, return original code
-  if (!parserName) return code;
-
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
+  const prettier = await loadPrettier();
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   options.parser = parserName;
-  return prettierCache
-    .format(code, options)
-    .then((formatted) => formatted.trimEnd())
-    .catch(() => code);
+
+  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
+  await setupTailwindPlugin(options);
+
+  // NOTE: This will throw if:
+  // - Specified parser is not available
+  // - Or, code has syntax errors
+  // In such cases, Rust side will fallback to original code
+  return prettier.format(code, options);
 }
 
 // ---
@@ -77,7 +69,7 @@ export type FormatFileParam = {
   code: string;
   parserName: string;
   fileName: string;
-  options: Options;
+  options: Options & { _tailwindPluginEnabled?: boolean };
 };
 
 /**
@@ -91,14 +83,102 @@ export async function formatFile({
   fileName,
   options,
 }: FormatFileParam): Promise<string> {
-  if (!prettierCache) {
-    prettierCache = await import("prettier");
-  }
+  const prettier = await loadPrettier();
 
   // SAFETY: `options` is created in Rust side, so it's safe to mutate here
   // We specify `parser` to skip parser inference for performance
   options.parser = parserName;
   // But some plugins rely on `filepath`, so we set it too
   options.filepath = fileName;
-  return prettierCache.format(code, options);
+
+  // Enable Tailwind CSS plugin for non-JS files if needed
+  await setupTailwindPlugin(options);
+
+  return prettier.format(code, options);
+}
+
+// ---
+// Tailwind CSS support
+// ---
+
+// Import types only to avoid runtime error if plugin is not installed
+import type { TransformerEnv } from "prettier-plugin-tailwindcss";
+
+// Shared cache for prettier-plugin-tailwindcss
+let tailwindPluginCache: typeof import("prettier-plugin-tailwindcss");
+
+async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tailwindcss")> {
+  if (tailwindPluginCache) return tailwindPluginCache;
+
+  tailwindPluginCache = await import("prettier-plugin-tailwindcss");
+  return tailwindPluginCache;
+}
+
+// ---
+
+const TAILWIND_RELEVANT_PARSERS = new Set(["html", "vue", "angular", "glimmer"]);
+
+/**
+ * Set up Tailwind CSS plugin for Prettier when:
+ * - `options._tailwindPluginEnabled` is set
+ * - And, the parser is relevant for Tailwind CSS
+ * Loads the plugin lazily. Option mapping is done in Rust side.
+ */
+async function setupTailwindPlugin(
+  options: Options & { _tailwindPluginEnabled?: boolean },
+): Promise<void> {
+  if (!options._tailwindPluginEnabled) return;
+
+  // Clean up internal flag
+  delete options._tailwindPluginEnabled;
+
+  // PERF: Skip loading Tailwind plugin for parsers that don't use it
+  if (!TAILWIND_RELEVANT_PARSERS.has(options.parser as string)) return;
+
+  const tailwindPlugin = await loadTailwindPlugin();
+
+  options.plugins = options.plugins || [];
+  options.plugins.push(tailwindPlugin as Plugin);
+}
+
+// ---
+
+export interface SortTailwindClassesArgs {
+  filepath: string;
+  classes: string[];
+  options?: Record<string, unknown>;
+}
+
+/**
+ * Process Tailwind CSS classes found in JSX attributes.
+ * Option mapping (`experimentalTailwindcss.xxx` → `tailwindXxx`) is done in Rust side.
+ * @param args - Object containing filepath, classes, and options
+ * @returns Array of sorted class strings (same order/length as input)
+ */
+export async function sortTailwindClasses({
+  filepath,
+  classes,
+  options = {},
+}: SortTailwindClassesArgs): Promise<string[]> {
+  const tailwindPlugin = await loadTailwindPlugin();
+
+  // SAFETY: `options` is created in Rust side, so it's safe to mutate here
+  options.filepath = filepath;
+
+  // Load Tailwind context
+  const context = await tailwindPlugin.getTailwindConfig(options);
+  if (!context) return classes;
+
+  // Create transformer env with options
+  const env: TransformerEnv = { context, options };
+
+  // Sort all classes
+  return classes.map((classStr) => {
+    try {
+      return tailwindPlugin.sortClasses(classStr, { env });
+    } catch {
+      // Failed to sort, return original
+      return classStr;
+    }
+  });
 }

@@ -2,91 +2,91 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await promise])
    ·              ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.allSettled()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:21]
+   ╭─[no_await_in_promise_methods.mjs:1:21]
  1 │ Promise.allSettled([await promise])
    ·                     ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.any()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.any([await promise])
    ·              ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.race()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:15]
+   ╭─[no_await_in_promise_methods.mjs:1:15]
  1 │ Promise.race([await promise])
    ·               ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:16]
+   ╭─[no_await_in_promise_methods.mjs:1:16]
  1 │ Promise.all([, await promise])
    ·                ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await promise,])
    ·              ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await promise],)
    ·              ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await (0, promise)],)
    ·              ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await (( promise ))])
    ·              ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await await promise])
    ·              ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:22]
+   ╭─[no_await_in_promise_methods.mjs:1:22]
  1 │ Promise.all([...foo, await promise1, await promise2])
    ·                      ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:38]
+   ╭─[no_await_in_promise_methods.mjs:1:38]
  1 │ Promise.all([...foo, await promise1, await promise2])
    ·                                      ─────
    ╰────
   help: Remove the `await`
 
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
-   ╭─[no_await_in_promise_methods.tsx:1:14]
+   ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await /* comment*/ promise])
    ·              ─────
    ╰────

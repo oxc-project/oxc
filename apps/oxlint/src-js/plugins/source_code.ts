@@ -1,4 +1,8 @@
-import { DATA_POINTER_POS_32, SOURCE_LEN_OFFSET } from "../generated/constants.ts";
+import {
+  DATA_POINTER_POS_32,
+  SOURCE_START_OFFSET,
+  SOURCE_LEN_OFFSET,
+} from "../generated/constants.ts";
 
 // We use the deserializer which removes `ParenthesizedExpression`s from AST,
 // and with `range`, `loc`, and `parent` properties on AST nodes, to match ESLint
@@ -25,7 +29,7 @@ import type { ScopeManager } from "./scope.ts";
 const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true });
 
 // Buffer containing AST. Set before linting a file by `setupSourceForFile`.
-let buffer: BufferWithArrays | null = null;
+export let buffer: BufferWithArrays | null = null;
 
 // Indicates if the original source text has a BOM. Set before linting a file by `setupSourceForFile`.
 let hasBOM = false;
@@ -33,6 +37,7 @@ let hasBOM = false;
 // Lazily populated when `SOURCE_CODE.text` or `SOURCE_CODE.ast` is accessed,
 // or `initAst()` is called before the AST is walked.
 export let sourceText: string | null = null;
+let sourceStartPos: number = 0;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
 
@@ -62,8 +67,9 @@ export function initSourceText(): void {
   debugAssertIsNonNull(buffer);
   const { uint32 } = buffer,
     programPos = uint32[DATA_POINTER_POS_32];
+  sourceStartPos = uint32[(programPos + SOURCE_START_OFFSET) >> 2];
   sourceByteLen = uint32[(programPos + SOURCE_LEN_OFFSET) >> 2];
-  sourceText = textDecoder.decode(buffer.subarray(0, sourceByteLen));
+  sourceText = textDecoder.decode(buffer.subarray(sourceStartPos, sourceStartPos + sourceByteLen));
 }
 
 /**
@@ -74,7 +80,7 @@ export function initAst(): void {
   debugAssertIsNonNull(sourceText);
   debugAssertIsNonNull(buffer);
 
-  ast = deserializeProgramOnly(buffer, sourceText, sourceByteLen, getNodeLoc);
+  ast = deserializeProgramOnly(buffer, sourceText, sourceStartPos, sourceByteLen, getNodeLoc);
   debugAssertIsNonNull(ast);
 }
 

@@ -13,12 +13,6 @@ use serde_json::Value;
 #[non_exhaustive]
 pub struct NoUnusedVarsOptions {
     /// Controls how usage of a variable in the global scope is checked.
-    ///
-    /// This option has two settings:
-    /// 1. `all` checks all variables for usage, including those in the global
-    ///    scope. This is the default setting.
-    /// 2. `local` checks only that locally-declared variables are used but will
-    ///    allow global variables to be unused.
     pub vars: VarsOption,
     /// Specifies exceptions to this rule for unused variables. Variables whose
     /// names match this pattern will be ignored.
@@ -38,14 +32,6 @@ pub struct NoUnusedVarsOptions {
     /// ```
     pub vars_ignore_pattern: IgnorePattern<Regex>,
     /// Controls how unused arguments are checked.
-    ///
-    /// This option has three settings:
-    /// 1. `after-used` - Unused positional arguments that occur before the last
-    ///    used argument will not be checked, but all named arguments and all
-    ///    positional arguments after the last used argument will be checked.
-    ///    This is the default setting.
-    /// 2. `all` - All named arguments must be used.
-    /// 3. `none` - Do not check arguments.
     pub args: ArgsOption,
     /// Specifies exceptions to this rule for unused arguments. Arguments whose
     /// names match this pattern will be ignored.
@@ -82,12 +68,6 @@ pub struct NoUnusedVarsOptions {
     /// ```
     pub ignore_rest_siblings: bool,
     /// Used for `catch` block validation.
-    ///
-    /// It has two settings:
-    /// * `none` - do not check error objects. This is the default setting.
-    /// * `all` - all named arguments must be used.
-    ///
-    /// `none` corresponds to `false`, while `all` corresponds to `true`.
     #[schemars(with = "CaughtErrorsJson")]
     pub caught_errors: CaughtErrors,
     /// Specifies exceptions to this rule for errors caught within a `catch` block.
@@ -413,7 +393,9 @@ pub struct CaughtErrors(bool);
 #[serde(rename_all = "kebab-case")]
 #[expect(dead_code)]
 enum CaughtErrorsJson {
+    /// All named arguments must be used.
     All,
+    /// Do not check error objects.
     #[default]
     None,
 }

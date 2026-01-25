@@ -554,9 +554,11 @@ impl<'a> StyledComponents<'a, '_> {
                         // want to pick the outer name because react-refresh will add HMR variables
                         // like this: X = _a = styled. We could also consider only doing this if the
                         // name starts with an underscore.
-                        AssignmentTarget::AssignmentTargetIdentifier(ident) => Some(ident.name),
+                        AssignmentTarget::AssignmentTargetIdentifier(ident) => {
+                            Some(ident.name.into())
+                        }
                         AssignmentTarget::StaticMemberExpression(member) => {
-                            Some(member.property.name)
+                            Some(member.property.name.into())
                         }
                         _ => return None,
                     };
@@ -564,7 +566,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `const X = styled`
                 Ancestor::VariableDeclaratorInit(declarator) => {
                     return if let BindingPattern::BindingIdentifier(ident) = &declarator.id() {
-                        Some(ident.name)
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -572,7 +574,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `const X = { Y: styled }`
                 Ancestor::ObjectPropertyValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -580,7 +582,7 @@ impl<'a> StyledComponents<'a, '_> {
                 // `class Y { (static) X = styled }`
                 Ancestor::PropertyDefinitionValue(property) => {
                     return if let PropertyKey::StaticIdentifier(ident) = property.key() {
-                        Some(ident.name)
+                        Some(ident.name.into())
                     } else {
                         None
                     };
@@ -1155,6 +1157,7 @@ mod tests {
                 SPAN,
                 TemplateElementValue { raw: ast.atom(input), cooked: Some(ast.atom(input)) },
                 true,
+                false,
             )),
             ast.vec(),
         );

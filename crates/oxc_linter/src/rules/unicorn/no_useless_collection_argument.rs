@@ -1,13 +1,17 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, NewExpression},
+    ast::{Expression, LogicalExpression, NewExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    AstNode, ast_util::is_new_expression, context::LintContext, rule::Rule,
+    AstNode,
+    ast_util::is_new_expression,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
     utils::is_empty_array_expression,
 };
 
@@ -54,7 +58,7 @@ declare_oxc_lint!(
     NoUselessCollectionArgument,
     unicorn,
     style,
-    pending,
+    suggestion,
 );
 
 impl Rule for NoUselessCollectionArgument {
@@ -73,24 +77,31 @@ impl Rule for NoUselessCollectionArgument {
 
         let Some(first_arg_expr) = first_arg.as_expression() else { return };
 
-        let first_arg_expr = first_arg_expr.get_inner_expression();
+        let first_arg_expr_inner = first_arg_expr.get_inner_expression();
 
-        let first_arg_expr = if let Expression::LogicalExpression(logical_expr) = first_arg_expr
+        let (useless_expr, logical_expr) = if let Expression::LogicalExpression(logical_expr) =
+            first_arg_expr_inner
             && logical_expr.operator.is_coalesce()
         {
-            logical_expr.right.get_inner_expression()
+            (logical_expr.right.get_inner_expression(), Some(logical_expr))
         } else {
-            first_arg_expr
+            (first_arg_expr_inner, None)
         };
 
-        let Some(description) = get_description(first_arg_expr) else {
+        let Some(description) = get_description(useless_expr) else {
             return;
         };
 
-        ctx.diagnostic(no_useless_collection_argument_diagnostic(
-            first_arg_expr.span(),
-            description,
-        ));
+        ctx.diagnostic_with_suggestion(
+            no_useless_collection_argument_diagnostic(useless_expr.span(), description),
+            |fixer| {
+                if let Some(logical_expr) = logical_expr {
+                    remove_fallback(fixer, first_arg_expr, logical_expr)
+                } else {
+                    remove_argument(fixer, new_expr)
+                }
+            },
+        );
     }
 }
 
@@ -116,6 +127,62 @@ fn get_description(expr: &Expression) -> Option<&'static str> {
     }
 
     None
+}
+
+fn remove_argument(fixer: RuleFixer, new_expr: &NewExpression) -> RuleFix {
+    let Some(first_arg) = new_expr.arguments.first() else {
+        return fixer.noop();
+    };
+
+    let arg_end = first_arg.span().end;
+
+    let source = fixer.source_text();
+    let mut delete_end = arg_end;
+
+    let after_arg = &source[arg_end as usize..];
+    let trimmed = after_arg.trim_start();
+
+    // remove trailing comma
+    if trimmed.starts_with(',') {
+        let Ok(comma_offset) = u32::try_from(after_arg.len() - trimmed.len()) else {
+            return fixer.noop();
+        };
+
+        delete_end = arg_end + comma_offset + 1;
+    }
+
+    fixer.delete_range(Span::new(first_arg.span().start, delete_end))
+}
+
+fn remove_fallback(
+    fixer: RuleFixer,
+    arg_expr: &Expression,
+    logical_expr: &LogicalExpression,
+) -> RuleFix {
+    let left_end = logical_expr.left.span().end;
+    let logical_end = logical_expr.span.end;
+    let logical_start = logical_expr.span.start;
+
+    let arg_start = arg_expr.span().start;
+    let arg_end = arg_expr.span().end;
+    let has_outer_parens = arg_start < logical_start || arg_end > logical_end;
+
+    if has_outer_parens {
+        let source = fixer.source_text();
+
+        let before_logical = &source[arg_start as usize..logical_start as usize];
+        let after_logical = &source[logical_end as usize..arg_end as usize];
+
+        let before_cleaned = before_logical.trim_start_matches('(');
+        let after_cleaned = after_logical.trim_end_matches(')');
+
+        let left_text = fixer.source_range(logical_expr.left.span());
+
+        let replacement = format!("{before_cleaned}{left_text}{after_cleaned}");
+        fixer.replace(arg_expr.span(), replacement)
+    } else {
+        fixer.delete_range(Span::new(left_end, logical_end))
+    }
 }
 
 #[test]
@@ -182,6 +249,38 @@ fn test() {
         "new Set(foo ?? bar ?? [])",
     ];
 
+    let fix = vec![
+        ("new Set([])", "new Set()"),
+        (r#"new Set("")"#, "new Set()"),
+        ("new Set(undefined)", "new Set()"),
+        ("new Set(null)", "new Set()"),
+        ("new WeakSet([])", "new WeakSet()"),
+        ("new Map([])", "new Map()"),
+        ("new WeakMap([])", "new WeakMap()"),
+        ("new Set( (([])) )", "new Set(  )"),
+        ("new Set([],)", "new Set()"),
+        ("new Set( (([])), )", "new Set(  )"),
+        ("new Set(foo ?? [])", "new Set(foo)"),
+        (r#"new Set(foo ?? "")"#, "new Set(foo)"),
+        ("new Set(foo ?? undefined)", "new Set(foo)"),
+        ("new Set(foo ?? null)", "new Set(foo)"),
+        ("new WeakSet(foo ?? [])", "new WeakSet(foo)"),
+        ("new Map(foo ?? [])", "new Map(foo)"),
+        ("new WeakMap(foo ?? [])", "new WeakMap(foo)"),
+        ("new Set( ((foo ?? [])) )", "new Set( foo )"),
+        ("new Set( (( foo )) ?? [] )", "new Set( (( foo )) )"),
+        ("new Set( foo ?? (( [] )) )", "new Set( foo )"),
+        ("new Set( (await foo) ?? [] )", "new Set( (await foo) )"),
+        ("new Set( (0, foo) ?? [] )", "new Set( (0, foo) )"),
+        ("new Set( (( (0, foo) ?? [] )) )", "new Set(  (0, foo)  )"),
+        ("new Set(document.all ?? [])", "new Set(document.all)"),
+        (r#"new Set([] ?? "")"#, "new Set([])"),
+        (r#"new Set( (( (( "" )) ?? (( [] )) )) )"#, r#"new Set(  (( "" ))  )"#),
+        ("new Set(foo ?? bar ?? [])", "new Set(foo ?? bar)"),
+    ];
+
     Tester::new(NoUselessCollectionArgument::NAME, NoUselessCollectionArgument::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
+        .expect_fix(fix)
         .test_and_snapshot();
 }

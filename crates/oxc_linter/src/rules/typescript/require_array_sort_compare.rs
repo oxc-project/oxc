@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 pub struct RequireArraySortCompare(Box<RequireArraySortCompareConfig>);
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireArraySortCompareConfig {
     /// Whether to ignore arrays in which all elements are strings.
     pub ignore_string_arrays: bool,
@@ -78,10 +78,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireArraySortCompare {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<RequireArraySortCompare>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {

@@ -256,11 +256,21 @@ impl Rule for PreferArraySome {
 
                         debug_assert!(target_span.is_some());
 
-                        if let Some(target_span) = target_span {
-                            fixer.replace(target_span, "some")
-                        } else {
-                            fixer.noop()
-                        }
+                        let Some(target_span) = target_span else {
+                            return fixer.noop();
+                        };
+
+                        // Replace `filter` with `some` and delete `.length > 0` or `.length !== 0`
+                        let multi_fixer = fixer.for_multifix();
+                        let mut multi_fix = multi_fixer.new_fix_with_capacity(2);
+                        multi_fix.push(multi_fixer.replace(target_span, "some"));
+                        multi_fix.push(
+                            multi_fixer.delete_range(Span::new(
+                                left_call_expr.span.end,
+                                bin_expr.span.end,
+                            )),
+                        );
+                        multi_fix.with_message("Replace `.filter(…).length` with `.some(…)`")
                     },
                 );
             }
@@ -448,8 +458,8 @@ fn test() {
             r#"const foo = array.find(element => element === "🦄") ? bar : baz;"#,
             r#"const foo = array.some(element => element === "🦄") ? bar : baz;"#,
         ),
-        (r"array.filter(fn).length > 0", r"array.some(fn).length > 0"),
-        (r"array.filter(fn).length !== 0", r"array.some(fn).length !== 0"),
+        (r"array.filter(fn).length > 0", r"array.some(fn)"),
+        (r"array.filter(fn).length !== 0", r"array.some(fn)"),
         (r"foo.find(fn) == null", r"foo.some(fn) == null"),
         (r"foo.find(fn) == undefined", r"foo.some(fn) == undefined"),
         (r"foo.find(fn) === undefined", r"foo.some(fn) === undefined"),

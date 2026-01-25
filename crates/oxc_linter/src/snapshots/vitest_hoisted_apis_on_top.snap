@@ -1,0 +1,52 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(hoisted-apis-on-top): Hoisted API cannot be used in a runtime location in this file.
+   ╭─[hoisted_apis_on_top.mjs:3:6]
+ 2 │             if (foo) {
+ 3 │               vi.mock('foo', () => {});
+   ·               ────────────────────────
+ 4 │             }
+   ╰────
+  help: Move this hoisted API to the top of the file to better reflect its behavior.
+        If possible, replace `vi.mock()` with `vi.doMock`, which is not hoisted.
+
+  ⚠ eslint-plugin-vitest(hoisted-apis-on-top): Hoisted API cannot be used in a runtime location in this file.
+   ╭─[hoisted_apis_on_top.mjs:5:6]
+ 4 │             if (foo) {
+ 5 │               vi.hoisted();
+   ·               ────────────
+ 6 │             }
+   ╰────
+  help: Move this hoisted API to the top of the file to better reflect its behavior.
+        If possible, replace `vi.mock()` with `vi.doMock`, which is not hoisted.
+
+  ⚠ eslint-plugin-vitest(hoisted-apis-on-top): Hoisted API cannot be used in a runtime location in this file.
+   ╭─[hoisted_apis_on_top.mjs:5:6]
+ 4 │             if (foo) {
+ 5 │               vi.unmock();
+   ·               ───────────
+ 6 │             }
+   ╰────
+  help: Move this hoisted API to the top of the file to better reflect its behavior.
+        If possible, replace `vi.mock()` with `vi.doMock`, which is not hoisted.
+
+  ⚠ eslint-plugin-vitest(hoisted-apis-on-top): Hoisted API cannot be used in a runtime location in this file.
+   ╭─[hoisted_apis_on_top.mjs:5:6]
+ 4 │             if (foo) {
+ 5 │               vi.mock();
+   ·               ─────────
+ 6 │             }
+   ╰────
+  help: Move this hoisted API to the top of the file to better reflect its behavior.
+        If possible, replace `vi.mock()` with `vi.doMock`, which is not hoisted.
+
+  ⚠ eslint-plugin-vitest(hoisted-apis-on-top): Hoisted API cannot be used in a runtime location in this file.
+   ╭─[hoisted_apis_on_top.mjs:3:6]
+ 2 │             if (shouldMock) {
+ 3 │               vi.mock(import('something'), () => bar);
+   ·               ───────────────────────────────────────
+ 4 │             }
+   ╰────
+  help: Move this hoisted API to the top of the file to better reflect its behavior.
+        If possible, replace `vi.mock()` with `vi.doMock`, which is not hoisted.

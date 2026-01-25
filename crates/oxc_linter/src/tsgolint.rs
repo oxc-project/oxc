@@ -15,7 +15,7 @@ use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
 
-use crate::{CompositeFix, FixKind, Fixer, Message, PossibleFixes};
+use crate::{CompositeFix, FixKind, Fixer, Message, PossibleFixes, WEBSITE_BASE_RULES_URL};
 
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
@@ -703,6 +703,7 @@ impl From<TsGoLintRuleDiagnostic> for OxcDiagnostic {
     fn from(val: TsGoLintRuleDiagnostic) -> Self {
         let mut d = OxcDiagnostic::warn(val.message.description)
             .with_label(val.span)
+            .with_url(format!("{}/{}/{}.html", WEBSITE_BASE_RULES_URL, "typescript", val.rule))
             .with_error_code("typescript-eslint", val.rule);
         if let Some(help) = val.message.help {
             d = d.with_help(help);
@@ -742,6 +743,7 @@ impl Message {
                     content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
+                    kind: crate::fixer::FixKind::Fix,
                 })
                 .collect();
 
@@ -767,6 +769,7 @@ impl Message {
                         content: Cow::Owned(fix.text),
                         span: Span::new(fix.range.pos, fix.range.end),
                         message: Some(Cow::Owned(message)),
+                        kind: crate::fixer::FixKind::Suggestion,
                     }
                 })
                 .collect();
@@ -1277,6 +1280,7 @@ mod test {
                 content: "fixedhello".into(),
                 span: Span::new(0, 10),
                 message: None,
+                kind: crate::fixer::FixKind::Fix
             })
         );
     }
@@ -1325,11 +1329,13 @@ mod test {
                     content: "hello".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: crate::fixer::FixKind::Suggestion
                 },
                 crate::fixer::Fix {
                     content: "helloworld".into(),
                     span: Span::new(0, 10),
                     message: Some("Suggestion 2".into()),
+                    kind: crate::fixer::FixKind::Suggestion
                 },
             ])
         );
@@ -1363,11 +1369,17 @@ mod test {
         assert_eq!(
             message.fixes,
             PossibleFixes::Multiple(vec![
-                crate::fixer::Fix { content: "fixed".into(), span: Span::new(0, 5), message: None },
+                crate::fixer::Fix {
+                    content: "fixed".into(),
+                    span: Span::new(0, 5),
+                    message: None,
+                    kind: crate::fixer::FixKind::Fix
+                },
                 crate::fixer::Fix {
                     content: "Suggestion 1".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
+                    kind: crate::fixer::FixKind::Suggestion,
                 },
             ])
         );

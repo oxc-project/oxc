@@ -12,14 +12,15 @@ use serde::Deserialize;
 
 fn no_barrel_file(total: usize, threshold: usize, labels: Vec<LabeledSpan>) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "Barrel file detected, {total} modules are loaded."
+        "Barrel file detected, {total} modules are loaded which exceeds the threshold of {threshold}.",
     ))
-    .with_help(format!("Loading {total} modules is slow for runtimes and bundlers.\nThe configured threshold is {threshold}.\nSee also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>."))
+    .with_help(format!("Consider importing directly from the specific modules instead of using `export *` or `import *`.\nLoading {total} modules may be slow for runtimes and bundlers."))
+    .with_note("See: https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7")
     .with_labels(labels)
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoBarrelFile {
     /// The maximum number of modules that can be re-exported via `export *`
     /// before the rule is triggered.
@@ -53,7 +54,7 @@ declare_oxc_lint!(
     /// * <https://github.com/thepassle/eslint-plugin-barrel-files>
     /// * <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// Invalid:
     ///
@@ -74,10 +75,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoBarrelFile {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoBarrelFile>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -113,7 +112,11 @@ impl Rule for NoBarrelFile {
                 && let Some(count) = count_loaded_modules(&remote_module)
             {
                 total += count;
-                labels.push(module_request.span.label(format!("{count} modules")));
+                labels.push(
+                    module_request
+                        .span
+                        .label(format!("{count} module{}", if count > 1 { "s" } else { "" })),
+                );
             }
         }
 
@@ -164,10 +167,12 @@ fn test() {
     let settings = Some(serde_json::json!([{"threshold": 1}]));
 
     let fail = vec![(
-        r#"export * from "./deep/a.js";
-           export * from "./deep/b.js";
-           export * from "./deep/c.js";
-           export * from "./deep/d.js";"#,
+        r#"
+export * from "./deep/a.js";
+export * from "./deep/b.js";
+export * from "./deep/c.js";
+export * from "./deep/d.js";
+        "#,
         settings,
     )];
 

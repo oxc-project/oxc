@@ -6,7 +6,7 @@ arguments: debugger.js
 working directory: fixtures/auto_config_detection
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[debugger.js:1:1]
  1 | debugger;
    : ^^^^^^^^^
@@ -14,7 +14,7 @@ working directory: fixtures/auto_config_detection
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file using 1 threads.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

@@ -42,7 +42,7 @@ fn index_of_na_n(method_name: &str, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct UseIsnan {
     /// Whether to disallow NaN in switch cases and discriminants
     enforce_for_switch_case: bool,
@@ -143,10 +143,8 @@ impl Rule for UseIsnan {
         }
     }
 
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<UseIsnan>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
@@ -227,6 +225,9 @@ fn test() {
         ("foo(2 / Number.NaN)", None),
         ("var x; if (x = Number.NaN) { }", None),
         ("x === Number[NaN];", None),
+        ("x === (NaN, 1)", None),
+        ("x === (doStuff(), NaN, 1)", None),
+        ("x === (doStuff(), Number.NaN, 1)", None),
         (
             "switch(NaN) { case foo: break; }",
             Some(serde_json::json!([{ "enforceForSwitchCase": false }])),
@@ -326,6 +327,14 @@ fn test() {
             "switch(foo) { case foo.Number.NaN: break }",
             Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
         ),
+        (
+            "switch((NaN, doStuff(), 1)) {}",
+            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        ),
+        (
+            "switch((Number.NaN, doStuff(), 1)) {}",
+            Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        ),
         ("foo.indexOf(NaN)", None),
         ("foo.lastIndexOf(NaN)", None),
         ("foo.indexOf(Number.NaN)", None),
@@ -347,10 +356,10 @@ fn test() {
         ("foo.indexOf(a)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.lastIndexOf(Nan)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.indexOf(a, NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        ("foo.lastIndexOf(NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.lastIndexOf(NaN, b, c)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.indexOf(a, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        ("foo.lastIndexOf(NaN, NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        ("foo.indexOf(...NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.lastIndexOf(NaN, NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.indexOf(...NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 6 },
         ("foo.lastIndexOf(NaN())", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.indexOf(Number.NaN)", Some(serde_json::json!([{}]))),
         ("foo.lastIndexOf(Number.NaN)", Some(serde_json::json!([{}]))),
@@ -367,52 +376,70 @@ fn test() {
         ("foo.lastIndexOf(Number.Nan)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.indexOf(a, Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         (
-            "foo.lastIndexOf(Number.NaN, b)",
+            "foo.lastIndexOf(Number.NaN, b, c)",
             Some(serde_json::json!([{ "enforceForIndexOf": true }])),
         ),
         (
-            "foo.lastIndexOf(Number.NaN, NaN)",
+            "foo.lastIndexOf(Number.NaN, NaN, b)",
             Some(serde_json::json!([{ "enforceForIndexOf": true }])),
         ),
-        ("foo.indexOf(...Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.indexOf(...Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 6 },
         ("foo.lastIndexOf(Number.NaN())", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.indexOf((NaN, 1))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.lastIndexOf((NaN, 1))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.indexOf((Number.NaN, 1))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        (
+            "foo.lastIndexOf((Number.NaN, 1))",
+            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
+        ),
     ];
 
     let fail = vec![
         ("123 == NaN;", None),
         ("123 === NaN;", None),
-        ("NaN === \"abc\";", None),
-        ("NaN == \"abc\";", None),
+        (r#"NaN === "abc";"#, None),
+        (r#"NaN == "abc";"#, None),
         ("123 != NaN;", None),
         ("123 !== NaN;", None),
-        ("NaN !== \"abc\";", None),
-        ("NaN != \"abc\";", None),
-        ("NaN < \"abc\";", None),
-        ("\"abc\" < NaN;", None),
-        ("NaN > \"abc\";", None),
-        ("\"abc\" > NaN;", None),
-        ("NaN <= \"abc\";", None),
-        ("\"abc\" <= NaN;", None),
-        ("NaN >= \"abc\";", None),
-        ("\"abc\" >= NaN;", None),
+        (r#"NaN !== "abc";"#, None),
+        (r#"NaN != "abc";"#, None),
+        (r#"NaN < "abc";"#, None),
+        (r#""abc" < NaN;"#, None),
+        (r#"NaN > "abc";"#, None),
+        (r#""abc" > NaN;"#, None),
+        (r#"NaN <= "abc";"#, None),
+        (r#""abc" <= NaN;"#, None),
+        (r#"NaN >= "abc";"#, None),
+        (r#""abc" >= NaN;"#, None),
         ("123 == Number.NaN;", None),
         ("123 === Number.NaN;", None),
-        ("Number.NaN === \"abc\";", None),
-        ("Number.NaN == \"abc\";", None),
+        (r#"Number.NaN === "abc";"#, None),
+        (r#"Number.NaN == "abc";"#, None),
         ("123 != Number.NaN;", None),
         ("123 !== Number.NaN;", None),
-        ("Number.NaN !== \"abc\";", None),
-        ("Number.NaN != \"abc\";", None),
-        ("Number.NaN < \"abc\";", None),
-        ("\"abc\" < Number.NaN;", None),
-        ("Number.NaN > \"abc\";", None),
-        ("\"abc\" > Number.NaN;", None),
-        ("Number.NaN <= \"abc\";", None),
-        ("\"abc\" <= Number.NaN;", None),
-        ("Number.NaN >= \"abc\";", None),
-        ("\"abc\" >= Number.NaN;", None),
-        ("x === Number?.NaN;", None),
+        (r#"Number.NaN !== "abc";"#, None),
+        (r#"Number.NaN != "abc";"#, None),
+        (r#"Number.NaN < "abc";"#, None),
+        (r#""abc" < Number.NaN;"#, None),
+        (r#"Number.NaN > "abc";"#, None),
+        (r#""abc" > Number.NaN;"#, None),
+        (r#"Number.NaN <= "abc";"#, None),
+        (r#""abc" <= Number.NaN;"#, None),
+        (r#"Number.NaN >= "abc";"#, None),
+        (r#""abc" >= Number.NaN;"#, None),
+        ("x === Number?.NaN;", None), // { "ecmaVersion": 2020 },
+        ("x !== Number?.NaN;", None), // { "ecmaVersion": 2020 },
         ("x === Number['NaN'];", None),
+        (
+            "/* just
+                adding */ x /* some */ === /* comments */ NaN; // here",
+            None,
+        ),
+        ("(1, 2) === NaN;", None),
+        // ("x === (doStuff(), NaN);", None),
+        // ("x === (doStuff(), Number.NaN);", None),
+        // ("x == (doStuff(), NaN);", None),
+        // ("x == (doStuff(), Number.NaN);", None),
         ("switch(NaN) { case foo: break; }", None),
         ("switch(foo) { case NaN: break; }", None),
         ("switch(NaN) { case foo: break; }", Some(serde_json::json!([{}]))),
@@ -500,15 +527,24 @@ fn test() {
             "switch(Number.NaN) { case Number.NaN: break; }",
             Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
         ),
+        // (
+        //     "switch((doStuff(), NaN)) {}",
+        //     Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        // ),
+        // (
+        //     "switch((doStuff(), Number.NaN)) {}",
+        //     Some(serde_json::json!([{ "enforceForSwitchCase": true }])),
+        // ),
         ("foo.indexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.lastIndexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo['indexOf'](NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo[`indexOf`](NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo['lastIndexOf'](NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo().indexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.bar.lastIndexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        ("foo.indexOf?.(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        ("foo?.indexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        ("(foo?.indexOf)(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.indexOf?.(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo?.indexOf(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("(foo?.indexOf)(NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
         ("foo.indexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo.lastIndexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
         ("foo['indexOf'](Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
@@ -521,9 +557,28 @@ fn test() {
             "foo.bar.lastIndexOf(Number.NaN)",
             Some(serde_json::json!([{ "enforceForIndexOf": true }])),
         ),
-        ("foo.indexOf?.(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        ("foo?.indexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        ("foo.indexOf?.(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo?.indexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
         ("(foo?.indexOf)(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
+        // TODO: Get these cases passing.
+        // ("foo.indexOf((1, NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // ("foo.indexOf((1, Number.NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // ("foo.lastIndexOf((1, NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // (
+        //     "foo.lastIndexOf((1, Number.NaN))",
+        //     Some(serde_json::json!([{ "enforceForIndexOf": true }])),
+        // ), // { "ecmaVersion": 2020 },
+        // ("foo.indexOf(NaN, 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // ("foo.lastIndexOf(NaN, 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // ("foo.indexOf(NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // ("foo.lastIndexOf(NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // ("foo.indexOf(Number.NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // (
+        //     "foo.lastIndexOf(Number.NaN, b)",
+        //     Some(serde_json::json!([{ "enforceForIndexOf": true }])),
+        // ), // { "ecmaVersion": 2020 },
+        // ("foo.lastIndexOf(NaN, NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        // ("foo.indexOf((1, NaN), 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 }
     ];
 
     let fix = vec![

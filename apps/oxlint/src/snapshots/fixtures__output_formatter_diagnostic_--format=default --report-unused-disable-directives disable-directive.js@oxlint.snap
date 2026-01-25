@@ -1,0 +1,37 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=default --report-unused-disable-directives disable-directive.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[disable-directive.js:9:3]
+  8 | 
+  9 | // eslint-disable-next-line no-debugger
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | const foo = 3;
+    `----
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[disable-directive.js:12:3]
+ 11 | 
+ 12 | // oxlint-disable-next-line no-debugger
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 13 | const bar = 3;
+    `----
+
+  ! Unused eslint-disable directive (no problems were reported).
+    ,-[disable-directive.js:15:3]
+ 14 | 
+ 15 | // oxlint-disable-next-line eslint/no-debugger
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 16 | const baz = 3;
+    `----
+
+Found 3 warnings and 0 errors.
+Finished in <variable>ms on 1 file with 2 rules using 1 threads.
+----------
+CLI result: LintSucceeded
+----------

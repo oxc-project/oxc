@@ -29,6 +29,9 @@ impl Parse for LintRuleMeta {
         #[cfg(feature = "ruledocs")]
         let mut documentation = String::new();
 
+        #[cfg(feature = "ruledocs")]
+        let mut backtick_fences_count: usize = 0;
+
         for attr in input.call(Attribute::parse_outer)? {
             match parse_attr(["doc"], &attr) {
                 Some(lit) => {
@@ -39,6 +42,9 @@ impl Parse for LintRuleMeta {
 
                         documentation.push_str(line);
                         documentation.push('\n');
+
+                        // Count occurrences of "```" to ensure the markdown code blocks are closed properly.
+                        backtick_fences_count += line.matches("```").count();
                     }
                     #[cfg(not(feature = "ruledocs"))]
                     {
@@ -121,6 +127,16 @@ impl Parse for LintRuleMeta {
             return Err(Error::new_spanned(
                 remaining,
                 "unexpected tokens in rule declaration, missing a comma?",
+            ));
+        }
+
+        // Validate that any markdown fenced code blocks (```) in rule docs are properly closed.
+        // If the total number of fences found is odd, a block was not closed.
+        #[cfg(feature = "ruledocs")]
+        if !backtick_fences_count.is_multiple_of(2) {
+            return Err(Error::new(
+                struct_name.span(),
+                "unclosed markdown code block in documentation, please close all ``` fences",
             ));
         }
 

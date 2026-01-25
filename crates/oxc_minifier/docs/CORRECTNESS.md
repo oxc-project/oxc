@@ -92,7 +92,7 @@ arr.length; // 3
 
 ```javascript
 // Respects property descriptors
-Object.defineProperty(obj, 'prop', {
+Object.defineProperty(obj, "prop", {
   writable: false,
   value: 1,
 });

@@ -1,114 +1,199 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+   ╭─[catch_error_name.tsx:4:26]
+ 3 │                     doSomething();
+ 4 │                 } catch (foo) {
+   ·                          ───
+ 5 │                     console.log(foo);
+   ╰────
+  help: Rename `foo` to `error`
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+   ╭─[catch_error_name.tsx:5:26]
+ 4 │                     doSomething();
+ 5 │                 } catch (foo) {
+   ·                          ───
+ 6 │                     console.log(foo);
+   ╰────
+  help: Rename `foo` to `error`
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+   ╭─[catch_error_name.tsx:3:27]
+ 2 │                 const error_ = new Error('foo bar');
+ 3 │                 obj.catch(foo => { });
+   ·                           ───
+ 4 │             }
+   ╰────
+  help: Replace `foo` with `error`.
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
+   ╭─[catch_error_name.tsx:1:11]
+ 1 │ obj.catch(err => {});
+   ·           ───
+ 2 │             obj.catch(err => {});
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
+   ╭─[catch_error_name.tsx:2:23]
+ 1 │ obj.catch(err => {});
+ 2 │             obj.catch(err => {});
+   ·                       ───
+ 3 │             obj.then(err => {}, err => {});
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
+   ╭─[catch_error_name.tsx:3:33]
+ 2 │             obj.catch(err => {});
+ 3 │             obj.then(err => {}, err => {});
+   ·                                 ───
+ 4 │             obj.then(err => {}, err => {});
+   ╰────
+  help: Replace `err` with `error`.
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
+   ╭─[catch_error_name.tsx:4:33]
+ 3 │             obj.then(err => {}, err => {});
+ 4 │             obj.then(err => {}, err => {});
+   ·                                 ───
+   ╰────
+  help: Replace `err` with `error`.
+
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "descriptiveError" should be named "exception"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (descriptiveError) { }
-   ·                ────────────────
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ try {} catch (descriptiveError) {}
+   ·               ────────────────
    ╰────
   help: Replace `descriptiveError` with `exception`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "has_space_after"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (e) { }
-   ·                ─
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ try {} catch (e) {}
+   ·               ─
    ╰────
   help: Replace `e` with `has_space_after`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (e) { }
-   ·                ─
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ try {} catch (e) {}
+   ·               ─
    ╰────
   help: Replace `e` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (e) { }
-   ·                ─
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ try {} catch (e) {}
+   ·               ─
    ╰────
   help: Replace `e` with `error`.
 
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (notMatching) { }
-   ·                ───────────
-   ╰────
-  help: Replace `notMatching` with `error`.
-
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (notMatching) { }
-   ·                ───────────
-   ╰────
-  help: Replace `notMatching` with `error`.
-
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (notMatching) { }
-   ·                ───────────
-   ╰────
-  help: Replace `notMatching` with `error`.
-
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "_" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (_) { console.log(_) }
-   ·                ─
-   ╰────
-  help: Rename `_` to `error`
-
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ try { } catch (err) { console.error(err) }
-   ·                ───
-   ╰────
-  help: Rename `err` to `error`
-
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
    ╭─[catch_error_name.tsx:1:15]
- 1 │ promise.catch(notMatching => { })
+ 1 │ try {} catch (notMatching) {}
    ·               ───────────
    ╰────
   help: Replace `notMatching` with `error`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:16]
- 1 │ promise.catch((foo) => { })
-   ·                ───
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ try {} catch (notMatching) {}
+   ·               ───────────
    ╰────
-  help: Replace `foo` with `error`.
+  help: Replace `notMatching` with `error`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:25]
- 1 │ promise.catch(function (foo) { })
-   ·                         ───
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "unicorn" should be named "error"
+   ╭─[catch_error_name.tsx:4:27]
+ 3 │             try {} catch (error2) {}
+ 4 │             try {} catch (unicorn) {}
+   ·                           ───────
    ╰────
-  help: Replace `foo` with `error`.
+  help: Replace `unicorn` with `error`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:26]
- 1 │ promise.catch((function (foo) { }))
-   ·                          ───
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ try {} catch (notMatching) {}
+   ·               ───────────
+ 2 │             try {} catch (unicorn) {}
    ╰────
-  help: Replace `foo` with `error`.
+  help: Replace `notMatching` with `error`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:41]
- 1 │ promise.then(function (foo) { }).catch((foo) => { })
-   ·                                         ───
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "notMatching" should be named "error"
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ promise.catch(notMatching => {})
+   ·               ───────────
    ╰────
-  help: Replace `foo` with `error`.
+  help: Replace `notMatching` with `error`.
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:35]
- 1 │ promise.then(undefined, function (foo) { })
-   ·                                   ───
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "_" should be named "error"
+   ╭─[catch_error_name.tsx:2:22]
+ 1 │ try {
+ 2 │             } catch (_) {
+   ·                      ─
+ 3 │                 console.log(_)
    ╰────
-  help: Replace `foo` with `error`.
+  help: Rename `_` to `error`
 
-  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
-   ╭─[catch_error_name.tsx:1:26]
- 1 │ promise.then(undefined, (foo) => { })
-   ·                          ───
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "_" should be named "error"
+   ╭─[catch_error_name.tsx:5:26]
+ 4 │                 try {
+ 5 │                 } catch (_) {
+   ·                          ─
+ 6 │                     console.log(_)
    ╰────
-  help: Replace `foo` with `error`.
+  help: Rename `_` to `error`
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "err" should be named "error"
+   ╭─[catch_error_name.tsx:3:22]
+ 2 │                 try {} catch (e) {}
+ 3 │             }).catch(err => err);
+   ·                      ───
+   ╰────
+  help: Rename `err` to `error`
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "error"
+   ╭─[catch_error_name.tsx:2:31]
+ 1 │ foo.then(() => {
+ 2 │                 try {} catch (e) {}
+   ·                               ─
+ 3 │             }).catch(err => err);
+   ╰────
+  help: Replace `e` with `error`.
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "anyName" should be named "error"
+   ╭─[catch_error_name.tsx:3:22]
+ 2 │                 doSomething();
+ 3 │             } catch (anyName) { // Nesting of catch clauses disables the rule
+   ·                      ───────
+ 4 │                 try {
+   ╰────
+  help: Replace `anyName` with `error`.
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "anyOtherName" should be named "error"
+   ╭─[catch_error_name.tsx:6:26]
+ 5 │                     doSomethingElse();
+ 6 │                 } catch (anyOtherName) {
+   ·                          ────────────
+ 7 │                     // ...
+   ╰────
+  help: Replace `anyOtherName` with `error`.
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "error"
+   ╭─[catch_error_name.tsx:4:30]
+ 3 │                     try {
+ 4 │                     } catch (e) {
+   ·                              ─
+ 5 │                         alert("There was a problem moving these items: " + e);
+   ╰────
+  help: Rename `e` to `error`
+
+  ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "e" should be named "error"
+   ╭─[catch_error_name.tsx:4:30]
+ 3 │                     try {
+ 4 │                     } catch (e) {
+   ·                              ─
+ 5 │                         alert("1There was a problem moving these items: " + e);
+   ╰────
+  help: Rename `e` to `error`

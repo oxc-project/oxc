@@ -98,7 +98,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
+    /// /* id-length: "error" */     // default is minimum 2-chars ({ "min": 2 })
     ///
     /// const x = 5;
     /// obj.e = document.body;
@@ -127,7 +127,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /*eslint id-length: "error"*/     // default is minimum 2-chars ({ "min": 2 })
+    /// /* id-length: "error" */     // default is minimum 2-chars ({ "min": 2 })
     ///
     /// const num = 5;
     /// function _f() { return 42; }
@@ -166,10 +166,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for IdLength {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let object = value.get(0).and_then(Value::as_object);
 
-        Self(Box::new(IdLengthConfig {
+        Ok(Self(Box::new(IdLengthConfig {
             exception_patterns: object
                 .and_then(|map| map.get("exceptionPatterns"))
                 .and_then(Value::as_array)
@@ -198,7 +198,7 @@ impl Rule for IdLength {
                 .and_then(Value::as_str)
                 .map(PropertyKind::from)
                 .unwrap_or_default(),
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

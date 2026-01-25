@@ -21,6 +21,7 @@ use oxc_linter::{
 };
 
 use crate::{
+    DEFAULT_OXLINTRC,
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
     walk::Walk,
@@ -178,7 +179,7 @@ impl CliRunner {
             paths.sort_unstable();
         }
 
-        let mut external_plugin_store = ExternalPluginStore::default();
+        let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -271,7 +272,7 @@ impl CliRunner {
                     config_file
                 };
 
-                if fs::write(Self::DEFAULT_OXLINTRC, configuration).is_ok() {
+                if fs::write(DEFAULT_OXLINTRC, configuration).is_ok() {
                     print_and_flush_stdout(stdout, "Configuration file created\n");
                     return CliRunResult::ConfigFileInitSucceeded;
                 }
@@ -323,7 +324,7 @@ impl CliRunner {
 
                 let table = RuleTable::default();
                 for section in &table.sections {
-                    let md = section.render_markdown_table_cli(None, &enabled);
+                    let md = section.render_markdown_table_cli(&enabled);
                     print_and_flush_stdout(stdout, &md);
                     print_and_flush_stdout(stdout, "\n");
                 }
@@ -342,7 +343,7 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_configs(external_linter);
+            let res = config_store.external_plugin_store().setup_rule_configs(external_linter);
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
@@ -464,8 +465,6 @@ impl CliRunner {
 }
 
 impl CliRunner {
-    const DEFAULT_OXLINTRC: &'static str = ".oxlintrc.json";
-
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
@@ -624,7 +623,7 @@ impl CliRunner {
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
-        let path: &Path = config.map_or(Self::DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
+        let path: &Path = config.map_or(DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
         let full_path = cwd.join(path);
 
         if config.is_some() || full_path.exists() {
@@ -637,7 +636,7 @@ impl CliRunner {
     /// and returns `Err` if none exists or the file is invalid. Does not apply the default
     /// config file.
     fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
-        let possible_config_path = dir.join(Self::DEFAULT_OXLINTRC);
+        let possible_config_path = dir.join(DEFAULT_OXLINTRC);
         if possible_config_path.is_file() {
             Oxlintrc::from_file(&possible_config_path).map(Some)
         } else {
@@ -671,7 +670,7 @@ mod test {
     use std::{fs, path::PathBuf};
 
     use super::CliRunner;
-    use crate::tester::Tester;
+    use crate::{DEFAULT_OXLINTRC, tester::Tester};
 
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
@@ -1046,14 +1045,14 @@ mod test {
 
     #[test]
     fn test_init_config() {
-        assert!(!fs::exists(CliRunner::DEFAULT_OXLINTRC).unwrap());
+        assert!(!fs::exists(DEFAULT_OXLINTRC).unwrap());
 
         let args = &["--init"];
         Tester::new().with_cwd("fixtures".into()).test(args);
 
-        assert!(fs::exists(CliRunner::DEFAULT_OXLINTRC).unwrap());
+        assert!(fs::exists(DEFAULT_OXLINTRC).unwrap());
 
-        fs::remove_file(CliRunner::DEFAULT_OXLINTRC).unwrap();
+        fs::remove_file(DEFAULT_OXLINTRC).unwrap();
     }
 
     #[test]
@@ -1349,6 +1348,10 @@ mod test {
             assert!(rule_obj.contains_key("scope"), "Rule should contain 'scope' field");
             assert!(rule_obj.contains_key("value"), "Rule should contain 'value' field");
             assert!(rule_obj.contains_key("category"), "Rule should contain 'category' field");
+            assert!(rule_obj.contains_key("type_aware"), "Rule should contain 'type_aware' field");
+            assert!(rule_obj.contains_key("fix"), "Rule should contain 'fix' field");
+            assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
+            assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
         }
     }
 
@@ -1467,5 +1470,74 @@ export { redundant };
 ",
             &["--type-aware", "-D", "no-unnecessary-type-assertion"],
         );
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_enum() {
+        Tester::new().with_cwd("fixtures/invalid_config_enum".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_extra_options() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_extra_options".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    // Ensure the config validation works with vitest/no-hooks, which
+    // is an alias of jest/no-hooks.
+    fn test_invalid_config_invalid_config_with_rule_alias() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_with_rule_alias".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_in_override() {
+        Tester::new().with_cwd("fixtures/invalid_config_in_override".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_multiple_rules() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_multiple_rules".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_type_difference() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_type_difference".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_extends() {
+        Tester::new().with_cwd("fixtures/extends_invalid_config".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_sort_imports() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_sort_imports".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_valid_complex_config() {
+        Tester::new().with_cwd("fixtures/valid_complex_config".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_complex_enum() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_complex_enum".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_invalid_config_tuple_rules() {
+        Tester::new().with_cwd("fixtures/invalid_config_tuple_rules".into()).test_and_snapshot(&[]);
     }
 }

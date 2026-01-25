@@ -9,8 +9,13 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{CompactStr, Span};
 use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+};
 
 fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected \"import\" statement instead of \"require\" call")
@@ -18,11 +23,11 @@ fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct NoRequireImports(Box<NoRequireImportsConfig>);
 
-#[derive(Debug, Default, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRequireImportsConfig {
     /// These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.
     /// A common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,
@@ -119,21 +124,8 @@ fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -
 }
 
 impl Rule for NoRequireImports {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        Self(Box::new(NoRequireImportsConfig {
-            allow: obj
-                .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter().filter_map(serde_json::Value::as_str).map(CompactStr::from).collect()
-                })
-                .unwrap_or_default(),
-            allow_as_import: obj
-                .and_then(|v| v.get("allowAsImport"))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or(false),
-        }))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -200,9 +192,8 @@ impl Rule for NoRequireImports {
 
                     ctx.diagnostic(no_require_imports_diagnostic(decl.span));
                 }
-                TSModuleReference::IdentifierReference(_)
-                | TSModuleReference::QualifiedName(_)
-                | TSModuleReference::ThisExpression(_) => {}
+                TSModuleReference::IdentifierReference(_) | TSModuleReference::QualifiedName(_) => {
+                }
             },
             _ => {}
         }

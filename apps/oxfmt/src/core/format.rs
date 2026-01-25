@@ -2,12 +2,14 @@
 use std::borrow::Cow;
 use std::path::Path;
 
+use serde_json::Value;
+use tracing::instrument;
+
 use oxc_allocator::AllocatorPool;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter::{FormatOptions, Formatter, enable_jsx_source_type, get_parse_options};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use serde_json::Value;
 
 use super::{FormatFileStrategy, ResolvedOptions};
 
@@ -42,6 +44,7 @@ impl SourceFormatter {
     }
 
     /// Format a file based on its entry type and resolved options.
+    #[instrument(level = "debug", name = "oxfmt::format", skip_all, fields(path = %entry.path().display()))]
     pub fn format(
         &self,
         entry: &FormatFileStrategy,
@@ -61,7 +64,7 @@ impl SourceFormatter {
                     source_text,
                     path,
                     *source_type,
-                    format_options,
+                    *format_options,
                     external_options,
                 ),
                 insert_final_newline,
@@ -92,7 +95,7 @@ impl SourceFormatter {
                     path,
                     parser_name,
                     external_options,
-                    sort_package_json,
+                    sort_package_json.as_ref(),
                 ),
                 insert_final_newline,
             ),
@@ -117,6 +120,7 @@ impl SourceFormatter {
     }
 
     /// Format JS/TS source code using oxc_formatter.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter", skip_all)]
     fn format_by_oxc_formatter(
         &self,
         source_text: &str,
@@ -137,28 +141,24 @@ impl SourceFormatter {
         }
 
         #[cfg(feature = "napi")]
-        let is_embed_off = format_options.embedded_language_formatting.is_off();
+        let external_callbacks = {
+            let external_formatter = self
+                .external_formatter
+                .as_ref()
+                .expect("`external_formatter` must exist when `napi` feature is enabled");
+
+            Some(external_formatter.to_external_callbacks(path, &format_options, external_options))
+        };
+
+        #[cfg(not(feature = "napi"))]
+        let external_callbacks = {
+            let _ = (path, external_options);
+            None
+        };
 
         let base_formatter = Formatter::new(&allocator, format_options);
-
-        #[cfg(feature = "napi")]
-        let formatted = {
-            if is_embed_off {
-                base_formatter.format(&ret.program)
-            } else {
-                let embedded_formatter = self
-                    .external_formatter
-                    .as_ref()
-                    .expect("`external_formatter` must exist when `napi` feature is enabled")
-                    .to_embedded_formatter(external_options);
-                base_formatter.format_with_embedded(&ret.program, embedded_formatter)
-            }
-        };
-        #[cfg(not(feature = "napi"))]
-        let formatted = {
-            let _ = external_options;
-            base_formatter.format(&ret.program)
-        };
+        let formatted =
+            base_formatter.format_with_external_callbacks(&ret.program, external_callbacks);
 
         let code = formatted.print().map_err(|err| {
             OxcDiagnostic::error(format!(
@@ -180,6 +180,7 @@ impl SourceFormatter {
     }
 
     /// Format TOML file using `toml`.
+    #[instrument(level = "debug", name = "oxfmt::format::oxc_toml", skip_all)]
     fn format_by_toml(source_text: &str, options: oxc_toml::Options) -> String {
         oxc_toml::format(source_text, options)
     }
@@ -187,6 +188,7 @@ impl SourceFormatter {
     /// Format non-JS/TS file using external formatter (Prettier).
     #[cfg(feature = "napi")]
     #[expect(clippy::needless_pass_by_value)]
+    #[instrument(level = "debug", name = "oxfmt::format::external_formatter", skip_all, fields(parser = %parser_name))]
     fn format_by_external_formatter(
         &self,
         source_text: &str,
@@ -219,21 +221,30 @@ impl SourceFormatter {
 
     /// Format `package.json`: optionally sort then format by external formatter.
     #[cfg(feature = "napi")]
+    #[instrument(
+        level = "debug",
+        name = "oxfmt::format::external_formatter_package_json",
+        skip_all
+    )]
     fn format_by_external_formatter_package_json(
         &self,
         source_text: &str,
         path: &Path,
         parser_name: &str,
         external_options: Value,
-        sort_package_json: bool,
+        sort_options: Option<&sort_package_json::SortOptions>,
     ) -> Result<String, OxcDiagnostic> {
-        let source_text: Cow<'_, str> = if sort_package_json {
-            Cow::Owned(sort_package_json::sort_package_json(source_text).map_err(|err| {
-                OxcDiagnostic::error(format!(
-                    "Failed to sort package.json: {}\n{err}",
-                    path.display()
-                ))
-            })?)
+        let source_text: Cow<'_, str> = if let Some(options) = sort_options {
+            Cow::Owned(
+                sort_package_json::sort_package_json_with_options(source_text, options).map_err(
+                    |err| {
+                        OxcDiagnostic::error(format!(
+                            "Failed to sort package.json: {}\n{err}",
+                            path.display()
+                        ))
+                    },
+                )?,
+            )
         } else {
             Cow::Borrowed(source_text)
         };

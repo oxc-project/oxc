@@ -74,7 +74,17 @@ enum IgnoreClassWithImplements {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce that class methods utilize this.
+    /// Enforce that class methods utilize `this`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// For class methods that do not use `this`, you should consider converting them
+    /// to `static` methods. This is not always possible or desirable, but it can
+    /// help clarify that the method does not rely on instance state.
+    ///
+    /// If you do convert the method into a `static` function,
+    /// instances of the class that call that particular method have to be converted
+    /// to a `static` call as well.
     ///
     /// ### Examples
     ///
@@ -114,9 +124,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for ClassMethodsUseThis {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let obj = value.get(0);
-        Self(Box::new(ClassMethodsUseThisConfig {
+        Ok(Self(Box::new(ClassMethodsUseThisConfig {
             except_methods: obj
                 .and_then(|o| o.get("exceptMethods"))
                 .and_then(|v| v.as_array())
@@ -150,7 +160,7 @@ impl Rule for ClassMethodsUseThis {
                     "public-fields" => IgnoreClassWithImplements::PublicFields,
                     _ => IgnoreClassWithImplements::All,
                 }),
-        }))
+        })))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -285,39 +285,45 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (r"foo.addEventListener('click', () => {})", None),
-        (r"foo.removeEventListener('click', onClick)", None),
-        (r"foo.onclick", None),
-        (r"foo[onclick] = () => {}", None),
-        (r#"foo["onclick"] = () => {}"#, None),
-        (r"foo.onunknown = () => {}", None),
-        (r"foo.setCallBack = () => {console.log('foo')}", None),
-        (r"setCallBack = () => {console.log('foo')}", None),
-        (r"foo.onclick.bar = () => {}", None),
-        (r"foo['x'] = true;", None),
+        "foo.addEventListener('click', () => {})",
+        "foo.removeEventListener('click', onClick)",
+        "foo.onclick",
+        "foo[onclick] = () => {}",
+        r#"foo["onclick"] = () => {}"#,
+        "foo.onunknown = () => {}",
+        "foo.setCallBack = () => {console.log('foo')}",
+        "setCallBack = () => {console.log('foo')}",
+        "foo.onclick.bar = () => {}",
+        "foo['x'] = true;",
     ];
 
     let fail = vec![
-        (r"foo.onclick = () => {}", None),
-        (r"foo.onclick = 1", None),
-        (r"foo.bar.onclick = onClick", None),
-        (r"const bar = null; foo.onclick = bar;", None),
-        (r"foo.onkeydown = () => {}", None),
-        (r"foo.ondragend = () => {}", None),
-        (r"foo.onclick = null", None),
-        (r"foo.onclick = undefined", None),
-        (r"window.onbeforeunload = null", None),
-        (r"window.onbeforeunload = undefined", None),
-        (r"window.onbeforeunload = foo", None),
-        (r"window.onbeforeunload = () => 'foo'", None),
-        (r"myWorker.port.onmessage = function(e) {}", None),
-        (r"((foo)).onclick = ((0, listener))", None),
-        (r"window.onload = window.onunload = function() {};", None),
-        (r"window.onunload ??= function() {};", None),
-        (r"window.onunload ||= function() {};", None),
-        (r"window.onunload += function() {};", None),
-        (r"(el as HTMLElement).onmouseenter = onAnchorMouseEnter;", None),
+        "foo.onclick = () => {}",
+        "foo.onclick = 1",
+        "foo.bar.onclick = onClick",
+        "const bar = null; foo.onclick = bar;",
+        "foo.onkeydown = () => {}",
+        "foo.ondragend = () => {}",
+        "foo.onclick = null",
+        "foo.onclick = undefined",
+        "window.onbeforeunload = null",
+        "window.onbeforeunload = undefined",
+        "window.onbeforeunload = foo",
+        "window.onbeforeunload = () => 'foo'",
+        "myWorker.port.onmessage = function(e) {}",
+        "((foo)).onclick = ((0, listener))",
+        "window.onload = window.onunload = function() {};",
+        "window.onunload ??= function() {};",
+        "window.onunload ||= function() {};",
+        "window.onunload += function() {};",
+        "(el as HTMLElement).onmouseenter = onAnchorMouseEnter;",
     ];
+
+    // TODO: Implement autofix and use these tests.
+    // let _fix = vec![(
+    //     "(el as HTMLElement).onmouseenter = onAnchorMouseEnter;",
+    //     "(el as HTMLElement).addEventListener('mouseenter', onAnchorMouseEnter);",
+    // )];
 
     Tester::new(PreferAddEventListener::NAME, PreferAddEventListener::PLUGIN, pass, fail)
         .test_and_snapshot();

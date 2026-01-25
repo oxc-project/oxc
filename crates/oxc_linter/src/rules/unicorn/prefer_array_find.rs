@@ -253,6 +253,7 @@ fn test() {
         "array.filter(foo).first",
         "array.filter[0]",
         "filter(foo)[0]",
+        // r#"array["filter"](foo)[0]"#,
         "array[filter](foo)[0]",
         "array.notFilter(foo)[0]",
         "array.filter()[0]",
@@ -265,12 +266,14 @@ fn test() {
         "[array.filter(foo)[0] = 1] = []",
         "array.filter(foo).shift",
         "shift(array.filter(foo))",
+        // r#"array.filter(foo)["shift"]()"#,
         "array.filter(foo)[shift]()",
         "array.filter(foo).notShift()",
         "array.filter(foo).shift(extraArgument)",
         "array.filter(foo).shift(...[])",
         "array.filter.shift()",
         "filter(foo).shift()",
+        // r#"array["filter"](foo).shift()"#,
         "array[filter](foo).shift()",
         "array.notFilter(foo).shift()",
         "array.filter().shift()",
@@ -287,6 +290,7 @@ fn test() {
         "const [...foo] = array.filter(bar)",
         "const [foo] = array.filter",
         "const [foo] = filter(bar)",
+        // r#"const [foo] = array["filter"](bar)"#,
         "const [foo] = array[filter](bar)",
         "const [foo] = array.notFilter(bar)",
         "const [foo] = array.filter()",
@@ -303,6 +307,7 @@ fn test() {
         "[...foo] = array.filter(bar)",
         "[foo] = array.filter",
         "[foo] = filter(bar)",
+        // r#"[foo] = array["filter"](bar)"#,
         "[foo] = array[filter](bar)",
         "[foo] = array.notFilter(bar)",
         "[foo] = array.filter()",
@@ -348,6 +353,7 @@ fn test() {
 			function a([bar] = foo) {}",
         "const foo = array.filter; const first = foo[0]",
         "const foo = filter(bar); const first = foo[0]",
+        // r#"const foo = array["filter"](bar); const first = foo[0]"#,
         "const foo = array[filter](bar); const first = foo[0]",
         "const foo = array.notFilter(bar); const first = foo[0]",
         "const foo = array.filter(); const first = foo[0]",
@@ -357,12 +363,14 @@ fn test() {
         "let items = array.filter(bar); console.log(items[0]); items = [1,2,3]; console.log(items[0]);",
         "array.filter(foo).pop",
         "pop(array.filter(foo))",
+        // r#"array.filter(foo)["pop"]()"#,
         "array.filter(foo)[pop]()",
         "array.filter(foo).notPop()",
         "array.filter(foo).pop(extraArgument)",
         "array.filter(foo).pop(...[])",
         "array.filter.pop()",
         "filter(foo).pop()",
+        // r#"array["filter"](foo).pop()"#,
         "array[filter](foo).pop()",
         "array.notFilter(foo).pop()",
         "array.filter().pop()",
@@ -370,6 +378,7 @@ fn test() {
         "array.filter(...foo).pop()",
         "array.filter(foo).at",
         "at(array.filter(foo), -1)",
+        // r#"array.filter(foo)["at"](-1)"#,
         "array.filter(foo)[at](-1)",
         "array.filter(foo).notAt(-1)",
         "array.filter(foo).at()",
@@ -383,14 +392,15 @@ fn test() {
         "const a = {b: -1}; array.filter(foo).at(a.b)",
         "array.filter(foo).at(-2)",
         "array.filter(foo).at(-(-1))",
-        //"array.filter(foo).at(-1.)",
-        //"array.filter(foo).at(-0b1)",
+        // "array.filter(foo).at(-1.)",
+        // "array.filter(foo).at(-0b1)",
         r#"array.filter(foo).at(-"1")"#,
         "array.filter(foo).at(-null)",
         "array.filter(foo).at(-false)",
         "array.filter(foo).at(-true)",
         "array.filter.at(-1)",
         "filter(foo).at(-1)",
+        // r#"array["filter"](foo).at(-1)"#,
         "array[filter](foo).at(-1)",
         "array.notFilter(foo).at(-1)",
         "array.filter().at(-1)",
@@ -398,6 +408,7 @@ fn test() {
         "array.filter(...foo).at(-1)",
         "array2.filter(foo).at",
         "at(array.filter(foo), 0)",
+        // r#"array.filter(foo)["at"](0)"#,
         "array.filter(foo)[at](0)",
         "array.filter(foo).notAt(0)",
         "array2.filter(foo).at()",
@@ -407,10 +418,11 @@ fn test() {
         "array.filter(foo).at(+0)",
         "const ZERO = 0; array.filter(foo).at(ZERO)",
         "const a = {b: 0}; array.filter(foo).at(a.b)",
-        //"array.filter(foo).at(0b0)",
+        // "array.filter(foo).at(0b0)",
         r#"array.filter(foo).at("0")"#,
         "array.filter.at(0)",
         "filter(foo).at(0)",
+        // r#"array["filter"](foo).at(0)"#,
         "array[filter](foo).at(0)",
         "array.notFilter(foo).at(0)",
         "array.filter().at(0)",
@@ -422,9 +434,13 @@ fn test() {
 
     let fail = vec![
         "array.filter(foo)[0]",
+        "array?.filter(foo)[0]",
         "array.filter(foo, thisArgument)[0]",
+        "array?.filter(foo, thisArgument)[0]",
         "array.filter(foo).shift()",
+        "array?.filter(foo).shift()",
         "array.filter(foo, thisArgument).shift()",
+        "array?.filter(foo, thisArgument).shift()",
         "const item = array
 				// comment 1
 				.filter(
@@ -585,7 +601,9 @@ fn test() {
 				// comment 6
 				;",
         "array.filter(foo).at(0)",
+        "array?.filter(foo).at(0)",
         "array.filter(foo, thisArgument).at(0)",
+        "array?.filter(foo, thisArgument).at(0)",
         "const item = array
 				// comment 1
 				.filter(
@@ -605,11 +623,16 @@ fn test() {
         "array.filter(foo)?.pop()",
     ];
 
-    let _fix: Vec<(&'static str, &'static str, Option<serde_json::Value>)> = vec![
-        ("array.filter(foo)[0]", "array.find(foo)", None),
-        ("array.filter(foo, thisArgument)[0]", "array.find(foo, thisArgument)", None),
-        ("array.filter(foo).shift()", "array.find(foo)", None),
-        ("array.filter(foo, thisArgument).shift()", "array.find(foo, thisArgument)", None),
+    // TODO: Implement autofix and use these tests.
+    let _fix = vec![
+        ("array.filter(foo)[0]", "array.find(foo)"),
+        ("array?.filter(foo)[0]", "array?.find(foo)"),
+        ("array.filter(foo, thisArgument)[0]", "array.find(foo, thisArgument)"),
+        ("array?.filter(foo, thisArgument)[0]", "array?.find(foo, thisArgument)"),
+        ("array.filter(foo).shift()", "array.find(foo)"),
+        ("array?.filter(foo).shift()", "array?.find(foo)"),
+        ("array.filter(foo, thisArgument).shift()", "array.find(foo, thisArgument)"),
+        ("array?.filter(foo, thisArgument).shift()", "array?.find(foo, thisArgument)"),
         (
             "const item = array
 				// comment 1
@@ -629,28 +652,25 @@ fn test() {
 				)
 				// comment 4
 				;",
-            None,
         ),
-        ("const [foo] = array.filter(bar)", "const foo = array.find(bar)", None),
-        ("const [items] = array.filter(bar)", "const items = array.find(bar)", None),
+        ("const [foo] = array.filter(bar)", "const foo = array.find(bar)"),
+        ("const [items] = array.filter(bar)", "const items = array.find(bar)"),
         (
             "const [foo] = array.filter(bar, thisArgument)",
             "const foo = array.find(bar, thisArgument)",
-            None,
         ),
-        ("const [{foo}] = array.filter(fn);", "const {foo} = array.find(fn);", None),
-        ("const [{foo = bar}] = array.filter(fn);", "const {foo = bar} = array.find(fn);", None),
-        ("const [[foo]] = array.filter(fn);", "const [foo] = array.find(fn);", None),
-        ("const [[foo = bar]] = array.filter(fn);", "const [foo = bar] = array.find(fn);", None),
-        ("const [foo, ] = array.filter(bar)", "const foo = array.find(bar)", None),
-        ("var [foo, ] = array.filter(bar)", "var foo = array.find(bar)", None),
-        ("let [foo, ] = array.filter(bar)", "let foo = array.find(bar)", None),
-        ("let a = 1, [foo, ] = array.filter(bar)", "let a = 1, foo = array.find(bar)", None),
-        ("let a = 1, [{foo}] = array.filter(bar)", "let a = 1, {foo} = array.find(bar)", None),
+        ("const [{foo}] = array.filter(fn);", "const {foo} = array.find(fn);"),
+        ("const [{foo = bar}] = array.filter(fn);", "const {foo = bar} = array.find(fn);"),
+        ("const [[foo]] = array.filter(fn);", "const [foo] = array.find(fn);"),
+        ("const [[foo = bar]] = array.filter(fn);", "const [foo = bar] = array.find(fn);"),
+        ("const [foo, ] = array.filter(bar)", "const foo = array.find(bar)"),
+        ("var [foo, ] = array.filter(bar)", "var foo = array.find(bar)"),
+        ("let [foo, ] = array.filter(bar)", "let foo = array.find(bar)"),
+        ("let a = 1, [foo, ] = array.filter(bar)", "let a = 1, foo = array.find(bar)"),
+        ("let a = 1, [{foo}] = array.filter(bar)", "let a = 1, {foo} = array.find(bar)"),
         (
             "for (let [i] = array.filter(bar); i< 10; i++) {}",
             "for (let i = array.find(bar); i< 10; i++) {}",
-            None,
         ),
         (
             "const [
@@ -676,19 +696,17 @@ fn test() {
 				)
 				// comment 5
 				;",
-            None,
         ),
-        ("[foo] = array.filter(bar)", "foo = array.find(bar)", None),
-        ("[foo] = array.filter(bar, thisArgument)", "foo = array.find(bar, thisArgument)", None),
-        ("[foo.bar().baz] = array.filter(fn)", "foo.bar().baz = array.find(fn)", None),
-        ("[{foo}] = array.filter(fn);", "({foo} = array.find(fn));", None),
-        ("[[foo]] = array.filter(fn);", "[foo] = array.find(fn);", None),
-        ("[{foo = baz}] = array.filter(fn);", "({foo = baz} = array.find(fn));", None),
-        ("[foo, ] = array.filter(bar)", "foo = array.find(bar)", None),
+        ("[foo] = array.filter(bar)", "foo = array.find(bar)"),
+        ("[foo] = array.filter(bar, thisArgument)", "foo = array.find(bar, thisArgument)"),
+        ("[foo.bar().baz] = array.filter(fn)", "foo.bar().baz = array.find(fn)"),
+        ("[{foo}] = array.filter(fn);", "({foo} = array.find(fn));"),
+        ("[[foo]] = array.filter(fn);", "[foo] = array.find(fn);"),
+        ("[{foo = baz}] = array.filter(fn);", "({foo = baz} = array.find(fn));"),
+        ("[foo, ] = array.filter(bar)", "foo = array.find(bar)"),
         (
             "for ([i] = array.filter(bar); i< 10; i++) {}",
             "for (i = array.find(bar); i< 10; i++) {}",
-            None,
         ),
         (
             "let foo
@@ -697,47 +715,32 @@ fn test() {
             "let foo
 			const bar = []
 			;foo = array.find(bar)",
-            None,
         ),
         (
             "const foo = array.filter(bar); const first = foo[0];",
             "const foo = array.find(bar); const first = foo;",
-            None,
         ),
         (
             "const foo = array.filter(bar), first = foo[0];",
             "const foo = array.find(bar), first = foo;",
-            None,
         ),
-        (
-            "var foo = array.filter(bar), first = foo[0];",
-            "var foo = array.find(bar), first = foo;",
-            None,
-        ),
-        (
-            "let foo = array.filter(bar), first = foo[0];",
-            "let foo = array.find(bar), first = foo;",
-            None,
-        ),
+        ("var foo = array.filter(bar), first = foo[0];", "var foo = array.find(bar), first = foo;"),
+        ("let foo = array.filter(bar), first = foo[0];", "let foo = array.find(bar), first = foo;"),
         (
             "const foo = array.filter(bar); const [first] = foo;",
             "const foo = array.find(bar); const first = foo;",
-            None,
         ),
         (
             "const foo = array.filter(bar); [first] = foo;",
             "const foo = array.find(bar); first = foo;",
-            None,
         ),
         (
             "const foo = array.filter(bar); const [{propOfFirst = unicorn}] = foo;",
             "const foo = array.find(bar); const {propOfFirst = unicorn} = foo;",
-            None,
         ),
         (
             "const foo = array.filter(bar); [{propOfFirst = unicorn}] = foo;",
             "const foo = array.find(bar); ({propOfFirst = unicorn} = foo);",
-            None,
         ),
         (
             "const items = array.filter(bar);
@@ -748,17 +751,14 @@ fn test() {
 			const first = item;
 			console.log(item);
 			function foo() { return item; }",
-            None,
         ),
         (
             "const item = {}; const items = array.filter(bar); console.log(items[0]);",
             "const item = {}; const item_ = array.find(bar); console.log(item_);",
-            None,
         ),
         (
             "let items = array.filter(bar); console.log(items[0]);",
             "let item = array.find(bar); console.log(item);",
-            None,
         ),
         (
             "const item = 1;
@@ -771,7 +771,6 @@ fn test() {
 				const item_ = array.find(bar);
 				console.log(item_);
 			}",
-            None,
         ),
         (
             "const items = array.filter(bar);
@@ -786,7 +785,6 @@ fn test() {
 				const item_ = 2;
 				console.log(item__);
 			}",
-            None,
         ),
         (
             "const items = array.filter(bar);
@@ -797,7 +795,6 @@ fn test() {
 			function f() {
 				console.log(item_, item);
 			}",
-            None,
         ),
         (
             "const items = array.filter(bar);
@@ -810,7 +807,6 @@ fn test() {
 			function f(item) {
 				return item;
 			}",
-            None,
         ),
         (
             "function f() {
@@ -827,26 +823,22 @@ fn test() {
 			function f2(item) {
 				return item;
 			}",
-            None,
         ),
         (
             "const packages = array.filter(bar);
 			console.log(packages[0]);",
             "const package_ = array.find(bar);
 			console.log(package_);",
-            None,
         ),
         (
             "const symbols = array.filter(bar);
 			console.log(symbols[0]);",
             "const symbol_ = array.find(bar);
 			console.log(symbol_);",
-            None,
         ),
         (
             "let foo = array.filter(bar);foo[0](foo[0])[foo[0]];",
             "let foo = array.find(bar);foo(foo)[foo];",
-            None,
         ),
         (
             "let baz;
@@ -869,7 +861,6 @@ fn test() {
 			function getPropertyOfFirst(property) {
 				return foo[property];
 			}",
-            None,
         ),
         (
             "const quz = array.filter(fn);
@@ -886,7 +877,6 @@ fn test() {
 			].find(
 				array.filter(fn).shift()
 			));",
-            None,
         ),
         (
             "const quz = array.find(fn);
@@ -903,10 +893,9 @@ fn test() {
 			].find(
 				array.find(fn)
 			));",
-            None,
         ),
-        ("array.filter(foo).pop()", "array.findLast(foo)", None),
-        ("array.filter(foo, thisArgument).pop()", "array.findLast(foo, thisArgument)", None),
+        ("array.filter(foo).pop()", "array.findLast(foo)"),
+        ("array.filter(foo, thisArgument).pop()", "array.findLast(foo, thisArgument)"),
         (
             "const item = array
 				// comment 1
@@ -926,10 +915,9 @@ fn test() {
 				)
 				// comment 4
 				;",
-            None,
         ),
-        ("array.filter(foo).at(-1)", "array.findLast(foo)", None),
-        ("array.filter(foo, thisArgument).at(-1)", "array.findLast(foo, thisArgument)", None),
+        ("array.filter(foo).at(-1)", "array.findLast(foo)"),
+        ("array.filter(foo, thisArgument).at(-1)", "array.findLast(foo, thisArgument)"),
         (
             "const item = array
 				// comment 1
@@ -953,10 +941,11 @@ fn test() {
 				)
 				// comment 6
 				;",
-            None,
         ),
-        ("array.filter(foo).at(0)", "array.find(foo)", None),
-        ("array.filter(foo, thisArgument).at(0)", "array.find(foo, thisArgument)", None),
+        ("array.filter(foo).at(0)", "array.find(foo)"),
+        ("array?.filter(foo).at(0)", "array?.find(foo)"),
+        ("array.filter(foo, thisArgument).at(0)", "array.find(foo, thisArgument)"),
+        ("array?.filter(foo, thisArgument).at(0)", "array?.find(foo, thisArgument)"),
         (
             "const item = array
 				// comment 1
@@ -980,7 +969,6 @@ fn test() {
 				)
 				// comment 6
 				;",
-            None,
         ),
     ];
     Tester::new(PreferArrayFind::NAME, PreferArrayFind::PLUGIN, pass, fail).test_and_snapshot();

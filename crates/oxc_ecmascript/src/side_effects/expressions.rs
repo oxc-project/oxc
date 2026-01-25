@@ -221,15 +221,50 @@ impl<'a> MayHaveSideEffects<'a> for BinaryExpression<'a> {
     }
 }
 
-fn is_pure_regexp(name: &str, args: &[Argument<'_>]) -> bool {
-    name == "RegExp"
-        && match args.len() {
-            0 | 1 => true,
-            2 => args[1].as_expression().is_some_and(|e| {
-                matches!(e, Expression::Identifier(_) | Expression::StringLiteral(_))
-            }),
-            _ => false,
-        }
+/// Validate a RegExp constructor call using the regex parser.
+///
+/// Returns `true` if the pattern and flags are valid (pure/side-effect free),
+/// `false` if invalid or cannot be statically determined.
+///
+/// Invalid patterns like `RegExp("[")` or invalid flags like `RegExp("a", "xyz")` throw SyntaxError,
+/// so they are NOT pure.
+///
+/// See <https://github.com/oxc-project/oxc/issues/18050>
+pub fn is_valid_regexp(args: &[Argument<'_>]) -> bool {
+    // Extract pattern from first argument
+    let pattern = match args.first() {
+        // No arguments: `RegExp()` is valid, returns /(?:)/
+        None => "",
+        Some(arg) => match arg.as_expression() {
+            // RegExp literal argument: `RegExp(/foo/)` is always valid
+            Some(Expression::RegExpLiteral(_)) => return true,
+            // String literal: extract the pattern to validate
+            Some(Expression::StringLiteral(s)) => s.value.as_str(),
+            // Non-literal argument: can't statically determine, assume side effects
+            _ => return false,
+        },
+    };
+
+    // Extract flags from second argument
+    let flags = match args.get(1) {
+        None => None,
+        Some(arg) => match arg.as_expression() {
+            Some(Expression::StringLiteral(s)) => Some(s.value.as_str()),
+            // Non-literal flags: can't statically determine, assume side effects
+            _ => return false,
+        },
+    };
+
+    // Use the regex parser to validate the pattern and flags
+    let allocator = oxc_allocator::Allocator::default();
+    oxc_regular_expression::LiteralParser::new(
+        &allocator,
+        pattern,
+        flags,
+        oxc_regular_expression::Options::default(),
+    )
+    .parse()
+    .is_ok()
 }
 
 #[rustfmt::skip]
@@ -248,7 +283,7 @@ fn is_pure_call(name: &str) -> bool {
 fn is_pure_constructor(name: &str) -> bool {
     matches!(name, "Set" | "Map" | "WeakSet" | "WeakMap" | "ArrayBuffer" | "Date"
             | "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" | "Symbol")
+            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String")
 }
 
 /// Whether the name matches any known global constructors.
@@ -552,7 +587,7 @@ impl<'a> MayHaveSideEffects<'a> for CallExpression<'a> {
             && let name = ident.name.as_str()
             && (is_pure_global_function(name)
                 || is_pure_call(name)
-                || is_pure_regexp(name, &self.arguments))
+                || (name == "RegExp" && is_valid_regexp(&self.arguments)))
         {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }
@@ -613,7 +648,7 @@ impl<'a> MayHaveSideEffects<'a> for NewExpression<'a> {
         if let Expression::Identifier(ident) = &self.callee
             && ctx.is_global_reference(ident)
             && let name = ident.name.as_str()
-            && (is_pure_constructor(name) || is_pure_regexp(name, &self.arguments))
+            && (is_pure_constructor(name) || (name == "RegExp" && is_valid_regexp(&self.arguments)))
         {
             return self.arguments.iter().any(|e| e.may_have_side_effects(ctx));
         }

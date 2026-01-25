@@ -1,6 +1,8 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, BindingPattern, Expression, MemberExpression},
+    ast::{
+        AssignmentTarget, BindingPattern, Expression, MemberExpression, VariableDeclarationKind,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -86,12 +88,12 @@ declare_oxc_lint!(
     PreferDestructuring,
     eslint,
     style,
-    fix,
+    conditional_fix,
     config = PreferDestructuring,
 );
 
 impl Rule for PreferDestructuring {
-    fn from_configuration(value: Value) -> Self {
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         let (variable_declarator, assignment_expression) = if let Some(obj) = value.get(0) {
             let array = obj.get("array").and_then(Value::as_bool);
             let object = obj.get("object").and_then(Value::as_bool);
@@ -121,7 +123,7 @@ impl Rule for PreferDestructuring {
             (Config::default(), Config::default())
         };
 
-        Self {
+        Ok(Self {
             variable_declarator,
             assignment_expression,
             enforce_for_renamed_properties: value
@@ -129,7 +131,7 @@ impl Rule for PreferDestructuring {
                 .and_then(|v| v.get("enforceForRenamedProperties"))
                 .and_then(Value::as_bool)
                 .unwrap_or(false),
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -205,6 +207,13 @@ impl Rule for PreferDestructuring {
                 }
             }
             AstKind::VariableDeclarator(declarator) => {
+                // Skip `using` and `await using` declarations - destructuring doesn't apply to them
+                if matches!(
+                    declarator.kind,
+                    VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
+                ) {
+                    return;
+                }
                 if let Some(init) = &declarator.init
                     && let Some(right) = init.without_parentheses().as_member_expression()
                 {
@@ -535,6 +544,10 @@ fn test() {
                 serde_json::json!([ { "array": true, "object": true }, { "enforceForRenamedProperties": true }, ]),
             ),
         ),
+        ("using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        ("using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        ("await using foo = array[0];", None), // { "sourceType": "module", "ecmaVersion": 2026, }
+        ("await using foo = object.foo;", None), // { "sourceType": "module", "ecmaVersion": 2026, }
     ];
 
     let fail = vec![
@@ -662,9 +675,9 @@ fn test() {
     let fix: Vec<(&str, &str, Option<serde_json::Value>)> = vec![
         ("var foo = object.foo;", "var {foo} = object;", None),
         ("var foo = (a, b).foo;", "var {foo} = (a, b);", None),
-        //     ("var length = (() => {}).length;", "var {length} = () => {};", None),
-        //     ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
-        //     ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
+        // ("var length = (() => {}).length;", "var {length} = () => {};", None),
+        // ("var foo = (a = b).foo;", "var {foo} = a = b;", None),
+        // ("var foo = (a || b).foo;", "var {foo} = a || b;", None),
         ("var foo = (f()).foo;", "var {foo} = f();", None),
         ("var foo = object.bar.foo;", "var {foo} = object.bar;", None),
         (

@@ -36,21 +36,15 @@ impl std::ops::Deref for JsxMaxDepth {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxMaxDepthConfig {
-    #[serde(default = "JsxMaxDepthConfig::default_max")]
+    /// The maximum allowed depth of nested JSX elements and fragments.
     pub max: usize,
-}
-
-impl JsxMaxDepthConfig {
-    const fn default_max() -> usize {
-        2
-    }
 }
 
 impl Default for JsxMaxDepthConfig {
     fn default() -> Self {
-        Self { max: Self::default_max() }
+        Self { max: 2 }
     }
 }
 
@@ -88,12 +82,6 @@ declare_oxc_lint!(
     ///   </div>
     /// );
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// `react/jsx-max-depth: [<enabled>, { "max": <number> }]`
-    ///
-    /// The `max` option defaults to `2`.
     JsxMaxDepth,
     react,
     style,
@@ -101,10 +89,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxMaxDepth {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<JsxMaxDepth>>(value)
-            .map(DefaultRuleConfig::into_inner)
-            .unwrap_or_default()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

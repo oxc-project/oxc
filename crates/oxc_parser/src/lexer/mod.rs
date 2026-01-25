@@ -45,6 +45,8 @@ pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
     token: Token,
     errors_snapshot: ErrorSnapshot,
+    has_pure_comment: bool,
+    has_no_side_effects_comment: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -72,6 +74,13 @@ pub struct Lexer<'a> {
     token: Token,
 
     pub(crate) errors: Vec<OxcDiagnostic>,
+
+    /// Errors that are only emitted if the file is determined to be a Module.
+    /// For `ModuleKind::Unambiguous`, HTML-like comments are allowed during lexing,
+    /// but if ESM syntax is found later, these comments become invalid.
+    /// If resolved to Module → emit these errors.
+    /// If resolved to Script → discard these errors.
+    pub(crate) deferred_module_errors: Vec<OxcDiagnostic>,
 
     context: LexerContext,
 
@@ -109,6 +118,7 @@ impl<'a> Lexer<'a> {
             source_type,
             token,
             errors: vec![],
+            deferred_module_errors: vec![],
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),
@@ -153,6 +163,8 @@ impl<'a> Lexer<'a> {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            has_pure_comment: self.trivia_builder.has_pure_comment,
+            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
     }
 
@@ -168,6 +180,8 @@ impl<'a> Lexer<'a> {
             source_position: self.source.position(),
             token: self.token,
             errors_snapshot,
+            has_pure_comment: self.trivia_builder.has_pure_comment,
+            has_no_side_effects_comment: self.trivia_builder.has_no_side_effects_comment,
         }
     }
 
@@ -180,6 +194,8 @@ impl<'a> Lexer<'a> {
         }
         self.source.set_position(checkpoint.source_position);
         self.token = checkpoint.token;
+        self.trivia_builder.has_pure_comment = checkpoint.has_pure_comment;
+        self.trivia_builder.has_no_side_effects_comment = checkpoint.has_no_side_effects_comment;
     }
 
     pub fn peek_token(&mut self) -> Token {

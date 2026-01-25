@@ -63,8 +63,7 @@ fn bench_mangler(criterion: &mut Criterion) {
                 allocator.reset();
                 temp_allocator.reset();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
-                let mut semantic =
-                    SemanticBuilder::new().with_scope_tree_child_ids(true).build(&program).semantic;
+                let mut semantic = SemanticBuilder::new().build(&program).semantic;
                 runner.run(|| {
                     Mangler::new_with_temp_allocator(&temp_allocator)
                         .build_with_semantic(&mut semantic, &program);

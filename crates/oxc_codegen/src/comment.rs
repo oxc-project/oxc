@@ -113,6 +113,8 @@ impl Codegen<'_> {
                     self.print_indent();
                 } else if comment.is_legal() {
                     self.print_hard_newline();
+                } else {
+                    self.print_soft_space();
                 }
                 self.print_comment(comment);
             }
@@ -122,6 +124,8 @@ impl Codegen<'_> {
                 self.print_indent();
             } else if last.is_legal() {
                 self.print_hard_newline();
+            } else {
+                self.print_soft_space();
             }
             self.print_comment(last);
 
@@ -204,6 +208,8 @@ impl Codegen<'_> {
         match legal_comments {
             LegalComment::Eof => {
                 self.print_hard_newline();
+                // Clear the flag to ensure consistent formatting for all EOF comments
+                self.print_next_indent_as_space = false;
                 for c in comments {
                     self.print_comment(&c);
                     self.print_hard_newline();

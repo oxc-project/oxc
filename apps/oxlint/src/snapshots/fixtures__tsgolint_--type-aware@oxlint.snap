@@ -132,6 +132,14 @@ working directory: fixtures/tsgolint
  3 | }
    `----
 
+  x typescript-eslint(no-unnecessary-template-expression): Template literal expression is unnecessary and can be simplified.
+   ,-[no-unnecessary-template-expression.ts:2:18]
+ 1 | const text = 'hello';
+ 2 | const wrapped = `${text}`;
+   :                  ^^^^^^^
+ 3 | 
+   `----
+
   x typescript-eslint(no-unnecessary-type-arguments): This is the default value for this type parameter, so it can be omitted.
    ,-[no-unnecessary-type-arguments.ts:4:25]
  3 | }
@@ -227,7 +235,7 @@ working directory: fixtures/tsgolint
  3 | 
    `----
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[non-tsgolint.ts:1:1]
  1 | debugger;
    : ^^^^^^^^^
@@ -271,6 +279,13 @@ working directory: fixtures/tsgolint
  1 | declare const nullableString: string | null;
  2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
    :                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
+  x typescript-eslint(prefer-optional-chain): Prefer using an optional chain expression instead, as it's more concise and easier to read.
+   ,-[prefer-optional-chain.ts:3:1]
+ 2 | declare const fooOptC: { bar: number } | null | undefined;
+ 3 | fooOptC && fooOptC.bar;
+   : ^^^^^^^^^^^^^^^^^^^^^^
    `----
 
   x typescript-eslint(prefer-promise-reject-errors): Expected the Promise rejection reason to be an Error.
@@ -371,7 +386,7 @@ working directory: fixtures/tsgolint
  4 |     case 'pending':
    `----
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  x eslint(no-debugger): `debugger` statement is not allowed
    ,-[test.svelte:2:2]
  1 | <script>
  2 |     debugger;
@@ -388,8 +403,8 @@ working directory: fixtures/tsgolint
    :                   ^^^^^^^^
    `----
 
-Found 0 warnings and 50 errors.
-Finished in <variable>ms on 45 files using 1 threads.
+Found 0 warnings and 52 errors.
+Finished in <variable>ms on 46 files with 45 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

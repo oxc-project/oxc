@@ -4,6 +4,59 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- ee9f6a4 mangler: Use `retain` instead of `truncate` to remove empty frequency slots (#18225) (Dunqing)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- d1016b9 minifier: Do not flip if/else when it would produce longer result (#17556) (Armano)
+- 9c6e344 minifier: Prune empty `case` before trailing `default` (#17994) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 38e4b53 minifier: Validate RegExp patterns before marking as pure (#18125) (Boshen)
+- 01d7b13 oxc_minifier: Enable sourcemap feature in dev mode (#18131) (Armano)
+- f69b6da mangler: Reserve names from eval-containing scopes (#18037) (camc314)
+- c8f847e minifier: Preserve return value of `@__PURE__` IIFE in return statements (#18036) (camc314)
+- ee353e6 minifier: Skip inlining constant in scopes with eval (#17926) (camc314)
+
+### ⚡ Performance
+
+- 91c143f mangler: Remove `frequencies` items if they are unused (#18183) (Dunqing)
+
+## [0.108.0] - 2026-01-12
+
+### ⚡ Performance
+
+- d5979dc minifier: Do not allocate when checking to convert `const` to `let` (#17730) (camchenry)
+
+### 📚 Documentation
+
+- 120a27c minifier: Add prettier-ignore for js-in-md part (#17687) (leaysgur)
+
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 23680a3 mangler: Skip mangling only in scopes affected by direct eval (#17612) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1044116 ecmascript: Mark `new Symbol` as non side-effect free (#17568) (camc314)
+- 68b2e54 minifier: Prevent incorrect ??= transformation when member base is mutated (#17472) (copilot-swe-agent)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- e031056 codegen: Add `sourcemap` feature flag (#17305) (Boshen)
+- 8e4409a minifier: Add `invalid_import_side_effects` option (#17300) (sapphi-red)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🚀 Features

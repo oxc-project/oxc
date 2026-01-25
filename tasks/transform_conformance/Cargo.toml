@@ -14,7 +14,6 @@ description.workspace = true
 workspace = true
 
 [lib]
-test = false
 doctest = false
 
 [[bin]]

@@ -17,9 +17,9 @@ use oxc_linter::RuntimeFileSystem;
 /// Must only be used in conjunction with `AllocatorPool` created with `new_fixed_size`,
 /// which wraps `Allocator`s with a custom `Drop` impl, which makes `read_to_arena_str` safe.
 ///
-/// This is a temporary solution. When we replace `bumpalo` with our own allocator, all strings
-/// will be written at start of the arena, so then `OsFileSystem` will work fine, and we can
-/// remove `RawTransferFileSystem`. TODO: Do that!
+/// This is a temporary solution. All strings should be written at start of the arena,
+/// so then `OsFileSystem` would work fine, and we can remove `RawTransferFileSystem`.
+/// TODO: Do that!
 pub struct RawTransferFileSystem;
 
 impl RuntimeFileSystem for RawTransferFileSystem {

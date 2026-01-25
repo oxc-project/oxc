@@ -64,6 +64,146 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `A /* comment */: foo` with `foo`.
 
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: "use strict"
+   · ─
+   ╰────
+  help: Replace `A: "use strict"` with `"use strict"`.
+
+  ⚠ eslint(no-unused-labels): 'foo:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:15]
+ 1 │ "use strict"; foo: "bar"
+   ·               ───
+   ╰────
+  help: Replace `foo: "bar"` with `"bar"`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: ("use strict")
+   · ─
+   ╰────
+  help: Replace `A: ("use strict")` with `("use strict")`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: `use strict`
+   · ─
+   ╰────
+  help: Replace `A: `use strict`` with ``use strict``.
+
+  ⚠ eslint(no-unused-labels): 'bar:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:12]
+ 1 │ if (foo) { bar: 'baz' }
+   ·            ───
+   ╰────
+  help: Replace `bar: 'baz'` with `'baz'`.
+
+  ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:4]
+ 1 │ A: B: 'foo'
+   ·    ─
+   ╰────
+  help: Replace `B: 'foo'` with `'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: B: 'foo'
+   · ─
+   ╰────
+  help: Replace `A: B: 'foo'` with `B: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'C:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:7]
+ 1 │ A: B: C: 'foo'
+   ·       ─
+   ╰────
+  help: Replace `C: 'foo'` with `'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:4]
+ 1 │ A: B: C: 'foo'
+   ·    ─
+   ╰────
+  help: Replace `B: C: 'foo'` with `C: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: B: C: 'foo'
+   · ─
+   ╰────
+  help: Replace `A: B: C: 'foo'` with `B: C: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'D:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:10]
+ 1 │ A: B: C: D: 'foo'
+   ·          ─
+   ╰────
+  help: Replace `D: 'foo'` with `'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'C:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:7]
+ 1 │ A: B: C: D: 'foo'
+   ·       ─
+   ╰────
+  help: Replace `C: D: 'foo'` with `D: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:4]
+ 1 │ A: B: C: D: 'foo'
+   ·    ─
+   ╰────
+  help: Replace `B: C: D: 'foo'` with `C: D: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: B: C: D: 'foo'
+   · ─
+   ╰────
+  help: Replace `A: B: C: D: 'foo'` with `B: C: D: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'E:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:13]
+ 1 │ A: B: C: D: E: 'foo'
+   ·             ─
+   ╰────
+  help: Replace `E: 'foo'` with `'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'D:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:10]
+ 1 │ A: B: C: D: E: 'foo'
+   ·          ─
+   ╰────
+  help: Replace `D: E: 'foo'` with `E: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'C:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:7]
+ 1 │ A: B: C: D: E: 'foo'
+   ·       ─
+   ╰────
+  help: Replace `C: D: E: 'foo'` with `D: E: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:4]
+ 1 │ A: B: C: D: E: 'foo'
+   ·    ─
+   ╰────
+  help: Replace `B: C: D: E: 'foo'` with `C: D: E: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: B: C: D: E: 'foo'
+   · ─
+   ╰────
+  help: Replace `A: B: C: D: E: 'foo'` with `B: C: D: E: 'foo'`.
+
+  ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
+   ╭─[no_unused_labels.tsx:1:1]
+ 1 │ A: 42
+   · ─
+   ╰────
+  help: Replace `A: 42` with `42`.
+
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:21]
  1 │ A: { function f() { B: { } } break A; }

@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.26.0] - 2026-01-19
+
+### 📚 Documentation
+
+- 8a294d5 oxfmt, oxlint: Update logo (#18242) (Dunqing)
+
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- a95b9bb oxfmt: Support oxfmtrc `overrides` config (#18068) (leaysgur)
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- cc3e74b oxfmt: Add Prettier specific fields in `Oxfmtrc` (#17981) (leaysgur)
+- 6ffe315 oxfmt: Add more `Oxfmtrc` fields description (#17979) (leaysgur)
+
+## [0.24.0] - 2026-01-12
+
+### 🚀 Features
+
+- 86c0168 oxfmt/sort_package_json: Handle `oxfmtrc.sort_scripts` option (#17738) (leaysgur)
+
+### 📚 Documentation
+
+- 62b7a01 formatter: Clarify `experimentalTailwindcss` configuration comments (#17898) (Dunqing)
+
+## [0.22.0] - 2026-01-05
+
+### 💥 BREAKING CHANGES
+
+- f7da875 oxlint: [**BREAKING**] Remove oxc_language_server binary (#17457) (Boshen)
+
+### 🚀 Features
+
+- 8fd4ea9 oxfmt: `options.embeddedLanguageFormatting` is now `"auto"` by default (#17649) (leaysgur)
+
+## [0.21.0] - 2025-12-29
+
+### 🐛 Bug Fixes
+
+- 0a39cba oxfmt: Update wrong doc comment (#17288) (leaysgur)
+
 ## [0.20.0] - 2025-12-22
 
 ### 🚀 Features

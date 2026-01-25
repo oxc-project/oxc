@@ -1,5 +1,16 @@
 <p align="center">
-  <img alt="OXC Logo" src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/preview-universal.png" width="700">
+  <br>
+  <br>
+  <a href="https://oxc.rs" target="_blank" rel="noopener noreferrer">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://oxc.rs/oxc-light.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://oxc.rs/oxc-dark.svg">
+      <img alt="Oxc logo" src="https://oxc.rs/oxc-dark.svg" height="60">
+    </picture>
+  </a>
+  <br>
+  <br>
+  <br>
 </p>
 
 <div align="center">
@@ -87,8 +98,8 @@ npm install oxc-parser
 ```
 
 ```js
-import { parseSync } from 'oxc-parser';
-const result = parseSync('const x = 1;');
+import { parseSync } from "oxc-parser";
+const result = parseSync("const x = 1;");
 ```
 
 → [Parser documentation](https://oxc.rs/docs/guide/usage/parser)
@@ -102,8 +113,8 @@ npm install oxc-transform
 ```
 
 ```js
-import { transform } from 'oxc-transform';
-const result = transform('source.tsx', code, { typescript: true });
+import { transform } from "oxc-transform";
+const result = transform("source.tsx", code, { typescript: true });
 ```
 
 → [Transformer documentation](https://oxc.rs/docs/guide/usage/transformer)
@@ -117,7 +128,7 @@ npm install oxc-minify
 ```
 
 ```js
-import { minify } from 'oxc-minify';
+import { minify } from "oxc-minify";
 const result = minify(code, { mangle: true });
 ```
 

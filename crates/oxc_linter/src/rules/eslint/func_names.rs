@@ -10,7 +10,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword_or_global_object};
 
 use crate::{
@@ -225,19 +225,19 @@ declare_oxc_lint!(
 );
 
 impl Rule for FuncNames {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let Some(functions_config) = value.get(0) else {
-            return Self::default();
+            return Ok(Self::default());
         };
         let generators_config =
             value.get(1).and_then(|v| v.get("generators")).unwrap_or(functions_config);
 
-        Self {
+        Ok(Self {
             config: FuncNamesConfig {
                 functions: FuncNamesConfigType::from(functions_config),
                 generators: FuncNamesConfigType::from(generators_config),
             },
-        }
+        })
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -467,8 +467,7 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
                 return decl
                     .id
                     .get_identifier_name()
-                    .as_ref()
-                    .map(Atom::as_str)
+                    .map(|n| n.as_str())
                     .filter(|name| is_valid_identifier_name(name))
                     .map(Cow::Borrowed);
             }

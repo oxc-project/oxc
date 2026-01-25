@@ -244,9 +244,7 @@ impl Runtime {
         #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
         let allocator_pool = AllocatorPool::new(thread_count);
 
-        let resolver = options.cross_module.then(|| {
-            Self::get_resolver(options.tsconfig.or_else(|| Some(options.cwd.join("tsconfig.json"))))
-        });
+        let resolver = options.cross_module.then(|| Self::get_resolver(options.tsconfig));
 
         Self {
             allocator_pool,
@@ -285,12 +283,14 @@ impl Runtime {
         use oxc_resolver::{
             ResolveOptions, TsconfigDiscovery, TsconfigOptions, TsconfigReferences,
         };
-        let tsconfig = tsconfig_path.and_then(|path| {
-            path.is_file().then_some(TsconfigDiscovery::Manual(TsconfigOptions {
+        let tsconfig = match tsconfig_path {
+            Some(path) if path.is_file() => Some(TsconfigDiscovery::Manual(TsconfigOptions {
                 config_file: path,
                 references: TsconfigReferences::Auto,
-            }))
-        });
+            })),
+            Some(_) => None, // Path provided but file doesn't exist
+            None => Some(TsconfigDiscovery::Auto),
+        };
         let extension_alias = tsconfig.as_ref().map_or_else(Vec::new, |_| {
             vec![
                 (".js".into(), vec![".js".into(), ".ts".into()]),
@@ -394,7 +394,9 @@ impl Runtime {
 
         // Create a sorted copy of paths for processing
         let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
-        sorted_paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
+        // Sort by path length descending - longer paths tend to be deeper in the directory tree.
+        // This achieves the "deeper paths first" heuristic described above in O(1) per comparison.
+        sorted_paths.par_sort_unstable_by(|a, b| b.len().cmp(&a.len()));
 
         // The general idea is processing `sorted_paths` and their dependencies in groups. We start from a group of modules
         // in `sorted_paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
@@ -1027,7 +1029,6 @@ impl Runtime {
 
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
-            .with_scope_tree_child_ids(true)
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 

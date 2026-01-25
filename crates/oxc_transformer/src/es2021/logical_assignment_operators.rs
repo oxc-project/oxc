@@ -146,7 +146,8 @@ impl<'a> LogicalAssignmentOperators<'a, '_> {
         let symbol_id = reference.symbol_id();
         let left_expr = Expression::Identifier(ctx.alloc(ident.clone()));
 
-        let ident = ctx.create_ident_reference(SPAN, ident.name, symbol_id, ReferenceFlags::Write);
+        let ident =
+            ctx.create_ident_reference(SPAN, ident.name.into(), symbol_id, ReferenceFlags::Write);
         let assign_target = AssignmentTarget::AssignmentTargetIdentifier(ctx.alloc(ident));
         (left_expr, assign_target)
     }

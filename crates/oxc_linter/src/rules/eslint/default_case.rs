@@ -26,8 +26,6 @@ pub struct DefaultCaseConfig {
     ///
     /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
     /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\sdefault" }] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -37,8 +35,6 @@ pub struct DefaultCaseConfig {
     ///
     /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
     /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -72,16 +68,16 @@ declare_oxc_lint!(
     /// no default case. The comment may be in any desired case, such as `// No Default`.
     ///
     /// Example configuration:
-    ///   ```json
-    ///   {
-    ///       "default-case": ["error", { "commentPattern": "^skip\\sdefault" }]
-    ///   }
-    ///   ```
+    /// ```json
+    /// {
+    ///     "default-case": ["error", { "commentPattern": "^skip\\sdefault" }]
+    /// }
+    /// ```
+    ///
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /* default-case: ["error"] */
-    ///
     /// switch (foo) {
     ///   case 1:
     ///     break;
@@ -90,8 +86,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /* default-case: ["error"] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -112,7 +106,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for DefaultCase {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let comment_pattern = value
             .get(0)
             .and_then(|config| config.get("commentPattern"))
@@ -120,7 +114,7 @@ impl Rule for DefaultCase {
             .and_then(|pattern| RegexBuilder::new(pattern).case_insensitive(true).build().ok());
         let case_config = DefaultCaseConfig { comment_pattern };
 
-        Self(Box::new(case_config))
+        Ok(Self(Box::new(case_config)))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

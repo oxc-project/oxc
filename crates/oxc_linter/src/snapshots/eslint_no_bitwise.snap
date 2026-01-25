@@ -43,6 +43,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
 
+  ⚠ eslint(no-bitwise): Unexpected use of `"|"`.
+   ╭─[no_bitwise.tsx:1:1]
+ 1 │ a|0
+   · ───
+   ╰────
+  help: bitwise operators are not allowed, maybe you mistyped `&&` or `||`?
+
   ⚠ eslint(no-bitwise): Unexpected use of `"~"`.
    ╭─[no_bitwise.tsx:1:1]
  1 │ ~a

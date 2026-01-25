@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, FormalParameter, FormalParameterRest,
+        Argument, BindingPattern, CallExpression, Expression, FormalParameterRest,
         FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
     },
 };
@@ -34,7 +34,8 @@ fn no_redundant_super_call(constructor_span: Span, super_span: Span) -> OxcDiagn
             constructor_span.primary_label("This constructor is unnecessary,"),
             super_span.label("because it only passes arguments through to the superclass"),
         ])
-        .with_help("Subclasses automatically use the constructor of their superclass, making this redundant.\nRemove this constructor or add code to it.")
+        .with_note("Subclasses automatically use the constructor of their superclass, making this redundant.")
+        .with_help("Remove this constructor or add code to it.")
 }
 
 #[derive(Debug, Default, Clone)]
@@ -52,8 +53,10 @@ declare_oxc_lint!(
     /// simply delegates into its parent class.
     ///
     /// ::: warning
-    /// Caveat: This lint rule will report on constructors whose sole purpose is to change visibility of a parent constructor.
-    /// This is because the rule does not have type information to determine if the parent constructor is public, protected, or private.
+    /// Caveat: This lint rule will report on constructors whose sole purpose
+    /// is to change visibility of a parent constructor. This is because the rule
+    /// does not have type information to determine if the parent constructor is
+    /// `public`, `protected`, or `private`.
     /// :::
     ///
     /// ### Examples
@@ -61,14 +64,13 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// class A {
-    ///     constructor () {
-    ///     }
+    ///   constructor() {}
     /// }
     ///
     /// class B extends A {
-    ///     constructor (...args) {
-    ///       super(...args);
-    ///     }
+    ///   constructor(...args) {
+    ///     super(...args);
+    ///   }
     /// }
     /// ```
     ///
@@ -77,22 +79,22 @@ declare_oxc_lint!(
     /// class A { }
     ///
     /// class B {
-    ///     constructor () {
-    ///         doSomething();
-    ///     }
+    ///   constructor() {
+    ///     doSomething();
+    ///   }
     /// }
     ///
     /// class C extends A {
-    ///     constructor() {
-    ///         super('foo');
-    ///     }
+    ///   constructor() {
+    ///     super('foo');
+    ///   }
     /// }
     ///
     /// class D extends A {
-    ///     constructor() {
-    ///         super();
-    ///         doSomething();
-    ///     }
+    ///   constructor() {
+    ///     super();
+    ///     doSomething();
+    ///   }
     /// }
     /// ```
     NoUselessConstructor,
@@ -112,19 +114,23 @@ impl Rule for NoUselessConstructor {
         let Some(body) = &constructor.value.body else {
             return;
         };
-        // allow `private private constructor() {}`. However, `public private
-        // constructor() {}` is the same as `constructor() {}` and so is not allowed.
-        if constructor.accessibility.is_some_and(|access| {
-            matches!(access, TSAccessibility::Private | TSAccessibility::Protected)
-        }) {
-            return;
-        }
 
         let class = ctx.nodes().ancestors(node.id()).find_map(|parent| parent.kind().as_class());
         debug_assert!(class.is_some(), "Found a constructor outside of a class definition");
         let Some(class) = class else {
             return;
         };
+
+        match &constructor.accessibility {
+            Some(TSAccessibility::Private | TSAccessibility::Protected) => {
+                return;
+            }
+            Some(TSAccessibility::Public) if class.super_class.is_some() => {
+                return;
+            }
+            _ => {}
+        }
+
         if class.declare {
             return;
         }
@@ -149,7 +155,13 @@ fn lint_empty_constructor<'a>(
 
     // allow constructors with parameter properties since they actually declare
     // class members
-    if constructor.value.params.items.iter().any(FormalParameter::has_modifier) {
+    if constructor
+        .value
+        .params
+        .items
+        .iter()
+        .any(|param| param.has_modifier() || !param.decorators.is_empty())
+    {
         return;
     }
 
@@ -172,6 +184,7 @@ fn lint_redundant_super_call<'a>(
 
     if is_only_simple_params(params)
         && !is_overriding(params)
+        && !has_decorated_params(params)
         && (is_spread_arguments(super_args) || is_passing_through(params, super_args))
     {
         ctx.diagnostic_with_fix(
@@ -183,6 +196,10 @@ fn lint_redundant_super_call<'a>(
 
 fn is_overriding(params: &FormalParameters) -> bool {
     params.items.iter().any(|param| param.r#override)
+}
+
+fn has_decorated_params(params: &FormalParameters) -> bool {
+    params.items.iter().any(|param| !param.decorators.is_empty())
 }
 
 /// Check if a function body only contains a single `super()` call. Ignores directives.
@@ -324,6 +341,205 @@ fn test() {
         // ",
     ];
 
+    let pass_typescript = vec![
+        "class A {}",
+        "
+			class A {
+			  constructor() {
+			    doSomething();
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor() {}
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor() {
+			    super('foo');
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor(foo, bar) {
+			    super(foo, bar, 1);
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor() {
+			    super();
+			    doSomething();
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor(...args) {
+			    super(...args);
+			    doSomething();
+			  }
+			}
+			    ",
+        "
+			class A {
+			  dummyMethod() {
+			    doSomething();
+			  }
+			}
+			    ",
+        "
+			class A extends B.C {
+			  constructor() {
+			    super(foo);
+			  }
+			}
+			    ",
+        "
+			class A extends B.C {
+			  constructor([a, b, c]) {
+			    super(...arguments);
+			  }
+			}
+			    ",
+        "
+			class A extends B.C {
+			  constructor(a = f()) {
+			    super(...arguments);
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor(a, b, c) {
+			    super(a, b);
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor(foo, bar) {
+			    super(foo);
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor(test) {
+			    super();
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor() {
+			    foo;
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  constructor(foo, bar) {
+			    super(bar);
+			  }
+			}
+			    ",
+        "
+			declare class A {
+			  constructor();
+			}
+			    ",
+        "
+			class A {
+			  constructor();
+			}
+			    ",
+        "
+			abstract class A {
+			  constructor();
+			}
+			    ",
+        "
+			class A {
+			  constructor(private name: string) {}
+			}
+			    ",
+        "
+			class A {
+			  constructor(public name: string) {}
+			}
+			    ",
+        "
+			class A {
+			  constructor(protected name: string) {}
+			}
+			    ",
+        "
+			class A {
+			  private constructor() {}
+			}
+			    ",
+        "
+			class A {
+			  protected constructor() {}
+			}
+			    ",
+        "
+			class A extends B {
+			  public constructor() {}
+			}
+			    ",
+        "
+			class A extends B {
+			  protected constructor(foo, bar) {
+			    super(bar);
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  private constructor(foo, bar) {
+			    super(bar);
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  public constructor(foo) {
+			    super(foo);
+			  }
+			}
+			    ",
+        "
+			class A extends B {
+			  public constructor(foo) {}
+			}
+			    ",
+        "
+			class A {
+			  constructor(foo);
+			}
+			    ",
+        "
+			class A extends Object {
+			  constructor(@Foo foo: string) {
+			    super(foo);
+			  }
+			}
+			    ",
+        "
+			class A extends Object {
+			  constructor(foo: string, @Bar() bar) {
+			    super(foo, bar);
+			  }
+			}
+			    ",
+    ];
+
     let fail = vec![
         "class A { constructor(){} }",
         "class A { 'constructor'(){} }",
@@ -343,6 +559,68 @@ fn test() {
         "class A { public constructor(){} }",
     ];
 
+    let fail_typescript = vec![
+        "
+			class A {
+			  constructor() {}
+			}
+			      ",
+        "
+			class A extends B {
+			  constructor() {
+			    super();
+			  }
+			}
+			      ",
+        "
+			class A extends B {
+			  constructor(foo) {
+			    super(foo);
+			  }
+			}
+			      ",
+        "
+			class A extends B {
+			  constructor(foo, bar) {
+			    super(foo, bar);
+			  }
+			}
+			      ",
+        "
+			class A extends B {
+			  constructor(...args) {
+			    super(...args);
+			  }
+			}
+			      ",
+        "
+			class A extends B.C {
+			  constructor() {
+			    super(...arguments);
+			  }
+			}
+			      ",
+        "
+			class A extends B {
+			  constructor(a, b, ...c) {
+			    super(...arguments);
+			  }
+			}
+			      ",
+        "
+			class A extends B {
+			  constructor(a, b, ...c) {
+			    super(a, b, ...c);
+			  }
+			}
+			      ",
+        "
+			class A {
+			  public constructor() {}
+			}
+			      ",
+    ];
+
     let fix = vec![
         ("class A { constructor(){} }", "class A {  }"),
         (
@@ -350,6 +628,9 @@ fn test() {
             "class A extends B {  foo() { bar(); } }",
         ),
     ];
+
+    let pass = [pass, pass_typescript].concat();
+    let fail = [fail, fail_typescript].concat();
 
     Tester::new(NoUselessConstructor::NAME, NoUselessConstructor::PLUGIN, pass, fail)
         .expect_fix(fix)

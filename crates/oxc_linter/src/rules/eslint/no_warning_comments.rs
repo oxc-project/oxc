@@ -126,7 +126,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoWarningComments {
-    fn from_configuration(value: serde_json::Value) -> Self {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         let config = value.get(0);
 
         let terms = config.and_then(|v| v.get("terms")).and_then(|v| v.as_array()).map_or_else(
@@ -158,7 +158,7 @@ impl Rule for NoWarningComments {
             })
             .unwrap_or_default();
 
-        Self::new(&terms, &location, &decoration)
+        Ok(Self::new(&terms, &location, &decoration))
     }
 
     fn run_once(&self, ctx: &LintContext) {

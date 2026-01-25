@@ -39,7 +39,12 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// This rule enforces `defineProps` typing style which you should use `type-based` or `runtime` declaration.
-    /// This rule only works in setup script and `lang="ts"`.
+    /// This rule only works in `<script setup>` with `lang="ts"`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// Inconsistent code style can be confusing and make code harder to
+    /// read through.
     ///
     /// ### Examples
     ///
@@ -83,10 +88,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for DefinePropsDeclaration {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<DefinePropsDeclaration>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

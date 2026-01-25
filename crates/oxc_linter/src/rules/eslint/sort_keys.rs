@@ -8,14 +8,18 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{Rule, TupleRuleConfig},
+};
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct SortKeys(Box<SortKeysConfig>);
 
-#[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Eq, PartialEq, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 /// Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
 pub enum SortOrder {
@@ -24,8 +28,8 @@ pub enum SortOrder {
     Asc,
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SortKeysOptions {
     /// Whether the sort comparison is case-sensitive (A < a when true).
     case_sensitive: bool,
@@ -49,18 +53,9 @@ impl Default for SortKeysOptions {
     }
 }
 
-#[derive(Debug, Default, Clone, JsonSchema)]
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
 #[serde(default)]
 pub struct SortKeysConfig(SortOrder, SortKeysOptions);
-
-impl SortKeys {
-    fn sort_order(&self) -> &SortOrder {
-        &(*self.0).0
-    }
-    fn options(&self) -> &SortKeysOptions {
-        &(*self.0).1
-    }
-}
 
 fn sort_properties_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Object keys should be sorted").with_label(span)
@@ -101,51 +96,17 @@ declare_oxc_lint!(
 );
 
 impl Rule for SortKeys {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        let Some(config_array) = value.as_array() else {
-            return Self::default();
-        };
-
-        let sort_order = if config_array.is_empty() {
-            SortOrder::Asc
-        } else {
-            config_array[0].as_str().map_or(SortOrder::Asc, |s| match s {
-                "desc" => SortOrder::Desc,
-                _ => SortOrder::Asc,
-            })
-        };
-
-        let config = if config_array.len() > 1 {
-            config_array[1].as_object().unwrap()
-        } else {
-            &serde_json::Map::new()
-        };
-
-        let case_sensitive =
-            config.get("caseSensitive").and_then(serde_json::Value::as_bool).unwrap_or(true);
-        let natural = config.get("natural").and_then(serde_json::Value::as_bool).unwrap_or(false);
-        let min_keys = config
-            .get("minKeys")
-            .and_then(serde_json::Value::as_u64)
-            .map_or(2, |n| n.try_into().unwrap_or(2));
-        let allow_line_separated_groups = config
-            .get("allowLineSeparatedGroups")
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
-
-        Self(Box::new(SortKeysConfig(
-            sort_order,
-            SortKeysOptions { case_sensitive, natural, min_keys, allow_line_separated_groups },
-        )))
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ObjectExpression(dec) = node.kind() {
-            let options = self.options();
+            let SortKeysConfig(sort_order, options) = &*self.0;
+
             if dec.properties.len() < options.min_keys {
                 return;
             }
-            let sort_order = self.sort_order().clone();
 
             let mut property_groups: Vec<Vec<String>> = vec![vec![]];
 
@@ -194,7 +155,7 @@ impl Rule for SortKeys {
                     alphanumeric_sort(group);
                 }
 
-                if sort_order == SortOrder::Desc {
+                if sort_order == &SortOrder::Desc {
                     group.reverse();
                 }
             }
@@ -264,7 +225,7 @@ impl Rule for SortKeys {
                     } else {
                         alphanumeric_sort(&mut sorted_keys);
                     }
-                    if sort_order == SortOrder::Desc {
+                    if sort_order == &SortOrder::Desc {
                         sorted_keys.reverse();
                     }
 
@@ -360,7 +321,9 @@ fn natural_sort(arr: &mut [String]) {
         loop {
             match (a_chars.next(), b_chars.next()) {
                 (Some(a_char), Some(b_char)) if a_char == b_char => {}
-                (Some(a_char), Some(b_char)) if a_char.is_numeric() && b_char.is_numeric() => {
+                (Some(a_char), Some(b_char))
+                    if a_char.is_ascii_digit() && b_char.is_ascii_digit() =>
+                {
                     let n1 = take_numeric(&mut a_chars, a_char);
                     let n2 = take_numeric(&mut b_chars, b_char);
                     match n1.cmp(&n2) {
@@ -506,6 +469,7 @@ fn test() {
             "var obj = {'#':1, 'Z':2, À:3, è:4}",
             Some(serde_json::json!(["asc", { "natural": true }])),
         ),
+        ("var obj = {'a²': 1, 'b³': 2}", Some(serde_json::json!(["asc", { "natural": true }]))),
         (
             "var obj = {b_:1, a:2, b:3}",
             Some(serde_json::json!(["asc", { "natural": true, "minKeys": 4 }])),

@@ -392,10 +392,8 @@ impl Oxc {
             let mut external_plugin_store = ExternalPluginStore::default();
             let semantic_ret = SemanticBuilder::new().with_cfg(true).build(program);
             let semantic = semantic_ret.semantic;
-            let lint_config = if linter_options.config.is_some() {
-                let oxlintrc =
-                    Oxlintrc::from_string(&linter_options.config.as_ref().unwrap().clone())
-                        .unwrap_or_default();
+            let lint_config = if let Some(config) = &linter_options.config {
+                let oxlintrc = Oxlintrc::from_string(config).unwrap_or_default();
                 let config_builder = ConfigStoreBuilder::from_oxlintrc(
                     false,
                     oxlintrc,
@@ -529,6 +527,7 @@ impl Oxc {
                     .clone()
                     .unwrap_or_else(default_internal_patterns),
                 groups: sort_imports_config.groups.clone().unwrap_or_else(default_groups),
+                custom_groups: vec![],
             });
         }
 
@@ -552,12 +551,11 @@ impl Oxc {
             let formatter = Formatter::new(&allocator, format_options);
             let formatted = formatter.format(&ret.program);
             if run_options.formatter {
+                self.formatter_ir_text = formatted.document().to_string();
                 self.formatter_formatted_text = match formatted.print() {
                     Ok(printer) => printer.into_code(),
                     Err(err) => err.to_string(),
                 };
-
-                self.formatter_ir_text = formatted.into_document().to_string();
             }
         }
     }

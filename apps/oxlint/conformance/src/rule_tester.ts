@@ -4,41 +4,32 @@
 
 // @ts-expect-error - internal module of ESLint with no types
 import eslintGlobals from "../submodules/eslint/conf/globals.js";
-import { createRequire } from "node:module";
 import { RuleTester } from "#oxlint";
-import { describe, it } from "./capture.ts";
-import { ESLINT_RULES_TESTS_DIR_PATH } from "./run.ts";
-import { FILTER_ONLY_CODE } from "./filter.ts";
+import { describe, it, setCurrentTest } from "./capture.ts";
+import { SHOULD_SKIP_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
+import type { LanguageOptionsInternal } from "../../src-js/package/rule_tester.ts";
 
 type DescribeFn = RuleTester.DescribeFn;
 type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
-type ValidTestCase = RuleTester.ValidTestCase;
-type InvalidTestCase = RuleTester.InvalidTestCase;
-type LanguageOptions = RuleTester.LanguageOptions;
 type Globals = RuleTester.Globals;
-export type TestCase = ValidTestCase | InvalidTestCase;
+export type Language = RuleTester.Language;
 
-const { isArray } = Array;
-
-/**
- * Language options config, with `parser` and `ecmaVersion` properties.
- * This is a copy of `RuleTester`'s internal type of the same name.
- */
-interface LanguageOptionsInternal extends LanguageOptions {
-  ecmaVersion?: number | "latest";
-  parser?: {
-    parse?: (code: string, options?: Record<string, unknown>) => unknown;
-    parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
-  };
+interface TestCaseExtension {
+  languageOptions?: LanguageOptionsInternal;
+  // Parser was specified as `test.parser` (path string) in old ESLint versions
+  parser?: string;
 }
 
-// Get `@typescript-eslint/parser` module.
-// Load the instance which would be loaded by files in ESLint's `tests/lib/rules` directory.
-const require = createRequire(ESLINT_RULES_TESTS_DIR_PATH);
-const tsEslintParser = require("@typescript-eslint/parser");
+export type ValidTestCase = RuleTester.ValidTestCase & TestCaseExtension;
+export type InvalidTestCase = RuleTester.InvalidTestCase & TestCaseExtension;
+export type TestCase = ValidTestCase | InvalidTestCase;
+
+// Maps of parser modules and parser paths to languages those parsers parse as
+export const parserModules: Map<unknown, Language> = new Map();
+export const parserModulePaths: Map<string, Language> = new Map();
 
 // Set up `RuleTester` to use our hooks
 RuleTester.describe = describe;
@@ -75,38 +66,87 @@ class RuleTesterShim extends RuleTester {
     throw new Error("Cannot override `itOnly` property");
   }
 
-  // Apply filter to test cases.
+  // Apply filter to test cases and add `before` hook to store test case in `currentTest`
   run(ruleName: string, rule: Rule, tests: TestCases): void {
-    if (FILTER_ONLY_CODE !== null) {
-      const codeMatchesFilter = isArray(FILTER_ONLY_CODE)
-        ? (code: string) => FILTER_ONLY_CODE!.includes(code)
-        : (code: string) => code === FILTER_ONLY_CODE;
-
-      tests = {
-        valid: tests.valid.filter((test) => {
-          const code = typeof test === "string" ? test : test.code;
-          return codeMatchesFilter(code);
-        }),
-        invalid: tests.invalid.filter((test) => codeMatchesFilter(test.code)),
-      };
-    }
+    tests = {
+      valid: tests.valid
+        .map((test) => {
+          if (typeof test === "string") test = { code: test };
+          return addBeforeHook(test);
+        })
+        .filter(shouldRunTestCase),
+      invalid: tests.invalid.map(addBeforeHook).filter(shouldRunTestCase),
+    };
 
     super.run(ruleName, rule, tests);
   }
+}
+
+/**
+ * Add `before` hook to test case to store test case in `currentTest`.
+ * @param test - Test case
+ * @returns Test case
+ */
+function addBeforeHook<T extends TestCase>(test: T): T {
+  // Clone test in case `after` hook modifies it (edge case)
+  const clonedTest = { ...test };
+
+  if (Object.hasOwn(test, "before")) {
+    const originalBefore = test.before;
+    test.before = function (this) {
+      setCurrentTest(clonedTest);
+      originalBefore!.call(this);
+    };
+  } else {
+    // Non-enumerable property so that test case remains serializable
+    // (for `isSerializable` check in `assertNotDuplicateTestCase`)
+    Object.defineProperty(test, "before", {
+      value: () => setCurrentTest(clonedTest),
+      writable: true,
+      configurable: true,
+      enumerable: false,
+    });
+  }
+
+  return test;
+}
+
+/**
+ * Check if test case should run.
+ * @param test - Test case
+ * @returns `true` if test case should run, `false` if is filtered out
+ */
+function shouldRunTestCase(test: TestCase): boolean {
+  return !SHOULD_SKIP_CODE(test.code);
 }
 
 // Register hook to modify test cases before they are run.
 // `registerModifyTestCaseHook` is only present in debug builds, so it's not part of the `RuleTester` type def.
 (RuleTester as any).registerModifyTestCaseHook(modifyTestCase);
 
+/**
+ * Modify test case before running it.
+ * Store test case in `currentTest` so it can be accessed in `it` function.
+ * @param test - Test case
+ */
 function modifyTestCase(test: TestCase): void {
+  let { languageOptions } = test;
+
+  // Record current test case.
+  // Clone it to avoid including the changes to the original test case made below.
+  // Replace `languageOptions.parser` with `{}` to avoid verbose output in snapshots.
+  const clonedTest = { ...test };
+  if (languageOptions?.parser != null) {
+    clonedTest.languageOptions = { ...languageOptions, parser: {} };
+  }
+  setCurrentTest(clonedTest);
+
   // Enable ESLint compat mode.
-  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior,
-  // and enables `sourceType: "commonjs"`.
+  // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
   test.eslintCompat = true;
 
   // Ignore parsing errors. ESLint's test cases include invalid code.
-  const languageOptions = { ...test.languageOptions } as LanguageOptionsInternal;
+  languageOptions = { ...test.languageOptions };
   test.languageOptions = languageOptions;
 
   const parserOptions = { ...languageOptions.parserOptions };
@@ -121,10 +161,36 @@ function modifyTestCase(test: TestCase): void {
   // Setting `env` to empty object prevents the default "builtin" env from being applied.
   languageOptions.env = {};
 
-  // If test case uses `@typescript-eslint/parser` as parser, set `parserOptions.lang = "ts"`
-  if (languageOptions.parser === tsEslintParser) {
-    delete languageOptions.parser;
-    parserOptions.lang = parserOptions.ecmaFeatures?.jsx === true ? "tsx" : "ts";
+  // If test case uses a known parser, set `parserOptions.lang` to match.
+  // Parser can be specified as:
+  // - Current ESLint: `test.languageOptions.parser` (parser object)
+  // - Old ESLint versions: `test.parser` (absolute path to parser)
+  let lang: Language | null = null;
+
+  if (languageOptions.parser != null) {
+    lang = parserModules.get(languageOptions.parser) ?? null;
+    if (lang !== null) delete languageOptions.parser;
+  }
+
+  if (test.parser != null) {
+    lang = parserModulePaths.get(test.parser) ?? null;
+    if (lang === null) {
+      // Set `languageOptions.parser` so an error is thrown
+      languageOptions.parser = {};
+    } else {
+      delete test.parser;
+    }
+  }
+
+  if (lang !== null) {
+    if (parserOptions.ecmaFeatures?.jsx === true) {
+      if (lang === "ts") {
+        lang = "tsx";
+      } else if (lang === "js") {
+        lang = "jsx";
+      }
+    }
+    parserOptions.lang = lang;
   }
 }
 

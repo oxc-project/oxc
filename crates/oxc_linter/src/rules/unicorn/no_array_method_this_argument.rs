@@ -186,19 +186,26 @@ const IGNORED: &[&[&str]] = &[
 fn test() {
     use crate::tester::Tester;
 
+    // TODO: Get the commented-out test cases passing here.
     let pass = vec![
         "array.unknownMethod(() => {}, thisArgument)",
         "new array.map(() => {}, thisArgument)",
+        // "array.map?.(() => {}, thisArgument)",
         "Array.unknownMethod(iterableOrArrayLike, () => {}, thisArgument)",
         "new Array.from(iterableOrArrayLike, () => {}, thisArgument)",
+        // "Array.from?.(iterableOrArrayLike, () => {}, thisArgument)",
+        // "Array?.from(iterableOrArrayLike, () => {}, thisArgument)",
         "NotArray.from(iterableOrArrayLike, () => {}, thisArgument)",
         "new Array.fromAsync(iterableOrArrayLike, () => {}, thisArgument)",
+        // "Array.fromAsync?.(iterableOrArrayLike, () => {}, thisArgument)",
+        // "Array?.fromAsync(iterableOrArrayLike, () => {}, thisArgument)",
         "NotArray.fromAsync(iterableOrArrayLike, () => {}, thisArgument)",
         "array.map()",
         "array.map(() => {},)",
         "array.map(() => {}, ...thisArgument)",
         "array.map(...() => {}, thisArgument)",
         "array.map(() => {}, thisArgument, extraArgument)",
+        // "Array?.from(iterableOrArrayLike, () => {}, thisArgument)",
         "Array.from()",
         "Array.from(iterableOrArrayLike)",
         "Array.from(iterableOrArrayLike, () => {},)",
@@ -236,8 +243,8 @@ fn test() {
         "Array.fromAsync(iterableOrArrayLike, new Callback, thisArgument)",
         "Array.from(iterableOrArrayLike, 1, thisArgument)",
         "Array.fromAsync(iterableOrArrayLike, 1, thisArgument)",
-        "Array.from(iterableOrArrayLike, await callback, thisArgument)",
-        "Array.fromAsync(iterableOrArrayLike, await callback, thisArgument)",
+        "async () => Array.from(iterableOrArrayLike, await callback, thisArgument)",
+        "async () => Array.fromAsync(iterableOrArrayLike, await callback, thisArgument)",
     ];
 
     let fail = vec![
@@ -250,6 +257,7 @@ fn test() {
         "array.flatMap(() => {}, thisArgument)",
         "array.forEach(() => {}, thisArgument)",
         "array.map(() => {}, thisArgument)",
+        "array?.map(() => {}, thisArgument)",
         "Array.from(iterableOrArrayLike, () => {}, thisArgument)",
         "Array.fromAsync(iterableOrArrayLike, () => {}, thisArgument)",
         "array.map(() => {}, thisArgument,)",
@@ -257,6 +265,7 @@ fn test() {
         "Array.from(iterableOrArrayLike, () => {}, thisArgument,)",
         "Array.fromAsync(iterableOrArrayLike, () => {}, thisArgument,)",
         "array.map(() => {}, thisArgumentHasSideEffect())",
+        "array?.map(() => {}, thisArgumentHasSideEffect())",
         "Array.from(iterableOrArrayLike, () => {}, thisArgumentHasSideEffect())",
         "Array.fromAsync(iterableOrArrayLike, () => {}, thisArgumentHasSideEffect())",
         "array.map(callback, thisArgument)",

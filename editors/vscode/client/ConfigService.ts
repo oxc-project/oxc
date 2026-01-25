@@ -1,5 +1,5 @@
 import * as path from "node:path";
-import { ConfigurationChangeEvent, RelativePattern, Uri, workspace, WorkspaceFolder } from "vscode";
+import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from "vscode";
 import { DiagnosticPullMode } from "vscode-languageclient";
 import { validateSafeBinaryPath } from "./PathValidator";
 import { IDisposable } from "./types";
@@ -111,22 +111,10 @@ export class ConfigService implements IDisposable {
 
   private async searchBinaryPath(
     settingsBinary: string | undefined,
-    defaultPattern: string,
+    defaultBinaryName: string,
   ): Promise<string | undefined> {
-    const cwd = this.workspaceConfigs.keys().next().value;
-    if (!cwd) {
-      return undefined;
-    }
-
     if (!settingsBinary) {
-      // try to find the binary in node_modules/.bin, resolve to the first workspace folder
-      const files = await workspace.findFiles(
-        new RelativePattern(cwd, `**/node_modules/.bin/${defaultPattern}`),
-        null,
-        1,
-      );
-
-      return files.length > 0 ? files[0].fsPath : undefined;
+      return this.searchNodeModulesBin(defaultBinaryName);
     }
 
     if (!workspace.isTrusted) {
@@ -134,20 +122,75 @@ export class ConfigService implements IDisposable {
     }
 
     // validates the given path is safe to use
-    if (validateSafeBinaryPath(settingsBinary) === false) {
+    if (!validateSafeBinaryPath(settingsBinary)) {
       return undefined;
     }
 
     if (!path.isAbsolute(settingsBinary)) {
+      const cwd = this.workspaceConfigs.keys().next().value;
+      if (!cwd) {
+        return undefined;
+      }
       // if the path is not absolute, resolve it to the first workspace folder
       settingsBinary = path.normalize(path.join(cwd, settingsBinary));
-      // strip the leading slash on Windows
-      if (process.platform === "win32" && settingsBinary.startsWith("\\")) {
-        settingsBinary = settingsBinary.slice(1);
-      }
+      settingsBinary = this.removeWindowsLeadingSlash(settingsBinary);
     }
 
-    return settingsBinary;
+    if (process.platform !== "win32" && settingsBinary.endsWith(".exe")) {
+      // on non-Windows, remove `.exe` extension if present
+      settingsBinary = settingsBinary.slice(0, -4);
+    }
+
+    try {
+      await workspace.fs.stat(Uri.file(settingsBinary));
+      return settingsBinary;
+    } catch {}
+
+    // on Windows, also check for `.exe` extension (bun uses `.exe` for its binaries)
+    if (process.platform === "win32") {
+      if (!settingsBinary.endsWith(".exe")) {
+        settingsBinary += ".exe";
+      }
+
+      try {
+        await workspace.fs.stat(Uri.file(settingsBinary));
+        return settingsBinary;
+      } catch {}
+    }
+
+    // no valid binary found
+    return undefined;
+  }
+
+  /**
+   * strip the leading slash on Windows
+   */
+  private removeWindowsLeadingSlash(path: string): string {
+    if (process.platform === "win32" && path.startsWith("\\")) {
+      return path.slice(1);
+    }
+    return path;
+  }
+
+  /**
+   * Search for the binary in all workspaces' node_modules/.bin directories.
+   * If multiple workspaces contain the binary, the first one found is returned.
+   */
+  private async searchNodeModulesBin(binaryName: string): Promise<string | undefined> {
+    // try to resolve via require.resolve
+    try {
+      const resolvedPath = require
+        .resolve(binaryName, {
+          paths: workspace.workspaceFolders?.map((folder) => folder.uri.fsPath) ?? [],
+        })
+        // we want to target the binary instead of the main index file
+        // Improvement: search inside package.json "bin" and `main` field for more reliability
+        .replace(
+          `${binaryName}${path.sep}dist${path.sep}index.js`,
+          `${binaryName}${path.sep}bin${path.sep}${binaryName}`,
+        );
+      return resolvedPath;
+    } catch {}
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {

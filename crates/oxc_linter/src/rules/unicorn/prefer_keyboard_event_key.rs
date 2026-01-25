@@ -1,6 +1,6 @@
 use phf::{Map, phf_map};
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, GetAddress, UnstableAddress};
 use oxc_ast::{
     AstBuilder, AstKind,
     ast::{
@@ -353,10 +353,10 @@ impl PreferKeyboardEventKey {
 
         match second_arg {
             Argument::ArrowFunctionExpression(arrow) => {
-                matches!(callback, CallbackFunction::Arrow(cb) if std::ptr::eq(*cb, arrow.as_ref()))
+                matches!(callback, CallbackFunction::Arrow(cb) if cb.unstable_address() == arrow.address())
             }
             Argument::FunctionExpression(func) => {
-                matches!(callback, CallbackFunction::Regular(cb) if std::ptr::eq(*cb, func.as_ref()))
+                matches!(callback, CallbackFunction::Regular(cb) if cb.unstable_address() == func.address())
             }
             _ => false,
         }

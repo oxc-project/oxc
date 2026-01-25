@@ -1,4 +1,8 @@
-use std::{ffi::OsStr, path::Component, sync::Arc};
+use std::{
+    ffi::OsStr,
+    path::{Component, Path, PathBuf},
+    sync::Arc,
+};
 
 use cow_utils::CowUtils;
 use oxc_diagnostics::OxcDiagnostic;
@@ -14,15 +18,52 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_cycle_diagnostic(span: Span, paths: &str) -> OxcDiagnostic {
+fn no_cycle_diagnostic(span: Span, stack: &[(CompactStr, PathBuf)], cwd: &Path) -> OxcDiagnostic {
+    let cycle_description = format_cycle(stack, cwd);
     OxcDiagnostic::warn("Dependency cycle detected")
-        .with_help(format!("These paths form a cycle: \n{paths}"))
+        .with_help("Refactor to remove the cycle. Consider extracting shared code into a separate module that both files can import.")
+        .with_note(format!("These paths form a cycle:\n{cycle_description}"))
         .with_label(span)
+}
+
+fn self_referencing_cycle_diagnostic(span: Span, is_import: bool) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Dependency cycle detected")
+        .with_help(if is_import {
+            "Remove the self-referencing import."
+        } else {
+            "Remove the self-referencing export and consider using a named export instead."
+        })
+        .with_label(span.primary_label("this module references itself"))
+}
+
+fn format_cycle(stack: &[(CompactStr, PathBuf)], cwd: &Path) -> String {
+    let mut lines = Vec::with_capacity(stack.len() * 2 + 1);
+
+    for (i, (specifier, path)) in stack.iter().enumerate() {
+        let relative_path = path
+            .strip_prefix(cwd)
+            .unwrap_or(path)
+            .to_string_lossy()
+            .cow_replace('\\', "/")
+            .into_owned();
+
+        if i == 0 {
+            lines.push(format!("╭──▶ {specifier} ({relative_path})"));
+        } else {
+            lines.push("│         ⬇ imports".to_string());
+            lines.push(format!("│    {specifier} ({relative_path})"));
+        }
+    }
+
+    // Close the cycle - it imports back to the original file
+    lines.push("╰─────────╯ imports the current file".to_string());
+
+    lines.join("\n")
 }
 
 // <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-cycle.md>
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoCycle {
     /// Maximum dependency depth to traverse
     max_depth: u32,
@@ -50,8 +91,8 @@ declare_oxc_lint!(
     ///
     /// Ensures that there is no resolvable path back to this module via its dependencies.
     ///
-    /// This includes cycles of depth 1 (imported module imports me) to "∞" (or Infinity),
-    /// if the `maxDepth` option is not set.
+    /// This includes cycles of depth 1 (imported module imports me) to an effectively
+    /// infinite value, if the `maxDepth` option is not set.
     ///
     /// ### Why is this bad?
     ///
@@ -94,8 +135,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCycle {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<NoCycle>>(value).unwrap_or_default().into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
@@ -181,21 +222,13 @@ impl Rule for NoCycle {
             });
 
         if visitor_result.result {
-            let span = module_record.requested_modules[&stack[0].0][0].span;
-            let help = stack
-                .iter()
-                .map(|(specifier, path)| {
-                    format!(
-                        "-> {specifier} - {}",
-                        path.strip_prefix(&cwd)
-                            .unwrap_or(path)
-                            .to_string_lossy()
-                            .cow_replace('\\', "/")
-                    )
-                })
-                .collect::<Vec<_>>()
-                .join("\n");
-            ctx.diagnostic(no_cycle_diagnostic(span, &help));
+            let requested_module = module_record.requested_modules[&stack[0].0][0];
+            let span = requested_module.span;
+            if stack.len() == 1 {
+                ctx.diagnostic(self_referencing_cycle_diagnostic(span, requested_module.is_import));
+            } else {
+                ctx.diagnostic(no_cycle_diagnostic(span, &stack, &cwd));
+            }
         }
     }
 }
@@ -294,8 +327,13 @@ fn test() {
         (r#"import one, { two, three } from "./es6/depth-three-star""#, None),
         (r#"import { bar } from "./es6/depth-three-indirect""#, None),
         (r#"import { bar } from "./es6/depth-three-indirect""#, None),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
+        // effectively unlimited:
+        (r#"import { foo } from "./es6/depth-two""#, None),
+        // Use default value, effectively unlimited:
+        (r#"import { foo } from "./es6/depth-two""#, Some(json!([]))),
+        // These are not valid config options and just fell back to the default value previously:
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
         (
             r#"import { foo } from "./es6/depth-one""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
@@ -349,19 +387,26 @@ fn test() {
             r#"import { bar } from "./es6/depth-three-indirect""#,
             Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
         ),
+        // Equivalent to the commented tests below.
         (
             r#"import { foo } from "./es6/depth-two""#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":null}])),
+            Some(json!([{"allowUnsafeDynamicCyclicDependency":true}])),
         ),
-        (
-            r#"import { foo } from "./es6/depth-two""#,
-            Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":"∞"}])),
-        ),
+        // These are not valid config options and just fell back to the default value previously:
+        // (
+        //     r#"import { foo } from "./es6/depth-two""#,
+        //     Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":null}])),
+        // ),
+        // (
+        //     r#"import { foo } from "./es6/depth-two""#,
+        //     Some(json!([{"allowUnsafeDynamicCyclicDependency":true,"maxDepth":"∞"}])),
+        // ),
         // TODO: dynamic import
         // (r#"import("./es6/depth-three-star")"#, None),
         // (r#"import("./es6/depth-three-indirect")"#, None),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
-        (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
+        // These are not valid config options and just fell back to the default value previously:
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":null}]))),
+        // (r#"import { foo } from "./es6/depth-two""#, Some(json!([{"maxDepth":"∞"}]))),
         // TODO: dynamic import
         // (r#"function bar(){ return import("./es6/depth-one"); } // #2265 5"#, None),
         // (r#"import { foo } from "./es6/depth-one-dynamic"; // #2265 6"#, None),
@@ -380,6 +425,7 @@ fn test() {
             Some(json!([{"ignoreTypes":false}])),
         ),
         (r"export function Foo() {}; export * from './depth-zero'", None),
+        (r"import * as depthZero from './depth-zero'", None),
     ];
 
     Tester::new(NoCycle::NAME, NoCycle::PLUGIN, pass, fail)

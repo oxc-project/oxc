@@ -64,7 +64,7 @@ Example
 
 ## $schema
 
-type: `string | null`
+type: `string`
 
 
 Schema URI for editor tooling.
@@ -206,13 +206,16 @@ Globs to ignore during linting. These are resolved from the configuration file p
 
 ## jsPlugins
 
-type: `array | null`
+type: `array`
 
 
-JS plugins.
+JS plugins, allows usage of ESLint plugins with Oxlint.
+
+Read more about JS plugins in
+[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
 Note: JS plugins are experimental and not subject to semver.
-They are not supported in language server at present.
+They are not supported in the language server (and thus editor integrations) at present.
 
 
 ### jsPlugins[n]
@@ -233,7 +236,7 @@ Custom name/alias for the plugin.
 Note: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:
 - react (includes react-hooks)
 - unicorn
-- typescript
+- typescript (includes @typescript-eslint)
 - oxc
 - import (includes import-x)
 - jsdoc
@@ -244,7 +247,6 @@ Note: The following plugin names are reserved because they are implemented nativ
 - react-perf
 - promise
 - node
-- regex
 - vue
 - eslint
 
@@ -277,7 +279,7 @@ type: `object`
 
 #### overrides[n].env
 
-type: `object | null`
+type: `object`
 
 
 Environments enable and disable collections of global variables.
@@ -293,7 +295,7 @@ A set of glob patterns.
 
 #### overrides[n].globals
 
-type: `object | null`
+type: `object`
 
 
 Enabled or disabled specific global variables.
@@ -301,13 +303,16 @@ Enabled or disabled specific global variables.
 
 #### overrides[n].jsPlugins
 
-type: `array | null`
+type: `array`
 
 
-JS plugins for this override.
+JS plugins for this override, allows usage of ESLint plugins with Oxlint.
+
+Read more about JS plugins in
+[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
 Note: JS plugins are experimental and not subject to semver.
-They are not supported in language server at present.
+They are not supported in the language server (and thus editor integrations) at present.
 
 
 ##### overrides[n].jsPlugins[n]
@@ -328,7 +333,7 @@ Custom name/alias for the plugin.
 Note: The following plugin names are reserved because they are implemented natively in Rust within oxlint and cannot be used for JS plugins:
 - react (includes react-hooks)
 - unicorn
-- typescript
+- typescript (includes @typescript-eslint)
 - oxc
 - import (includes import-x)
 - jsdoc
@@ -339,7 +344,6 @@ Note: The following plugin names are reserved because they are implemented nativ
 - react-perf
 - promise
 - node
-- regex
 - vue
 - eslint
 
@@ -356,7 +360,7 @@ Path or package name of the plugin
 
 #### overrides[n].plugins
 
-type: `array | null`
+type: `array`
 
 default: `null`
 
@@ -366,7 +370,7 @@ omitted, the base config's plugins are used.
 
 ##### overrides[n].plugins[n]
 
-type: `string`
+type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue"`
 
 
 
@@ -382,7 +386,7 @@ See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
 
 ## plugins
 
-type: `array | null`
+type: `array`
 
 default: `null`
 
@@ -396,7 +400,7 @@ The `plugins` array should reflect all of the plugins you want to use.
 
 ### plugins[n]
 
-type: `string`
+type: `"eslint" | "react" | "unicorn" | "typescript" | "oxc" | "import" | "jsdoc" | "jest" | "vitest" | "jsx-a11y" | "nextjs" | "react-perf" | "promise" | "node" | "vue"`
 
 
 
@@ -587,7 +591,7 @@ Example:
 
 #### settings.jsx-a11y.polymorphicPropName
 
-type: `string | null`
+type: `string`
 
 
 An optional setting that define the prop your code uses to create polymorphic components.
@@ -636,6 +640,27 @@ type: `object`
 Configure React plugin rules.
 
 Derived from [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc-)
+
+
+#### settings.react.componentWrapperFunctions
+
+type: `string[]`
+
+default: `[]`
+
+Functions that wrap React components and should be treated as HOCs.
+
+Example:
+
+```jsonc
+{
+"settings": {
+"react": {
+"componentWrapperFunctions": ["observer", "withRouter"]
+}
+}
+}
+```
 
 
 #### settings.react.formComponents
@@ -743,7 +768,7 @@ type: `string`
 
 #### settings.react.version
 
-type: `string | null`
+type: `string`
 
 default: `null`
 

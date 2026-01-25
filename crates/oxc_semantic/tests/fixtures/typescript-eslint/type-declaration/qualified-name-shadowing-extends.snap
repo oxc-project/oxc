@@ -1,0 +1,99 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/qualified-name-shadowing-extends.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "Class(C)",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 2,
+                "name": "U",
+                "node": "TSTypeParameter(U)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 0,
+                    "name": "U",
+                    "node_id": 16,
+                    "scope_id": 2
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(TsModuleBlock)",
+        "id": 1,
+        "node": "TSModuleDeclaration(T)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(Class)",
+            "id": 1,
+            "name": "C",
+            "node": "Class(C)",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "Class(Foo)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 4,
+            "name": "T",
+            "node": "TSTypeParameter(T)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 2,
+                "name": "T",
+                "node_id": 30,
+                "scope_id": 3
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(ValueModule)",
+        "id": 0,
+        "name": "T",
+        "node": "TSModuleDeclaration(T)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "T",
+            "node_id": 23,
+            "scope_id": 3
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Class)",
+        "id": 3,
+        "name": "Foo",
+        "node": "Class(Foo)",
+        "references": []
+      }
+    ]
+  }
+]

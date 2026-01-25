@@ -1,10 +1,17 @@
+import * as path from "node:path";
 import { LogOutputChannel, window } from "vscode";
 import { Executable, MessageType, ShowMessageParams } from "vscode-languageclient/node";
 
-export function runExecutable(path: string, nodePath?: string, tsgolintPath?: string): Executable {
+export function runExecutable(
+  binaryPath: string,
+  nodeBinName: string,
+  nodePath?: string,
+  tsgolintPath?: string,
+): Executable {
   const serverEnv: Record<string, string> = {
     ...process.env,
-    RUST_LOG: process.env.RUST_LOG || "info",
+    RUST_LOG: process.env.RUST_LOG || "info", // Keep for backward compatibility for a while
+    OXC_LOG: process.env.OXC_LOG || "info",
   };
   if (nodePath) {
     serverEnv.PATH = `${nodePath}${process.platform === "win32" ? ";" : ":"}${process.env.PATH ?? ""}`;
@@ -12,20 +19,27 @@ export function runExecutable(path: string, nodePath?: string, tsgolintPath?: st
   if (tsgolintPath) {
     serverEnv.OXLINT_TSGOLINT_PATH = tsgolintPath;
   }
-  const isNode = path.endsWith(".js") || path.endsWith(".cjs") || path.endsWith(".mjs");
+  // when the binary path ends with `oxlint/bin/oxlint` or a common js extension, we should run it with `node`
+  // the path is defined in `ConfigService.searchNodeModulesBin`
+  const isNode =
+    binaryPath.endsWith(".js") ||
+    binaryPath.endsWith(".cjs") ||
+    binaryPath.endsWith(".mjs") ||
+    binaryPath.endsWith(`${nodeBinName}${path.sep}bin${path.sep}${nodeBinName}`);
+
   const isWindows = process.platform === "win32";
 
   return isNode
     ? {
         command: "node",
-        args: [path, "--lsp"],
+        args: [binaryPath, "--lsp"],
         options: {
           env: serverEnv,
         },
       }
     : {
         // On Windows with shell, quote the command path to handle spaces in usernames/paths
-        command: isWindows ? `"${path}"` : path,
+        command: isWindows ? `"${binaryPath}"` : binaryPath,
         args: ["--lsp"],
         options: {
           // On Windows we need to run the binary in a shell to be able to execute the shell npm bin script.

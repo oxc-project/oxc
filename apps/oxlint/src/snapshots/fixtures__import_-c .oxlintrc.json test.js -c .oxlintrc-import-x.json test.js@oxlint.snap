@@ -6,7 +6,7 @@ arguments: -c .oxlintrc.json test.js
 working directory: fixtures/import
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-default-export.html\eslint-plugin-import(no-default-export)]8;;\: Prefer named exports
+  x eslint-plugin-import(no-default-export): Prefer named exports
    ,-[test.js:7:8]
  6 | // import/no-default-export
  7 | export default function () { }
@@ -15,7 +15,7 @@ working directory: fixtures/import
    `----
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file with 55 rules using 1 threads.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
@@ -25,7 +25,7 @@ arguments: -c .oxlintrc-import-x.json test.js
 working directory: fixtures/import
 ----------
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/import/no-default-export.html\eslint-plugin-import(no-default-export)]8;;\: Prefer named exports
+  x eslint-plugin-import(no-default-export): Prefer named exports
    ,-[test.js:7:8]
  6 | // import/no-default-export
  7 | export default function () { }
@@ -34,7 +34,7 @@ working directory: fixtures/import
    `----
 
 Found 0 warnings and 1 error.
-Finished in <variable>ms on 1 file with 55 rules using 1 threads.
+Finished in <variable>ms on 1 file with 1 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

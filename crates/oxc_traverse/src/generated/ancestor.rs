@@ -299,28 +299,29 @@ pub(crate) enum AncestorType {
     TSConstructorTypeTypeParameters = 275,
     TSConstructorTypeParams = 276,
     TSConstructorTypeReturnType = 277,
-    TSMappedTypeTypeParameter = 278,
-    TSMappedTypeNameType = 279,
-    TSMappedTypeTypeAnnotation = 280,
-    TSTemplateLiteralTypeQuasis = 281,
-    TSTemplateLiteralTypeTypes = 282,
-    TSAsExpressionExpression = 283,
-    TSAsExpressionTypeAnnotation = 284,
-    TSSatisfiesExpressionExpression = 285,
-    TSSatisfiesExpressionTypeAnnotation = 286,
-    TSTypeAssertionTypeAnnotation = 287,
-    TSTypeAssertionExpression = 288,
-    TSImportEqualsDeclarationId = 289,
-    TSImportEqualsDeclarationModuleReference = 290,
-    TSExternalModuleReferenceExpression = 291,
-    TSNonNullExpressionExpression = 292,
-    DecoratorExpression = 293,
-    TSExportAssignmentExpression = 294,
-    TSNamespaceExportDeclarationId = 295,
-    TSInstantiationExpressionExpression = 296,
-    TSInstantiationExpressionTypeArguments = 297,
-    JSDocNullableTypeTypeAnnotation = 298,
-    JSDocNonNullableTypeTypeAnnotation = 299,
+    TSMappedTypeKey = 278,
+    TSMappedTypeConstraint = 279,
+    TSMappedTypeNameType = 280,
+    TSMappedTypeTypeAnnotation = 281,
+    TSTemplateLiteralTypeQuasis = 282,
+    TSTemplateLiteralTypeTypes = 283,
+    TSAsExpressionExpression = 284,
+    TSAsExpressionTypeAnnotation = 285,
+    TSSatisfiesExpressionExpression = 286,
+    TSSatisfiesExpressionTypeAnnotation = 287,
+    TSTypeAssertionTypeAnnotation = 288,
+    TSTypeAssertionExpression = 289,
+    TSImportEqualsDeclarationId = 290,
+    TSImportEqualsDeclarationModuleReference = 291,
+    TSExternalModuleReferenceExpression = 292,
+    TSNonNullExpressionExpression = 293,
+    DecoratorExpression = 294,
+    TSExportAssignmentExpression = 295,
+    TSNamespaceExportDeclarationId = 296,
+    TSInstantiationExpressionExpression = 297,
+    TSInstantiationExpressionTypeArguments = 298,
+    JSDocNullableTypeTypeAnnotation = 299,
+    JSDocNonNullableTypeTypeAnnotation = 300,
 }
 
 /// Ancestor type used in AST traversal.
@@ -857,8 +858,9 @@ pub enum Ancestor<'a, 't> {
         AncestorType::TSConstructorTypeParams as u16,
     TSConstructorTypeReturnType(TSConstructorTypeWithoutReturnType<'a, 't>) =
         AncestorType::TSConstructorTypeReturnType as u16,
-    TSMappedTypeTypeParameter(TSMappedTypeWithoutTypeParameter<'a, 't>) =
-        AncestorType::TSMappedTypeTypeParameter as u16,
+    TSMappedTypeKey(TSMappedTypeWithoutKey<'a, 't>) = AncestorType::TSMappedTypeKey as u16,
+    TSMappedTypeConstraint(TSMappedTypeWithoutConstraint<'a, 't>) =
+        AncestorType::TSMappedTypeConstraint as u16,
     TSMappedTypeNameType(TSMappedTypeWithoutNameType<'a, 't>) =
         AncestorType::TSMappedTypeNameType as u16,
     TSMappedTypeTypeAnnotation(TSMappedTypeWithoutTypeAnnotation<'a, 't>) =
@@ -1815,7 +1817,8 @@ impl<'a, 't> Ancestor<'a, 't> {
     pub fn is_ts_mapped_type(self) -> bool {
         matches!(
             self,
-            Self::TSMappedTypeTypeParameter(_)
+            Self::TSMappedTypeKey(_)
+                | Self::TSMappedTypeConstraint(_)
                 | Self::TSMappedTypeNameType(_)
                 | Self::TSMappedTypeTypeAnnotation(_)
         )
@@ -2175,6 +2178,7 @@ impl<'a, 't> Ancestor<'a, 't> {
                 | Self::TSTypeParameterConstraint(_)
                 | Self::TSTypeParameterDefault(_)
                 | Self::TSTypeAliasDeclarationTypeAnnotation(_)
+                | Self::TSMappedTypeConstraint(_)
                 | Self::TSMappedTypeNameType(_)
                 | Self::TSMappedTypeTypeAnnotation(_)
                 | Self::TSTemplateLiteralTypeTypes(_)
@@ -2526,7 +2530,8 @@ impl<'a, 't> GetAddress for Ancestor<'a, 't> {
             Self::TSConstructorTypeTypeParameters(a) => a.address(),
             Self::TSConstructorTypeParams(a) => a.address(),
             Self::TSConstructorTypeReturnType(a) => a.address(),
-            Self::TSMappedTypeTypeParameter(a) => a.address(),
+            Self::TSMappedTypeKey(a) => a.address(),
+            Self::TSMappedTypeConstraint(a) => a.address(),
             Self::TSMappedTypeNameType(a) => a.address(),
             Self::TSMappedTypeTypeAnnotation(a) => a.address(),
             Self::TSTemplateLiteralTypeQuasis(a) => a.address(),
@@ -11463,8 +11468,6 @@ pub(crate) const OFFSET_TS_ENUM_DECLARATION_ID: usize = offset_of!(TSEnumDeclara
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_BODY: usize = offset_of!(TSEnumDeclaration, body);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_CONST: usize = offset_of!(TSEnumDeclaration, r#const);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_DECLARE: usize = offset_of!(TSEnumDeclaration, declare);
-pub(crate) const OFFSET_TS_ENUM_DECLARATION_SCOPE_ID: usize =
-    offset_of!(TSEnumDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11494,14 +11497,6 @@ impl<'a, 't> TSEnumDeclarationWithoutId<'a, 't> {
     #[inline]
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
     }
 }
 
@@ -11542,14 +11537,6 @@ impl<'a, 't> TSEnumDeclarationWithoutBody<'a, 't> {
     pub fn declare(self) -> &'t bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
     }
-
-    #[inline]
-    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
 }
 
 impl<'a, 't> GetAddress for TSEnumDeclarationWithoutBody<'a, 't> {
@@ -11561,6 +11548,7 @@ impl<'a, 't> GetAddress for TSEnumDeclarationWithoutBody<'a, 't> {
 
 pub(crate) const OFFSET_TS_ENUM_BODY_SPAN: usize = offset_of!(TSEnumBody, span);
 pub(crate) const OFFSET_TS_ENUM_BODY_MEMBERS: usize = offset_of!(TSEnumBody, members);
+pub(crate) const OFFSET_TS_ENUM_BODY_SCOPE_ID: usize = offset_of!(TSEnumBody, scope_id);
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
@@ -11573,6 +11561,14 @@ impl<'a, 't> TSEnumBodyWithoutMembers<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_BODY_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
     }
 }
 
@@ -15275,8 +15271,8 @@ impl<'a, 't> GetAddress for TSConstructorTypeWithoutReturnType<'a, 't> {
 }
 
 pub(crate) const OFFSET_TS_MAPPED_TYPE_SPAN: usize = offset_of!(TSMappedType, span);
-pub(crate) const OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER: usize =
-    offset_of!(TSMappedType, type_parameter);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_KEY: usize = offset_of!(TSMappedType, key);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_CONSTRAINT: usize = offset_of!(TSMappedType, constraint);
 pub(crate) const OFFSET_TS_MAPPED_TYPE_NAME_TYPE: usize = offset_of!(TSMappedType, name_type);
 pub(crate) const OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION: usize =
     offset_of!(TSMappedType, type_annotation);
@@ -15286,15 +15282,22 @@ pub(crate) const OFFSET_TS_MAPPED_TYPE_SCOPE_ID: usize = offset_of!(TSMappedType
 
 #[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-pub struct TSMappedTypeWithoutTypeParameter<'a, 't>(
+pub struct TSMappedTypeWithoutKey<'a, 't>(
     pub(crate) *const TSMappedType<'a>,
     pub(crate) PhantomData<&'t ()>,
 );
 
-impl<'a, 't> TSMappedTypeWithoutTypeParameter<'a, 't> {
+impl<'a, 't> TSMappedTypeWithoutKey<'a, 't> {
     #[inline]
     pub fn span(self) -> &'t Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *const TSType<'a>)
+        }
     }
 
     #[inline]
@@ -15338,7 +15341,75 @@ impl<'a, 't> TSMappedTypeWithoutTypeParameter<'a, 't> {
     }
 }
 
-impl<'a, 't> GetAddress for TSMappedTypeWithoutTypeParameter<'a, 't> {
+impl<'a, 't> GetAddress for TSMappedTypeWithoutKey<'a, 't> {
+    #[inline]
+    fn address(&self) -> Address {
+        unsafe { Address::from_ptr(self.0) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug)]
+pub struct TSMappedTypeWithoutConstraint<'a, 't>(
+    pub(crate) *const TSMappedType<'a>,
+    pub(crate) PhantomData<&'t ()>,
+);
+
+impl<'a, 't> TSMappedTypeWithoutConstraint<'a, 't> {
+    #[inline]
+    pub fn span(self) -> &'t Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn key(self) -> &'t BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_KEY) as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn name_type(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_NAME_TYPE)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_annotation(self) -> &'t Option<TSType<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION)
+                as *const Option<TSType<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_OPTIONAL)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn readonly(self) -> &'t Option<TSMappedTypeModifierOperator> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
+                as *const Option<TSMappedTypeModifierOperator>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(self) -> &'t Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+impl<'a, 't> GetAddress for TSMappedTypeWithoutConstraint<'a, 't> {
     #[inline]
     fn address(&self) -> Address {
         unsafe { Address::from_ptr(self.0) }
@@ -15359,10 +15430,16 @@ impl<'a, 't> TSMappedTypeWithoutNameType<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameter(self) -> &'t Box<'a, TSTypeParameter<'a>> {
+    pub fn key(self) -> &'t BindingIdentifier<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER)
-                as *const Box<'a, TSTypeParameter<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_KEY) as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *const TSType<'a>)
         }
     }
 
@@ -15420,10 +15497,16 @@ impl<'a, 't> TSMappedTypeWithoutTypeAnnotation<'a, 't> {
     }
 
     #[inline]
-    pub fn type_parameter(self) -> &'t Box<'a, TSTypeParameter<'a>> {
+    pub fn key(self) -> &'t BindingIdentifier<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER)
-                as *const Box<'a, TSTypeParameter<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_KEY) as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn constraint(self) -> &'t TSType<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *const TSType<'a>)
         }
     }
 

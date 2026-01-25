@@ -1,9 +1,9 @@
-commit: 2dfdbbab
+commit: 7f6a8467
 
 parser_typescript Summary:
-AST Parsed     : 9839/9840 (99.99%)
-Positive Passed: 9830/9840 (99.90%)
-Negative Passed: 1494/2550 (58.59%)
+AST Parsed     : 9842/9843 (99.99%)
+Positive Passed: 9837/9843 (99.94%)
+Negative Passed: 1500/2555 (58.71%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -156,6 +156,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionExp
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndVar.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commonSourceDirectory_dts.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedGenericRecursiveBaseClassReference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1.ts
@@ -213,6 +215,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitIndexTypeNotFound.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMonorepoBaseUrl.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRelativeModuleError.ts
 
@@ -752,6 +760,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterDec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_realRootFile.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_noAliasWithRoot_realRootFile.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation5.ts
@@ -1080,8 +1092,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/m
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAccessModifiers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/classes/propertyMemberDeclarations/autoAccessorExperimentalDecorators.ts
@@ -1390,10 +1400,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressio
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccess.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessStringIndexSignature.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessStringIndexSignatureNoImplicitAny.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/propertyAccess/propertyAccessWidening.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/expressions/superPropertyAccess/superSymbolIndexedAccess4.ts
@@ -1475,6 +1481,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelModuleDeclarationAndFile.ts
 
@@ -1750,11 +1758,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 
@@ -1960,11 +1964,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/e
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/scanner/ecmascript5/scannerNumericLiteral9.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.14.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts
 
@@ -2074,13 +2078,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/thi
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/contextualTypeTupleEnd.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/unionsOfTupleTypes1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/intrinsicKeyword.ts
 
@@ -2116,135 +2114,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uni
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/arrayFromAsync.ts
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:22:5]
- 21 │ const arr : number[] = [];
- 22 │ for await (const v of asyncGen(4)) {
-    ·     ─────
- 23 │   arr.push(v);
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:26:18]
- 25 │ 
- 26 │ const sameArr1 = await Array.fromAsync(arrLike);
-    ·                  ─────
- 27 │ const sameArr2 = await Array.fromAsync([Promise.resolve(0), Promise.resolve(2), Promise.resolve(4), Promise.resolve(6)]);
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:27:18]
- 26 │ const sameArr1 = await Array.fromAsync(arrLike);
- 27 │ const sameArr2 = await Array.fromAsync([Promise.resolve(0), Promise.resolve(2), Promise.resolve(4), Promise.resolve(6)]);
-    ·                  ─────
- 28 │ const sameArr3 = await Array.fromAsync(genPromises(4));
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:28:18]
- 27 │ const sameArr2 = await Array.fromAsync([Promise.resolve(0), Promise.resolve(2), Promise.resolve(4), Promise.resolve(6)]);
- 28 │ const sameArr3 = await Array.fromAsync(genPromises(4));
-    ·                  ─────
- 29 │ const sameArr4 = await Array.fromAsync(asyncGen(4));
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:29:18]
- 28 │ const sameArr3 = await Array.fromAsync(genPromises(4));
- 29 │ const sameArr4 = await Array.fromAsync(asyncGen(4));
-    ·                  ─────
- 30 │ 
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:33:18]
- 32 │ Data.fromAsync = Array.fromAsync;
- 33 │ const sameArr5 = await Data.fromAsync(asyncGen(4));
-    ·                  ─────
- 34 │ 
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:35:17]
- 34 │ 
- 35 │ const mapArr1 = await Array.fromAsync(asyncGen(4), v => v ** 2);
-    ·                 ─────
- 36 │ const mapArr2 = await Array.fromAsync([0,2,4,6], v => Promise.resolve(v ** 2));
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:36:17]
- 35 │ const mapArr1 = await Array.fromAsync(asyncGen(4), v => v ** 2);
- 36 │ const mapArr2 = await Array.fromAsync([0,2,4,6], v => Promise.resolve(v ** 2));
-    ·                 ─────
- 37 │ const mapArr3 = await Array.fromAsync([0,2,4,6], v => v ** 2);
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:37:17]
- 36 │ const mapArr2 = await Array.fromAsync([0,2,4,6], v => Promise.resolve(v ** 2));
- 37 │ const mapArr3 = await Array.fromAsync([0,2,4,6], v => v ** 2);
-    ·                 ─────
- 38 │ 
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:42:18]
- 41 │ // This returns a promise that will reject with `err`.
- 42 │ const badArray = await Array.fromAsync(badIterable);
-    ·                  ─────
- 43 │ 
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/arrayFromAsync.ts:44:25]
- 43 │ 
- 44 │ const withIndexResult = await Array.fromAsync(["a", "b"], (str, index) => ({ index, str }));
-    ·                         ─────
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts:23:1]
- 22 │ // @ts-ignore suppress `with` statement error
- 23 │ with (window)
-    · ────
- 24 │     const enum H {}
-    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts:1:5]
- 1 │ for await (const x of []) {}
-   ·     ─────
- 2 │ await Promise.resolve();
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/compiler/modulePreserveTopLevelAwait1.ts:2:1]
- 1 │ for await (const x of []) {}
- 2 │ await Promise.resolve();
-   · ─────
- 3 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
   × Unexpected token
@@ -2254,15 +2123,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidat
     ·       ───
  19 │     }
     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
-
-  × 'with' statements are not allowed
-   ╭─[typescript/tests/cases/compiler/withStatementInternalComments.ts:2:7]
- 1 │ // @ts-ignore
- 2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
-   ·       ────
-   ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncWithVarShadowing_es6.ts
 
@@ -2287,16 +2147,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport
    ·          ─────────
    ╰────
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts:64:1]
- 63 │ // @ts-ignore
- 64 │ with (_) {
-    · ────
- 65 │     var y = _;
-    ╰────
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
@@ -2316,6 +2166,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─
  3 │ }
    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts:1:1]
+ 1 │ using x = {};
+   · ─────────────
+   ╰────
+  help: Wrap this code in a block or use a module
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -3269,15 +3128,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:4:7]
- 3 │ function normalFunc(p: Promise<number>) {
- 4 │   for await (const _ of []);
-   ·       ─────
- 5 │   return await p;
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:5:10]
  4 │   for await (const _ of []);
  5 │   return await p;
@@ -3287,29 +3137,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:9:7]
-  8 │ export function exportedFunc(p: Promise<number>) {
-  9 │   for await (const _ of []);
-    ·       ─────
- 10 │   return await p;
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:10:10]
   9 │   for await (const _ of []);
  10 │   return await p;
     ·          ─────
  11 │ }
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:14:7]
- 13 │ const functionExpression = function(p: Promise<number>) {
- 14 │   for await (const _ of []);
-    ·       ─────
- 15 │   await p;
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
@@ -3323,29 +3155,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:19:7]
- 18 │ const arrowFunc = (p: Promise<number>) => {
- 19 │   for await (const _ of []);
-    ·       ─────
- 20 │   return await p;
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:20:10]
  19 │   for await (const _ of []);
  20 │   return await p;
     ·          ─────
  21 │ };
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:24:7]
- 23 │ function* generatorFunc(p: Promise<number>) {
- 24 │   for await (const _ of []);
-    ·       ─────
- 25 │   yield await p;
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
@@ -3359,15 +3173,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:30:9]
- 29 │   constructor(p: Promise<number>) {
- 30 │     for await (const _ of []);
-    ·         ─────
- 31 │     await p;
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:31:5]
  30 │     for await (const _ of []);
  31 │     await p;
@@ -3377,37 +3182,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:34:7]
- 33 │   method(p: Promise<number>) {
- 34 │   for await (const _ of []);
-    ·       ─────
- 35 │     await p;
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:35:5]
  34 │   for await (const _ of []);
  35 │     await p;
     ·     ─────
  36 │   }
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:39:5]
- 38 │ 
- 39 │ for await (const _ of []);
-    ·     ─────
- 40 │ await null;
-    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:40:1]
- 39 │ for await (const _ of []);
- 40 │ await null;
-    · ─────
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
@@ -5446,24 +5225,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  9 │ function f7(a, func = (a) => { return 1 }){ }  // not error
    ╰────
 
-  × Identifier `a` has already been declared
+  × Identifier `"a"` has already been declared
    ╭─[typescript/tests/cases/compiler/duplicateIdentifierComputedName.ts:2:6]
  1 │ class C {
  2 │     ["a"]: string;
    ·      ─┬─
-   ·       ╰── `a` has already been declared here
+   ·       ╰── `"a"` has already been declared here
  3 │     ["a"]: string;
    ·      ─┬─
    ·       ╰── It can not be redeclared here
  4 │ }
    ╰────
 
-  × Identifier `3` has already been declared
+  × Identifier `0b11` has already been declared
    ╭─[typescript/tests/cases/compiler/duplicateIdentifierDifferentSpelling.ts:2:3]
  1 │ class A {
  2 │   0b11 = '';
    ·   ──┬─
-   ·     ╰── `3` has already been declared here
+   ·     ╰── `0b11` has already been declared here
  3 │   3 = '';
    ·   ┬
    ·   ╰── It can not be redeclared here
@@ -5728,7 +5507,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  10 │ declare function foo(x: () => Container<Ref<number>>): void;
     ·                  ─┬─
     ·                   ╰── `foo` has already been declared here
- 11 │ let a: () => Container<Ref<string>>;
+ 11 │ declare let a: () => Container<Ref<string>>;
     ╰────
     ╭─[typescript/tests/cases/compiler/errorElaboration.ts:22:7]
  21 │ 
@@ -5752,6 +5531,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  43 │ 
  44 │ import lol = Test5.Foo.
     ╰────
+
+  × TS(1253): Abstract properties can only appear within an abstract class.
+   ╭─[typescript/tests/cases/compiler/errorInUnnamedClassExpression.ts:7:14]
+ 6 │     }
+ 7 │     abstract bar;
+   ·              ───
+ 8 │ };
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:17]
@@ -6063,175 +5850,95 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ────────────────
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
  1 │ namespace M {
  2 │     export export var x = 1;
    ·            ──────
  3 │     export export function f() { }
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:2:12]
- 1 │ namespace M {
- 2 │     export export var x = 1;
-   ·            ──────
- 3 │     export export function f() { }
-   ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
  2 │     export export var x = 1;
  3 │     export export function f() { }
    ·            ──────
  4 │ 
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:3:12]
- 2 │     export export var x = 1;
- 3 │     export export function f() { }
-   ·            ──────
- 4 │ 
-   ╰────
-  help: Allowed modifiers are: declare, async
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
  4 │ 
  5 │     export export namespace N {
    ·            ──────
  6 │         export export class C { }
    ╰────
+  help: Remove the duplicate modifier.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
  5 │     export export namespace N {
  6 │         export export class C { }
    ·                ──────
  7 │         export export interface I { }
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:6:16]
- 5 │     export export namespace N {
- 6 │         export export class C { }
-   ·                ──────
- 7 │         export export interface I { }
-   ╰────
-  help: Allowed modifiers are: declare, abstract
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
  6 │         export export class C { }
  7 │         export export interface I { }
    ·                ──────
  8 │     }  
    ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:7:16]
- 6 │         export export class C { }
- 7 │         export export interface I { }
-   ·                ──────
- 8 │     }  
-   ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:5:12]
- 4 │ 
- 5 │     export export namespace N {
-   ·            ──────
- 6 │         export export class C { }
-   ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
  11 │ declare namespace A {
  12 │     export export var x;
     ·            ──────
  13 │     export export function f()
     ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:12:12]
- 11 │ declare namespace A {
- 12 │     export export var x;
-    ·            ──────
- 13 │     export export function f()
-    ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
  12 │     export export var x;
  13 │     export export function f()
     ·            ──────
  14 │ 
     ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:13:12]
- 12 │     export export var x;
- 13 │     export export function f()
-    ·            ──────
- 14 │ 
-    ╰────
-  help: Allowed modifiers are: declare, async
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
  14 │ 
  15 │     export export namespace N {
     ·            ──────
  16 │         export export class C { }
     ╰────
+  help: Remove the duplicate modifier.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
  15 │     export export namespace N {
  16 │         export export class C { }
     ·                ──────
  17 │         export export interface I { }
     ╰────
+  help: Remove the duplicate modifier.
 
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:16:16]
- 15 │     export export namespace N {
- 16 │         export export class C { }
-    ·                ──────
- 17 │         export export interface I { }
-    ╰────
-  help: Allowed modifiers are: declare, abstract
-
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
     ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
  16 │         export export class C { }
  17 │         export export interface I { }
     ·                ──────
  18 │     }
     ╰────
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:17:16]
- 16 │         export export class C { }
- 17 │         export export interface I { }
-    ·                ──────
- 18 │     }
-    ╰────
-  help: Only 'declare' modifier is allowed here.
-
-  × 'export' modifier cannot be used here.
-    ╭─[typescript/tests/cases/compiler/exportAlreadySeen.ts:15:12]
- 14 │ 
- 15 │     export export namespace N {
-    ·            ──────
- 16 │         export export class C { }
-    ╰────
-  help: Only 'declare' modifier is allowed here.
+  help: Remove the duplicate modifier.
 
   × Unexpected token
    ╭─[typescript/tests/cases/compiler/exportAssignmentWithDeclareAndExportModifiers.ts:2:16]
@@ -6247,11 +5954,19 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·         ──────
    ╰────
 
-  × Unexpected token
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/compiler/exportAssignmentWithExportModifier.ts:2:8]
  1 │ var x;
  2 │ export export = x;
    ·        ──────
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/exportAssignmentWithExportModifier.ts:2:15]
+ 1 │ var x;
+ 2 │ export export = x;
+   ·               ─
    ╰────
 
   × TS(2309): An export assignment cannot be used in a module with other exported elements
@@ -7233,7 +6948,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ───
    ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[typescript/tests/cases/compiler/jsFileCompilationBindMultipleDefaultExports.ts:1:8]
  1 │ export default class a {
    ·        ───────
@@ -8606,6 +8321,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  19 │ var t4 =
     ╰────
 
+  × A rest parameter cannot be optional
+    ╭─[typescript/tests/cases/compiler/noCrashOnMixin2.ts:11:40]
+ 10 │ 
+ 11 │ type Constructor<T = {}> = new (...args?: any[]) => T;
+    ·                                        ─
+ 12 │ 
+    ╰────
+  help: Remove this `?`. The default value is an empty array
+
   × Missing initializer in destructuring declaration
    ╭─[typescript/tests/cases/compiler/noImplicitAnyDestructuringVarDeclaration.ts:1:5]
  1 │ var [a], {b}, c, d; // error
@@ -8717,24 +8441,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Try inserting a semicolon here
 
-  × Missing initializer in const declaration
-    ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:86:7]
- 85 │ const isNumber: (x: 0 | 1) => number = (x: 0 | 1) => x;
- 86 │ const zeroOrBigOne: 0 | 1n;
-    ·       ────────────
- 87 │ if (typeof zeroOrBigOne === "bigint") isBigInt(zeroOrBigOne);
-    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
-  × Missing initializer in const declaration
-    ╭─[typescript/tests/cases/compiler/numberVsBigIntOperations.ts:93:7]
- 92 │ if (zeroOrBigOne) isOne(zeroOrBigOne);
- 93 │ const bigZeroOrOne: 0n | 1;
-    ·       ────────────
- 94 │ if (bigZeroOrOne) isOne(bigZeroOrOne);
-    ╰────
-  help: Add an initializer (e.g. ` = undefined`) here
-
   × Identifier `0` has already been declared
    ╭─[typescript/tests/cases/compiler/numericClassMembers1.ts:2:3]
  1 │ class C234 {
@@ -8747,12 +8453,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │ }
    ╰────
 
-  × Identifier `0` has already been declared
+  × Identifier `0.0` has already been declared
    ╭─[typescript/tests/cases/compiler/numericClassMembers1.ts:7:3]
  6 │ class C235 { 
  7 │   0.0 = 1;
    ·   ─┬─
-   ·    ╰── `0` has already been declared here
+   ·    ╰── `0.0` has already been declared here
  8 │  '0' = 2;
    ·  ─┬─
    ·   ╰── It can not be redeclared here
@@ -12178,11 +11884,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/compiler/typeAliasDeclareKeywordNewlines.ts:4:8]
- 3 │ // The following is invalid but should declare a type alias named 'T1':
- 4 │ declare type /*unexpected newline*/
+   ╭─[typescript/tests/cases/compiler/typeAliasDeclareKeywordNewlines.ts:5:8]
+ 4 │ // The following is invalid but should declare a type alias named 'T1':
+ 5 │ declare type /*unexpected newline*/
    ·        ▲
- 5 │ T1 = null;
+ 6 │ T1 = null;
    ╰────
   help: Try inserting a semicolon here
 
@@ -13283,7 +12989,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                  ┬            ┬
    ·                  │            ╰── `,` or `}` expected
    ·                  ╰── Opened here
- 7 │ var x: { foo: string; }
+ 7 │ declare var x: { foo: string; }
    ╰────
 
   × Expected `,` or `}` but found `;`
@@ -13360,7 +13066,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                ╰── It can not be redeclared here
    ╰────
 
-  × Private field 'y' must be declared in an enclosing class
+  × Private field '#y' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock16.ts:11:28]
  10 │     getX = (obj: C) => obj.#x;
  11 │     getY = (obj: D) => obj.#y;
@@ -13368,7 +13074,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │   }
     ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/classStaticBlock/classStaticBlock16.ts:21:28]
  20 │     // getY has privileged access to y
  21 │     getX = (obj: C) => obj.#x;
@@ -13810,7 +13516,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  18 │ }
     ╰────
 
-  × Private field 'prop' must be declared in an enclosing class
+  × Private field '#prop' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAccessorsAccess.ts:22:18]
  21 │     m() {
  22 │         new A2().#prop;
@@ -13818,7 +13524,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  23 │     }
     ╰────
 
-  × Private field 'prop' must be declared in an enclosing class
+  × Private field '#prop' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAccessorssDerivedClasses.ts:9:23]
   8 │     static method(x: Derived) {
   9 │         console.log(x.#prop);
@@ -13826,7 +13532,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  10 │     }
     ╰────
 
-  × Private field 'bar' must be declared in an enclosing class
+  × Private field '#bar' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndAny.ts:9:15]
   8 │         thing.#baz;
   9 │         thing.#bar; // Error
@@ -13834,7 +13540,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  10 │         thing.#foo();
     ╰────
 
-  × Private field 'bar' must be declared in an enclosing class
+  × Private field '#bar' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndAny.ts:16:15]
  15 │         thing.#baz;
  16 │         thing.#bar;
@@ -13842,7 +13548,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  17 │         thing.#foo();
     ╰────
 
-  × Private field 'bar' must be declared in an enclosing class
+  × Private field '#bar' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndAny.ts:23:15]
  22 │         thing.#baz;
  23 │         thing.#bar;
@@ -13850,7 +13556,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  24 │         thing.#foo();
     ╰────
 
-  × Private field 'f' must be declared in an enclosing class
+  × Private field '#f' must be declared in an enclosing class
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameAndIndexSignature.ts:6:14]
  5 │     constructor(message: string) {
  6 │         this.#f = 3           // Error (index signatures do not implicitly declare private names)
@@ -13889,7 +13595,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ 
    ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameBadAssignment.ts:12:14]
  11 │         exports.#bar = 6;    // Error
  12 │         this.#foo = 3;       // Error (undeclared)
@@ -13913,336 +13619,720 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:5:9]
  4 │     class A_Field_Field {
  5 │         #foo = "foo";
    ·         ──┬─
-   ·           ╰── `foo` has already been declared here
+   ·           ╰── `#foo` has already been declared here
  6 │         #foo = "foo";
    ·         ──┬─
    ·           ╰── It can not be redeclared here
  7 │     }
    ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:11:9]
  10 │     class A_Field_Method {
  11 │         #foo = "foo";
     ·         ──┬─
-    ·           ╰── `foo` has already been declared here
+    ·           ╰── `#foo` has already been declared here
  12 │         #foo() { }
     ·         ──┬─
     ·           ╰── It can not be redeclared here
  13 │     }
     ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:17:9]
  16 │     class A_Field_Getter {
  17 │         #foo = "foo";
     ·         ──┬─
-    ·           ╰── `foo` has already been declared here
+    ·           ╰── `#foo` has already been declared here
  18 │         get #foo() { return ""}
     ·             ──┬─
     ·               ╰── It can not be redeclared here
  19 │     }
     ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:23:9]
  22 │     class A_Field_Setter {
  23 │         #foo = "foo";
     ·         ──┬─
-    ·           ╰── `foo` has already been declared here
+    ·           ╰── `#foo` has already been declared here
  24 │         set #foo(value: string) { }
     ·             ──┬─
     ·               ╰── It can not be redeclared here
  25 │     }
     ╰────
 
-  × Identifier `foo` has already been declared
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:29:9]
+ 28 │     class A_Field_StaticField {
+ 29 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 30 │         static #foo = "foo";
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 31 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:35:9]
+ 34 │     class A_Field_StaticMethod {
+ 35 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 36 │         static #foo() { }
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 37 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:41:9]
+ 40 │     class A_Field_StaticGetter {
+ 41 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 42 │         static get #foo() { return ""}
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 43 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:47:9]
+ 46 │     class A_Field_StaticSetter {
+ 47 │         #foo = "foo";
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 48 │         static set #foo(value: string) { }
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 49 │     }
+    ╰────
+
+  × Identifier `#foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:55:9]
  54 │     class A_Method_Field {
  55 │         #foo() { }
     ·         ──┬─
-    ·           ╰── `foo` has already been declared here
+    ·           ╰── `#foo` has already been declared here
  56 │         #foo = "foo";
     ·         ──┬─
     ·           ╰── It can not be redeclared here
  57 │     }
     ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:61:9]
  60 │     class A_Method_Method {
  61 │         #foo() { }
     ·         ──┬─
-    ·           ╰── `foo` has already been declared here
+    ·           ╰── `#foo` has already been declared here
  62 │         #foo() { }
     ·         ──┬─
     ·           ╰── It can not be redeclared here
  63 │     }
     ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:67:9]
  66 │     class A_Method_Getter {
  67 │         #foo() { }
     ·         ──┬─
-    ·           ╰── `foo` has already been declared here
+    ·           ╰── `#foo` has already been declared here
  68 │         get #foo() { return ""}
     ·             ──┬─
     ·               ╰── It can not be redeclared here
  69 │     }
     ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:73:9]
  72 │     class A_Method_Setter {
  73 │         #foo() { }
     ·         ──┬─
-    ·           ╰── `foo` has already been declared here
+    ·           ╰── `#foo` has already been declared here
  74 │         set #foo(value: string) { }
     ·             ──┬─
     ·               ╰── It can not be redeclared here
  75 │     }
     ╰────
 
-  × Identifier `foo` has already been declared
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:79:9]
+ 78 │     class A_Method_StaticField {
+ 79 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 80 │         static #foo = "foo";
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 81 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:85:9]
+ 84 │     class A_Method_StaticMethod {
+ 85 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 86 │         static #foo() { }
+    ·                ──┬─
+    ·                  ╰── It can not be redeclared here
+ 87 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:91:9]
+ 90 │     class A_Method_StaticGetter {
+ 91 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 92 │         static get #foo() { return ""}
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 93 │     }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:97:9]
+ 96 │     class A_Method_StaticSetter {
+ 97 │         #foo() { }
+    ·         ──┬─
+    ·           ╰── `#foo` has already been declared here
+ 98 │         static set #foo(value: string) { }
+    ·                    ──┬─
+    ·                      ╰── It can not be redeclared here
+ 99 │     }
+    ╰────
+
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:106:13]
  105 │     class A_Getter_Field {
  106 │         get #foo() { return ""}
      ·             ──┬─
-     ·               ╰── `foo` has already been declared here
+     ·               ╰── `#foo` has already been declared here
  107 │         #foo = "foo";
      ·         ──┬─
      ·           ╰── It can not be redeclared here
  108 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:112:13]
  111 │     class A_Getter_Method {
  112 │         get #foo() { return ""}
      ·             ──┬─
-     ·               ╰── `foo` has already been declared here
+     ·               ╰── `#foo` has already been declared here
  113 │         #foo() { }
      ·         ──┬─
      ·           ╰── It can not be redeclared here
  114 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:118:13]
  117 │     class A_Getter_Getter {
  118 │         get #foo() { return ""}
      ·             ──┬─
-     ·               ╰── `foo` has already been declared here
+     ·               ╰── `#foo` has already been declared here
  119 │         get #foo() { return ""}
      ·             ──┬─
      ·               ╰── It can not be redeclared here
  120 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:130:13]
+ 129 │     class A_Getter_StaticField {
+ 130 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 131 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 132 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:136:13]
+ 135 │     class A_Getter_StaticMethod {
+ 136 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 137 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 138 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:142:13]
+ 141 │     class A_Getter_StaticGetter {
+ 142 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 143 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 144 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:148:13]
+ 147 │     class A_Getter_StaticSetter {
+ 148 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 149 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 150 │     }
+     ╰────
+
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:156:13]
  155 │     class A_Setter_Field {
  156 │         set #foo(value: string) { }
      ·             ──┬─
-     ·               ╰── `foo` has already been declared here
+     ·               ╰── `#foo` has already been declared here
  157 │         #foo = "foo";
      ·         ──┬─
      ·           ╰── It can not be redeclared here
  158 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:162:13]
  161 │     class A_Setter_Method {
  162 │         set #foo(value: string) { }
      ·             ──┬─
-     ·               ╰── `foo` has already been declared here
+     ·               ╰── `#foo` has already been declared here
  163 │         #foo() { }
      ·         ──┬─
      ·           ╰── It can not be redeclared here
  164 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:174:13]
  173 │     class A_Setter_Setter {
  174 │         set #foo(value: string) { }
      ·             ──┬─
-     ·               ╰── `foo` has already been declared here
+     ·               ╰── `#foo` has already been declared here
  175 │         set #foo(value: string) { }
      ·             ──┬─
      ·               ╰── It can not be redeclared here
  176 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:180:13]
+ 179 │     class A_Setter_StaticField {
+ 180 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 181 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 182 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:186:13]
+ 185 │     class A_Setter_StaticMethod {
+ 186 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 187 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── It can not be redeclared here
+ 188 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:192:13]
+ 191 │     class A_Setter_StaticGetter {
+ 192 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 193 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 194 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:198:13]
+ 197 │     class A_Setter_StaticSetter {
+ 198 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── `#foo` has already been declared here
+ 199 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── It can not be redeclared here
+ 200 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:206:16]
+ 205 │     class A_StaticField_Field {
+ 206 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 207 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 208 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:212:16]
+ 211 │     class A_StaticField_Method {
+ 212 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 213 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 214 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:218:16]
+ 217 │     class A_StaticField_Getter {
+ 218 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 219 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 220 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:224:16]
+ 223 │     class A_StaticField_Setter {
+ 224 │         static #foo = "foo";
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 225 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 226 │     }
+     ╰────
+
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:230:16]
  229 │     class A_StaticField_StaticField {
  230 │         static #foo = "foo";
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  231 │         static #foo = "foo";
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  232 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:236:16]
  235 │     class A_StaticField_StaticMethod {
  236 │         static #foo = "foo";
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  237 │         static #foo() { }
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  238 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:242:16]
  241 │     class A_StaticField_StaticGetter {
  242 │         static #foo = "foo";
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  243 │         static get #foo() { return ""}
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
  244 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:248:16]
  247 │     class A_StaticField_StaticSetter {
  248 │         static #foo = "foo";
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  249 │         static set #foo(value: string) { }
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
  250 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:256:16]
+ 255 │     class A_StaticMethod_Field {
+ 256 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 257 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 258 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:262:16]
+ 261 │     class A_StaticMethod_Method {
+ 262 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 263 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 264 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:268:16]
+ 267 │     class A_StaticMethod_Getter {
+ 268 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 269 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 270 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:274:16]
+ 273 │     class A_StaticMethod_Setter {
+ 274 │         static #foo() { }
+     ·                ──┬─
+     ·                  ╰── `#foo` has already been declared here
+ 275 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 276 │     }
+     ╰────
+
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:280:16]
  279 │     class A_StaticMethod_StaticField {
  280 │         static #foo() { }
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  281 │         static #foo = "foo";
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  282 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:286:16]
  285 │     class A_StaticMethod_StaticMethod {
  286 │         static #foo() { }
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  287 │         static #foo() { }
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  288 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:292:16]
  291 │     class A_StaticMethod_StaticGetter {
  292 │         static #foo() { }
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  293 │         static get #foo() { return ""}
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
  294 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:298:16]
  297 │     class A_StaticMethod_StaticSetter {
  298 │         static #foo() { }
      ·                ──┬─
-     ·                  ╰── `foo` has already been declared here
+     ·                  ╰── `#foo` has already been declared here
  299 │         static set #foo(value: string) { }
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
  300 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:307:20]
+ 306 │     class A_StaticGetter_Field {
+ 307 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 308 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 309 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:313:20]
+ 312 │     class A_StaticGetter_Method {
+ 313 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 314 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 315 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:319:20]
+ 318 │     class A_StaticGetter_Getter {
+ 319 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 320 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 321 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:325:20]
+ 324 │     class A_StaticGetter_Setter {
+ 325 │         static get #foo() { return ""}
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 326 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 327 │     }
+     ╰────
+
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:331:20]
  330 │     class A_StaticGetter_StaticField {
  331 │         static get #foo() { return ""}
      ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
+     ·                      ╰── `#foo` has already been declared here
  332 │         static #foo() { }
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  333 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:337:20]
  336 │     class A_StaticGetter_StaticMethod {
  337 │         static get #foo() { return ""}
      ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
+     ·                      ╰── `#foo` has already been declared here
  338 │         static #foo() { }
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  339 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:343:20]
  342 │     class A_StaticGetter_StaticGetter {
  343 │         static get #foo() { return ""}
      ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
+     ·                      ╰── `#foo` has already been declared here
  344 │         static get #foo() { return ""}
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
  345 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:356:20]
+ 355 │     class A_StaticSetter_Field {
+ 356 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 357 │         #foo = "foo";
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 358 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:362:20]
+ 361 │     class A_StaticSetter_Method {
+ 362 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 363 │         #foo() { }
+     ·         ──┬─
+     ·           ╰── It can not be redeclared here
+ 364 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:369:20]
+ 368 │     class A_StaticSetter_Getter {
+ 369 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 370 │         get #foo() { return ""}
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 371 │     }
+     ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:375:20]
+ 374 │     class A_StaticSetter_Setter {
+ 375 │         static set #foo(value: string) { }
+     ·                    ──┬─
+     ·                      ╰── `#foo` has already been declared here
+ 376 │         set #foo(value: string) { }
+     ·             ──┬─
+     ·               ╰── It can not be redeclared here
+ 377 │     }
+     ╰────
+
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:381:20]
  380 │     class A_StaticSetter_StaticField {
  381 │         static set #foo(value: string) { }
      ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
+     ·                      ╰── `#foo` has already been declared here
  382 │         static #foo = "foo";
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  383 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:387:20]
  386 │     class A_StaticSetter_StaticMethod {
  387 │         static set #foo(value: string) { }
      ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
+     ·                      ╰── `#foo` has already been declared here
  388 │         static #foo() { }
      ·                ──┬─
      ·                  ╰── It can not be redeclared here
  389 │     }
      ╰────
 
-  × Identifier `foo` has already been declared
+  × Identifier `#foo` has already been declared
      ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameDuplicateField.ts:399:20]
  398 │     class A_StaticSetter_StaticSetter {
  399 │         static set #foo(value: string) { }
      ·                    ──┬─
-     ·                      ╰── `foo` has already been declared here
+     ·                      ╰── `#foo` has already been declared here
  400 │         static set #foo(value: string) { }
      ·                    ──┬─
      ·                      ╰── It can not be redeclared here
@@ -14257,7 +14347,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × Private field 'prop' must be declared in an enclosing class
+  × Private field '#prop' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameFieldDerivedClasses.ts:9:23]
   8 │     static method(x: Derived) {
   9 │         console.log(x.#prop);
@@ -14274,7 +14364,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ class C {
    ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameImplicitDeclaration.ts:4:14]
  3 │         /** @type {string} */
  4 │         this.#x;
@@ -14291,12 +14381,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  26 │ 
     ╰────
 
-  × Cannot assign to this expression
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInInExpressionTransform.ts:29:9]
- 28 │     invalidLHS(v: any) {
- 29 │         'prop' in v = 10;
-    ·         ───────────
- 30 │         #field in v = 10;
+  × Unexpected private identifier
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInInExpressionTransform.ts:20:14]
+ 19 │ 
+ 20 │         v << #field in v << v; // Good precedence (SyntaxError): (v << #field) in (v << v)
+    ·              ──────
+ 21 │ 
     ╰────
 
   × Unexpected token
@@ -14346,7 +14436,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │ 
    ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameJsBadAssignment.ts:11:14]
  10 │     constructor () {
  11 │         this.#foo = 3;       // Error (undeclared)
@@ -14378,7 +14468,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  16 │ }
     ╰────
 
-  × Private field 'method' must be declared in an enclosing class
+  × Private field '#method' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameMethodAccess.ts:20:18]
  19 │     m() {
  20 │         new A2().#method();
@@ -14401,7 +14491,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·                 ──────
     ╰────
 
-  × Private field 'prop' must be declared in an enclosing class
+  × Private field '#prop' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameMethodsDerivedClasses.ts:9:23]
   8 │     static method(x: Derived) {
   9 │         console.log(x.#prop());
@@ -14409,7 +14499,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  10 │     }
     ╰────
 
-  × Private field 'unknown' must be declared in an enclosing class
+  × Private field '#unknown' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameNestedMethodAccess.ts:19:19]
  18 │                 x.#bar;
  19 │                 x.#unknown; // Error
@@ -14446,7 +14536,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  20 │ }
     ╰────
 
-  × Private field 'prop' must be declared in an enclosing class
+  × Private field '#prop' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticAccessorsAccess.ts:24:12]
  23 │     m() {
  24 │         A2.#prop;
@@ -14454,7 +14544,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  25 │     }
     ╰────
 
-  × Private field 'prop' must be declared in an enclosing class
+  × Private field '#prop' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticAccessorssDerivedClasses.ts:9:23]
   8 │     static method(x: typeof Derived) {
   9 │         console.log(x.#prop);
@@ -14462,7 +14552,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  10 │     }
     ╰────
 
-  × Private field 'derivedProp' must be declared in an enclosing class
+  × Private field '#derivedProp' must be declared in an enclosing class
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDerivedClasses.ts:4:17]
  3 │     static method(x: Derived) {
  4 │         Derived.#derivedProp // error
@@ -14470,7 +14560,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  5 │         Base.#prop  = 10;
    ╰────
 
-  × Private field 'prop' must be declared in an enclosing class
+  × Private field '#prop' must be declared in an enclosing class
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameStaticFieldDerivedClasses.ts:12:14]
  11 │         Derived.#derivedProp
  12 │         Base.#prop  = 10; // error
@@ -14493,7 +14583,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·              ──────
     ╰────
 
-  × Private field 'foo' must be declared in an enclosing class
+  × Private field '#foo' must be declared in an enclosing class
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameUncheckedJsOptionalChain.ts:4:15]
  3 │     constructor () {
  4 │         this?.#foo;
@@ -14724,6 +14814,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  27 │     async get #asyncProp() { return 1; }         // Error
     ╰────
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
   × Private identifier '#prop' is not allowed outside class bodies
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesInterfaceExtendingClass.ts:10:7]
   9 │ function func(x: I) {
@@ -14752,6 +14850,18 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesNotAllowedInVariableDeclarations.ts:1:7]
  1 │ const #foo = 3;
    ·       ────
+   ╰────
+
+  × TS(2804): Duplicate identifier `#foo`. Static and instance elements cannot share the same private name.
+   ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesUnique-3.ts:2:5]
+ 1 │ class A {
+ 2 │     #foo = 1;
+   ·     ──┬─
+   ·       ╰── `#foo` has already been declared here
+ 3 │     static #foo = true; // error (duplicate)
+   ·            ──┬─
+   ·              ╰── It can not be redeclared here
+ 4 │                         // because static and instance private names
    ╰────
 
   × Expected `;` but found `Identifier`
@@ -15907,24 +16017,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  6 │     set [[0, 1]](v) { }
    ╰────
 
-  × Identifier `` has already been declared
+  × Identifier `""` has already been declared
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames40_ES5.ts:8:6]
   7 │     // Computed properties
   8 │     [""]() { return new Foo }
     ·      ─┬
-    ·       ╰── `` has already been declared here
+    ·       ╰── `""` has already been declared here
   9 │     [""]() { return new Foo2 }
     ·      ─┬
     ·       ╰── It can not be redeclared here
  10 │ }
     ╰────
 
-  × Identifier `` has already been declared
+  × Identifier `""` has already been declared
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames40_ES6.ts:8:6]
   7 │     // Computed properties
   8 │     [""]() { return new Foo }
     ·      ─┬
-    ·       ╰── `` has already been declared here
+    ·       ╰── `""` has already been declared here
   9 │     [""]() { return new Foo2 }
     ·      ─┬
     ·       ╰── It can not be redeclared here
@@ -16382,7 +16492,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer1.ts:2:9]
- 1 │ var a: number[];
+ 1 │ declare var a: number[];
  2 │ var [...x = a] = a;  // Error, rest element cannot have initializer
    ·         ─────
    ╰────
@@ -16619,7 +16729,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ──────────
  2 │ const b = () => new.target;
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:2:17]
@@ -16628,7 +16738,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ──────────
  3 │ 
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:5:6]
@@ -16637,16 +16747,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·      ──────────
  6 │     c() { return new.target; }
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:9:15]
-  8 │     set e(_) { _ = new.target; }
-  9 │     f = () => new.target;
-    ·               ──────────
- 10 │ 
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:11:13]
@@ -16655,16 +16756,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·             ──────────
  12 │     static g() { return new.target; }
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:15:22]
- 14 │     static set i(_) { _ = new.target; }
- 15 │     static j = () => new.target;
-    ·                      ──────────
- 16 │ }
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:19:6]
@@ -16673,7 +16765,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·      ──────────
  20 │     k() { return new.target; },
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:23:8]
@@ -16682,7 +16774,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·        ──────────
  24 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:1:11]
@@ -16690,7 +16782,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·           ──────────
  2 │ const b = () => new.target;
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:2:17]
@@ -16699,7 +16791,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                 ──────────
  3 │ 
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:5:6]
@@ -16708,16 +16800,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·      ──────────
  6 │     c() { return new.target; }
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:9:15]
-  8 │     set e(_) { _ = new.target; }
-  9 │     f = () => new.target;
-    ·               ──────────
- 10 │ 
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:11:13]
@@ -16726,16 +16809,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·             ──────────
  12 │     static g() { return new.target; }
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:15:22]
- 14 │     static set i(_) { _ = new.target; }
- 15 │     static j = () => new.target;
-    ·                      ──────────
- 16 │ }
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:19:6]
@@ -16744,7 +16818,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·      ──────────
  20 │     k() { return new.target; },
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:23:8]
@@ -16753,7 +16827,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ·        ──────────
  24 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Expected `:` but found `,`
    ╭─[typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorFromNotUsingIdentifier.ts:3:20]
@@ -19368,7 +19442,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × Expected `>` but found `is`
     ╭─[typescript/tests/cases/conformance/expressions/typeAssertions/typeAssertions.ts:44:14]
- 43 │ var str: string;
+ 43 │ declare var str: string;
  44 │ if(<numOrStr is string>(numOrStr === undefined)) { // Error
     ·              ─┬
     ·               ╰── `>` expected
@@ -19622,109 +19696,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ╰── `as` expected
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:1]
+  × Parenthesized expressions may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:9]
  3 │ // reparse call as invalid await should error
  4 │ await (1,);
-   · ─────
+   ·         ─
  5 │ await <number, string>(1);
    ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:5:1]
- 4 │ await (1,);
- 5 │ await <number, string>(1);
-   · ─────
- 6 │ 
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:8:1]
- 7 │ // reparse tagged template as invalid await should error
- 8 │ await <number, string> ``;
-   · ─────
- 9 │ 
-   ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:11:17]
- 10 │ // reparse class extends clause should fail
- 11 │ class C extends await<string> {
-    ·                 ─────
- 12 │ }
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:15:3]
- 14 │ // await in class decorators should fail
- 15 │ @(await)
-    ·   ─────
- 16 │ class C1 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:18:2]
- 17 │ 
- 18 │ @await(x)
-    ·  ─────
- 19 │ class C2 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:21:2]
- 20 │ 
- 21 │ @await
-    ·  ─────
- 22 │ class C3 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:26:6]
- 25 │ class C4 {
- 26 │     @await
-    ·      ─────
- 27 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:30:6]
- 29 │ class C5 {
- 30 │     @await(1)
-    ·      ─────
- 31 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:34:7]
- 33 │ class C6 {
- 34 │     @(await)
-    ·       ─────
- 35 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:40:14]
- 39 │ class C7 {
- 40 │     method1(@await [x]) {}
-    ·              ─────
- 41 │     method2(@await(1) [x]) {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:41:14]
- 40 │     method1(@await [x]) {}
- 41 │     method2(@await(1) [x]) {}
-    ·              ─────
- 42 │     method3(@(await) [x]) {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:42:15]
- 41 │     method2(@await(1) [x]) {}
- 42 │     method3(@(await) [x]) {}
-    ·               ─────
- 43 │ }
-    ╰────
+  help: Remove the trailing comma here
 
   × Identifier expected. 'await' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.10.ts:2:19]
@@ -19754,11 +19733,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
+ 4 │ // await disallowed in import=namespace when in a module
+ 5 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
  5 │ import await = foo.await;
    ·        ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
+ 3 │ // reparse variable name as await should fail
+ 4 │ var await = 1;
+   ·     ─────
    ╰────
 
   × The keyword 'await' is reserved
@@ -19768,10 +19761,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·     ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
  3 │ // reparse binding pattern as await should fail
  4 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var [await] = [1];
    ·      ─────
    ╰────
 
@@ -19840,23 +19847,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·          ─────
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:1:1]
- 1 │ await x;
-   · ─────
- 2 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:5:5]
- 4 │ 
- 5 │ for await (const item of arr) {
-   ·     ─────
- 6 │   item;
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
   × Expected `=` but found `;`
     ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_missingBraces.ts:11:16]
  10 │ namespace ns {
@@ -19889,12 +19879,10 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ╰── Opened here
    ╰────
 
-  × Expected `from` but found `Identifier`
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
    ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/grammarErrors.ts:1:13]
- 1 │ import type A from './a';
-   ·             ┬
-   ·             ╰── `from` expected
- 2 │ export type { A };
+ 1 │ import type A, { B, C } from './a';
+   ·             ─
    ╰────
 
   × Expected `,` or `}` but found `as`
@@ -20163,7 +20151,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
   × The keyword 'interface' is reserved
    ╭─[typescript/tests/cases/conformance/interfaces/interfaceDeclarations/asiPreventsParsingAsInterface05.ts:3:5]
  2 │ 
- 3 │ var interface: number;
+ 3 │ var interface: number = 123;
    ·     ─────────
  4 │ 
    ╰────
@@ -21410,6 +21398,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
+  × TS(1093): Type annotation cannot appear on a constructor declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts:2:16]
+ 1 │ class C {
+ 2 │   constructor(): number { }
+   ·                ────────
+ 3 │ }
+   ╰────
+
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
@@ -21432,6 +21428,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  1 │ class C {
  2 │   export constructor() { }
    ·   ──────
+ 3 │ }
+   ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on a constructor declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts:2:3]
+ 1 │ class C {
+ 2 │   declare constructor() { }
+   ·   ───────
  3 │ }
    ╰────
 
@@ -22450,20 +22454,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Only 'declare' modifier is allowed here.
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
  1 │ export export interface I {
    ·        ──────
  2 │ }
    ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
- 1 │ export export interface I {
-   ·        ──────
- 2 │ }
-   ╰────
-  help: Only 'declare' modifier is allowed here.
+  help: Remove the duplicate modifier.
 
   × TS(2414): Interface name cannot be 'string'
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts:1:11]
@@ -22974,20 +22971,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  3 │ }
    ╰────
 
-  × TS(1029): 'export' modifier must precede 'declare' modifier.
+  × TS(1030): 'export' modifier already seen.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
  1 │ export export class Foo {
    ·        ──────
  2 │   public Bar() {
    ╰────
-
-  × 'export' modifier cannot be used here.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
- 1 │ export export class Foo {
-   ·        ──────
- 2 │   public Bar() {
-   ╰────
-  help: Allowed modifiers are: declare, abstract
+  help: Remove the duplicate modifier.
 
   × The keyword 'static' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegressionTests/parser642331.ts:2:18]
@@ -24058,6 +24048,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
   × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:3:7]
+ 2 │ export default 13
+ 3 │ const await = 1
+   ·       ─────
+ 4 │ const yield = 2
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:6:11]
  5 │ async function f() {
  6 │     const await = 3
@@ -24081,7 +24079,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  13 │     deleted() {
     ╰────
 
-  × Duplicated default export
+  × TS(2528): A module cannot have multiple default exports.
    ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:1:8]
  1 │ export default 12
    ·        ───────
@@ -24211,7 +24209,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
-  × Private field 'b' must be declared in an enclosing class
+  × Private field '#b' must be declared in an enclosing class
    ╭─[typescript/tests/cases/conformance/salsa/plainJSGrammarErrors4.ts:5:14]
  4 │         this.#a; // ok
  5 │         this.#b; // error
@@ -24409,6 +24407,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove the `export` here and add `export { x }` as a separate statement to export the declaration
 
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.13.ts:1:1]
+ 1 │ await using x = null;
+   · ─────────────────────
+ 2 │ 
+   ╰────
+  help: Wrap this code in a block or use a module
+
   × Using declarations must have an initializer.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.16.ts:2:17]
  1 │ declare namespace N {
@@ -24490,22 +24496,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
     ╰────
   help: Wrap this declaration in a block statement
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:10]
  1 │ {
  2 │     await using [a] = null;
-   ·     ─────
+   ·          ▲
  3 │ }
    ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × Cannot assign to this expression
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
- 1 │ {
- 2 │     await using [a] = null;
-   ·     ───────────────
- 3 │ }
-   ╰────
+  help: Try inserting a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.5.ts:3:17]
@@ -24515,20 +24513,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  4 │                 c = null;
    ╰────
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:5]
- 1 │ {
- 2 │     await using {a} = null;
-   ·     ─────
- 3 │ }
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:16]
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:10]
  1 │ {
  2 │     await using {a} = null;
-   ·                ▲
+   ·          ▲
  3 │ }
    ╰────
   help: Try inserting a semicolon here
@@ -24550,15 +24539,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
- 4 │ 
- 5 │ for await (await using of x);
-   ·     ─────
- 6 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
   × Expected `;` but found `Identifier`
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:27]
  4 │ 
@@ -24567,6 +24547,15 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·                           ╰── `;` expected
  6 │ 
    ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForAwaitOf.3.ts:5:5]
+ 4 │ 
+ 5 │ for await (await using of x);
+   ·     ─────
+ 6 │ 
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × The left-hand side of a for...in statement cannot be an await using declaration.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForIn.ts:2:10]
@@ -24610,6 +24599,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·        ───────────────
    ╰────
   help: Wrap this declaration in a block statement
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.10.ts:2:8]
+ 1 │ declare var x: any;
+ 2 │ if (x) using a = null;
+   ·        ───────────────
+   ╰────
+  help: Wrap this code in a block or use a module
 
   × Using declarations cannot be exported directly.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.13.ts:1:8]
@@ -24754,13 +24751,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ·            ┬
    ·            ╰── `;` expected
  2 │ }
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts:1:15]
- 1 │ for (using of = null;;) break;
-   ·               ─
- 2 │ for (using of: null = null;;) break;
    ╰────
 
   × Illegal break statement
@@ -25428,24 +25418,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  7 │     1.;
    ╰────
 
-  × Identifier `1` has already been declared
+  × Identifier `1.0` has already been declared
    ╭─[typescript/tests/cases/conformance/types/members/objectTypeWithDuplicateNumericProperty.ts:6:5]
  5 │     1;
  6 │     1.0;
    ·     ─┬─
-   ·      ╰── `1` has already been declared here
+   ·      ╰── `1.0` has already been declared here
  7 │     1.;
    ·     ─┬
    ·      ╰── It can not be redeclared here
  8 │     1.00;
    ╰────
 
-  × Identifier `1` has already been declared
+  × Identifier `1.` has already been declared
    ╭─[typescript/tests/cases/conformance/types/members/objectTypeWithDuplicateNumericProperty.ts:7:5]
  6 │     1.0;
  7 │     1.;
    ·     ─┬
-   ·      ╰── `1` has already been declared here
+   ·      ╰── `1.` has already been declared here
  8 │     1.00;
    ·     ──┬─
    ·       ╰── It can not be redeclared here
@@ -25529,7 +25519,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
 
   × TS(1015): A parameter cannot have a question mark and an initializer.
     ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithOptionalParameterAndInitializer.ts:34:6]
- 33 │ var a: {
+ 33 │ declare var a: {
  34 │     (x?: number = 1);
     ·      ─
  35 │     foo(x? = 1);
@@ -26291,12 +26281,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  21 │ }
     ╰────
 
-  × Identifier `1` has already been declared
+  × Identifier `"1"` has already been declared
    ╭─[typescript/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/numericStringNamedPropertyEquivalence.ts:4:5]
  3 │ class C {
  4 │     "1": number;
    ·     ─┬─
-   ·      ╰── `1` has already been declared here
+   ·      ╰── `"1"` has already been declared here
  5 │     "1.0": number; // not a duplicate
  6 │     1.0: number;
    ·     ─┬─
@@ -26474,6 +26464,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  17 │ 
     ╰────
 
+  × TS(1257): A required element cannot follow an optional element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts:11:20]
+ 10 │ 
+ 11 │ type T5 = [number, string?, boolean];  // Error
+    ·                    ───┬───  ───┬───
+    ·                       │        ╰── Required element here
+    ·                       ╰── Optional element seen here
+ 12 │ 
+    ╰────
+
   × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
     ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:9:12]
   8 │ 
@@ -26504,6 +26504,86 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
  12 │ type T33 = readonly Array<string>;  // Error
     ·            ────────
  13 │ 
+    ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts:3:13]
+ 2 │ type T01 = [string, string?];
+ 3 │ type T02 = [string?, string];  // Error
+   ·             ───┬───  ───┬──
+   ·                │        ╰── Required element here
+   ·                ╰── Optional element seen here
+ 4 │ type T03 = [...string[]];
+   ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
+ 6 │ 
+ 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
+   ·                     ─────┬─────  ──────┬─────
+   ·                          │             ╰── Second rest element here
+   ·                          ╰── First seen here
+ 8 │ type V11 = [number, ...string[], boolean?];  // Error
+   ╰────
+
+  × TS(1266): An optional element cannot follow a rest element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:8:21]
+ 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
+ 8 │ type V11 = [number, ...string[], boolean?];  // Error
+   ·                     ─────┬─────  ────┬───
+   ·                          │           ╰── Optional element here
+   ·                          ╰── Rest element seen here
+ 9 │ type V12 = [number, string?, boolean];  // Error
+   ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]
+  8 │ type V11 = [number, ...string[], boolean?];  // Error
+  9 │ type V12 = [number, string?, boolean];  // Error
+    ·                     ───┬───  ───┬───
+    ·                        │        ╰── Required element here
+    ·                        ╰── Optional element seen here
+ 10 │ 
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
+ 10 │ 
+ 11 │ type V15 = [...string[], ...number[]];  // Error
+    ·             ─────┬─────  ─────┬─────
+    ·                  │            ╰── Second rest element here
+    ·                  ╰── First seen here
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:12:13]
+ 11 │ type V15 = [...string[], ...number[]];  // Error
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+    ·             ─────┬─────  ────────┬───────
+    ·                  │               ╰── Second rest element here
+    ·                  ╰── First seen here
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:13:13]
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+    ·             ────────┬───────  ─────┬─────
+    ·                     │              ╰── Second rest element here
+    ·                     ╰── First seen here
+ 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:14:13]
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+ 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
+    ·             ────────┬───────  ────────┬───────
+    ·                     │                 ╰── Second rest element here
+    ·                     ╰── First seen here
+ 15 │ 
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

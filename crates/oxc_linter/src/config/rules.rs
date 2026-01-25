@@ -19,6 +19,39 @@ use crate::{
     utils::{is_eslint_rule_adapted_to_typescript, is_jest_rule_adapted_to_vitest},
 };
 
+/// Errors that can occur when overriding rules
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OverrideRulesError {
+    /// Error looking up an external rule
+    ExternalRuleLookup(ExternalRuleLookupError),
+    /// Error parsing rule configuration
+    RuleConfiguration {
+        /// The fully qualified rule name (e.g., "jest/no-hooks")
+        rule_name: String,
+        /// The error message from parsing
+        message: String,
+    },
+}
+
+impl fmt::Display for OverrideRulesError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            OverrideRulesError::ExternalRuleLookup(e) => write!(f, "{e}"),
+            OverrideRulesError::RuleConfiguration { rule_name, message } => {
+                write!(f, "Invalid configuration for rule `{rule_name}`:\n  {message}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for OverrideRulesError {}
+
+impl From<ExternalRuleLookupError> for OverrideRulesError {
+    fn from(e: ExternalRuleLookupError) -> Self {
+        OverrideRulesError::ExternalRuleLookup(e)
+    }
+}
+
 type RuleSet = FxHashMap<RuleEnum, AllowWarnDeny>;
 
 // TS type is `Record<string, RuleConf>`
@@ -71,8 +104,9 @@ impl OxlintRules {
         >,
         all_rules: &[RuleEnum],
         external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<(), ExternalRuleLookupError> {
+    ) -> Result<(), Vec<OverrideRulesError>> {
         let mut rules_to_replace = vec![];
+        let mut errors = vec![];
 
         let lookup = self.rules.iter().into_group_map_by(|r| r.rule_name.as_str());
 
@@ -104,7 +138,17 @@ impl OxlintRules {
                         } else {
                             serde_json::Value::Array(rule_config.config.to_vec())
                         };
-                        rules_to_replace.push((rule.from_configuration(config), severity));
+                        match rule.from_configuration(config) {
+                            Ok(configured_rule) => {
+                                rules_to_replace.push((configured_rule, severity));
+                            }
+                            Err(e) => {
+                                errors.push(OverrideRulesError::RuleConfiguration {
+                                    rule_name: rule_config.full_name().into_owned(),
+                                    message: e.to_string(),
+                                });
+                            }
+                        }
                     }
                 } else {
                     // If JS plugins are disabled (language server), assume plugin name refers to a JS plugin,
@@ -115,23 +159,33 @@ impl OxlintRules {
                     // (e.g. typos like `unicon/filename-case`). But we can't avoid this as the name of a JS plugin
                     // can only be known by loading it, which language server can't do at present.
                     if external_plugin_store.is_enabled() {
-                        let external_rule_id =
-                            external_plugin_store.lookup_rule_id(plugin_name, rule_name)?;
+                        match external_plugin_store.lookup_rule_id(plugin_name, rule_name) {
+                            Ok(external_rule_id) => {
+                                // Add options to store and get options ID
+                                let options_id = external_plugin_store
+                                    .add_options(external_rule_id, &rule_config.config);
 
-                        // Add options to store and get options ID
-                        let options_id = external_plugin_store
-                            .add_options(external_rule_id, &rule_config.config);
-
-                        external_rules_for_override
-                            .entry(external_rule_id)
-                            .and_modify(|(opts_id, sev)| {
-                                *opts_id = options_id;
-                                *sev = severity;
-                            })
-                            .or_insert((options_id, severity));
+                                external_rules_for_override
+                                    .entry(external_rule_id)
+                                    .and_modify(|(opts_id, sev)| {
+                                        *opts_id = options_id;
+                                        *sev = severity;
+                                    })
+                                    .or_insert((options_id, severity));
+                            }
+                            Err(e) => {
+                                errors.push(OverrideRulesError::ExternalRuleLookup(e));
+                            }
+                        }
                     }
                 }
             }
+        }
+
+        if !errors.is_empty() {
+            // Sort by the error message so output is stable
+            errors.sort_by_key(std::string::ToString::to_string);
+            return Err(errors);
         }
 
         for (rule, severity) in rules_to_replace {
@@ -627,5 +681,96 @@ mod test {
         let (_rule_id, &(options_id, severity)) = external_rules.iter().next().unwrap();
         assert_eq!(options_id, ExternalOptionsId::NONE, "no options should use reserved id 0");
         assert_eq!(severity, AllowWarnDeny::Deny);
+    }
+
+    #[test]
+    fn test_override_rules_errors_single() {
+        let rules_config = OxlintRules::deserialize(&json!({
+            "jest/no-hooks": ["error", { "foo": "bar" }],
+        }))
+        .unwrap();
+
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        let mut store = ExternalPluginStore::default();
+
+        match rules_config.override_rules(
+            &mut builtin_rules,
+            &mut external_rules,
+            &RULES,
+            &mut store,
+        ) {
+            Err(errors) => {
+                assert!(errors.len() == 1, "expected one error, got {errors:#?}");
+                assert!(matches!(
+                    &errors[0],
+                    super::OverrideRulesError::RuleConfiguration { rule_name, message }
+                    if rule_name == "jest/no-hooks" && message.contains("unknown field")
+                ));
+            }
+            Ok(()) => panic!("expected errors from invalid config"),
+        }
+    }
+
+    #[test]
+    fn test_override_rules_errors_multiple() {
+        let rules_config = OxlintRules::deserialize(&json!({
+            "jest/no-hooks": ["error", { "foo": "bar" }],
+            "eslint/no-return-assign": ["error", "foobar"]
+        }))
+        .unwrap();
+
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        let mut store = ExternalPluginStore::default();
+
+        match rules_config.override_rules(
+            &mut builtin_rules,
+            &mut external_rules,
+            &RULES,
+            &mut store,
+        ) {
+            Err(errors) => {
+                assert!(errors.len() == 2, "expected two errors, got {errors:#?}");
+                assert!(matches!(
+                    &errors[0],
+                    super::OverrideRulesError::RuleConfiguration { rule_name, message }
+                    if rule_name == "jest/no-hooks" && message.contains("unknown field")
+                ));
+                assert!(matches!(
+                    &errors[1],
+                    super::OverrideRulesError::RuleConfiguration { rule_name, message }
+                    if rule_name == "no-return-assign" && message.contains("unknown variant `foobar`")
+                ));
+            }
+            Ok(()) => panic!("expected errors from invalid config"),
+        }
+    }
+
+    #[test]
+    fn test_override_rules_errors_sorted() {
+        let rules_config = OxlintRules::deserialize(&json!({
+            "jest/no-hooks": ["error", { "foo": "bar" }],
+            "eslint/no-return-assign": ["error", "foobar"]
+        }))
+        .unwrap();
+
+        let mut builtin_rules = RuleSet::default();
+        let mut external_rules = FxHashMap::default();
+        let mut store = ExternalPluginStore::default();
+
+        match rules_config.override_rules(
+            &mut builtin_rules,
+            &mut external_rules,
+            &RULES,
+            &mut store,
+        ) {
+            Err(errors) => {
+                let strs: Vec<String> =
+                    errors.iter().map(std::string::ToString::to_string).collect();
+                assert!(strs.windows(2).all(|w| w[0] <= w[1]), "errors not sorted: {strs:#?}");
+            }
+            Ok(()) => panic!("expected errors from invalid configs"),
+        }
     }
 }

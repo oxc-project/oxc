@@ -14,7 +14,7 @@ use crate::{
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     let mut d =
-        OxcDiagnostic::warn("Typeof comparisons should be to string literals.").with_label(span);
+        OxcDiagnostic::warn("`typeof` comparisons should be to string literals.").with_label(span);
     if let Some(x) = help {
         d = d.with_help(x);
     }
@@ -22,7 +22,7 @@ fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
 }
 
 fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn("Invalid typeof comparison value.").with_label(span);
+    let mut d = OxcDiagnostic::warn("Invalid `typeof` comparison value.").with_label(span);
     if let Some(x) = help {
         d = d.with_help(x);
     }
@@ -30,7 +30,7 @@ fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ValidTypeof {
     /// The `requireStringLiterals` option when set to `true`, allows the comparison of `typeof`
     /// expressions with only string literals or other `typeof` expressions, and disallows
@@ -93,6 +93,10 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidTypeof {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // match on `typeof` unary expression for better performance
         let _unary_expr = match node.kind() {
@@ -157,12 +161,6 @@ impl Rule for ValidTypeof {
             ctx.diagnostic(not_string(None, sibling.span()));
         }
     }
-
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<ValidTypeof>>(value)
-            .unwrap_or_default()
-            .into_inner()
-    }
 }
 
 const VALID_TYPES: [&str; 8] =
@@ -199,7 +197,6 @@ fn test() {
         ("typeof(foo) != 'string'", None),
         ("var oddUse = typeof foo + 'thing'", None),
         ("function f(undefined) { typeof x === undefined }", None),
-        ("typeof foo === `str${somethingElse}`", None),
         ("typeof foo === 'number'", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === \"number\"", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         (
@@ -209,6 +206,7 @@ fn test() {
         ("typeof foo === typeof bar", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("typeof foo === `string`", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
         ("`object` === typeof foo", Some(serde_json::json!([{ "requireStringLiterals": true }]))),
+        ("typeof foo === `str${somethingElse}`", None), // { "ecmaVersion": 6 }
     ];
 
     let fail = vec![

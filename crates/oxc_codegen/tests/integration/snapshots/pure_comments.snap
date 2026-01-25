@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_codegen/tests/integration/main.rs
+source: crates/oxc_codegen/tests/integration/tester.rs
 ---
 ########## 0
 
@@ -451,7 +451,7 @@ const Foo = (/* @__PURE__ */ (() => {})() as unknown) as {
 ########## 27
 const Foo = /* @__PURE__ */ (() => {})() satisfies X
 ----------
-const Foo = ((/* @__PURE__ */ (() => {})()) satisfies X);
+const Foo = /* @__PURE__ */ (() => {})() satisfies X;
 
 ########## 28
 const Foo = /* @__PURE__ */ (() => {})()<X>
@@ -466,4 +466,28 @@ const Foo = (<Foo>(/* @__PURE__ */ (() => {})())!);
 ########## 30
 const Foo = /* @__PURE__ */ <Foo>(() => {})()! as X satisfies Y
 ----------
-const Foo = (((<Foo>(/* @__PURE__ */ (() => {})())!) as X) satisfies Y);
+const Foo = ((<Foo>(/* @__PURE__ */ (() => {})())!) as X) satisfies Y;
+
+########## 31
+/* @__NO_SIDE_EFFECTS__ */ ((options, extraOptions) => {
+  return defineCustomElement(options, extraOptions, hydrate);
+})
+----------
+/* @__NO_SIDE_EFFECTS__ */ ((options, extraOptions) => {
+	return defineCustomElement(options, extraOptions, hydrate);
+});
+
+########## 32
+/* @__NO_SIDE_EFFECTS__ */ ((x) => x)
+----------
+/* @__NO_SIDE_EFFECTS__ */ ((x) => x);
+
+########## 33
+/* @__NO_SIDE_EFFECTS__ */ (function() {})
+----------
+/* @__NO_SIDE_EFFECTS__ */ (function() {});
+
+########## 34
+/* @__NO_SIDE_EFFECTS__ */ (function foo() {})
+----------
+/* @__NO_SIDE_EFFECTS__ */ (function foo() {});

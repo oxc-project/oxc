@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
 ---
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
@@ -34,14 +35,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ array.filter(fn).length > 0
    ·       ──────
    ╰────
-  help: Replace `filter` with `some`.
+  help: Replace `.filter(…).length` with `.some(…)`
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.
    ╭─[prefer_array_some.tsx:1:7]
  1 │ array.filter(fn).length !== 0
    ·       ──────
    ╰────
-  help: Replace `filter` with `some`.
+  help: Replace `.filter(…).length` with `.some(…)`
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]

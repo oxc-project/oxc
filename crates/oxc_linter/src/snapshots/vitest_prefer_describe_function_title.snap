@@ -1,0 +1,29 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-vitest(prefer-describe-function-title): Title description can not have the same content as a imported function name.
+   ╭─[prefer_describe_function_title.tsx:3:21]
+ 2 │                     import { myFunction } from "./myFunction"
+ 3 │                     describe("myFunction", () => {})
+   ·                              ────────────
+ 4 │                   
+   ╰────
+  help: Pass the function as a description title argument or modify the description title to not match any imported function name.
+
+  ⚠ eslint-plugin-vitest(prefer-describe-function-title): Title description can not have the same content as a imported function name.
+   ╭─[prefer_describe_function_title.tsx:3:21]
+ 2 │                     import { myFunction } from "./myFunction"
+ 3 │                     describe(myFunction.name, () => {})
+   ·                              ───────────────
+ 4 │                   
+   ╰────
+  help: Pass the function as a description title argument or modify the description title to not match any imported function name.
+
+  ⚠ eslint-plugin-vitest(prefer-describe-function-title): Title description can not have the same content as a imported function name.
+   ╭─[prefer_describe_function_title.tsx:4:23]
+ 3 │                     if (someProcessEnvCheck) {
+ 4 │                       describe("myFunction", () => {})
+   ·                                ────────────
+ 5 │                     }
+   ╰────
+  help: Pass the function as a description title argument or modify the description title to not match any imported function name.

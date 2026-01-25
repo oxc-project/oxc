@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::Box as ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{Argument, CallExpression, Expression, FormalParameters},
@@ -22,7 +22,7 @@ fn prefer_promise_reject_errors_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferPromiseRejectErrors {
     /// Whether to allow calls to `Promise.reject()` with no arguments.
     allow_empty_reject: bool,
@@ -81,10 +81,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferPromiseRejectErrors {
-    fn from_configuration(value: Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<PreferPromiseRejectErrors>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -141,7 +139,7 @@ fn check_reject_call(call_expr: &CallExpression, ctx: &LintContext, allow_empty_
 
 #[expect(clippy::float_cmp, clippy::cast_precision_loss)]
 fn check_reject_in_function(
-    params: &Box<'_, FormalParameters<'_>>,
+    params: &ArenaBox<'_, FormalParameters<'_>>,
     ctx: &LintContext,
     allow_empty_reject: bool,
 ) {

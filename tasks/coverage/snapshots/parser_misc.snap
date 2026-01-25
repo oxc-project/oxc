@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 54/54 (100.00%)
-Positive Passed: 54/54 (100.00%)
-Negative Passed: 122/122 (100.00%)
+AST Parsed     : 64/64 (100.00%)
+Positive Passed: 64/64 (100.00%)
+Negative Passed: 134/134 (100.00%)
 
   × Cannot assign to 'arguments' in strict mode
    ╭─[misc/fail/arguments-eval.ts:1:10]
@@ -50,6 +50,36 @@ Negative Passed: 122/122 (100.00%)
  8 │ 
    ╰────
 
+  × Cannot use export statement outside a module
+   ╭─[misc/fail/commonjs-export-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow export statements (use module.exports instead)
+ 2 │ export const foo = 1;
+   · ──────
+   ╰────
+
+  × Unexpected import.meta expression
+   ╭─[misc/fail/commonjs-import-meta.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import.meta (only ES modules do)
+ 2 │ import.meta;
+   · ───────────
+   ╰────
+  help: import.meta is only allowed in module code
+
+  × Cannot use import statement outside a module
+   ╭─[misc/fail/commonjs-import-statement.cjs:2:1]
+ 1 │ // CommonJS does NOT allow import statements (use require instead)
+ 2 │ import foo from 'foo';
+   · ──────
+   ╰────
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[misc/fail/commonjs-top-level-await.cjs:2:1]
+ 1 │ // CommonJS does NOT allow top-level await (only ES modules do)
+ 2 │ await Promise.resolve();
+   · ─────
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
   × Encountered diff marker
     ╭─[misc/fail/diff-markers.js:10:1]
   9 │ function test() {
@@ -95,6 +125,19 @@ Negative Passed: 122/122 (100.00%)
    · ───────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/html-comment-in-module.mjs:1:1]
+ 1 │ <!-- comment
+   · ────
+   ╰────
+
+  × HTML comments are not allowed in modules
+   ╭─[misc/fail/html-comment-with-esm.js:1:1]
+ 1 │ <!-- comment
+   · ────
+ 2 │ import foo from "bar";
+   ╰────
 
   × Expected `,` or `]` but found `const`
    ╭─[misc/fail/imbalanced-array-expr.js:2:1]
@@ -211,6 +254,13 @@ Negative Passed: 122/122 (100.00%)
    ·                  ╰── `from` expected
    ╰────
 
+  × Identifier expected. 'this' is a reserved word that cannot be used here.
+   ╭─[misc/fail/import-equals-this.ts:2:12]
+ 1 │ // `this` is not valid in import equals declaration
+ 2 │ import x = this;
+   ·            ────
+   ╰────
+
   × Expected `from` but found `string`
    ╭─[misc/fail/import-from-str.js:1:13]
  1 │ import from 'module';
@@ -230,6 +280,20 @@ Negative Passed: 122/122 (100.00%)
  1 │ import source 'module';
    ·               ────┬───
    ·                   ╰── `from` expected
+   ╰────
+
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
+   ╭─[misc/fail/import-type-mixed-empty.ts:3:13]
+ 2 │ // TS1363: A type-only import can specify a default import or named bindings, but not both.
+ 3 │ import type foo, {} from 'bar';
+   ·             ───
+   ╰────
+
+  × TS(1363): A type-only import can specify a default import or named bindings, but not both.
+   ╭─[misc/fail/import-type-mixed-star.ts:3:13]
+ 2 │ // TS1363: A type-only import can specify a default import or named bindings, but not both.
+ 3 │ import type A, * as NS from 'mod';
+   ·             ─
    ╰────
 
   × TS(1141): String literal expected.
@@ -380,6 +444,15 @@ Negative Passed: 122/122 (100.00%)
    ·                      │               ╰── It can not be redeclared here
    ·                      ╰── `b` has already been declared here
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/oxc-10503.ts:4:6]
+ 3 │ 
+ 4 │ await using
+   ·      ▲
+ 5 │ foo = bar();
+   ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[misc/fail/oxc-10638.js:2:1]
@@ -3341,6 +3414,28 @@ Negative Passed: 122/122 (100.00%)
  1 │ 1<(V=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V=uIV=82<<t-j0<(V=$<LBI<(V=ut<I<(V=$<LBI<(V<II>
    ╰────
 
+  × Identifier `f` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:1:10]
+ 1 │ function f() {}
+   ·          ┬
+   ·          ╰── `f` has already been declared here
+ 2 │ function f() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
+ 3 │ 
+   ╰────
+
+  × Identifier `g` has already been declared
+   ╭─[misc/fail/oxc-18231.mjs:4:5]
+ 3 │ 
+ 4 │ var g;
+   ·     ┬
+   ·     ╰── `g` has already been declared here
+ 5 │ function g() {}
+   ·          ┬
+   ·          ╰── It can not be redeclared here
+   ╰────
+
   × Expected `(` but found `:`
    ╭─[misc/fail/oxc-1942-1.ts:2:8]
  1 │ class Foo {
@@ -3625,7 +3720,7 @@ Negative Passed: 122/122 (100.00%)
  3 │ }
    ╰────
 
-  × Private field 'x' must be declared in an enclosing class
+  × Private field '#x' must be declared in an enclosing class
    ╭─[misc/fail/oxc-7582.js:4:9]
  3 │   method() {
  4 │     obj.#x;
@@ -3663,6 +3758,14 @@ Negative Passed: 122/122 (100.00%)
  3 │ }
    ╰────
   help: Add an identifier after '?.'
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[misc/fail/script-top-level-using.js:2:1]
+ 1 │ // 'using' is not allowed at top level in scripts
+ 2 │ using x = {};
+   · ─────────────
+   ╰────
+  help: Wrap this code in a block or use a module
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

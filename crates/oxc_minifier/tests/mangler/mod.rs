@@ -20,12 +20,79 @@ fn mangle(source_text: &str, options: MangleOptions) -> String {
         .code
 }
 
+fn test(source_text: &str, expected: &str, options: MangleOptions) {
+    let mangled = mangle(source_text, options);
+    let expected = {
+        let allocator = Allocator::default();
+        let source_type = SourceType::mjs();
+        let ret = Parser::new(&allocator, expected, source_type).parse();
+        assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
+        Codegen::new().build(&ret.program).code
+    };
+    assert_eq!(
+        mangled, expected,
+        "\nfor source\n{source_text}\nexpect\n{expected}\ngot\n{mangled}"
+    );
+}
+
 #[test]
 fn direct_eval() {
-    let source_text = "function foo() { let NO_MANGLE; eval('') }";
     let options = MangleOptions::default();
+
+    // Symbols in scopes with direct eval should NOT be mangled
+    let source_text = "function foo() { let NO_MANGLE; eval('') }";
     let mangled = mangle(source_text, options);
     assert_eq!(mangled, "function foo() {\n\tlet NO_MANGLE;\n\teval(\"\");\n}\n");
+
+    // Nested direct eval: parent scope also should not mangle
+    let source_text = "function foo() { let NO_MANGLE; function bar() { eval('') } }";
+    let mangled = mangle(source_text, options);
+    assert_eq!(
+        mangled,
+        "function foo() {\n\tlet NO_MANGLE;\n\tfunction bar() {\n\t\teval(\"\");\n\t}\n}\n"
+    );
+
+    // Sibling scope without direct eval should be mangled
+    let source_text =
+        "function foo() { let NO_MANGLE; eval('') } function bar() { let SHOULD_MANGLE; }";
+    let mangled = mangle(source_text, options);
+    // SHOULD_MANGLE gets mangled (to some short name), NO_MANGLE stays as is
+    assert!(mangled.contains("NO_MANGLE"));
+    assert!(!mangled.contains("SHOULD_MANGLE"));
+
+    // Child function scope without direct eval CAN be mangled (eval in parent cannot access child function locals)
+    let source_text = "function foo() { eval(''); function bar() { let CAN_MANGLE; } }";
+    let mangled = mangle(source_text, options);
+    assert!(!mangled.contains("CAN_MANGLE"));
+
+    // Indirect eval should still allow mangling
+    let source_text = "function foo() { let SHOULD_MANGLE; (0, eval)('') }";
+    let mangled = mangle(source_text, options);
+    assert!(!mangled.contains("SHOULD_MANGLE"));
+
+    test(
+        r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
+        r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
+        MangleOptions::default(),
+    );
+
+    test(
+        r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
+        r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
+        MangleOptions { top_level: true, ..MangleOptions::default() },
+    );
+
+    test(
+        r"function outer() { let e = 1; eval(''); function inner() { let longNameToMangle = 2; console.log(e); } }",
+        r#"function outer() { let e = 1; eval(""); function inner() { let t = 2; console.log(e); } }"#,
+        MangleOptions::default(),
+    );
+
+    test(
+        r"function evalScope() { let x = 1; eval(''); } function siblingScope() { let longName = 2; console.log(longName); }",
+        r#"function evalScope() {let x = 1; eval(""); } function siblingScope() { let e = 2; console.log(e); }"#,
+        MangleOptions::default(),
+    );
 }
 
 #[test]

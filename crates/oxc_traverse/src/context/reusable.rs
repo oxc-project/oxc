@@ -11,7 +11,7 @@ use super::TraverseCtx;
 /// This wrapper type can safely be passed to user code as only ways it can be used are to:
 ///
 /// * Call `traverse_mut_with_ctx`, which maintains safety invariants.
-/// * Unwrap it to [`Scoping`], which discards the sensitive [`TraverseAncestry`] in the process.
+/// * Unwrap it to [`Scoping`] and / or `State`, which discards the sensitive [`TraverseAncestry`] in the process.
 ///
 /// [`TraverseAncestry`]: super::TraverseAncestry
 #[repr(transparent)]
@@ -27,6 +27,26 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
     /// Consume [`ReusableTraverseCtx`] and return [`Scoping`].
     pub fn into_scoping(self) -> Scoping {
         self.0.scoping.into_scoping()
+    }
+
+    /// Consume [`ReusableTraverseCtx`] and return the user state.
+    pub fn into_state(self) -> State {
+        self.0.state
+    }
+
+    /// Consume [`ReusableTraverseCtx`] and return both user state and [`Scoping`].
+    pub fn into_state_and_scoping(self) -> (State, Scoping) {
+        (self.0.state, self.0.scoping.into_scoping())
+    }
+
+    /// Get a reference to the user state.
+    pub fn state(&self) -> &State {
+        &self.0.state
+    }
+
+    /// Get a mutable reference to the user state.
+    pub fn state_mut(&mut self) -> &mut State {
+        &mut self.0.state
     }
 
     /// Unwrap [`TraverseCtx`] in a [`ReusableTraverseCtx`].

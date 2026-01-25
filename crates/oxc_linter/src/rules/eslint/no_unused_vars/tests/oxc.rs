@@ -518,8 +518,51 @@ fn test_vars_catch() {
         ),
     ];
 
+    // these suggestion fixes are safe
+    let fix = vec![
+        ("try {} catch (error) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try { const x = (1 + 1); } catch (error) { }",
+            "try { const x = (1 + 1); } catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+        ("try {} catch ({ msg }) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        // spacing
+        ("try {} catch (e) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        ("try {} catch(e){ }", "try {} catch{ }", None, FixKind::Suggestion),
+        ("try {} catch (      e) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        ("try {} catch (      e \t\n ) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        // comments
+        ("try {} catch (/* comment() */ e) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        ("try {} catch (e /* comment() */) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try {} catch /* comment */ (e) { }",
+            "try {} catch /* comment */  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            r"try {} catch (
+            // comment
+            // ()
+            e) { }",
+            "try {} catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+        // typescript
+        ("try {} catch (error: Error) { }", "try {} catch  { }", None, FixKind::Suggestion),
+        (
+            "try {} catch (error: (typeof thing)[number]) { }",
+            "try {} catch  { }",
+            None,
+            FixKind::Suggestion,
+        ),
+    ];
+
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
-        .intentionally_allow_no_fix_tests()
+        .expect_fix(fix)
         .with_snapshot_suffix("oxc-vars-catch")
         .test_and_snapshot();
 }
@@ -807,13 +850,13 @@ fn test_imports() {
         ),
         (
             "import foo, { bar } from './foo'; foo();",
-            "import foo, { } from './foo'; foo();",
+            "import foo from './foo'; foo();",
             None,
             FixKind::DangerousSuggestion,
         ),
         (
             "import { foo, bar, baz } from './foo'; foo(bar);",
-            "import { foo, bar, } from './foo'; foo(bar);",
+            "import { foo, bar } from './foo'; foo(bar);",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -844,7 +887,7 @@ fn test_imports() {
         ),
         (
             "import foo, { type bar } from './foo'; foo();",
-            "import foo, { } from './foo'; foo();",
+            "import foo from './foo'; foo();",
             None,
             FixKind::DangerousSuggestion,
         ),

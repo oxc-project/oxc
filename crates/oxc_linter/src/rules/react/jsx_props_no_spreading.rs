@@ -29,7 +29,7 @@ enum IgnoreEnforceOption {
 }
 
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct JsxPropsNoSpreadingConfig {
     /// `html` set to `ignore` will ignore all html jsx tags like `div`, `img` etc. Default is set to `enforce`.
     html: IgnoreEnforceOption,
@@ -90,10 +90,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxPropsNoSpreading {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<JsxPropsNoSpreading>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

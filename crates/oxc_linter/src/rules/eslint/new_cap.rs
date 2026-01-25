@@ -170,7 +170,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule with the default `{ "newIsCap": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    /// /* new-cap: ["error", { "newIsCap": true }] */
     ///
     /// var friend = new person();
     /// ```
@@ -178,7 +178,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the default `{ "newIsCap": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    /// /* new-cap: ["error", { "newIsCap": true }] */
     ///
     /// var friend = new Person();
     /// ```
@@ -186,7 +186,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the `{ "newIsCap": false }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCap": false }]*/
+    /// /* new-cap: ["error", { "newIsCap": false }] */
     ///
     /// var friend = new person();
     /// ```
@@ -194,7 +194,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule with the default `{ "capIsNew": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    /// /* new-cap: ["error", { "capIsNew": true }] */
     ///
     /// var colleague = Person();
     /// ```
@@ -202,7 +202,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the default `{ "capIsNew": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    /// /* new-cap: ["error", { "capIsNew": true }] */
     ///
     /// var colleague = new Person();
     /// ```
@@ -210,7 +210,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the `{ "capIsNew": false }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNew": false }]*/
+    /// /* new-cap: ["error", { "capIsNew": false }] */
     ///
     /// var colleague = Person();
     /// ```
@@ -218,7 +218,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptions": ["events"] }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCapExceptions": ["events"] }]*/
+    /// /* new-cap: ["error", { "newIsCapExceptions": ["events"] }] */
     ///
     /// var events = require('events');
     ///
@@ -228,7 +228,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "^person\\.." }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "^person\\.." }]*/
+    /// /* new-cap: ["error", { "newIsCapExceptionPattern": "^person\\.." }] */
     ///
     /// var friend = new person.acquaintance();
     ///
@@ -238,7 +238,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "\\.bar$" }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "\\.bar$" }]*/
+    /// /* new-cap: ["error", { "newIsCapExceptionPattern": "\\.bar$" }] */
     ///
     /// var friend = new person.bar();
     /// ```
@@ -246,7 +246,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptions": ["Person"] }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptions": ["Person"] }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptions": ["Person"] }] */
     ///
     /// function foo(arg) {
     ///     return Person(arg);
@@ -256,7 +256,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^person\\.." }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^person\\.." }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptionPattern": "^person\\.." }] */
     ///
     /// var friend = person.Acquaintance();
     /// var bestFriend = person.Friend();
@@ -265,7 +265,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "\\.Bar$" }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "\\.Bar$" }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptionPattern": "\\.Bar$" }] */
     ///
     /// foo.Bar();
     /// ```
@@ -273,7 +273,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^Foo" }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^Foo" }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptionPattern": "^Foo" }] */
     ///
     /// var x = Foo(42);
     ///
@@ -287,7 +287,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule with the default `{ "properties": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    /// /* new-cap: ["error", { "properties": true }] */
     ///
     /// var friend = new person.acquaintance();
     /// ```
@@ -295,7 +295,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the default `{ "properties": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    /// /* new-cap: ["error", { "properties": true }] */
     ///
     /// var friend = new person.Acquaintance();
     /// ```
@@ -303,7 +303,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the `{ "properties": false }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "properties": false }]*/
+    /// /* new-cap: ["error", { "properties": false }] */
     ///
     /// var friend = new person.acquaintance();
     /// ```
@@ -311,7 +311,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule with the default `{ "newIsCap": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    /// /* new-cap: ["error", { "newIsCap": true }] */
     ///
     /// var friend = new person();
     /// ```
@@ -319,7 +319,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the default `{ "newIsCap": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCap": true }]*/
+    /// /* new-cap: ["error", { "newIsCap": true }] */
     ///
     /// var friend = new Person();
     /// ```
@@ -327,7 +327,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the `{ "newIsCap": false }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCap": false }]*/
+    /// /* new-cap: ["error", { "newIsCap": false }] */
     ///
     /// var friend = new person();
     /// ```
@@ -335,7 +335,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule with the default `{ "capIsNew": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    /// /* new-cap: ["error", { "capIsNew": true }] */
     ///
     /// var colleague = Person();
     /// ```
@@ -343,7 +343,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the default `{ "capIsNew": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNew": true }]*/
+    /// /* new-cap: ["error", { "capIsNew": true }] */
     ///
     /// var colleague = new Person();
     /// ```
@@ -351,7 +351,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the `{ "capIsNew": false }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNew": false }]*/
+    /// /* new-cap: ["error", { "capIsNew": false }] */
     ///
     /// var colleague = Person();
     /// ```
@@ -359,7 +359,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptions": ["events"] }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCapExceptions": ["events"] }]*/
+    /// /* new-cap: ["error", { "newIsCapExceptions": ["events"] }] */
     ///
     /// var events = require('events');
     ///
@@ -369,7 +369,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "^person\\.." }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "^person\\.." }]*/
+    /// /* new-cap: ["error", { "newIsCapExceptionPattern": "^person\\.." }] */
     ///
     /// var friend = new person.acquaintance();
     ///
@@ -379,7 +379,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "newIsCapExceptionPattern": "\\.bar$" }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "newIsCapExceptionPattern": "\\.bar$" }]*/
+    /// /* new-cap: ["error", { "newIsCapExceptionPattern": "\\.bar$" }] */
     ///
     /// var friend = new person.bar();
     /// ```
@@ -389,7 +389,7 @@ declare_oxc_lint!(
     /// ::: correct
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptions": ["Person"] }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptions": ["Person"] }] */
     ///
     /// function foo(arg) {
     ///     return Person(arg);
@@ -399,7 +399,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^person\\.." }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^person\\.." }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptionPattern": "^person\\.." }] */
     ///
     /// var friend = person.Acquaintance();
     /// var bestFriend = person.Friend();
@@ -408,7 +408,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "\\.Bar$" }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "\\.Bar$" }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptionPattern": "\\.Bar$" }] */
     ///
     /// foo.Bar();
     /// ```
@@ -416,7 +416,7 @@ declare_oxc_lint!(
     /// Examples of additional **correct** code for this rule with the `{ "capIsNewExceptionPattern": "^Foo" }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "capIsNewExceptionPattern": "^Foo" }]*/
+    /// /* new-cap: ["error", { "capIsNewExceptionPattern": "^Foo" }] */
     ///
     /// var x = Foo(42);
     ///
@@ -428,7 +428,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule with the default `{ "properties": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    /// /* new-cap: ["error", { "properties": true }] */
     ///
     /// var friend = new person.acquaintance();
     /// ```
@@ -437,7 +437,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the default `{ "properties": true }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "properties": true }]*/
+    /// /* new-cap: ["error", { "properties": true }] */
     ///
     /// var friend = new person.Acquaintance();
     /// ```
@@ -445,7 +445,7 @@ declare_oxc_lint!(
     /// Examples of **correct** code for this rule with the `{ "properties": false }` option:
     ///
     /// ```js
-    /// /*eslint new-cap: ["error", { "properties": false }]*/
+    /// /* new-cap: ["error", { "properties": false }] */
     ///
     /// var friend = new person.acquaintance();
     /// ```
@@ -457,8 +457,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for NewCap {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        NewCap::from(&value)
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        Ok(NewCap::from(&value))
     }
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {

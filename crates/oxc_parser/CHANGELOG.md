@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- 8a1cbbd parser: Add syntax errors for constructor declarations (#18220) (Boshen)
+- 175b73a parser: Add ts error 1257 for `TSTupleElement` (#18146) (Sysix)
+- fa2ffe2 parser: Add ts error 1266 for `TSTupleElement` (#18145) (Sysix)
+- acf1aba parser: Add ts error 1265 for `TSTupleElement` (#18144) (Sysix)
+- 92e27b4 parser: Reparse await expressions in unambiguous mode when ESM detected (#18139) (Boshen)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 37482eb parser: Respect optional `TSNamedTupleMember`  for ts error 1266 &1257 (#18178) (Sysix)
+- 2c6966d parser: Correct precedence handling for private-in expression (#18169) (Boshen)
+- 91126a0 parser: Reparse all statements with await identifier in unambiguous mode (#18163) (Boshen)
+- c98e5b7 parser: Parse `for (using of = ...)` as using declaration (#18142) (Boshen)
+- a412103 parser: Improve diagnostics for double `export` (#17992) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### 🐛 Bug Fixes
+
+- 7422b7e parser/trivia: Correctly mark whether a block comment is on a newline (#17754) (camc314)
+- ef7e014 parser: Preserve `@__NO_SIDE_EFFECTS__` annotation with parenthesized expressions (#17711) (camc314)
+- 59a6228 parser: Detect TS1363 error for type-only imports with mixed default and named/namespace bindings (#17712) (Copilot)
+
+### ⚡ Performance
+
+- 3f4429c parser: Do not re-allocate TS interface heritage (#17692) (camchenry)
+
+## [0.107.0] - 2026-01-05
+
+### 🚀 Features
+
+- 6870b64 parser: Add TS1363 error code (#17609) (Sysix)
+- a7e1643 parser: Add TS2528 error code to duplicate_default_export diagnostic (#17558) (camc314)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- 4ac23e1 parser: Produce syntax error for `({ foo(bar) })` (#17267) (Boshen)
+- a15e183 parser: Change span for missing initializer in decleration (#17134) (camc314)
+- 3ee71b0 parser: Add diagnostic for parameters with question mark and initializer (#17132) (camc314)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🚀 Features

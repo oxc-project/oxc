@@ -23,7 +23,7 @@ fn my_rule_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[schemars(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct ConfigObject {
     pub foo: String,
     pub bar: Option<i32>,
@@ -64,10 +64,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for MyRule {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -91,5 +89,6 @@ fn test() {
     let fix = vec![
         ("fixed")
     ];
+
     Tester::new(MyRule::NAME, MyRule::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -20,7 +20,7 @@ fn exceeded_max_assertion(count: usize, max: usize, span: Span) -> OxcDiagnostic
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct MaxExpects {
     /// Maximum number of `expect()` assertion calls allowed within a single test.
     pub max: usize,
@@ -83,10 +83,8 @@ declare_oxc_lint!(
 );
 
 impl Rule for MaxExpects {
-    fn from_configuration(value: serde_json::Value) -> Self {
-        serde_json::from_value::<DefaultRuleConfig<MaxExpects>>(value)
-            .unwrap_or_default()
-            .into_inner()
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {

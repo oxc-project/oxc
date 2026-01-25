@@ -11,7 +11,7 @@ use oxc::{
     codegen::Codegen,
     diagnostics::{NamedSource, OxcDiagnostic},
     parser::Parser,
-    span::SourceType,
+    span::{SourceType, Span},
 };
 
 use crate::workspace_root;
@@ -24,8 +24,9 @@ static META_OPTIONS: Lazy<Regex> = lazy_regex!(
 // Returns a match for a tsc diagnostic error code like `error TS1234: xxx`
 static TS_ERROR_CODES: Lazy<Regex> =
     lazy_regex!(r"error[[:space:]]+TS(?P<code>\d{4,5}):[[:space:]]+");
+// Returns matches for @ts-ignore or @ts-expect-error in comments (// or /* */)
+static TS_IGNORE_PATTERN: Lazy<Regex> = lazy_regex!(r"(?://|/\*).*?(@ts-ignore|@ts-expect-error)");
 
-#[expect(unused)]
 #[derive(Debug)]
 pub struct CompilerSettings {
     pub modules: Vec<String>,
@@ -103,6 +104,9 @@ pub struct TestUnitData {
     pub name: String,
     pub content: String,
     pub source_type: SourceType,
+    /// Spans of `@ts-ignore` or `@ts-expect-error` comments.
+    /// Errors on the line immediately following these should be suppressed.
+    pub ts_ignore_spans: Vec<Span>,
 }
 
 #[derive(Debug)]
@@ -132,6 +136,7 @@ impl TestCaseContent {
                             name: file_name,
                             content: std::mem::take(&mut current_file_content),
                             source_type: SourceType::default(),
+                            ts_ignore_spans: vec![],
                         });
                     }
                     current_file_name = Some(meta_value);
@@ -157,6 +162,7 @@ impl TestCaseContent {
             name: file_name,
             content: std::mem::take(&mut current_file_content),
             source_type: SourceType::default(),
+            ts_ignore_spans: vec![],
         });
 
         let settings = CompilerSettings::new(&current_file_options);
@@ -190,6 +196,16 @@ impl TestCaseContent {
                     source_type = source_type.with_module(true);
                 }
                 unit.source_type = source_type;
+
+                // Collect spans of @ts-ignore or @ts-expect-error comments
+                unit.ts_ignore_spans = TS_IGNORE_PATTERN
+                    .captures_iter(&unit.content)
+                    .filter_map(|cap| {
+                        #[expect(clippy::cast_possible_truncation)]
+                        cap.get(1).map(|m| Span::new(m.start() as u32, m.end() as u32))
+                    })
+                    .collect();
+
                 Some(unit)
             })
             .collect::<Vec<_>>();
@@ -281,7 +297,11 @@ impl TestCaseContent {
     }
 }
 
-#[derive(Debug, Clone, Default)]
+// ================================
+// Baseline types for transpile tests
+// ================================
+
+#[derive(Debug, Default)]
 pub struct Baseline {
     pub name: String,
     pub original: String,
@@ -293,7 +313,7 @@ pub struct Baseline {
 impl Baseline {
     pub fn print_oxc(&mut self) {
         let allocator = Allocator::default();
-        let source_type = SourceType::from_path(Path::new(&self.name)).unwrap();
+        let source_type = SourceType::from_path(Path::new(&self.name)).unwrap_or_default();
         let ret = Parser::new(&allocator, &self.original, source_type).parse();
         let printed = Codegen::new().build(&ret.program).code;
         self.oxc_printed = printed;
@@ -349,7 +369,7 @@ impl BaselineFile {
                 }
                 continue;
             }
-            let last = files.last_mut().unwrap();
+            let Some(last) = files.last_mut() else { continue };
             if is_diagnostic {
                 // Skip details of the diagnostic
                 if line.is_empty() {
@@ -365,6 +385,7 @@ impl BaselineFile {
             }
         }
 
+        // Regenerate content through oxc's codegen for consistent formatting
         for file in &mut files {
             file.print_oxc();
         }

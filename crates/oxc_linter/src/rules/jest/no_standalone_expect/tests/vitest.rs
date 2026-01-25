@@ -23,17 +23,44 @@ fn test() {
         (r#"it("an it", () => expect(1).toBe(1))"#, None),
         (r#"it.only("an it", () => expect(1).toBe(1))"#, None),
         (r#"it.concurrent("an it", () => expect(1).toBe(1))"#, None),
-        // TODO: it.extend.* and test.fails are not properly recognized by the parser yet
+        // TODO: it.extend.* is not properly recognized by the parser yet
         // (r#"it.extend.skip("an it", ()  => expect(1).toBe(1))"#, None),
+        (r#"it.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"it.only.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"it.skip.fails("a failing test", () => expect(1).toBe(1))"#, None),
         (r#"test("a test", () => expect(1).toBe(1))"#, None),
         (r#"test.skip("a skipped test", () => expect(1).toBe(1))"#, None),
-        // (r#"test.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"test.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"test.only.fails("a failing test", () => expect(1).toBe(1))"#, None),
+        (r#"test.skip.fails("a failing test", () => expect(1).toBe(1))"#, None),
         ("const func = function(){ expect(1).toBe(1); };", None),
         ("const func = () => expect(1).toBe(1);", None),
         ("{}", None),
         (r#"it.each([1, true])("trues", value => { expect(value).toBe(true); });"#, None),
         (
             r#"it.each([1, true])("trues", value => { expect(value).toBe(true); }); it("an it", () => { expect(1).toBe(1) });"#,
+            None,
+        ),
+        (
+            r"import {fakeAsync} from '@angular/core/testing';
+            describe('App', () => { it('should create the app', fakeAsync(() => { expect(true).toBeTruthy(); })); });",
+            None,
+        ),
+        (
+            r"describe('App', () => {
+              it('should work with wrapper function', wrapperFn(() => { expect(true).toBeTruthy(); }));
+            });",
+            None,
+        ),
+        // Test case from the issue: it.fails should be recognized as a test block
+        (
+            r#"describe('workers/repository/update/pr/code-owners', () => {
+              describe('codeOwnersForPr', () => {
+                it.fails('does not parse Gitea regex as Gitlab sections', () => {
+                  expect("foo").toEqual("bar");
+                });
+              });
+            });"#,
             None,
         ),
     ];

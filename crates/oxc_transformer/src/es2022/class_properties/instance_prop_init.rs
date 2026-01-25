@@ -146,7 +146,7 @@ impl<'a> InstanceInitializerVisitor<'a, '_> {
         }
 
         // Record the symbol clash. Symbol in constructor needs to be renamed.
-        self.clashing_symbols.entry(constructor_symbol_id).or_insert(ident.name);
+        self.clashing_symbols.entry(constructor_symbol_id).or_insert(ident.name.into());
     }
 }
 

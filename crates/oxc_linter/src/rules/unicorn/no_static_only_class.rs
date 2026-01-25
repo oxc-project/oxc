@@ -206,14 +206,13 @@ impl Rule for NoStaticOnlyClass {
             }
 
             let start = class.span.start;
-            if class.id.is_none() {
-                // just remove the class keyword
-                rule_fixes.push(fixer.delete_range(Span::sized(start, 5)));
-            } else {
-                let id = class.id.as_ref().unwrap();
+            if let Some(id) = &class.id {
                 let target = Span::new(start, id.span.end);
                 let replacement = format!("const {} =", id.name.as_str());
                 rule_fixes.push(fixer.replace(target, replacement));
+            } else {
+                // just remove the class keyword
+                rule_fixes.push(fixer.delete_range(Span::sized(start, 5)));
             }
             rule_fixes
                 .with_message("Convert to an object instead of a class with only static members.")

@@ -4,10 +4,7 @@ use bpaf::{Bpaf, Parser};
 #[cfg(feature = "napi")]
 use cow_utils::CowUtils;
 
-const VERSION: &str = match option_env!("OXC_VERSION") {
-    Some(v) => v,
-    None => "dev",
-};
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 #[expect(clippy::ptr_arg)]
 fn validate_paths(paths: &Vec<PathBuf>) -> bool {

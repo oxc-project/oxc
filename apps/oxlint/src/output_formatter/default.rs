@@ -15,7 +15,7 @@ impl InternalFormatter for DefaultOutputFormatter {
         let mut output = String::new();
         let table = RuleTable::default();
         for section in table.sections {
-            output.push_str(section.render_markdown_table(None).as_str());
+            output.push_str(section.render_markdown_table().as_str());
             output.push('\n');
         }
         output.push_str(format!("Default: {}\n", table.turned_on_by_default_count).as_str());
@@ -130,7 +130,9 @@ mod test_implementation {
 
     impl DiagnosticReporter for GraphicalReporterTester {
         fn finish(&mut self, result: &DiagnosticResult) -> Option<String> {
-            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none());
+            let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none())
+                // links print ansi escape codes, which makes snapshots harder to read
+                .with_links(false);
             let mut output = String::new();
 
             self.diagnostics.sort_by_cached_key(|diagnostic| {

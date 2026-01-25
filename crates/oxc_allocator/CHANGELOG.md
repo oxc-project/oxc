@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.109.0] - 2026-01-19
+
+### ⚡ Performance
+
+- 46cd73d allocator: Add #[cold] annotations to error handling functions (#18181) (Boshen)
+- 8da684e allocator: Type-erase RawVec::finish_grow inner function (#18175) (Boshen)
+
+## [0.106.0] - 2025-12-29
+
+### 🚀 Features
+
+- 5f963dd allocator/bitset: Add `clear` method to reset all bits (#17380) (camc314)
+
 ## [0.105.0] - 2025-12-22
 
 ### 🐛 Bug Fixes

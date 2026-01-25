@@ -1,6 +1,10 @@
 import Tinypool from "tinypool";
 import { resolvePlugins } from "../libs/prettier";
-import type { FormatEmbeddedCodeParam, FormatFileParam } from "../libs/prettier";
+import type {
+  FormatEmbeddedCodeParam,
+  FormatFileParam,
+  SortTailwindClassesArgs,
+} from "../libs/prettier";
 import type { Options } from "prettier";
 
 // Worker pool for parallel Prettier formatting
@@ -18,10 +22,10 @@ export async function initExternalFormatter(numThreads: number): Promise<string[
 
 export async function formatEmbeddedCode(
   options: Options,
-  tagName: string,
+  parserName: string,
   code: string,
 ): Promise<string> {
-  return pool!.run({ options, code, tagName } satisfies FormatEmbeddedCodeParam, {
+  return pool!.run({ options, code, parserName } satisfies FormatEmbeddedCodeParam, {
     name: "formatEmbeddedCode",
   });
 }
@@ -34,5 +38,15 @@ export async function formatFile(
 ): Promise<string> {
   return pool!.run({ options, code, fileName, parserName } satisfies FormatFileParam, {
     name: "formatFile",
+  });
+}
+
+export async function sortTailwindClasses(
+  filepath: string,
+  options: Options,
+  classes: string[],
+): Promise<string[]> {
+  return pool!.run({ filepath, options, classes } satisfies SortTailwindClassesArgs, {
+    name: "sortTailwindClasses",
   });
 }

@@ -138,7 +138,7 @@ fn test() {
         r#"fs.readFileSync(file, "UTF-8")"#,
         r#"fs[readFile](file, "UTF-8")"#,
         r#"fs["readFile"](file, "UTF-8")"#,
-        r#"await fs.readFile(file, "UTF-8",)"#,
+        r#"import fs from 'fs'; await fs.readFile(file, "UTF-8",)"#,
         r#"fs.promises.readFile(file, "UTF-8",)"#,
         r#"whatever.readFile(file, "UTF-8",)"#,
         r#"<not-meta charset="utf-8" />"#,
@@ -164,7 +164,10 @@ fn test() {
         (r#"fs.readFileSync(file, "UTF-8")"#, r#"fs.readFileSync(file, "utf8")"#),
         (r#"fs[readFile](file, "UTF-8")"#, r#"fs[readFile](file, "utf8")"#),
         (r#"fs["readFile"](file, "UTF-8")"#, r#"fs["readFile"](file, "utf8")"#),
-        (r#"await fs.readFile(file, "UTF-8",)"#, r#"await fs.readFile(file, "utf8",)"#),
+        (
+            r#"import fs from 'fs'; await fs.readFile(file, "UTF-8",)"#,
+            r#"import fs from 'fs'; await fs.readFile(file, "utf8",)"#,
+        ),
         (r#"fs.promises.readFile(file, "UTF-8",)"#, r#"fs.promises.readFile(file, "utf8",)"#),
         (r#"whatever.readFile(file, "UTF-8",)"#, r#"whatever.readFile(file, "utf8",)"#),
         (r#"<not-meta charset="utf-8" />"#, r#"<not-meta charset="utf8" />"#),
@@ -174,6 +177,7 @@ fn test() {
     ];
 
     Tester::new(TextEncodingIdentifierCase::NAME, TextEncodingIdentifierCase::PLUGIN, pass, fail)
+        .change_rule_path_extension("jsx")
         .expect_fix(fix)
         .test_and_snapshot();
 }

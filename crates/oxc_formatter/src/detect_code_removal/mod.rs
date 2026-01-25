@@ -274,6 +274,28 @@ impl StatsCollector {
             // e.g. `(a?.b)?.()` -> `a?.b?.()`
             // CallExpression(<computed>) -> CallExpression(b)
             AstKind::CallExpression(_) => "CALL_EXPRESSION".to_string(),
+            // Tailwind sorting may reorder and/or deduplicate space-separated words in string literals.
+            // Normalize by deduplicating and sorting to treat such cases as equivalent.
+            // e.g. `"w-fit mx-auto"` -> `"mx-auto w-fit"` (same after normalization)
+            // e.g. `"flex flex p-4"` -> `"flex p-4"` (same after normalization)
+            //
+            // NOTE: This normalization applies to ALL multi-word string literals,
+            // which means `"hello world"` and `"world hello"` would be treated as equivalent.
+            // However, the formatter does not reorder arbitrary string content,
+            // and Tailwind options (custom attributes/functions) are not available here,
+            // so this broad approach is acceptable for detecting code removal.
+            AstKind::StringLiteral(s) => {
+                let parts: Vec<_> = s.value.split_whitespace().collect();
+                if parts.len() > 1 {
+                    // Deduplicate and sort
+                    let unique: FxHashSet<_> = parts.into_iter().collect();
+                    let mut sorted: Vec<_> = unique.into_iter().collect();
+                    sorted.sort_unstable();
+                    format!("SORTED_STRING({})", sorted.join(" "))
+                } else {
+                    node_name
+                }
+            }
             _ => node_name,
         };
         *self.node_counts.entry(count_key).or_insert(0) += 1;
@@ -317,6 +339,21 @@ mod tests {
             ("(a.b)?.().c;", "a.b?.().c;"),
             ("(a?.b)?.().c", "a?.b?.().c"),
             ("for ((let)[a] in foo);", "for ((let)[a] in foo);"),
+            // Tailwind CSS sorting: space-separated class names can be reordered
+            (
+                r#"<div className="w-fit mx-auto overscroll-contain my-24" />"#,
+                r#"<div className="mx-auto my-24 w-fit overscroll-contain" />"#,
+            ),
+            (
+                r#"<div className="container mx-auto mt-4 mb-24 overscroll-contain" />"#,
+                r#"<div className="container mx-auto overscroll-contain mt-4 mb-24" />"#,
+            ),
+            // Function call arguments
+            (r#"clsx("flex p-4 m-2")"#, r#"clsx("flex m-2 p-4")"#),
+            // Duplicate class removal (preserve_duplicates: false)
+            (r#"<div className="flex flex p-4" />"#, r#"<div className="flex p-4" />"#),
+            // Single class should still be tracked normally
+            (r#"const a = "flex";"#, r#"const a = "flex";"#),
         ] {
             let source_type = SourceType::default().with_typescript(true).with_jsx(true);
 

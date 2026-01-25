@@ -80,7 +80,7 @@
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
-  x ]8;;https://oxc.rs/docs/guide/usage/linter/rules/jsdoc/require-param.html\eslint-plugin-jsdoc(require-param)]8;;\: Missing JSDoc `@param` declaration for function parameters.
+  x eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
    ,-[files/index.js:4:17]
  3 |  */
  4 | function f(foo, bar) {}
@@ -89,7 +89,7 @@
   help: Add `@param` tag with name.
 
 Found 0 warnings and 12 errors.
-Finished in Xms on 1 file using X threads.
+Finished in Xms on 1 file with 12 rules using X threads.
 ```
 
 # stderr

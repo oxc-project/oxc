@@ -38,6 +38,23 @@ mod js_plugins;
 // Use Mimalloc as the global allocator if `--features allocator` is enabled.
 // Mimalloc has better performance, but this is feature-gated because it's slow to compile.
 // `--features allocator` is only used in release builds.
-#[cfg(all(feature = "allocator", not(miri), not(target_family = "wasm")))]
+#[cfg(all(
+    feature = "allocator",
+    not(any(target_arch = "arm", miri, target_os = "freebsd", target_family = "wasm"))
+))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
+
+const DEFAULT_OXLINTRC: &str = ".oxlintrc.json";
+
+/// Return a JSON blob containing metadata for all available oxlint rules.
+///
+/// This uses the internal JSON output formatter to generate the full list.
+///
+/// # Panics
+/// Panics if the JSON generation fails, which should never happen under normal circumstances.
+pub fn get_all_rules_json() -> String {
+    use crate::output_formatter::{OutputFormat, OutputFormatter};
+
+    OutputFormatter::new(OutputFormat::Json).all_rules().expect("Failed to generate rules JSON")
+}

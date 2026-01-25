@@ -4,6 +4,93 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- fd2c792 formatter: Support css prop, styled jsx, and member/computed `styled.tags` (#17990) (magic-akari)
+- c4c55cc formatter: Add `oxfmt-ignore` ignore comment support (#17916) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3e141f0 formatter: Normalize `ChainExpression` with `TSNonNullExpression` to match Prettier (#18061) (Boshen)
+- 9b902b6 formatter: Use soft indent for empty objects in JSX spread attributes (#18063) (Boshen)
+- 8da749b formatter: Allow parameters to break in angular test wrappers (#18060) (Boshen)
+- 125962d formatter: Fix 4 prettier conformance tests (#18057) (Boshen)
+- bbadb8e oxfmt/sort-imports: Hard line inside multiline import leads to i… (#17880) (nilptr)
+
+### ⚡ Performance
+
+- 138637c formatter: Use VecDeque for member chain groups (#18094) (Boshen)
+
+## [0.24.0] - 2026-01-12
+
+### 🚀 Features
+
+- 539b350 formatter/sort_imports: Update `NODE_BUILTINS` modules (#17771) (nilptr)
+- 86c0168 oxfmt/sort_package_json: Handle `oxfmtrc.sort_scripts` option (#17738) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fdd1e1e formatter: Don't wrap parenthesis for type assertion when it's an declaration of export default (#17878) (Dunqing)
+- f0813ad formatter: Incorrect type annotation check for short argument (#17877) (Dunqing)
+- 9e89389 formatter/tailwindcss: Nested class string doesn't respect `singleQuote: true` (#17838) (Dunqing)
+- e2f534c formatter/sort_imports: Handle alignable comment with JsLabels (#17791) (leaysgur)
+- f0cedd4 formatter/tailwindcss: Class name is broken after sorting when its contains single quotes with `singleQuote: true` (#17790) (Dunqing)
+- 0563217 formatter: Classes will be stripped out when both `experimentalTailwindcss` and `experimentalSortImports` are enabled (#17726) (Dunqing)
+
+### ⚡ Performance
+
+- d1bc514 formatter: Optimize RegExpLiteral formatting to avoid heap allocations (#17797) (Dunqing)
+
+## [0.23.0] - 2026-01-06
+
+### 🐛 Bug Fixes
+
+- 3b4aced formatter: Should not treat multi-type arguments of TSTypeReference as a complex type (#17708) (Dunqing)
+- dcfdd41 formatter: Should not set up tailwindcss callback when no tailwindcss configuration is set (#17696) (Dunqing)
+- 6f65901 formatter: Return original classes when there are no tailwindcss classes sort callback (#17689) (Dunqing)
+
+### ⚡ Performance
+
+- c6a99fd formatter: Don't call `sort_tailwind_classes` if no classes need to be sorted (#17698) (Dunqing)
+
+## [0.22.0] - 2026-01-05
+
+### 🚀 Features
+
+- 8fd4ea9 oxfmt: `options.embeddedLanguageFormatting` is now `"auto"` by default (#17649) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- c9b5d7d formatter/sort_imports: Handle alignable_comment correctly (#17646) (leaysgur)
+- 453222d formatter: Missing comment handling for end-of-line comments in member chains (#17659) (Dunqing)
+- 0805ff2 formatter: Incorrect inline comment placement in try-catch (#17657) (Dunqing)
+- 3a0c782 formatter: Don't move comments into optional call parentheses (#17582) (magic-akari)
+
+## [0.21.0] - 2025-12-29
+
+### 🚀 Features
+
+- 7c3dae3 formatter: Support Vitest test functions (#17340) (leaysgur)
+- b00da37 formatter: Normalize line break for directive (#17303) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 1bf0ffc formatter: Incorrect JSX text wrapping when the expression container is an arrow function that will break (#17445) (Dunqing)
+- 42ad9d6 formatter: JSXFragment missed a leading semicolon when semicolon is disabled (#17386) (Dunqing)
+- c8c5341 formatter: Complete `is_complex_type_arguments()` (take2) (#17362) (leaysgur)
+- 745bc5d formatter: Do not consider rest param as simple (#17354) (leaysgur)
+- e836f37 formatter: Fix `Deno()` to not detect as test functions (#17339) (leaysgur)
+- 09848b3 formatter: Handle more test functions (#17337) (leaysgur)
+- a55bfc1 formatter: Count emoji sequences correctly (#17331) (leaysgur)
+- 0a39cba oxfmt: Update wrong doc comment (#17288) (leaysgur)
+- 2d556cb formatter: Should treat TSMappedType as a complex type in assignment-like formatting (#17257) (Dunqing)
+- fa5cef3 formatter: Shouldn't treat `TaggedTemplateExpression` as a simple argument in the member chain (#17256) (Dunqing)
+- 6ad3951 formatter: Trailing comments of JSX in call arguments are moved out the of call (#17255) (Dunqing)
+
 ## [0.20.0] - 2025-12-22
 
 ### 🚀 Features

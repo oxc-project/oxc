@@ -4,6 +4,85 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.40.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- ba9c750 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `.cjs` and `.cts` file extensions (#18117) (Boshen)
+- 3a0a190 linter/plugins: [**BREAKING**] Prevent access to `cwd` in `createOnce` (#18081) (overlookmotel)
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- 7c86fc3 linter/plugins: Support `commonjs` source type in `RuleTester` (#18198) (overlookmotel)
+- 6e8fa80 napi/parser, napi/transform: Accept `sourceType: "commonjs"` (#18197) (overlookmotel)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+- b516088 linter: Implement rule option validation/error handling for jest/no-hooks and eslint/no-return-assign rules. (#17600) (connorshea)
+- e7631dd website: Update website generation flow for JSON rules output (#17973) (connorshea)
+- 1757251 linter: Update linter JSON rule output to include extra information. (#15763) (connorshea)
+
+### 🐛 Bug Fixes
+
+- 4d68448 linter/plugins: `report` accept out of range `column` indexes in `loc` (#18199) (overlookmotel)
+- 8a2dabc linter/plugins: Rule tester default to module source type in ESLint compat mode (#18195) (overlookmotel)
+- 6956543 linter: Fix LSP panic from stale directive spans (#18082) (Boshen)
+- 7a0ca99 linter/plugins: Use correct ScriptKind for tokens (#17185) (Peter Wagenet)
+- 2a397f8 oxlint/lsp: Don't send `workspace/diagnostic/refresh` notification on watched file changes (#17885) (Sysix)
+
+### 📚 Documentation
+
+- d51cb6c linter/plugins: Remove outdated comments (#18194) (overlookmotel)
+
+## [1.39.0] - 2026-01-12
+
+### 🚀 Features
+
+- af1d0e3 linter/prefer-optional-chain: Add rule (#17831) (camc314)
+- 3567304 linter/vitest: Implement `consistent-each-for` (#17601) (Said Atrahouch)
+- 2bd2d5a linter/vitest: Implement hoisted-apis-on-top (#17658) (Said Atrahouch)
+
+### 🐛 Bug Fixes
+
+- 84f4f3c linter: Add doc url for tsgolint diagnostics (#17879) (Sysix)
+
+### 📚 Documentation
+
+- e81a306 linter: Update the tsconfig flag mention for the import plugin. (#17778) (connorshea)
+
+## [1.37.0] - 2026-01-05
+
+### 🚀 Features
+
+- 6154c8c linter/eslint-plugin-vitest: Implemented vitest/warn-todo rule (#17228) (Said Atrahouch)
+- 9e8ec78 linter/only-throw-error rule: Add `allowRethrowing` option for  (#17554) (camc314)
+- ee34716 linter/react: Implement no-will-update-set-state (#17530) (Kenzo Wada)
+- 3088e1d linter/react: Implement no-this-in-sfc (#17535) (Kenzo Wada)
+- 29a2868 linter/jsx-a11y: Implement no-static-element-interactions (#17538) (Kenzo Wada)
+
+### 🐛 Bug Fixes
+
+- a702f13 oxlint/lsp: Correct position for "disable for this file" with shebang (#17613) (Sysix)
+- 529901c linter: Include JS plugin rules when calculating total rule count (#17520) (connorshea)
+- 96ef2cc linter: Print total rule # when using a single nested config (#17517) (connorshea)
+- 9ad0f29 oxlint: Do not enable external plugin store when no external linter is passed (#17498) (Sysix)
+- 174375d oxfmt,oxlint: Disable mimalloc for 32-bit Arm targets (#17473) (Yaksh Bariya)
+- a38892a linter: Update no-unnecessary-template-expression docs and test case (#17453) (camc314)
+
+## [1.36.0] - 2025-12-29
+
+### 🚀 Features
+
+- 267e255 linter/react: Implement react/no-did-mount-set-state (#17313) (Kenzo Wada)
+- 5cc7c90 linter/plugins: Pass `env` from Rust to JS (#17291) (overlookmotel)
+- b97101a linter: Implement aria/proptypes (#17253) (mehm8128)
+
+### 🐛 Bug Fixes
+
+- fec2863 linter: Respect `.gitignore` regardless of if a git repo is initialized (#17375) (copilot-swe-agent)
+- c6690d1 rust: Remove unsupported tokio io-std feature for WASM compatibility (#17311) (Boshen)
+- 7eaa660 linter/plugins: Set up global scope correctly (#17293) (overlookmotel)
+
 ## [1.35.0] - 2025-12-22
 
 ### 🚀 Features
