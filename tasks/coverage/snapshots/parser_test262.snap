@@ -14208,7 +14208,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │         throw new Test262Error();
     ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
     ╭─[test262/test/language/expressions/class/getter-param-dflt.js:24:17]
  23 │ 
  24 │ 0, class { get a(param = null) {} };
@@ -18625,7 +18625,7 @@ Negative Passed: 4581/4581 (100.00%)
  20 │   }
     ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
     ╭─[test262/test/language/expressions/object/getter-param-dflt.js:24:11]
  23 │ 
  24 │ 0, { get a(param = null) {} };
@@ -33319,7 +33319,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │         throw new Test262Error();
     ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
     ╭─[test262/test/language/statements/class/getter-param-dflt.js:24:16]
  23 │ 
  24 │ class C { get a(param = null) {} }

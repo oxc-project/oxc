@@ -781,7 +781,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·    ────────
    ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[babel/packages/babel-parser/test/fixtures/core/object/invalid-getter-param/input.js:1:12]
  1 │ ({ get prop(x) {} })
    ·            ───
@@ -2633,7 +2633,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/class-methods/getter-signature/input.js:2:12]
  1 │ class A {
  2 │   get prop (arg) {}
@@ -4371,7 +4371,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    · ─────
    ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/345/input.js:1:19]
  1 │ class A { get prop(x) {} }
    ·                   ───
@@ -12051,7 +12051,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add a parameter here
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/getter-setter/input.ts:4:9]
  3 │ ({ set x() {} });
  4 │ ({ get x(x) {} });
@@ -13287,7 +13287,7 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  3 │ }
    ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/interface/get-set-invalid-parameters/input.ts:2:10]
  1 │ interface Foo {
  2 │   get foo(param): string;

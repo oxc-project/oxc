@@ -4031,7 +4031,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
     ╭─[typescript/tests/cases/compiler/complicatedPrivacy.ts:11:26]
  10 │         export class C2 implements m3.i3 {
  11 │             public get p1(arg) {
@@ -6425,7 +6425,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │ }
     ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/compiler/gettersAndSettersErrors.ts:6:19]
  5 │     public Foo = 0; // error - duplicate identifier Foo - confirmed
  6 │     public get Goo(v:string):string {return null;} // error - getters must not have a parameter
@@ -21146,7 +21146,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors7.ts:1:18]
  1 │ var v = { get foo(v: number) { } };
    ·                  ───────────
@@ -22485,7 +22485,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × A 'get' accessor must not have any formal parameters.
+  × TS(1054): A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration12.ts:2:11]
  1 │ class C {
  2 │    get Foo(a: number) { }

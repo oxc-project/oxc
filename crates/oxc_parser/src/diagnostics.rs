@@ -1148,7 +1148,7 @@ pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn getter_parameters(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.")
+    ts_error("1054", "A 'get' accessor must not have any formal parameters.")
         .with_label(span)
         .with_help("Remove these parameters here")
 }
