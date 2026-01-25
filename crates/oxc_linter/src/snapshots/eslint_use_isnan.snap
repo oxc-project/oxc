@@ -1,56 +1,56 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 == NaN;
    ·        ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 === NaN;
    ·         ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN === "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN == "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 != NaN;
    ·        ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 !== NaN;
    ·         ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN !== "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN != "abc";
    · ───
@@ -113,56 +113,56 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 == Number.NaN;
    ·        ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 === Number.NaN;
    ·         ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN === "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN == "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 != Number.NaN;
    ·        ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 !== Number.NaN;
    ·         ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN !== "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN != "abc";
    · ──────────
@@ -225,28 +225,28 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:7]
  1 │ x === Number?.NaN;
    ·       ───────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:7]
  1 │ x !== Number?.NaN;
    ·       ───────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:7]
  1 │ x === Number['NaN'];
    ·       ─────────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:2:59]
  1 │ /* just
  2 │                 adding */ x /* some */ === /* comments */ NaN; // here
@@ -254,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Comparison with NaN will always return false
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:12]
  1 │ (1, 2) === NaN;
    ·            ───

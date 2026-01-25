@@ -15,8 +15,17 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn comparison_with_nan(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Comparison with NaN will always return false")
+fn comparison_with_nan(span: Span, operator: BinaryOperator) -> OxcDiagnostic {
+    let msg = match operator {
+        BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+            "Checking inequality with NaN will always return true"
+        }
+        BinaryOperator::Equality | BinaryOperator::StrictEquality => {
+            "Checking equality with NaN will always return false"
+        }
+        _ => "Comparison with NaN will always return false",
+    };
+    OxcDiagnostic::warn(msg)
         .with_help("Use the `isNaN` function to compare with NaN.")
         .with_label(span)
 }
@@ -96,22 +105,24 @@ impl Rule for UseIsnan {
         match node.kind() {
             AstKind::BinaryExpression(expr) if expr.operator.is_compare() => {
                 if is_nan_identifier(&expr.left) {
-                    ctx.diagnostic(comparison_with_nan(expr.left.span()));
+                    ctx.diagnostic(comparison_with_nan(expr.left.span(), expr.operator));
                 }
                 if is_nan_identifier(&expr.right) {
-                    ctx.diagnostic(comparison_with_nan(expr.right.span()));
+                    ctx.diagnostic(comparison_with_nan(expr.right.span(), expr.operator));
                 }
             }
             AstKind::BinaryExpression(expr) if expr.operator.is_equality() => {
                 if is_nan_identifier(&expr.left) {
-                    ctx.diagnostic_with_fix(comparison_with_nan(expr.left.span()), |fixer| {
-                        fixer.replace(expr.span, make_equality_fix(true, expr, ctx))
-                    });
+                    ctx.diagnostic_with_fix(
+                        comparison_with_nan(expr.left.span(), expr.operator),
+                        |fixer| fixer.replace(expr.span, make_equality_fix(true, expr, ctx)),
+                    );
                 }
                 if is_nan_identifier(&expr.right) {
-                    ctx.diagnostic_with_fix(comparison_with_nan(expr.right.span()), |fixer| {
-                        fixer.replace(expr.span, make_equality_fix(false, expr, ctx))
-                    });
+                    ctx.diagnostic_with_fix(
+                        comparison_with_nan(expr.right.span(), expr.operator),
+                        |fixer| fixer.replace(expr.span, make_equality_fix(false, expr, ctx)),
+                    );
                 }
             }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {
