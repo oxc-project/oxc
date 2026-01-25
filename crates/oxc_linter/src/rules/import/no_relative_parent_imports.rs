@@ -110,9 +110,12 @@ impl Rule for NoRelativeParentImports {
     }
 }
 
-/// Check if the import path is a relative parent import (starts with `../` or is `..`)
+/// Check if the import path is a relative parent import.
+/// Matches paths like `../foo`, `..`, `./../foo`, etc.
 fn is_parent_import(path: &str) -> bool {
-    path == ".." || path.starts_with("../")
+    path == ".."
+        || path.starts_with("../")
+        || path.starts_with("./../") // handles ./../foo pattern
 }
 
 #[test]
@@ -120,55 +123,35 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Package imports
-        r"import foo from 'lodash'",
-        r"import foo from '@scope/package'",
-        r"import foo from 'foo/bar'",
-        // Sibling imports
-        r"import foo from './foo'",
-        r"import foo from './foo/bar'",
-        // Current directory
-        r"import foo from '.'",
-        r"import foo from './'",
-        // Require - packages
-        r"var foo = require('lodash')",
-        r"var foo = require('@scope/package')",
-        // Require - siblings
-        r"var foo = require('./foo')",
-        r"var foo = require('./foo/bar')",
-        // Export - siblings
-        r"export { foo } from './foo'",
-        r"export * from './bar'",
-        // Absolute paths (handled by no-absolute-path rule, not this one)
-        r"import foo from '/absolute/path'",
-        // Dynamic imports - siblings OK
-        r"import('./foo')",
-        r"import('./sub/bar')",
+        // ESLint test cases
+        r#"import foo from "./internal.js""#,
+        r#"import foo from "./app/index.js""#,
+        r#"import foo from "package""#,
+        r#"require("./internal.js")"#,
+        r#"require("./app/index.js")"#,
+        r#"require("package")"#,
+        r#"import("./internal.js")"#,
+        r#"import("./app/index.js")"#,
+        r#"import(".")"#,
+        r#"import("path")"#,
+        r#"import("package")"#,
+        r#"import("@scope/package")"#,
+        // Additional: exports (not tested by ESLint)
+        r#"export { foo } from "./sibling""#,
+        r#"export * from "./another""#,
     ];
 
     let fail = vec![
-        // Basic parent imports
-        r"import foo from '../foo'",
-        r"import foo from '../../foo'",
-        r"import foo from '../../../foo'",
-        // Parent with subdirectory
-        r"import foo from '../foo/bar'",
-        r"import foo from '../../foo/bar/baz'",
-        // Parent index
-        r"import foo from '..'",
-        r"import foo from '../'",
-        // Require parent
-        r"var foo = require('../foo')",
-        r"var foo = require('../../foo')",
-        r"var foo = require('../foo/bar')",
-        // Export from parent
-        r"export { foo } from '../foo'",
-        r"export { foo } from '../../bar'",
-        r"export * from '../baz'",
-        r"export * from '../../qux'",
-        // Dynamic imports from parent
-        r"import('../foo')",
-        r"import('../../bar')",
+        // ESLint test cases
+        r#"import foo from "../plugin.js""#,
+        r#"import foo from "./../plugin.js""#,
+        r#"import foo from "../../api/service""#,
+        r#"require("../plugin.js")"#,
+        r#"import("../plugin.js")"#,
+        r#"import("../../api/service")"#,
+        // Additional: exports (not tested by ESLint)
+        r#"export { foo } from "../parent""#,
+        r#"export * from "../parent""#,
     ];
 
     Tester::new(NoRelativeParentImports::NAME, NoRelativeParentImports::PLUGIN, pass, fail)
