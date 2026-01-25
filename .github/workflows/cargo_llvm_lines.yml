@@ -17,12 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+        uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
 
       - name: Install cargo-llvm-lines
-        uses: taiki-e/install-action@542cebaaed782771e619bd5609d97659d109c492 # v2.66.7
+        uses: taiki-e/install-action@81a2f66614862089b24532663f669a485d79c889 # v2.67.10
         with:
           tool: cargo-llvm-lines
 
