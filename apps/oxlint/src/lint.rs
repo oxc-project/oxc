@@ -912,12 +912,12 @@ mod test {
     #[test]
     fn test_tsconfig_option() {
         // passed
-        Tester::new().with_cwd("fixtures".into()).test(&["--tsconfig", "tsconfig/tsconfig.json"]);
+        Tester::new().with_cwd("fixtures/tsconfig".into()).test(&["--tsconfig", "tsconfig.json"]);
 
         // failed
         Tester::new()
-            .with_cwd("fixtures".into())
-            .test_and_snapshot(&["--tsconfig", "oxc/tsconfig.json"]);
+            .with_cwd("fixtures/tsconfig".into())
+            .test_and_snapshot(&["--tsconfig", "non-exists.json"]);
     }
 
     #[test]
