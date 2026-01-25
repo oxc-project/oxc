@@ -21,7 +21,7 @@ fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
     d
 }
 
-fn invalid_value(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
+fn invalid_value(help: Option<String>, span: Span) -> OxcDiagnostic {
     let mut d = OxcDiagnostic::warn("Invalid `typeof` comparison value.").with_label(span);
     if let Some(x) = help {
         d = d.with_help(x);
@@ -123,7 +123,9 @@ impl Rule for ValidTypeof {
 
         if let Expression::StringLiteral(lit) = sibling {
             if !VALID_TYPES.contains(&lit.value.as_str()) {
-                ctx.diagnostic(invalid_value(None, sibling.span()));
+                let help = get_typo_suggestion(lit.value.as_str())
+                    .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
+                ctx.diagnostic(invalid_value(help, sibling.span()));
             }
             return;
         }
@@ -132,7 +134,9 @@ impl Rule for ValidTypeof {
             && let Some(quasi) = template.single_quasi()
         {
             if !VALID_TYPES.contains(&quasi.as_str()) {
-                ctx.diagnostic(invalid_value(None, sibling.span()));
+                let help = get_typo_suggestion(quasi.as_str())
+                    .map(|suggestion| format!("Did you mean `\"{suggestion}\"`?"));
+                ctx.diagnostic(invalid_value(help, sibling.span()));
             }
             return;
         }
@@ -146,7 +150,7 @@ impl Rule for ValidTypeof {
                     not_string(Some("Use `\"undefined\"` instead of `undefined`."), sibling.span())
                 } else {
                     invalid_value(
-                        Some("Use `\"undefined\"` instead of `undefined`."),
+                        Some("Use `\"undefined\"` instead of `undefined`.".to_string()),
                         sibling.span(),
                     )
                 },
@@ -165,6 +169,29 @@ impl Rule for ValidTypeof {
 
 const VALID_TYPES: [&str; 8] =
     ["bigint", "boolean", "function", "number", "object", "string", "symbol", "undefined"];
+
+/// Check for common misspellings of typeof values and return a suggestion.
+fn get_typo_suggestion(value: &str) -> Option<&'static str> {
+    // spellchecker:off
+    match value {
+        "strnig" | "stirng" | "sting" | "strng" | "srting" | "srtring" | "strning" => {
+            Some("string")
+        }
+        "umdefined" | "undefimed" | "underfined" | "undefinied" | "undefied" | "undeffined"
+        | "undefind" | "undifined" | "udefined" | "undfined" => Some("undefined"),
+        "fucntion" | "funtion" | "fuction" | "functon" | "funcion" | "funciton" | "functin"
+        | "funcitn" | "funcrion" => Some("function"),
+        "obejct" | "objcet" | "obect" | "objetc" | "objetct" | "objet" | "objec" => Some("object"),
+        "bolean" | "booleen" | "boolen" | "boolaen" | "booelan" | "bollean" => Some("boolean"),
+        "nunber" | "nubmer" | "numbre" | "numver" | "numbr" | "numebr" | "nmber" => Some("number"),
+        "symol" | "symblo" | "simbole" | "synbol" | "symboll" | "symbal" => Some("symbol"),
+        "biigint" | "bignt" | "biignt" | "bigimit" | "bignit" | "bigit" | "begint" => {
+            Some("bigint")
+        }
+        _ => None,
+    }
+    // spellchecker:on
+}
 
 #[test]
 fn test() {
@@ -240,6 +267,13 @@ fn test() {
             "typeof foo === `${string}`",
             Some(serde_json::json!([{ "requireStringLiterals": true }])),
         ),
+        // Typo suggestions for each valid typeof type
+        ("typeof foo === 'biigint'", None), // spellchecker:disable-line
+        ("typeof foo === 'bolean'", None),  // spellchecker:disable-line
+        ("typeof foo === 'fucntion'", None), // spellchecker:disable-line
+        ("typeof foo === 'nunber'", None),  // spellchecker:disable-line
+        ("typeof foo === 'obejct'", None),  // spellchecker:disable-line
+        ("typeof foo === 'symol'", None),   // spellchecker:disable-line
     ];
 
     let fix = vec![("typeof foo === undefined", r#"typeof foo === "undefined""#)];
