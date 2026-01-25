@@ -30,7 +30,6 @@ fn test_rules_with_custom_configuration_have_schema() {
     // list - newly-created rules should always be documented before being merged!
     let exceptions: &[&str] = &[
         // eslint
-        "eslint/func-names",
         "eslint/no-empty-function",
         "eslint/no-restricted-imports",
         "eslint/no-warning-comments",
