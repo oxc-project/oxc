@@ -2478,7 +2478,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
-  × A 'set' accessor cannot have an initializer.
+  × TS(1052): A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/accessorWithInitializer.ts:2:10]
  1 │ class C {
  2 │     set X(v = 0) { }
@@ -2486,7 +2486,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     static set X(v2 = 0) { }
    ╰────
 
-  × A 'set' accessor cannot have an initializer.
+  × TS(1052): A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/accessorWithInitializer.ts:3:17]
  2 │     set X(v = 0) { }
  3 │     static set X(v2 = 0) { }
@@ -22521,7 +22521,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
-  × A 'set' accessor cannot have an initializer.
+  × TS(1052): A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts:2:11]
  1 │ class C {
  2 │    set Foo(a = 1) { }

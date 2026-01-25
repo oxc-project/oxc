@@ -1137,7 +1137,7 @@ pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
 }
 #[cold]
 pub fn setter_with_initializer(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor cannot have an initializer.").with_label(span)
+    ts_error("1052", "A 'set' accessor cannot have an initializer.").with_label(span)
 }
 
 #[cold]
