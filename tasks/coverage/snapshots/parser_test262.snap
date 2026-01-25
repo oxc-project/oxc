@@ -3195,7 +3195,7 @@ Negative Passed: 4581/4581 (100.00%)
  60 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dflt-params-rest.js:63:8]
  62 │ 
  63 │ 0, (...x = []) => {
@@ -3203,7 +3203,7 @@ Negative Passed: 4581/4581 (100.00%)
  64 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-init-ary.js:53:10]
  52 │ var f;
  53 │ f = ([...[ x ] = []]) => {
@@ -3211,7 +3211,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-init-id.js:53:10]
  52 │ var f;
  53 │ f = ([...x = []]) => {
@@ -3219,7 +3219,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/ary-ptrn-rest-init-obj.js:53:10]
  52 │ var f;
  53 │ f = ([...{ x } = []]) => {
@@ -3254,7 +3254,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Try inserting a semicolon here
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-ary.js:53:10]
  52 │ var f;
  53 │ f = ([...[ x ] = []] = []) => {
@@ -3262,7 +3262,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-id.js:53:10]
  52 │ var f;
  53 │ f = ([...x = []] = []) => {
@@ -3270,7 +3270,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/arrow-function/dstr/dflt-ary-ptrn-rest-init-obj.js:53:10]
  52 │ var f;
  53 │ f = ([...{ x } = []] = []) => {
@@ -6981,7 +6981,7 @@ Negative Passed: 4581/4581 (100.00%)
  52 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-arrow-function/dflt-params-rest.js:55:12]
  54 │ 
  55 │ (async (...x = []) => {
@@ -7344,7 +7344,7 @@ Negative Passed: 4581/4581 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/named-dflt-params-rest.js:41:22]
  40 │ 
  41 │ (async function f(...x = []) {
@@ -7398,7 +7398,7 @@ Negative Passed: 4581/4581 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-function/nameless-dflt-params-rest.js:41:20]
  40 │ 
  41 │ (async function(...x = []) {
@@ -7516,7 +7516,7 @@ Negative Passed: 4581/4581 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dflt-params-rest.js:44:23]
  43 │ 
  44 │ 0, async function*(...x = []) {
@@ -7524,7 +7524,7 @@ Negative Passed: 4581/4581 (100.00%)
  45 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/ary-ptrn-rest-init-ary.js:34:25]
  33 │ var f;
  34 │ f = async function*([...[ x ] = []]) {
@@ -7532,7 +7532,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/ary-ptrn-rest-init-id.js:34:25]
  33 │ var f;
  34 │ f = async function*([...x = []]) {
@@ -7540,7 +7540,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/ary-ptrn-rest-init-obj.js:34:25]
  33 │ var f;
  34 │ f = async function*([...{ x } = []]) {
@@ -7572,7 +7572,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:34:25]
  33 │ var f;
  34 │ f = async function*([...[ x ] = []] = []) {
@@ -7580,7 +7580,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:34:25]
  33 │ var f;
  34 │ f = async function*([...x = []] = []) {
@@ -7588,7 +7588,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:34:25]
  33 │ var f;
  34 │ f = async function*([...{ x } = []] = []) {
@@ -7620,7 +7620,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-ary.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...[ x ] = []]) {
@@ -7628,7 +7628,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-id.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...x = []]) {
@@ -7636,7 +7636,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-ary-ptrn-rest-init-obj.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...{ x } = []]) {
@@ -7668,7 +7668,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-ary.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...[ x ] = []] = []) {
@@ -7676,7 +7676,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-id.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...x = []] = []) {
@@ -7684,7 +7684,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/dstr/named-dflt-ary-ptrn-rest-init-obj.js:34:27]
  33 │ var f;
  34 │ f = async function* h([...{ x } = []] = []) {
@@ -7978,7 +7978,7 @@ Negative Passed: 4581/4581 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/async-generator/named-dflt-params-rest.js:44:25]
  43 │ 
  44 │ 0, async function* g(...x = []) {
@@ -8366,7 +8366,7 @@ Negative Passed: 4581/4581 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method/dflt-params-rest.js:68:20]
  67 │ 0, class {
  68 │   async *method(...x = []) {
@@ -8590,7 +8590,7 @@ Negative Passed: 4581/4581 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ 0, class {
  68 │   static async *method(...x = []) {
@@ -8814,7 +8814,7 @@ Negative Passed: 4581/4581 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -8932,7 +8932,7 @@ Negative Passed: 4581/4581 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/async-method-static/dflt-params-rest.js:66:26]
  65 │ var C = class {
  66 │   static async method(...x = []) {
@@ -9037,7 +9037,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·               ─────
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:58:21]
  57 │ var C = class {
  58 │   async *method([...[ x ] = []]) {
@@ -9045,7 +9045,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:58:21]
  57 │ var C = class {
  58 │   async *method([...x = []]) {
@@ -9053,7 +9053,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:58:21]
  57 │ var C = class {
  58 │   async *method([...{ x } = []]) {
@@ -9085,7 +9085,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:58:21]
  57 │ var C = class {
  58 │   async *method([...[ x ] = []] = []) {
@@ -9093,7 +9093,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:58:21]
  57 │ var C = class {
  58 │   async *method([...x = []] = []) {
@@ -9101,7 +9101,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:58:21]
  57 │ var C = class {
  58 │   async *method([...{ x } = []] = []) {
@@ -9133,7 +9133,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...[ x ] = []]) {
@@ -9141,7 +9141,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...x = []]) {
@@ -9149,7 +9149,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...{ x } = []]) {
@@ -9181,7 +9181,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...[ x ] = []] = []) {
@@ -9189,7 +9189,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...x = []] = []) {
@@ -9197,7 +9197,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:58:28]
  57 │ var C = class {
  58 │   static async *method([...{ x } = []] = []) {
@@ -9229,7 +9229,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...[ x ] = []]) {
@@ -9237,7 +9237,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...x = []]) {
@@ -9245,7 +9245,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...{ x } = []]) {
@@ -9277,7 +9277,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...[ x ] = []] = []) {
@@ -9285,7 +9285,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...x = []] = []) {
@@ -9293,7 +9293,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:58:23]
  57 │ var C = class {
  58 │   async * #method([...{ x } = []] = []) {
@@ -9325,7 +9325,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...[ x ] = []]) {
@@ -9333,7 +9333,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...x = []]) {
@@ -9341,7 +9341,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...{ x } = []]) {
@@ -9373,7 +9373,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...[ x ] = []] = []) {
@@ -9381,7 +9381,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...x = []] = []) {
@@ -9389,7 +9389,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:58:30]
  57 │ var C = class {
  58 │   static async * #method([...{ x } = []] = []) {
@@ -9421,7 +9421,7 @@ Negative Passed: 4581/4581 (100.00%)
  59 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:77:15]
  76 │ var C = class {
  77 │   *method([...[ x ] = []]) {
@@ -9429,7 +9429,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:77:15]
  76 │ var C = class {
  77 │   *method([...x = []]) {
@@ -9437,7 +9437,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:77:15]
  76 │ var C = class {
  77 │   *method([...{ x } = []]) {
@@ -9469,7 +9469,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:77:15]
  76 │ var C = class {
  77 │   *method([...[ x ] = []] = []) {
@@ -9477,7 +9477,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:77:15]
  76 │ var C = class {
  77 │   *method([...x = []] = []) {
@@ -9485,7 +9485,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:77:15]
  76 │ var C = class {
  77 │   *method([...{ x } = []] = []) {
@@ -9517,7 +9517,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:77:22]
  76 │ var C = class {
  77 │   static *method([...[ x ] = []]) {
@@ -9525,7 +9525,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:77:22]
  76 │ var C = class {
  77 │   static *method([...x = []]) {
@@ -9533,7 +9533,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:77:22]
  76 │ var C = class {
  77 │   static *method([...{ x } = []]) {
@@ -9565,7 +9565,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:77:22]
  76 │ var C = class {
  77 │   static *method([...[ x ] = []] = []) {
@@ -9573,7 +9573,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:77:22]
  76 │ var C = class {
  77 │   static *method([...x = []] = []) {
@@ -9581,7 +9581,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:77:22]
  76 │ var C = class {
  77 │   static *method([...{ x } = []] = []) {
@@ -9613,7 +9613,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-ary-ptrn-rest-init-ary.js:74:14]
  73 │ var C = class {
  74 │   method([...[ x ] = []]) {
@@ -9621,7 +9621,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-ary-ptrn-rest-init-id.js:74:14]
  73 │ var C = class {
  74 │   method([...x = []]) {
@@ -9629,7 +9629,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-ary-ptrn-rest-init-obj.js:74:14]
  73 │ var C = class {
  74 │   method([...{ x } = []]) {
@@ -9661,7 +9661,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:74:14]
  73 │ var C = class {
  74 │   method([...[ x ] = []] = []) {
@@ -9669,7 +9669,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:74:14]
  73 │ var C = class {
  74 │   method([...x = []] = []) {
@@ -9677,7 +9677,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:74:14]
  73 │ var C = class {
  74 │   method([...{ x } = []] = []) {
@@ -9709,7 +9709,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:74:21]
  73 │ var C = class {
  74 │   static method([...[ x ] = []]) {
@@ -9717,7 +9717,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-id.js:74:21]
  73 │ var C = class {
  74 │   static method([...x = []]) {
@@ -9725,7 +9725,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:74:21]
  73 │ var C = class {
  74 │   static method([...{ x } = []]) {
@@ -9757,7 +9757,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:74:21]
  73 │ var C = class {
  74 │   static method([...[ x ] = []] = []) {
@@ -9765,7 +9765,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:74:21]
  73 │ var C = class {
  74 │   static method([...x = []] = []) {
@@ -9773,7 +9773,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:74:21]
  73 │ var C = class {
  74 │   static method([...{ x } = []] = []) {
@@ -9805,7 +9805,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:77:17]
  76 │ var C = class {
  77 │   * #method([...[ x ] = []]) {
@@ -9813,7 +9813,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:77:17]
  76 │ var C = class {
  77 │   * #method([...x = []]) {
@@ -9821,7 +9821,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:77:17]
  76 │ var C = class {
  77 │   * #method([...{ x } = []]) {
@@ -9853,7 +9853,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:77:17]
  76 │ var C = class {
  77 │   * #method([...[ x ] = []] = []) {
@@ -9861,7 +9861,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:77:17]
  76 │ var C = class {
  77 │   * #method([...x = []] = []) {
@@ -9869,7 +9869,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:77:17]
  76 │ var C = class {
  77 │   * #method([...{ x } = []] = []) {
@@ -9901,7 +9901,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...[ x ] = []]) {
@@ -9909,7 +9909,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...x = []]) {
@@ -9917,7 +9917,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...{ x } = []]) {
@@ -9949,7 +9949,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...[ x ] = []] = []) {
@@ -9957,7 +9957,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...x = []] = []) {
@@ -9965,7 +9965,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:77:24]
  76 │ var C = class {
  77 │   static * #method([...{ x } = []] = []) {
@@ -9997,7 +9997,7 @@ Negative Passed: 4581/4581 (100.00%)
  78 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:74:15]
  73 │ var C = class {
  74 │   #method([...[ x ] = []]) {
@@ -10005,7 +10005,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-id.js:74:15]
  73 │ var C = class {
  74 │   #method([...x = []]) {
@@ -10013,7 +10013,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:74:15]
  73 │ var C = class {
  74 │   #method([...{ x } = []]) {
@@ -10045,7 +10045,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:74:15]
  73 │ var C = class {
  74 │   #method([...[ x ] = []] = []) {
@@ -10053,7 +10053,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:74:15]
  73 │ var C = class {
  74 │   #method([...x = []] = []) {
@@ -10061,7 +10061,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:74:15]
  73 │ var C = class {
  74 │   #method([...{ x } = []] = []) {
@@ -10093,7 +10093,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:74:22]
  73 │ var C = class {
  74 │   static #method([...[ x ] = []]) {
@@ -10101,7 +10101,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:74:22]
  73 │ var C = class {
  74 │   static #method([...x = []]) {
@@ -10109,7 +10109,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:74:22]
  73 │ var C = class {
  74 │   static #method([...{ x } = []]) {
@@ -10141,7 +10141,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:74:22]
  73 │ var C = class {
  74 │   static #method([...[ x ] = []] = []) {
@@ -10149,7 +10149,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:74:22]
  73 │ var C = class {
  74 │   static #method([...x = []] = []) {
@@ -10157,7 +10157,7 @@ Negative Passed: 4581/4581 (100.00%)
  75 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:74:22]
  73 │ var C = class {
  74 │   static #method([...{ x } = []] = []) {
@@ -13898,7 +13898,7 @@ Negative Passed: 4581/4581 (100.00%)
  86 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method/dflt-params-rest.js:89:14]
  88 │ 0, class {
  89 │   *method(...x = []) {
@@ -14067,7 +14067,7 @@ Negative Passed: 4581/4581 (100.00%)
  86 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/gen-method-static/dflt-params-rest.js:89:21]
  88 │ 0, class {
  89 │   static *method(...x = []) {
@@ -14235,7 +14235,7 @@ Negative Passed: 4581/4581 (100.00%)
  82 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method/dflt-params-rest.js:85:13]
  84 │ 0, class {
  85 │   method(...x = []) {
@@ -14297,7 +14297,7 @@ Negative Passed: 4581/4581 (100.00%)
  82 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/class/method-static/dflt-params-rest.js:85:20]
  84 │ 0, class {
  85 │   static method(...x = []) {
@@ -17278,7 +17278,7 @@ Negative Passed: 4581/4581 (100.00%)
  61 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dflt-params-rest.js:64:16]
  63 │ 
  64 │ 0, function(...x = []) {
@@ -17286,7 +17286,7 @@ Negative Passed: 4581/4581 (100.00%)
  65 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/ary-ptrn-rest-init-ary.js:54:18]
  53 │ var f;
  54 │ f = function([...[ x ] = []]) {
@@ -17294,7 +17294,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/ary-ptrn-rest-init-id.js:54:18]
  53 │ var f;
  54 │ f = function([...x = []]) {
@@ -17302,7 +17302,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/ary-ptrn-rest-init-obj.js:54:18]
  53 │ var f;
  54 │ f = function([...{ x } = []]) {
@@ -17334,7 +17334,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/dflt-ary-ptrn-rest-init-ary.js:54:18]
  53 │ var f;
  54 │ f = function([...[ x ] = []] = []) {
@@ -17342,7 +17342,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/dflt-ary-ptrn-rest-init-id.js:54:18]
  53 │ var f;
  54 │ f = function([...x = []] = []) {
@@ -17350,7 +17350,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/function/dstr/dflt-ary-ptrn-rest-init-obj.js:54:18]
  53 │ var f;
  54 │ f = function([...{ x } = []] = []) {
@@ -17610,7 +17610,7 @@ Negative Passed: 4581/4581 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dflt-params-rest.js:65:17]
  64 │ 
  65 │ 0, function*(...x = []) {
@@ -17618,7 +17618,7 @@ Negative Passed: 4581/4581 (100.00%)
  66 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/ary-ptrn-rest-init-ary.js:54:19]
  53 │ var f;
  54 │ f = function*([...[ x ] = []]) {
@@ -17626,7 +17626,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/ary-ptrn-rest-init-id.js:54:19]
  53 │ var f;
  54 │ f = function*([...x = []]) {
@@ -17634,7 +17634,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/ary-ptrn-rest-init-obj.js:54:19]
  53 │ var f;
  54 │ f = function*([...{ x } = []]) {
@@ -17666,7 +17666,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:54:19]
  53 │ var f;
  54 │ f = function*([...[ x ] = []] = []) {
@@ -17674,7 +17674,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-id.js:54:19]
  53 │ var f;
  54 │ f = function*([...x = []] = []) {
@@ -17682,7 +17682,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:54:19]
  53 │ var f;
  54 │ f = function*([...{ x } = []] = []) {
@@ -18321,7 +18321,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:39:21]
  38 │ var obj = {
  39 │   async *method([...[ x ] = []]) {
@@ -18329,7 +18329,7 @@ Negative Passed: 4581/4581 (100.00%)
  40 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:39:21]
  38 │ var obj = {
  39 │   async *method([...x = []]) {
@@ -18337,7 +18337,7 @@ Negative Passed: 4581/4581 (100.00%)
  40 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:39:21]
  38 │ var obj = {
  39 │   async *method([...{ x } = []]) {
@@ -18369,7 +18369,7 @@ Negative Passed: 4581/4581 (100.00%)
  40 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:39:21]
  38 │ var obj = {
  39 │   async *method([...[ x ] = []] = []) {
@@ -18377,7 +18377,7 @@ Negative Passed: 4581/4581 (100.00%)
  40 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:39:21]
  38 │ var obj = {
  39 │   async *method([...x = []] = []) {
@@ -18385,7 +18385,7 @@ Negative Passed: 4581/4581 (100.00%)
  40 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:39:21]
  38 │ var obj = {
  39 │   async *method([...{ x } = []] = []) {
@@ -18417,7 +18417,7 @@ Negative Passed: 4581/4581 (100.00%)
  40 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-ary.js:59:15]
  58 │ var obj = {
  59 │   *method([...[ x ] = []]) {
@@ -18425,7 +18425,7 @@ Negative Passed: 4581/4581 (100.00%)
  60 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-id.js:59:15]
  58 │ var obj = {
  59 │   *method([...x = []]) {
@@ -18433,7 +18433,7 @@ Negative Passed: 4581/4581 (100.00%)
  60 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-ary-ptrn-rest-init-obj.js:59:15]
  58 │ var obj = {
  59 │   *method([...{ x } = []]) {
@@ -18465,7 +18465,7 @@ Negative Passed: 4581/4581 (100.00%)
  60 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:59:15]
  58 │ var obj = {
  59 │   *method([...[ x ] = []] = []) {
@@ -18473,7 +18473,7 @@ Negative Passed: 4581/4581 (100.00%)
  60 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:59:15]
  58 │ var obj = {
  59 │   *method([...x = []] = []) {
@@ -18481,7 +18481,7 @@ Negative Passed: 4581/4581 (100.00%)
  60 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:59:15]
  58 │ var obj = {
  59 │   *method([...{ x } = []] = []) {
@@ -18513,7 +18513,7 @@ Negative Passed: 4581/4581 (100.00%)
  60 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-ary-ptrn-rest-init-ary.js:56:14]
  55 │ var obj = {
  56 │   method([...[ x ] = []]) {
@@ -18521,7 +18521,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-ary-ptrn-rest-init-id.js:56:14]
  55 │ var obj = {
  56 │   method([...x = []]) {
@@ -18529,7 +18529,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-ary-ptrn-rest-init-obj.js:56:14]
  55 │ var obj = {
  56 │   method([...{ x } = []]) {
@@ -18561,7 +18561,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:56:14]
  55 │ var obj = {
  56 │   method([...[ x ] = []] = []) {
@@ -18569,7 +18569,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-id.js:56:14]
  55 │ var obj = {
  56 │   method([...x = []] = []) {
@@ -18577,7 +18577,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:56:14]
  55 │ var obj = {
  56 │   method([...{ x } = []] = []) {
@@ -18877,7 +18877,7 @@ Negative Passed: 4581/4581 (100.00%)
  46 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-gen-meth-dflt-params-rest.js:49:20]
  48 │ 0, {
  49 │   async *method(...x = []) {
@@ -19045,7 +19045,7 @@ Negative Passed: 4581/4581 (100.00%)
  39 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/async-meth-dflt-params-rest.js:42:20]
  41 │ ({
  42 │   async *method(...x = []) {
@@ -19279,7 +19279,7 @@ Negative Passed: 4581/4581 (100.00%)
  68 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/gen-meth-dflt-params-rest.js:71:14]
  70 │ 0, {
  71 │   *method(...x = []) {
@@ -19505,7 +19505,7 @@ Negative Passed: 4581/4581 (100.00%)
  64 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/expressions/object/method-definition/meth-dflt-params-rest.js:67:13]
  66 │ 0, {
  67 │   method(...x = []) {
@@ -26194,7 +26194,7 @@ Negative Passed: 4581/4581 (100.00%)
  38 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-function/dflt-params-rest.js:41:21]
  40 │ 
  41 │ async function f(...x = []) {
@@ -26434,7 +26434,7 @@ Negative Passed: 4581/4581 (100.00%)
  41 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dflt-params-rest.js:44:22]
  43 │ 
  44 │ async function* f(...x = []) {
@@ -26442,7 +26442,7 @@ Negative Passed: 4581/4581 (100.00%)
  45 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/ary-ptrn-rest-init-ary.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...[ x ] = []]) {
@@ -26450,7 +26450,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/ary-ptrn-rest-init-id.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...x = []]) {
@@ -26458,7 +26458,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/ary-ptrn-rest-init-obj.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...{ x } = []]) {
@@ -26490,7 +26490,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-ary.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...[ x ] = []] = []) {
@@ -26498,7 +26498,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-id.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...x = []] = []) {
@@ -26506,7 +26506,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/async-generator/dstr/dflt-ary-ptrn-rest-init-obj.js:33:23]
  32 │ var callCount = 0;
  33 │ async function* f([...{ x } = []] = []) {
@@ -27256,7 +27256,7 @@ Negative Passed: 4581/4581 (100.00%)
  64 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method/dflt-params-rest.js:67:20]
  66 │ class C {
  67 │   async *method(...x = []) {
@@ -27480,7 +27480,7 @@ Negative Passed: 4581/4581 (100.00%)
  65 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-gen-method-static/dflt-params-rest.js:68:27]
  67 │ class C {
  68 │   static async *method(...x = []) {
@@ -27712,7 +27712,7 @@ Negative Passed: 4581/4581 (100.00%)
  63 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method/dflt-params-rest.js:66:19]
  65 │ class C {
  66 │   async method(...x = []) {
@@ -27830,7 +27830,7 @@ Negative Passed: 4581/4581 (100.00%)
  62 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/async-method-static/dflt-params-rest.js:65:26]
  64 │ class C {
  65 │   static async method(...x = []) {
@@ -28087,7 +28087,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Try inserting a semicolon here
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-ary.js:57:21]
  56 │ class C {
  57 │   async *method([...[ x ] = []]) {
@@ -28095,7 +28095,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-id.js:57:21]
  56 │ class C {
  57 │   async *method([...x = []]) {
@@ -28103,7 +28103,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-ary-ptrn-rest-init-obj.js:57:21]
  56 │ class C {
  57 │   async *method([...{ x } = []]) {
@@ -28135,7 +28135,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-ary.js:57:21]
  56 │ class C {
  57 │   async *method([...[ x ] = []] = []) {
@@ -28143,7 +28143,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-id.js:57:21]
  56 │ class C {
  57 │   async *method([...x = []] = []) {
@@ -28151,7 +28151,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-dflt-ary-ptrn-rest-init-obj.js:57:21]
  56 │ class C {
  57 │   async *method([...{ x } = []] = []) {
@@ -28183,7 +28183,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-ary.js:57:28]
  56 │ class C {
  57 │   static async *method([...[ x ] = []]) {
@@ -28191,7 +28191,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-id.js:57:28]
  56 │ class C {
  57 │   static async *method([...x = []]) {
@@ -28199,7 +28199,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-ary-ptrn-rest-init-obj.js:57:28]
  56 │ class C {
  57 │   static async *method([...{ x } = []]) {
@@ -28231,7 +28231,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:57:28]
  56 │ class C {
  57 │   static async *method([...[ x ] = []] = []) {
@@ -28239,7 +28239,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:57:28]
  56 │ class C {
  57 │   static async *method([...x = []] = []) {
@@ -28247,7 +28247,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:57:28]
  56 │ class C {
  57 │   static async *method([...{ x } = []] = []) {
@@ -28279,7 +28279,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-ary.js:57:23]
  56 │ class C {
  57 │   async * #method([...[ x ] = []]) {
@@ -28287,7 +28287,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-id.js:57:23]
  56 │ class C {
  57 │   async * #method([...x = []]) {
@@ -28295,7 +28295,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-ary-ptrn-rest-init-obj.js:57:23]
  56 │ class C {
  57 │   async * #method([...{ x } = []]) {
@@ -28327,7 +28327,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:57:23]
  56 │ class C {
  57 │   async * #method([...[ x ] = []] = []) {
@@ -28335,7 +28335,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-id.js:57:23]
  56 │ class C {
  57 │   async * #method([...x = []] = []) {
@@ -28343,7 +28343,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:57:23]
  56 │ class C {
  57 │   async * #method([...{ x } = []] = []) {
@@ -28375,7 +28375,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-ary.js:57:30]
  56 │ class C {
  57 │   static async * #method([...[ x ] = []]) {
@@ -28383,7 +28383,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-id.js:57:30]
  56 │ class C {
  57 │   static async * #method([...x = []]) {
@@ -28391,7 +28391,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-rest-init-obj.js:57:30]
  56 │ class C {
  57 │   static async * #method([...{ x } = []]) {
@@ -28423,7 +28423,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:57:30]
  56 │ class C {
  57 │   static async * #method([...[ x ] = []] = []) {
@@ -28431,7 +28431,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:57:30]
  56 │ class C {
  57 │   static async * #method([...x = []] = []) {
@@ -28439,7 +28439,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/async-private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:57:30]
  56 │ class C {
  57 │   static async * #method([...{ x } = []] = []) {
@@ -28471,7 +28471,7 @@ Negative Passed: 4581/4581 (100.00%)
  58 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-ary.js:75:15]
  74 │ class C {
  75 │   *method([...[ x ] = []]) {
@@ -28479,7 +28479,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-id.js:75:15]
  74 │ class C {
  75 │   *method([...x = []]) {
@@ -28487,7 +28487,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-ary-ptrn-rest-init-obj.js:75:15]
  74 │ class C {
  75 │   *method([...{ x } = []]) {
@@ -28519,7 +28519,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:15]
  74 │ class C {
  75 │   *method([...[ x ] = []] = []) {
@@ -28527,7 +28527,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-id.js:75:15]
  74 │ class C {
  75 │   *method([...x = []] = []) {
@@ -28535,7 +28535,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:15]
  74 │ class C {
  75 │   *method([...{ x } = []] = []) {
@@ -28567,7 +28567,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-ary.js:75:22]
  74 │ class C {
  75 │   static *method([...[ x ] = []]) {
@@ -28575,7 +28575,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-id.js:75:22]
  74 │ class C {
  75 │   static *method([...x = []]) {
@@ -28583,7 +28583,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-ary-ptrn-rest-init-obj.js:75:22]
  74 │ class C {
  75 │   static *method([...{ x } = []]) {
@@ -28615,7 +28615,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:22]
  74 │ class C {
  75 │   static *method([...[ x ] = []] = []) {
@@ -28623,7 +28623,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:22]
  74 │ class C {
  75 │   static *method([...x = []] = []) {
@@ -28631,7 +28631,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:22]
  74 │ class C {
  75 │   static *method([...{ x } = []] = []) {
@@ -28663,7 +28663,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-ary-ptrn-rest-init-ary.js:73:14]
  72 │ class C {
  73 │   method([...[ x ] = []]) {
@@ -28671,7 +28671,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-ary-ptrn-rest-init-id.js:73:14]
  72 │ class C {
  73 │   method([...x = []]) {
@@ -28679,7 +28679,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-ary-ptrn-rest-init-obj.js:73:14]
  72 │ class C {
  73 │   method([...{ x } = []]) {
@@ -28711,7 +28711,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-ary.js:73:14]
  72 │ class C {
  73 │   method([...[ x ] = []] = []) {
@@ -28719,7 +28719,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-id.js:73:14]
  72 │ class C {
  73 │   method([...x = []] = []) {
@@ -28727,7 +28727,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-dflt-ary-ptrn-rest-init-obj.js:73:14]
  72 │ class C {
  73 │   method([...{ x } = []] = []) {
@@ -28759,7 +28759,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-ary-ptrn-rest-init-ary.js:73:21]
  72 │ class C {
  73 │   static method([...[ x ] = []]) {
@@ -28767,7 +28767,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-ary-ptrn-rest-init-id.js:73:21]
  72 │ class C {
  73 │   static method([...x = []]) {
@@ -28775,7 +28775,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-ary-ptrn-rest-init-obj.js:73:21]
  72 │ class C {
  73 │   static method([...{ x } = []]) {
@@ -28807,7 +28807,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-ary.js:73:21]
  72 │ class C {
  73 │   static method([...[ x ] = []] = []) {
@@ -28815,7 +28815,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-id.js:73:21]
  72 │ class C {
  73 │   static method([...x = []] = []) {
@@ -28823,7 +28823,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/meth-static-dflt-ary-ptrn-rest-init-obj.js:73:21]
  72 │ class C {
  73 │   static method([...{ x } = []] = []) {
@@ -28855,7 +28855,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-ary.js:75:17]
  74 │ class C {
  75 │   * #method([...[ x ] = []]) {
@@ -28863,7 +28863,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-id.js:75:17]
  74 │ class C {
  75 │   * #method([...x = []]) {
@@ -28871,7 +28871,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-ary-ptrn-rest-init-obj.js:75:17]
  74 │ class C {
  75 │   * #method([...{ x } = []]) {
@@ -28903,7 +28903,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-ary.js:75:17]
  74 │ class C {
  75 │   * #method([...[ x ] = []] = []) {
@@ -28911,7 +28911,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-id.js:75:17]
  74 │ class C {
  75 │   * #method([...x = []] = []) {
@@ -28919,7 +28919,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-dflt-ary-ptrn-rest-init-obj.js:75:17]
  74 │ class C {
  75 │   * #method([...{ x } = []] = []) {
@@ -28951,7 +28951,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-ary.js:75:24]
  74 │ class C {
  75 │   static * #method([...[ x ] = []]) {
@@ -28959,7 +28959,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-id.js:75:24]
  74 │ class C {
  75 │   static * #method([...x = []]) {
@@ -28967,7 +28967,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-ary-ptrn-rest-init-obj.js:75:24]
  74 │ class C {
  75 │   static * #method([...{ x } = []]) {
@@ -28999,7 +28999,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-ary.js:75:24]
  74 │ class C {
  75 │   static * #method([...[ x ] = []] = []) {
@@ -29007,7 +29007,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-id.js:75:24]
  74 │ class C {
  75 │   static * #method([...x = []] = []) {
@@ -29015,7 +29015,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-gen-meth-static-dflt-ary-ptrn-rest-init-obj.js:75:24]
  74 │ class C {
  75 │   static * #method([...{ x } = []] = []) {
@@ -29047,7 +29047,7 @@ Negative Passed: 4581/4581 (100.00%)
  76 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-ary-ptrn-rest-init-ary.js:73:15]
  72 │ class C {
  73 │   #method([...[ x ] = []]) {
@@ -29055,7 +29055,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-ary-ptrn-rest-init-id.js:73:15]
  72 │ class C {
  73 │   #method([...x = []]) {
@@ -29063,7 +29063,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-ary-ptrn-rest-init-obj.js:73:15]
  72 │ class C {
  73 │   #method([...{ x } = []]) {
@@ -29095,7 +29095,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-ary.js:73:15]
  72 │ class C {
  73 │   #method([...[ x ] = []] = []) {
@@ -29103,7 +29103,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-id.js:73:15]
  72 │ class C {
  73 │   #method([...x = []] = []) {
@@ -29111,7 +29111,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-dflt-ary-ptrn-rest-init-obj.js:73:15]
  72 │ class C {
  73 │   #method([...{ x } = []] = []) {
@@ -29143,7 +29143,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-ary.js:73:22]
  72 │ class C {
  73 │   static #method([...[ x ] = []]) {
@@ -29151,7 +29151,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-id.js:73:22]
  72 │ class C {
  73 │   static #method([...x = []]) {
@@ -29159,7 +29159,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-ary-ptrn-rest-init-obj.js:73:22]
  72 │ class C {
  73 │   static #method([...{ x } = []]) {
@@ -29191,7 +29191,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-ary.js:73:22]
  72 │ class C {
  73 │   static #method([...[ x ] = []] = []) {
@@ -29199,7 +29199,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-id.js:73:22]
  72 │ class C {
  73 │   static #method([...x = []] = []) {
@@ -29207,7 +29207,7 @@ Negative Passed: 4581/4581 (100.00%)
  74 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/dstr/private-meth-static-dflt-ary-ptrn-rest-init-obj.js:73:22]
  72 │ class C {
  73 │   static #method([...{ x } = []] = []) {
@@ -33009,7 +33009,7 @@ Negative Passed: 4581/4581 (100.00%)
  84 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method/dflt-params-rest.js:87:14]
  86 │ class C {
  87 │   *method(...x = []) {
@@ -33178,7 +33178,7 @@ Negative Passed: 4581/4581 (100.00%)
  84 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/gen-method-static/dflt-params-rest.js:87:21]
  86 │ class C {
  87 │   static *method(...x = []) {
@@ -33346,7 +33346,7 @@ Negative Passed: 4581/4581 (100.00%)
  81 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/method/dflt-params-rest.js:84:13]
  83 │ class C {
  84 │   method(...x = []) {
@@ -33408,7 +33408,7 @@ Negative Passed: 4581/4581 (100.00%)
  81 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/class/method-static/dflt-params-rest.js:84:20]
  83 │ class C {
  84 │   static method(...x = []) {
@@ -33646,7 +33646,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │ }
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/const/dstr/ary-ptrn-rest-init-ary.js:31:11]
  30 │ 
  31 │ const [...[ x ] = []] = [];
@@ -33654,7 +33654,7 @@ Negative Passed: 4581/4581 (100.00%)
  32 │ 
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/const/dstr/ary-ptrn-rest-init-id.js:31:11]
  30 │ 
  31 │ const [...x = []] = [];
@@ -33662,7 +33662,7 @@ Negative Passed: 4581/4581 (100.00%)
  32 │ 
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/const/dstr/ary-ptrn-rest-init-obj.js:31:11]
  30 │ 
  31 │ const [...{ x } = []] = [];
@@ -34449,7 +34449,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Try inserting a semicolon here
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/const-ary-ptrn-rest-init-ary.js:52:16]
  51 │ 
  52 │ for (const [...[ x ] = []] = []; iterCount < 1; ) {
@@ -34457,7 +34457,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/const-ary-ptrn-rest-init-id.js:52:16]
  51 │ 
  52 │ for (const [...x = []] = []; iterCount < 1; ) {
@@ -34465,7 +34465,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/const-ary-ptrn-rest-init-obj.js:52:16]
  51 │ 
  52 │ for (const [...{ x } = []] = []; iterCount < 1; ) {
@@ -34497,7 +34497,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/let-ary-ptrn-rest-init-ary.js:52:14]
  51 │ 
  52 │ for (let [...[ x ] = []] = []; iterCount < 1; ) {
@@ -34505,7 +34505,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/let-ary-ptrn-rest-init-id.js:52:14]
  51 │ 
  52 │ for (let [...x = []] = []; iterCount < 1; ) {
@@ -34513,7 +34513,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/let-ary-ptrn-rest-init-obj.js:52:14]
  51 │ 
  52 │ for (let [...{ x } = []] = []; iterCount < 1; ) {
@@ -34545,7 +34545,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/var-ary-ptrn-rest-init-ary.js:46:14]
  45 │ 
  46 │ for (var [...[ x ] = []] = []; iterCount < 1; ) {
@@ -34553,7 +34553,7 @@ Negative Passed: 4581/4581 (100.00%)
  47 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/var-ary-ptrn-rest-init-id.js:46:14]
  45 │ 
  46 │ for (var [...x = []] = []; iterCount < 1; ) {
@@ -34561,7 +34561,7 @@ Negative Passed: 4581/4581 (100.00%)
  47 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for/dstr/var-ary-ptrn-rest-init-obj.js:46:14]
  45 │ 
  46 │ for (var [...{ x } = []] = []; iterCount < 1; ) {
@@ -34713,7 +34713,7 @@ Negative Passed: 4581/4581 (100.00%)
  35 │ }
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-ary.js:53:24]
  52 │ async function fn() {
  53 │   for await (const [...[ x ] = []] of [[]]) {
@@ -34721,7 +34721,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-id.js:53:24]
  52 │ async function fn() {
  53 │   for await (const [...x = []] of [[]]) {
@@ -34729,7 +34729,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-ary-ptrn-rest-init-obj.js:53:24]
  52 │ async function fn() {
  53 │   for await (const [...{ x } = []] of [[]]) {
@@ -34761,7 +34761,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-ary.js:56:24]
  55 │ async function fn() {
  56 │   for await (const [...[ x ] = []] of asyncIter) {
@@ -34769,7 +34769,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-id.js:56:24]
  55 │ async function fn() {
  56 │   for await (const [...x = []] of asyncIter) {
@@ -34777,7 +34777,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-const-async-ary-ptrn-rest-init-obj.js:56:24]
  55 │ async function fn() {
  56 │   for await (const [...{ x } = []] of asyncIter) {
@@ -34809,7 +34809,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-ary.js:53:22]
  52 │ async function fn() {
  53 │   for await (let [...[ x ] = []] of [[]]) {
@@ -34817,7 +34817,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-id.js:53:22]
  52 │ async function fn() {
  53 │   for await (let [...x = []] of [[]]) {
@@ -34825,7 +34825,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-ary-ptrn-rest-init-obj.js:53:22]
  52 │ async function fn() {
  53 │   for await (let [...{ x } = []] of [[]]) {
@@ -34857,7 +34857,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function fn() {
  56 │   for await (let [...[ x ] = []] of asyncIter) {
@@ -34865,7 +34865,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function fn() {
  56 │   for await (let [...x = []] of asyncIter) {
@@ -34873,7 +34873,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-let-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function fn() {
  56 │   for await (let [...{ x } = []] of asyncIter) {
@@ -34905,7 +34905,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-ary.js:50:22]
  49 │ async function fn() {
  50 │   for await (var [...[ x ] = []] of [[]]) {
@@ -34913,7 +34913,7 @@ Negative Passed: 4581/4581 (100.00%)
  51 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-id.js:50:22]
  49 │ async function fn() {
  50 │   for await (var [...x = []] of [[]]) {
@@ -34921,7 +34921,7 @@ Negative Passed: 4581/4581 (100.00%)
  51 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-ary-ptrn-rest-init-obj.js:50:22]
  49 │ async function fn() {
  50 │   for await (var [...{ x } = []] of [[]]) {
@@ -34953,7 +34953,7 @@ Negative Passed: 4581/4581 (100.00%)
  51 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function fn() {
  56 │   for await (var [...[ x ] = []] of asyncIter) {
@@ -34961,7 +34961,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function fn() {
  56 │   for await (var [...x = []] of asyncIter) {
@@ -34969,7 +34969,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-func-dstr-var-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function fn() {
  56 │   for await (var [...{ x } = []] of asyncIter) {
@@ -35009,7 +35009,7 @@ Negative Passed: 4581/4581 (100.00%)
  21 │ }
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-ary.js:53:24]
  52 │ async function *fn() {
  53 │   for await (const [...[ x ] = []] of [[]]) {
@@ -35017,7 +35017,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-id.js:53:24]
  52 │ async function *fn() {
  53 │   for await (const [...x = []] of [[]]) {
@@ -35025,7 +35025,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-rest-init-obj.js:53:24]
  52 │ async function *fn() {
  53 │   for await (const [...{ x } = []] of [[]]) {
@@ -35057,7 +35057,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-ary.js:56:24]
  55 │ async function *fn() {
  56 │   for await (const [...[ x ] = []] of asyncIter) {
@@ -35065,7 +35065,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-id.js:56:24]
  55 │ async function *fn() {
  56 │   for await (const [...x = []] of asyncIter) {
@@ -35073,7 +35073,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-const-async-ary-ptrn-rest-init-obj.js:56:24]
  55 │ async function *fn() {
  56 │   for await (const [...{ x } = []] of asyncIter) {
@@ -35121,7 +35121,7 @@ Negative Passed: 4581/4581 (100.00%)
  21 │ }
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-ary.js:53:22]
  52 │ async function *fn() {
  53 │   for await (let [...[ x ] = []] of [[]]) {
@@ -35129,7 +35129,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-id.js:53:22]
  52 │ async function *fn() {
  53 │   for await (let [...x = []] of [[]]) {
@@ -35137,7 +35137,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-ary-ptrn-rest-init-obj.js:53:22]
  52 │ async function *fn() {
  53 │   for await (let [...{ x } = []] of [[]]) {
@@ -35169,7 +35169,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function *fn() {
  56 │   for await (let [...[ x ] = []] of asyncIter) {
@@ -35177,7 +35177,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function *fn() {
  56 │   for await (let [...x = []] of asyncIter) {
@@ -35185,7 +35185,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-let-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function *fn() {
  56 │   for await (let [...{ x } = []] of asyncIter) {
@@ -35233,7 +35233,7 @@ Negative Passed: 4581/4581 (100.00%)
  21 │ }
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-ary.js:50:22]
  49 │ async function *fn() {
  50 │   for await (var [...[ x ] = []] of [[]]) {
@@ -35241,7 +35241,7 @@ Negative Passed: 4581/4581 (100.00%)
  51 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-id.js:50:22]
  49 │ async function *fn() {
  50 │   for await (var [...x = []] of [[]]) {
@@ -35249,7 +35249,7 @@ Negative Passed: 4581/4581 (100.00%)
  51 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-ary-ptrn-rest-init-obj.js:50:22]
  49 │ async function *fn() {
  50 │   for await (var [...{ x } = []] of [[]]) {
@@ -35281,7 +35281,7 @@ Negative Passed: 4581/4581 (100.00%)
  51 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-ary.js:56:22]
  55 │ async function *fn() {
  56 │   for await (var [...[ x ] = []] of asyncIter) {
@@ -35289,7 +35289,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-id.js:56:22]
  55 │ async function *fn() {
  56 │   for await (var [...x = []] of asyncIter) {
@@ -35297,7 +35297,7 @@ Negative Passed: 4581/4581 (100.00%)
  57 │     
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-await-of/async-gen-dstr-var-async-ary-ptrn-rest-init-obj.js:56:22]
  55 │ async function *fn() {
  56 │   for await (var [...{ x } = []] of asyncIter) {
@@ -36149,7 +36149,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·      ─────────────
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/const-ary-ptrn-rest-init-ary.js:52:16]
  51 │ 
  52 │ for (const [...[ x ] = []] of [[]]) {
@@ -36157,7 +36157,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/const-ary-ptrn-rest-init-id.js:52:16]
  51 │ 
  52 │ for (const [...x = []] of [[]]) {
@@ -36165,7 +36165,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/const-ary-ptrn-rest-init-obj.js:52:16]
  51 │ 
  52 │ for (const [...{ x } = []] of [[]]) {
@@ -36211,7 +36211,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·      ───────────
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/let-ary-ptrn-rest-init-ary.js:52:14]
  51 │ 
  52 │ for (let [...[ x ] = []] of [[]]) {
@@ -36219,7 +36219,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/let-ary-ptrn-rest-init-id.js:52:14]
  51 │ 
  52 │ for (let [...x = []] of [[]]) {
@@ -36227,7 +36227,7 @@ Negative Passed: 4581/4581 (100.00%)
  53 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/let-ary-ptrn-rest-init-obj.js:52:14]
  51 │ 
  52 │ for (let [...{ x } = []] of [[]]) {
@@ -36377,7 +36377,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·      ───────────
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/var-ary-ptrn-rest-init-ary.js:49:14]
  48 │ 
  49 │ for (var [...[ x ] = []] of [[]]) {
@@ -36385,7 +36385,7 @@ Negative Passed: 4581/4581 (100.00%)
  50 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/var-ary-ptrn-rest-init-id.js:49:14]
  48 │ 
  49 │ for (var [...x = []] of [[]]) {
@@ -36393,7 +36393,7 @@ Negative Passed: 4581/4581 (100.00%)
  50 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/for-of/dstr/var-ary-ptrn-rest-init-obj.js:49:14]
  48 │ 
  49 │ for (var [...{ x } = []] of [[]]) {
@@ -36767,7 +36767,7 @@ Negative Passed: 4581/4581 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dflt-params-rest.js:65:15]
  64 │ 
  65 │ function f(...x = []) {
@@ -36775,7 +36775,7 @@ Negative Passed: 4581/4581 (100.00%)
  66 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/ary-ptrn-rest-init-ary.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...[ x ] = []]) {
@@ -36783,7 +36783,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/ary-ptrn-rest-init-id.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...x = []]) {
@@ -36791,7 +36791,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/ary-ptrn-rest-init-obj.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...{ x } = []]) {
@@ -36823,7 +36823,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/dflt-ary-ptrn-rest-init-ary.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...[ x ] = []] = []) {
@@ -36831,7 +36831,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/dflt-ary-ptrn-rest-init-id.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...x = []] = []) {
@@ -36839,7 +36839,7 @@ Negative Passed: 4581/4581 (100.00%)
  55 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/function/dstr/dflt-ary-ptrn-rest-init-obj.js:54:16]
  53 │ var callCount = 0;
  54 │ function f([...{ x } = []] = []) {
@@ -37205,7 +37205,7 @@ Negative Passed: 4581/4581 (100.00%)
  62 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dflt-params-rest.js:65:16]
  64 │ 
  65 │ function* f(...x = []) {
@@ -37213,7 +37213,7 @@ Negative Passed: 4581/4581 (100.00%)
  66 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/ary-ptrn-rest-init-ary.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...[ x ] = []]) {
@@ -37221,7 +37221,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/ary-ptrn-rest-init-id.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...x = []]) {
@@ -37229,7 +37229,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/ary-ptrn-rest-init-obj.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...{ x } = []]) {
@@ -37261,7 +37261,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/dflt-ary-ptrn-rest-init-ary.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...[ x ] = []] = []) {
@@ -37269,7 +37269,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/dflt-ary-ptrn-rest-init-id.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...x = []] = []) {
@@ -37277,7 +37277,7 @@ Negative Passed: 4581/4581 (100.00%)
  54 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/generators/dstr/dflt-ary-ptrn-rest-init-obj.js:53:17]
  52 │ var callCount = 0;
  53 │ function* f([...{ x } = []] = []) {
@@ -38130,7 +38130,7 @@ Negative Passed: 4581/4581 (100.00%)
     · ─────
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/let/dstr/ary-ptrn-rest-init-ary.js:31:9]
  30 │ 
  31 │ let [...[ x ] = []] = [];
@@ -38138,7 +38138,7 @@ Negative Passed: 4581/4581 (100.00%)
  32 │ 
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/let/dstr/ary-ptrn-rest-init-id.js:31:9]
  30 │ 
  31 │ let [...x = []] = [];
@@ -38146,7 +38146,7 @@ Negative Passed: 4581/4581 (100.00%)
  32 │ 
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/let/dstr/ary-ptrn-rest-init-obj.js:31:9]
  30 │ 
  31 │ let [...{ x } = []] = [];
@@ -39205,7 +39205,7 @@ Negative Passed: 4581/4581 (100.00%)
     ·                ────
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/try/dstr/ary-ptrn-rest-init-ary.js:33:14]
  32 │   throw [];
  33 │ } catch ([...[ x ] = []]) {
@@ -39213,7 +39213,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/try/dstr/ary-ptrn-rest-init-id.js:33:14]
  32 │   throw [];
  33 │ } catch ([...x = []]) {
@@ -39221,7 +39221,7 @@ Negative Passed: 4581/4581 (100.00%)
  34 │   
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/try/dstr/ary-ptrn-rest-init-obj.js:33:14]
  32 │   throw [];
  33 │ } catch ([...{ x } = []]) {
@@ -39857,7 +39857,7 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/variable/dstr/ary-ptrn-rest-init-ary.js:30:9]
  29 │ 
  30 │ var [...[ x ] = []] = [];
@@ -39865,7 +39865,7 @@ Negative Passed: 4581/4581 (100.00%)
  31 │ 
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/variable/dstr/ary-ptrn-rest-init-id.js:30:9]
  29 │ 
  30 │ var [...x = []] = [];
@@ -39873,7 +39873,7 @@ Negative Passed: 4581/4581 (100.00%)
  31 │ 
     ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[test262/test/language/statements/variable/dstr/ary-ptrn-rest-init-obj.js:30:9]
  29 │ 
  30 │ var [...{ x } = []] = [];

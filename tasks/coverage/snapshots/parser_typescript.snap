@@ -10144,7 +10144,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParamAsOptional.ts:2:16]
  1 │ function f(...x?) { }
  2 │ function f2(...x = []) { }
@@ -10175,7 +10175,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·            ────
    ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts:3:19]
  2 │ 
  3 │ function b(...[...foo = []]: string[]) { }
@@ -16142,7 +16142,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
  14 │ function a3(...b?) { }            // Error, can't be optional
  15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
@@ -16490,7 +16490,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                ─────
    ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer1.ts:2:9]
  1 │ declare var a: number[];
  2 │ var [...x = a] = a;  // Error, rest element cannot have initializer
@@ -22715,7 +22715,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × A rest element cannot have an initializer.
+  × TS(1048): A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList10.ts:2:11]
  1 │ class C {
  2 │    foo(...bar = 0) { }
