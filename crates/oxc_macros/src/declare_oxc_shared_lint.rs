@@ -28,7 +28,7 @@ pub struct SharedLintRuleMeta {
 impl Parse for SharedLintRuleMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let struct_name: Ident = input.parse()?;
-        
+
         // Optional marker `(tsgolint)` directly after the rule struct name
         let mut is_tsgolint_rule = false;
         if input.peek(syn::token::Paren) {
@@ -48,7 +48,7 @@ impl Parse for SharedLintRuleMeta {
             }
         }
         input.parse::<Token!(,)>()?;
-        
+
         let plugin = input.parse()?;
         input.parse::<Token!(,)>()?;
         let category = input.parse()?;
@@ -136,7 +136,7 @@ pub fn declare_oxc_shared_lint(metadata: SharedLintRuleMeta) -> TokenStream {
 
     let canonical_name = rule_name_converter().convert(name.to_string());
     let plugin_str = plugin.to_string();
-    
+
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
         "suspicious" => quote! { RuleCategory::Suspicious },
@@ -147,7 +147,7 @@ pub fn declare_oxc_shared_lint(metadata: SharedLintRuleMeta) -> TokenStream {
         "nursery" => quote! { RuleCategory::Nursery },
         _ => panic!("invalid rule category"),
     };
-    
+
     let fix = fix.as_ref().map(Ident::to_string).map(|fix| {
         let fix = parse_fix(&fix);
         quote! {
