@@ -227,7 +227,7 @@ impl CliRunner {
         };
 
         if self.options.list_rules {
-            return crate::mode::run_rules(&lint_config, format_str, &output_formatter, stdout);
+            return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
         let search_for_nested_configs = !disable_nested_config &&

@@ -25,6 +25,7 @@ pub mod cli {
 mod run;
 #[cfg(feature = "napi")]
 pub use run::*;
+use rustc_hash::FxHashSet;
 
 // JS plugins are only supported on 64-bit little-endian platforms at present.
 // Note: `raw_transfer_constants` module will not compile on 32-bit systems.
@@ -57,5 +58,7 @@ const DEFAULT_OXLINTRC: &str = ".oxlintrc.json";
 pub fn get_all_rules_json() -> String {
     use crate::output_formatter::{OutputFormat, OutputFormatter};
 
-    OutputFormatter::new(OutputFormat::Json).all_rules().expect("Failed to generate rules JSON")
+    OutputFormatter::new(OutputFormat::Json)
+        .all_rules(FxHashSet::default())
+        .expect("Failed to generate rules JSON")
 }
