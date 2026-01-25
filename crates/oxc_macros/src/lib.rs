@@ -4,6 +4,7 @@ use proc_macro::TokenStream;
 use syn::parse_macro_input;
 
 mod declare_oxc_lint;
+mod declare_oxc_shared_lint;
 
 /// Macro used to declare an oxc lint rule
 ///
@@ -128,4 +129,87 @@ pub fn declare_oxc_lint_test(input: TokenStream) -> TokenStream {
     let mut metadata = parse_macro_input!(input as declare_oxc_lint::LintRuleMeta);
     metadata.used_in_test = true;
     declare_oxc_lint::declare_oxc_lint(metadata)
+}
+
+/// Macro used to declare a shared lint rule that references documentation from a shared location
+///
+/// This macro is similar to `declare_oxc_lint!` but allows you to reference
+/// documentation from a shared module, avoiding duplication when the same rule
+/// exists in multiple plugins.
+///
+/// Every shared lint declaration consists of 4 required parts and optional configuration:
+///
+/// 1. The lint's struct name
+/// 2. The lint's plugin
+/// 3. The lint's category
+/// 4. What kind of auto-fixes the lint supports, if any
+/// 5. A `shared_docs` parameter pointing to the shared documentation module
+///
+/// And optionally, a `config` parameter for defining configuration options.
+///
+/// ## Shared Documentation
+/// The `shared_docs` parameter should point to a module path that exports a
+/// `DOCUMENTATION` constant containing the rule's documentation string.
+/// This allows multiple plugin implementations to reference the same documentation.
+///
+/// ## Plugin and Category
+/// These work the same as in `declare_oxc_lint!`. Each usage of the macro
+/// specifies one plugin (e.g., `jest` or `vitest`).
+///
+/// ## Auto-fixes
+/// These work the same as in `declare_oxc_lint!`. See that macro's documentation for details.
+///
+/// # Example
+///
+/// In `shared/valid_title.rs`:
+/// ```rust,ignore
+/// #[cfg(feature = "ruledocs")]
+/// pub const DOCUMENTATION: Option<&str> = Some(
+///     r#"
+/// ### What it does
+///
+/// Checks that the titles of Jest and Vitest blocks are valid.
+///
+/// ### Why is this bad?
+///
+/// Titles that are not valid can be misleading.
+/// "#
+/// );
+/// ```
+///
+/// In `jest/valid_title.rs`:
+/// ```rust,ignore
+/// use oxc_macros::declare_oxc_shared_lint;
+///
+/// #[derive(Debug, Default, Clone)]
+/// pub struct ValidTitle(Box<SharedValidTitle::ValidTitleConfig>);
+///
+/// declare_oxc_shared_lint!(
+///     ValidTitle,
+///     jest,
+///     correctness,
+///     conditional_fix,
+///     shared_docs = crate::rules::shared::valid_title
+/// );
+/// ```
+///
+/// In `vitest/valid_title.rs`:
+/// ```rust,ignore
+/// use oxc_macros::declare_oxc_shared_lint;
+///
+/// #[derive(Debug, Default, Clone)]
+/// pub struct ValidTitle(Box<SharedValidTitle::ValidTitleConfig>);
+///
+/// declare_oxc_shared_lint!(
+///     ValidTitle,
+///     vitest,
+///     correctness,
+///     conditional_fix,
+///     shared_docs = crate::rules::shared::valid_title
+/// );
+/// ```
+#[proc_macro]
+pub fn declare_oxc_shared_lint(input: TokenStream) -> TokenStream {
+    let metadata = parse_macro_input!(input as declare_oxc_shared_lint::SharedLintRuleMeta);
+    declare_oxc_shared_lint::declare_oxc_shared_lint(metadata)
 }
