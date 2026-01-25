@@ -5,6 +5,7 @@ mod command;
 mod init;
 mod lint;
 mod lsp;
+mod mode;
 mod output_formatter;
 mod result;
 mod walk;

@@ -1,7 +1,6 @@
 use std::{
     env,
     ffi::OsStr,
-    fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
@@ -11,7 +10,6 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 use rustc_hash::{FxHashMap, FxHashSet};
-use serde_json::Value;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
@@ -63,6 +61,10 @@ impl CliRunner {
             inline_config_options,
             ..
         } = self.options;
+
+        if basic_options.init {
+            return crate::mode::run_init(&self.cwd, stdout);
+        }
 
         let external_linter = self.external_linter.as_ref();
 
@@ -215,11 +217,8 @@ impl CliRunner {
             oxlintrc.plugins = Some(plugins);
         }
 
-        let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
-            Some(oxlintrc.clone())
-        } else {
-            None
-        };
+        let oxlintrc_for_print =
+            if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
 
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
@@ -254,32 +253,6 @@ impl CliRunner {
                 print_and_flush_stdout(stdout, "\n");
 
                 return CliRunResult::PrintConfigResult;
-            } else if basic_options.init {
-                let schema_relative_path = "node_modules/oxlint/configuration_schema.json";
-                let configuration = if self.cwd.join(schema_relative_path).is_file() {
-                    let mut config_json: Value = serde_json::from_str(&config_file).unwrap();
-                    if let Value::Object(ref mut obj) = config_json {
-                        let mut json_object = serde_json::Map::new();
-                        json_object.insert(
-                            "$schema".to_string(),
-                            format!("./{schema_relative_path}").into(),
-                        );
-                        json_object.extend(obj.clone());
-                        *obj = json_object;
-                    }
-                    serde_json::to_string_pretty(&config_json).unwrap()
-                } else {
-                    config_file
-                };
-
-                if fs::write(DEFAULT_OXLINTRC, configuration).is_ok() {
-                    print_and_flush_stdout(stdout, "Configuration file created\n");
-                    return CliRunResult::ConfigFileInitSucceeded;
-                }
-
-                // failed case
-                print_and_flush_stdout(stdout, "Failed to create configuration file\n");
-                return CliRunResult::ConfigFileInitFailed;
             }
         }
 
