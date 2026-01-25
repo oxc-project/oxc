@@ -308,8 +308,12 @@ impl CliRunner {
             ReportUnusedDirectives::WithSeverity(Some(severity)) => Some(severity),
             _ => None,
         };
-        let (mut diagnostic_service, tx_error) =
-            Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options, &oxlintrc);
+        let (mut diagnostic_service, tx_error) = Self::get_diagnostic_service(
+            &output_formatter,
+            &warning_options,
+            &misc_options,
+            &oxlintrc,
+        );
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
 
