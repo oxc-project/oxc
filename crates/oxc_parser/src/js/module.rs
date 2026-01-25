@@ -402,7 +402,7 @@ impl<'a> ParserImpl<'a> {
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
         if self.ctx.has_top_level() {
-            self.module_record_builder.found_ts_export();
+            self.module_record_builder.set_module_syntax();
         }
         self.ast.alloc_ts_export_assignment(self.end_span(start_span), expression)
     }
@@ -416,7 +416,7 @@ impl<'a> ParserImpl<'a> {
         let id = self.parse_identifier_name();
         self.asi();
         if self.ctx.has_top_level() {
-            self.module_record_builder.found_ts_export();
+            self.module_record_builder.set_module_syntax();
         }
         self.ast.alloc_ts_namespace_export_declaration(self.end_span(start_span), id)
     }

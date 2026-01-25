@@ -568,6 +568,9 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::LParen);
             let expression = self.parse_literal_string();
             self.expect(Kind::RParen);
+            if self.ctx.has_top_level() {
+                self.module_record_builder.set_module_syntax();
+            }
             self.ast.ts_module_reference_external_module_reference(
                 self.end_span(reference_span),
                 expression,
