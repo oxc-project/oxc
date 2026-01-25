@@ -16041,7 +16041,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  10 │ }
     ╰────
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames49_ES5.ts:9:16]
   8 │     },
   9 │     set [1 + 1]() {
@@ -16050,7 +16050,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames49_ES6.ts:9:16]
   8 │     },
   9 │     set [1 + 1]() {
@@ -16059,7 +16059,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames50_ES5.ts:11:16]
  10 │     },
  11 │     set [1 + 1]() {
@@ -16068,7 +16068,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames50_ES6.ts:11:16]
  10 │     },
  11 │     set [1 + 1]() {
@@ -21153,14 +21153,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove these parameters here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors8.ts:1:18]
  1 │ var v = { set foo() { } }
    ·                  ──
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors9.ts:1:18]
  1 │ var v = { set foo(a, b) { } }
    ·                  ──────
@@ -22010,7 +22010,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserErrantSemicolonInClass1.ts:15:17]
  14 │     }
  15 │     public set d() {
@@ -22494,7 +22494,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove these parameters here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration13.ts:2:11]
  1 │ class C {
  2 │    set Foo() { }
@@ -22503,7 +22503,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration14.ts:2:11]
  1 │ class C {
  2 │    set Foo(a: number, b: number) { }

@@ -1122,7 +1122,7 @@ pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn setter_with_parameters(span: Span, parameters_count: usize) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.")
+    ts_error("1049", "A 'set' accessor must have exactly one parameter.")
         .with_label(span)
         .with_help(if parameters_count == 0 {
             "Add a parameter here"
