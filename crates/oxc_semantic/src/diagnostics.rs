@@ -239,7 +239,7 @@ pub fn super_without_derived_class(span: Span, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn unexpected_super_call(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Super calls are not permitted outside constructors or in nested functions inside constructors.")
+    ts_error("2337", "Super calls are not permitted outside constructors or in nested functions inside constructors.")
         .with_label(span)
 }
 

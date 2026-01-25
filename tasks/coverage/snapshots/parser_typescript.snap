@@ -6470,7 +6470,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  4 │ }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:9:32]
   8 │         var r3 = () => { super(); }
   9 │         var r4 = function () { super(); }
@@ -6478,7 +6478,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  10 │         var r5 = {
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:12:17]
  11 │             get foo() {
  12 │                 super();
@@ -6486,7 +6486,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │                 return 1;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:16:17]
  15 │             set foo(v: number) {
  16 │                 super();
@@ -11157,7 +11157,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: either remove this super, or extend the class
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/compiler/superCallFromFunction1.ts:2:5]
  1 │ function foo() {
  2 │     super(value => String(value));
@@ -11165,7 +11165,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/compiler/superCallOutsideConstructor.ts:6:9]
  5 │ class D extends C {
  6 │     x = super(); 
@@ -11173,7 +11173,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  7 │  
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/superCallOutsideConstructor.ts:16:13]
  15 │         var y2 = function() {
  16 │             super();
@@ -13361,7 +13361,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicate modifier.
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassConstructorWithoutSuperCall.ts:24:31]
  23 │     constructor() { // error
  24 │         var r = function () { super() } // error
@@ -13476,7 +13476,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers6.ts:6:16]
  5 │ class D extends C {
  6 │     static c = super();
@@ -15985,7 +15985,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  11 │     ]() { }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames27_ES5.ts:4:7]
  3 │ class C extends Base {
  4 │     [(super(), "prop")]() { }
@@ -15993,7 +15993,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  5 │ }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames27_ES6.ts:4:7]
  3 │ class C extends Base {
  4 │     [(super(), "prop")]() { }
@@ -19314,7 +19314,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: either remove this super, or extend the class
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:9:9]
   8 │     fn() {
   9 │         super();
@@ -19322,7 +19322,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  10 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:14:9]
  13 │     get foo() {
  14 │         super();
@@ -19330,7 +19330,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  15 │         return null;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:18:9]
  17 │     set foo(v) {
  18 │         super();
@@ -19338,7 +19338,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  19 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:22:9]
  21 │     //super call in class member initializer with no base type
  22 │     p = super();
@@ -19346,7 +19346,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  23 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:26:9]
  25 │     static fn() {
  26 │         super();
@@ -19354,7 +19354,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  27 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:30:16]
  29 │     //super call in static class member initializer with no base type
  30 │     static k = super();
@@ -19362,7 +19362,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  31 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:34:9]
  33 │     static get q() {
  34 │         super();
@@ -19370,7 +19370,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  35 │         return null;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:38:9]
  37 │     static set q(n) {
  38 │         super();
@@ -19378,7 +19378,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  39 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:58:9]
  57 │     //super call in class member initializer of derived type
  58 │     t = super();
@@ -19386,7 +19386,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  59 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:62:9]
  61 │         //super call in class member function of derived type
  62 │         super();
@@ -19394,7 +19394,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  63 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:67:9]
  66 │     get foo() {
  67 │         super();
@@ -19402,7 +19402,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  68 │         return null;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:71:9]
  70 │     set foo(n) {
  71 │         super();
@@ -23655,7 +23655,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Replace with `super()` or `super.prop` or `super[prop]`
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:3:5]
  2 │   M() {
  3 │     super<T>(0);
