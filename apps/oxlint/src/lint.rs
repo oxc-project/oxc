@@ -182,6 +182,36 @@ impl CliRunner {
         }
 
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+        {
+            let mut plugins = oxlintrc.plugins.unwrap_or_default();
+            enable_plugins.apply_overrides(&mut plugins);
+            oxlintrc.plugins = Some(plugins);
+        }
+
+        let base_ignore_patterns = oxlintrc.ignore_patterns.clone();
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc.clone(),
+            external_linter,
+            &mut external_plugin_store,
+        ) {
+            Ok(builder) => builder,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to parse oxlint configuration file.\n{}\n",
+                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
+        .with_filters(&filters);
+
+        if misc_options.print_config {
+            return crate::mode::run_print_config(&config_builder, oxlintrc, stdout);
+        }
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -207,53 +237,13 @@ impl CliRunner {
             FxHashMap::default()
         };
 
-        let ignore_matcher = {
-            LintIgnoreMatcher::new(&oxlintrc.ignore_patterns, &self.cwd, nested_ignore_patterns)
-        };
-
-        {
-            let mut plugins = oxlintrc.plugins.unwrap_or_default();
-            enable_plugins.apply_overrides(&mut plugins);
-            oxlintrc.plugins = Some(plugins);
-        }
-
-        let oxlintrc_for_print =
-            if misc_options.print_config { Some(oxlintrc.clone()) } else { None };
-
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
-            external_linter,
-            &mut external_plugin_store,
-        ) {
-            Ok(builder) => builder,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse oxlint configuration file.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        }
-        .with_filters(&filters);
+        let ignore_matcher =
+            { LintIgnoreMatcher::new(&base_ignore_patterns, &self.cwd, nested_ignore_patterns) };
 
         // If no external rules, discard `ExternalLinter`
         let mut external_linter = self.external_linter;
         if external_plugin_store.is_empty() {
             external_linter = None;
-        }
-
-        if let Some(basic_config_file) = oxlintrc_for_print {
-            let config_file = config_builder.resolve_final_config_file(basic_config_file);
-            if misc_options.print_config {
-                print_and_flush_stdout(stdout, &config_file);
-                print_and_flush_stdout(stdout, "\n");
-
-                return CliRunResult::PrintConfigResult;
-            }
         }
 
         // TODO(refactor): pull this into a shared function, so that the language server can use
