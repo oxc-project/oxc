@@ -3,10 +3,14 @@
   "version": "0.110.0",
   "description": "Oxc Parser Node API",
   "keywords": [
+    "ast",
+    "estree",
+    "javascript",
     "oxc",
-    "parser"
+    "parser",
+    "typescript"
   ],
-  "homepage": "https://oxc.rs",
+  "homepage": "https://oxc.rs/docs/guide/usage/parser",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "license": "MIT",
   "author": "Boshen and oxc contributors",

@@ -50,7 +50,7 @@ The Oxidation Compiler is creating a suite of high-performance tools for JavaScr
 
 This is the formatter for oxc.
 
-See [usage instructions](https://oxc.rs/docs/guide/usage/formatter.html).
+See [usage instructions](https://oxc.rs/docs/guide/usage/formatter).
 
 Run
 
