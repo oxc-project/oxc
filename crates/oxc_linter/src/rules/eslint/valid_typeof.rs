@@ -10,6 +10,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    utils::best_match,
 };
 
 fn not_string(help: Option<&'static str>, span: Span) -> OxcDiagnostic {
@@ -172,25 +173,8 @@ const VALID_TYPES: [&str; 8] =
 
 /// Check for common misspellings of typeof values and return a suggestion.
 fn get_typo_suggestion(value: &str) -> Option<&'static str> {
-    // spellchecker:off
-    match value {
-        "strnig" | "stirng" | "sting" | "strng" | "srting" | "srtring" | "strning" => {
-            Some("string")
-        }
-        "umdefined" | "undefimed" | "underfined" | "undefinied" | "undefied" | "undeffined"
-        | "undefind" | "undifined" | "udefined" | "undfined" => Some("undefined"),
-        "fucntion" | "funtion" | "fuction" | "functon" | "funcion" | "funciton" | "functin"
-        | "funcitn" | "funcrion" => Some("function"),
-        "obejct" | "objcet" | "obect" | "objetc" | "objetct" | "objet" | "objec" => Some("object"),
-        "bolean" | "booleen" | "boolen" | "boolaen" | "booelan" | "bollean" => Some("boolean"),
-        "nunber" | "nubmer" | "numbre" | "numver" | "numbr" | "numebr" | "nmber" => Some("number"),
-        "symol" | "symblo" | "simbole" | "synbol" | "symboll" | "symbal" => Some("symbol"),
-        "biigint" | "bignt" | "biignt" | "bigimit" | "bignit" | "bigit" | "begint" => {
-            Some("bigint")
-        }
-        _ => None,
-    }
-    // spellchecker:on
+    const THRESHOLD: usize = 2;
+    best_match(value, VALID_TYPES, THRESHOLD)
 }
 
 #[test]
