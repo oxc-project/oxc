@@ -37,7 +37,6 @@ fn test_rules_with_custom_configuration_have_schema() {
         "jest/valid-title",
         // react
         "react/forbid-dom-props",
-        "react/forbid-elements",
     ];
 
     let exception_set: FxHashSet<&str> = exceptions.iter().copied().collect();
