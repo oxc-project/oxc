@@ -10,13 +10,18 @@ import { SHOULD_SKIP_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
 import type { ParserDetails } from "./index.ts";
-import type { LanguageOptionsInternal } from "../../src-js/package/rule_tester.ts";
+import type {
+  LanguageOptionsInternal,
+  ParserOptionsInternal,
+} from "../../src-js/package/rule_tester.ts";
 
 type DescribeFn = RuleTester.DescribeFn;
 type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
 type Globals = RuleTester.Globals;
 export type Language = RuleTester.Language;
+export type LanguageOptions = LanguageOptionsInternal;
+export type ParserOptions = ParserOptionsInternal;
 
 interface TestCaseExtension {
   languageOptions?: LanguageOptionsInternal;

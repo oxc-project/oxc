@@ -8,10 +8,12 @@
 // Use the conformance testing version of `RuleTester`,
 // which modifies test cases before they run
 import { RuleTester as OxlintRuleTester } from "./src/rule_tester.ts";
-// @ts-expect-error - internal module of ESLint with no types
-import { RuleTester as ESLintRuleTester } from "./submodules/eslint/lib/rule-tester/index.js";
+// // @ts-expect-error - internal module of ESLint with no types
+// import { RuleTester as ESLintRuleTester } from "./submodules/eslint/lib/rule-tester/index.js";
+import { RuleTester as ESLintRuleTester } from "eslint";
 // @ts-expect-error - internal module of ESLint with no types
 import { builtinRules } from "./submodules/eslint/lib/unsupported-api.js";
+import tsEslintParser from "@typescript-eslint/parser";
 
 import type { Rule } from "#oxlint";
 import type { ValidTestCase, InvalidTestCase } from "./src/rule_tester.ts";
@@ -133,6 +135,9 @@ Leave the eslint repo as it was before you started, ready to investigate another
 -----------------------------------------------------------------------------*/
 
 const ruleName = "block-scoped-var";
+const rule = builtinRules.get(ruleName) as unknown as Rule;
+
+// import rule from "./submodules/stylistic/packages/eslint-plugin/rules/jsx-props-no-multi-spaces/jsx-props-no-multi-spaces.ts";
 
 const code = `for (var a = 0;;) {} a;`;
 
@@ -157,35 +162,47 @@ const testCase: TestCaseWithoutCode = {
 // Run test case with both ESLint and Oxlint
 // -----------------------------------------------------------------------------
 
-runBoth(ruleName, isInvalid, code, testCase);
+runBoth(rule, isInvalid, code, testCase);
 
-function runBoth(
-  ruleName: string,
-  isInvalid: boolean,
-  code: string,
-  testCase: TestCaseWithoutCode,
-) {
+function runBoth(rule: Rule, isInvalid: boolean, code: string, testCase: TestCaseWithoutCode) {
   testCase = { code, ...testCase };
 
-  const valid: ValidTestCase[] = [],
-    invalid: InvalidTestCase[] = [];
-  if (isInvalid) {
-    invalid.push(testCase as InvalidTestCase);
-  } else {
-    valid.push(testCase as ValidTestCase);
-  }
-
-  const rule = builtinRules.get(ruleName) as unknown as Rule;
-
+  // Run case with ESLint
   console.log("--------------------");
   console.log("ESLint");
   console.log("--------------------");
-  runOne(ESLintRuleTester, rule, valid, invalid);
 
+  const eslintValid: ValidTestCase[] = [],
+    eslintInvalid: InvalidTestCase[] = [];
+  if (isInvalid) {
+    eslintInvalid.push(testCase as InvalidTestCase);
+  } else {
+    eslintValid.push(testCase as ValidTestCase);
+  }
+
+  runOne(ESLintRuleTester, rule, eslintValid, eslintInvalid);
+
+  // Run case with Oxlint
   console.log("\n--------------------");
   console.log("Oxlint");
   console.log("--------------------");
-  runOne(OxlintRuleTester, rule, valid, invalid);
+
+  if (testCase?.languageOptions?.parser === tsEslintParser) {
+    testCase.languageOptions = { parserOptions: {}, ...testCase.languageOptions };
+    delete testCase.languageOptions.parser;
+    testCase.languageOptions.parserOptions!.lang =
+      testCase.languageOptions.parserOptions!.ecmaFeatures?.jsx === true ? "tsx" : "ts";
+  }
+
+  const oxlintValid: ValidTestCase[] = [],
+    oxlintInvalid: InvalidTestCase[] = [];
+  if (isInvalid) {
+    oxlintInvalid.push(testCase as InvalidTestCase);
+  } else {
+    oxlintValid.push(testCase as ValidTestCase);
+  }
+
+  runOne(OxlintRuleTester, rule, oxlintValid, oxlintInvalid);
 }
 
 function runOne(RuleTester: any, rule: Rule, valid: ValidTestCase[], invalid: InvalidTestCase[]) {
