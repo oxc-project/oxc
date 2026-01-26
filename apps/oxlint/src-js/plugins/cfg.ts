@@ -207,19 +207,18 @@ function prepareSteps(ast: Program) {
         // `exit` visit fn would be called before the CFG event handlers, instead of after.
         if (DEBUG && stepTypeIds.length !== stepsLenAfterEnter) {
           const eventNames: string[] = [];
-          for (let j = stepsLenAfterEnter; j < stepTypeIds.length; j++) {
-            const eventTypeId = stepTypeIds[j];
-            // CFG events have type IDs >= NODE_TYPES_COUNT and < EXIT_TYPE_ID_OFFSET
-            if (eventTypeId >= NODE_TYPES_COUNT && eventTypeId < EXIT_TYPE_ID_OFFSET) {
-              // Find the event name by reverse lookup
-              for (const [name, id] of NODE_TYPE_IDS_MAP) {
-                if (id === eventTypeId) {
-                  eventNames.push(name);
-                  break;
-                }
-              }
+          for (let i = stepsLenAfterEnter; i < stepTypeIds.length; i++) {
+            const typeId = stepTypeIds[i];
+            if (typeId < NODE_TYPES_COUNT) {
+              eventNames.push(`enter ${NODE_TYPE_IDS_MAP.get((stepData[i] as Node).type)}`);
+            } else if (typeId >= EXIT_TYPE_ID_OFFSET) {
+              eventNames.push(`exit ${NODE_TYPE_IDS_MAP.get((stepData[i] as Node).type)}`);
+            } else {
+              const eventName = NODE_TYPE_IDS_MAP.entries().find(([, id]) => id === typeId)![0];
+              eventNames.push(eventName);
             }
           }
+
           throw new Error(
             `CFG events emitted during visiting leaf node \`${node.type}\`: ${eventNames.join(", ")}`,
           );
