@@ -169,13 +169,10 @@ jobs:
 
       - run: ls
 
-      - name: Unzip from windows builds
-        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
-        with:
-          args: unzip -qq *.zip -d .
-
-      - name: Untar from non-windows builds
-        run: ls *.gz | xargs -i tar xf {}
+      - name: Unzip and untar
+        run: |
+          unzip -qq '*.zip' -d .
+          ls *.gz | xargs -i tar xf {}
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
@@ -335,13 +332,10 @@ jobs:
 
       - run: ls
 
-      - name: Unzip from windows builds
-        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
-        with:
-          args: unzip -qq *.zip -d .
-
-      - name: Untar from non-windows builds
-        run: ls *.gz | xargs -i tar xf {}
+      - name: Unzip and untar
+        run: |
+          unzip -qq '*.zip' -d .
+          ls *.gz | xargs -i tar xf {}
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
