@@ -1,0 +1,8 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+assertion_line: 261
+---
+########## 
+Linted file: fixtures/lsp/ts_config_basic/test.js
+----------
+Error running diagnostics: Failed to read file: No such file or directory (os error 2)

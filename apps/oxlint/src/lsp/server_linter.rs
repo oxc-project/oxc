@@ -26,8 +26,11 @@ use oxc_language_server::{
     ToolRestartChanges,
 };
 
+#[cfg(feature = "napi")]
+use crate::js_config::JsConfigLoaderCb;
+
 use crate::{
-    DEFAULT_OXLINTRC_NAME,
+    DEFAULT_OXLINTRC_NAME, DEFAULT_TS_OXLINTRC_NAME,
     config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
     lsp::{
         code_actions::{
@@ -48,11 +51,24 @@ use crate::{
 #[derive(Default)]
 pub struct ServerLinterBuilder {
     external_linter: Option<ExternalLinter>,
+    #[cfg(feature = "napi")]
+    js_config_loader: Option<JsConfigLoaderCb>,
 }
 
 impl ServerLinterBuilder {
     pub fn new(external_linter: Option<ExternalLinter>) -> Self {
-        Self { external_linter }
+        Self {
+            external_linter,
+            #[cfg(feature = "napi")]
+            js_config_loader: None,
+        }
+    }
+
+    #[cfg(feature = "napi")]
+    #[must_use]
+    pub fn with_js_config_loader(mut self, js_config_loader: Option<JsConfigLoaderCb>) -> Self {
+        self.js_config_loader = js_config_loader;
+        self
     }
 
     /// # Panics
@@ -82,35 +98,94 @@ impl ServerLinterBuilder {
         let mut nested_ignore_patterns = Vec::new();
         let mut extended_paths = FxHashSet::default();
         let nested_configs = if options.use_nested_configs() {
-            Self::create_nested_configs(
+            #[cfg(feature = "napi")]
+            let configs = Self::create_nested_configs(
                 &root_path,
                 self.external_linter.as_ref(),
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
-                Some(root_uri.as_str()),
-            )
+                self.js_config_loader.as_ref(),
+            );
+            #[cfg(not(feature = "napi"))]
+            let configs = Self::create_nested_configs(
+                &root_path,
+                self.external_linter.as_ref(),
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+            );
+            configs
         } else {
             FxHashMap::default()
         };
-        let config_path = match options.config_path.as_deref() {
-            Some("") | None => DEFAULT_OXLINTRC_NAME,
-            Some(v) => v,
-        };
-        let config = normalize_path(root_path.join(config_path));
-        let oxlintrc = if config.try_exists().is_ok_and(|exists| exists) {
-            if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
-                oxlintrc
+        let config_path = options.config_path.as_deref().filter(|path| !path.is_empty());
+        let oxlintrc = if let Some(config_path) = config_path {
+            let config = normalize_path(root_path.join(config_path));
+            if config.try_exists().is_ok_and(|exists| exists) {
+                if config.ends_with(DEFAULT_TS_OXLINTRC_NAME) {
+                    #[cfg(feature = "napi")]
+                    let config = Self::load_ts_config(&config, self.js_config_loader.as_ref());
+                    #[cfg(not(feature = "napi"))]
+                    let config = {
+                        warn!(
+                            "TypeScript config files ({DEFAULT_TS_OXLINTRC}) are not supported in this build."
+                        );
+                        None
+                    };
+                    config.unwrap_or_default()
+                } else if let Ok(oxlintrc) = Oxlintrc::from_file(&config) {
+                    oxlintrc
+                } else {
+                    warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                    Oxlintrc::default()
+                }
             } else {
-                warn!("Failed to initialize oxlintrc config: {}", config.to_string_lossy());
+                warn!(
+                    "Config file not found: {}, fallback to default config",
+                    config.to_string_lossy()
+                );
                 Oxlintrc::default()
             }
         } else {
-            warn!(
-                "Config file not found: {}, fallback to default config",
-                config.to_string_lossy()
-            );
-            Oxlintrc::default()
+            let json_path = root_path.join(DEFAULT_OXLINTRC_NAME);
+            let ts_path = root_path.join(DEFAULT_TS_OXLINTRC_NAME);
+            let json_exists = json_path.is_file();
+            let ts_exists = ts_path.is_file();
+
+            if json_exists && ts_exists {
+                warn!(
+                    "Both '{}' and '{}' found in {}. Please use only one config file.",
+                    DEFAULT_OXLINTRC_NAME,
+                    DEFAULT_TS_OXLINTRC_NAME,
+                    root_path.display()
+                );
+                Oxlintrc::default()
+            } else if ts_exists {
+                #[cfg(feature = "napi")]
+                let config = Self::load_ts_config(&ts_path, self.js_config_loader.as_ref());
+                #[cfg(not(feature = "napi"))]
+                let config = {
+                    warn!(
+                        "TypeScript config files ({DEFAULT_TS_OXLINTRC}) are not supported in this build."
+                    );
+                    None
+                };
+                config.unwrap_or_default()
+            } else if json_exists {
+                if let Ok(oxlintrc) = Oxlintrc::from_file(&json_path) {
+                    oxlintrc
+                } else {
+                    warn!("Failed to initialize oxlintrc config: {}", json_path.to_string_lossy());
+                    Oxlintrc::default()
+                }
+            } else {
+                warn!(
+                    "Config file not found: {}, fallback to default config",
+                    json_path.to_string_lossy()
+                );
+                Oxlintrc::default()
+            }
         };
 
         let base_patterns = oxlintrc.ignore_patterns.clone();
@@ -318,12 +393,15 @@ impl ServerLinterBuilder {
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
-        workspace_uri: Option<&str>,
+        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
     ) -> FxHashMap<PathBuf, Config> {
         let config_paths = discover_configs_in_tree(root_path);
 
-        let mut loader =
-            ConfigLoader::new(external_linter, external_plugin_store, &[], workspace_uri);
+        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, &[], None);
+        #[cfg(feature = "napi")]
+        {
+            loader = loader.with_js_config_loader(js_config_loader);
+        }
         let (configs, errors) = loader.load_discovered(config_paths);
 
         for error in errors {
@@ -335,6 +413,30 @@ impl ServerLinterBuilder {
         }
 
         build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths))
+    }
+
+    #[cfg(feature = "napi")]
+    fn load_ts_config(
+        path: &Path,
+        js_config_loader: Option<&JsConfigLoaderCb>,
+    ) -> Option<Oxlintrc> {
+        let Some(loader) = js_config_loader else {
+            warn!(
+                "TypeScript config files ({DEFAULT_TS_OXLINTRC_NAME}) found but JS runtime not available."
+            );
+            return None;
+        };
+
+        let paths_as_strings = vec![path.to_string_lossy().to_string()];
+        match loader(paths_as_strings) {
+            Ok(results) => results.into_iter().next().map(|result| result.config),
+            Err(diagnostics) => {
+                for diagnostic in diagnostics {
+                    warn!("Skipping invalid config file: {}", diagnostic);
+                }
+                None
+            }
+        }
     }
 
     #[expect(clippy::filetype_is_file)]
@@ -449,11 +551,15 @@ impl Tool for ServerLinter {
                 LSPLintOptions::default()
             }
         };
-        let config_pattern = match options.config_path.as_deref() {
-            Some("") | None => "**/.oxlintrc.json".to_string(),
-            Some(v) => v.to_string(),
+        let mut watchers = match options.config_path.as_deref() {
+            Some("") | None => {
+                vec![
+                    format!("**/{DEFAULT_OXLINTRC_NAME}"),
+                    format!("**/{DEFAULT_TS_OXLINTRC_NAME}"),
+                ]
+            }
+            Some(v) => vec![v.to_string()],
         };
-        let mut watchers = vec![config_pattern];
 
         for path in &self.extended_paths {
             // ignore .oxlintrc.json files when using nested configs
@@ -998,8 +1104,9 @@ mod test_watchers {
             let patterns =
                 Tester::new("fixtures/lsp/watchers/default", json!({})).get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
         }
 
         #[test]
@@ -1012,8 +1119,9 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 1);
+            assert_eq!(patterns.len(), 2);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
+            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
         }
 
         #[test]
@@ -1035,10 +1143,11 @@ mod test_watchers {
             let patterns = Tester::new("fixtures/lsp/watchers/linter_extends", json!({}))
                 .get_watcher_patterns();
 
-            // The `.oxlintrc.json` extends `./lint.json -> 2 watchers
-            assert_eq!(patterns.len(), 2);
+            // The `.oxlintrc.json` extends `./lint.json` -> 3 watchers (default config files + extends)
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "lint.json".to_string());
+            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[2], "lint.json".to_string());
         }
 
         #[test]
@@ -1066,9 +1175,10 @@ mod test_watchers {
             )
             .get_watcher_patterns();
 
-            assert_eq!(patterns.len(), 2);
+            assert_eq!(patterns.len(), 3);
             assert_eq!(patterns[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(patterns[1], "**/tsconfig*.json".to_string());
+            assert_eq!(patterns[1], "**/oxlint.config.ts".to_string());
+            assert_eq!(patterns[2], "**/tsconfig*.json".to_string());
         }
     }
 
@@ -1119,9 +1229,10 @@ mod test_watchers {
                         "typeAware": true
                     }));
             assert!(watch_patterns.is_some());
-            assert_eq!(watch_patterns.as_ref().unwrap().len(), 2);
+            assert_eq!(watch_patterns.as_ref().unwrap().len(), 3);
             assert_eq!(watch_patterns.as_ref().unwrap()[0], "**/.oxlintrc.json".to_string());
-            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/tsconfig*.json".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[1], "**/oxlint.config.ts".to_string());
+            assert_eq!(watch_patterns.as_ref().unwrap()[2], "**/tsconfig*.json".to_string());
         }
     }
 }
@@ -1130,20 +1241,30 @@ mod test_watchers {
 mod test {
     use std::path::PathBuf;
 
-    use oxc_linter::ExternalPluginStore;
+    use oxc_linter::{ExternalPluginStore, Oxlintrc};
     use rustc_hash::FxHashSet;
     use serde_json::json;
+
+    #[cfg(feature = "napi")]
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    };
 
     use crate::lsp::{
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
 
+    #[cfg(feature = "napi")]
+    use crate::js_config::{JsConfigLoaderCb, JsConfigResult};
+
     #[test]
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut extended_paths = FxHashSet::default();
+        #[cfg(feature = "napi")]
         let configs = ServerLinterBuilder::create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
             None,
@@ -1151,6 +1272,14 @@ mod test {
             &mut nested_ignore_patterns,
             &mut extended_paths,
             None,
+        );
+        #[cfg(not(feature = "napi"))]
+        let configs = ServerLinterBuilder::create_nested_configs(
+            &get_file_path("fixtures/lsp/init_nested_configs"),
+            None,
+            &mut external_plugin_store,
+            &mut nested_ignore_patterns,
+            &mut extended_paths,
         );
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results
@@ -1160,6 +1289,33 @@ mod test {
         assert!(configs_dirs[2].ends_with("deep2"));
         assert!(configs_dirs[1].ends_with("deep1"));
         assert!(configs_dirs[0].ends_with("init_nested_configs"));
+    }
+
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_ts_config_root_snapshot() {
+        let root = get_file_path("fixtures/lsp/ts_config_basic");
+        let expected_path = root.join(crate::DEFAULT_TS_OXLINTRC_NAME);
+        let expected_path = expected_path.to_string_lossy().to_string();
+        let called = Arc::new(AtomicBool::new(false));
+        let called_clone = Arc::clone(&called);
+
+        let loader: JsConfigLoaderCb = Box::new(move |paths| {
+            called_clone.store(true, Ordering::SeqCst);
+            assert_eq!(paths, vec![expected_path.clone()]);
+            let mut config =
+                Oxlintrc::from_string(r#"{"categories":{"correctness":"off"}}"#).unwrap();
+            let path = PathBuf::from(&paths[0]);
+            config.path = path.clone();
+            Ok(vec![JsConfigResult { path, config }])
+        });
+
+        let builder = ServerLinterBuilder::default().with_js_config_loader(Some(loader));
+
+        Tester::new("fixtures/lsp/ts_config_basic", json!({}))
+            .with_builder(builder)
+            .test_and_snapshot_single_file("test.js");
+        assert!(called.load(Ordering::SeqCst));
     }
 
     #[test]
