@@ -158,21 +158,28 @@ pub fn rule_name_converter() -> Converter {
     Converter::new().remove_boundary(Boundary::LowerDigit).to_case(Case::Kebab)
 }
 
-pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta {
-        name,
-        is_tsgolint_rule,
-        plugin,
-        category,
-        fix,
-        #[cfg(feature = "ruledocs")]
-        documentation,
-        used_in_test,
-        config,
-    } = metadata;
+/// Documentation source for a lint rule
+#[allow(dead_code)]
+pub enum DocumentationSource {
+    /// Inline documentation from doc comments
+    Inline(String),
+    /// Reference to a shared documentation constant
+    Path(syn::Path),
+}
 
+/// Generate the RuleMeta implementation for a lint rule
+#[allow(unused_variables)]
+pub fn generate_rule_meta_impl(
+    name: &Ident,
+    is_tsgolint_rule: bool,
+    plugin: &str,
+    category: &Ident,
+    fix: &Option<Ident>,
+    doc_source: DocumentationSource,
+    used_in_test: bool,
+    config: &Option<Ident>,
+) -> TokenStream {
     let canonical_name = rule_name_converter().convert(name.to_string());
-    let plugin = plugin.to_string(); // ToDo: validate plugin name
 
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
@@ -184,6 +191,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         "nursery" => quote! { RuleCategory::Nursery },
         _ => panic!("invalid rule category"),
     };
+
     let fix = fix.as_ref().map(Ident::to_string).map(|fix| {
         let fix = parse_fix(&fix);
         quote! {
@@ -204,10 +212,17 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let docs: Option<proc_macro2::TokenStream> = None;
 
     #[cfg(feature = "ruledocs")]
-    let docs = Some(quote! {
-        fn documentation() -> Option<&'static str> {
-            Some(#documentation)
-        }
+    let docs = Some(match doc_source {
+        DocumentationSource::Inline(documentation) => quote! {
+            fn documentation() -> Option<&'static str> {
+                Some(#documentation)
+            }
+        },
+        DocumentationSource::Path(shared_docs_path) => quote! {
+            fn documentation() -> Option<&'static str> {
+                #shared_docs_path::DOCUMENTATION
+            }
+        },
     });
 
     #[cfg(not(feature = "ruledocs"))]
@@ -252,6 +267,39 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     TokenStream::from(output)
 }
 
+pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
+    let LintRuleMeta {
+        name,
+        is_tsgolint_rule,
+        plugin,
+        category,
+        fix,
+        #[cfg(feature = "ruledocs")]
+        documentation,
+        used_in_test,
+        config,
+    } = metadata;
+
+    let plugin_str = plugin.to_string(); // ToDo: validate plugin name
+
+    #[cfg(feature = "ruledocs")]
+    let doc_source = DocumentationSource::Inline(documentation);
+
+    #[cfg(not(feature = "ruledocs"))]
+    let doc_source = DocumentationSource::Inline(String::new());
+
+    generate_rule_meta_impl(
+        &name,
+        is_tsgolint_rule,
+        &plugin_str,
+        &category,
+        &fix,
+        doc_source,
+        used_in_test,
+        &config,
+    )
+}
+
 fn parse_attr<'a, const LEN: usize>(
     path: [&'static str; LEN],
     attr: &'a Attribute,
@@ -268,7 +316,7 @@ fn parse_attr<'a, const LEN: usize>(
     None
 }
 
-fn parse_fix(s: &str) -> proc_macro2::TokenStream {
+pub fn parse_fix(s: &str) -> proc_macro2::TokenStream {
     const SEP: char = '_';
 
     match s {
@@ -322,7 +370,7 @@ fn parse_fix(s: &str) -> proc_macro2::TokenStream {
     }
 }
 
-fn parse_fix_kind(s: &str) -> proc_macro2::TokenStream {
+pub fn parse_fix_kind(s: &str) -> proc_macro2::TokenStream {
     match s {
         "fix" | "fixes" => quote! { FixKind::Fix },
         "suggestion" | "suggestions" => quote! { FixKind::Suggestion },
