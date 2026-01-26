@@ -1,7 +1,7 @@
 use std::{
     fs, io,
     io::Write,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
 };
 
 /// To debug `oxc_formatter`:
@@ -62,11 +62,14 @@ pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
 /// Normalize a relative path by:
 /// - stripping `./` prefix,
 /// - joining with `cwd`,
-/// - and canonicalizing to resolve `..` components
+/// - and resolving `.` and `..` components logically (without fs access)
 ///
 /// This ensures consistent absolute path format,
 /// which is required for gitignore-based pattern matching
 /// (e.g., `ignorePatterns` resolution).
+///
+/// Unlike `fs::canonicalize()`,
+/// this does not resolve symlinks and does not produce `\\?\` prefixed paths on Windows.
 pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
     if path.is_absolute() {
         return path.to_path_buf();
@@ -78,5 +81,18 @@ pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
         cwd.join(path)
     };
 
-    fs::canonicalize(&joined).unwrap_or(joined)
+    let mut result = PathBuf::new();
+    for component in joined.components() {
+        match component {
+            Component::ParentDir => {
+                result.pop();
+            }
+            Component::CurDir => {}
+            _ => {
+                result.push(component.as_os_str());
+            }
+        }
+    }
+
+    result
 }
