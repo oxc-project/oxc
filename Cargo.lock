@@ -2400,7 +2400,6 @@ dependencies = [
  "oxc_tasks_common",
  "oxc_tasks_transform_checker",
  "pico-args",
- "similar",
  "walkdir",
 ]
 
@@ -2473,7 +2472,6 @@ dependencies = [
  "oxc_traverse",
  "pico-args",
  "rustc-hash",
- "similar",
 ]
 
 [[package]]

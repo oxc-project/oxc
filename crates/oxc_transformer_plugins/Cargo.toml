@@ -39,7 +39,6 @@ rustc-hash = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true }
 pico-args = { workspace = true }
-similar = { workspace = true }
 
 oxc_codegen = { workspace = true, features = ["sourcemap"] }
 oxc_minifier = { workspace = true }
