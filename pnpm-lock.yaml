@@ -107,6 +107,9 @@ importers:
       '@arethetypeswrong/core':
         specifier: 'catalog:'
         version: 0.18.2
+      '@codspeed/tinybench-plugin':
+        specifier: ^5.0.0
+        version: 5.0.1(tinybench@4.1.0)
       '@eslint/plugin-kit':
         specifier: ^0.5.0
         version: 0.5.0
@@ -161,6 +164,9 @@ importers:
       rolldown:
         specifier: 'catalog:'
         version: 1.0.0-rc.1
+      tinybench:
+        specifier: ^4.0.1
+        version: 4.1.0
       tsdown:
         specifier: 'catalog:'
         version: 0.20.1(@arethetypeswrong/core@0.18.2)(publint@0.3.15)(typescript@5.9.3)
@@ -237,7 +243,7 @@ importers:
     devDependencies:
       '@codspeed/vitest-plugin':
         specifier: ^5.0.0
-        version: 5.0.1(tinybench@2.9.0)(vite@7.3.0(@types/node@24.1.0)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0))(vitest@4.0.15)
+        version: 5.0.1(tinybench@4.1.0)(vite@7.3.0(@types/node@24.1.0)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0))(vitest@4.0.15)
       '@napi-rs/cli':
         specifier: 'catalog:'
         version: 3.5.1(@emnapi/runtime@1.7.1)(@types/node@24.1.0)
@@ -840,6 +846,11 @@ packages:
 
   '@codspeed/core@5.0.1':
     resolution: {integrity: sha512-4g5ZyFAin8QywK4+0FK1uXG3GLRPu0oc3xbP+7OUhhFxbwpzFuaJtKmnTofMqLy9/pHH6Bl/7H0/DTVH3cpFkA==}
+
+  '@codspeed/tinybench-plugin@5.0.1':
+    resolution: {integrity: sha512-NFLtGi7U15lLOD2H6IVN1eTisv3R38zm1iibvytGSt2vnvsfAsq89bu65l6i91rcUaCj+zosH/yj84RGmmLBjw==}
+    peerDependencies:
+      tinybench: '>=4.0.1'
 
   '@codspeed/vitest-plugin@5.0.1':
     resolution: {integrity: sha512-RQLy8AGI16oTtmTyBIS2iKzD4AQQzJP7waurrYkUlnOlCa5Yp/7KXVZuZVzhqwYmPcH984xzFtsC2CENYbpRHQ==}
@@ -5072,6 +5083,10 @@ packages:
   spdx-license-ids@3.0.22:
     resolution: {integrity: sha512-4PRT4nh1EImPbt2jASOKHX7PB7I+e4IWNLvkKFDxNhJlfjbYlleYQh285Z/3mPTHSAK/AvdMmw5BNNuYH8ShgQ==}
 
+  stack-trace@1.0.0-pre2:
+    resolution: {integrity: sha512-2ztBJRek8IVofG9DBJqdy2N5kulaacX30Nz7xmkYF6ale9WBVmIy6mFBchvGX7Vx/MyjBhx+Rcxqrj+dbOnQ6A==}
+    engines: {node: '>=16'}
+
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
 
@@ -5219,6 +5234,10 @@ packages:
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
+
+  tinybench@4.1.0:
+    resolution: {integrity: sha512-8JZoQRJgWWEIIeAmpiNmMHIREmUY3oGX8GRmlmNapLr/qtgMe+K76vM2qabh85hNScnE2lqTVTajVETjuD9Ixg==}
+    engines: {node: '>=18.0.0'}
 
   tinyexec@1.0.2:
     resolution: {integrity: sha512-W/KYk+NFhkmsYpuHq5JykngiOCnxeVL8v8dFnqxSD8qEEdRfXk1SDM6JzNqcERbcGYj9tMrDQBYV9cjgnunFIg==}
@@ -6142,10 +6161,18 @@ snapshots:
     transitivePeerDependencies:
       - debug
 
-  '@codspeed/vitest-plugin@5.0.1(tinybench@2.9.0)(vite@7.3.0(@types/node@24.1.0)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0))(vitest@4.0.15)':
+  '@codspeed/tinybench-plugin@5.0.1(tinybench@4.1.0)':
     dependencies:
       '@codspeed/core': 5.0.1
-      tinybench: 2.9.0
+      stack-trace: 1.0.0-pre2
+      tinybench: 4.1.0
+    transitivePeerDependencies:
+      - debug
+
+  '@codspeed/vitest-plugin@5.0.1(tinybench@4.1.0)(vite@7.3.0(@types/node@24.1.0)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0))(vitest@4.0.15)':
+    dependencies:
+      '@codspeed/core': 5.0.1
+      tinybench: 4.1.0
       vite: 7.3.0(@types/node@24.1.0)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
       vitest: 4.0.15(@types/node@24.1.0)(@vitest/browser-playwright@4.0.15)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
     transitivePeerDependencies:
@@ -10538,6 +10565,8 @@ snapshots:
 
   spdx-license-ids@3.0.22: {}
 
+  stack-trace@1.0.0-pre2: {}
+
   stackback@0.0.2: {}
 
   statuses@2.0.2: {}
@@ -10699,6 +10728,8 @@ snapshots:
   tiny-case@1.0.3: {}
 
   tinybench@2.9.0: {}
+
+  tinybench@4.1.0: {}
 
   tinyexec@1.0.2: {}
 
