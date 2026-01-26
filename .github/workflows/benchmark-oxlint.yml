@@ -1,0 +1,80 @@
+# Benchmark for oxlint JS plugin (ESLint rules)
+#
+# Uses tinybench with CodSpeed for performance tracking.
+# See https://docs.codspeed.io/benchmarks/nodejs/tinybench
+
+name: Benchmark Oxlint
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - "crates/**"
+      - "apps/oxlint/**"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/benchmark-oxlint.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "crates/**"
+      - "apps/oxlint/**"
+      - "Cargo.lock"
+      - "rust-toolchain.toml"
+      - ".github/workflows/benchmark-oxlint.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  benchmark-node:
+    name: Bench Node (ESLint Rules)
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, '0-merge') }}
+    permissions:
+      id-token: write # required for OIDC authentication with CodSpeed
+    steps:
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
+
+      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+        with:
+          cache-key: benchmark-node
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Clone ESLint submodule
+        working-directory: apps/oxlint/conformance
+        run: |
+          ESLINT_SHA=$(grep -E '^ESLINT_SHA=' init.sh | cut -d'"' -f2)
+          rm -rf submodules
+          mkdir -p submodules
+          cd submodules
+          git clone --single-branch --depth 1 https://github.com/eslint/eslint.git eslint
+          cd eslint
+          git fetch --quiet --depth 1 origin "$ESLINT_SHA"
+          git reset --hard "$ESLINT_SHA"
+          git clean -f -q
+          pnpm install --ignore-workspace
+          rm node_modules/@typescript-eslint/parser
+          cp -r tools/typescript-eslint-parser node_modules/@typescript-eslint/parser
+          cd node_modules/@typescript-eslint/parser
+          pnpm install --ignore-workspace
+
+      - name: Build NAPI bindings
+        working-directory: apps/oxlint
+        run: pnpm run build-dev
+
+      - name: Run benchmark
+        uses: CodSpeedHQ/action@e736f0d2aeb36da38e9f08eca4dff7967408d154 # v4.8.2
+        timeout-minutes: 30
+        with:
+          mode: simulation
+          run: cd apps/oxlint && pnpm bench

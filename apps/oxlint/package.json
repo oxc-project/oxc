@@ -20,10 +20,12 @@
     "build-js": "node scripts/build.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
-    "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx ./conformance/src/index.ts"
+    "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx ./conformance/src/index.ts",
+    "bench": "node bench/eslint_rules.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
+    "@codspeed/tinybench-plugin": "^5.0.0",
     "@eslint/plugin-kit": "^0.5.0",
     "@napi-rs/cli": "catalog:",
     "@types/esquery": "^1.5.4",
@@ -42,6 +44,7 @@
     "json-stable-stringify-without-jsonify": "^1.0.1",
     "oxc-parser": "^0.110.0",
     "rolldown": "catalog:",
+    "tinybench": "^4.0.1",
     "tsdown": "catalog:",
     "tsx": "^4.21.0",
     "type-fest": "^5.2.0",
