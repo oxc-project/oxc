@@ -23235,7 +23235,7 @@ Negative Passed: 4581/4581 (100.00%)
     · ────
     ╰────
 
-  × Flag g is mentioned twice in regular expression literal
+  × TS(1500): Flag g is mentioned twice in regular expression literal
     ╭─[test262/test/language/literals/regexp/early-err-dup-flag.js:19:6]
  18 │ 
  19 │ /./gig;

@@ -204,7 +204,7 @@ pub fn reg_exp_flag(x0: char, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reg_exp_flag_twice(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Flag {x0} is mentioned twice in regular expression literal"))
+    ts_error("1500", format!("Flag {x0} is mentioned twice in regular expression literal"))
         .with_label(span1)
         .with_help("Remove the duplicated flag here")
 }
