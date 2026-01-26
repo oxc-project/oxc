@@ -197,14 +197,14 @@ pub fn unterminated_string(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reg_exp_flag(x0: char, span1: Span) -> OxcDiagnostic {
-    ts_error("1499", format!("Unexpected flag {x0} in regular expression literal"))
+    OxcDiagnostic::error(format!("Unexpected flag {x0} in regular expression literal"))
         .with_label(span1)
         .with_help(format!("The allowed flags are `{REGEXP_FLAGS_LIST}`"))
 }
 
 #[cold]
 pub fn reg_exp_flag_twice(x0: char, span1: Span) -> OxcDiagnostic {
-    ts_error("1500", format!("Flag {x0} is mentioned twice in regular expression literal"))
+    OxcDiagnostic::error(format!("Flag {x0} is mentioned twice in regular expression literal"))
         .with_label(span1)
         .with_help("Remove the duplicated flag here")
 }
@@ -794,7 +794,7 @@ pub fn rest_element_property_name(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn a_rest_element_cannot_have_an_initializer(span: Span) -> OxcDiagnostic {
-    ts_error("1048", "A rest element cannot have an initializer.").with_label(span)
+    OxcDiagnostic::error("A rest element cannot have an initializer.").with_label(span)
 }
 
 #[cold]
@@ -1132,25 +1132,24 @@ pub fn setter_with_parameters(span: Span, parameters_count: usize) -> OxcDiagnos
 }
 
 #[cold]
-pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
+pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
 }
-
 #[cold]
 pub fn setter_with_initializer(span: Span) -> OxcDiagnostic {
-    ts_error("1052", "A 'set' accessor cannot have an initializer.").with_label(span)
-}
-
-#[cold]
-pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
-    ts_error("1053", "A 'set' accessor cannot have rest parameter.").with_label(span)
+    OxcDiagnostic::error("A 'set' accessor cannot have an initializer.").with_label(span)
 }
 
 #[cold]
 pub fn getter_parameters(span: Span) -> OxcDiagnostic {
-    ts_error("1054", "A 'get' accessor must not have any formal parameters.")
+    OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.")
         .with_label(span)
         .with_help("Remove these parameters here")
+}
+
+#[cold]
+pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
 }
 
 #[cold]

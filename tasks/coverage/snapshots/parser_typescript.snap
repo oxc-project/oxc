@@ -2478,7 +2478,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
-  × TS(1052): A 'set' accessor cannot have an initializer.
+  × A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/accessorWithInitializer.ts:2:10]
  1 │ class C {
  2 │     set X(v = 0) { }
@@ -2486,7 +2486,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     static set X(v2 = 0) { }
    ╰────
 
-  × TS(1052): A 'set' accessor cannot have an initializer.
+  × A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/accessorWithInitializer.ts:3:17]
  2 │     set X(v = 0) { }
  3 │     static set X(v2 = 0) { }
@@ -2494,7 +2494,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  4 │ }
    ╰────
 
-  × TS(1053): A 'set' accessor cannot have rest parameter.
+  × A 'set' accessor cannot have rest parameter.
    ╭─[typescript/tests/cases/compiler/accessorWithRestParam.ts:2:11]
  1 │ class C {
  2 │     set X(...v) { }
@@ -2502,7 +2502,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     static set X(...v2) { }
    ╰────
 
-  × TS(1053): A 'set' accessor cannot have rest parameter.
+  × A 'set' accessor cannot have rest parameter.
    ╭─[typescript/tests/cases/compiler/accessorWithRestParam.ts:3:18]
  2 │     set X(...v) { }
  3 │     static set X(...v2) { }
@@ -4031,7 +4031,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(1054): A 'get' accessor must not have any formal parameters.
+  × A 'get' accessor must not have any formal parameters.
     ╭─[typescript/tests/cases/compiler/complicatedPrivacy.ts:11:26]
  10 │         export class C2 implements m3.i3 {
  11 │             public get p1(arg) {
@@ -6425,7 +6425,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │ }
     ╰────
 
-  × TS(1054): A 'get' accessor must not have any formal parameters.
+  × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/compiler/gettersAndSettersErrors.ts:6:19]
  5 │     public Foo = 0; // error - duplicate identifier Foo - confirmed
  6 │     public get Goo(v:string):string {return null;} // error - getters must not have a parameter
@@ -9993,7 +9993,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Valid group names are: foo
 
-  × TS(1499): Unexpected flag a in regular expression literal
+  × Unexpected flag a in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:11]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10002,7 +10002,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × TS(1499): Unexpected flag l in regular expression literal
+  × Unexpected flag l in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:12]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10011,7 +10011,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × TS(1500): Flag s is mentioned twice in regular expression literal
+  × Flag s is mentioned twice in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:13]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10020,7 +10020,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicated flag here
 
-  × TS(1499): Unexpected flag t in regular expression literal
+  × Unexpected flag t in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:14]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10029,7 +10029,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × TS(1500): Flag u is mentioned twice in regular expression literal
+  × Flag u is mentioned twice in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:15]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10038,7 +10038,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicated flag here
 
-  × TS(1500): Flag i is mentioned twice in regular expression literal
+  × Flag i is mentioned twice in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:17]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10047,7 +10047,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicated flag here
 
-  × TS(1499): Unexpected flag o in regular expression literal
+  × Unexpected flag o in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:18]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10056,7 +10056,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × TS(1499): Unexpected flag c in regular expression literal
+  × Unexpected flag c in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:19]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10065,7 +10065,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × TS(1499): Unexpected flag o in regular expression literal
+  × Unexpected flag o in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:20]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10074,7 +10074,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × TS(1500): Flag d is mentioned twice in regular expression literal
+  × Flag d is mentioned twice in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:21]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10083,7 +10083,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicated flag here
 
-  × TS(1499): Unexpected flag e in regular expression literal
+  × Unexpected flag e in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:22]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10144,7 +10144,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × TS(1048): A rest element cannot have an initializer.
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParamAsOptional.ts:2:16]
  1 │ function f(...x?) { }
  2 │ function f2(...x = []) { }
@@ -10175,7 +10175,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·            ────
    ╰────
 
-  × TS(1048): A rest element cannot have an initializer.
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/compiler/restParameterWithBindingPattern3.ts:3:19]
  2 │ 
  3 │ function b(...[...foo = []]: string[]) { }
@@ -16142,7 +16142,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Remove this `?`. The default value is an empty array
 
-  × TS(1048): A rest element cannot have an initializer.
+  × A rest element cannot have an initializer.
     ╭─[typescript/tests/cases/conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
  14 │ function a3(...b?) { }            // Error, can't be optional
  15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
@@ -16490,7 +16490,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                ─────
    ╰────
 
-  × TS(1048): A rest element cannot have an initializer.
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/es6/destructuring/restElementWithInitializer1.ts:2:9]
  1 │ declare var a: number[];
  2 │ var [...x = a] = a;  // Error, rest element cannot have initializer
@@ -21146,7 +21146,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
-  × TS(1054): A 'get' accessor must not have any formal parameters.
+  × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors7.ts:1:18]
  1 │ var v = { get foo(v: number) { } };
    ·                  ───────────
@@ -22485,7 +22485,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × TS(1054): A 'get' accessor must not have any formal parameters.
+  × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration12.ts:2:11]
  1 │ class C {
  2 │    get Foo(a: number) { }
@@ -22521,7 +22521,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
-  × TS(1052): A 'set' accessor cannot have an initializer.
+  × A 'set' accessor cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration16.ts:2:11]
  1 │ class C {
  2 │    set Foo(a = 1) { }
@@ -22529,7 +22529,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × TS(1053): A 'set' accessor cannot have rest parameter.
+  × A 'set' accessor cannot have rest parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration18.ts:2:12]
  1 │ class C {
  2 │    set Foo(...a) { }
@@ -22715,7 +22715,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × TS(1048): A rest element cannot have an initializer.
+  × A rest element cannot have an initializer.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ParameterLists/parserParameterList10.ts:2:11]
  1 │ class C {
  2 │    foo(...bar = 0) { }
@@ -23009,7 +23009,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(1499): Unexpected flag a in regular expression literal
+  × Unexpected flag a in regular expression literal
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:16]
  1 │ if (1) /regexp/a.foo();
    ·                ─
