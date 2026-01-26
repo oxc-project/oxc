@@ -100,7 +100,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
   debugAssert(stepsLen > 0, "`stepTypeIds` should not be empty");
 
   for (let i = 0; i < stepsLen; i++) {
-    const typeId = stepTypeIds[i];
+    let typeId = stepTypeIds[i];
 
     if (typeId < NODE_TYPES_COUNT) {
       // Enter visit - node type ID is used directly
@@ -126,12 +126,12 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
       }
     } else if (typeId >= EXIT_TYPE_ID_OFFSET) {
       // Exit non-leaf node - type ID has EXIT_TYPE_ID_OFFSET added
-      const actualTypeId = typeId - EXIT_TYPE_ID_OFFSET;
+      typeId -= EXIT_TYPE_ID_OFFSET;
       const node = stepData[i] as Node;
 
       ancestors.shift();
 
-      const enterExit = visitors[actualTypeId];
+      const enterExit = visitors[typeId];
       if (enterExit !== null) {
         typeAssertIs<EnterExit>(enterExit);
         const { exit } = enterExit;
