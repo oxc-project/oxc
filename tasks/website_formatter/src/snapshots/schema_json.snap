@@ -20,6 +20,14 @@ expression: json
       ],
       "markdownDescription": "Include parentheses around a sole arrow function parameter.\n\n- Default: `\"always\"`"
     },
+    "basePath": {
+      "description": "Base directory for resolving `overrides` and `ignorePatterns` glob patterns.\nWhen specified, patterns are resolved relative to this directory\ninstead of the configuration file's location.\nNOTE: This path itself is resolved relative to the configuration file's directory.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "markdownDescription": "Base directory for resolving `overrides` and `ignorePatterns` glob patterns.\nWhen specified, patterns are resolved relative to this directory\ninstead of the configuration file's location.\nNOTE: This path itself is resolved relative to the configuration file's directory."
+    },
     "bracketSameLine": {
       "description": "Put the `>` of a multi-line HTML (HTML, JSX, Vue, Angular) element at the end of the last line,\ninstead of being alone on the next line (does not apply to self closing elements).\n\n- Default: `false`",
       "type": [
@@ -109,7 +117,7 @@ expression: json
       "markdownDescription": "Specify the global whitespace sensitivity for HTML, Vue, Angular, and Handlebars.\n\n- Default: `\"css\"`"
     },
     "ignorePatterns": {
-      "description": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`",
+      "description": "Ignore files matching these glob patterns.\nPatterns are based on `basePath` if specified, otherwise the location of the Oxfmt configuration file.\n\n- Default: `[]`",
       "type": [
         "array",
         "null"
@@ -117,7 +125,7 @@ expression: json
       "items": {
         "type": "string"
       },
-      "markdownDescription": "Ignore files matching these glob patterns.\nPatterns are based on the location of the Oxfmt configuration file.\n\n- Default: `[]`"
+      "markdownDescription": "Ignore files matching these glob patterns.\nPatterns are based on `basePath` if specified, otherwise the location of the Oxfmt configuration file.\n\n- Default: `[]`"
     },
     "insertFinalNewline": {
       "description": "Whether to insert a final newline at the end of the file.\n\n- Default: `true`\n- Overrides `.editorconfig.insert_final_newline`",
@@ -562,12 +570,12 @@ expression: json
           "markdownDescription": "Glob patterns to exclude from this override."
         },
         "files": {
-          "description": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file.",
+          "description": "Glob patterns to match files for this override.\nPatterns are relative to `basePath` if specified, otherwise the configuration file's directory.",
           "type": "array",
           "items": {
             "type": "string"
           },
-          "markdownDescription": "Glob patterns to match files for this override.\nAll patterns are relative to the Oxfmt configuration file."
+          "markdownDescription": "Glob patterns to match files for this override.\nPatterns are relative to `basePath` if specified, otherwise the configuration file's directory."
         },
         "options": {
           "description": "Format options to apply for matched files.",

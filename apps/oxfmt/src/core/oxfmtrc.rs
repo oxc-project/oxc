@@ -19,6 +19,12 @@ use oxc_toml::Options as TomlFormatterOptions;
 pub struct Oxfmtrc {
     #[serde(flatten)]
     pub format_config: FormatConfig,
+    /// Base directory for resolving `overrides` and `ignorePatterns` glob patterns.
+    /// When specified, patterns are resolved relative to this directory
+    /// instead of the configuration file's location.
+    /// NOTE: This path itself is resolved relative to the configuration file's directory.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub base_path: Option<String>,
     /// File-specific overrides.
     /// When a file matches multiple overrides, the later override takes precedence (array order matters).
     ///
@@ -26,7 +32,7 @@ pub struct Oxfmtrc {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub overrides: Option<Vec<OxfmtOverrideConfig>>,
     /// Ignore files matching these glob patterns.
-    /// Patterns are based on the location of the Oxfmt configuration file.
+    /// Patterns are based on `basePath` if specified, otherwise the location of the Oxfmt configuration file.
     ///
     /// - Default: `[]`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -39,7 +45,7 @@ pub struct Oxfmtrc {
 #[serde(rename_all = "camelCase")]
 pub struct OxfmtOverrideConfig {
     /// Glob patterns to match files for this override.
-    /// All patterns are relative to the Oxfmt configuration file.
+    /// Patterns are relative to `basePath` if specified, otherwise the configuration file's directory.
     pub files: Vec<String>,
     /// Glob patterns to exclude from this override.
     #[serde(skip_serializing_if = "Option::is_none")]

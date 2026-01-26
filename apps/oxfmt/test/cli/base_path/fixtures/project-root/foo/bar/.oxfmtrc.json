@@ -1,0 +1,5 @@
+{
+  "basePath": "../..",
+  "ignorePatterns": ["dist/**", "foo/**"],
+  "overrides": [{ "files": ["src/**/*.js"], "options": { "tabWidth": 4 } }]
+}

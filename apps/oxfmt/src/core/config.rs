@@ -162,21 +162,34 @@ impl ConfigResolver {
         })
     }
 
-    /// Validate config and return ignore patterns (= non-formatting option) for file walking.
+    /// Validate config and cache resolved options for per-file resolution.
     ///
-    /// Validated options are cached for fast path resolution.
+    /// Returns `(ignore_patterns, patterns_base_dir)`:
+    /// - `ignore_patterns`: glob patterns from `ignorePatterns` for file walking
+    /// - `patterns_base_dir`: base directory for resolving `ignorePatterns` and `overrides`
+    ///   - Determined by `basePath` (resolved relative to config dir) or the config file's parent
     ///
     /// # Errors
-    /// Returns error if config deserialization fails.
+    /// Returns error if config deserialization or validation fails.
     #[instrument(level = "debug", name = "oxfmt::config::build_and_validate", skip_all)]
-    pub fn build_and_validate(&mut self) -> Result<Vec<String>, String> {
+    pub fn build_and_validate(&mut self) -> Result<(Vec<String>, Option<PathBuf>), String> {
         let oxfmtrc: Oxfmtrc = serde_json::from_value(self.raw_config.clone())
             .map_err(|err| format!("Failed to deserialize Oxfmtrc: {err}"))?;
 
-        // Resolve `overrides` from `Oxfmtrc` for later per-file matching
-        let base_dir = self.config_dir.take();
-        self.oxfmtrc_overrides =
-            oxfmtrc.overrides.map(|overrides| OxfmtrcOverrides::new(overrides, base_dir));
+        // Resolve the base directory for pattern matching in `overrides` and `ignorePatterns`.
+        // If `basePath` is specified, resolve it relative to the config file directory.
+        // Otherwise, fall back to the config file's parent directory.
+        let config_dir = self.config_dir.take();
+        let patterns_base_dir = match oxfmtrc.base_path {
+            Some(ref base_path_str) => Some(match &config_dir {
+                Some(cd) => utils::normalize_relative_path(cd, Path::new(base_path_str)),
+                None => PathBuf::from(base_path_str),
+            }),
+            None => config_dir,
+        };
+        self.oxfmtrc_overrides = oxfmtrc
+            .overrides
+            .map(|overrides| OxfmtrcOverrides::new(overrides, patterns_base_dir.clone()));
 
         let mut format_config = oxfmtrc.format_config;
 
@@ -209,7 +222,7 @@ impl ConfigResolver {
         self.cached_options = Some((oxfmt_options, external_options));
 
         let ignore_patterns = oxfmtrc.ignore_patterns.unwrap_or_default();
-        Ok(ignore_patterns)
+        Ok((ignore_patterns, patterns_base_dir))
     }
 
     /// Resolve format options for a specific file.

@@ -45,16 +45,20 @@ impl ServerFormatterBuilder {
         debug!("root_path = {:?}", root_path.display());
 
         // Build `ConfigResolver` from config paths
-        let (config_resolver, ignore_patterns) =
+        let (config_resolver, ignore_patterns, patterns_base_dir) =
             match Self::build_config_resolver(&root_path, options.config_path.as_ref()) {
-                Ok((resolver, patterns)) => (resolver, patterns),
+                Ok(result) => result,
                 Err(err) => {
                     warn!("Failed to build config resolver: {err}, falling back to default config");
                     Self::default_config_resolver()
                 }
             };
 
-        let gitignore_glob = match Self::create_ignore_globs(&root_path, &ignore_patterns) {
+        let gitignore_glob = match Self::create_ignore_globs(
+            &root_path,
+            &ignore_patterns,
+            patterns_base_dir.as_deref(),
+        ) {
             Ok(glob) => Some(glob),
             Err(err) => {
                 warn!("Failed to create gitignore globs: {err}, proceeding without ignore globs");
@@ -95,14 +99,14 @@ impl ToolBuilder for ServerFormatterBuilder {
 
 impl ServerFormatterBuilder {
     /// Build a `ConfigResolver` from config paths.
-    /// Returns the resolver and ignore patterns.
+    /// Returns the resolver, ignore patterns, and the base directory for pattern resolution.
     ///
     /// # Errors
-    /// Returns error if config file parsing fails.
+    /// Returns error if config file loading or validation fails.
     fn build_config_resolver(
         root_path: &Path,
         config_path: Option<&String>,
-    ) -> Result<(ConfigResolver, Vec<String>), String> {
+    ) -> Result<(ConfigResolver, Vec<String>, Option<PathBuf>), String> {
         let oxfmtrc_path =
             resolve_oxfmtrc_path(root_path, config_path.filter(|s| !s.is_empty()).map(Path::new));
         let editorconfig_path = resolve_editorconfig_path(root_path);
@@ -113,27 +117,28 @@ impl ServerFormatterBuilder {
             editorconfig_path.as_deref(),
         )?;
 
-        // Validate config and cache options, returns ignore patterns
-        let ignore_patterns = resolver.build_and_validate()?;
+        // Validate config and cache options; returns ignore patterns and patterns base dir
+        let (ignore_patterns, patterns_base_dir) = resolver.build_and_validate()?;
 
-        Ok((resolver, ignore_patterns))
+        Ok((resolver, ignore_patterns, patterns_base_dir))
     }
 
     /// Create a default `ConfigResolver` when config loading fails.
-    fn default_config_resolver() -> (ConfigResolver, Vec<String>) {
+    fn default_config_resolver() -> (ConfigResolver, Vec<String>, Option<PathBuf>) {
         let mut resolver = ConfigResolver::from_config_paths(Path::new("."), None, None)
             .expect("Default ConfigResolver should never fail");
-        let ignore_patterns = resolver
+        let (ignore_patterns, patterns_base_dir) = resolver
             .build_and_validate()
             .expect("Default ConfigResolver validation should never fail");
-        (resolver, ignore_patterns)
+        (resolver, ignore_patterns, patterns_base_dir)
     }
 
     fn create_ignore_globs(
         root_path: &Path,
         ignore_patterns: &[String],
+        patterns_base_dir: Option<&Path>,
     ) -> Result<Gitignore, String> {
-        let mut builder = GitignoreBuilder::new(root_path);
+        let mut builder = GitignoreBuilder::new(patterns_base_dir.unwrap_or(root_path));
         for ignore_path in &load_ignore_paths(root_path) {
             if builder.add(ignore_path).is_some() {
                 return Err(format!("Failed to add ignore file: {}", ignore_path.display()));

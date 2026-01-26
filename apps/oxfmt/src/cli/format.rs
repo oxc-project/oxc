@@ -85,8 +85,8 @@ impl FormatRunner {
                 return CliRunResult::InvalidOptionConfig;
             }
         };
-        let ignore_patterns = match config_resolver.build_and_validate() {
-            Ok(patterns) => patterns,
+        let (ignore_patterns, patterns_base_dir) = match config_resolver.build_and_validate() {
+            Ok(result) => result,
             Err(err) => {
                 utils::print_and_flush(stderr, &format!("Failed to parse configuration.\n{err}\n"));
                 return CliRunResult::InvalidOptionConfig;
@@ -120,7 +120,7 @@ impl FormatRunner {
             &paths,
             &ignore_options.ignore_path,
             ignore_options.with_node_modules,
-            oxfmtrc_path.as_deref(),
+            patterns_base_dir.as_deref(),
             &ignore_patterns,
         ) {
             Ok(Some(walker)) => walker,

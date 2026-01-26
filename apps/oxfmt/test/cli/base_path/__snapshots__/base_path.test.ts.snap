@@ -1,0 +1,61 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`basePath > auto-discovery from config directory 1`] = `
+"--------------------
+arguments: --check <cwd>/apps/oxfmt/test/cli/base_path/fixtures/project-root
+working directory: base_path/fixtures/project-root/foo/bar
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 2 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`basePath > auto-discovery from subdirectory below config 1`] = `
+"--------------------
+arguments: --check <cwd>/apps/oxfmt/test/cli/base_path/fixtures/project-root
+working directory: base_path/fixtures/project-root/foo/bar/baz
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 2 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`basePath > explicit --config from project root 1`] = `
+"--------------------
+arguments: --check --config foo/bar/.oxfmtrc.json .
+working directory: base_path/fixtures/project-root
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 2 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
+
+exports[`basePath > explicit --config from subdirectory 1`] = `
+"--------------------
+arguments: --check --config ../foo/bar/.oxfmtrc.json <cwd>/apps/oxfmt/test/cli/base_path/fixtures/project-root
+working directory: base_path/fixtures/project-root/src
+exit code: 0
+--- STDOUT ---------
+Checking formatting...
+
+All matched files use the correct format.
+Finished in <variable>ms on 2 files using 1 threads.
+--- STDERR ---------
+
+--------------------"
+`;
