@@ -124,13 +124,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 
         ancestors.unshift(node);
       }
-    } else if (typeId < EXIT_TYPE_ID_OFFSET) {
-      // Call method (CFG event) - event type ID is in range NODE_TYPES_COUNT to EXIT_TYPE_ID_OFFSET-1
-      const visit = visitors[typeId];
-      if (visit !== null) {
-        (visit as any).apply(undefined, stepData[i] as unknown[]);
-      }
-    } else {
+    } else if (typeId >= EXIT_TYPE_ID_OFFSET) {
       // Exit non-leaf node - type ID has EXIT_TYPE_ID_OFFSET added
       const actualTypeId = typeId - EXIT_TYPE_ID_OFFSET;
       const node = stepData[i] as Node;
@@ -142,6 +136,12 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
         typeAssertIs<EnterExit>(enterExit);
         const { exit } = enterExit;
         if (exit !== null) exit(node);
+      }
+    } else {
+      // Call method (CFG event) - event type ID is in range NODE_TYPES_COUNT to EXIT_TYPE_ID_OFFSET-1
+      const visit = visitors[typeId];
+      if (visit !== null) {
+        (visit as any).apply(undefined, stepData[i] as unknown[]);
       }
     }
   }
