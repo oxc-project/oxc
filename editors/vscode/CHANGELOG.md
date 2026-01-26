@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.42.0] - 2026-01-26
+
+### 🐛 Bug Fixes
+
+- 75e7163 vscode: Support json5 for oxfmt (#18502) (Sysix)
+- 3c0e9b9 oxlint/lsp: Skip dangerous fixes/suggestions for "fix all" code action and command (#18364) (Sysix)
+- b9a14fd vscode: Update package.json to restrict a few more config options. (#18270) (Connor Shea)
+- c1260cb vscode: Update version info formatting. (#18274) (connorshea)
+- 2f68dc6 vscode: Update notification for client restart to specify tool. (#18273) (connorshea)
+
 ## [1.40.0] - 2026-01-19
 
 ### 🚀 Features

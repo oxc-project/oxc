@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.27.0] - 2026-01-26
+
+### 🚀 Features
+
+- d71c15d oxfmt: Enable tailwind sort inside xxx-in-js (#18417) (leaysgur)
+- 52b5003 formatter,oxfmt: Support Angular `@Component({ template, styles })` (#18324) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 224140c oxfmt: Canonicalize `..` component in config path (#18570) (leaysgur)
+- 7e6c15b oxfmt: Increase Tailwind CSS test timeout for Windows CI (#18339) (Boshen)
+
+### ⚡ Performance
+
+- b2df8fb oxfmt: Enable tailwind plugin only for relevant parser (#18418) (leaysgur)
+
 ## [0.26.0] - 2026-01-19
 
 ### 🐛 Bug Fixes

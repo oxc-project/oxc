@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.27.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 52b5003 formatter,oxfmt: Support Angular `@Component({ template, styles })` (#18324) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 30b467e formatter: Preserve trailing comments before the semicolon in class methods without a body (#18446) (Dunqing)
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- 164bbd7 formatter: Preserve trailing comments inside ternary alternate branch (#18433) (Dunqing)
+- 1c50800 formatter: Use HTML entity escaping for JSX attribute strings (#18385) (Boshen)
+- 4e156d2 formatter: Preserve parentheses for `in` expressions in arrow function block bodies (#18352) (Boshen)
+- 29966eb formatter/dead-code-removal: Handle tailwind sorting (#18321) (leaysgur)
+- 29f41be formatter: Only expand mapped types when newline immediately follows opening brace (#18087) (Boshen)
+- 2194552 formatter: Relocate leading comments for single-element union/intersection types (#18083) (Boshen)
+
+### ⚡ Performance
+
+- 85ab400 formatter: Store `AstNodes` itself instead of `&'a AstNodes` as the `parent` field of `AstNode` (#18428) (Dunqing)
+- 194d384 formatter: Reduce AstNode size by 8 bytes using following_span_start (#18347) (Dunqing)
+
 ## [0.25.0] - 2026-01-19
 
 ### 🚀 Features
