@@ -4,10 +4,10 @@ use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::GLOBALS;
 
-use oxc_ast::ast::IdentifierReference;
+use oxc_ast::{AstType, ast::IdentifierReference};
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
-use oxc_semantic::Semantic;
+use oxc_semantic::{AstNode, NodeId, Semantic};
 use oxc_span::Span;
 
 #[cfg(debug_assertions)]
@@ -544,6 +544,51 @@ impl<'a> LintContext<'a> {
 
     pub fn other_file_hosts(&self) -> Vec<&ContextSubHost<'a>> {
         self.parent.other_file_hosts()
+    }
+
+    /* AST traversal helpers */
+
+    /// Returns `true` if any ancestor of the given node matches any of the provided AST types.
+    ///
+    /// This is a convenience method for the common pattern of checking if a node is inside
+    /// a particular kind of AST node.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use oxc_ast::AstType;
+    ///
+    /// // Check if we're inside a yield or await expression
+    /// if ctx.is_inside(node.id(), &[AstType::YieldExpression, AstType::AwaitExpression]) {
+    ///     return;
+    /// }
+    /// ```
+    #[inline]
+    pub fn is_inside(&self, node_id: NodeId, types: &[AstType]) -> bool {
+        self.nodes().ancestors(node_id).any(|node| types.contains(&node.kind().ty()))
+    }
+
+    /// Returns `true` if any ancestor of the given node satisfies the predicate.
+    ///
+    /// This is a convenience method for the common pattern of checking if a node is inside
+    /// a particular kind of AST node, with custom matching logic.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// // Check if we're inside a declared TypeScript module
+    /// if ctx.is_inside_where(node.id(), |ancestor| {
+    ///     matches!(ancestor.kind(), AstKind::TSModuleDeclaration(decl) if decl.declare)
+    /// }) {
+    ///     return;
+    /// }
+    /// ```
+    #[inline]
+    pub fn is_inside_where<F>(&self, node_id: NodeId, predicate: F) -> bool
+    where
+        F: FnMut(&AstNode<'a>) -> bool,
+    {
+        self.nodes().ancestors(node_id).any(predicate)
     }
 }
 
