@@ -14857,6 +14857,68 @@ impl<'a> AstBuilder<'a> {
         )
     }
 
+    /// Build a [`TSModuleReference::IdentifierReference`].
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    #[inline]
+    pub fn ts_module_reference_identifier_reference<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> TSModuleReference<'a>
+    where
+        A1: Into<Ident<'a>>,
+    {
+        TSModuleReference::IdentifierReference(self.alloc_identifier_reference(span, name))
+    }
+
+    /// Build a [`TSModuleReference::IdentifierReference`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn ts_module_reference_identifier_reference_with_reference_id<A1>(
+        self,
+        span: Span,
+        name: A1,
+        reference_id: ReferenceId,
+    ) -> TSModuleReference<'a>
+    where
+        A1: Into<Ident<'a>>,
+    {
+        TSModuleReference::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
+            span,
+            name,
+            reference_id,
+        ))
+    }
+
+    /// Build a [`TSModuleReference::QualifiedName`].
+    ///
+    /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn ts_module_reference_qualified_name(
+        self,
+        span: Span,
+        left: TSTypeName<'a>,
+        right: IdentifierName<'a>,
+    ) -> TSModuleReference<'a> {
+        TSModuleReference::QualifiedName(self.alloc_ts_qualified_name(span, left, right))
+    }
+
     /// Build a [`TSExternalModuleReference`].
     ///
     /// If you want the built node to be allocated in the memory arena,

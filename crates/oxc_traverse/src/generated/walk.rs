@@ -5548,9 +5548,12 @@ unsafe fn walk_ts_module_reference<'a, State, Tr: Traverse<'a, State>>(
         TSModuleReference::ExternalModuleReference(node) => {
             walk_ts_external_module_reference(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSModuleReference::IdentifierReference(_)
-        | TSModuleReference::QualifiedName(_)
-        | TSModuleReference::ThisExpression(_) => walk_ts_type_name(traverser, node as *mut _, ctx),
+        TSModuleReference::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSModuleReference::QualifiedName(node) => {
+            walk_ts_qualified_name(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_ts_module_reference(&mut *node, ctx);
 }

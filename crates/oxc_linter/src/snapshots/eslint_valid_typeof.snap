@@ -1,132 +1,187 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:16]
  1 │ typeof foo === 'strnig'
    ·                ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:1]
  1 │ 'strnig' === typeof foo
    · ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:20]
  1 │ if (typeof bar === 'umdefined') {}
    ·                    ───────────
    ╰────
+  help: Did you mean `"undefined"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:16]
  1 │ typeof foo !== 'strnig'
    ·                ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:1]
  1 │ 'strnig' !== typeof foo
    · ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:20]
  1 │ if (typeof bar !== 'umdefined') {}
    ·                    ───────────
    ╰────
+  help: Did you mean `"undefined"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:15]
  1 │ typeof foo != 'strnig'
    ·               ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:1]
  1 │ 'strnig' != typeof foo
    · ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:19]
  1 │ if (typeof bar != 'umdefined') {}
    ·                   ───────────
    ╰────
+  help: Did you mean `"undefined"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:15]
  1 │ typeof foo == 'strnig'
    ·               ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:1]
  1 │ 'strnig' == typeof foo
    · ────────
    ╰────
+  help: Did you mean `"string"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:19]
  1 │ if (typeof bar == 'umdefined') {}
    ·                   ───────────
    ╰────
+  help: Did you mean `"undefined"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:20]
  1 │ if (typeof bar === `umdefined`) {}
    ·                    ───────────
    ╰────
+  help: Did you mean `"undefined"`?
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:15]
  1 │ typeof foo == 'invalid string'
    ·               ────────────────
    ╰────
 
-  ⚠ eslint(valid-typeof): Invalid typeof comparison value.
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
    ╭─[valid_typeof.tsx:1:20]
  1 │ if (typeof bar !== undefined) {}
    ·                    ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
 
-  ⚠ eslint(valid-typeof): Typeof comparisons should be to string literals.
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:15]
  1 │ typeof foo == Object
    ·               ──────
    ╰────
 
-  ⚠ eslint(valid-typeof): Typeof comparisons should be to string literals.
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:16]
  1 │ typeof foo === undefined
    ·                ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
 
-  ⚠ eslint(valid-typeof): Typeof comparisons should be to string literals.
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:1]
  1 │ undefined === typeof foo
    · ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
 
-  ⚠ eslint(valid-typeof): Typeof comparisons should be to string literals.
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:1]
  1 │ undefined == typeof foo
    · ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
 
-  ⚠ eslint(valid-typeof): Typeof comparisons should be to string literals.
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:16]
  1 │ typeof foo === `undefined${foo}`
    ·                ─────────────────
    ╰────
 
-  ⚠ eslint(valid-typeof): Typeof comparisons should be to string literals.
+  ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:16]
  1 │ typeof foo === `${string}`
    ·                ───────────
    ╰────
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === 'biigint'
+   ·                ─────────
+   ╰────
+  help: Did you mean `"bigint"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === 'bolean'
+   ·                ────────
+   ╰────
+  help: Did you mean `"boolean"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === 'fucntion'
+   ·                ──────────
+   ╰────
+  help: Did you mean `"function"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === 'nunber'
+   ·                ────────
+   ╰────
+  help: Did you mean `"number"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === 'obejct'
+   ·                ────────
+   ╰────
+  help: Did you mean `"object"`?
+
+  ⚠ eslint(valid-typeof): Invalid `typeof` comparison value.
+   ╭─[valid_typeof.tsx:1:16]
+ 1 │ typeof foo === 'symol'
+   ·                ───────
+   ╰────
+  help: Did you mean `"symbol"`?

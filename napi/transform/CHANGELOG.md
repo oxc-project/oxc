@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
 ## [0.109.0] - 2026-01-19
 
 ### 🚀 Features

@@ -116,8 +116,7 @@ impl Rule for First {
                         }
                     }
                     TSModuleReference::IdentifierReference(_)
-                    | TSModuleReference::QualifiedName(_)
-                    | TSModuleReference::ThisExpression(_) => {}
+                    | TSModuleReference::QualifiedName(_) => {}
                 },
                 Statement::ImportDeclaration(decl) => {
                     if matches!(self.0, AbsoluteFirst::AbsoluteFirst) {

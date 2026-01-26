@@ -11274,13 +11274,11 @@ const DebugTSImportEqualsDeclaration = class TSImportEqualsDeclaration {};
 function constructTSModuleReference(pos, ast) {
   switch (ast.buffer[pos]) {
     case 0:
-      return constructBoxIdentifierReference(pos + 8, ast);
-    case 1:
-      return constructBoxTSQualifiedName(pos + 8, ast);
-    case 2:
-      return constructBoxThisExpression(pos + 8, ast);
-    case 3:
       return constructBoxTSExternalModuleReference(pos + 8, ast);
+    case 1:
+      return constructBoxIdentifierReference(pos + 8, ast);
+    case 2:
+      return constructBoxTSQualifiedName(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleReference`);
   }

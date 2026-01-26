@@ -7757,9 +7757,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleReference<'_> {
             Self::QualifiedName(it) => {
                 TSModuleReference::QualifiedName(CloneIn::clone_in(it, allocator))
             }
-            Self::ThisExpression(it) => {
-                TSModuleReference::ThisExpression(CloneIn::clone_in(it, allocator))
-            }
         }
     }
 
@@ -7774,9 +7771,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TSModuleReference<'_> {
             Self::QualifiedName(it) => {
                 TSModuleReference::QualifiedName(CloneIn::clone_in_with_semantic_ids(it, allocator))
             }
-            Self::ThisExpression(it) => TSModuleReference::ThisExpression(
-                CloneIn::clone_in_with_semantic_ids(it, allocator),
-            ),
         }
     }
 }

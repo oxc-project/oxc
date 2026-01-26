@@ -26,7 +26,7 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { ast, initAst, SOURCE_CODE } from "./source_code.ts";
+import { ast, initAst, fileIsJsx, SOURCE_CODE } from "./source_code.ts";
 import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
@@ -143,6 +143,13 @@ export const ecmaFeaturesOverride: {
 
 // Singleton object for ECMA features.
 const ECMA_FEATURES = Object.freeze({
+  /**
+   * `true` if file was parsed as JSX.
+   */
+  get jsx(): boolean {
+    return fileIsJsx();
+  },
+
   /**
    * `true` if file was parsed with top-level `return` statements allowed.
    */

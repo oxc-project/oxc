@@ -1,7 +1,10 @@
-import * as path from "node:path";
 import { ConfigurationChangeEvent, Uri, workspace, WorkspaceFolder } from "vscode";
 import { DiagnosticPullMode } from "vscode-languageclient";
-import { validateSafeBinaryPath } from "./PathValidator";
+import {
+  searchGlobalNodeModulesBin,
+  searchProjectNodeModulesBin,
+  searchSettingsBin,
+} from "./findBinary";
 import { IDisposable } from "./types";
 import { VSCodeConfig } from "./VSCodeConfig";
 import {
@@ -99,98 +102,27 @@ export class ConfigService implements IDisposable {
       return false;
     }
 
-    const textDocumentPath = textDocumentUri.path;
-
-    for (const [workspaceUri, workspaceConfig] of this.workspaceConfigs.entries()) {
-      if (textDocumentPath.startsWith(workspaceUri)) {
-        return workspaceConfig.shouldRequestDiagnostics(diagnosticPullMode);
-      }
+    const ws = workspace.getWorkspaceFolder(textDocumentUri);
+    if (!ws) {
+      return false;
     }
-    return false;
+    const workspaceConfig = this.getWorkspaceConfig(ws.uri);
+
+    return workspaceConfig?.shouldRequestDiagnostics(diagnosticPullMode) ?? false;
   }
 
   private async searchBinaryPath(
     settingsBinary: string | undefined,
     defaultBinaryName: string,
   ): Promise<string | undefined> {
-    if (!settingsBinary) {
-      return this.searchNodeModulesBin(defaultBinaryName);
+    if (settingsBinary) {
+      return searchSettingsBin(settingsBinary);
     }
 
-    if (!workspace.isTrusted) {
-      return;
-    }
-
-    // validates the given path is safe to use
-    if (!validateSafeBinaryPath(settingsBinary)) {
-      return undefined;
-    }
-
-    if (!path.isAbsolute(settingsBinary)) {
-      const cwd = this.workspaceConfigs.keys().next().value;
-      if (!cwd) {
-        return undefined;
-      }
-      // if the path is not absolute, resolve it to the first workspace folder
-      settingsBinary = path.normalize(path.join(cwd, settingsBinary));
-      settingsBinary = this.removeWindowsLeadingSlash(settingsBinary);
-    }
-
-    if (process.platform !== "win32" && settingsBinary.endsWith(".exe")) {
-      // on non-Windows, remove `.exe` extension if present
-      settingsBinary = settingsBinary.slice(0, -4);
-    }
-
-    try {
-      await workspace.fs.stat(Uri.file(settingsBinary));
-      return settingsBinary;
-    } catch {}
-
-    // on Windows, also check for `.exe` extension (bun uses `.exe` for its binaries)
-    if (process.platform === "win32") {
-      if (!settingsBinary.endsWith(".exe")) {
-        settingsBinary += ".exe";
-      }
-
-      try {
-        await workspace.fs.stat(Uri.file(settingsBinary));
-        return settingsBinary;
-      } catch {}
-    }
-
-    // no valid binary found
-    return undefined;
-  }
-
-  /**
-   * strip the leading slash on Windows
-   */
-  private removeWindowsLeadingSlash(path: string): string {
-    if (process.platform === "win32" && path.startsWith("\\")) {
-      return path.slice(1);
-    }
-    return path;
-  }
-
-  /**
-   * Search for the binary in all workspaces' node_modules/.bin directories.
-   * If multiple workspaces contain the binary, the first one found is returned.
-   */
-  private async searchNodeModulesBin(binaryName: string): Promise<string | undefined> {
-    // try to resolve via require.resolve
-    try {
-      const resolvedPath = require
-        .resolve(binaryName, {
-          paths: workspace.workspaceFolders?.map((folder) => folder.uri.fsPath) ?? [],
-        })
-        // we want to target the binary instead of the main index file
-        // Improvement: search inside package.json "bin" and `main` field for more reliability
-        .replace(
-          `${binaryName}${path.sep}dist${path.sep}index.js`,
-          `${binaryName}${path.sep}bin${path.sep}${binaryName}`,
-        );
-      return resolvedPath;
-    } catch {}
+    return (
+      (await searchProjectNodeModulesBin(defaultBinaryName)) ??
+      (await searchGlobalNodeModulesBin(defaultBinaryName))
+    );
   }
 
   private async onVscodeConfigChange(event: ConfigurationChangeEvent): Promise<void> {

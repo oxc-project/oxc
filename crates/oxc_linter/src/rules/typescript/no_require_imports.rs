@@ -192,9 +192,8 @@ impl Rule for NoRequireImports {
 
                     ctx.diagnostic(no_require_imports_diagnostic(decl.span));
                 }
-                TSModuleReference::IdentifierReference(_)
-                | TSModuleReference::QualifiedName(_)
-                | TSModuleReference::ThisExpression(_) => {}
+                TSModuleReference::IdentifierReference(_) | TSModuleReference::QualifiedName(_) => {
+                }
             },
             _ => {}
         }

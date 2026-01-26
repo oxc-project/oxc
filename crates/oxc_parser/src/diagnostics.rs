@@ -1115,16 +1115,14 @@ pub fn interface_extend(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
-    )
-    .with_label(span)
-    .with_help("v flag enables additional syntax over u flag")
+    ts_error("1502", "The 'u' and 'v' regular expression flags cannot be enabled at the same time")
+        .with_label(span)
+        .with_help("v flag enables additional syntax over u flag")
 }
 
 #[cold]
 pub fn setter_with_parameters(span: Span, parameters_count: usize) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.")
+    ts_error("1049", "A 'set' accessor must have exactly one parameter.")
         .with_label(span)
         .with_help(if parameters_count == 0 {
             "Add a parameter here"
@@ -1138,7 +1136,7 @@ pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
 }
 #[cold]
-pub fn setter_with_assignment_pattern(span: Span) -> OxcDiagnostic {
+pub fn setter_with_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have an initializer.").with_label(span)
 }
 

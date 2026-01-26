@@ -1,252 +1,252 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 == NaN;
    ·        ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 === NaN;
    ·         ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN === "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN == "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 != NaN;
    ·        ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 !== NaN;
    ·         ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN !== "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN != "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN < "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ "abc" < NaN;
    ·         ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN > "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ "abc" > NaN;
    ·         ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN <= "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:10]
  1 │ "abc" <= NaN;
    ·          ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ NaN >= "abc";
    · ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:10]
  1 │ "abc" >= NaN;
    ·          ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 == Number.NaN;
    ·        ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 === Number.NaN;
    ·         ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN === "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN == "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:8]
  1 │ 123 != Number.NaN;
    ·        ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:9]
  1 │ 123 !== Number.NaN;
    ·         ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN !== "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN != "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN < "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ "abc" < Number.NaN;
    ·         ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN > "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:9]
  1 │ "abc" > Number.NaN;
    ·         ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN <= "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:10]
  1 │ "abc" <= Number.NaN;
    ·          ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:1]
  1 │ Number.NaN >= "abc";
    · ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Comparison with NaN will always return false
    ╭─[use_isnan.tsx:1:10]
  1 │ "abc" >= Number.NaN;
    ·          ──────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:7]
  1 │ x === Number?.NaN;
    ·       ───────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking inequality with NaN will always return true
    ╭─[use_isnan.tsx:1:7]
  1 │ x !== Number?.NaN;
    ·       ───────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:7]
  1 │ x === Number['NaN'];
    ·       ─────────────
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:2:59]
  1 │ /* just
  2 │                 adding */ x /* some */ === /* comments */ NaN; // here
@@ -254,380 +254,464 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking equality with NaN will always return false
    ╭─[use_isnan.tsx:1:12]
  1 │ (1, 2) === NaN;
    ·            ───
    ╰────
   help: Use the `isNaN` function to compare with NaN.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { case foo: break; }
    ·        ───
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case NaN: break; }
    ·                    ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { case foo: break; }
    ·        ───
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case NaN: break; }
    ·                    ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) {}
    ·        ───
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { case foo: break; }
    ·        ───
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { default: break; }
    ·        ───
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { case foo: break; default: break; }
    ·        ───
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case NaN: }
    ·                    ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case NaN: break; }
    ·                    ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case (NaN): break; }
    ·                    ─────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:37]
  1 │ switch(foo) { case bar: break; case NaN: break; default: break; }
    ·                                     ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:30]
  1 │ switch(foo) { case bar: case NaN: default: break; }
    ·                              ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:37]
  1 │ switch(foo) { case bar: break; case NaN: break; case baz: break; case NaN: break; }
    ·                                     ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:71]
  1 │ switch(foo) { case bar: break; case NaN: break; case baz: break; case NaN: break; }
    ·                                                                       ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(NaN) { case NaN: break; }
    ·        ───
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(NaN) { case NaN: break; }
    ·                    ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(Number.NaN) { case foo: break; }
    ·        ──────────
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case Number.NaN: break; }
    ·                    ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(Number.NaN) { case foo: break; }
    ·        ──────────
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case Number.NaN: break; }
    ·                    ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(Number.NaN) {}
    ·        ──────────
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(Number.NaN) { case foo: break; }
    ·        ──────────
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(Number.NaN) { default: break; }
    ·        ──────────
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(Number.NaN) { case foo: break; default: break; }
    ·        ──────────
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case Number.NaN: }
    ·                    ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case Number.NaN: break; }
    ·                    ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:20]
  1 │ switch(foo) { case (Number.NaN): break; }
    ·                    ────────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:37]
  1 │ switch(foo) { case bar: break; case Number.NaN: break; default: break; }
    ·                                     ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:30]
  1 │ switch(foo) { case bar: case Number.NaN: default: break; }
    ·                              ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:37]
  1 │ switch(foo) { case bar: break; case NaN: break; case baz: break; case Number.NaN: break; }
    ·                                     ───
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:71]
  1 │ switch(foo) { case bar: break; case NaN: break; case baz: break; case Number.NaN: break; }
    ·                                                                       ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN.
+  ⚠ eslint(use-isnan): Checking `switch` discriminant against NaN will never match
    ╭─[use_isnan.tsx:1:8]
  1 │ switch(Number.NaN) { case Number.NaN: break; }
    ·        ──────────
    ╰────
-  help: `switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): Checking for NaN in `case` clause will never match
    ╭─[use_isnan.tsx:1:27]
  1 │ switch(Number.NaN) { case Number.NaN: break; }
    ·                           ──────────
    ╰────
-  help: `case NaN` can never match. Use `Number.isNaN` before the switch.
+  help: Use the `isNaN` function instead of the switch.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:13]
  1 │ foo.indexOf(NaN)
    ·             ───
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
    ╭─[use_isnan.tsx:1:17]
  1 │ foo.lastIndexOf(NaN)
    ·                 ───
    ╰────
-  help: Array prototype method 'lastIndexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:16]
  1 │ foo['indexOf'](NaN)
    ·                ───
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:16]
  1 │ foo[`indexOf`](NaN)
    ·                ───
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
    ╭─[use_isnan.tsx:1:20]
  1 │ foo['lastIndexOf'](NaN)
    ·                    ───
    ╰────
-  help: Array prototype method 'lastIndexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:15]
  1 │ foo().indexOf(NaN)
    ·               ───
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
    ╭─[use_isnan.tsx:1:21]
  1 │ foo.bar.lastIndexOf(NaN)
    ·                     ───
    ╰────
-  help: Array prototype method 'lastIndexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:15]
  1 │ foo.indexOf?.(NaN)
    ·               ───
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:14]
  1 │ foo?.indexOf(NaN)
    ·              ───
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:16]
  1 │ (foo?.indexOf)(NaN)
    ·                ───
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:13]
  1 │ foo.indexOf(Number.NaN)
    ·             ──────────
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
    ╭─[use_isnan.tsx:1:17]
  1 │ foo.lastIndexOf(Number.NaN)
    ·                 ──────────
    ╰────
-  help: Array prototype method 'lastIndexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:16]
  1 │ foo['indexOf'](Number.NaN)
    ·                ──────────
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
    ╭─[use_isnan.tsx:1:20]
  1 │ foo['lastIndexOf'](Number.NaN)
    ·                    ──────────
    ╰────
-  help: Array prototype method 'lastIndexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:15]
  1 │ foo().indexOf(Number.NaN)
    ·               ──────────
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
    ╭─[use_isnan.tsx:1:21]
  1 │ foo.bar.lastIndexOf(Number.NaN)
    ·                     ──────────
    ╰────
-  help: Array prototype method 'lastIndexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:15]
  1 │ foo.indexOf?.(Number.NaN)
    ·               ──────────
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:14]
  1 │ foo?.indexOf(Number.NaN)
    ·              ──────────
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
 
-  ⚠ eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
    ╭─[use_isnan.tsx:1:16]
  1 │ (foo?.indexOf)(Number.NaN)
    ·                ──────────
    ╰────
-  help: Array prototype method 'indexOf' cannot find NaN.
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
+   ╭─[use_isnan.tsx:1:17]
+ 1 │ foo.indexOf((1, NaN))
+   ·                 ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
+   ╭─[use_isnan.tsx:1:17]
+ 1 │ foo.indexOf((1, Number.NaN))
+   ·                 ──────────
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
+   ╭─[use_isnan.tsx:1:21]
+ 1 │ foo.lastIndexOf((1, NaN))
+   ·                     ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
+   ╭─[use_isnan.tsx:1:21]
+ 1 │ foo.lastIndexOf((1, Number.NaN))
+   ·                     ──────────
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
+   ╭─[use_isnan.tsx:1:13]
+ 1 │ foo.indexOf(NaN, 1)
+   ·             ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
+   ╭─[use_isnan.tsx:1:17]
+ 1 │ foo.lastIndexOf(NaN, 1)
+   ·                 ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
+   ╭─[use_isnan.tsx:1:13]
+ 1 │ foo.indexOf(NaN, b)
+   ·             ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
+   ╭─[use_isnan.tsx:1:17]
+ 1 │ foo.lastIndexOf(NaN, b)
+   ·                 ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
+   ╭─[use_isnan.tsx:1:13]
+ 1 │ foo.indexOf(Number.NaN, b)
+   ·             ──────────
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
+   ╭─[use_isnan.tsx:1:17]
+ 1 │ foo.lastIndexOf(Number.NaN, b)
+   ·                 ──────────
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.lastIndexOf`
+   ╭─[use_isnan.tsx:1:17]
+ 1 │ foo.lastIndexOf(NaN, NaN)
+   ·                 ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.
+
+  ⚠ eslint(use-isnan): NaN values will never be found by `Array.prototype.indexOf`
+   ╭─[use_isnan.tsx:1:17]
+ 1 │ foo.indexOf((1, NaN), 1)
+   ·                 ───
+   ╰────
+  help: Use the `isNaN` function to check for NaN values.

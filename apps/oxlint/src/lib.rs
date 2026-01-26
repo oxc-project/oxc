@@ -5,6 +5,7 @@ mod command;
 mod init;
 mod lint;
 mod lsp;
+mod mode;
 mod output_formatter;
 mod result;
 mod walk;
@@ -24,6 +25,7 @@ pub mod cli {
 mod run;
 #[cfg(feature = "napi")]
 pub use run::*;
+use rustc_hash::FxHashSet;
 
 // JS plugins are only supported on 64-bit little-endian platforms at present.
 // Note: `raw_transfer_constants` module will not compile on 32-bit systems.
@@ -45,6 +47,8 @@ mod js_plugins;
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
+const DEFAULT_OXLINTRC: &str = ".oxlintrc.json";
+
 /// Return a JSON blob containing metadata for all available oxlint rules.
 ///
 /// This uses the internal JSON output formatter to generate the full list.
@@ -54,5 +58,7 @@ static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 pub fn get_all_rules_json() -> String {
     use crate::output_formatter::{OutputFormat, OutputFormatter};
 
-    OutputFormatter::new(OutputFormat::Json).all_rules().expect("Failed to generate rules JSON")
+    OutputFormatter::new(OutputFormat::Json)
+        .all_rules(FxHashSet::default())
+        .expect("Failed to generate rules JSON")
 }

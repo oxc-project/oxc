@@ -1,5 +1,7 @@
 # Oxc Transform
 
+See [usage instructions](https://oxc.rs/docs/guide/usage/transformer).
+
 ## TypeScript and React JSX Transform
 
 ```javascript

@@ -4,6 +4,31 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 0a02026 semantic: Add TS1499 code to diagnostic (#18557) (camc314)
+- 8b4618f parser: Add TS1500 code to diagnostic (#18547) (camc314)
+- 866b6b3 parser: Add TS1048 code to diagnostic (#18546) (camc314)
+- 1117c44 parser: Add TS1054 code to diagnostic (#18541) (camc314)
+- e4fcdde semantic: Add TS1053 code to diagnostic (#18539) (camc314)
+- bcbf396 semantic: Add TS1052 code to diagnostic (#18538) (camc314)
+- 8155edf semantic: Add TS1049 code to diagnostic (#18535) (camc314)
+- 51d3b3f parser: Add TS1502 code to diagnostic (#18534) (camc314)
+- 993fd2b parser: Parse unambiguous await with better error messages (#18480) (Boshen)
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- aed3669 parser: Parse HTML-like comments in unambiguous mode (#18442) (Boshen)
+- c4132fb parser: Validate accessor parameters in interface method signatures (#18391) (Boshen)
+
 ## [0.109.0] - 2026-01-19
 
 ### 🚀 Features

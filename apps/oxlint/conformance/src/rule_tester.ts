@@ -6,30 +6,37 @@
 import eslintGlobals from "../submodules/eslint/conf/globals.js";
 import { RuleTester } from "#oxlint";
 import { describe, it, setCurrentTest } from "./capture.ts";
-import { FILTER_ONLY_CODE } from "./filter.ts";
+import { SHOULD_SKIP_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint";
-import type { LanguageOptionsInternal } from "../../src-js/package/rule_tester.ts";
+import type { ParserDetails } from "./index.ts";
+import type {
+  LanguageOptionsInternal,
+  ParserOptionsInternal,
+} from "../../src-js/package/rule_tester.ts";
 
 type DescribeFn = RuleTester.DescribeFn;
 type ItFn = RuleTester.ItFn;
 type TestCases = RuleTester.TestCases;
 type Globals = RuleTester.Globals;
 export type Language = RuleTester.Language;
+export type LanguageOptions = LanguageOptionsInternal;
+export type ParserOptions = ParserOptionsInternal;
 
 interface TestCaseExtension {
   languageOptions?: LanguageOptionsInternal;
   // Parser was specified as `test.parser` (path string) in old ESLint versions
   parser?: string;
+  _parser?: ParserDetails;
 }
 
 export type ValidTestCase = RuleTester.ValidTestCase & TestCaseExtension;
 export type InvalidTestCase = RuleTester.InvalidTestCase & TestCaseExtension;
 export type TestCase = ValidTestCase | InvalidTestCase;
 
-// Maps of parser modules and parser paths to languages those parsers parse as
-export const parserModules: Map<unknown, Language> = new Map();
-export const parserModulePaths: Map<string, Language> = new Map();
+// Maps of parser modules and parser paths to parser details (language + specifier)
+export const parserModules: Map<unknown, ParserDetails> = new Map();
+export const parserModulePaths: Map<string, ParserDetails> = new Map();
 
 // Set up `RuleTester` to use our hooks
 RuleTester.describe = describe;
@@ -66,41 +73,80 @@ class RuleTesterShim extends RuleTester {
     throw new Error("Cannot override `itOnly` property");
   }
 
-  // Apply filter to test cases.
+  // Apply filter to test cases and add `before` hook to store test case in `currentTest`
   run(ruleName: string, rule: Rule, tests: TestCases): void {
-    if (FILTER_ONLY_CODE !== null) {
-      const codeMatchesFilter = Array.isArray(FILTER_ONLY_CODE)
-        ? (code: string) => FILTER_ONLY_CODE!.includes(code)
-        : (code: string) => code === FILTER_ONLY_CODE;
-
-      tests = {
-        valid: tests.valid.filter((test) => {
-          const code = typeof test === "string" ? test : test.code;
-          return codeMatchesFilter(code);
-        }),
-        invalid: tests.invalid.filter((test) => codeMatchesFilter(test.code)),
-      };
-    }
+    tests = {
+      valid: tests.valid
+        .map((test) => {
+          if (typeof test === "string") test = { code: test };
+          return addBeforeHook(test);
+        })
+        .filter(shouldRunTestCase),
+      invalid: tests.invalid.map(addBeforeHook).filter(shouldRunTestCase),
+    };
 
     super.run(ruleName, rule, tests);
   }
+}
+
+/**
+ * Add `before` hook to test case to store test case in `currentTest`.
+ * @param test - Test case
+ * @returns Test case
+ */
+function addBeforeHook<T extends TestCase>(test: T): T {
+  // Clone test in case `after` hook modifies it (edge case)
+  const clonedTest = { ...test };
+
+  if (Object.hasOwn(test, "before")) {
+    const originalBefore = test.before;
+    test.before = function (this) {
+      setCurrentTest(clonedTest);
+      originalBefore!.call(this);
+    };
+  } else {
+    // Non-enumerable property so that test case remains serializable
+    // (for `isSerializable` check in `assertNotDuplicateTestCase`)
+    Object.defineProperty(test, "before", {
+      value: () => setCurrentTest(clonedTest),
+      writable: true,
+      configurable: true,
+      enumerable: false,
+    });
+  }
+
+  return test;
+}
+
+/**
+ * Check if test case should run.
+ * @param test - Test case
+ * @returns `true` if test case should run, `false` if is filtered out
+ */
+function shouldRunTestCase(test: TestCase): boolean {
+  return !SHOULD_SKIP_CODE(test.code);
 }
 
 // Register hook to modify test cases before they are run.
 // `registerModifyTestCaseHook` is only present in debug builds, so it's not part of the `RuleTester` type def.
 (RuleTester as any).registerModifyTestCaseHook(modifyTestCase);
 
+/**
+ * Modify test case before running it.
+ * Store test case in `currentTest` so it can be accessed in `it` function.
+ * @param test - Test case
+ */
 function modifyTestCase(test: TestCase): void {
   let { languageOptions } = test;
 
   // Record current test case.
   // Clone it to avoid including the changes to the original test case made below.
   // Replace `languageOptions.parser` with `{}` to avoid verbose output in snapshots.
-  const clonedTest = { ...test };
+  const storedTest = { ...test };
   if (languageOptions?.parser != null) {
-    clonedTest.languageOptions = { ...languageOptions, parser: {} };
+    storedTest.languageOptions = { ...languageOptions, parser: {} };
   }
-  setCurrentTest(clonedTest);
+  setCurrentTest(storedTest);
 
   // Enable ESLint compat mode.
   // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
@@ -126,24 +172,29 @@ function modifyTestCase(test: TestCase): void {
   // Parser can be specified as:
   // - Current ESLint: `test.languageOptions.parser` (parser object)
   // - Old ESLint versions: `test.parser` (absolute path to parser)
-  let lang: Language | null = null;
+  let parserDetails: ParserDetails | null = null;
 
   if (languageOptions.parser != null) {
-    lang = parserModules.get(languageOptions.parser) ?? null;
-    if (lang !== null) delete languageOptions.parser;
+    parserDetails = parserModules.get(languageOptions.parser) ?? null;
+    if (parserDetails !== null) delete languageOptions.parser;
   }
 
   if (test.parser != null) {
-    lang = parserModulePaths.get(test.parser) ?? null;
-    if (lang === null) {
-      // Set `languageOptions.parser` so an error is thrown
-      languageOptions.parser = {};
-    } else {
-      delete test.parser;
+    if (parserDetails !== null) {
+      throw new Error("Both `test.parser` and `test.languageOptions.parser` specified");
     }
+    parserDetails = parserModulePaths.get(test.parser) ?? null;
+    if (parserDetails === null) {
+      // Set `languageOptions.parser` so an error is thrown.
+      // Store in stored test case so appears in snapshot.
+      (languageOptions as any).parser = { specifier: "__unknownParser", path: test.parser };
+      (storedTest as any)._parser = { specifier: "__unknownParser", path: test.parser };
+    }
+    delete test.parser;
   }
 
-  if (lang !== null) {
+  if (parserDetails !== null) {
+    let { lang } = parserDetails;
     if (parserOptions.ecmaFeatures?.jsx === true) {
       if (lang === "ts") {
         lang = "tsx";
@@ -152,6 +203,11 @@ function modifyTestCase(test: TestCase): void {
       }
     }
     parserOptions.lang = lang;
+
+    // Store parser details in test case so tests using different parsers don't get detected as duplicates.
+    // Store in stored test case so they appear in snapshot.
+    (test as any)._parser = parserDetails;
+    storedTest._parser = parserDetails;
   }
 }
 

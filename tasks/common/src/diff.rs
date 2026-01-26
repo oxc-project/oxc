@@ -28,6 +28,7 @@ const CONTEXT_LINES: usize = 3;
 /// +  43 │    new_code();
 ///    44 │}
 /// ```
+/// Simple API that creates a diff from two strings and prints it.
 pub fn print_diff_in_terminal(expected: &str, result: &str) {
     let diff = TextDiff::from_lines(expected, result);
     print_text_diff(&diff);

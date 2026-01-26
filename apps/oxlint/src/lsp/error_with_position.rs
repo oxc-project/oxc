@@ -7,7 +7,9 @@ use tower_lsp_server::ls_types::{
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::{OxcCode, Severity};
-use oxc_linter::{Fix, FixKind, Message, PossibleFixes};
+use oxc_linter::{
+    AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -219,6 +221,80 @@ pub fn generate_inverted_diagnostics(
         }
     }
     inverted_diagnostics
+}
+
+/// Almost the same as [oxc_linter::create_unused_directives_diagnostics], but returns `Message`s
+/// with a `PossibleFixes` instead of `OxcDiagnostic`s.
+pub fn create_unused_directives_messages(
+    directives: &DisableDirectives,
+    severity: AllowWarnDeny,
+    source_text: &str,
+) -> Vec<Message> {
+    use oxc_diagnostics::OxcDiagnostic;
+
+    let mut diagnostics = Vec::new();
+    let fix_message = "remove unused disable directive";
+
+    let severity = if severity == AllowWarnDeny::Deny {
+        oxc_diagnostics::Severity::Error
+    } else {
+        oxc_diagnostics::Severity::Warning
+    };
+
+    // Report unused disable comments
+    let unused_disable = directives.collect_unused_disable_comments();
+    for unused_comment in unused_disable {
+        let span = unused_comment.span;
+        match unused_comment.r#type {
+            RuleCommentType::All => {
+                diagnostics.push(Message::new(
+                    OxcDiagnostic::warn(
+                        "Unused eslint-disable directive (no problems were reported).",
+                    )
+                    .with_label(span)
+                    .with_severity(severity),
+                    PossibleFixes::Single(Fix::delete(span).with_message(fix_message)),
+                ));
+            }
+            RuleCommentType::Single(rules) => {
+                for rule in rules {
+                    let rule_message = format!(
+                        "Unused eslint-disable directive (no problems were reported from {}).",
+                        rule.rule_name
+                    );
+                    diagnostics.push(Message::new(
+                        OxcDiagnostic::warn(rule_message)
+                            .with_label(rule.name_span)
+                            .with_severity(severity),
+                        PossibleFixes::Single(
+                            rule.create_fix(source_text, span).with_message(fix_message),
+                        ),
+                    ));
+                }
+            }
+        }
+    }
+
+    // Report unused enable comments
+    let unused_enable = directives.unused_enable_comments();
+    for (rule_name, span) in unused_enable {
+        let message = if let Some(rule_name) = rule_name {
+            format!(
+                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
+            )
+        } else {
+            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
+                .to_string()
+        };
+        diagnostics.push(Message::new(
+            OxcDiagnostic::warn(message).with_label(*span).with_severity(severity),
+            // TODO: fixer
+            // copy the structure of disable directives
+            PossibleFixes::None,
+        ));
+    }
+
+    diagnostics
 }
 
 pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Position {

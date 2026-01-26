@@ -1,0 +1,14 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/invalid_config_nested
+----------
+Failed to parse oxlint configuration file at <cwd>/fixtures/invalid_config_nested/invalid/.oxlintrc.json.
+
+  x Failed to parse config with error Error("Unknown plugin: '../invalid/plugin.ts'.", line: 0, column: 0)
+
+----------
+CLI result: InvalidOptionConfig
+----------

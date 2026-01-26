@@ -153,6 +153,17 @@ impl RuleRunner for crate::rules::import::no_namespace::NoNamespace {
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
+impl RuleRunner for crate::rules::import::no_relative_parent_imports::NoRelativeParentImports {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ExportAllDeclaration,
+        AstType::ExportNamedDeclaration,
+        AstType::ImportDeclaration,
+        AstType::ImportExpression,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner for crate::rules::import::no_self_import::NoSelfImport {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;

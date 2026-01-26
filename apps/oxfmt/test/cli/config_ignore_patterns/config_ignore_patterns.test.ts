@@ -34,4 +34,20 @@ describe("config_ignore_patterns", () => {
     const snapshot = await runAndSnapshot(nestedCwd, [["--check", "."]]);
     expect(snapshot).toMatchSnapshot();
   });
+
+  // Same structure as above, but explicitly specifying `--config ../.oxfmtrc.json`
+  // instead of relying on automatic upward config search.
+  //
+  // When `--config` contains `..`, `normalize_relative_path` joins
+  // cwd + `../.oxfmtrc.json` without resolving `..`, leaving the path as
+  // `.../sub/../.oxfmtrc.json`. This causes `GitignoreBuilder`'s root
+  // to be `.../sub/..` which doesn't match file paths via `strip_prefix`,
+  // making `ignorePatterns` ineffective.
+  it("explicit --config with parent-relative path resolves ignorePatterns correctly", async () => {
+    const nestedCwd = join(import.meta.dirname, "fixtures", "nested_cwd", "sub");
+    const snapshot = await runAndSnapshot(nestedCwd, [
+      ["--check", "--config", "../.oxfmtrc.json", "."],
+    ]);
+    expect(snapshot).toMatchSnapshot();
+  });
 });
