@@ -1,0 +1,135 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "path"
+   ╭─[index.ts:1:18]
+ 1 │ import path from "path"
+   ·                  ──────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:16]
+ 1 │ import fs from "fs"
+   ·                ────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "path"
+   ╭─[index.ts:1:20]
+ 1 │ var path = require("path")
+   ·                    ──────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:18]
+ 1 │ var fs = require("fs")
+   ·                  ────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "node:path"
+   ╭─[index.ts:1:18]
+ 1 │ import path from "node:path"
+   ·                  ───────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "node:fs"
+   ╭─[index.ts:1:16]
+ 1 │ import fs from "node:fs"
+   ·                ─────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "node:path"
+   ╭─[index.ts:1:20]
+ 1 │ var path = require("node:path")
+   ·                    ───────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "node:fs"
+   ╭─[index.ts:1:18]
+ 1 │ var fs = require("node:fs")
+   ·                  ─────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs/promises"
+   ╭─[index.ts:1:16]
+ 1 │ import fs from "fs/promises"
+   ·                ─────────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs/promises"
+   ╭─[index.ts:1:18]
+ 1 │ var fs = require("fs/promises")
+   ·                  ─────────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:8]
+ 1 │ import("fs")
+   ·        ────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "node:fs"
+   ╭─[index.ts:1:8]
+ 1 │ import("node:fs")
+   ·        ─────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:9]
+ 1 │ import(`fs`)
+   ·         ──
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "node:path"
+   ╭─[index.ts:1:9]
+ 1 │ import(`node:path`)
+   ·         ─────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:26]
+ 1 │ export { readFile } from "fs"
+   ·                          ────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:15]
+ 1 │ export * from "fs"
+   ·               ────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:21]
+ 1 │ import fs = require("fs")
+   ·                     ────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "node:path"
+   ╭─[index.ts:1:23]
+ 1 │ import path = require("node:path")
+   ·                       ───────────
+   ╰────
+  help: This module is not available in browser environments.
+
+  ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module "fs"
+   ╭─[index.ts:1:16]
+ 1 │ import fs from "fs"
+   ·                ────
+   ╰────
+  help: This module is not available in browser environments.

@@ -8,6 +8,11 @@ use oxc_semantic::AstTypesBitset;
 
 use crate::rule::{RuleRunFunctionsImplemented, RuleRunner};
 
+impl RuleRunner for crate::rules::import::no_nodejs_modules::NoNodejsModules {
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+}
+
 impl RuleRunner
     for crate::rules::import::consistent_type_specifier_style::ConsistentTypeSpecifierStyle
 {
