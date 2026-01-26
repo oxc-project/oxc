@@ -26,20 +26,34 @@ const STEP_TYPE_EXIT = 1;
 const STEP_TYPE_CALL = 2;
 
 /**
- * Step to walk AST - using plain objects instead of ESLint's class instances.
+ * Step to walk AST.
  */
-interface VisitStep {
-  type: typeof STEP_TYPE_ENTER | typeof STEP_TYPE_EXIT;
+type Step = EnterStep | ExitStep | CallStep;
+
+/**
+ * Step for entering AST node.
+ */
+interface EnterStep {
+  type: typeof STEP_TYPE_ENTER;
   target: Node;
 }
 
+/**
+ * Step for exiting AST node.
+ */
+interface ExitStep {
+  type: typeof STEP_TYPE_EXIT;
+  target: Node;
+}
+
+/**
+ * Step for calling a CFG event handler.
+ */
 interface CallStep {
   type: typeof STEP_TYPE_CALL;
   eventName: string;
   args: unknown[];
 }
-
-type Step = VisitStep | CallStep;
 
 // Array of steps to walk AST.
 // Singleton array which is re-used for each walk, and emptied after each walk.
@@ -128,7 +142,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
       }
     } else {
       // Call method (CFG event)
-      const callStep = step as CallStep;
+      const callStep = step;
       const eventId = NODE_TYPE_IDS_MAP.get(callStep.eventName)!;
       const visit = visitors[eventId];
       if (visit !== null) {
