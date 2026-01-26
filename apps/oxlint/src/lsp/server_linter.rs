@@ -702,12 +702,18 @@ impl ServerLinter {
         let mut fs = LspFileSystem::default();
         fs.add_file(path.to_path_buf(), Arc::from(source_text));
 
-        let mut messages: Vec<DiagnosticReport> = self
-            .runner
-            .run_source(&[Arc::from(path.as_os_str())], &fs)?
-            .into_iter()
-            .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
-            .collect();
+        let mut messages: Vec<DiagnosticReport> =
+            match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
+                Ok(results) => results
+                    .into_iter()
+                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
+                    .collect(),
+                Err(e) => {
+                    // clear disable directives on error to prevent stale directives
+                    self.runner.directives_coordinator().remove(path);
+                    return Err(e);
+                }
+            };
 
         messages.append(&mut generate_inverted_diagnostics(&messages, uri));
 
