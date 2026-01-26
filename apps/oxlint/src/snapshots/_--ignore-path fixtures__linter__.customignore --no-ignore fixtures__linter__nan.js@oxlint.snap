@@ -13,7 +13,7 @@ working directory:
    `----
   help: Consider using this expression or removing it
 
-  ! eslint(use-isnan): Requires calls to `isNaN()` when checking for NaN
+  ! eslint(use-isnan): Checking equality with NaN will always return false
    ,-[fixtures/linter/nan.js:1:8]
  1 | 123 == NaN;
    :        ^^^

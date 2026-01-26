@@ -112,10 +112,15 @@ export interface TestGroup {
    *
    * e.g. `{ specifier: "@typescript-eslint/parser", lang: "ts" }`
    */
-  parsers: {
-    specifier: string;
-    lang: Language;
-  }[];
+  parsers: ParserDetails[];
+}
+
+/**
+ * Custom parser details.
+ */
+export interface ParserDetails {
+  specifier: string;
+  lang: Language;
 }
 
 /**
@@ -245,13 +250,15 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   parserModules.clear();
   parserModulePaths.clear();
 
-  for (const parserProps of group.parsers) {
-    const path = resolveFromTestsDir(parserProps.specifier);
+  for (const parserDetails of group.parsers) {
+    const path = resolveFromTestsDir(parserDetails.specifier);
     const parser = require(path);
 
-    const { lang } = parserProps;
-    parserModules.set(parser, lang);
-    parserModulePaths.set(path, lang);
+    // Set `default` export on parser module to work around apparent bug in `tsx`
+    if (parser && parser.default === undefined) parser.default = parser;
+
+    parserModules.set(parser, parserDetails);
+    parserModulePaths.set(path, parserDetails);
   }
 
   // Find test files and run tests

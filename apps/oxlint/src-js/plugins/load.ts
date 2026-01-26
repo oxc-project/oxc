@@ -189,17 +189,7 @@ export function registerPlugin(
         // ESLint treats empty `defaultOptions` the same as no `defaultOptions`,
         // and does not validate against schema
         if (inputDefaultOptions.length !== 0) {
-          // Serialize to JSON and deserialize again.
-          // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
-          // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
-          // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
-          try {
-            defaultOptions = JSON.parse(JSON.stringify(inputDefaultOptions)) as Options;
-          } catch (err) {
-            throw new Error(
-              `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
-            );
-          }
+          defaultOptions = conformDefaultOptions(inputDefaultOptions);
 
           // Validate default options against schema, if schema was provided.
           // This also applies any defaults from schema.
@@ -367,6 +357,61 @@ function normalizePluginName(name: string): string {
   // No normalization needed
   return name;
 }
+
+/**
+ * Serialize default options to JSON and deserialize again.
+ *
+ * This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
+ * or circular references. It may also be the fastest, as `JSON.parse` and `JSON.stringify` are native code.
+ * If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+ *
+ * Special handling for `Infinity` / `-Infinity` values, to ensure they survive the round trip.
+ * Without this, they would be converted to `null`.
+ *
+ * @param defaultOptions - Default options array
+ * @returns Conformed default options array
+ */
+function conformDefaultOptions(defaultOptions: Options): Options {
+  let json,
+    containsInfinity = false;
+  try {
+    json = JSON.stringify(defaultOptions, (key, value) => {
+      if (value === Infinity || value === -Infinity) {
+        containsInfinity = true;
+        return value === Infinity ? POS_INFINITY_PLACEHOLDER : NEG_INFINITY_PLACEHOLDER;
+      }
+      return value;
+    });
+  } catch (err) {
+    throw new Error(
+      `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
+    );
+  }
+
+  if (containsInfinity) {
+    const plainJson = JSON.stringify(defaultOptions);
+    if (
+      plainJson.includes(POS_INFINITY_PLACEHOLDER) ||
+      plainJson.includes(NEG_INFINITY_PLACEHOLDER)
+    ) {
+      throw new Error(
+        `\`rule.meta.defaultOptions\` cannot contain the strings "${POS_INFINITY_PLACEHOLDER}" or "${NEG_INFINITY_PLACEHOLDER}"`,
+      );
+    }
+
+    // `JSON.parse` will convert these back to `Infinity` / `-Infinity`
+    json = json
+      .replaceAll(POS_INFINITY_PLACEHOLDER_STR, "1e+400")
+      .replaceAll(NEG_INFINITY_PLACEHOLDER_STR, "-1e+400");
+  }
+
+  return JSON.parse(json);
+}
+
+const POS_INFINITY_PLACEHOLDER = "$_$_$_POS_INFINITY_$_$_$";
+const NEG_INFINITY_PLACEHOLDER = "$_$_$_NEG_INFINITY_$_$_$";
+const POS_INFINITY_PLACEHOLDER_STR = JSON.stringify(POS_INFINITY_PLACEHOLDER);
+const NEG_INFINITY_PLACEHOLDER_STR = JSON.stringify(NEG_INFINITY_PLACEHOLDER);
 
 /**
  * Validate and conform `before` / `after` hook function.

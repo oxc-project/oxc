@@ -19,7 +19,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -34,7 +34,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -48,7 +48,7 @@ const plugin: Plugin = {
           "string",
           123,
           true,
-          { toBe: false, notToBe: true },
+          { toBe: false, notToBe: true, inf: Infinity, negInf: -Infinity },
           { deep: [{ deeper: { evenDeeper: [{ soDeep: { soSoDeep: true } }] } }] },
         ],
         schema: false,
@@ -56,7 +56,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -67,7 +67,13 @@ const plugin: Plugin = {
     "merge-options": {
       meta: {
         defaultOptions: [
-          { fromDefault: 1, overrideDefault: 2, nested: { fromDefault: 3, overrideDefault: 4 } },
+          {
+            fromDefault: 1,
+            overrideDefault: 2,
+            nested: { fromDefault: 3, overrideDefault: 4 },
+            inf: Infinity,
+            negInf: -Infinity,
+          },
           { fromDefault: 5 },
           { fromDefault: 6 },
           7,
@@ -77,7 +83,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -93,7 +99,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -123,7 +129,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -160,7 +166,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -189,7 +195,7 @@ const plugin: Plugin = {
       create(context) {
         context.report({
           message:
-            `\noptions: ${JSON.stringify(context.options, null, 2)}\n` +
+            `\noptions: ${stringifyOptions(context.options)}\n` +
             `isDeepFrozen: ${isDeepFrozen(context.options)}`,
           node: SPAN,
         });
@@ -200,6 +206,18 @@ const plugin: Plugin = {
 };
 
 export default plugin;
+
+function stringifyOptions(options: unknown): string {
+  return JSON.stringify(
+    options,
+    (key, value) => {
+      if (value === Infinity) return "<Infinity>";
+      if (value === -Infinity) return "<-Infinity>";
+      return value;
+    },
+    2,
+  );
+}
 
 function isDeepFrozen(value: unknown): boolean {
   if (value === null || typeof value !== "object") return true;

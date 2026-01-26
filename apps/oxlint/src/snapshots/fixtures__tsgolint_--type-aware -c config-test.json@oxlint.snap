@@ -6,7 +6,7 @@ arguments: --type-aware -c config-test.json
 working directory: fixtures/tsgolint
 ----------
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited.
+  ! typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[no-floating-promises.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
@@ -23,7 +23,7 @@ working directory: fixtures/tsgolint
    `----
   help: Remove the debugger statement
 
-  ! typescript-eslint(no-floating-promises): Promises must be awaited.
+  ! typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[prefer-promise-reject-errors.ts:1:1]
  1 | Promise.reject('error');
    : ^^^^^^^^^^^^^^^^^^^^^^^^

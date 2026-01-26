@@ -1,7 +1,6 @@
 use std::{
     env,
     ffi::OsStr,
-    fs,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
@@ -10,20 +9,18 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use rustc_hash::{FxHashMap, FxHashSet};
-use serde_json::Value;
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
-    table::RuleTable,
 };
 
 use crate::{
     DEFAULT_OXLINTRC,
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
-    output_formatter::{LintCommandInfo, OutputFormat, OutputFormatter},
+    output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
 use oxc_linter::LintIgnoreMatcher;
@@ -63,6 +60,10 @@ impl CliRunner {
             inline_config_options,
             ..
         } = self.options;
+
+        if basic_options.init {
+            return crate::mode::run_init(&self.cwd, stdout);
+        }
 
         let external_linter = self.external_linter.as_ref();
 
@@ -180,6 +181,54 @@ impl CliRunner {
         }
 
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
+        {
+            let mut plugins = oxlintrc.plugins.unwrap_or_default();
+            enable_plugins.apply_overrides(&mut plugins);
+            oxlintrc.plugins = Some(plugins);
+        }
+
+        let base_ignore_patterns = oxlintrc.ignore_patterns.clone();
+        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
+            false,
+            oxlintrc.clone(),
+            external_linter,
+            &mut external_plugin_store,
+        ) {
+            Ok(builder) => builder,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to parse oxlint configuration file.\n{}\n",
+                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        }
+        .with_filters(&filters);
+
+        if misc_options.print_config {
+            return crate::mode::run_print_config(&config_builder, oxlintrc, stdout);
+        }
+
+        let lint_config = match config_builder.build(&mut external_plugin_store) {
+            Ok(config) => config,
+            Err(e) => {
+                print_and_flush_stdout(
+                    stdout,
+                    &format!(
+                        "Failed to build configuration.\n{}\n",
+                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
+                    ),
+                );
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+
+        if self.options.list_rules {
+            return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
+        }
 
         let search_for_nested_configs = !disable_nested_config &&
             // If the `--config` option is explicitly passed, we should not search for nested config files
@@ -205,41 +254,8 @@ impl CliRunner {
             FxHashMap::default()
         };
 
-        let ignore_matcher = {
-            LintIgnoreMatcher::new(&oxlintrc.ignore_patterns, &self.cwd, nested_ignore_patterns)
-        };
-
-        {
-            let mut plugins = oxlintrc.plugins.unwrap_or_default();
-            enable_plugins.apply_overrides(&mut plugins);
-            oxlintrc.plugins = Some(plugins);
-        }
-
-        let oxlintrc_for_print = if misc_options.print_config || basic_options.init {
-            Some(oxlintrc.clone())
-        } else {
-            None
-        };
-
-        let config_builder = match ConfigStoreBuilder::from_oxlintrc(
-            false,
-            oxlintrc,
-            external_linter,
-            &mut external_plugin_store,
-        ) {
-            Ok(builder) => builder,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse oxlint configuration file.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        }
-        .with_filters(&filters);
+        let ignore_matcher =
+            { LintIgnoreMatcher::new(&base_ignore_patterns, &self.cwd, nested_ignore_patterns) };
 
         // If no external rules, discard `ExternalLinter`
         let mut external_linter = self.external_linter;
@@ -247,61 +263,11 @@ impl CliRunner {
             external_linter = None;
         }
 
-        if let Some(basic_config_file) = oxlintrc_for_print {
-            let config_file = config_builder.resolve_final_config_file(basic_config_file);
-            if misc_options.print_config {
-                print_and_flush_stdout(stdout, &config_file);
-                print_and_flush_stdout(stdout, "\n");
-
-                return CliRunResult::PrintConfigResult;
-            } else if basic_options.init {
-                let schema_relative_path = "node_modules/oxlint/configuration_schema.json";
-                let configuration = if self.cwd.join(schema_relative_path).is_file() {
-                    let mut config_json: Value = serde_json::from_str(&config_file).unwrap();
-                    if let Value::Object(ref mut obj) = config_json {
-                        let mut json_object = serde_json::Map::new();
-                        json_object.insert(
-                            "$schema".to_string(),
-                            format!("./{schema_relative_path}").into(),
-                        );
-                        json_object.extend(obj.clone());
-                        *obj = json_object;
-                    }
-                    serde_json::to_string_pretty(&config_json).unwrap()
-                } else {
-                    config_file
-                };
-
-                if fs::write(DEFAULT_OXLINTRC, configuration).is_ok() {
-                    print_and_flush_stdout(stdout, "Configuration file created\n");
-                    return CliRunResult::ConfigFileInitSucceeded;
-                }
-
-                // failed case
-                print_and_flush_stdout(stdout, "Failed to create configuration file\n");
-                return CliRunResult::ConfigFileInitFailed;
-            }
-        }
-
         // TODO(refactor): pull this into a shared function, so that the language server can use
         // the same functionality.
-        let use_cross_module = config_builder.plugins().has_import()
+        let use_cross_module = lint_config.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
         let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
-
-        let lint_config = match config_builder.build(&mut external_plugin_store) {
-            Ok(config) => config,
-            Err(e) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to build configuration.\n{}\n",
-                        render_report(&handler, &OxcDiagnostic::error(e.to_string()))
-                    ),
-                );
-                return CliRunResult::InvalidOptionConfig;
-            }
-        };
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -312,34 +278,6 @@ impl CliRunner {
             Self::get_diagnostic_service(&output_formatter, &warning_options, &misc_options);
 
         let config_store = ConfigStore::new(lint_config, nested_configs, external_plugin_store);
-
-        // If the user requested `--rules`, print a CLI-specific table that
-        // includes an "Enabled?" column based on the resolved configuration.
-        if self.options.list_rules {
-            // Preserve previous behavior of `--rules` output when `-f` is set
-            if self.options.output_options.format == OutputFormat::Default {
-                // Build the set of enabled builtin rule names from the resolved config.
-                let enabled: FxHashSet<&str> =
-                    config_store.rules().iter().map(|(rule, _)| rule.name()).collect();
-
-                let table = RuleTable::default();
-                for section in &table.sections {
-                    let md = section.render_markdown_table_cli(&enabled);
-                    print_and_flush_stdout(stdout, &md);
-                    print_and_flush_stdout(stdout, "\n");
-                }
-
-                print_and_flush_stdout(
-                    stdout,
-                    format!("Default: {}\n", table.turned_on_by_default_count).as_str(),
-                );
-                print_and_flush_stdout(stdout, format!("Total: {}\n", table.total).as_str());
-            } else if let Some(output) = output_formatter.all_rules() {
-                print_and_flush_stdout(stdout, &output);
-            }
-
-            return CliRunResult::None;
-        }
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
@@ -537,8 +475,7 @@ impl CliRunner {
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
-        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
-        let mut nested_configs = FxHashMap::<PathBuf, Config>::default();
+        let mut nested_oxlintrc = FxHashSet::<PathBuf>::default();
         // get all of the unique directories among the paths to use for search for
         // oxlint config files in those directories and their ancestors
         // e.g. `/some/file.js` will check `/some` and `/`
@@ -559,25 +496,36 @@ impl CliRunner {
             }
         }
         for directory in directories {
-            #[expect(clippy::match_same_arms)]
-            match Self::find_oxlint_config_in_directory(directory) {
-                Ok(Some(v)) => {
-                    nested_oxlintrc.insert(directory, v);
-                }
-                Ok(None) => {}
-                Err(_) => {
-                    // TODO(camc314): report this error
-                }
+            if let Some(path) = Self::find_oxlint_config_path_in_directory(directory) {
+                nested_oxlintrc.insert(path);
             }
         }
 
-        // iterate over each config and build the ConfigStore
-        for (dir, oxlintrc) in nested_oxlintrc {
+        let mut nested_configs = FxHashMap::<PathBuf, Config>::with_capacity_and_hasher(
+            nested_oxlintrc.len(),
+            FxBuildHasher,
+        );
+
+        // iterate over each config path and build the ConfigStore
+        for path in nested_oxlintrc {
+            let oxlintrc = match Oxlintrc::from_file(&path) {
+                Ok(oxlintrc) => oxlintrc,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to parse oxlint configuration file at {}.\n{}\n",
+                            path.display(),
+                            render_report(handler, &e)
+                        ),
+                    );
+                    return Err(CliRunResult::InvalidOptionConfig);
+                }
+            };
+            let dir = oxlintrc.path.parent().unwrap().to_path_buf();
             // Collect ignore patterns and their root
-            nested_ignore_patterns.push((
-                oxlintrc.ignore_patterns.clone(),
-                oxlintrc.path.parent().unwrap().to_path_buf(),
-            ));
+            nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir.clone()));
+
             // TODO(refactor): clean up all of the error handling in this function
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
@@ -612,7 +560,7 @@ impl CliRunner {
                     return Err(CliRunResult::InvalidOptionConfig);
                 }
             };
-            nested_configs.insert(dir.to_path_buf(), config);
+            nested_configs.insert(dir, config);
         }
 
         Ok(nested_configs)
@@ -632,16 +580,11 @@ impl CliRunner {
         Ok(Oxlintrc::default())
     }
 
-    /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
-    /// and returns `Err` if none exists or the file is invalid. Does not apply the default
-    /// config file.
-    fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+    /// Looks in a directory for an oxlint config file and returns the path if it exists.
+    /// Does not validate the file or apply the default config file.
+    fn find_oxlint_config_path_in_directory(dir: &Path) -> Option<PathBuf> {
         let possible_config_path = dir.join(DEFAULT_OXLINTRC);
-        if possible_config_path.is_file() {
-            Oxlintrc::from_file(&possible_config_path).map(Some)
-        } else {
-            Ok(None)
-        }
+        if possible_config_path.is_file() { Some(possible_config_path) } else { None }
     }
 }
 
@@ -974,12 +917,12 @@ mod test {
     #[test]
     fn test_tsconfig_option() {
         // passed
-        Tester::new().with_cwd("fixtures".into()).test(&["--tsconfig", "tsconfig/tsconfig.json"]);
+        Tester::new().with_cwd("fixtures/tsconfig".into()).test(&["--tsconfig", "tsconfig.json"]);
 
         // failed
         Tester::new()
-            .with_cwd("fixtures".into())
-            .test_and_snapshot(&["--tsconfig", "oxc/tsconfig.json"]);
+            .with_cwd("fixtures/tsconfig".into())
+            .test_and_snapshot(&["--tsconfig", "non-exists.json"]);
     }
 
     #[test]
@@ -1503,6 +1446,11 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/invalid_config_multiple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_nested() {
+        Tester::new().with_cwd("fixtures/invalid_config_nested".into()).test_and_snapshot(&[]);
     }
 
     #[test]

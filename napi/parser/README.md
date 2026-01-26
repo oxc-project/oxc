@@ -1,5 +1,7 @@
 # Oxc Parser
 
+See [usage instructions](https://oxc.rs/docs/guide/usage/parser).
+
 ## Features
 
 ### Supports WASM

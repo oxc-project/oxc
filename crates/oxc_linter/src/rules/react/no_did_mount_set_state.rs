@@ -21,9 +21,10 @@ fn no_did_mount_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 pub enum NoDidMountSetStateConfig {
+    /// Allow `setState` calls in nested functions within `componentDidMount`, the default behavior.
     #[default]
-    #[serde(skip)]
     Allowed,
+    /// When set, also disallows `setState` calls in nested functions within `componentDidMount`.
     DisallowInFunc,
 }
 
@@ -34,6 +35,9 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Disallows using `setState` in the `componentDidMount` lifecycle method.
+    ///
+    /// This rule is not relevant for function components, and so can potentially be
+    /// disabled for modern React codebases.
     ///
     /// ### Why is this bad?
     ///
@@ -71,18 +75,6 @@ declare_oxc_lint!(
     ///   }
     /// });
     /// ```
-    ///
-    /// ### Options
-    ///
-    /// The rule accepts a string value `"disallow-in-func"`:
-    ///
-    /// ```json
-    /// {
-    ///   "react/no-did-mount-set-state": ["error", "disallow-in-func"]
-    /// }
-    /// ```
-    ///
-    /// When set, also disallows `setState` calls in nested functions within `componentDidMount`.
     NoDidMountSetState,
     react,
     correctness,

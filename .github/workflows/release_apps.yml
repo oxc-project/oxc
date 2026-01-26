@@ -24,7 +24,7 @@ jobs:
       oxfmt_version: ${{ steps.oxfmt.outputs.version }}
       oxlint_version: ${{ steps.oxlint.outputs.version }}
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
       - uses: ./.github/actions/check-version
         id: oxfmt
         with:
@@ -91,10 +91,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Install cross
-        uses: taiki-e/install-action@542cebaaed782771e619bd5609d97659d109c492 # v2.66.7
+        uses: taiki-e/install-action@81a2f66614862089b24532663f669a485d79c889 # v2.67.10
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -159,7 +159,7 @@ jobs:
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
@@ -169,13 +169,10 @@ jobs:
 
       - run: ls
 
-      - name: Unzip from windows builds
-        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
-        with:
-          args: unzip -qq *.zip -d .
-
-      - name: Untar from non-windows builds
-        run: ls *.gz | xargs -i tar xf {}
+      - name: Unzip and untar
+        run: |
+          unzip -qq '*.zip' -d .
+          ls *.gz | xargs -i tar xf {}
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
@@ -257,10 +254,10 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Install cross
-        uses: taiki-e/install-action@542cebaaed782771e619bd5609d97659d109c492 # v2.66.7
+        uses: taiki-e/install-action@81a2f66614862089b24532663f669a485d79c889 # v2.67.10
         with:
           tool: cross # cross installs the latest rust toolchain
 
@@ -325,7 +322,7 @@ jobs:
     permissions:
       id-token: write # for `pnpm publish --provenance`
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
@@ -335,13 +332,10 @@ jobs:
 
       - run: ls
 
-      - name: Unzip from windows builds
-        uses: montudor/action-zip@0852c26906e00f8a315c704958823928d8018b28 # v1.0.0
-        with:
-          args: unzip -qq *.zip -d .
-
-      - name: Untar from non-windows builds
-        run: ls *.gz | xargs -i tar xf {}
+      - name: Unzip and untar
+        run: |
+          unzip -qq '*.zip' -d .
+          ls *.gz | xargs -i tar xf {}
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
@@ -376,7 +370,7 @@ jobs:
       contents: write # for softprops/action-gh-release@v1.3.1
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           token: ${{ secrets.OXC_BOT_PAT }}
           fetch-depth: 0 # for changelog
@@ -492,7 +486,7 @@ jobs:
     name: Bump oxlint dependents
     runs-on: ubuntu-slim
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Bump oxc-project/eslint-plugin-oxlint
         uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4

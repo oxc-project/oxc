@@ -64,6 +64,8 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
     get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
 }
 
+// TODO: Move the a11y methods to their own util for jsx-a11y?
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/isHiddenFromScreenReader.js
 pub fn is_hidden_from_screen_reader<'a>(
     ctx: &LintContext<'a>,
@@ -108,6 +110,7 @@ pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<
         || has_jsx_prop_ignore_case(&node.opening_element, "children").is_some()
 }
 
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isPresentationRole.js
 pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
     let Some(role) = has_jsx_prop(jsx_opening_el, "role") else {
         return false;
@@ -116,9 +119,8 @@ pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
     matches!(get_string_literal_prop_value(role), Some("presentation" | "none"))
 }
 
-// TODO: Should re-implement
+// TODO: Should re-implement based on
 // https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
-// with `oxc-project/aria-query` which is currently W.I.P.
 //
 // Until then, use simplified version by https://html.spec.whatwg.org/multipage/dom.html#interactive-content
 pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {

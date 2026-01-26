@@ -193,7 +193,7 @@ interface ParserOptions {
  * but could be if test cases are ported from ESLint.
  * For internal use only.
  */
-interface ParserOptionsInternal extends ParserOptions {
+export interface ParserOptionsInternal extends ParserOptions {
   ecmaFeatures?: EcmaFeaturesInternal;
 }
 
@@ -568,6 +568,10 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   if (typeof errors === "number") {
     // If `errors` is a number, it's expected error count
     assertErrorCountIsCorrect(diagnostics, errors);
+  } else if (CONFORMANCE && (errors as unknown as string) === "__unknown__") {
+    // In conformance tests, sometimes test cases don't specify `errors` property
+    // (e.g. `eslint-plugin-stylistic`'s test cases). Conformance tester sets `errors` to `"__unknown__"`
+    // in those cases. So don't error here.
   } else {
     // `errors` is an array of error objects
     assertErrorCountIsCorrect(diagnostics, errors.length);
@@ -1361,6 +1365,10 @@ function assertInvalidTestCaseIsWellFormed(
   const { errors } = test;
   if (typeof errors === "number") {
     assert(errors > 0, "Invalid cases must have `errors` value greater than 0");
+  } else if (CONFORMANCE && (errors as unknown as string) === "__unknown__") {
+    // In conformance tests, sometimes test cases don't specify `errors` property
+    // (e.g. `eslint-plugin-stylistic`'s test cases). Conformance tester sets `errors` to `"__unknown__"`
+    // in those cases. So don't error here.
   } else {
     assert(
       errors !== undefined,

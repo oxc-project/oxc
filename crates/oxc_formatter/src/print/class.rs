@@ -125,7 +125,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
 
         if let Some(body) = &value.body() {
             write!(f, body);
+        } else {
+            let comments = f.context().comments().comments_before(self.span.end);
+            write!(f, FormatTrailingComments::Comments(comments));
         }
+
         if self.r#type().is_abstract()
             || matches!(value.r#type, FunctionType::TSEmptyBodyFunctionExpression)
         {

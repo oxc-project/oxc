@@ -714,7 +714,7 @@ impl<'a> ParserImpl<'a> {
                 function.params.parameters_count(),
             ));
         } else if self.is_ts && function.params.items.first().unwrap().initializer.is_some() {
-            self.error(diagnostics::setter_with_assignment_pattern(function.params.span));
+            self.error(diagnostics::setter_with_initializer(function.params.span));
         }
     }
 

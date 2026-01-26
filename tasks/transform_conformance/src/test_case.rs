@@ -4,7 +4,6 @@ use std::{
 };
 
 use cow_utils::CowUtils;
-use similar::TextDiff;
 
 use oxc::{
     allocator::Allocator,
@@ -14,7 +13,7 @@ use oxc::{
     span::{SourceType, VALID_EXTENSIONS},
     transformer::{BabelOptions, HelperLoaderMode, TransformOptions},
 };
-use oxc_tasks_common::{normalize_path, print_text_diff, project_root};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal, project_root};
 
 use crate::{
     TestRunnerOptions,
@@ -361,9 +360,8 @@ impl TestCase {
                 if let Some(actual_errors) = &actual_errors {
                     println!("{actual_errors}\n");
                     if !passed {
-                        let diff = TextDiff::from_lines(&output, actual_errors);
                         println!("Diff:\n");
-                        print_text_diff(&diff);
+                        print_diff_in_terminal(&output, actual_errors);
                     }
                 }
             } else {
@@ -376,9 +374,8 @@ impl TestCase {
                     println!("{actual_errors}\n");
                 }
                 if !passed {
-                    let diff = TextDiff::from_lines(&output, &self.transformed_code);
                     println!("Diff:\n");
-                    print_text_diff(&diff);
+                    print_diff_in_terminal(&output, &self.transformed_code);
                 }
             }
 

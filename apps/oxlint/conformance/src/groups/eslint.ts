@@ -14,9 +14,6 @@ const group: TestGroup = {
   },
 
   shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Error): boolean {
-    // We cannot support custom parsers
-    if (err.message === "Custom parsers are not supported") return true;
-
     // Skip test cases which start with `/* global */`, `/* globals */`, `/* exported */`, or `/* eslint */` comments.
     // Oxlint does not support defining globals inline.
     // `RuleTester` does not support enabling other rules beyond the rule under test.

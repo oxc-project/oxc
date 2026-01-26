@@ -402,49 +402,6 @@ mod test_watchers {
     // so we can use a fake directory for testing.
     const FAKE_DIR: &str = "fixtures/formatter/watchers";
 
-    mod init_watchers {
-        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
-        use serde_json::json;
-
-        #[test]
-        fn test_default_options() {
-            let patterns = Tester::new(FAKE_DIR, json!({})).get_watcher_patterns();
-            assert_eq!(patterns.len(), 3);
-            assert_eq!(patterns[0], ".oxfmtrc.json");
-            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
-            assert_eq!(patterns[2], ".editorconfig");
-        }
-
-        #[test]
-        fn test_formatter_custom_config_path() {
-            let patterns = Tester::new(
-                FAKE_DIR,
-                json!({
-                    "fmt.configPath": "configs/formatter.json"
-                }),
-            )
-            .get_watcher_patterns();
-            assert_eq!(patterns.len(), 2);
-            assert_eq!(patterns[0], "configs/formatter.json");
-            assert_eq!(patterns[1], ".editorconfig");
-        }
-
-        #[test]
-        fn test_empty_string_config_path() {
-            let patterns = Tester::new(
-                FAKE_DIR,
-                json!({
-                    "fmt.configPath": ""
-                }),
-            )
-            .get_watcher_patterns();
-            assert_eq!(patterns.len(), 3);
-            assert_eq!(patterns[0], ".oxfmtrc.json");
-            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
-            assert_eq!(patterns[2], ".editorconfig");
-        }
-    }
-
     mod handle_configuration_change {
         use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
         use oxc_language_server::ToolRestartChanges;

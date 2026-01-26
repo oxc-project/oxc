@@ -56,7 +56,7 @@ impl std::ops::Deref for OnlyExportComponents {
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
-#[serde(default, rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct OnlyExportComponentsConfig {
     /// Treat specific named exports as HMR-safe (useful for frameworks that hot-replace
     /// certain exports). For example, in Remix:
@@ -169,9 +169,7 @@ static DEFAULT_REACT_HOCS: &[&str] = &["memo", "forwardRef"];
 
 impl Rule for OnlyExportComponents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {

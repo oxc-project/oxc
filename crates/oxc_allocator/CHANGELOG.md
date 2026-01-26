@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### ⚡ Performance
+
+- 2349031 allocator: Increase initial chunk size from 512B to 16KB (#18234) (Boshen)
+
 ## [0.109.0] - 2026-01-19
 
 ### ⚡ Performance

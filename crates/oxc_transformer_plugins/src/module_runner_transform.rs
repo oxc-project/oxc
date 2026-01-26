@@ -849,7 +849,6 @@ mod test {
     use std::path::Path;
 
     use rustc_hash::FxHashSet;
-    use similar::TextDiff;
 
     use oxc_allocator::Allocator;
     use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
@@ -857,7 +856,7 @@ mod test {
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
-    use oxc_tasks_common::print_text_diff;
+    use oxc_tasks_common::print_diff_in_terminal;
     use oxc_transformer::{JsxRuntime, TransformOptions, Transformer};
 
     use super::ModuleRunnerTransform;
@@ -920,8 +919,7 @@ mod test {
         let expected = format_expected_code(expected);
         let result = transform(source_text, false).unwrap().code;
         if result != expected {
-            let diff = TextDiff::from_lines(&expected, &result);
-            print_text_diff(&diff);
+            print_diff_in_terminal(&expected, &result);
             panic!("Expected code does not match the result");
         }
     }
@@ -931,8 +929,7 @@ mod test {
         let expected = format_expected_code(expected);
         let result = transform(source_text, true).unwrap().code;
         if result != expected {
-            let diff = TextDiff::from_lines(&expected, &result);
-            print_text_diff(&diff);
+            print_diff_in_terminal(&expected, &result);
             panic!("Expected code does not match the result");
         }
     }
@@ -943,8 +940,7 @@ mod test {
         let TransformReturn { code, deps: result_deps, dynamic_deps: result_dynamic_deps } =
             transform(source_text, false).unwrap();
         if code != expected {
-            let diff = TextDiff::from_lines(&expected, &code);
-            print_text_diff(&diff);
+            print_diff_in_terminal(&expected, &code);
             panic!("Expected code does not match the result");
         }
         for dep in deps {
