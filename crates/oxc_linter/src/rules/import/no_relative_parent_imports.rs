@@ -56,10 +56,10 @@ impl Rule for NoRelativeParentImports {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             // ESM import declarations
-            AstKind::ImportDeclaration(import_decl) => {
-                if is_parent_import(import_decl.source.value.as_str()) {
-                    ctx.diagnostic(no_relative_parent_imports_diagnostic(import_decl.source.span));
-                }
+            AstKind::ImportDeclaration(import_decl)
+                if is_parent_import(import_decl.source.value.as_str()) =>
+            {
+                ctx.diagnostic(no_relative_parent_imports_diagnostic(import_decl.source.span));
             }
             // ESM export { } from '...'
             AstKind::ExportNamedDeclaration(export_decl) => {
@@ -70,10 +70,10 @@ impl Rule for NoRelativeParentImports {
                 }
             }
             // ESM export * from '...'
-            AstKind::ExportAllDeclaration(export_decl) => {
-                if is_parent_import(export_decl.source.value.as_str()) {
-                    ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
-                }
+            AstKind::ExportAllDeclaration(export_decl)
+                if is_parent_import(export_decl.source.value.as_str()) =>
+            {
+                ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
             }
             // Dynamic import expressions: import('../foo')
             AstKind::ImportExpression(import_expr) => {
@@ -85,23 +85,12 @@ impl Rule for NoRelativeParentImports {
             }
             // CommonJS require() calls
             AstKind::CallExpression(call_expr) => {
-                let Expression::Identifier(ident) = &call_expr.callee else {
-                    return;
-                };
-
-                if ident.name != "require" {
-                    return;
-                }
-
-                if call_expr.arguments.len() != 1 {
-                    return;
-                }
-
-                let Argument::StringLiteral(str_literal) = &call_expr.arguments[0] else {
-                    return;
-                };
-
-                if is_parent_import(str_literal.value.as_str()) {
+                if let Expression::Identifier(ident) = &call_expr.callee
+                    && ident.name == "require"
+                    && call_expr.arguments.len() == 1
+                    && let Argument::StringLiteral(str_literal) = &call_expr.arguments[0]
+                    && is_parent_import(str_literal.value.as_str())
+                {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
                 }
             }
@@ -113,7 +102,11 @@ impl Rule for NoRelativeParentImports {
 /// Check if the import path is a relative parent import.
 /// Matches paths like `../foo`, `..`, `./../foo`, etc.
 fn is_parent_import(path: &str) -> bool {
-    path == ".." || path.starts_with("../") || path.starts_with("./../") // handles ./../foo pattern
+    let mut normalized = path;
+    while let Some(rest) = normalized.strip_prefix("./") {
+        normalized = rest;
+    }
+    normalized == ".." || normalized.starts_with("../")
 }
 
 #[test]
@@ -147,9 +140,14 @@ fn test() {
         r#"require("../plugin.js")"#,
         r#"import("../plugin.js")"#,
         r#"import("../../api/service")"#,
-        // Additional: exports (not tested by ESLint)
+        // Additional:
+        r#"import foo from "./..""#,
+        r#"require("./..")"#,
+        r#"import("./..")"#,
         r#"export { foo } from "../parent""#,
         r#"export * from "../parent""#,
+        r#"export { foo } from "./..""#,
+        r#"export * from "./..""#,
     ];
 
     Tester::new(NoRelativeParentImports::NAME, NoRelativeParentImports::PLUGIN, pass, fail)
