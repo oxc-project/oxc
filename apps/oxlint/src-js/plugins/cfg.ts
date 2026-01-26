@@ -198,10 +198,10 @@ function prepareSteps(ast: Program) {
         // visit functions are called in would be wrong.
         // `exit` visit fn would be called before the CFG event handlers, instead of after.
         if (DEBUG && steps.length !== stepsLenAfterEnter) {
-          const eventNames = steps
-            .slice(stepsLenAfterEnter)
-            .filter((step): step is CallStep => step.type === STEP_TYPE_CALL)
-            .map((step) => step.eventName);
+          const eventNames = steps.slice(stepsLenAfterEnter).map((step) => {
+            if (step.type === STEP_TYPE_CALL) return step.eventName;
+            return `${step.type === STEP_TYPE_ENTER ? "enter" : "exit"} ${node.type}`;
+          });
           throw new Error(
             `CFG events emitted during visiting leaf node \`${node.type}\`: ${eventNames.join(", ")}`,
           );
