@@ -230,12 +230,8 @@ function prepareSteps(ast: Program) {
     },
   });
 
-  // Walk AST using our lightweight traverser instead of ESLint's Traverser
-  traverseNode(
-    ast,
-    (node) => analyzer.enterNode(node),
-    (node) => analyzer.leaveNode(node),
-  );
+  // Walk AST, calling `analyzer` methods for each node
+  traverseNode(ast, analyzer.enterNode.bind(analyzer), analyzer.leaveNode.bind(analyzer));
 
   debugAssert(
     stepTypeIds.length === stepData.length,
