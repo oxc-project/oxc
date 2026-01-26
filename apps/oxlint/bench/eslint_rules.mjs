@@ -97,6 +97,8 @@ parse(FILENAME, SOURCE_CODE, {
 console.log("Source code parsed successfully.");
 
 // Set up default options for all rules
+// Format: { options: [defaultOptions, ...], ruleIds: [0, ...] }
+// defaultOptions is an empty array [] for rules with no options
 setOptions(JSON.stringify({ options: [[]], ruleIds: [0] }));
 
 const bench = withCodSpeed(new Bench());
