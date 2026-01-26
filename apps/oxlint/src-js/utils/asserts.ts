@@ -48,6 +48,21 @@ export function debugAssertIsNonNull<T>(
 }
 
 /**
+ * Debug assert that `fn` is a function.
+ *
+ * In release builds, is a no-op. Only does runtime checks in debug builds.
+ * Minification removes this function and all calls to it in release builds, so it has zero runtime cost.
+ *
+ * @param fn - Function
+ * @throws {TypeError} If `fn` is not a function in debug build
+ */
+export function debugAssertIsFunction(fn: unknown): asserts fn is Function {
+  if (!DEBUG) return;
+
+  if (typeof fn !== "function") throw new TypeError("Expected to be a function");
+}
+
+/**
  * Assert a condition.
  *
  * In release builds, is a no-op. Only does runtime checks in debug builds.

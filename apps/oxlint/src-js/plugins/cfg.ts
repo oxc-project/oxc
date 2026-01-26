@@ -15,9 +15,9 @@ import {
   TYPE_IDS_COUNT,
 } from "../generated/type_ids.ts";
 import { ancestors } from "../generated/walk.js";
-import { debugAssert, typeAssertIs } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsFunction } from "../utils/asserts.ts";
 
-import type { EnterExit, VisitFn } from "./visitor.ts";
+import type { EnterExit } from "./visitor.ts";
 import type { Node, Program } from "../generated/types.d.ts";
 import type { CompiledVisitors } from "../generated/walk.js";
 
@@ -108,14 +108,14 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
       if (typeId < LEAF_NODE_TYPES_COUNT) {
         // Leaf node
         if (visit !== null) {
-          typeAssertIs<VisitFn>(visit);
+          debugAssertIsFunction(visit);
           visit(node);
         }
         // Don't add node to `ancestors`, because we don't visit leaf nodes on exit
       } else {
         // Non-leaf node
         if (visit !== null) {
-          typeAssertIs<EnterExit>(visit);
+          debugAssertIsEnterExitObject(visit);
           const { enter } = visit;
           if (enter !== null) enter(node);
         }
@@ -131,7 +131,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 
       const enterExit = visitors[typeId];
       if (enterExit !== null) {
-        typeAssertIs<EnterExit>(enterExit);
+        debugAssertIsEnterExitObject(enterExit);
         const { exit } = enterExit;
         if (exit !== null) exit(node);
       }
@@ -141,7 +141,8 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 
       const visit = visitors[typeId];
       if (visit !== null) {
-        (visit as any).apply(undefined, stepData[i]);
+        debugAssertIsFunction(visit);
+        visit.apply(undefined, stepData[i]);
       }
     }
   }
@@ -270,4 +271,30 @@ function traverseNode(node: Node, enter: (node: Node) => void, leave: (node: Nod
   }
 
   leave(node);
+}
+
+/**
+ * Debug assert that `enterExit` is an `EnterExit` object.
+ * In release build, this function does nothing and is removed entirely by minifier.
+ * @param enterExit - Object
+ * @throws {TypeError} If `enterExit` is not an `EnterExit` object in debug build
+ */
+export function debugAssertIsEnterExitObject(enterExit: unknown): asserts enterExit is EnterExit {
+  if (!DEBUG) return;
+
+  if (!isEnterExit(enterExit)) throw new TypeError("Expected to be an `EnterExit` object");
+}
+
+/**
+ * Check if an object is an `EnterExit` object.
+ * @param obj - Object
+ * @returns `true` if `obj` is an `EnterExit` object, `false` otherwise
+ */
+function isEnterExit(obj: any): obj is EnterExit {
+  if (obj === null) return false;
+  if (typeof obj !== "object") return false;
+  if (Object.keys(obj).length !== 2) return false;
+  if (obj.enter !== null && typeof obj.enter !== "function") return false;
+  if (obj.exit !== null && typeof obj.exit !== "function") return false;
+  return true;
 }
