@@ -4,8 +4,8 @@ import {
   parse,
   lintFileImpl,
   registerPlugin,
+  registeredRules,
   diagnostics,
-  resetFile,
   setOptions,
   DEFAULT_OPTIONS_ID,
 } from "#oxlint";
@@ -96,6 +96,9 @@ parse(FILENAME, SOURCE_CODE, {
 });
 console.log("Source code parsed successfully.");
 
+// Set up default options for all rules
+setOptions(JSON.stringify({ options: [[]], ruleIds: [0] }));
+
 const bench = withCodSpeed(new Bench());
 
 // Single benchmark that runs all rules using the pre-parsed buffer
@@ -111,9 +114,6 @@ bench.add("all-eslint-rules", () => {
       // Register the plugin (null = no plugin name override, false = not a builtin plugin)
       registerPlugin(plugin, null, false);
 
-      // Set up default options
-      setOptions(DEFAULT_OPTIONS_ID, []);
-
       // Lint using the pre-parsed buffer
       lintFileImpl(
         FILENAME,
@@ -127,7 +127,8 @@ bench.add("all-eslint-rules", () => {
     } catch {
       // Some rules may fail on this code, but we're benchmarking execution time
     } finally {
-      // Always clear diagnostics for next rule
+      // Reset state for next rule
+      registeredRules.length = 0;
       diagnostics.length = 0;
     }
   }

@@ -3,7 +3,7 @@ export { definePlugin, defineRule } from "./package/define.ts";
 export { RuleTester } from "./package/rule_tester.ts";
 export { parse, type ParseOptions } from "./package/parse.ts";
 export { lintFileImpl, resetFile, resetStateAfterError } from "./plugins/lint.ts";
-export { registerPlugin } from "./plugins/load.ts";
+export { registerPlugin, registeredRules } from "./plugins/load.ts";
 export { diagnostics } from "./plugins/report.ts";
 export { setOptions, DEFAULT_OPTIONS_ID } from "./plugins/options.ts";
 
