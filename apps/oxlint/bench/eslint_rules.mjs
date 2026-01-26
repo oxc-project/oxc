@@ -1,6 +1,14 @@
 import { Bench } from "tinybench";
 import { withCodSpeed } from "@codspeed/tinybench-plugin";
-import { RuleTester } from "#oxlint";
+import {
+  parse,
+  lintFileImpl,
+  registerPlugin,
+  diagnostics,
+  resetFile,
+  setOptions,
+  DEFAULT_OPTIONS_ID,
+} from "#oxlint";
 
 // @ts-expect-error - ESLint internal API
 import { builtinRules } from "../conformance/submodules/eslint/lib/unsupported-api.js";
@@ -68,32 +76,47 @@ export const AdoptionSection = () => {
   );
 };`;
 
-const tester = new RuleTester({
-  languageOptions: {
-    parserOptions: {
-      ecmaFeatures: {
-        jsx: true,
-      },
-    },
-  },
-});
+const FILENAME = "test.jsx";
 
 // Collect all rules upfront
 const rules = Array.from(builtinRules.entries());
 console.log(`Benchmarking ${rules.length} ESLint rules...`);
 
+// Parse the source code once before benchmarking
+console.log("Parsing source code...");
+parse(FILENAME, SOURCE_CODE, {
+  lang: "jsx",
+  allowReturnOutsideFunction: true,
+});
+console.log("Source code parsed successfully.");
+
 const bench = withCodSpeed(new Bench());
 
-// Single benchmark that runs all rules
+// Single benchmark that runs all rules using the pre-parsed buffer
 bench.add("all-eslint-rules", () => {
   for (const [ruleName, rule] of rules) {
     try {
-      tester.run(ruleName, rule, {
-        valid: [{ code: SOURCE_CODE }],
-        invalid: [],
-      });
+      // Create a plugin for this rule
+      const plugin = {
+        meta: { name: "eslint" },
+        rules: { [ruleName]: rule },
+      };
+
+      // Register the plugin
+      registerPlugin(plugin, null, false);
+
+      // Set up default options
+      setOptions(DEFAULT_OPTIONS_ID, []);
+
+      // Lint using the pre-parsed buffer (bufferId = 0)
+      // Pass empty arrays/objects for ruleIds, optionsIds, settings, and globals
+      lintFileImpl(FILENAME, 0, null, [0], [DEFAULT_OPTIONS_ID], "{}", "{}");
+
+      // Clear diagnostics for next rule
+      diagnostics.length = 0;
     } catch {
       // Some rules may fail on this code, but we're benchmarking execution time
+      diagnostics.length = 0;
     }
   }
 });
