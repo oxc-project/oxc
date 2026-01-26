@@ -6,8 +6,6 @@
 
 // @ts-expect-error - internal module of ESLint with no types
 import CodePathAnalyzer from "../../node_modules/eslint/lib/linter/code-path-analysis/code-path-analyzer.js";
-// @ts-expect-error - internal module of ESLint with no types
-import Traverser from "../../node_modules/eslint/lib/shared/traverser.js";
 
 import visitorKeys from "../generated/keys.ts";
 import {
@@ -85,9 +83,8 @@ export function resetCfgWalk(): void {
  *    Run through the steps, in order, calling visit functions for each step.
  *
  * TODO: This is was originally copied from ESLint, and has been adapted for better performance.
- * We could further improve its performance by:
- * - Copy `CodePathAnalyzer` code into this repo and rewrite it to work entirely with type IDs instead of strings.
- * - Using a faster AST walker than ESLint's `Traverser`.
+ * We could further improve its performance by copying ESLint's `CodePathAnalyzer` into this repo,
+ * and rewriting it to work entirely with type IDs instead of strings.
  *
  * @param ast - AST
  * @param visitors - Visitors array
@@ -233,23 +230,44 @@ function prepareSteps(ast: Program) {
     },
   });
 
-  // Walk AST passing enter and exit event to the `CodePathAnalyzer`
-  //
-  // TODO: Use a faster walker.
-  // Could use our own `walkProgram`, though that builds `ancestors` array unnecessarily, which is probably slow.
-  // Would be better to generate a separate walker for this purpose.
-  Traverser.traverse(ast, {
-    enter(node: Node) {
-      analyzer.enterNode(node);
-    },
-    leave(node: Node) {
-      analyzer.leaveNode(node);
-    },
-    visitorKeys,
-  });
+  // Walk AST, calling `analyzer` methods for each node
+  traverseNode(ast, analyzer.enterNode.bind(analyzer), analyzer.leaveNode.bind(analyzer));
 
   debugAssert(
     stepTypeIds.length === stepData.length,
     "`stepTypeIds` and `stepData` should have the same length",
   );
+}
+
+/**
+ * Lightweight AST traverser for CFG building.
+ * This is a simplified version that only calls enter/leave callbacks,
+ * without building ancestors array or other overhead that ESLint's `Traverser` has.
+ *
+ * @param node - AST node to traverse
+ * @param enter - Callback for entering a node
+ * @param leave - Callback for leaving a node
+ */
+function traverseNode(node: Node, enter: (node: Node) => void, leave: (node: Node) => void): void {
+  enter(node);
+
+  const keys = visitorKeys[node.type as keyof typeof visitorKeys];
+  const keysLen = keys.length;
+  for (let i = 0; i < keysLen; i++) {
+    const child = (node as any)[keys[i]] as Node | (Node | null)[] | null;
+
+    if (child === null) continue;
+
+    if (Array.isArray(child)) {
+      const len = child.length;
+      for (let i = 0; i < len; i++) {
+        const element = child[i];
+        if (element !== null) traverseNode(element, enter, leave);
+      }
+    } else {
+      traverseNode(child, enter, leave);
+    }
+  }
+
+  leave(node);
 }
