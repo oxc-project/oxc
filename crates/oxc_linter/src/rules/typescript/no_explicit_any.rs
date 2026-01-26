@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, AstType};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -106,7 +106,7 @@ impl Rule for NoExplicitAny {
 impl NoExplicitAny {
     fn is_in_rest<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
-        ctx.is_inside(node.id(), &[AstType::FormalParameterRest])
+        ctx.is_inside(node.id(), |ancestor| matches!(ancestor.kind(), AstKind::FormalParameterRest(_)))
     }
 }
 

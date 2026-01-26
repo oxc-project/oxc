@@ -232,7 +232,7 @@ pub fn is_children<'a, 'b>(call: &'b CallExpression<'a>, ctx: &'b LintContext<'a
     is_import(ctx, ident.name.as_str(), REACT, REACT) && local_name == CHILDREN
 }
 fn is_within_children_to_array<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
-    ctx.is_inside_where(ctx.nodes().parent_id(node.id()), |ancestor| {
+    ctx.is_inside(ctx.nodes().parent_id(node.id()), |ancestor| {
         ancestor
             .kind()
             .as_call_expression()

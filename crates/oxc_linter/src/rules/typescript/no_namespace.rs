@@ -157,7 +157,7 @@ impl Rule for NoNamespace {
 }
 
 fn is_any_ancestor_declaration(node: &AstNode, ctx: &LintContext) -> bool {
-    ctx.is_inside_where(node.id(), |ancestor| match ancestor.kind() {
+    ctx.is_inside(node.id(), |ancestor| match ancestor.kind() {
         AstKind::TSModuleDeclaration(decl) => decl.declare,
         // No need to check `declare` field, as `global` is only valid in ambient context
         AstKind::TSGlobalDeclaration(_) => true,

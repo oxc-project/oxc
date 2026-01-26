@@ -4,7 +4,7 @@ use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::GLOBALS;
 
-use oxc_ast::{AstType, ast::IdentifierReference};
+use oxc_ast::ast::IdentifierReference;
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNode, NodeId, Semantic};
@@ -548,7 +548,7 @@ impl<'a> LintContext<'a> {
 
     /* AST traversal helpers */
 
-    /// Returns `true` if any ancestor of the given node matches any of the provided AST types.
+    /// Returns `true` if any ancestor of the given node satisfies the predicate.
     ///
     /// This is a convenience method for the common pattern of checking if a node is inside
     /// a particular kind of AST node.
@@ -556,35 +556,24 @@ impl<'a> LintContext<'a> {
     /// # Example
     ///
     /// ```ignore
-    /// use oxc_ast::AstType;
+    /// use oxc_ast::AstKind;
     ///
     /// // Check if we're inside a yield or await expression
-    /// if ctx.is_inside(node.id(), &[AstType::YieldExpression, AstType::AwaitExpression]) {
+    /// if ctx.is_inside(node.id(), |ancestor| {
+    ///     matches!(ancestor.kind(), AstKind::YieldExpression(_) | AstKind::AwaitExpression(_))
+    /// }) {
     ///     return;
     /// }
-    /// ```
-    #[inline]
-    pub fn is_inside(&self, node_id: NodeId, types: &[AstType]) -> bool {
-        self.nodes().ancestors(node_id).any(|node| types.contains(&node.kind().ty()))
-    }
-
-    /// Returns `true` if any ancestor of the given node satisfies the predicate.
     ///
-    /// This is a convenience method for the common pattern of checking if a node is inside
-    /// a particular kind of AST node, with custom matching logic.
-    ///
-    /// # Example
-    ///
-    /// ```ignore
     /// // Check if we're inside a declared TypeScript module
-    /// if ctx.is_inside_where(node.id(), |ancestor| {
+    /// if ctx.is_inside(node.id(), |ancestor| {
     ///     matches!(ancestor.kind(), AstKind::TSModuleDeclaration(decl) if decl.declare)
     /// }) {
     ///     return;
     /// }
     /// ```
     #[inline]
-    pub fn is_inside_where<F>(&self, node_id: NodeId, predicate: F) -> bool
+    pub fn is_inside<F>(&self, node_id: NodeId, predicate: F) -> bool
     where
         F: FnMut(&AstNode<'a>) -> bool,
     {

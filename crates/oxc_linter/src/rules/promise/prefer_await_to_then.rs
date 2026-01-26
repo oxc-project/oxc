@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, AstType};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -88,7 +88,9 @@ impl Rule for PreferAwaitToThen {
 
         if !self.strict {
             // Already inside a yield or await
-            if ctx.is_inside(node.id(), &[AstType::YieldExpression, AstType::AwaitExpression]) {
+            if ctx.is_inside(node.id(), |ancestor| {
+                matches!(ancestor.kind(), AstKind::YieldExpression(_) | AstKind::AwaitExpression(_))
+            }) {
                 return;
             }
         }

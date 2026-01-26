@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, AstType,
+    AstKind,
     ast::{Argument, Expression, FormalParameters, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -105,9 +105,12 @@ impl Rule for PreferAwaitToCallbacks {
                     if matches!(
                         param.pattern.get_identifier_name().as_deref(),
                         Some("err" | "error")
-                    ) && !ctx
-                        .is_inside(node.id(), &[AstType::YieldExpression, AstType::AwaitExpression])
-                    {
+                    ) && !ctx.is_inside(node.id(), |ancestor| {
+                        matches!(
+                            ancestor.kind(),
+                            AstKind::YieldExpression(_) | AstKind::AwaitExpression(_)
+                        )
+                    }) {
                         ctx.diagnostic(prefer_await_to_callbacks(last_arg.span()));
                     }
                 }

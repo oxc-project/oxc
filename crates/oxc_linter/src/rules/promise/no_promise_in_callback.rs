@@ -65,7 +65,7 @@ impl Rule for NoPromiseInCallback {
             return;
         }
 
-        if ctx.is_inside_where(node.id(), |ancestor| is_callback_function(ancestor, ctx)) {
+        if ctx.is_inside(node.id(), |ancestor| is_callback_function(ancestor, ctx)) {
             ctx.diagnostic(no_promise_in_callback_diagnostic(call_expr.callee.span()));
         }
     }

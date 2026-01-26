@@ -258,7 +258,7 @@ fn is_recursive_function(func: &Function, func_name: &str, ctx: &LintContext) ->
                 if call_expr.callee.span()
                     == ctx.nodes().get_node(reference.node_id()).kind().span()
                 {
-                    return ctx.is_inside_where(reference.node_id(), |ancestor| {
+                    return ctx.is_inside(reference.node_id(), |ancestor| {
                         matches!(ancestor.kind(), AstKind::Function(f) if f.scope_id.get() == Some(func_scope_id))
                     });
                 }

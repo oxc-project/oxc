@@ -203,7 +203,7 @@ impl Rule for NoNesting {
             return;
         }
 
-        if ctx.is_inside_where(node.id(), |ancestor| is_inside_promise(ancestor, ctx)) {
+        if ctx.is_inside(node.id(), |ancestor| is_inside_promise(ancestor, ctx)) {
             match closest_promise_cb(node, ctx) {
                 Some(closest) => {
                     if can_safely_unnest(call_expr, closest, ctx) {
