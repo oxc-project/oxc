@@ -142,11 +142,10 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
       }
     } else {
       // Call method (CFG event)
-      const callStep = step;
-      const eventId = NODE_TYPE_IDS_MAP.get(callStep.eventName)!;
+      const eventId = NODE_TYPE_IDS_MAP.get(step.eventName)!;
       const visit = visitors[eventId];
       if (visit !== null) {
-        (visit as any).apply(undefined, callStep.args);
+        (visit as any).apply(undefined, step.args);
       }
     }
   }
