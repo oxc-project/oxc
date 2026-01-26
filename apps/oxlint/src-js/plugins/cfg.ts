@@ -139,9 +139,11 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
       }
     } else {
       // Call method (CFG event) - event type ID is in range NODE_TYPES_COUNT to EXIT_TYPE_ID_OFFSET-1
+      debugAssert(Array.isArray(stepData[i]), "`stepData` should contain an array for CFG events");
+
       const visit = visitors[typeId];
       if (visit !== null) {
-        (visit as any).apply(undefined, stepData[i] as unknown[]);
+        (visit as any).apply(undefined, stepData[i]);
       }
     }
   }
@@ -157,6 +159,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
  */
 function prepareSteps(ast: Program) {
   debugAssert(stepTypeIds.length === 0, "`stepTypeIds` should be empty at start of `prepareSteps`");
+  debugAssert(stepData.length === 0, "`stepData` should be empty at start of `prepareSteps`");
 
   // Length of arrays after entering each node.
   // Used in debug build to check that no leaf nodes emit CFG events (see below).
@@ -249,4 +252,9 @@ function prepareSteps(ast: Program) {
     },
     visitorKeys,
   });
+
+  debugAssert(
+    stepTypeIds.length === stepData.length,
+    "`stepTypeIds` and `stepData` should have the same length",
+  );
 }
