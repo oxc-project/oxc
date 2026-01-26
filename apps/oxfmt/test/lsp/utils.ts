@@ -11,13 +11,18 @@ import {
   ExitNotification,
   InitializedNotification,
   InitializeRequest,
+  RegistrationRequest,
   ShutdownRequest,
   StreamMessageReader,
   StreamMessageWriter,
   WorkspaceFolder,
 } from "vscode-languageserver-protocol/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import type { TextEdit } from "vscode-languageserver-protocol/node";
+import type {
+  ClientCapabilities,
+  Registration,
+  TextEdit,
+} from "vscode-languageserver-protocol/node";
 
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
@@ -33,10 +38,14 @@ export function createLspConnection() {
   return {
     // NOTE: Config and ignore files are searched from `workspaceFolders[].uri` upward
     // Or, provide a custom config path via `initializationOptions`
-    async initialize(workspaceFolders: WorkspaceFolder[], initializationOptions?: unknown) {
+    async initialize(
+      workspaceFolders: WorkspaceFolder[],
+      capabilities: ClientCapabilities = {},
+      initializationOptions?: unknown,
+    ) {
       const result = await connection.sendRequest(InitializeRequest.type, {
         processId: process.pid,
-        capabilities: {},
+        capabilities,
         workspaceFolders,
         rootUri: null,
         initializationOptions,
@@ -71,6 +80,15 @@ export function createLspConnection() {
       });
     },
 
+    async getDynamicRegistration(): Promise<Registration[]> {
+      return await new Promise((resolve) => {
+        const disposer = connection.onRequest(RegistrationRequest.type, (params) => {
+          resolve(params.registrations);
+          disposer.dispose();
+        });
+      });
+    },
+
     async [Symbol.asyncDispose]() {
       await connection.sendRequest(ShutdownRequest.type);
       await connection.sendNotification(ExitNotification.type);
@@ -95,15 +113,12 @@ export async function formatFixture(
 
   await using client = createLspConnection();
 
-  await client.initialize(
-    [{ uri: pathToFileURL(dirPath).href, name: "test" }],
-    [
-      {
-        workspaceUri: pathToFileURL(dirPath).href,
-        options: initializationOptions,
-      },
-    ],
-  );
+  await client.initialize([{ uri: pathToFileURL(dirPath).href, name: "test" }], {}, [
+    {
+      workspaceUri: pathToFileURL(dirPath).href,
+      options: initializationOptions,
+    },
+  ]);
   await client.didOpen(fileUri, languageId, content);
 
   const edits = await client.format(fileUri);
@@ -134,15 +149,12 @@ export async function formatFixtureAfterConfigChange(
   await using client = createLspConnection();
 
   // Initial format with first config
-  await client.initialize(
-    [{ uri: pathToFileURL(dirPath).href, name: "test" }],
-    [
-      {
-        workspaceUri: pathToFileURL(dirPath).href,
-        options: initializationOptions,
-      },
-    ],
-  );
+  await client.initialize([{ uri: pathToFileURL(dirPath).href, name: "test" }], {}, [
+    {
+      workspaceUri: pathToFileURL(dirPath).href,
+      options: initializationOptions,
+    },
+  ]);
   await client.didOpen(fileUri, languageId, content);
   const edits1 = await client.format(fileUri);
   const formatted1 = applyEdits(content, edits1, languageId) ?? content;
