@@ -515,7 +515,7 @@ impl CliRunner {
                         stdout,
                         &format!(
                             "Failed to parse oxlint configuration file at {}.\n{}\n",
-                            path.display(),
+                            path.to_string_lossy().cow_replace('\\', "/"),
                             render_report(handler, &e)
                         ),
                     );
