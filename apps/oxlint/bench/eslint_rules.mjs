@@ -1,6 +1,14 @@
 import { Bench } from "tinybench";
 import { withCodSpeed } from "@codspeed/tinybench-plugin";
-import { RuleTester } from "#oxlint";
+import {
+  parse,
+  lintFileImpl,
+  registerPlugin,
+  registeredRules,
+  diagnostics,
+  setOptions,
+  DEFAULT_OPTIONS_ID,
+} from "#oxlint";
 
 // @ts-expect-error - ESLint internal API
 import { builtinRules } from "../conformance/submodules/eslint/lib/unsupported-api.js";
@@ -68,32 +76,62 @@ export const AdoptionSection = () => {
   );
 };`;
 
-const tester = new RuleTester({
-  languageOptions: {
-    parserOptions: {
-      ecmaFeatures: {
-        jsx: true,
-      },
-    },
-  },
-});
+const FILENAME = "test.jsx";
+
+// Constants for lintFileImpl parameters
+const BUFFER_ID = 0; // Pre-parsed buffer is stored at index 0
+const RULE_ID = 0; // Single rule at index 0
+const EMPTY_SETTINGS = "{}";
+const EMPTY_GLOBALS = "{}";
 
 // Collect all rules upfront
 const rules = Array.from(builtinRules.entries());
 console.log(`Benchmarking ${rules.length} ESLint rules...`);
 
+// Parse the source code once before benchmarking
+console.log("Parsing source code...");
+parse(FILENAME, SOURCE_CODE, {
+  lang: "jsx",
+  allowReturnOutsideFunction: true,
+});
+console.log("Source code parsed successfully.");
+
+// Set up default options for all rules
+// Format: { options: [defaultOptions, ...], ruleIds: [0, ...] }
+// defaultOptions is an empty array [] for rules with no options
+setOptions(JSON.stringify({ options: [[]], ruleIds: [0] }));
+
 const bench = withCodSpeed(new Bench());
 
-// Single benchmark that runs all rules
+// Single benchmark that runs all rules using the pre-parsed buffer
 bench.add("all-eslint-rules", () => {
   for (const [ruleName, rule] of rules) {
     try {
-      tester.run(ruleName, rule, {
-        valid: [{ code: SOURCE_CODE }],
-        invalid: [],
-      });
+      // Create a plugin for this rule
+      const plugin = {
+        meta: { name: "eslint" },
+        rules: { [ruleName]: rule },
+      };
+
+      // Register the plugin (null = no plugin name override, false = not a builtin plugin)
+      registerPlugin(plugin, null, false);
+
+      // Lint using the pre-parsed buffer
+      lintFileImpl(
+        FILENAME,
+        BUFFER_ID,
+        null, // Buffer already stored, no need to pass it again
+        [RULE_ID],
+        [DEFAULT_OPTIONS_ID],
+        EMPTY_SETTINGS,
+        EMPTY_GLOBALS,
+      );
     } catch {
       // Some rules may fail on this code, but we're benchmarking execution time
+    } finally {
+      // Reset state for next rule
+      registeredRules.length = 0;
+      diagnostics.length = 0;
     }
   }
 });
