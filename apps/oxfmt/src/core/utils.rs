@@ -59,12 +59,24 @@ pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
     writer.flush().unwrap();
 }
 
-/// Normalize a relative path by stripping `./` prefix and joining with `cwd`.
-/// This ensures consistent path format and avoids issues with relative paths.
+/// Normalize a relative path by:
+/// - stripping `./` prefix,
+/// - joining with `cwd`,
+/// - and canonicalizing to resolve `..` components
+///
+/// This ensures consistent absolute path format,
+/// which is required for gitignore-based pattern matching
+/// (e.g., `ignorePatterns` resolution).
 pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
     if path.is_absolute() {
         return path.to_path_buf();
     }
 
-    if let Ok(stripped) = path.strip_prefix("./") { cwd.join(stripped) } else { cwd.join(path) }
+    let joined = if let Ok(stripped) = path.strip_prefix("./") {
+        cwd.join(stripped)
+    } else {
+        cwd.join(path)
+    };
+
+    fs::canonicalize(&joined).unwrap_or(joined)
 }
