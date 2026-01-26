@@ -38,7 +38,7 @@ const enum LspCommands {
 
 export default class LinterTool implements ToolInterface {
   // Global flag to check if the user allows us to start the server.
-  // When `oxc.requireConfig` is `true`, make sure one `.oxlintrc.json` file is present.
+  // When `oxc.requireConfig` is `true`, make sure one oxlint config file is present.
   private allowedToStartServer: boolean = false;
 
   // LSP client instance
@@ -76,7 +76,7 @@ export default class LinterTool implements ToolInterface {
     }
 
     this.allowedToStartServer = configService.vsCodeConfig.requireConfig
-      ? (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0
+      ? await hasOxlintConfig()
       : true;
 
     const restartCommand = commands.registerCommand(OxcCommands.RestartServerLint, async () => {
@@ -307,7 +307,7 @@ export default class LinterTool implements ToolInterface {
     if (!this.allowedToStartServer) {
       return {
         isEnabled: false,
-        tooltipText: "no .oxlintrc.json found",
+        tooltipText: "no oxlint config found",
       };
     } else if (!enable) {
       return {
@@ -351,32 +351,40 @@ export default class LinterTool implements ToolInterface {
     context: ExtensionContext,
     statusBarItemHandler: StatusBarItemHandler,
   ): void {
-    const watcher = workspace.createFileSystemWatcher(
-      "**/.oxlintrc.json",
-      false,
-      true,
-      !config.requireConfig,
+    const watchers = OXLINT_CONFIG_GLOBS.map((glob) =>
+      workspace.createFileSystemWatcher(glob, false, true, !config.requireConfig),
     );
-    watcher.onDidCreate(async () => {
-      this.allowedToStartServer = true;
-      this.updateStatusBar(statusBarItemHandler, config.enable);
-      if (this.client && !this.client.isRunning() && config.enable) {
-        await this.client.start();
-      }
-    });
 
-    watcher.onDidDelete(async () => {
-      // only can be called when config.requireConfig
-      this.allowedToStartServer =
-        (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0;
-      if (!this.allowedToStartServer) {
-        this.updateStatusBar(statusBarItemHandler, false);
-        if (this.client && this.client.isRunning()) {
-          await this.client.stop();
+    for (const watcher of watchers) {
+      watcher.onDidCreate(async () => {
+        this.allowedToStartServer = true;
+        this.updateStatusBar(statusBarItemHandler, config.enable);
+        if (this.client && !this.client.isRunning() && config.enable) {
+          await this.client.start();
         }
-      }
-    });
+      });
 
-    context.subscriptions.push(watcher);
+      watcher.onDidDelete(async () => {
+        // only can be called when config.requireConfig
+        this.allowedToStartServer = await hasOxlintConfig();
+        if (!this.allowedToStartServer) {
+          this.updateStatusBar(statusBarItemHandler, false);
+          if (this.client && this.client.isRunning()) {
+            await this.client.stop();
+          }
+        }
+      });
+
+      context.subscriptions.push(watcher);
+    }
   }
+}
+
+const OXLINT_CONFIG_GLOBS = ["**/.oxlintrc.json", "**/oxlint.config.ts"];
+
+async function hasOxlintConfig(): Promise<boolean> {
+  const configs = await Promise.all(
+    OXLINT_CONFIG_GLOBS.map((glob) => workspace.findFiles(glob, "**/node_modules/**", 1)),
+  );
+  return configs.some((matches) => matches.length > 0);
 }
