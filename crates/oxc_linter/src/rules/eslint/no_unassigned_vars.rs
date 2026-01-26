@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::BindingPattern};
+use oxc_ast::{AstKind, AstType, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -74,12 +74,10 @@ impl Rule for NoUnassignedVars {
         ) {
             return;
         }
-        if ctx.nodes().ancestors(node.id()).skip(1).any(|ancestor| {
-            matches!(
-                ancestor.kind(),
-                AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)
-            )
-        }) {
+        if ctx.is_inside(
+            ctx.nodes().parent_id(node.id()),
+            &[AstType::TSModuleDeclaration, AstType::TSGlobalDeclaration],
+        ) {
             return;
         }
         let BindingPattern::BindingIdentifier(ident) = &declarator.id else {
