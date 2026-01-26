@@ -9,7 +9,6 @@ import CodePathAnalyzer from "../../node_modules/eslint/lib/linter/code-path-ana
 // @ts-expect-error - internal module of ESLint with no types
 import Traverser from "../../node_modules/eslint/lib/shared/traverser.js";
 
-import { VisitNodeStep, CallMethodStep } from "@eslint/plugin-kit";
 import visitorKeys from "../generated/keys.ts";
 import { LEAF_NODE_TYPES_COUNT, NODE_TYPE_IDS_MAP } from "../generated/type_ids.ts";
 import { ancestors } from "../generated/walk.js";
@@ -19,15 +18,41 @@ import type { EnterExit, VisitFn } from "./visitor.ts";
 import type { Node, Program } from "../generated/types.d.ts";
 import type { CompiledVisitors } from "../generated/walk.js";
 
+// Step type constants.
+// Equivalent to an enum, but minifies better.
+const STEP_TYPE_ENTER = 0;
+const STEP_TYPE_EXIT = 1;
+const STEP_TYPE_CALL = 2;
+
 /**
  * Step to walk AST.
  */
-type Step = VisitNodeStep | CallMethodStep;
+type Step = EnterStep | ExitStep | CallStep;
 
-const STEP_KIND_VISIT = 1;
+/**
+ * Step for entering AST node.
+ */
+interface EnterStep {
+  type: typeof STEP_TYPE_ENTER;
+  target: Node;
+}
 
-const STEP_PHASE_ENTER = 1;
-const STEP_PHASE_EXIT = 2;
+/**
+ * Step for exiting AST node.
+ */
+interface ExitStep {
+  type: typeof STEP_TYPE_EXIT;
+  target: Node;
+}
+
+/**
+ * Step for calling a CFG event handler.
+ */
+interface CallStep {
+  type: typeof STEP_TYPE_CALL;
+  eventName: string;
+  args: unknown[];
+}
 
 // Array of steps to walk AST.
 // Singleton array which is re-used for each walk, and emptied after each walk.
@@ -59,7 +84,8 @@ export function resetCfgWalk(): void {
  * 2. Visit AST with provided visitor.
  *    Run through the steps, in order, calling visit functions for each step.
  *
- * TODO: This is copied from ESLint and is not very efficient. We could improve its performance in many ways.
+ * TODO: This is was originally copied from ESLint, and has been adapted for better performance.
+ * But we could further improve its performance in many ways.
  * See TODO comments in the code below for some ideas for optimization.
  *
  * @param ast - AST
@@ -75,44 +101,46 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 
   for (let i = 0; i < stepsLen; i++) {
     const step = steps[i];
-    if (step.kind === STEP_KIND_VISIT) {
-      const node = step.target as Node;
+    const stepType = step.type;
 
-      if (step.phase === STEP_PHASE_ENTER) {
-        // Enter node - can be leaf or non-leaf node
-        const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
-        const visit = visitors[typeId];
-        if (typeId < LEAF_NODE_TYPES_COUNT) {
-          // Leaf node
-          if (visit !== null) {
-            typeAssertIs<VisitFn>(visit);
-            visit(node);
-          }
-          // Don't add node to `ancestors`, because we don't visit them on exit
-        } else {
-          // Non-leaf node
-          if (visit !== null) {
-            typeAssertIs<EnterExit>(visit);
-            const { enter } = visit;
-            if (enter !== null) enter(node);
-          }
+    if (stepType === STEP_TYPE_ENTER) {
+      // Enter node - can be leaf or non-leaf node
+      const node = step.target;
+      const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
+      const visit = visitors[typeId];
 
-          ancestors.unshift(node);
+      if (typeId < LEAF_NODE_TYPES_COUNT) {
+        // Leaf node
+        if (visit !== null) {
+          typeAssertIs<VisitFn>(visit);
+          visit(node);
         }
+        // Don't add node to `ancestors`, because we don't visit them on exit
       } else {
-        // Exit non-leaf node
-        ancestors.shift();
-
-        const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
-        const enterExit = visitors[typeId];
-        if (enterExit !== null) {
-          typeAssertIs<EnterExit>(enterExit);
-          const { exit } = enterExit;
-          if (exit !== null) exit(node);
+        // Non-leaf node
+        if (visit !== null) {
+          typeAssertIs<EnterExit>(visit);
+          const { enter } = visit;
+          if (enter !== null) enter(node);
         }
+
+        ancestors.unshift(node);
+      }
+    } else if (stepType === STEP_TYPE_EXIT) {
+      // Exit non-leaf node
+      const node = step.target;
+      ancestors.shift();
+
+      const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
+      const enterExit = visitors[typeId];
+      if (enterExit !== null) {
+        typeAssertIs<EnterExit>(enterExit);
+        const { exit } = enterExit;
+        if (exit !== null) exit(node);
       }
     } else {
-      const eventId = NODE_TYPE_IDS_MAP.get(step.target)!;
+      // Call method (CFG event)
+      const eventId = NODE_TYPE_IDS_MAP.get(step.eventName)!;
       const visit = visitors[eventId];
       if (visit !== null) {
         (visit as any).apply(undefined, step.args);
@@ -139,11 +167,8 @@ function prepareSteps(ast: Program) {
   // Create `CodePathAnalyzer`.
   // It stores steps to walk AST.
   //
-  // This is really inefficient code.
-  // We could improve it in several ways (in ascending order of complexity):
+  // We could improve performance in several ways (in ascending order of complexity):
   //
-  // * Get rid of the bloated `VisitNodeStep` and `CallMethodStep` classes. Just use plain objects.
-  // * Combine `step.kind` and `step.phase` into a single `step.type` property.
   // * Reduce object creation by storing steps as 2 arrays (struct of arrays pattern):
   //   * Array 1: Step type (number).
   //   * Array 2: Step data - AST node object for enter/exit node steps, args for CFG events.
@@ -159,13 +184,10 @@ function prepareSteps(ast: Program) {
   // TODO: Apply these optimizations (or at least some of them).
   const analyzer = new CodePathAnalyzer({
     enterNode(node: Node) {
-      steps.push(
-        new VisitNodeStep({
-          target: node,
-          phase: STEP_PHASE_ENTER,
-          args: [node],
-        }),
-      );
+      steps.push({
+        type: STEP_TYPE_ENTER,
+        target: node,
+      });
 
       if (DEBUG) stepsLenAfterEnter = steps.length;
     },
@@ -175,13 +197,10 @@ function prepareSteps(ast: Program) {
 
       if (typeId >= LEAF_NODE_TYPES_COUNT) {
         // Non-leaf node
-        steps.push(
-          new VisitNodeStep({
-            target: node,
-            phase: STEP_PHASE_EXIT,
-            args: [node],
-          }),
-        );
+        steps.push({
+          type: STEP_TYPE_EXIT,
+          target: node,
+        });
       } else {
         // Leaf node.
         // Don't add a step.
@@ -194,7 +213,10 @@ function prepareSteps(ast: Program) {
         // visit functions are called in would be wrong.
         // `exit` visit fn would be called before the CFG event handlers, instead of after.
         if (DEBUG && steps.length !== stepsLenAfterEnter) {
-          const eventNames = steps.slice(stepsLenAfterEnter).map((step) => step.target) as string[];
+          const eventNames = steps.slice(stepsLenAfterEnter).map((step) => {
+            if (step.type === STEP_TYPE_CALL) return step.eventName;
+            return `${step.type === STEP_TYPE_ENTER ? "enter" : "exit"} ${node.type}`;
+          });
           throw new Error(
             `CFG events emitted during visiting leaf node \`${node.type}\`: ${eventNames.join(", ")}`,
           );
@@ -202,13 +224,12 @@ function prepareSteps(ast: Program) {
       }
     },
 
-    emit(eventName: string, args: any[]) {
-      steps.push(
-        new CallMethodStep({
-          target: eventName,
-          args,
-        }),
-      );
+    emit(eventName: string, args: unknown[]) {
+      steps.push({
+        type: STEP_TYPE_CALL,
+        eventName,
+        args,
+      });
     },
   });
 
