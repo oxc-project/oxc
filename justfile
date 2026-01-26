@@ -254,8 +254,8 @@ watch-playground:
 
 # ==================== UTILITIES & ADVANCED ====================
 
-# Generate website documentation, intended for updating the oxc-project.github.io site.
-# Path should be the path to your clone of https://github.com/oxc-project/oxc-project.github.io
+# Generate website documentation, intended for updating the oxc.rs website.
+# Path should be the path to your clone of https://github.com/oxc-project/website
 # When testing changes to the website documentation, you may also want to run `pnpm run fmt`
 # in the website directory.
 website path:
