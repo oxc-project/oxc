@@ -78,6 +78,12 @@ export const AdoptionSection = () => {
 
 const FILENAME = "test.jsx";
 
+// Constants for lintFileImpl parameters
+const BUFFER_ID = 0; // Pre-parsed buffer is stored at index 0
+const RULE_ID = 0; // Single rule at index 0
+const EMPTY_SETTINGS = "{}";
+const EMPTY_GLOBALS = "{}";
+
 // Collect all rules upfront
 const rules = Array.from(builtinRules.entries());
 console.log(`Benchmarking ${rules.length} ESLint rules...`);
@@ -102,20 +108,26 @@ bench.add("all-eslint-rules", () => {
         rules: { [ruleName]: rule },
       };
 
-      // Register the plugin
+      // Register the plugin (null = no plugin name override, false = not a builtin plugin)
       registerPlugin(plugin, null, false);
 
       // Set up default options
       setOptions(DEFAULT_OPTIONS_ID, []);
 
-      // Lint using the pre-parsed buffer (bufferId = 0)
-      // Pass empty arrays/objects for ruleIds, optionsIds, settings, and globals
-      lintFileImpl(FILENAME, 0, null, [0], [DEFAULT_OPTIONS_ID], "{}", "{}");
-
-      // Clear diagnostics for next rule
-      diagnostics.length = 0;
+      // Lint using the pre-parsed buffer
+      lintFileImpl(
+        FILENAME,
+        BUFFER_ID,
+        null, // Buffer already stored, no need to pass it again
+        [RULE_ID],
+        [DEFAULT_OPTIONS_ID],
+        EMPTY_SETTINGS,
+        EMPTY_GLOBALS,
+      );
     } catch {
       // Some rules may fail on this code, but we're benchmarking execution time
+    } finally {
+      // Always clear diagnostics for next rule
       diagnostics.length = 0;
     }
   }
