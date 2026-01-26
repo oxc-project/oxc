@@ -63,7 +63,7 @@ working directory: fixtures/tsgolint
  2 | promise;
    `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited.
+  x typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[no-floating-promises.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
  2 | promise;
@@ -103,12 +103,13 @@ working directory: fixtures/tsgolint
  5 | 
    `----
 
-  x typescript-eslint(no-misused-spread): Using the spread operator on Promise in an object can cause unexpected behavior. Did you forget to await the promise?
+  x typescript-eslint(no-misused-spread): Using the spread operator on Promise in an object can cause unexpected behavior.
    ,-[no-misused-spread.ts:2:25]
  1 | declare const promise: Promise<number>;
  2 | const spreadPromise = { ...promise };
    :                         ^^^^^^^^^^
    `----
+  help: Did you forget to await the promise before spreading it?
 
   x typescript-eslint(no-mixed-enums): Mixing number and string enums can be confusing.
    ,-[no-mixed-enums.ts:3:12]
@@ -294,7 +295,7 @@ working directory: fixtures/tsgolint
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
-  x typescript-eslint(no-floating-promises): Promises must be awaited.
+  x typescript-eslint(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[prefer-promise-reject-errors.ts:1:1]
  1 | Promise.reject('error');
    : ^^^^^^^^^^^^^^^^^^^^^^^^
