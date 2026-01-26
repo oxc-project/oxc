@@ -28,16 +28,16 @@ const STEP_TYPE_CALL = 2;
 /**
  * Step to walk AST - using plain objects instead of ESLint's class instances.
  */
-type VisitStep = {
+interface VisitStep {
   type: typeof STEP_TYPE_ENTER | typeof STEP_TYPE_EXIT;
   target: Node;
-};
+}
 
-type CallStep = {
+interface CallStep {
   type: typeof STEP_TYPE_CALL;
   eventName: string;
   args: unknown[];
-};
+}
 
 type Step = VisitStep | CallStep;
 
