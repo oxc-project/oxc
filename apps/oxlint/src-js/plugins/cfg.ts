@@ -252,20 +252,7 @@ function prepareSteps(ast: Program) {
  * @param enter - Callback for entering a node
  * @param leave - Callback for leaving a node
  */
-function traverseNode(
-  node: Node | (Node | null)[],
-  enter: (node: Node) => void,
-  leave: (node: Node) => void,
-): void {
-  if (Array.isArray(node)) {
-    const len = node.length;
-    for (let i = 0; i < len; i++) {
-      const child = node[i];
-      if (child !== null) traverseNode(child, enter, leave);
-    }
-    return;
-  }
-
+function traverseNode(node: Node, enter: (node: Node) => void, leave: (node: Node) => void): void {
   // Enter the node
   enter(node);
 
@@ -274,7 +261,16 @@ function traverseNode(
   const keysLen = keys.length;
   for (let i = 0; i < keysLen; i++) {
     const child = (node as any)[keys[i]] as Node | (Node | null)[] | null;
-    if (child !== null) {
+
+    if (child === null) continue;
+
+    if (Array.isArray(child)) {
+      const len = child.length;
+      for (let i = 0; i < len; i++) {
+        const element = child[i];
+        if (element !== null) traverseNode(element, enter, leave);
+      }
+    } else {
       traverseNode(child, enter, leave);
     }
   }
