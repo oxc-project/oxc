@@ -22,7 +22,7 @@ fn text_encoding_identifier_case_diagnostic(
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
-#[serde(default, rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct TextEncodingIdentifierCase {
     /// If `true`, prefer `utf-8` over `utf8`.
     with_dash: bool,
