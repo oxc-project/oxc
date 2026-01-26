@@ -99,17 +99,17 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 
       if (typeId < LEAF_NODE_TYPES_COUNT) {
         // Leaf node
-        if (visit != null) {
+        if (visit !== null) {
           typeAssertIs<VisitFn>(visit);
           visit(node);
         }
         // Don't add node to `ancestors`, because we don't visit them on exit
       } else {
         // Non-leaf node
-        if (visit != null) {
+        if (visit !== null) {
           typeAssertIs<EnterExit>(visit);
           const { enter } = visit;
-          if (enter != null) enter(node);
+          if (enter !== null) enter(node);
         }
 
         ancestors.unshift(node);
@@ -121,17 +121,17 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 
       const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
       const enterExit = visitors[typeId];
-      if (enterExit != null) {
+      if (enterExit !== null) {
         typeAssertIs<EnterExit>(enterExit);
         const { exit } = enterExit;
-        if (exit != null) exit(node);
+        if (exit !== null) exit(node);
       }
     } else {
       // Call method (CFG event)
       const callStep = step as CallStep;
       const eventId = NODE_TYPE_IDS_MAP.get(callStep.target)!;
       const visit = visitors[eventId];
-      if (visit != null) {
+      if (visit !== null) {
         (visit as any).apply(undefined, callStep.args);
       }
     }
