@@ -8,7 +8,7 @@ use oxc_span::SourceType;
 
 fn mangle(source_text: &str, options: MangleOptions) -> String {
     let allocator = Allocator::default();
-    let source_type = SourceType::mjs();
+    let source_type = SourceType::mjs().with_unambiguous(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
     let program = ret.program;
@@ -24,7 +24,7 @@ fn test(source_text: &str, expected: &str, options: MangleOptions) {
     let mangled = mangle(source_text, options);
     let expected = {
         let allocator = Allocator::default();
-        let source_type = SourceType::mjs();
+        let source_type = SourceType::mjs().with_unambiguous(true);
         let ret = Parser::new(&allocator, expected, source_type).parse();
         assert!(ret.errors.is_empty(), "Parser errors: {:?}", ret.errors);
         Codegen::new().build(&ret.program).code
@@ -79,7 +79,7 @@ fn direct_eval() {
     test(
         r#"var e = () => {}; var foo = (bar) => e(bar); var pt = (() => { eval("") })();"#,
         r#"var e = () => {}; var foo = (t) => e(t); var pt = (() => { eval(""); })();"#,
-        MangleOptions { top_level: true, ..MangleOptions::default() },
+        MangleOptions { top_level: Some(true), ..MangleOptions::default() },
     );
 
     test(
@@ -158,7 +158,7 @@ fn mangler() {
         w
     });
     top_level_cases.into_iter().fold(&mut snapshot, |w, case| {
-        let options = MangleOptions { top_level: true, ..MangleOptions::default() };
+        let options = MangleOptions { top_level: Some(true), ..MangleOptions::default() };
         write!(w, "{case}\n{}\n", mangle(case, options)).unwrap();
         w
     });
