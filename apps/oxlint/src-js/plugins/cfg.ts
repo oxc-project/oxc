@@ -93,7 +93,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 
     if (stepType === STEP_TYPE_ENTER) {
       // Enter node - can be leaf or non-leaf node
-      const node = step.target as Node;
+      const node = step.target;
       const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
       const visit = visitors[typeId];
 
@@ -116,7 +116,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
       }
     } else if (stepType === STEP_TYPE_EXIT) {
       // Exit non-leaf node
-      const node = step.target as Node;
+      const node = step.target;
       ancestors.shift();
 
       const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
