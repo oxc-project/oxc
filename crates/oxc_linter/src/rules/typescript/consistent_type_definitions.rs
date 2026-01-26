@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{ExportDefaultDeclarationKind, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -243,9 +243,7 @@ impl Rule for ConsistentTypeDefinitions {
 }
 
 fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
-    ctx.nodes()
-        .ancestors(node_id)
-        .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
+    ctx.is_inside(node_id, &[AstType::TSGlobalDeclaration])
 }
 
 #[test]
