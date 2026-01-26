@@ -155,49 +155,6 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
 }
 
 /**
- * Lightweight AST traverser for CFG building.
- * This is a simplified version that only calls enter/leave callbacks,
- * without building ancestors array or other overhead that ESLint's Traverser has.
- *
- * @param node - AST node to traverse
- * @param enter - Callback for entering a node
- * @param leave - Callback for leaving a node
- */
-function traverseNode(
-  node: Node | null | undefined,
-  enter: (node: Node) => void,
-  leave: (node: Node) => void,
-): void {
-  if (node == null) return;
-
-  if (isArray(node)) {
-    const len = node.length;
-    for (let i = 0; i < len; i++) {
-      traverseNode(node[i], enter, leave);
-    }
-    return;
-  }
-
-  // Enter the node
-  enter(node);
-
-  // Traverse children using visitorKeys
-  const keys = visitorKeys[node.type as keyof typeof visitorKeys];
-  if (keys != null) {
-    const keysLen = keys.length;
-    for (let i = 0; i < keysLen; i++) {
-      const child = (node as any)[keys[i]];
-      if (child != null) {
-        traverseNode(child, enter, leave);
-      }
-    }
-  }
-
-  // Leave the node
-  leave(node);
-}
-
-/**
  * Walk AST and put a list of all steps to walk AST into the SoA arrays.
  * @param ast - AST
  */
@@ -287,4 +244,47 @@ function prepareSteps(ast: Program) {
     stepTypeIds.length === stepData.length,
     "`stepTypeIds` and `stepData` should have the same length",
   );
+}
+
+/**
+ * Lightweight AST traverser for CFG building.
+ * This is a simplified version that only calls enter/leave callbacks,
+ * without building ancestors array or other overhead that ESLint's `Traverser` has.
+ *
+ * @param node - AST node to traverse
+ * @param enter - Callback for entering a node
+ * @param leave - Callback for leaving a node
+ */
+function traverseNode(
+  node: Node | null | undefined,
+  enter: (node: Node) => void,
+  leave: (node: Node) => void,
+): void {
+  if (node == null) return;
+
+  if (isArray(node)) {
+    const len = node.length;
+    for (let i = 0; i < len; i++) {
+      traverseNode(node[i], enter, leave);
+    }
+    return;
+  }
+
+  // Enter the node
+  enter(node);
+
+  // Traverse children using visitorKeys
+  const keys = visitorKeys[node.type as keyof typeof visitorKeys];
+  if (keys != null) {
+    const keysLen = keys.length;
+    for (let i = 0; i < keysLen; i++) {
+      const child = (node as any)[keys[i]];
+      if (child != null) {
+        traverseNode(child, enter, leave);
+      }
+    }
+  }
+
+  // Leave the node
+  leave(node);
 }
