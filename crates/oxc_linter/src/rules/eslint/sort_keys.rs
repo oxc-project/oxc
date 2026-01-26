@@ -183,10 +183,23 @@ impl Rule for SortKeys {
 
                 for (i, prop) in all_props.iter().enumerate() {
                     match prop {
-                        ObjectPropertyKind::SpreadProperty(_) => match spread_pos {
-                            SpreadPos::Start | SpreadPos::End => {}
-                            SpreadPos::CanEnd => spread_pos = SpreadPos::End,
-                        },
+                        ObjectPropertyKind::SpreadProperty(_) => {
+                            if let Some(next_prop) = all_props.get(i + 1)
+                                && let ObjectPropertyKind::ObjectProperty(_) = next_prop
+                                && ctx.has_comments_between(Span::new(
+                                    prop.span().end,
+                                    next_prop.span().start,
+                                ))
+                            {
+                                can_fix = false;
+                                break;
+                            }
+
+                            match spread_pos {
+                                SpreadPos::Start | SpreadPos::End => {}
+                                SpreadPos::CanEnd => spread_pos = SpreadPos::End,
+                            }
+                        }
                         ObjectPropertyKind::ObjectProperty(obj) => {
                             match spread_pos {
                                 SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
@@ -1174,6 +1187,8 @@ fn test() {
         ("var obj = {...z, b:1, a:2}", "var obj = {...z, a:2, b:1}"),
         // Spreading at the start when one of the keys is the empty string
         ("var obj = {...z, a:1, '':2}", "var obj = {...z, '':2, a:1}"),
+        // No fix when a leading spread has a trailing comment
+        ("var obj = {...z, /*c*/ b:1, a:2}", "var obj = {...z, /*c*/ b:1, a:2}"),
         // Spreading multiple times at the start
         ("var obj = {...z, ...y, b:1, a:2,}", "var obj = {...z, ...y, a:2, b:1,}"),
         // Spreading at the end
