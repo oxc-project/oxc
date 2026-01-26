@@ -335,8 +335,11 @@ fn check_for_resolve_reject(ctx: &LintContext, allow_reject: bool, call_expr: &C
 
 /// Return true if this node is inside a `then` or `catch` or `finally` promise callback.
 fn inside_promise_cb<'a, 'b>(node: &'a AstNode<'b>, ctx: &'a LintContext<'b>) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|node| {
-        node.kind().as_call_expression().is_some_and(|call_expr| is_promise(call_expr).is_some())
+    ctx.is_inside_where(node.id(), |ancestor| {
+        ancestor
+            .kind()
+            .as_call_expression()
+            .is_some_and(|call_expr| is_promise(call_expr).is_some())
     })
 }
 

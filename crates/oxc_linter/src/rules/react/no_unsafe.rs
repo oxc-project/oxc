@@ -107,16 +107,9 @@ impl Rule for NoUnsafe {
             AstKind::ObjectProperty(obj_prop) => {
                 if let Some(name) = obj_prop.key.static_name()
                     && is_unsafe_method(name.as_ref(), self.0.check_aliases, ctx)
+                    && ctx.is_inside_where(node.id(), is_es5_component)
                 {
-                    for ancestor in ctx.nodes().ancestors(node.id()) {
-                        if is_es5_component(ancestor) {
-                            ctx.diagnostic(no_unsafe_diagnostic(
-                                name.as_ref(),
-                                obj_prop.key.span(),
-                            ));
-                            break;
-                        }
-                    }
+                    ctx.diagnostic(no_unsafe_diagnostic(name.as_ref(), obj_prop.key.span()));
                 }
             }
             _ => {}

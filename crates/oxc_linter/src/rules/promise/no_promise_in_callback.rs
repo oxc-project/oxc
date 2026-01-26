@@ -65,8 +65,7 @@ impl Rule for NoPromiseInCallback {
             return;
         }
 
-        let mut ancestors = ctx.nodes().ancestors(node.id());
-        if ancestors.any(|node| is_callback_function(node, ctx)) {
+        if ctx.is_inside_where(node.id(), |ancestor| is_callback_function(ancestor, ctx)) {
             ctx.diagnostic(no_promise_in_callback_diagnostic(call_expr.callee.span()));
         }
     }

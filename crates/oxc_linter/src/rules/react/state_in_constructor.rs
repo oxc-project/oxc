@@ -160,7 +160,7 @@ impl Rule for StateInConstructor {
 }
 
 fn has_parent_es6_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    ctx.nodes().ancestors(node.id()).any(|node| is_es6_component(node))
+    ctx.is_inside_where(node.id(), is_es6_component)
 }
 
 /// Checks if a node is inside a constructor method.

@@ -58,7 +58,7 @@ impl Rule for NoVar {
             && dec.kind == VariableDeclarationKind::Var
         {
             // Skip TypeScript ambient declarations (declare global/module/namespace)
-            if ctx.nodes().ancestors(node.id()).any(|ancestor| match ancestor.kind() {
+            if ctx.is_inside_where(node.id(), |ancestor| match ancestor.kind() {
                 AstKind::TSModuleDeclaration(module) => module.declare,
                 AstKind::TSGlobalDeclaration(_) => true,
                 _ => false,
