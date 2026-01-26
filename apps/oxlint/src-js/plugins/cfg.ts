@@ -272,13 +272,11 @@ function traverseNode(
 
   // Traverse children using visitorKeys
   const keys = visitorKeys[node.type as keyof typeof visitorKeys];
-  if (keys != null) {
-    const keysLen = keys.length;
-    for (let i = 0; i < keysLen; i++) {
-      const child = (node as any)[keys[i]];
-      if (child != null) {
-        traverseNode(child, enter, leave);
-      }
+  const keysLen = keys.length;
+  for (let i = 0; i < keysLen; i++) {
+    const child = (node as any)[keys[i]];
+    if (child != null) {
+      traverseNode(child, enter, leave);
     }
   }
 
