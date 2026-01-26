@@ -35,7 +35,7 @@ type VisitStep = {
 
 type CallStep = {
   type: typeof STEP_TYPE_CALL;
-  target: string;
+  eventName: string;
   args: unknown[];
 };
 
@@ -129,7 +129,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
     } else {
       // Call method (CFG event)
       const callStep = step as CallStep;
-      const eventId = NODE_TYPE_IDS_MAP.get(callStep.target)!;
+      const eventId = NODE_TYPE_IDS_MAP.get(callStep.eventName)!;
       const visit = visitors[eventId];
       if (visit !== null) {
         (visit as any).apply(undefined, callStep.args);
@@ -201,7 +201,7 @@ function prepareSteps(ast: Program) {
           const eventNames = steps
             .slice(stepsLenAfterEnter)
             .filter((step): step is CallStep => step.type === STEP_TYPE_CALL)
-            .map((step) => step.target);
+            .map((step) => step.eventName);
           throw new Error(
             `CFG events emitted during visiting leaf node \`${node.type}\`: ${eventNames.join(", ")}`,
           );
@@ -212,7 +212,7 @@ function prepareSteps(ast: Program) {
     emit(eventName: string, args: unknown[]) {
       steps.push({
         type: STEP_TYPE_CALL,
-        target: eventName,
+        eventName,
         args,
       });
     },
