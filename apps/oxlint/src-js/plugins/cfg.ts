@@ -14,6 +14,7 @@ import {
   LEAF_NODE_TYPES_COUNT,
   NODE_TYPE_IDS_MAP,
   NODE_TYPES_COUNT,
+  TYPE_IDS_COUNT,
 } from "../generated/type_ids.ts";
 import { ancestors } from "../generated/walk.js";
 import { debugAssert, typeAssertIs } from "../utils/asserts.ts";
@@ -32,6 +33,11 @@ import type { CompiledVisitors } from "../generated/walk.js";
  * - Exit visit (non-leaf nodes): typeId + EXIT_TYPE_ID_OFFSET (256+)
  */
 const EXIT_TYPE_ID_OFFSET = 256;
+
+debugAssert(
+  EXIT_TYPE_ID_OFFSET >= TYPE_IDS_COUNT,
+  "`EXIT_TYPE_ID_OFFSET` must be >= `TYPE_IDS_COUNT`",
+);
 
 // Struct of Arrays (SoA) pattern for step storage.
 // Using 2 arrays instead of an array of objects improves memory locality and V8 optimization.
