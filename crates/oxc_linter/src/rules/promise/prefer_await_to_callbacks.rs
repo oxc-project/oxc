@@ -1,10 +1,9 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Argument, Expression, FormalParameters, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -106,7 +105,8 @@ impl Rule for PreferAwaitToCallbacks {
                     if matches!(
                         param.pattern.get_identifier_name().as_deref(),
                         Some("err" | "error")
-                    ) && !Self::is_inside_yield_or_await(node.id(), ctx)
+                    ) && !ctx
+                        .is_inside(node.id(), &[AstType::YieldExpression, AstType::AwaitExpression])
                     {
                         ctx.diagnostic(prefer_await_to_callbacks(last_arg.span()));
                     }
@@ -133,12 +133,6 @@ impl PreferAwaitToCallbacks {
         if matches!(id.as_deref(), Some("callback" | "cb")) {
             ctx.diagnostic(prefer_await_to_callbacks(param.span));
         }
-    }
-
-    fn is_inside_yield_or_await(id: NodeId, ctx: &LintContext) -> bool {
-        ctx.nodes().ancestors(id).any(|parent| {
-            matches!(parent.kind(), AstKind::AwaitExpression(_) | AstKind::YieldExpression(_))
-        })
     }
 
     fn is_array_method(name: &str) -> bool {
