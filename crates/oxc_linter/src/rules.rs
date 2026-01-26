@@ -181,6 +181,7 @@ pub(crate) mod eslint {
     pub mod no_void;
     pub mod no_warning_comments;
     pub mod no_with;
+    pub mod object_shorthand;
     pub mod operator_assignment;
     pub mod prefer_destructuring;
     pub mod prefer_exponentiation_operator;
