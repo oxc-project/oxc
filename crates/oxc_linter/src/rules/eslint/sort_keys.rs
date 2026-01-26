@@ -166,22 +166,50 @@ impl Rule for SortKeys {
             if !is_sorted {
                 // Try to provide a safe autofix when possible.
                 // Conditions for providing a fix:
-                // - No spread properties (reordering spreads is unsafe)
+                // - No in-between spread properties (reordering spreads is unsafe)
                 // - All properties have a static key name
                 // - No comments between adjacent properties
                 // - No special grouping markers (we only support a single contiguous group)
+                enum SpreadPos {
+                    Start,
+                    CanEnd,
+                    End,
+                }
 
                 let all_props = &dec.properties;
                 let mut can_fix = true;
+                let mut spread_pos = SpreadPos::Start;
                 let mut props: Vec<(String, Span)> = Vec::with_capacity(all_props.len());
 
                 for (i, prop) in all_props.iter().enumerate() {
                     match prop {
                         ObjectPropertyKind::SpreadProperty(_) => {
-                            can_fix = false;
-                            break;
+                            if let Some(next_prop) = all_props.get(i + 1)
+                                && let ObjectPropertyKind::ObjectProperty(_) = next_prop
+                                && ctx.has_comments_between(Span::new(
+                                    prop.span().end,
+                                    next_prop.span().start,
+                                ))
+                            {
+                                can_fix = false;
+                                break;
+                            }
+
+                            match spread_pos {
+                                SpreadPos::Start | SpreadPos::End => {}
+                                SpreadPos::CanEnd => spread_pos = SpreadPos::End,
+                            }
                         }
                         ObjectPropertyKind::ObjectProperty(obj) => {
+                            match spread_pos {
+                                SpreadPos::Start => spread_pos = SpreadPos::CanEnd,
+                                SpreadPos::CanEnd => {}
+                                SpreadPos::End => {
+                                    can_fix = false;
+                                    break;
+                                }
+                            }
+
                             let Some(key) = obj.key.static_name() else {
                                 can_fix = false;
                                 break;
@@ -200,11 +228,12 @@ impl Rule for SortKeys {
                     }
                 }
 
-                if can_fix
-                    && !props.is_empty()
-                    && property_groups.len() == 1
-                    && !property_groups[0].iter().any(|s| s.starts_with('<'))
-                {
+                let static_groups_count = property_groups
+                    .iter()
+                    .filter(|g| !g.is_empty() && !g.iter().any(|s| s.starts_with('<')))
+                    .count();
+
+                if can_fix && !props.is_empty() && static_groups_count == 1 {
                     // Prepare keys for comparison according to options
                     let keys_for_cmp: Vec<String> = props
                         .iter()
@@ -1154,6 +1183,25 @@ fn test() {
         ("var obj = {c:1, a:2, b:3}", "var obj = {a:2, b:3, c:1}"),
         // Mixed types
         ("var obj = {2:1, a:2, 1:3}", "var obj = {1:3, 2:1, a:2}"),
+        // Spreading at the start
+        ("var obj = {...z, b:1, a:2}", "var obj = {...z, a:2, b:1}"),
+        // Spreading at the start when one of the keys is the empty string
+        ("var obj = {...z, a:1, '':2}", "var obj = {...z, '':2, a:1}"),
+        // No fix when a leading spread has a trailing comment
+        ("var obj = {...z, /*c*/ b:1, a:2}", "var obj = {...z, /*c*/ b:1, a:2}"),
+        // Spreading multiple times at the start
+        ("var obj = {...z, ...y, b:1, a:2,}", "var obj = {...z, ...y, a:2, b:1,}"),
+        // Spreading at the end
+        ("var obj = { b:1, a:2, ...z}", "var obj = { a:2, b:1, ...z}"),
+        // Spreading multiple times at the end
+        ("var obj = {b:1, a:2, ...z, ...y}", "var obj = {a:2, b:1, ...z, ...y}"),
+        // Spreading at both the start and end
+        ("var obj = {...z, b:1, a:2, ...y}", "var obj = {...z, a:2, b:1, ...y}"),
+        // Spreading multiple times at both the start and end
+        (
+            "var obj = { ...z, ...y, b:1, a:2, ...x, ...w, }",
+            "var obj = { ...z, ...y, a:2, b:1, ...x, ...w, }",
+        ),
         // Multi-line formatting should be preserved (issue #16391)
         (
             "const obj = {
