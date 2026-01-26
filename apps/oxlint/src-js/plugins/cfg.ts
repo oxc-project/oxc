@@ -85,10 +85,9 @@ export function resetCfgWalk(): void {
  * 2. Visit AST with provided visitor.
  *    Run through the steps, in order, calling visit functions for each step.
  *
- * TODO: Further optimizations possible:
- * - Reduce object creation by storing steps as 2 arrays (struct of arrays pattern).
- * - Avoid repeated conversions from `type` (string) to `typeId` (number) when iterating through steps.
- * - Use a faster walker instead of ESLint's Traverser.
+ * TODO: This is was originally copied from ESLint, and has been adapted for better performance.
+ * But we could further improve its performance in many ways.
+ * See TODO comments in the code below for some ideas for optimization.
  *
  * @param ast - AST
  * @param visitors - Visitors array
@@ -167,19 +166,23 @@ function prepareSteps(ast: Program) {
   let stepsLenAfterEnter = 0;
 
   // Create `CodePathAnalyzer`.
-  // It stores steps to walk AST using plain objects instead of ESLint's class instances.
+  // It stores steps to walk AST.
   //
-  // Further optimizations possible (in ascending order of complexity):
+  // We could improve performance in several ways (in ascending order of complexity):
   //
   // * Reduce object creation by storing steps as 2 arrays (struct of arrays pattern):
   //   * Array 1: Step type (number).
   //   * Array 2: Step data - AST node object for enter/exit node steps, args for CFG events.
+  // * Alternatively, use a single array containing step objects as now, but recycle the objects
+  //   (SoA option is probably better).
   // * Avoid repeated conversions from `type` (string) to `typeId` (number) when iterating through steps.
-  //   * Store type ID in steps during preparation phase.
+  //   * Generate separate `enterNode` / `exitNode` functions for each node type.
+  //   * Set them on `analyzer.original` before calling `analyzer.enterNode` / `analyzer.exitNode`.
+  //   * These functions would know the type ID of the node already, and then could store type ID in steps.
   //   * When iterating through steps, use that type ID instead of converting `node.type` to `typeId` every time.
-  // * Use a faster walker instead of ESLint's Traverser.
+  // * Copy `CodePathAnalyzer` code into this repo and rewrite it to work entirely with type IDs instead of strings.
   //
-  // TODO: Apply these optimizations.
+  // TODO: Apply these optimizations (or at least some of them).
   const analyzer = new CodePathAnalyzer({
     enterNode(node: Node) {
       steps.push({
