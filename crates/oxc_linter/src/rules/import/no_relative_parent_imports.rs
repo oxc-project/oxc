@@ -113,9 +113,7 @@ impl Rule for NoRelativeParentImports {
 /// Check if the import path is a relative parent import.
 /// Matches paths like `../foo`, `..`, `./../foo`, etc.
 fn is_parent_import(path: &str) -> bool {
-    path == ".."
-        || path.starts_with("../")
-        || path.starts_with("./../") // handles ./../foo pattern
+    path == ".." || path.starts_with("../") || path.starts_with("./../") // handles ./../foo pattern
 }
 
 #[test]
