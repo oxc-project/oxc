@@ -18,9 +18,8 @@ import type { EnterExit, VisitFn } from "./visitor.ts";
 import type { Node, Program } from "../generated/types.d.ts";
 import type { CompiledVisitors } from "../generated/walk.js";
 
-/**
- * Step type constants (merged kind + phase into single type).
- */
+// Step type constants.
+// Equivalent to an enum, but minifies better.
 const STEP_TYPE_ENTER = 0;
 const STEP_TYPE_EXIT = 1;
 const STEP_TYPE_CALL = 2;
