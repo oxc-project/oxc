@@ -118,9 +118,9 @@ impl Rule for NoConditionalInTest {
             _ => return,
         }
 
-        let is_if_statement_in_test = ctx.nodes().ancestors(node.id()).any(|node| {
-            let AstKind::CallExpression(call_expr) = node.kind() else { return false };
-            let vitest_node = PossibleJestNode { node, original: None };
+        let is_if_statement_in_test = ctx.is_inside_where(node.id(), |ancestor| {
+            let AstKind::CallExpression(call_expr) = ancestor.kind() else { return false };
+            let vitest_node = PossibleJestNode { node: ancestor, original: None };
 
             is_type_of_jest_fn_call(
                 call_expr,

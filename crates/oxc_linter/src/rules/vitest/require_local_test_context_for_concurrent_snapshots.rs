@@ -115,8 +115,9 @@ impl RequireLocalTestContextForConcurrentSnapshots {
             }
 
             let test_or_describe_node_found =
-                ctx.nodes().ancestors(possible_jest_node.node.id()).any(|node| {
-                    node.kind()
+                ctx.is_inside_where(possible_jest_node.node.id(), |ancestor| {
+                    ancestor
+                        .kind()
                         .as_call_expression()
                         .and_then(|call_expr| call_expr.callee.as_member_expression())
                         .is_some_and(|member_expr| is_test_or_describe_node(member_expr))

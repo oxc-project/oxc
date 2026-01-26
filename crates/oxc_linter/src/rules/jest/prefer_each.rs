@@ -19,8 +19,8 @@ fn use_prefer_each(span: Span, fn_name: &str) -> OxcDiagnostic {
 
 #[inline]
 fn is_in_test(ctx: &LintContext<'_>, id: NodeId) -> bool {
-    ctx.nodes().ancestors(id).any(|node| {
-        let AstKind::CallExpression(ancestor_call_expr) = node.kind() else { return false };
+    ctx.is_inside_where(id, |ancestor| {
+        let AstKind::CallExpression(ancestor_call_expr) = ancestor.kind() else { return false };
         let Some(ancestor_member_expr) = ancestor_call_expr.callee.as_member_expression() else {
             return false;
         };
