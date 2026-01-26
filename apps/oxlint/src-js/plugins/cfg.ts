@@ -55,9 +55,6 @@ const stepTypeIds: number[] = [];
  */
 const stepData: (Node | unknown[])[] = [];
 
-// Pre-computed for performance
-const { isArray } = Array;
-
 /**
  * Reset state for walking AST with CFG.
  *
@@ -262,7 +259,7 @@ function traverseNode(
 ): void {
   if (node == null) return;
 
-  if (isArray(node)) {
+  if (Array.isArray(node)) {
     const len = node.length;
     for (let i = 0; i < len; i++) {
       traverseNode(node[i], enter, leave);
