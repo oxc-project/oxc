@@ -9,7 +9,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
@@ -475,8 +475,7 @@ impl CliRunner {
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
         // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
         // per-file or per-directory basis, to avoid calling `.parent()` on every path.
-        let mut nested_oxlintrc = FxHashMap::<&Path, Oxlintrc>::default();
-        let mut nested_configs = FxHashMap::<PathBuf, Config>::default();
+        let mut nested_oxlintrc = FxHashSet::<PathBuf>::default();
         // get all of the unique directories among the paths to use for search for
         // oxlint config files in those directories and their ancestors
         // e.g. `/some/file.js` will check `/some` and `/`
@@ -497,25 +496,36 @@ impl CliRunner {
             }
         }
         for directory in directories {
-            #[expect(clippy::match_same_arms)]
-            match Self::find_oxlint_config_in_directory(directory) {
-                Ok(Some(v)) => {
-                    nested_oxlintrc.insert(directory, v);
-                }
-                Ok(None) => {}
-                Err(_) => {
-                    // TODO(camc314): report this error
-                }
+            if let Some(path) = Self::find_oxlint_config_path_in_directory(directory) {
+                nested_oxlintrc.insert(path);
             }
         }
 
-        // iterate over each config and build the ConfigStore
-        for (dir, oxlintrc) in nested_oxlintrc {
+        let mut nested_configs = FxHashMap::<PathBuf, Config>::with_capacity_and_hasher(
+            nested_oxlintrc.len(),
+            FxBuildHasher,
+        );
+
+        // iterate over each config path and build the ConfigStore
+        for path in nested_oxlintrc {
+            let oxlintrc = match Oxlintrc::from_file(&path) {
+                Ok(oxlintrc) => oxlintrc,
+                Err(e) => {
+                    print_and_flush_stdout(
+                        stdout,
+                        &format!(
+                            "Failed to parse oxlint configuration file at {}.\n{}\n",
+                            path.display(),
+                            render_report(handler, &e)
+                        ),
+                    );
+                    return Err(CliRunResult::InvalidOptionConfig);
+                }
+            };
+            let dir = oxlintrc.path.parent().unwrap().to_path_buf();
             // Collect ignore patterns and their root
-            nested_ignore_patterns.push((
-                oxlintrc.ignore_patterns.clone(),
-                oxlintrc.path.parent().unwrap().to_path_buf(),
-            ));
+            nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir.clone()));
+
             // TODO(refactor): clean up all of the error handling in this function
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
@@ -550,7 +560,7 @@ impl CliRunner {
                     return Err(CliRunResult::InvalidOptionConfig);
                 }
             };
-            nested_configs.insert(dir.to_path_buf(), config);
+            nested_configs.insert(dir, config);
         }
 
         Ok(nested_configs)
@@ -570,16 +580,11 @@ impl CliRunner {
         Ok(Oxlintrc::default())
     }
 
-    /// Looks in a directory for an oxlint config file, returns the oxlint config if it exists
-    /// and returns `Err` if none exists or the file is invalid. Does not apply the default
-    /// config file.
-    fn find_oxlint_config_in_directory(dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+    /// Looks in a directory for an oxlint config file and returns the path if it exists.
+    /// Does not validate the file or apply the default config file.
+    fn find_oxlint_config_path_in_directory(dir: &Path) -> Option<PathBuf> {
         let possible_config_path = dir.join(DEFAULT_OXLINTRC);
-        if possible_config_path.is_file() {
-            Oxlintrc::from_file(&possible_config_path).map(Some)
-        } else {
-            Ok(None)
-        }
+        if possible_config_path.is_file() { Some(possible_config_path) } else { None }
     }
 }
 
@@ -1441,6 +1446,11 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/invalid_config_multiple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_invalid_config_nested() {
+        Tester::new().with_cwd("fixtures/invalid_config_nested".into()).test_and_snapshot(&[]);
     }
 
     #[test]
