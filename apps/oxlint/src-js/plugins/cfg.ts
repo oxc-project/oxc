@@ -28,9 +28,9 @@ import type { CompiledVisitors } from "../generated/walk.js";
  * Using 256 as it's a power of 2 and larger than the maximum type ID (171).
  *
  * Type ID encoding:
- * - Enter visit (nodes): 0 to NODE_TYPES_COUNT-1 (0-164)
- * - Call method (CFG events): NODE_TYPES_COUNT to TYPE_IDS_COUNT-1 (165-171)
- * - Exit visit (non-leaf nodes): typeId + EXIT_TYPE_ID_OFFSET (256+)
+ * - Enter visit (nodes): 0 to NODE_TYPES_COUNT - 1 (0-164)
+ * - Call method (CFG events): NODE_TYPES_COUNT to TYPE_IDS_COUNT - 1 (165-171)
+ * - Exit visit (non-leaf nodes): Node type ID + EXIT_TYPE_ID_OFFSET (256+)
  */
 const EXIT_TYPE_ID_OFFSET = 256;
 
@@ -40,20 +40,20 @@ debugAssert(
 );
 
 // Struct of Arrays (SoA) pattern for step storage.
-// Using 2 arrays instead of an array of objects improves memory locality and V8 optimization.
+// Using 2 arrays instead of an array of objects reduces object creation.
 
 /**
  * Encoded type IDs for each step.
- * - For enter visits: node type ID (0-164)
- * - For CFG events: event type ID (165-171)
- * - For exit visits: node type ID + EXIT_TYPE_ID_OFFSET (256+)
+ * - For enter visits: Node type ID (0-164)
+ * - For CFG events: Event type ID (165-171)
+ * - For exit visits: Node type ID + `EXIT_TYPE_ID_OFFSET` (256+)
  */
 const stepTypeIds: number[] = [];
 
 /**
  * Step data for each step.
- * - For visit steps (enter/exit): the AST node
- * - For call steps (CFG events): the args array
+ * - For visit steps (enter/exit): AST node
+ * - For call steps (CFG events): Array of arguments to call CFG event handler with
  */
 const stepData: (Node | unknown[])[] = [];
 
@@ -85,8 +85,9 @@ export function resetCfgWalk(): void {
  *    Run through the steps, in order, calling visit functions for each step.
  *
  * TODO: This is was originally copied from ESLint, and has been adapted for better performance.
- * But we could further improve its performance in many ways.
- * See TODO comments in the code below for some ideas for optimization.
+ * We could further improve its performance by:
+ * - Copy `CodePathAnalyzer` code into this repo and rewrite it to work entirely with type IDs instead of strings.
+ * - Using a faster AST walker than ESLint's `Traverser`.
  *
  * @param ast - AST
  * @param visitors - Visitors array
@@ -103,7 +104,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
     let typeId = stepTypeIds[i];
 
     if (typeId < NODE_TYPES_COUNT) {
-      // Enter visit - node type ID is used directly
+      // Enter node. `typeId` is node type ID.
       const node = stepData[i] as Node;
       const visit = visitors[typeId];
 
@@ -113,7 +114,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
           typeAssertIs<VisitFn>(visit);
           visit(node);
         }
-        // Don't add node to `ancestors`, because we don't visit them on exit
+        // Don't add node to `ancestors`, because we don't visit leaf nodes on exit
       } else {
         // Non-leaf node
         if (visit !== null) {
@@ -125,7 +126,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
         ancestors.unshift(node);
       }
     } else if (typeId >= EXIT_TYPE_ID_OFFSET) {
-      // Exit non-leaf node - type ID has EXIT_TYPE_ID_OFFSET added
+      // Exit non-leaf node. `typeId` is node type ID + `EXIT_TYPE_ID_OFFSET`.
       typeId -= EXIT_TYPE_ID_OFFSET;
       const node = stepData[i] as Node;
 
@@ -138,7 +139,7 @@ export function walkProgramWithCfg(ast: Program, visitors: CompiledVisitors): vo
         if (exit !== null) exit(node);
       }
     } else {
-      // Call method (CFG event) - event type ID is in range NODE_TYPES_COUNT to EXIT_TYPE_ID_OFFSET-1
+      // Call method (CFG event). `typeId` is event type ID.
       debugAssert(Array.isArray(stepData[i]), "`stepData` should contain an array for CFG events");
 
       const visit = visitors[typeId];
@@ -170,18 +171,13 @@ function prepareSteps(ast: Program) {
   // It stores steps to walk AST using the SoA (Struct of Arrays) pattern.
   //
   // Type ID encoding:
-  // - Enter visits: type ID directly (0-164 for node types)
-  // - CFG events: type ID directly (165-171 for event types)
-  // - Exit visits: type ID + EXIT_TYPE_ID_OFFSET (256+)
+  // - Enter visits: Node type ID directly (0-164 for node types)
+  // - CFG events: Node type ID directly (165-171 for event types)
+  // - Exit visits: Event type ID + `EXIT_TYPE_ID_OFFSET` (256+)
   //
   // This allows us to:
-  // 1. Avoid repeated string-to-number conversions during step execution
-  // 2. Reduce memory allocation by using 2 flat arrays instead of step objects
-  //
-  // We could further improve performance in several ways (in ascending order of complexity):
-  // * Copy `CodePathAnalyzer` code into this repo and rewrite it to work entirely with type IDs instead of strings.
-  //
-  // TODO: Apply these optimizations (or at least some of them).
+  // 1. Avoid repeated `NODE_TYPE_IDS_MAP` hash map lookups during step execution.
+  // 2. Reduce object creation by using 2 flat arrays instead of step objects.
   const analyzer = new CodePathAnalyzer({
     enterNode(node: Node) {
       const typeId = NODE_TYPE_IDS_MAP.get(node.type)!;
