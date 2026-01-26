@@ -102,14 +102,13 @@ export class ConfigService implements IDisposable {
       return false;
     }
 
-    const textDocumentPath = textDocumentUri.path;
-
-    for (const [workspaceUri, workspaceConfig] of this.workspaceConfigs.entries()) {
-      if (textDocumentPath.startsWith(workspaceUri)) {
-        return workspaceConfig.shouldRequestDiagnostics(diagnosticPullMode);
-      }
+    const ws = workspace.getWorkspaceFolder(textDocumentUri);
+    if (!ws) {
+      return false;
     }
-    return false;
+    const workspaceConfig = this.getWorkspaceConfig(ws.uri);
+
+    return workspaceConfig?.shouldRequestDiagnostics(diagnosticPullMode) ?? false;
   }
 
   private async searchBinaryPath(
