@@ -197,7 +197,7 @@ pub fn unterminated_string(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reg_exp_flag(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Unexpected flag {x0} in regular expression literal"))
+    ts_error("1499", format!("Unexpected flag {x0} in regular expression literal"))
         .with_label(span1)
         .with_help(format!("The allowed flags are `{REGEXP_FLAGS_LIST}`"))
 }

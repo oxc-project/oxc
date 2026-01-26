@@ -23220,7 +23220,7 @@ Negative Passed: 4581/4581 (100.00%)
     ╰────
   help: Valid modifiers are: i, m, s
 
-  × Unexpected flag G in regular expression literal
+  × TS(1499): Unexpected flag G in regular expression literal
     ╭─[test262/test/language/literals/regexp/early-err-bad-flag.js:19:4]
  18 │ 
  19 │ /./G;

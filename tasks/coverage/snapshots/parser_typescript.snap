@@ -9993,7 +9993,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Valid group names are: foo
 
-  × Unexpected flag a in regular expression literal
+  × TS(1499): Unexpected flag a in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:11]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10002,7 +10002,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × Unexpected flag l in regular expression literal
+  × TS(1499): Unexpected flag l in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:12]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10020,7 +10020,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicated flag here
 
-  × Unexpected flag t in regular expression literal
+  × TS(1499): Unexpected flag t in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:14]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10047,7 +10047,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicated flag here
 
-  × Unexpected flag o in regular expression literal
+  × TS(1499): Unexpected flag o in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:18]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10056,7 +10056,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × Unexpected flag c in regular expression literal
+  × TS(1499): Unexpected flag c in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:19]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10065,7 +10065,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: The allowed flags are `gimsuydv`
 
-  × Unexpected flag o in regular expression literal
+  × TS(1499): Unexpected flag o in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:20]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -10083,7 +10083,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicated flag here
 
-  × Unexpected flag e in regular expression literal
+  × TS(1499): Unexpected flag e in regular expression literal
    ╭─[typescript/tests/cases/compiler/regularExpressionScanning.ts:3:22]
  2 │     // Flags
  3 │     /foo/visualstudiocode,
@@ -23009,7 +23009,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × Unexpected flag a in regular expression literal
+  × TS(1499): Unexpected flag a in regular expression literal
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:16]
  1 │ if (1) /regexp/a.foo();
    ·                ─
