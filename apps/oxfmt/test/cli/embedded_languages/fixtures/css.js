@@ -16,3 +16,13 @@ const styledButton = styled(Button)`font-size:16px;color:#333;`;
 const cssProp = <div css={`display: flex; align-items: center;`}>Hello</div>;
 
 const styledJsx = <style jsx>{`display: flex; align-items: center;`}</style>;
+
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+`;
+

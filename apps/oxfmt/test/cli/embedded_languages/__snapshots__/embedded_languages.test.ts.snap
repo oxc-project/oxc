@@ -294,6 +294,16 @@ const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
 const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
 
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
+
+
 --- AFTER ----------
 // Tagged template literals with css and styled tags
 const styles = css\`
@@ -350,6 +360,15 @@ const styledJsx = (
     align-items: center;
   \`}</style>
 );
+
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
 
 --------------------"
 `;
@@ -468,6 +487,16 @@ const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
 const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
 
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
+
+
 --- AFTER ----------
 // Tagged template literals with css and styled tags
 const styles = css\`.button{color:red;background:blue;padding:10px 20px;}\`;
@@ -487,6 +516,15 @@ const styledButton = styled(Button)\`font-size:16px;color:#333;\`;
 const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
 const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
+
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
 
 --------------------
 

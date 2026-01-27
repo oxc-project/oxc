@@ -2,7 +2,7 @@ use unicode_width::UnicodeWidthStr;
 
 use std::cmp;
 
-use oxc_allocator::{StringBuilder, Vec as ArenaVec};
+use oxc_allocator::{Allocator, StringBuilder, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
@@ -777,19 +777,35 @@ fn get_tag_name<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
     }
 }
 
+/// Format embedded language content (CSS, GraphQL, etc.)
+/// inside a template literal using an external formatter (Prettier).
+///
+/// NOTE: Unlike Prettier, which formats embedded languages in-process via its document IR
+/// (e.g. `textToDoc()` → `indent([hardline, doc])`),
+/// we communicate with the external formatter over a plain text interface.
+///
+/// This means we must:
+/// - Dedent the inherited JS/TS indentation before sending
+/// - Reconstruct the template structure (`block_indent()`) from the formatted text
+///
+/// If `format_embedded()` could return `FormatElement` (IR) directly,
+/// most of work in this function would be unnecessary.
 fn format_embedded_template<'a>(
     f: &mut Formatter<'_, 'a>,
     language: &str,
     template_content: &str,
 ) -> bool {
-    // If the content is whitespace only,
-    // just trim it and skip calling the embedded formatter
+    // Whitespace-only templates become empty backticks.
+    // Regular template literals would preserve them as-is.
     if template_content.trim().is_empty() {
         write!(f, ["``"]);
-        // Return `true` (mark as formatted),
-        // since whitespace-only regular template literals are preserved as-is
         return true;
     }
+
+    // Strip inherited indentation.
+    // So the external formatter receives clean embedded language content.
+    // Otherwise, indentation may be duplicated on each formatting pass.
+    let template_content = dedent(template_content, f.context().allocator());
 
     let Some(Ok(formatted)) =
         f.context().external_callbacks().format_embedded(language, template_content)
@@ -813,6 +829,32 @@ fn format_embedded_template<'a>(
     write!(f, ["`", block_indent(&format_content), "`"]);
 
     true
+}
+
+/// Strip the common leading indentation from all non-empty lines in `text`.
+/// Returns the original `text` unchanged if there is no common indentation.
+fn dedent<'a>(text: &'a str, allocator: &'a Allocator) -> &'a str {
+    let min_indent = text
+        .split('\n')
+        .filter(|line| !line.trim_ascii_start().is_empty())
+        .map(|line| line.bytes().take_while(u8::is_ascii_whitespace).count())
+        .min()
+        .unwrap_or(0);
+
+    if min_indent == 0 {
+        return text;
+    }
+
+    let mut result = StringBuilder::with_capacity_in(text.len(), allocator);
+    for (i, line) in text.split('\n').enumerate() {
+        if i > 0 {
+            result.push('\n');
+        }
+        let strip = line.bytes().take_while(u8::is_ascii_whitespace).count().min(min_indent);
+        result.push_str(&line[strip..]);
+    }
+
+    result.into_str()
 }
 
 /// Try to format a tagged template with the embedded formatter if supported.
