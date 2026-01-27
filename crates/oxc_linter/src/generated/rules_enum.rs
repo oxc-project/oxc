@@ -677,7 +677,6 @@ use crate::{
 use oxc_semantic::AstTypesBitset;
 #[derive(Debug, Clone)]
 pub enum RuleEnum {
-    ImportNoNodejsModules(ImportNoNodejsModules),
     ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle),
     ImportDefault(ImportDefault),
     ImportExport(ImportExport),
@@ -703,6 +702,7 @@ pub enum RuleEnum {
     ImportNoNamedDefault(ImportNoNamedDefault),
     ImportNoNamedExport(ImportNoNamedExport),
     ImportNoNamespace(ImportNoNamespace),
+    ImportNoNodejsModules(ImportNoNodejsModules),
     ImportNoRelativeParentImports(ImportNoRelativeParentImports),
     ImportNoSelfImport(ImportNoSelfImport),
     ImportNoUnassignedImport(ImportNoUnassignedImport),
@@ -1348,32 +1348,32 @@ pub enum RuleEnum {
 impl RuleEnum {
     pub fn id(&self) -> usize {
         match self {
-            Self::ImportNoNodejsModules(_) => 0usize,
-            Self::ImportConsistentTypeSpecifierStyle(_) => 1usize,
-            Self::ImportDefault(_) => 2usize,
-            Self::ImportExport(_) => 3usize,
-            Self::ImportExportsLast(_) => 4usize,
-            Self::ImportExtensions(_) => 5usize,
-            Self::ImportFirst(_) => 6usize,
-            Self::ImportGroupExports(_) => 7usize,
-            Self::ImportMaxDependencies(_) => 8usize,
-            Self::ImportNamed(_) => 9usize,
-            Self::ImportNamespace(_) => 10usize,
-            Self::ImportNoAbsolutePath(_) => 11usize,
-            Self::ImportNoAmd(_) => 12usize,
-            Self::ImportNoAnonymousDefaultExport(_) => 13usize,
-            Self::ImportNoCommonjs(_) => 14usize,
-            Self::ImportNoCycle(_) => 15usize,
-            Self::ImportNoDefaultExport(_) => 16usize,
-            Self::ImportNoDuplicates(_) => 17usize,
-            Self::ImportNoDynamicRequire(_) => 18usize,
-            Self::ImportNoEmptyNamedBlocks(_) => 19usize,
-            Self::ImportNoMutableExports(_) => 20usize,
-            Self::ImportNoNamedAsDefault(_) => 21usize,
-            Self::ImportNoNamedAsDefaultMember(_) => 22usize,
-            Self::ImportNoNamedDefault(_) => 23usize,
-            Self::ImportNoNamedExport(_) => 24usize,
-            Self::ImportNoNamespace(_) => 25usize,
+            Self::ImportConsistentTypeSpecifierStyle(_) => 0usize,
+            Self::ImportDefault(_) => 1usize,
+            Self::ImportExport(_) => 2usize,
+            Self::ImportExportsLast(_) => 3usize,
+            Self::ImportExtensions(_) => 4usize,
+            Self::ImportFirst(_) => 5usize,
+            Self::ImportGroupExports(_) => 6usize,
+            Self::ImportMaxDependencies(_) => 7usize,
+            Self::ImportNamed(_) => 8usize,
+            Self::ImportNamespace(_) => 9usize,
+            Self::ImportNoAbsolutePath(_) => 10usize,
+            Self::ImportNoAmd(_) => 11usize,
+            Self::ImportNoAnonymousDefaultExport(_) => 12usize,
+            Self::ImportNoCommonjs(_) => 13usize,
+            Self::ImportNoCycle(_) => 14usize,
+            Self::ImportNoDefaultExport(_) => 15usize,
+            Self::ImportNoDuplicates(_) => 16usize,
+            Self::ImportNoDynamicRequire(_) => 17usize,
+            Self::ImportNoEmptyNamedBlocks(_) => 18usize,
+            Self::ImportNoMutableExports(_) => 19usize,
+            Self::ImportNoNamedAsDefault(_) => 20usize,
+            Self::ImportNoNamedAsDefaultMember(_) => 21usize,
+            Self::ImportNoNamedDefault(_) => 22usize,
+            Self::ImportNoNamedExport(_) => 23usize,
+            Self::ImportNoNamespace(_) => 24usize,
+            Self::ImportNoNodejsModules(_) => 25usize,
             Self::ImportNoRelativeParentImports(_) => 26usize,
             Self::ImportNoSelfImport(_) => 27usize,
             Self::ImportNoUnassignedImport(_) => 28usize,
@@ -2015,7 +2015,6 @@ impl RuleEnum {
     }
     pub fn name(&self) -> &'static str {
         match self {
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::NAME,
             Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::NAME,
             Self::ImportDefault(_) => ImportDefault::NAME,
             Self::ImportExport(_) => ImportExport::NAME,
@@ -2041,6 +2040,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::NAME,
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::NAME,
             Self::ImportNoNamespace(_) => ImportNoNamespace::NAME,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::NAME,
             Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::NAME,
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::NAME,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::NAME,
@@ -2768,7 +2768,6 @@ impl RuleEnum {
     }
     pub fn category(&self) -> RuleCategory {
         match self {
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::CATEGORY,
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::CATEGORY
             }
@@ -2796,6 +2795,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::CATEGORY,
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::CATEGORY,
             Self::ImportNoNamespace(_) => ImportNoNamespace::CATEGORY,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::CATEGORY,
             Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::CATEGORY,
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::CATEGORY,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::CATEGORY,
@@ -3562,7 +3562,6 @@ impl RuleEnum {
     #[doc = r" This [`Rule`]'s auto-fix capabilities."]
     pub fn fix(&self) -> RuleFixMeta {
         match self {
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::FIX,
             Self::ImportConsistentTypeSpecifierStyle(_) => ImportConsistentTypeSpecifierStyle::FIX,
             Self::ImportDefault(_) => ImportDefault::FIX,
             Self::ImportExport(_) => ImportExport::FIX,
@@ -3588,6 +3587,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::FIX,
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::FIX,
             Self::ImportNoNamespace(_) => ImportNoNamespace::FIX,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::FIX,
             Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::FIX,
             Self::ImportNoSelfImport(_) => ImportNoSelfImport::FIX,
             Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::FIX,
@@ -4316,7 +4316,6 @@ impl RuleEnum {
     #[cfg(feature = "ruledocs")]
     pub fn documentation(&self) -> Option<&'static str> {
         match self {
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::documentation(),
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::documentation()
             }
@@ -4346,6 +4345,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::documentation(),
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::documentation(),
             Self::ImportNoNamespace(_) => ImportNoNamespace::documentation(),
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::documentation(),
             Self::ImportNoRelativeParentImports(_) => {
                 ImportNoRelativeParentImports::documentation()
             }
@@ -5251,8 +5251,6 @@ impl RuleEnum {
         generator: &mut schemars::SchemaGenerator,
     ) -> Option<schemars::schema::Schema> {
         match self {
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::config_schema(generator)
-                .or_else(|| ImportNoNodejsModules::schema(generator)),
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::config_schema(generator)
                     .or_else(|| ImportConsistentTypeSpecifierStyle::schema(generator))
@@ -5315,6 +5313,8 @@ impl RuleEnum {
                 .or_else(|| ImportNoNamedExport::schema(generator)),
             Self::ImportNoNamespace(_) => ImportNoNamespace::config_schema(generator)
                 .or_else(|| ImportNoNamespace::schema(generator)),
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::config_schema(generator)
+                .or_else(|| ImportNoNodejsModules::schema(generator)),
             Self::ImportNoRelativeParentImports(_) => {
                 ImportNoRelativeParentImports::config_schema(generator)
                     .or_else(|| ImportNoRelativeParentImports::schema(generator))
@@ -7122,7 +7122,6 @@ impl RuleEnum {
     }
     pub fn plugin_name(&self) -> &'static str {
         match self {
-            Self::ImportNoNodejsModules(_) => "import",
             Self::ImportConsistentTypeSpecifierStyle(_) => "import",
             Self::ImportDefault(_) => "import",
             Self::ImportExport(_) => "import",
@@ -7148,6 +7147,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(_) => "import",
             Self::ImportNoNamedExport(_) => "import",
             Self::ImportNoNamespace(_) => "import",
+            Self::ImportNoNodejsModules(_) => "import",
             Self::ImportNoRelativeParentImports(_) => "import",
             Self::ImportNoSelfImport(_) => "import",
             Self::ImportNoUnassignedImport(_) => "import",
@@ -7792,9 +7792,6 @@ impl RuleEnum {
         value: serde_json::Value,
     ) -> Result<Self, serde_json::error::Error> {
         match self {
-            Self::ImportNoNodejsModules(_) => {
-                Ok(Self::ImportNoNodejsModules(ImportNoNodejsModules::from_configuration(value)?))
-            }
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 Ok(Self::ImportConsistentTypeSpecifierStyle(
                     ImportConsistentTypeSpecifierStyle::from_configuration(value)?,
@@ -7865,6 +7862,9 @@ impl RuleEnum {
             }
             Self::ImportNoNamespace(_) => {
                 Ok(Self::ImportNoNamespace(ImportNoNamespace::from_configuration(value)?))
+            }
+            Self::ImportNoNodejsModules(_) => {
+                Ok(Self::ImportNoNodejsModules(ImportNoNodejsModules::from_configuration(value)?))
             }
             Self::ImportNoRelativeParentImports(_) => Ok(Self::ImportNoRelativeParentImports(
                 ImportNoRelativeParentImports::from_configuration(value)?,
@@ -9909,7 +9909,6 @@ impl RuleEnum {
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
         match self {
-            Self::ImportNoNodejsModules(rule) => rule.to_configuration(),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.to_configuration(),
             Self::ImportDefault(rule) => rule.to_configuration(),
             Self::ImportExport(rule) => rule.to_configuration(),
@@ -9935,6 +9934,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(rule) => rule.to_configuration(),
             Self::ImportNoNamedExport(rule) => rule.to_configuration(),
             Self::ImportNoNamespace(rule) => rule.to_configuration(),
+            Self::ImportNoNodejsModules(rule) => rule.to_configuration(),
             Self::ImportNoRelativeParentImports(rule) => rule.to_configuration(),
             Self::ImportNoSelfImport(rule) => rule.to_configuration(),
             Self::ImportNoUnassignedImport(rule) => rule.to_configuration(),
@@ -10580,7 +10580,6 @@ impl RuleEnum {
     }
     pub(crate) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match self {
-            Self::ImportNoNodejsModules(rule) => rule.run(node, ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run(node, ctx),
             Self::ImportDefault(rule) => rule.run(node, ctx),
             Self::ImportExport(rule) => rule.run(node, ctx),
@@ -10606,6 +10605,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(rule) => rule.run(node, ctx),
             Self::ImportNoNamedExport(rule) => rule.run(node, ctx),
             Self::ImportNoNamespace(rule) => rule.run(node, ctx),
+            Self::ImportNoNodejsModules(rule) => rule.run(node, ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.run(node, ctx),
             Self::ImportNoSelfImport(rule) => rule.run(node, ctx),
             Self::ImportNoUnassignedImport(rule) => rule.run(node, ctx),
@@ -11247,7 +11247,6 @@ impl RuleEnum {
     }
     pub(crate) fn run_once(&self, ctx: &LintContext<'_>) {
         match self {
-            Self::ImportNoNodejsModules(rule) => rule.run_once(ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_once(ctx),
             Self::ImportDefault(rule) => rule.run_once(ctx),
             Self::ImportExport(rule) => rule.run_once(ctx),
@@ -11273,6 +11272,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(rule) => rule.run_once(ctx),
             Self::ImportNoNamedExport(rule) => rule.run_once(ctx),
             Self::ImportNoNamespace(rule) => rule.run_once(ctx),
+            Self::ImportNoNodejsModules(rule) => rule.run_once(ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.run_once(ctx),
             Self::ImportNoSelfImport(rule) => rule.run_once(ctx),
             Self::ImportNoUnassignedImport(rule) => rule.run_once(ctx),
@@ -11918,7 +11918,6 @@ impl RuleEnum {
         ctx: &'c LintContext<'a>,
     ) {
         match self {
-            Self::ImportNoNodejsModules(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportExport(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -11944,6 +11943,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoNamedExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ImportNoNodejsModules(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoSelfImport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ImportNoUnassignedImport(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -12671,7 +12671,6 @@ impl RuleEnum {
     }
     pub(crate) fn should_run(&self, ctx: &ContextHost) -> bool {
         match self {
-            Self::ImportNoNodejsModules(rule) => rule.should_run(ctx),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.should_run(ctx),
             Self::ImportDefault(rule) => rule.should_run(ctx),
             Self::ImportExport(rule) => rule.should_run(ctx),
@@ -12697,6 +12696,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(rule) => rule.should_run(ctx),
             Self::ImportNoNamedExport(rule) => rule.should_run(ctx),
             Self::ImportNoNamespace(rule) => rule.should_run(ctx),
+            Self::ImportNoNodejsModules(rule) => rule.should_run(ctx),
             Self::ImportNoRelativeParentImports(rule) => rule.should_run(ctx),
             Self::ImportNoSelfImport(rule) => rule.should_run(ctx),
             Self::ImportNoUnassignedImport(rule) => rule.should_run(ctx),
@@ -13338,7 +13338,6 @@ impl RuleEnum {
     }
     pub fn is_tsgolint_rule(&self) -> bool {
         match self {
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::IS_TSGOLINT_RULE,
             Self::ImportConsistentTypeSpecifierStyle(_) => {
                 ImportConsistentTypeSpecifierStyle::IS_TSGOLINT_RULE
             }
@@ -13368,6 +13367,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::IS_TSGOLINT_RULE,
             Self::ImportNoNamedExport(_) => ImportNoNamedExport::IS_TSGOLINT_RULE,
             Self::ImportNoNamespace(_) => ImportNoNamespace::IS_TSGOLINT_RULE,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::IS_TSGOLINT_RULE,
             Self::ImportNoRelativeParentImports(_) => {
                 ImportNoRelativeParentImports::IS_TSGOLINT_RULE
             }
@@ -14269,7 +14269,6 @@ impl RuleEnum {
     }
     pub fn types_info(&self) -> Option<&'static AstTypesBitset> {
         match self {
-            Self::ImportNoNodejsModules(rule) => rule.types_info(),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.types_info(),
             Self::ImportDefault(rule) => rule.types_info(),
             Self::ImportExport(rule) => rule.types_info(),
@@ -14295,6 +14294,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(rule) => rule.types_info(),
             Self::ImportNoNamedExport(rule) => rule.types_info(),
             Self::ImportNoNamespace(rule) => rule.types_info(),
+            Self::ImportNoNodejsModules(rule) => rule.types_info(),
             Self::ImportNoRelativeParentImports(rule) => rule.types_info(),
             Self::ImportNoSelfImport(rule) => rule.types_info(),
             Self::ImportNoUnassignedImport(rule) => rule.types_info(),
@@ -14936,7 +14936,6 @@ impl RuleEnum {
     }
     pub fn run_info(&self) -> RuleRunFunctionsImplemented {
         match self {
-            Self::ImportNoNodejsModules(rule) => rule.run_info(),
             Self::ImportConsistentTypeSpecifierStyle(rule) => rule.run_info(),
             Self::ImportDefault(rule) => rule.run_info(),
             Self::ImportExport(rule) => rule.run_info(),
@@ -14962,6 +14961,7 @@ impl RuleEnum {
             Self::ImportNoNamedDefault(rule) => rule.run_info(),
             Self::ImportNoNamedExport(rule) => rule.run_info(),
             Self::ImportNoNamespace(rule) => rule.run_info(),
+            Self::ImportNoNodejsModules(rule) => rule.run_info(),
             Self::ImportNoRelativeParentImports(rule) => rule.run_info(),
             Self::ImportNoSelfImport(rule) => rule.run_info(),
             Self::ImportNoUnassignedImport(rule) => rule.run_info(),
@@ -15625,7 +15625,6 @@ impl PartialOrd for RuleEnum {
 }
 pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(|| {
     vec![
-        RuleEnum::ImportNoNodejsModules(ImportNoNodejsModules::default()),
         RuleEnum::ImportConsistentTypeSpecifierStyle(ImportConsistentTypeSpecifierStyle::default()),
         RuleEnum::ImportDefault(ImportDefault::default()),
         RuleEnum::ImportExport(ImportExport::default()),
@@ -15651,6 +15650,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ImportNoNamedDefault(ImportNoNamedDefault::default()),
         RuleEnum::ImportNoNamedExport(ImportNoNamedExport::default()),
         RuleEnum::ImportNoNamespace(ImportNoNamespace::default()),
+        RuleEnum::ImportNoNodejsModules(ImportNoNodejsModules::default()),
         RuleEnum::ImportNoRelativeParentImports(ImportNoRelativeParentImports::default()),
         RuleEnum::ImportNoSelfImport(ImportNoSelfImport::default()),
         RuleEnum::ImportNoUnassignedImport(ImportNoUnassignedImport::default()),

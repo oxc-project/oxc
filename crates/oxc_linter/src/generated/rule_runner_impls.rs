@@ -8,11 +8,6 @@ use oxc_semantic::AstTypesBitset;
 
 use crate::rule::{RuleRunFunctionsImplemented, RuleRunner};
 
-impl RuleRunner for crate::rules::import::no_nodejs_modules::NoNodejsModules {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
-}
-
 impl RuleRunner
     for crate::rules::import::consistent_type_specifier_style::ConsistentTypeSpecifierStyle
 {
@@ -156,6 +151,18 @@ impl RuleRunner for crate::rules::import::no_named_export::NoNamedExport {
 impl RuleRunner for crate::rules::import::no_namespace::NoNamespace {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
+}
+
+impl RuleRunner for crate::rules::import::no_nodejs_modules::NoNodejsModules {
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::CallExpression,
+        AstType::ExportAllDeclaration,
+        AstType::ExportNamedDeclaration,
+        AstType::ImportDeclaration,
+        AstType::ImportExpression,
+        AstType::TSImportEqualsDeclaration,
+    ]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::import::no_relative_parent_imports::NoRelativeParentImports {
