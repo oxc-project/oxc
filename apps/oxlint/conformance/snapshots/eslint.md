@@ -18,9 +18,9 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33159 | 100.0% |
-| Passing     | 32873 |  99.1% |
+| Passing     | 32881 |  99.2% |
 | Failing     |     0 |   0.0% |
-| Skipped     |   286 |   0.9% |
+| Skipped     |   278 |   0.8% |
 
 ## Fully Passing Rules
 
@@ -137,7 +137,7 @@
 - `no-empty-static-block` (10 tests)
 - `no-empty` (35 tests)
 - `no-eq-null` (5 tests)
-- `no-eval` (101 tests) (1 skipped)
+- `no-eval` (101 tests)
 - `no-ex-assign` (8 tests)
 - `no-extend-native` (40 tests)
 - `no-extra-bind` (43 tests)
@@ -156,7 +156,7 @@
 - `no-inline-comments` (49 tests)
 - `no-inner-declarations` (68 tests)
 - `no-invalid-regexp` (108 tests)
-- `no-invalid-this` (562 tests) (4 skipped)
+- `no-invalid-this` (562 tests) (1 skipped)
 - `no-irregular-whitespace` (280 tests)
 - `no-iterator` (9 tests)
 - `no-label-var` (5 tests)
@@ -237,7 +237,7 @@
 - `no-unsafe-finally` (28 tests)
 - `no-unsafe-negation` (29 tests)
 - `no-unsafe-optional-chaining` (187 tests)
-- `no-unused-expressions` (124 tests) (4 skipped)
+- `no-unused-expressions` (124 tests)
 - `no-unused-labels` (26 tests)
 - `no-unused-private-class-members` (39 tests)
 - `no-unused-vars` (448 tests) (21 skipped)

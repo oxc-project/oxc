@@ -265,7 +265,7 @@ const LANGUAGE_OPTIONS = {
 // In conformance build, replace `LANGUAGE_OPTIONS.ecmaVersion` with a getter which returns value of local var.
 // This is to allow changing the ECMAScript version in conformance tests.
 // Some of ESLint's rules change behavior based on the version, and ESLint's tests rely on this.
-let ecmaVersion = ECMA_VERSION;
+export let ecmaVersion = ECMA_VERSION;
 
 export function setEcmaVersion(version: number): void {
   if (!CONFORMANCE) throw new Error("Should be unreachable in release or debug builds");
