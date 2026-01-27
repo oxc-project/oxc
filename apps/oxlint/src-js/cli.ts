@@ -2,11 +2,11 @@ import { lint } from "./bindings.js";
 import { debugAssertIsNonNull } from "./utils/asserts.ts";
 
 // Lazy-loaded JS plugin-related functions.
-// Using `typeof wrapper` here makes TS check that the function signatures of `loadPlugin` and `loadPluginWrapper`
-// are identical. Ditto `lintFile` and `lintFileWrapper`.
-let loadPlugin: typeof loadPluginWrapper | null = null;
-let setupRuleConfigs: typeof setupRuleConfigsWrapper | null = null;
-let lintFile: typeof lintFileWrapper | null = null;
+// The type annotations below use `typeof import("./plugins/index.ts").<fn>` so that the lazy-loaded variables
+// always have the exact same function signatures as the implementations exported from the plugins module.
+let loadPlugin: typeof import("./plugins/index.ts").loadPlugin | null = null;
+let setupRuleConfigs: typeof import("./plugins/index.ts").setupRuleConfigs | null = null;
+let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
 
 /**
  * Load a plugin.
