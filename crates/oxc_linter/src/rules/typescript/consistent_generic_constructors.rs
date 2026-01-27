@@ -1,14 +1,17 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSType, TSTypeAnnotation, TSTypeName},
+    ast::{
+        BindingPattern, Expression, NewExpression, TSType, TSTypeAnnotation, TSTypeName,
+        TSTypeParameterInstantiation, TSTypeReference,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, fixer::RuleFixer, rule::Rule};
 
 fn consistent_generic_constructors_diagnostic_prefer_annotation(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -88,7 +91,7 @@ declare_oxc_lint!(
     ConsistentGenericConstructors,
     typescript,
     style,
-    pending,
+    fix,
     config = ConsistentGenericConstructorsConfig
 );
 
@@ -98,17 +101,17 @@ impl Rule for ConsistentGenericConstructors {
             AstKind::VariableDeclarator(variable_declarator) => {
                 let type_ann = variable_declarator.type_annotation.as_ref();
                 let init = variable_declarator.init.as_ref();
-                self.check(type_ann, init, ctx);
+                self.check(node, type_ann, init, ctx);
             }
             AstKind::FormalParameter(formal_parameter) => {
                 let type_ann = formal_parameter.type_annotation.as_ref();
                 let init = formal_parameter.initializer.as_deref();
-                self.check(type_ann, init, ctx);
+                self.check(node, type_ann, init, ctx);
             }
             AstKind::PropertyDefinition(property_definition) => {
                 let type_ann = property_definition.type_annotation.as_ref();
                 let init = property_definition.value.as_ref();
-                self.check(type_ann, init, ctx);
+                self.check(node, type_ann, init, ctx);
             }
             _ => {}
         }
@@ -130,11 +133,12 @@ impl Rule for ConsistentGenericConstructors {
 }
 
 impl ConsistentGenericConstructors {
-    fn check(
+    fn check<'a>(
         &self,
-        type_annotation: Option<&oxc_allocator::Box<TSTypeAnnotation>>,
-        init: Option<&Expression>,
-        ctx: &LintContext,
+        node: &AstNode<'a>,
+        type_annotation: Option<&oxc_allocator::Box<'a, TSTypeAnnotation<'a>>>,
+        init: Option<&Expression<'a>>,
+        ctx: &LintContext<'a>,
     ) {
         let Some(init) = init else { return };
         let Expression::NewExpression(new_expression) = init.get_inner_expression() else {
@@ -161,28 +165,223 @@ impl ConsistentGenericConstructors {
             if type_annotation.is_none()
                 && let Some(type_arguments) = &new_expression.type_arguments
             {
-                ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_annotation(
-                    type_arguments.span,
-                ));
+                ctx.diagnostic_with_fix(
+                    consistent_generic_constructors_diagnostic_prefer_annotation(
+                        type_arguments.span,
+                    ),
+                    |fixer| {
+                        Self::fix_prefer_type_annotation(
+                            fixer,
+                            node,
+                            new_expression,
+                            type_arguments,
+                            ctx,
+                        )
+                    },
+                );
             }
             return;
         }
 
-        if let Some(type_arguments) = &type_annotation
-            && has_type_parameters(&type_arguments.type_annotation)
+        if let Some(type_ann) = &type_annotation
+            && let TSType::TSTypeReference(type_ref) = &type_ann.type_annotation
+            && let Some(type_params) = &type_ref.type_arguments
             && new_expression.type_arguments.is_none()
         {
-            ctx.diagnostic(consistent_generic_constructors_diagnostic_prefer_constructor(
-                type_arguments.span,
-            ));
+            ctx.diagnostic_with_fix(
+                consistent_generic_constructors_diagnostic_prefer_constructor(type_ann.span),
+                |fixer| {
+                    Self::fix_prefer_constructor(
+                        fixer,
+                        type_ann,
+                        type_ref,
+                        type_params,
+                        new_expression,
+                        ctx,
+                    )
+                },
+            );
         }
     }
-}
 
-fn has_type_parameters(ts_type: &TSType) -> bool {
-    match ts_type {
-        TSType::TSTypeReference(type_ref) => type_ref.type_arguments.is_some(),
-        _ => false,
+    /// Fix for "prefer constructor" mode:
+    /// Move type arguments from annotation to constructor
+    /// e.g., `const a: Foo<string> = new Foo()` -> `const a = new Foo<string>()`
+    fn fix_prefer_constructor<'a>(
+        fixer: RuleFixer<'_, 'a>,
+        type_ann: &TSTypeAnnotation<'a>,
+        type_ref: &TSTypeReference<'a>,
+        type_params: &TSTypeParameterInstantiation<'a>,
+        new_expression: &NewExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> crate::fixer::RuleFix {
+        let fixer = fixer.for_multifix();
+        let source_text = ctx.source_text();
+
+        // Get the type arguments text
+        let type_params_text =
+            &source_text[type_params.span.start as usize..type_params.span.end as usize];
+
+        // Extract comments from two regions in the type annotation:
+        // 1. Between the colon and type name: `: /* comment */ Foo`
+        // 2. Between type name and type arguments: `Foo/* another */<string>`
+        let colon_pos =
+            ctx.find_prev_token_from(type_ann.span.start, ":").unwrap_or(type_ann.span.start);
+        let type_name_start = type_ref.type_name.span().start;
+        let type_name_end = type_ref.type_name.span().end;
+
+        // Comments before type name (between colon and type name)
+        let comments_before: String = ctx
+            .comments_range((colon_pos + 1)..type_name_start)
+            .map(|c| c.span.source_text(source_text))
+            .collect();
+
+        // Comments between type name and type arguments
+        let comments_between: String = ctx
+            .comments_range(type_name_end..type_params.span.start)
+            .map(|c| c.span.source_text(source_text))
+            .collect();
+
+        // Build the new type arguments string to insert after constructor callee
+        let new_type_args = format!("{comments_before}{comments_between}{type_params_text}");
+
+        // Determine where to delete the type annotation (including the colon)
+        let delete_start =
+            ctx.find_prev_token_from(type_ann.span.start, ":").unwrap_or(type_ann.span.start);
+        let delete_span = Span::new(delete_start, type_ann.span.end);
+
+        // Find where to insert type arguments in the new expression
+        let callee_end = new_expression.callee.span().end;
+
+        // Check if `new Foo;` (no parentheses) - need to handle this case
+        // If the expression span ends at the callee span end (or type args if present), no parens
+        let expr_end = new_expression.span.end;
+        let callee_or_type_end =
+            new_expression.type_arguments.as_ref().map_or(callee_end, |ta| ta.span.end);
+        // Look for opening paren after the callee/type args
+        let after_callee = &source_text[callee_or_type_end as usize..expr_end as usize];
+        let needs_parens = !after_callee.contains('(');
+
+        // Build the fix
+        let mut fix = fixer.new_fix_with_capacity(if needs_parens { 3 } else { 2 });
+
+        // Delete the type annotation (including leading colon and whitespace)
+        fix.push(fixer.delete_range(delete_span));
+
+        // Insert type arguments after callee
+        fix.push(fixer.insert_text_after_range(Span::new(callee_end, callee_end), new_type_args));
+
+        // If `new Foo;`, add empty parentheses at the end
+        if needs_parens {
+            let expr_end = new_expression.span.end;
+            fix.push(fixer.insert_text_after_range(Span::new(expr_end, expr_end), "()"));
+        }
+
+        fix.with_message("Move the generic type to the constructor")
+    }
+
+    /// Fix for "prefer type annotation" mode:
+    /// Move type arguments from constructor to annotation
+    /// e.g., `const a = new Foo<string>()` -> `const a: Foo<string> = new Foo()`
+    fn fix_prefer_type_annotation<'a>(
+        fixer: RuleFixer<'_, 'a>,
+        node: &AstNode<'a>,
+        new_expression: &NewExpression<'a>,
+        type_args: &TSTypeParameterInstantiation<'a>,
+        ctx: &LintContext<'a>,
+    ) -> crate::fixer::RuleFix {
+        let fixer = fixer.for_multifix();
+        let source_text = ctx.source_text();
+
+        // Get the callee name (constructor name)
+        let Expression::Identifier(callee_ident) = &new_expression.callee else {
+            return fixer.noop();
+        };
+        let callee_name = callee_ident.name.as_str();
+
+        // Get type arguments text (including any internal comments)
+        let type_args_text =
+            &source_text[type_args.span.start as usize..type_args.span.end as usize];
+
+        // Build the type annotation to insert (no comments between name and type args)
+        let type_annotation = format!(": {callee_name}{type_args_text}");
+
+        // Find the position to insert the type annotation (after the binding pattern/identifier)
+        let Some(insert_pos) = Self::find_type_annotation_insert_position(node, ctx) else {
+            return fixer.noop();
+        };
+
+        // For the constructor, we need to delete just the type arguments (the `<...>` part)
+        // but keep any comments that were between callee and type args
+        // For `new Foo/* comment */ <string> /* another */()`, we delete ` <string>` (with leading space)
+        // and keep `/* comment */` and `/* another */`
+        let callee_end = new_expression.callee.span().end;
+
+        // Check if there are only whitespace/comments between callee and type args
+        // If there's whitespace before `<`, we delete from callee end to type args end
+        // and replace with just the comments (if any)
+        let comments_between: String = ctx
+            .comments_range(callee_end..type_args.span.start)
+            .map(|c| c.span.source_text(source_text))
+            .collect();
+
+        // The delete span is from callee end to type args end
+        let delete_span = Span::new(callee_end, type_args.span.end);
+
+        // Replacement: keep comments but remove type args
+        let replacement =
+            if comments_between.is_empty() { String::new() } else { comments_between };
+
+        // Build the fix
+        let mut fix = fixer.new_fix_with_capacity(2);
+
+        // Insert type annotation after binding
+        fix.push(fixer.insert_text_after_range(Span::new(insert_pos, insert_pos), type_annotation));
+
+        // Replace the type arguments area (callee_end to type_args end) with just comments
+        fix.push(fixer.replace(delete_span, replacement));
+
+        fix.with_message("Move the generic type to the type annotation")
+    }
+
+    /// Find the position to insert a type annotation for the current node
+    fn find_type_annotation_insert_position(
+        node: &AstNode<'_>,
+        ctx: &LintContext<'_>,
+    ) -> Option<u32> {
+        match node.kind() {
+            AstKind::VariableDeclarator(var_decl) => {
+                // Insert after the binding identifier/pattern
+                Some(var_decl.id.span().end)
+            }
+            AstKind::FormalParameter(param) => {
+                // Insert after the binding pattern
+                match &param.pattern {
+                    BindingPattern::BindingIdentifier(ident) => Some(ident.span.end),
+                    BindingPattern::ObjectPattern(obj) => Some(obj.span.end),
+                    BindingPattern::ArrayPattern(arr) => Some(arr.span.end),
+                    BindingPattern::AssignmentPattern(assign) => {
+                        // For assignment pattern like `a = new Foo<string>()`,
+                        // we need to insert after the left side
+                        Some(assign.left.span().end)
+                    }
+                }
+            }
+            AstKind::PropertyDefinition(prop_def) => {
+                // For computed properties like `[a]` or `[a + b]`, we need to insert
+                // after the closing bracket `]`, not after the key expression
+                if prop_def.computed {
+                    // Find the closing bracket after the key
+                    let key_end = prop_def.key.span().end;
+                    // find_next_token_from returns offset from key_end, add 1 for position after ']'
+                    ctx.find_next_token_from(key_end, "]").map(|offset| key_end + offset + 1)
+                } else {
+                    // Insert after the property key
+                    Some(prop_def.key.span().end)
+                }
+            }
+            _ => None,
+        }
     }
 }
 
@@ -445,7 +644,7 @@ fn test() {
         ),
     ];
 
-    let _fix = vec![
+    let fix = vec![
         ("const a: Foo<string> = new Foo();", "const a = new Foo<string>();", None),
         ("const a: Map<string, number> = new Map();", "const a = new Map<string, number>();", None),
         (
@@ -570,7 +769,7 @@ fn test() {
         ),
         (
             "const a = new Map <string, number> ();",
-            "const a: Map<string, number> = new Map  ();",
+            "const a: Map<string, number> = new Map ();",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
@@ -589,7 +788,7 @@ fn test() {
         ),
         (
             "const a = new Foo/* comment */ <string> /* another */();",
-            "const a: Foo<string> = new Foo/* comment */  /* another */();",
+            "const a: Foo<string> = new Foo/* comment */ /* another */();",
             Some(serde_json::json!(["type-annotation"])),
         ),
         (
@@ -692,5 +891,6 @@ fn test() {
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }
