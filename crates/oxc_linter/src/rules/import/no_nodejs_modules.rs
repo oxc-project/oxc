@@ -201,6 +201,12 @@ fn test() {
             r#"import path from "path";import events from "events""#,
             Some(json!([{ "allow": ["path", "events"] }])),
         ),
+        // Allow with node: protocol prefix
+        (r#"import path from "node:path""#, Some(json!([{ "allow": ["path"] }]))),
+        (r#"var path = require("node:path")"#, Some(json!([{ "allow": ["path"] }]))),
+        // Allow with subpaths
+        (r#"import fs from "fs/promises""#, Some(json!([{ "allow": ["fs"] }]))),
+        (r#"var fs = require("fs/promises")"#, Some(json!([{ "allow": ["fs"] }]))),
     ];
 
     let fail = vec![
