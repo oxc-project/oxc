@@ -539,7 +539,6 @@ mod test {
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
     }
-
     #[test]
     fn test_set_config_dir() {
         let mut config: Oxlintrc = serde_json::from_str(
@@ -582,5 +581,25 @@ mod test {
         for entry in override_plugins {
             assert_eq!(entry.config_dir, new_config_dir);
         }
+    }
+
+    #[test]
+    fn test_oxlintrc_max_warnings() {
+        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        assert_eq!(config.max_warnings, Some(10));
+
+        let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        assert_eq!(config.max_warnings, None);
+
+        // Test merge
+        let config1: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 20}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.max_warnings, Some(10));
+
+        let config1: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 20}"#).unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.max_warnings, Some(20));
     }
 }
