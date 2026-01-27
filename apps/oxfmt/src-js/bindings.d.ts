@@ -41,6 +41,19 @@ export interface FormatResult {
 }
 
 /**
+ * NAPI function for Prettier plugin integration.
+ *
+ * This function is called from the Prettier plugin's `parse()` function.
+ * It formats the source code using oxc_formatter and returns the result as a string (Doc).
+ *
+ * The `options` parameter contains Prettier-style options (useTabs, singleQuote, etc.)
+ * which are converted to oxc_formatter's FormatOptions.
+ *
+ * Returns the formatted code as a string, which Prettier treats as a Doc.
+ */
+export declare function formatToDoc(sourceText: string, sourceType: 'js' | 'ts' | 'jsx' | 'tsx', filepath: string, options?: any | undefined | null, formatEmbeddedCb?: (options: Record<string, any>, parserName: string, code: string) => Promise<string>, sortTailwindClassesCb?: (filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>): Promise<string>
+
+/**
  * NAPI based JS CLI entry point.
  * For pure Rust CLI entry point, see `main.rs`.
  *

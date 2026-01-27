@@ -76,7 +76,11 @@ impl SourceFormatter {
             #[cfg(feature = "napi")]
             (
                 FormatFileStrategy::ExternalFormatter { path, parser_name },
-                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline },
+                ResolvedOptions::ExternalFormatter {
+                    format_options: _,
+                    external_options,
+                    insert_final_newline,
+                },
             ) => (
                 self.format_by_external_formatter(source_text, path, parser_name, external_options),
                 insert_final_newline,

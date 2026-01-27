@@ -11,7 +11,7 @@ use crate::{
     core::{
         ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
         JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-        SourceFormatter, utils,
+        SourceFormatter, utils, wrap_format_embedded_only, wrap_sort_tailwind_for_doc,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -203,4 +203,170 @@ pub async fn format(
             FormatResult { code: source_text, errors }
         }
     }
+}
+
+// ---
+
+/// NAPI function for Prettier plugin integration.
+///
+/// This function is called from the Prettier plugin's `parse()` function.
+/// It formats the source code using oxc_formatter and returns the result as a string (Doc).
+///
+/// The `options` parameter contains Prettier-style options (useTabs, singleQuote, etc.)
+/// which are converted to oxc_formatter's FormatOptions.
+///
+/// Returns the formatted code as a string, which Prettier treats as a Doc.
+#[expect(clippy::allow_attributes)]
+#[allow(
+    clippy::trailing_empty_array,
+    clippy::unused_async,
+    clippy::missing_errors_doc,
+    clippy::missing_panics_doc
+)]
+#[napi]
+pub async fn format_to_doc(
+    source_text: String,
+    #[napi(ts_arg_type = "'js' | 'ts' | 'jsx' | 'tsx'")] source_type: String,
+    filepath: String,
+    options: Option<Value>,
+    #[napi(
+        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
+    )]
+    format_embedded_cb: Option<JsFormatEmbeddedCb>,
+    #[napi(
+        ts_arg_type = "(filepath: string, options: Record<string, any>, classes: string[]) => Promise<string[]>"
+    )]
+    sort_tailwind_classes_cb: Option<JsSortTailwindClassesCb>,
+) -> napi::Result<String> {
+    use oxc_allocator::Allocator;
+    use oxc_formatter::{ExternalCallbacks, Formatter, enable_jsx_source_type, get_parse_options};
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    // Parse source type
+    let source_type = match source_type.as_str() {
+        "js" => SourceType::mjs(),
+        "jsx" => SourceType::jsx(),
+        "ts" => SourceType::ts(),
+        "tsx" => SourceType::tsx(),
+        _ => {
+            return Err(napi::Error::from_reason(format!(
+                "Invalid source type: {source_type}. Expected 'js', 'ts', 'jsx', or 'tsx'"
+            )));
+        }
+    };
+    let source_type = enable_jsx_source_type(source_type);
+
+    // Convert Prettier-style options to FormatOptions
+    let external_options = options.unwrap_or_default();
+    let format_options = convert_prettier_options_to_format_options(&external_options);
+
+    // Create external callbacks for embedded language formatting and Tailwind sorting
+    let embedded_callback =
+        format_embedded_cb.map(|cb| wrap_format_embedded_only(cb, external_options.clone()));
+
+    let tailwind_callback = sort_tailwind_classes_cb
+        .filter(|_| format_options.experimental_tailwindcss.is_some())
+        .map(|cb| wrap_sort_tailwind_for_doc(cb, filepath, external_options));
+
+    let external_callbacks = Some(
+        ExternalCallbacks::new()
+            .with_embedded_formatter(embedded_callback)
+            .with_tailwind(tailwind_callback),
+    );
+
+    // Parse and format
+    // Use `block_in_place()` to avoid nested async runtime access when embedded callback is used
+    let code = tokio::task::block_in_place(|| {
+        let allocator = Allocator::default();
+        let ret = Parser::new(&allocator, &source_text, source_type)
+            .with_options(get_parse_options())
+            .parse();
+
+        if !ret.errors.is_empty() {
+            let error = ret.errors.into_iter().next().unwrap();
+            return Err(napi::Error::from_reason(format!("Parse error: {error}")));
+        }
+
+        let formatter = Formatter::new(&allocator, format_options);
+        let formatted = formatter.format_with_external_callbacks(&ret.program, external_callbacks);
+
+        let code = formatted.print().map_err(|err| {
+            napi::Error::from_reason(format!("Failed to print formatted code: {err}"))
+        })?;
+
+        Ok(code.into_code())
+    })?;
+
+    Ok(code)
+}
+
+/// Convert Prettier-style options to oxc_formatter's FormatOptions.
+fn convert_prettier_options_to_format_options(options: &Value) -> oxc_formatter::FormatOptions {
+    use oxc_formatter::{
+        FormatOptions, IndentStyle, IndentWidth, LineEnding, LineWidth, QuoteStyle, Semicolons,
+        SortImportsOptions, TailwindcssOptions,
+    };
+
+    let Some(obj) = options.as_object() else {
+        return FormatOptions::default();
+    };
+
+    let mut format_options = FormatOptions::default();
+
+    // useTabs -> indent_style
+    if let Some(use_tabs) = obj.get("useTabs").and_then(Value::as_bool) {
+        format_options.indent_style = if use_tabs { IndentStyle::Tab } else { IndentStyle::Space };
+    }
+
+    // tabWidth -> indent_width
+    if let Some(tab_width) = obj.get("tabWidth").and_then(Value::as_u64) {
+        format_options.indent_width = IndentWidth::try_from(tab_width as u8).unwrap_or_default();
+    }
+
+    // printWidth -> line_width
+    if let Some(print_width) = obj.get("printWidth").and_then(Value::as_u64) {
+        format_options.line_width = LineWidth::try_from(print_width as u16).unwrap_or_default();
+    }
+
+    // singleQuote -> quote_style
+    if let Some(single_quote) = obj.get("singleQuote").and_then(Value::as_bool) {
+        format_options.quote_style =
+            if single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+    }
+
+    // jsxSingleQuote -> jsx_quote_style
+    if let Some(jsx_single_quote) = obj.get("jsxSingleQuote").and_then(Value::as_bool) {
+        format_options.jsx_quote_style =
+            if jsx_single_quote { QuoteStyle::Single } else { QuoteStyle::Double };
+    }
+
+    // semi -> semicolons
+    if let Some(semi) = obj.get("semi").and_then(Value::as_bool) {
+        format_options.semicolons = if semi { Semicolons::Always } else { Semicolons::AsNeeded };
+    }
+
+    // endOfLine -> line_ending
+    if let Some(end_of_line) = obj.get("endOfLine").and_then(Value::as_str) {
+        format_options.line_ending = match end_of_line {
+            "lf" => LineEnding::Lf,
+            "crlf" => LineEnding::Crlf,
+            "cr" => LineEnding::Cr,
+            _ => LineEnding::Lf,
+        };
+    }
+
+    // Check for Tailwind plugin enabled flag or experimentalTailwindcss option
+    let tailwind_enabled =
+        obj.get("_tailwindPluginEnabled").and_then(Value::as_bool).unwrap_or(false);
+    if tailwind_enabled || obj.contains_key("experimentalTailwindcss") {
+        format_options.experimental_tailwindcss = Some(TailwindcssOptions::default());
+    }
+
+    // experimentalSortImports -> experimental_sort_imports
+    if obj.contains_key("experimentalSortImports") {
+        format_options.experimental_sort_imports = Some(SortImportsOptions::default());
+    }
+
+    format_options
 }

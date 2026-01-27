@@ -14,6 +14,18 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
   return prettierCache;
 }
 
+// Lazy load oxc plugin
+// FormatOptions are cached on Rust side, so no need to pass options here
+let oxcPluginCache: Plugin;
+
+async function loadOxcPlugin(): Promise<Plugin> {
+  if (oxcPluginCache) return oxcPluginCache;
+
+  const module = await import("./prettier-plugin-oxc");
+  oxcPluginCache = module.default;
+  return oxcPluginCache;
+}
+
 // ---
 
 /**
@@ -73,6 +85,19 @@ export type FormatFileParam = {
 };
 
 /**
+ * Serialize an object option to a JSON string for Prettier plugin preservation.
+ */
+function serializeObjectOption(options: Options, sourceKey: string, targetKey: string): void {
+  const anyOptions = options as Record<string, unknown>;
+  if (anyOptions[sourceKey] !== undefined) {
+    anyOptions[targetKey] = JSON.stringify(anyOptions[sourceKey]);
+  }
+}
+
+// Parsers that contain embedded JavaScript (need oxc plugin)
+const PARSERS_WITH_EMBEDDED_JS = new Set(["vue", "html", "angular", "svelte", "astro"]);
+
+/**
  * Format non-js file
  *
  * @returns Formatted code
@@ -93,6 +118,22 @@ export async function formatFile({
 
   // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
+
+  // Add oxc plugin for files with embedded JavaScript AFTER tailwind plugin
+  // This overrides babel/typescript parsers so that <script> content
+  // is formatted by oxc_formatter instead of Prettier's built-in formatter
+  // Prettier resolves parsers from the LAST plugin first, so oxc must be last
+  // FormatOptions are cached on Rust side before this function is called
+  if (PARSERS_WITH_EMBEDDED_JS.has(parserName)) {
+    const oxcPlugin = await loadOxcPlugin();
+    options.plugins = options.plugins || [];
+    options.plugins.push(oxcPlugin);
+
+    // Convert object options to JSON strings so they survive Prettier's option normalization
+    // Prettier only preserves options that are defined in plugins, and only supports primitive types
+    serializeObjectOption(options, "experimentalSortImports", "_experimentalSortImportsJson");
+    serializeObjectOption(options, "experimentalTailwindcss", "_experimentalTailwindcssJson");
+  }
 
   return prettier.format(code, options);
 }

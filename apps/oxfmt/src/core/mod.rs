@@ -16,5 +16,5 @@ pub use support::FormatFileStrategy;
 #[cfg(feature = "napi")]
 pub use external_formatter::{
     ExternalFormatter, JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb,
-    JsSortTailwindClassesCb,
+    JsSortTailwindClassesCb, wrap_format_embedded_only, wrap_sort_tailwind_for_doc,
 };

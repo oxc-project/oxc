@@ -61,8 +61,13 @@ pub enum ResolvedOptions {
     /// For TOML files.
     OxfmtToml { toml_options: TomlFormatterOptions, insert_final_newline: bool },
     /// For non-JS files formatted by external formatter (Prettier).
+    /// `format_options` is included for embedded JS formatting in Vue/HTML files.
     #[cfg(feature = "napi")]
-    ExternalFormatter { external_options: Value, insert_final_newline: bool },
+    ExternalFormatter {
+        format_options: Box<FormatOptions>,
+        external_options: Value,
+        insert_final_newline: bool,
+    },
     /// For `package.json` files: optionally sorted then formatted.
     #[cfg(feature = "napi")]
     ExternalFormatterPackageJson {
@@ -212,6 +217,16 @@ impl ConfigResolver {
         Ok(ignore_patterns)
     }
 
+    /// Get the cached format options for JS/TS formatting.
+    /// Must be called after `build_and_validate()`.
+    #[cfg(feature = "napi")]
+    pub fn get_cached_format_options(&self) -> FormatOptions {
+        self.cached_options
+            .as_ref()
+            .map(|(opts, _)| opts.format_options.clone())
+            .expect("`build_and_validate()` must be called first")
+    }
+
     /// Resolve format options for a specific file.
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
@@ -233,9 +248,11 @@ impl ConfigResolver {
                 ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
             }
             #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatter { .. } => {
-                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
-            }
+            FormatFileStrategy::ExternalFormatter { .. } => ResolvedOptions::ExternalFormatter {
+                format_options: Box::new(format_options),
+                external_options,
+                insert_final_newline,
+            },
             #[cfg(feature = "napi")]
             FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
                 ResolvedOptions::ExternalFormatterPackageJson {

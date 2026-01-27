@@ -338,3 +338,30 @@ fn wrap_sort_tailwind_classes(cb: JsSortTailwindClassesCb) -> TailwindWithConfig
         )
     })
 }
+
+/// Wrap JS `formatEmbeddedCode` callback for use in Prettier plugin context.
+/// This creates an `EmbeddedFormatterCallback` that can be used by oxc_formatter.
+pub fn wrap_format_embedded_only(
+    cb: JsFormatEmbeddedCb,
+    options: Value,
+) -> EmbeddedFormatterCallback {
+    let wrapped = wrap_format_embedded(cb);
+    Arc::new(move |language: &str, code: &str| {
+        let Some(parser_name) = language_to_prettier_parser(language) else {
+            return Err(format!("Unsupported language: {language}"));
+        };
+        (wrapped)(&options, parser_name, code)
+    })
+}
+
+/// Wrap JS `sortTailwindClasses` callback for use in Prettier plugin context.
+/// This creates a `TailwindCallback` that can be used by oxc_formatter.
+/// The filepath and options are captured in the closure.
+pub fn wrap_sort_tailwind_for_doc(
+    cb: JsSortTailwindClassesCb,
+    filepath: String,
+    options: Value,
+) -> TailwindCallback {
+    let wrapped = wrap_sort_tailwind_classes(cb);
+    Arc::new(move |classes: Vec<String>| (wrapped)(&filepath, &options, classes))
+}
