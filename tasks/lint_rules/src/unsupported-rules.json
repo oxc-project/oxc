@@ -26,6 +26,7 @@
     "jsx-a11y/no-onchange": "Deprecated, based on behavior of very old browsers, and so no longer necessary.",
     "eslint/camelcase": "Superseded by `@typescript-eslint/naming-convention`, which accomplishes the same behavior with more flexibility.",
     "eslint/no-invalid-this": "Superseded by TypeScript's [`noImplicitThis`](https://www.typescriptlang.org/tsconfig/#noImplicitThis) compiler option (enabled by `strict` mode).",
+    "react/jsx-uses-react": "It is unnecessary to import React for JSX/TSX files with React 17+ when using the new JSX transform. This rule is also not easy to implement in Oxlint as it modifies the behavior of another rule.",
 
     "n/prefer-node-protocol": "No need to implement, already implemented by `unicorn/prefer-node-protocol`.",
     "n/no-process-exit": "No need to implement, already implemented by `unicorn/no-process-exit`.",
