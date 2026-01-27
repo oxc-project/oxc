@@ -1,9 +1,9 @@
-commit: fff41f05
+commit: 3c6180f5
 
 parser_test262 Summary:
-AST Parsed     : 46595/46595 (100.00%)
-Positive Passed: 46595/46595 (100.00%)
-Negative Passed: 4581/4581 (100.00%)
+AST Parsed     : 46712/46712 (100.00%)
+Positive Passed: 46712/46712 (100.00%)
+Negative Passed: 4588/4588 (100.00%)
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -26678,6 +26678,16 @@ Negative Passed: 4581/4581 (100.00%)
  30 │       throw new Test262Error();
     ╰────
 
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/await-using/redeclaration-error-from-within-strict-mode-function-await-using.js:15:49]
+ 14 │ $DONOTEVALUATE();
+ 15 │ (async function() { 'use strict'; { await using f = null; var f; } })
+    ·                                                 ┬             ┬
+    ·                                                 │             ╰── It can not be redeclared here
+    ·                                                 ╰── `f` has already been declared here
+ 16 │ 
+    ╰────
+
   × Using declarations may not have binding patterns.
     ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-arraybindingpattern-after-bindingidentifier.js:18:25]
  17 │ async function f() {
@@ -26728,6 +26738,24 @@ Negative Passed: 4581/4581 (100.00%)
  18 │ }
     ╰────
   help: Try inserting a semicolon here
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-caseclause.js:22:7]
+ 21 │     case 0:
+ 22 │       await using _ = null;
+    ·       ─────────────────────
+ 23 │       break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/await-using/syntax/await-using-invalid-switchstatement-defaultclause.js:22:7]
+ 21 │     default:
+ 22 │       await using _ = null;
+    ·       ─────────────────────
+ 23 │       break;
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × 'using' declarations are not allowed at the top level of a script
     ╭─[test262/test/language/statements/await-using/syntax/await-using-not-allowed-at-top-level-of-script.js:23:1]
@@ -39299,6 +39327,32 @@ Negative Passed: 4581/4581 (100.00%)
  26 │   }
     ╰────
 
+  × Identifier `f` has already been declared
+    ╭─[test262/test/language/statements/using/redeclaration-error-from-within-strict-mode-function-using.js:15:37]
+ 14 │ $DONOTEVALUATE();
+ 15 │ (function() { 'use strict'; { using f = null; var f; } })
+    ·                                     ┬             ┬
+    ·                                     │             ╰── It can not be redeclared here
+    ·                                     ╰── `f` has already been declared here
+ 16 │ 
+    ╰────
+
+  × Cannot use `await` as an identifier in an async context
+    ╭─[test262/test/language/statements/using/static-init-await-binding-invalid.js:26:11]
+ 25 │   static {
+ 26 │     using await = null;
+    ·           ─────
+ 27 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
+    ╭─[test262/test/language/statements/using/static-init-await-binding-invalid.js:26:11]
+ 25 │   static {
+ 26 │     using await = null;
+    ·           ─────
+ 27 │   }
+    ╰────
+
   × Using declarations must have an initializer.
     ╭─[test262/test/language/statements/using/syntax/block-scope-syntax-using-declarations-mixed-with-without-initializer.js:30:19]
  29 │ {
@@ -39365,6 +39419,24 @@ Negative Passed: 4581/4581 (100.00%)
     ·         ──
  19 │ }
     ╰────
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-switchstatement-caseclause.js:21:5]
+ 20 │   case 0:
+ 21 │     using _ = null;
+    ·     ───────────────
+ 22 │     break;
+    ╰────
+  help: Wrap this declaration in a block statement
+
+  × Using declaration cannot appear in the bare case statement.
+    ╭─[test262/test/language/statements/using/syntax/using-invalid-switchstatement-defaultclause.js:21:5]
+ 20 │   default:
+ 21 │     using _ = null;
+    ·     ───────────────
+ 22 │     break;
+    ╰────
+  help: Wrap this declaration in a block statement
 
   × 'using' declarations are not allowed at the top level of a script
     ╭─[test262/test/language/statements/using/syntax/using-not-allowed-at-top-level-of-script.js:23:1]
