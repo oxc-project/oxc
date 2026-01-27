@@ -445,9 +445,9 @@ const FILE_CONTEXT = Object.freeze({
    * The path to the parser used to parse this file.
    * @deprecated No longer supported.
    */
-  get parserPath(): string {
-    // TODO: Implement this?
-    throw new Error("`context.parserPath` is unsupported at present (and deprecated)");
+  get parserPath(): string | undefined {
+    if (filePath === null) throw new Error("Cannot access `context.parserPath` in `createOnce`");
+    return undefined;
   },
 });
 

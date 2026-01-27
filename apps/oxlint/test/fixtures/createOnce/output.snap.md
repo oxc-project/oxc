@@ -99,6 +99,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: parserPath error: Cannot access `context.parserPath` in `createOnce`
+   ,-[files/1.js:1:1]
+ 1 | let x;
+   : ^
+   `----
+
   x create-once-plugin(always-run): createOnce: physicalFilename error: Cannot access `context.physicalFilename` in `createOnce`
    ,-[files/1.js:1:1]
  1 | let x;
@@ -273,6 +279,12 @@
    : ^
    `----
 
+  x create-once-plugin(always-run): createOnce: parserPath error: Cannot access `context.parserPath` in `createOnce`
+   ,-[files/2.js:1:1]
+ 1 | let y;
+   : ^
+   `----
+
   x create-once-plugin(always-run): createOnce: physicalFilename error: Cannot access `context.physicalFilename` in `createOnce`
    ,-[files/2.js:1:1]
  1 | let y;
@@ -351,7 +363,7 @@
    :     ^
    `----
 
-Found 0 warnings and 58 errors.
+Found 0 warnings and 60 errors.
 Finished in Xms on 2 files with 6 rules using X threads.
 ```
 
