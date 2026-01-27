@@ -782,6 +782,15 @@ fn format_embedded_template<'a>(
     language: &str,
     template_content: &str,
 ) -> bool {
+    // If the content is whitespace only,
+    // just trim it and skip calling the embedded formatter
+    if template_content.trim().is_empty() {
+        write!(f, ["``"]);
+        // Return `true` (mark as formatted),
+        // since whitespace-only regular template literals are preserved as-is
+        return true;
+    }
+
     let Some(Ok(formatted)) =
         f.context().external_callbacks().format_embedded(language, template_content)
     else {

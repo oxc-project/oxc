@@ -16,6 +16,19 @@ const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
 const mixedDocs = md\`#Documentation
 This is **important**.\`;
 
+// Empty - Regular template literals retain newlines and spaces, but embedded ones are condensed
+const empty = css\`\`;
+const empty2 = styled\`
+\`;
+const empty3 = styled.div\` \`;
+const empty4 = gql\`   \`;
+const empty5 = html\`
+
+\`;
+const empty6 = md\`
+
+\`;
+
 --- AFTER ----------
 // Multiple embedded languages in one file
 const mixedStyles = css\`
@@ -44,6 +57,14 @@ const mixedDocs = md\`
   #Documentation
   This is **important**.
 \`;
+
+// Empty - Regular template literals retain newlines and spaces, but embedded ones are condensed
+const empty = css\`\`;
+const empty2 = styled\`\`;
+const empty3 = styled.div\`\`;
+const empty4 = gql\`\`;
+const empty5 = html\`\`;
+const empty6 = md\`\`;
 
 --------------------"
 `;
@@ -144,7 +165,7 @@ var(--color),
 --------------------"
 `;
 
-exports[`embedded_languages > angular.ts > should format (auto) 1`] = `
+exports[`embedded_languages > should format angular.ts (auto) 1`] = `
 "--- FILE -----------
 angular.ts
 --- BEFORE ---------
@@ -250,7 +271,7 @@ export class AppComponent2 {}
 --------------------"
 `;
 
-exports[`embedded_languages > css.js > should format (auto) 1`] = `
+exports[`embedded_languages > should format css.js (auto) 1`] = `
 "--- FILE -----------
 css.js
 --- BEFORE ---------
@@ -333,7 +354,7 @@ const styledJsx = (
 --------------------"
 `;
 
-exports[`embedded_languages > graphql.js > should format (auto) 1`] = `
+exports[`embedded_languages > should format graphql.js (auto) 1`] = `
 "--- FILE -----------
 graphql.js
 --- BEFORE ---------
@@ -365,7 +386,7 @@ const mutation = graphql\`
 --------------------"
 `;
 
-exports[`embedded_languages > html.js > should format (auto) 1`] = `
+exports[`embedded_languages > should format html.js (auto) 1`] = `
 "--- FILE -----------
 html.js
 --- BEFORE ---------
@@ -390,7 +411,7 @@ const component = html\`
 --------------------"
 `;
 
-exports[`embedded_languages > markdown.js > should format (auto) 1`] = `
+exports[`embedded_languages > should format markdown.js (auto) 1`] = `
 "--- FILE -----------
 markdown.js
 --- BEFORE ---------
