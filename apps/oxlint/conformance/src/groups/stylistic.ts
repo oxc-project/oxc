@@ -13,6 +13,7 @@ import type { RuleTester as RuleTesterType } from "#oxlint/rule-tester";
 import type { Rule } from "#oxlint/plugin";
 
 type Config = RuleTesterType.Config;
+type TSEslintParser = typeof import("@typescript-eslint/parser");
 
 const group: TestGroup = {
   name: "stylistic",
@@ -32,7 +33,7 @@ const group: TestGroup = {
 
   prepare(require: NodeJS.Require, mock: (path: string, value: unknown) => void) {
     // Load the copy of `@typescript-eslint/parser` which is used by the test cases
-    const tsEslintParser = require("@typescript-eslint/parser");
+    const tsEslintParser = require("@typescript-eslint/parser") as TSEslintParser;
 
     // Mock `eslint-plugin-stylistic`'s rule tester, to use conformance `RuleTester`
     mock("../../../shared/test-utils/runner.ts", createStylisticRuleRunnerMock(tsEslintParser));
@@ -186,7 +187,7 @@ const OPTIONS_KEYS: KeysSet = new Set(OPTIONS_KEYS_ARRAY);
  * @param tsEslintParser - TSESLint parser module
  * @returns Module to replace `eslint-plugin-stylistic`'s rule runner module with
  */
-function createStylisticRuleRunnerMock(tsEslintParser: any) {
+function createStylisticRuleRunnerMock(tsEslintParser: TSEslintParser) {
   return {
     run(options: StylisticRunOptions) {
       // Validate options
