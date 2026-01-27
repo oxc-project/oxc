@@ -316,6 +316,10 @@ impl OxfmtrcOverrides {
         let normalize_patterns = |patterns: Vec<String>| {
             patterns
                 .into_iter()
+                // This may be problematic if user writes glob patterns with `\` as separator on Windows.
+                // But fine for now since:
+                // - `fast_glob::glob_match()` supports both `/` and `\`
+                // - Glob patterns are usually written with `/` even on Windows
                 .map(|pat| if pat.contains('/') { pat } else { format!("**/{pat}") })
                 .collect()
         };
@@ -345,6 +349,8 @@ impl OxfmtrcOverrides {
         self.entries.iter().filter(move |e| Self::is_entry_match(e, &relative)).map(|e| &e.options)
     }
 
+    /// NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.
+    /// This is OK since `fast_glob::glob_match()` supports both `/` and `\` via `std::path::is_separator`.
     fn relative_path(&self, path: &Path) -> String {
         self.base_dir
             .as_ref()
@@ -361,6 +367,7 @@ impl OxfmtrcOverrides {
 }
 
 /// A single override entry with normalized glob patterns.
+/// NOTE: Written path patterns are glob patterns; use `/` as the path separator on all platforms.
 #[derive(Debug)]
 struct OxfmtrcOverrideEntry {
     files: Vec<String>,

@@ -18,6 +18,17 @@ The `oxfmt` implemented under this directory serves several purposes.
 
 When making changes, consider the impact on all paths.
 
+## Platform Considerations
+
+Oxfmt is built for multiple platforms (Linux, macOS, Windows) and architectures.
+
+When working with file paths in CLI code, be aware of Windows path differences:
+
+- Use `std::path::Path` / `PathBuf` instead of manual string manipulation with `/`
+- Be cautious with path comparisons and normalization across platforms
+  - Avoid hardcoding `/` as a path separator; prefer `Path::join()`
+  - Windows uses `\` as a path separator and has drive letter prefixes (e.g., `C:\`)
+
 ## Verification
 
 ```sh
