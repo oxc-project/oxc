@@ -67,6 +67,7 @@ declare_oxc_lint!(
     NoNodejsModules,
     import,
     restriction,
+    config = NoNodejsModulesConfig,
 );
 
 impl Rule for NoNodejsModules {
