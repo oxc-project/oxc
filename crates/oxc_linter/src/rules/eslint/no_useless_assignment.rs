@@ -344,7 +344,7 @@ fn pre_checks_skip(
         _ => return false,
     };
 
-    if is_exported(ctx, name, span) {
+    if is_exported(ctx, name.into(), span) {
         return true;
     }
 
