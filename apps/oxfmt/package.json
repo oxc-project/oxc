@@ -17,9 +17,9 @@
     "test": "vitest --dir test run"
   },
   "dependencies": {
-    "prettier": "3.8.0",
+    "prettier": "3.8.1",
     "prettier-plugin-tailwindcss": "0.7.2",
-    "tinypool": "2.0.0"
+    "tinypool": "2.1.0"
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
