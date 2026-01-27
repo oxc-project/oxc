@@ -614,6 +614,7 @@ mod test {
 
     use super::CliRunner;
     use crate::{DEFAULT_OXLINTRC, tester::Tester};
+    use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
@@ -1285,6 +1286,9 @@ mod test {
             serde_json::from_str(&stdout).expect("Failed to parse JSON");
         assert!(!rules.is_empty(), "The rules list should not be empty");
 
+        // Ensure that the number of rules matches the RULES constant, all rules should be listed.
+        assert_eq!(rules.len(), RULES.len(), "The number of rules should match the RULES constant");
+
         // Validate the structure of JSON objects.
         for rule in &rules {
             let rule_obj = rule.as_object().unwrap();
@@ -1296,6 +1300,16 @@ mod test {
             assert!(rule_obj.contains_key("default"), "Rule should contain 'default' field");
             assert!(rule_obj.contains_key("docs_url"), "Rule should contain 'docs_url' field");
         }
+
+        // Verify that the rules list is sorted by scope and value.
+        let rule_names: Vec<(&str, &str)> = rules
+            .iter()
+            .map(|rule| {
+                let obj = rule.as_object().unwrap();
+                (obj["scope"].as_str().unwrap(), obj["value"].as_str().unwrap())
+            })
+            .collect();
+        assert!(rule_names.is_sorted(), "The rules list should be sorted by scope and value");
     }
 
     #[test]

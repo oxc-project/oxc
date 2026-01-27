@@ -42,25 +42,27 @@ impl InternalFormatter for JsonOutputFormatter {
             .map(oxc_linter::rules::RuleEnum::name)
             .collect();
 
-        let rules_info = RULES.iter().map(|rule| RuleInfoJson {
-            scope: rule.plugin_name(),
-            value: rule.name(),
-            category: rule.category(),
-            type_aware: rule.is_tsgolint_rule(),
-            fix: rule.fix().to_string(),
-            default: default_rules.contains(rule.name()),
-            docs_url: format!(
-                "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
-                rule.plugin_name(),
-                rule.name()
-            )
-            .into(),
-        });
+        let mut rules_info: Vec<_> = RULES
+            .iter()
+            .map(|rule| RuleInfoJson {
+                scope: rule.plugin_name(),
+                value: rule.name(),
+                category: rule.category(),
+                type_aware: rule.is_tsgolint_rule(),
+                fix: rule.fix().to_string(),
+                default: default_rules.contains(rule.name()),
+                docs_url: format!(
+                    "https://oxc.rs/docs/guide/usage/linter/rules/{}/{}.html",
+                    rule.plugin_name(),
+                    rule.name()
+                )
+                .into(),
+            })
+            .collect();
 
-        Some(
-            serde_json::to_string_pretty(&rules_info.collect::<Vec<_>>())
-                .expect("Failed to serialize"),
-        )
+        rules_info.sort_by_key(|rule| (rule.scope, rule.value));
+
+        Some(serde_json::to_string_pretty(&rules_info).expect("Failed to serialize"))
     }
 
     fn lint_command_info(&self, lint_command_info: &super::LintCommandInfo) -> Option<String> {
