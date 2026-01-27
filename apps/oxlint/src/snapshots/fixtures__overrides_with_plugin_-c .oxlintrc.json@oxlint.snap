@@ -31,6 +31,15 @@ working directory: fixtures/overrides_with_plugin
    `----
   help: Add assertion(s) in this Test
 
+  ! eslint-plugin-vitest(expect-expect): Test has no assertions
+   ,-[index.test.ts:4:3]
+ 3 | 
+ 4 |   it("", () => {});
+   :   ^^
+ 5 |   // ^ jest/no-valid-title error as explicitly set in the `.test.ts` override
+   `----
+  help: Add assertion(s) in this Test
+
   x eslint-plugin-jest(valid-title): Should not have an empty title
    ,-[index.test.ts:4:6]
  3 | 
@@ -58,7 +67,7 @@ working directory: fixtures/overrides_with_plugin
    `----
   help: Consider removing this declaration.
 
-Found 2 warnings and 4 errors.
+Found 3 warnings and 4 errors.
 Finished in <variable>ms on 2 files with 90 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
