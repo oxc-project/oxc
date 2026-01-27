@@ -1,5 +1,8 @@
 use nodejs_built_in_modules::is_nodejs_builtin_module;
-use oxc_ast::{AstKind, ast::{Expression, TSModuleReference}};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, TSModuleReference},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
@@ -131,10 +134,15 @@ impl Rule for NoNodejsModules {
             }
             // TypeScript import = require('...')
             AstKind::TSImportEqualsDeclaration(import_decl) => {
-                if let TSModuleReference::ExternalModuleReference(external) = &import_decl.module_reference {
+                if let TSModuleReference::ExternalModuleReference(external) =
+                    &import_decl.module_reference
+                {
                     let module_name = external.expression.value.as_str();
                     if is_nodejs_module_not_allowed(module_name, &self.allow) {
-                        ctx.diagnostic(no_nodejs_modules_diagnostic(external.expression.span, module_name));
+                        ctx.diagnostic(no_nodejs_modules_diagnostic(
+                            external.expression.span,
+                            module_name,
+                        ));
                     }
                 }
             }
