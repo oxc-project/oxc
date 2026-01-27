@@ -670,6 +670,7 @@ pub(crate) mod promise {
 pub(crate) mod vitest {
     pub mod consistent_each_for;
     pub mod consistent_test_filename;
+    pub mod consistent_test_it;
     pub mod consistent_vitest_vi;
     pub mod hoisted_apis_on_top;
     pub mod no_conditional_tests;
@@ -714,6 +715,7 @@ pub(crate) mod vue {
 }
 
 pub(crate) mod shared {
+    pub mod consistent_test_it;
     pub mod valid_title;
 }
 
