@@ -133,48 +133,8 @@ function initTsScopeManager() {
   // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);
 
-  fixCatchClauseDefinitions();
-
   // Add globals from configuration and resolve references
   addGlobals();
-}
-
-/**
- * Fix `CatchClause` definitions to match `eslint-scope` behavior.
- *
- * TS-ESLint's scope manager has a bug where for destructuring patterns in `CatchClause`s
- * (e.g., `catch ([a, b])` or `catch ({ message })`), the definition's `name` property is set to
- * the entire pattern (`ArrayPattern` or `ObjectPattern`) instead of the individual `Identifier`.
- *
- * Correct this bug by setting `def.name` to the `Identifier`.
- *
- * @see https://github.com/typescript-eslint/typescript-eslint/issues/11981
- */
-function fixCatchClauseDefinitions(): void {
-  debugAssertIsNonNull(tsScopeManager);
-
-  const { scopes } = tsScopeManager;
-  for (let scopeIndex = 0; scopeIndex < scopes.length; scopeIndex++) {
-    const scope = scopes[scopeIndex];
-    if (scope.type !== "catch") continue;
-
-    const { param } = scope.block;
-    if (param === null || param.type === "Identifier") continue;
-
-    // `CatchClause` scope with an `ObjectPattern` or `ArrayPattern` parameter - fix it
-    const { variables } = scope;
-    for (let varIndex = 0; varIndex < variables.length; varIndex++) {
-      const variable = variables[varIndex];
-
-      // Variables defined in a catch clause are block-scoped, therefore can only have a single definition.
-      // If there were more, parser would have errored already.
-      debugAssert(variable.defs.length === 1, "Expected `defs.length === 1`");
-      debugAssert(variable.identifiers.length === 1, "Expected `identifiers.length === 1`");
-      debugAssert(variable.defs[0].name === param, "Expected `def.name === param`");
-
-      (variable.defs[0] as Writable<(typeof variable.defs)[number]>).name = variable.identifiers[0];
-    }
-  }
 }
 
 /**
