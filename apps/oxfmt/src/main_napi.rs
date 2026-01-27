@@ -9,9 +9,9 @@ use serde_json::Value;
 use crate::{
     cli::{FormatRunner, Mode, format_command, init_miette, init_rayon},
     core::{
-        ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
+        ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
         JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-        SourceFormatter, utils,
+        SourceFormatter, resolve_options_from_value, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -155,18 +155,6 @@ pub async fn format(
         sort_tailwind_classes_cb,
     );
 
-    // Create resolver from options and resolve format options
-    let mut config_resolver = ConfigResolver::from_value(options.unwrap_or_default());
-    match config_resolver.build_and_validate() {
-        Ok(_) => {}
-        Err(err) => {
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
-            };
-        }
-    }
-
     // Use `block_in_place()` to avoid nested async runtime access
     match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
         // TODO: Plugins support
@@ -187,7 +175,17 @@ pub async fn format(
         };
     };
 
-    let resolved_options = config_resolver.resolve(&strategy);
+    // Resolve format options directly from the provided options
+    let resolved_options = match resolve_options_from_value(options.unwrap_or_default(), &strategy)
+    {
+        Ok(options) => options,
+        Err(err) => {
+            return FormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
+            };
+        }
+    };
 
     // Create formatter and format
     let formatter =

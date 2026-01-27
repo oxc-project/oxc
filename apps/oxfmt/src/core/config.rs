@@ -45,6 +45,30 @@ pub fn resolve_editorconfig_path(cwd: &Path) -> Option<PathBuf> {
     cwd.ancestors().map(|dir| dir.join(".editorconfig")).find(|p| p.exists())
 }
 
+/// Resolve format options directly from a raw JSON config value.
+///
+/// This is the simplified path for the NAPI `format()` API,
+/// which doesn't need `.oxfmtrc` overrides, `.editorconfig`, or ignore patterns.
+#[cfg(feature = "napi")]
+pub fn resolve_options_from_value(
+    raw_config: Value,
+    strategy: &FormatFileStrategy,
+) -> Result<ResolvedOptions, String> {
+    let format_config: FormatConfig = serde_json::from_value(raw_config)
+        .map_err(|err| format!("Failed to deserialize FormatConfig: {err}"))?;
+
+    let mut external_options =
+        serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
+
+    let oxfmt_options = format_config
+        .into_oxfmt_options()
+        .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
+
+    populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
+
+    Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
+}
+
 // ---
 
 /// Resolved options for each file type.
@@ -72,6 +96,50 @@ pub enum ResolvedOptions {
     },
 }
 
+impl ResolvedOptions {
+    /// Build `ResolvedOptions` from `OxfmtOptions`, `external_options`, and `FormatFileStrategy`.
+    fn from_oxfmt_options(
+        oxfmt_options: OxfmtOptions,
+        external_options: Value,
+        strategy: &FormatFileStrategy,
+    ) -> Self {
+        #[cfg(feature = "napi")]
+        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
+            oxfmt_options;
+        #[cfg(not(feature = "napi"))]
+        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
+
+        match strategy {
+            FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
+                format_options: Box::new(format_options),
+                external_options,
+                insert_final_newline,
+            },
+            FormatFileStrategy::OxfmtToml { .. } => {
+                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
+            }
+            #[cfg(feature = "napi")]
+            FormatFileStrategy::ExternalFormatter { .. } => {
+                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
+            }
+            #[cfg(feature = "napi")]
+            FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
+                ResolvedOptions::ExternalFormatterPackageJson {
+                    external_options,
+                    sort_package_json,
+                    insert_final_newline,
+                }
+            }
+            #[cfg(not(feature = "napi"))]
+            _ => {
+                unreachable!("If `napi` feature is disabled, this should not be passed here")
+            }
+        }
+    }
+}
+
+// ---
+
 /// Configuration resolver to handle `.oxfmtrc` and `.editorconfig` files.
 ///
 /// Priority order: `Oxfmtrc::default()` → user's `.oxfmtrc` base → `.oxfmtrc` overrides
@@ -96,18 +164,6 @@ pub struct ConfigResolver {
 }
 
 impl ConfigResolver {
-    /// Create a new resolver from a raw JSON config value.
-    #[cfg(feature = "napi")]
-    pub fn from_value(raw_config: Value) -> Self {
-        Self {
-            raw_config,
-            config_dir: None,
-            cached_options: None,
-            oxfmtrc_overrides: None,
-            editorconfig: None,
-        }
-    }
-
     /// Create a resolver by loading config from a file path.
     ///
     /// # Errors
@@ -216,39 +272,7 @@ impl ConfigResolver {
     #[instrument(level = "debug", name = "oxfmt::config::resolve", skip_all, fields(path = %strategy.path().display()))]
     pub fn resolve(&self, strategy: &FormatFileStrategy) -> ResolvedOptions {
         let (oxfmt_options, external_options) = self.resolve_options(strategy.path());
-
-        #[cfg(feature = "napi")]
-        let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
-            oxfmt_options;
-        #[cfg(not(feature = "napi"))]
-        let OxfmtOptions { format_options, toml_options, insert_final_newline, .. } = oxfmt_options;
-
-        match strategy {
-            FormatFileStrategy::OxcFormatter { .. } => ResolvedOptions::OxcFormatter {
-                format_options: Box::new(format_options),
-                external_options,
-                insert_final_newline,
-            },
-            FormatFileStrategy::OxfmtToml { .. } => {
-                ResolvedOptions::OxfmtToml { toml_options, insert_final_newline }
-            }
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatter { .. } => {
-                ResolvedOptions::ExternalFormatter { external_options, insert_final_newline }
-            }
-            #[cfg(feature = "napi")]
-            FormatFileStrategy::ExternalFormatterPackageJson { .. } => {
-                ResolvedOptions::ExternalFormatterPackageJson {
-                    external_options,
-                    sort_package_json,
-                    insert_final_newline,
-                }
-            }
-            #[cfg(not(feature = "napi"))]
-            _ => {
-                unreachable!("If `napi` feature is disabled, this should not be passed here")
-            }
-        }
+        ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy)
     }
 
     /// Resolve options for a specific file path.
