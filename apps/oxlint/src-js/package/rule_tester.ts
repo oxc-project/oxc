@@ -1243,13 +1243,14 @@ function setEcmaVersionAndFeatures(test: TestCase) {
   // In ESLint, the branch for `undefined` is actually dead code, because `undefined` is replaced by default value
   // in an early step of config parsing.
   const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  const ecmaVersion = languageOptions?.ecmaVersion;
+  let ecmaVersion = languageOptions?.ecmaVersion;
 
-  let version = ECMA_VERSION;
   if (typeof ecmaVersion === "number") {
-    version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
+    if (ecmaVersion > 5 && ecmaVersion < 2015) ecmaVersion += 2009;
+  } else {
+    ecmaVersion = ECMA_VERSION;
   }
-  setEcmaVersion(version);
+  setEcmaVersion(ecmaVersion);
 
   // Set `globalReturn` and `impliedStrict` in scope analyzer options
   const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures;
