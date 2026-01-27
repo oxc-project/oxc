@@ -14,7 +14,15 @@ working directory: fixtures/issue_10394
    `----
   help: Write a meaningful title for your test
 
-Found 1 warning and 0 errors.
+  ! eslint-plugin-vitest(valid-title): Should not have an empty title
+   ,-[foo.test.ts:1:10]
+ 1 | describe("", () => {
+   :          ^^
+ 2 |   //
+   `----
+  help: Write a meaningful title for your test
+
+Found 2 warnings and 0 errors.
 Finished in <variable>ms on 1 file with 90 rules using 1 threads.
 ----------
 CLI result: LintSucceeded
