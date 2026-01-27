@@ -822,7 +822,11 @@ fn format_embedded_template<'a>(
     let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
         let content = f.context().allocator().alloc_str(&formatted);
         for line in content.split('\n') {
-            write!(f, [text(line), hard_line_break()]);
+            if line.is_empty() {
+                write!(f, [empty_line()]);
+            } else {
+                write!(f, [text(line), hard_line_break()]);
+            }
         }
     });
 
