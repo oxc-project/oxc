@@ -56,7 +56,6 @@ declare_oxc_lint!(
     NoUnsafeUnaryMinus(tsgolint),
     typescript,
     correctness,
-    pending,
 );
 
 impl Rule for NoUnsafeUnaryMinus {}

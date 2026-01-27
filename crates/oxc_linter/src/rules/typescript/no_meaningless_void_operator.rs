@@ -59,7 +59,7 @@ declare_oxc_lint!(
     NoMeaninglessVoidOperator(tsgolint),
     typescript,
     correctness,
-    pending,
+    fix_suggestion,
     config = NoMeaninglessVoidOperatorConfig,
 );
 

@@ -103,7 +103,7 @@ declare_oxc_lint!(
     PromiseFunctionAsync(tsgolint),
     typescript,
     restriction,
-    pending,
+    conditional_fix,
     config = PromiseFunctionAsyncConfig,
 );
 

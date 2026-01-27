@@ -86,7 +86,6 @@ declare_oxc_lint!(
     NoUnnecessaryBooleanLiteralCompare(tsgolint),
     typescript,
     suspicious,
-    pending,
     config = NoUnnecessaryBooleanLiteralCompareConfig,
 );
 

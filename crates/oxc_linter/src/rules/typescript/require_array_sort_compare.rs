@@ -73,7 +73,6 @@ declare_oxc_lint!(
     RequireArraySortCompare(tsgolint),
     typescript,
     correctness,
-    pending,
     config = RequireArraySortCompareConfig,
 );
 

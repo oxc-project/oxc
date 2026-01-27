@@ -58,7 +58,7 @@ declare_oxc_lint!(
     NonNullableTypeAssertionStyle(tsgolint),
     typescript,
     restriction,
-    pending,
+    fix,
 );
 
 impl Rule for NonNullableTypeAssertionStyle {}

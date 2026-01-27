@@ -66,7 +66,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeAssertion(tsgolint),
     typescript,
     suspicious,
-    pending,
+    fix,
     config = NoUnnecessaryTypeAssertionConfig,
 );
 

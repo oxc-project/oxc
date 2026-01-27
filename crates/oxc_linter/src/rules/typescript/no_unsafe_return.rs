@@ -58,7 +58,6 @@ declare_oxc_lint!(
     NoUnsafeReturn(tsgolint),
     typescript,
     pedantic,
-    pending,
 );
 
 impl Rule for NoUnsafeReturn {}

@@ -88,7 +88,6 @@ declare_oxc_lint!(
     OnlyThrowError(tsgolint),
     typescript,
     pedantic,
-    pending,
     config = OnlyThrowErrorConfig,
 );
 

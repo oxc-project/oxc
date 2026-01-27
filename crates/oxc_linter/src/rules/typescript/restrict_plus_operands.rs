@@ -92,7 +92,6 @@ declare_oxc_lint!(
     RestrictPlusOperands(tsgolint),
     typescript,
     pedantic,
-    pending,
     config = RestrictPlusOperandsConfig,
 );
 

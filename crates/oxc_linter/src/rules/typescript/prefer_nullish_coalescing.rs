@@ -134,7 +134,7 @@ declare_oxc_lint!(
     PreferNullishCoalescing(tsgolint),
     typescript,
     pedantic,
-    pending,
+    fix,
     config = PreferNullishCoalescingConfig,
 );
 

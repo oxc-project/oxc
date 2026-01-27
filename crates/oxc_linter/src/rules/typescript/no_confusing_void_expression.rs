@@ -68,7 +68,7 @@ declare_oxc_lint!(
     NoConfusingVoidExpression(tsgolint),
     typescript,
     pedantic,
-    pending,
+    fix_suggestion,
     config = NoConfusingVoidExpressionConfig,
 );
 

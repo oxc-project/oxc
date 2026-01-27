@@ -94,7 +94,7 @@ declare_oxc_lint!(
     PreferOptionalChain(tsgolint),
     typescript,
     nursery, // move to style after we've confirmed this works correctly on as many edge-cases as possible.
-    fix,
+    dangerous_fix_suggestion,
     config = PreferOptionalChainConfig,
 );
 

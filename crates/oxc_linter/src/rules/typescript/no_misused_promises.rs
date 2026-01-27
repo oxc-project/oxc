@@ -125,7 +125,6 @@ declare_oxc_lint!(
     NoMisusedPromises(tsgolint),
     typescript,
     pedantic,
-    pending,
     config = NoMisusedPromisesConfig,
 );
 

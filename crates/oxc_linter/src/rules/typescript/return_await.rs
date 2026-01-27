@@ -99,7 +99,7 @@ declare_oxc_lint!(
     ReturnAwait(tsgolint),
     typescript,
     pedantic,
-    pending,
+    fix_suggestion,
     config = ReturnAwaitOption,
 );
 

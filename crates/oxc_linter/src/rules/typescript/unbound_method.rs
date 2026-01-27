@@ -96,7 +96,6 @@ declare_oxc_lint!(
     UnboundMethod(tsgolint),
     typescript,
     correctness,
-    pending,
     config = UnboundMethodConfig,
 );
 

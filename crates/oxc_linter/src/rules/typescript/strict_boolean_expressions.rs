@@ -122,7 +122,6 @@ declare_oxc_lint!(
     StrictBooleanExpressions(tsgolint),
     typescript,
     pedantic,
-    pending,
     config = StrictBooleanExpressionsConfig,
 );
 

@@ -71,7 +71,6 @@ declare_oxc_lint!(
     PreferPromiseRejectErrors(tsgolint),
     typescript,
     pedantic,
-    pending,
     config = PreferPromiseRejectErrorsConfig,
 );
 

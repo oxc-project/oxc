@@ -65,7 +65,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeArguments(tsgolint),
     typescript,
     suspicious,
-    pending,
+    fix,
 );
 
 impl Rule for NoUnnecessaryTypeArguments {}

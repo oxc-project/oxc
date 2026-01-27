@@ -49,7 +49,7 @@ declare_oxc_lint!(
     AwaitThenable(tsgolint),
     typescript,
     correctness,
-    pending,
+    suggestion,
 );
 
 impl Rule for AwaitThenable {}

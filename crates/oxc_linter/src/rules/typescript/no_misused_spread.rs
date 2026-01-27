@@ -65,7 +65,7 @@ declare_oxc_lint!(
     NoMisusedSpread(tsgolint),
     typescript,
     correctness,
-    pending,
+    suggestion,
     config = NoMisusedSpreadConfig,
 );
 
