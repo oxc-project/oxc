@@ -1255,7 +1255,9 @@ function setEcmaVersionAndFeatures(test: TestCase) {
   // Set `globalReturn` and `impliedStrict` in scope analyzer options
   const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures;
   ecmaFeaturesOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
-  ecmaFeaturesOverride.impliedStrict = ecmaFeatures?.impliedStrict ?? null;
+  // Strict mode does not exist in ES3
+  ecmaFeaturesOverride.impliedStrict =
+    ecmaVersion === 3 ? false : (ecmaFeatures?.impliedStrict ?? null);
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)
