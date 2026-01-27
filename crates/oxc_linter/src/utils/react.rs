@@ -14,6 +14,7 @@ use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
 use oxc_syntax::scope::ScopeFlags;
 
+use crate::globals::HTML_TAG;
 use crate::{LintContext, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
@@ -119,19 +120,53 @@ pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
     matches!(get_string_literal_prop_value(role), Some("presentation" | "none"))
 }
 
-// TODO: Should re-implement based on
-// https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isAbstractRole.js
+pub fn is_abstract_role<'a>(ctx: &LintContext<'a>, jsx_opening_el: &JSXOpeningElement<'a>) -> bool {
+    // Do not test custom JSX components, we do not know what
+    // low-level DOM element this maps to.
+    let element_type = get_element_type(ctx, jsx_opening_el);
+    if !HTML_TAG.contains(element_type.as_ref()) {
+        return false;
+    }
+
+    let Some(role) = has_jsx_prop(jsx_opening_el, "role") else {
+        return false;
+    };
+
+    matches!(
+        get_string_literal_prop_value(role),
+        Some(
+            "command"
+                | "composite"
+                | "input"
+                | "landmark"
+                | "range"
+                | "roletype"
+                | "section"
+                | "sectionhead"
+                | "select"
+                | "structure"
+                | "widget"
+                | "window"
+        )
+    )
+}
+
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
 //
-// Until then, use simplified version by https://html.spec.whatwg.org/multipage/dom.html#interactive-content
+// See also https://html.spec.whatwg.org/multipage/dom.html#interactive-content
 pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
     // Interactive contents are...
-    // - button, details, embed, iframe, label, select, textarea
-    // - input (if the `type` attribute is not in the Hidden state)
-    // - a (if the `href` attribute is present)
-    // - audio, video (if the `controls` attribute is present)
-    // - img (if the `usemap` attribute is present)
+    // - a, area (when they have `href`)
+    // - audio, video
+    // - button, canvas, datalist, details, embed, iframe, label, menuitem,
+    //   option, select, summary, textarea, td, th, tr
+    // - input (unless `type` is hidden)
+    // - img (when `usemap` is present)
     match element_type {
-        "button" | "details" | "embed" | "iframe" | "label" | "select" | "textarea" => true,
+        "audio" | "button" | "canvas" | "datalist" | "details" | "embed" | "iframe" | "label"
+        | "menuitem" | "option" | "select" | "summary" | "td" | "th" | "tr" | "textarea"
+        | "video" => true,
         "input" => {
             if let Some(input_type) = has_jsx_prop(jsx_opening_el, "type")
                 && get_string_literal_prop_value(input_type)
@@ -141,11 +176,192 @@ pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningEle
             }
             true
         }
-        "a" => has_jsx_prop(jsx_opening_el, "href").is_some(),
-        "audio" | "video" => has_jsx_prop(jsx_opening_el, "controls").is_some(),
+        "a" | "area" => has_jsx_prop(jsx_opening_el, "href").is_some(),
         "img" => has_jsx_prop(jsx_opening_el, "usemap").is_some(),
         _ => false,
     }
+}
+
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isNonInteractiveElement.js
+pub fn is_non_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
+    // Do not test custom JSX components, we do not know what
+    // low-level DOM element this maps to.
+    if !HTML_TAG.contains(element_type.as_ref()) {
+        return false;
+    }
+
+    match element_type {
+        // <header> elements do not technically have semantics, unless the
+        // element is a direct descendant of <body>, and this plugin cannot
+        // reliably test that.
+        // @see https://www.w3.org/TR/wai-aria-practices/examples/landmarks/banner.html
+        "header" => false,
+        // Only treat <section> as non-interactive when it has an accessible name.
+        "section" => {
+            has_jsx_prop_ignore_case(jsx_opening_el, "aria-label").is_some()
+                || has_jsx_prop_ignore_case(jsx_opening_el, "aria-labelledby").is_some()
+        }
+        _ => NON_INTERACTIVE_ELEMENT_TYPES.contains(&element_type),
+    }
+}
+
+// Based on https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isNonInteractiveElement.js
+const NON_INTERACTIVE_ELEMENT_TYPES: [&str; 59] = [
+    "abbr",
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "br",
+    "caption",
+    "code",
+    "dd",
+    "del",
+    "details",
+    "dfn",
+    "dialog",
+    "dir",
+    "dl",
+    "dt",
+    "em",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "hr",
+    "html",
+    "iframe",
+    "img",
+    "ins",
+    "label",
+    "legend",
+    "li",
+    "main",
+    "mark",
+    "marquee",
+    "menu",
+    "meter",
+    "nav",
+    "ol",
+    "optgroup",
+    "output",
+    "p",
+    "pre",
+    "progress",
+    "ruby",
+    "section",
+    "strong",
+    "sub",
+    "sup",
+    "table",
+    "tbody",
+    "tfoot",
+    "thead",
+    "time",
+    "ul",
+];
+
+const INTERACTIVE_ROLES: [&str; 27] = [
+    "button",
+    "checkbox",
+    "columnheader",
+    "combobox",
+    "gridcell",
+    "link",
+    "listbox",
+    "menu",
+    "menubar",
+    "menuitem",
+    "menuitemcheckbox",
+    "menuitemradio",
+    "option",
+    "radio",
+    "radiogroup",
+    "row",
+    "rowheader",
+    "scrollbar",
+    "searchbox",
+    "separator",
+    "slider",
+    "spinbutton",
+    "switch",
+    "tab",
+    "textbox",
+    // Per the original rule:
+    // > 'toolbar' does not descend from widget, but it does support
+    // > aria-activedescendant, thus in practice we treat it as a widget.
+    "toolbar",
+    "treeitem",
+];
+
+const NON_INTERACTIVE_ROLES: [&str; 47] = [
+    "alert",
+    "alertdialog",
+    "application",
+    "article",
+    "banner",
+    "blockquote",
+    "caption",
+    "cell",
+    "complementary",
+    "contentinfo",
+    "definition",
+    "deletion",
+    "dialog",
+    "directory",
+    "document",
+    "feed",
+    "figure",
+    "form",
+    "grid",
+    "group",
+    "heading",
+    "img",
+    "insertion",
+    "list",
+    "listitem",
+    "log",
+    "main",
+    "marquee",
+    "math",
+    "navigation",
+    "note",
+    "paragraph",
+    // per the original impl:
+    // >  The `progressbar` is descended from `widget`, but in practice, its
+    // > value is always `readonly`, so we treat it as a non-interactive role.
+    "progressbar",
+    "region",
+    "row",
+    "rowgroup",
+    "search",
+    "status",
+    "table",
+    "tablist",
+    "tabpanel",
+    "term",
+    "time",
+    "timer",
+    "tooltip",
+    "tree",
+    "treegrid",
+];
+
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
+pub fn is_interactive_role(role: &str) -> bool {
+    INTERACTIVE_ROLES.contains(&role)
+}
+
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isInteractiveRole.js
+pub fn is_non_interactive_role(role: &str) -> bool {
+    NON_INTERACTIVE_ROLES.contains(&role)
 }
 
 const PRAGMA: &str = "React";
