@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import type { Plugin, Rule } from "#oxlint";
+import type { Plugin, Rule } from "#oxlint/plugin";
 
 const STANDARD_TOKEN_KEYS = new Set(["type", "value", "start", "end", "range", "loc"]);
 

@@ -7,7 +7,23 @@
   "type": "module",
   "main": "dist/index.js",
   "imports": {
-    "#oxlint": "./dist/index.js"
+    "#oxlint": "./dist/index.js",
+    "#oxlint/plugin": "./dist/plugin.js",
+    "#oxlint/rule-tester": "./dist/rule-tester.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    },
+    "./rule-tester": {
+      "types": "./dist/rule-tester.d.ts",
+      "default": "./dist/rule-tester.js"
+    }
   },
   "scripts": {
     "build": "pnpm run build-napi-release && pnpm run build-js",

@@ -34,6 +34,20 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    },
+    "./rule-tester": {
+      "types": "./dist/rule-tester.d.ts",
+      "default": "./dist/rule-tester.js"
+    }
+  },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   }

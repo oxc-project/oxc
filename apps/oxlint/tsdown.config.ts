@@ -37,7 +37,7 @@ export default defineConfig([
   // Main build
   {
     ...commonConfig,
-    entry: ["src-js/cli.ts", "src-js/index.ts"],
+    entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugin.ts", "src-js/rule-tester.ts"],
     format: "esm",
     external: [
       // External native bindings

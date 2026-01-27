@@ -15,7 +15,7 @@ import { RuleTester as ESLintRuleTester } from "eslint";
 import { builtinRules } from "./submodules/eslint/lib/unsupported-api.js";
 import tsEslintParser from "@typescript-eslint/parser";
 
-import type { Rule } from "#oxlint";
+import type { Rule } from "#oxlint/plugin";
 import type { ValidTestCase, InvalidTestCase } from "./src/rule_tester.ts";
 
 type ValidTestCaseWithoutCode = Omit<ValidTestCase, "code"> & { code?: string };

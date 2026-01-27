@@ -9,7 +9,8 @@ import type {
   LanguageOptions,
   ParserOptions,
 } from "../rule_tester.ts";
-import type { Rule, RuleTester as RuleTesterType } from "#oxlint";
+import type { RuleTester as RuleTesterType } from "#oxlint/rule-tester";
+import type { Rule } from "#oxlint/plugin";
 
 type Config = RuleTesterType.Config;
 

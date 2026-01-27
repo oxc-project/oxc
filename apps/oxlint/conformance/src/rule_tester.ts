@@ -4,11 +4,11 @@
 
 // @ts-expect-error - internal module of ESLint with no types
 import eslintGlobals from "../submodules/eslint/conf/globals.js";
-import { RuleTester } from "#oxlint";
+import { RuleTester } from "#oxlint/rule-tester";
 import { describe, it, setCurrentTest } from "./capture.ts";
 import { SHOULD_SKIP_CODE } from "./filter.ts";
 
-import type { Rule } from "#oxlint";
+import type { Rule } from "#oxlint/plugin";
 import type { ParserDetails } from "./index.ts";
 import type {
   LanguageOptionsInternal,
