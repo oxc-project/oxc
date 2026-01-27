@@ -146,9 +146,15 @@ importers:
       execa:
         specifier: ^9.6.0
         version: 9.6.1
+      globals:
+        specifier: ^17.2.0
+        version: 17.2.0
       json-stable-stringify-without-jsonify:
         specifier: ^1.0.1
         version: 1.0.1
+      lodash.merge:
+        specifier: ^4.6.2
+        version: 4.6.2
       oxc-parser:
         specifier: ^0.111.0
         version: 0.111.0
@@ -3861,6 +3867,10 @@ packages:
 
   globals@14.0.0:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
+    engines: {node: '>=18'}
+
+  globals@17.2.0:
+    resolution: {integrity: sha512-tovnCz/fEq+Ripoq+p/gN1u7l6A7wwkoBT9pRCzTHzsD/LvADIzXZdjmRymh5Ztf0DYC3Rwg5cZRYjxzBmzbWg==}
     engines: {node: '>=18'}
 
   globalthis@1.0.4:
@@ -9314,6 +9324,8 @@ snapshots:
       path-scurry: 2.0.1
 
   globals@14.0.0: {}
+
+  globals@17.2.0: {}
 
   globalthis@1.0.4:
     dependencies:

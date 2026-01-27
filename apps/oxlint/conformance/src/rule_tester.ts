@@ -17,7 +17,7 @@ import type {
 
 type DescribeFn = RuleTester.DescribeFn;
 type ItFn = RuleTester.ItFn;
-type TestCases = RuleTester.TestCases;
+export type TestCases = RuleTester.TestCases;
 type Globals = RuleTester.Globals;
 export type Language = RuleTester.Language;
 export type LanguageOptions = LanguageOptionsInternal;

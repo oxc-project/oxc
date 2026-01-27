@@ -11,7 +11,7 @@ type ShouldSkipFn = (name: string) => boolean;
 
 // Options to filter tests to a specific group, rule, or specific code.
 // Useful for debugging a particular test case.
-const FILTER_ONLY_GROUP: Filter | null = null;
+const FILTER_ONLY_GROUP: Filter | null = "sonarjs";
 const FILTER_ONLY_RULE: Filter | null = null;
 const FILTER_ONLY_CODE: Filter | null = null;
 

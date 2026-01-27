@@ -337,6 +337,9 @@ function formatTestCase(testCase: TestCase | null, code: string): string | null 
   // Remove `code` property if it's the same as the test case's code
   if (testCase.code === code) (testCase as { code?: string }).code = undefined;
 
+  // TODO: Delete next line
+  if (testCase.languageOptions?.globals) (testCase.languageOptions as any).globals = "<redacted>";
+
   try {
     return JSON.stringify(testCase, null, 2);
   } catch {
