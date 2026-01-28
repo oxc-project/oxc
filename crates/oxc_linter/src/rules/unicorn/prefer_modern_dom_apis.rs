@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -38,6 +38,16 @@ fn get_replacement_for_position(position: &str) -> Option<&'static str> {
     }
 }
 
+fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
+    let parent_node = ctx.nodes().parent_node(node.id());
+    let grandparent_node = ctx.nodes().parent_node(parent_node.id());
+    matches!(
+        (parent_node.kind(), grandparent_node.kind()),
+        (AstKind::ExpressionStatement(_), _)
+            | (AstKind::ChainExpression(_), AstKind::ExpressionStatement(_))
+    )
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -68,7 +78,7 @@ declare_oxc_lint!(
     PreferModernDomApis,
     unicorn,
     style,
-    pending
+    suggestion
 );
 
 impl Rule for PreferModernDomApis {
@@ -96,11 +106,24 @@ impl Rule for PreferModernDomApis {
             && !call_expr.optional
             && let Some(preferred_method) = get_replacement_for_disallowed_method(method)
         {
-            ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
+            let diagnostic = prefer_modern_dom_apis_diagnostic(
                 preferred_method,
                 method,
                 member_expr.property.span,
-            ));
+            );
+
+            if is_value_not_usable(node, ctx) {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    let new_node = ctx.source_range(call_expr.arguments[0].span());
+                    let old_node = ctx.source_range(call_expr.arguments[1].span());
+
+                    let replacement = format!("{old_node}.{preferred_method}({new_node})");
+
+                    fixer.replace(call_expr.span, replacement)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
 
             return;
         }
@@ -112,13 +135,28 @@ impl Rule for PreferModernDomApis {
             Some(2),
             Some(2),
         ) && let Argument::StringLiteral(lit) = &call_expr.arguments[0]
-            && let Some(replacer) = get_replacement_for_position(lit.value.as_str())
+            && let Some(preferred_method) = get_replacement_for_position(lit.value.as_str())
         {
-            ctx.diagnostic(prefer_modern_dom_apis_diagnostic(
-                replacer,
+            let diagnostic = prefer_modern_dom_apis_diagnostic(
+                preferred_method,
                 method,
                 member_expr.property.span,
-            ));
+            );
+
+            let can_fix = method == "insertAdjacentText" || is_value_not_usable(node, ctx);
+
+            if can_fix {
+                ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    let content = ctx.source_range(call_expr.arguments[1].span());
+                    let reference = ctx.source_range(member_expr.object.span());
+
+                    let replacement = format!("{reference}.{preferred_method}({content})");
+
+                    fixer.replace(call_expr.span, replacement)
+                });
+            } else {
+                ctx.diagnostic(diagnostic);
+            }
         }
     }
 }
@@ -207,8 +245,7 @@ fn test() {
         ),
     ];
 
-    // TODO: Implement autofix and use these tests.
-    let _fix = vec![
+    let fix = vec![
         (
             "parentNode.replaceChild(newChildNode, oldChildNode);",
             "oldChildNode.replaceWith(newChildNode);",
@@ -285,5 +322,6 @@ fn test() {
     ];
 
     Tester::new(PreferModernDomApis::NAME, PreferModernDomApis::PLUGIN, pass, fail)
+        .expect_fix(fix)
         .test_and_snapshot();
 }
