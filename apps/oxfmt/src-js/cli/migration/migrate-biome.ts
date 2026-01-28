@@ -152,7 +152,6 @@ export async function runMigrateBiome() {
 
 // ---
 
-// oxlint-disable-next-line no-await-in-loop -- sequential check is intentional
 async function resolveBiomeConfigFile(cwd: string): Promise<string | null> {
   // Biome supports both `biome.json` and `biome.jsonc`.
   // If both exist, `biome.json` takes priority.
@@ -161,6 +160,7 @@ async function resolveBiomeConfigFile(cwd: string): Promise<string | null> {
   for (const filename of candidates) {
     const filepath = join(cwd, filename);
     try {
+      // oxlint-disable-next-line no-await-in-loop -- sequential check is intentional
       await readFile(filepath, "utf8");
       return filepath;
     } catch {}
