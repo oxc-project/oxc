@@ -43,7 +43,7 @@ export function setCurrentGroup(group: TestGroup): void {
 }
 
 // Current rule being tested
-let currentRule: RuleResult | null = null;
+export let currentRule: RuleResult | null = null;
 
 /**
  * Set the current rule being tested.

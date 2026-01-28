@@ -4,6 +4,7 @@ set -e
 ESLINT_SHA="8f360ad6a7a743d33a83eed8973ee4a50731e55b" # 10.0.0-rc.0
 REACT_SHA="612e371fb215498edde4c853bd1e0c8e9203808f" # 19.2.3
 STYLISTIC_SHA="5c4b512a225a314fa5f41eead9fdc4d51fc243d7" # 5.7.1
+SONAR_SHA="8852e2593390e00f9d9aea764b0b0b9a503d1f08" # 3.0.6
 
 # Shallow clone a repo at a specific commit.
 # Git commands copied from `.github/scripts/clone-parallel.mjs`.
@@ -117,6 +118,52 @@ import BABEL_ESLINT from '@babel/eslint-parser';
 import TYPESCRIPT_ESLINT from '@typescript-eslint/parser';
 export { BABEL_ESLINT, TYPESCRIPT_ESLINT };
 EOF
+
+# Return to `submodules` directory
+cd ..
+
+###############################################################################
+# SonarJS
+###############################################################################
+
+# Clone SonarJS repo into `submodules/sonarjs`
+clone sonarjs https://github.com/SonarSource/SonarJS.git "$SONAR_SHA"
+
+# Install dependencies
+pnpm install --ignore-workspace
+
+# Build
+# (ignore errors, it's just typecheck fail)
+pnpm run bbf || true
+
+# The tests use `describe` and `it` from `node:test`, but we just need to use global `describe`,
+# and make `it` behave like `describe`
+PATTERN="s/import .* from 'node:test';/const it = describe;/"
+if [[ "$OSTYPE" == darwin* ]]; then
+  find packages/jsts/src/rules -name '*.test.ts' -exec sed -i '' "$PATTERN" {} \;
+else
+  find packages/jsts/src/rules -name '*.test.ts' -exec sed -i "$PATTERN" {} \;
+fi
+
+# Replace `import.meta.dirname` with `__dirname` (`import.meta.dirname` doesn't work after `tsx` transforms to CommonJS)
+PATTERN2="s/import\.meta\.dirname/__dirname/g"
+TESTER_PATH="packages/jsts/tests/tools/testers/rule-tester.ts"
+if [[ "$OSTYPE" == darwin* ]]; then
+  find packages/jsts/src/rules -name '*.test.ts' -exec sed -i '' "$PATTERN2" {} \;
+  sed -i '' "$PATTERN2" "$TESTER_PATH"
+else
+  find packages/jsts/src/rules -name '*.test.ts' -exec sed -i "$PATTERN2" {} \;
+  sed -i "$PATTERN2" "$TESTER_PATH"
+fi
+
+# Replace `import { it } from 'node:test';` with `const it = describe;` in comment-based checker
+PATTERN3="s/import .* from 'node:test';/const it = describe;/"
+CHECKER_PATH="packages/jsts/tests/tools/testers/comment-based/checker.ts"
+if [[ "$OSTYPE" == darwin* ]]; then
+  sed -i '' "$PATTERN3" "$CHECKER_PATH"
+else
+  sed -i "$PATTERN3" "$CHECKER_PATH"
+fi
 
 # Return to `submodules` directory
 cd ..
