@@ -3,7 +3,7 @@ commit: 7f6a8467
 parser_typescript Summary:
 AST Parsed     : 9842/9843 (99.99%)
 Positive Passed: 9837/9843 (99.94%)
-Negative Passed: 1500/2555 (58.71%)
+Negative Passed: 1510/2555 (59.10%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -13,8 +13,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDecl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorInferredReturnTypeErrorInReturnStatement.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorsInAmbientContext.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports10.ts
 
@@ -27,8 +25,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExpor
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithRelativeExternalImportDeclaration.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithRelativeModuleName.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientGetters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientStatement1.ts
 
@@ -181,8 +177,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constWithNon
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constantEnumAssert.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads7.ts
 
@@ -362,8 +356,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssign
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclareClass1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultAlias_excludesEverything.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultClassAndValue.ts
@@ -409,8 +401,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendGlobal
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendedInterfacesWithDuplicateTypeParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSemantics.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleImmutableBindings.ts
 
@@ -629,8 +619,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedClassW
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarationExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/methodInAmbientClass1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingDomElement_UsingDomLib.ts
 
@@ -1466,8 +1454,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importsImplicitlyReadonly.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault2.ts
@@ -1738,10 +1724,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors6.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserGetAccessorWithTypeParameters1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeAnnotation1.ts
@@ -1751,8 +1733,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClass2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
 
@@ -2524,6 +2504,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Add a function body (`{}`).
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:3:17]
+ 2 │     class C {
+ 3 │         get X() { return 1; }
+   ·                 ▲
+ 4 │         set X(v) { }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:4:18]
+ 3 │         get X() { return 1; }
+ 4 │         set X(v) { }
+   ·                  ▲
+ 5 │ 
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:6:24]
+ 5 │ 
+ 6 │         static get Y() { return 1; }
+   ·                        ▲
+ 7 │         static set Y(v) { }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:7:25]
+ 6 │         static get Y() { return 1; }
+ 7 │         static set Y(v) { }
+   ·                         ▲
+ 8 │     }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:12:13]
+ 11 │ declare class C {
+ 12 │     get X() { return 1; }
+    ·             ▲
+ 13 │     set X(v) { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:13:14]
+ 12 │     get X() { return 1; }
+ 13 │     set X(v) { }
+    ·              ▲
+ 14 │ 
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:15:20]
+ 14 │ 
+ 15 │     static get Y() { return 1; }
+    ·                    ▲
+ 16 │     static set Y(v) { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:16:21]
+ 15 │     static get Y() { return 1; }
+ 16 │     static set Y(v) { }
+    ·                     ▲
+ 17 │ }
+    ╰────
+
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/aliasErrors.ts:13:12]
  12 │ import m2 = no.mod;
@@ -2570,6 +2614,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  4 │         var arguments = [];
    ·             ─────────
  5 │     }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/ambientGetters.ts:6:18]
+ 5 │ declare class B {
+ 6 │     get length() { return 0; }
+   ·                  ▲
+ 7 │ }
    ╰────
 
   × Expected `;` but found `:`
@@ -4518,6 +4570,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │ 
    ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/constructorOverloads6.ts:4:25]
+ 3 │     constructor(n: number);
+ 4 │     constructor(x: any) {
+   ·                         ▲
+ 5 │ 
+   ╰────
+
   × Multiple constructor implementations are not allowed.
    ╭─[typescript/tests/cases/compiler/constructorOverloads8.ts:2:5]
  1 │ class C {
@@ -5992,6 +6052,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  14 │ }
     ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/exportDeclareClass1.ts:2:21]
+ 1 │     export declare class eaC {
+ 2 │         static tF() { };
+   ·                     ▲
+ 3 │         static tsF(param:any) { };
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/exportDeclareClass1.ts:3:31]
+ 2 │         static tF() { };
+ 3 │         static tsF(param:any) { };
+   ·                               ▲
+ 4 │     };
+   ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/compiler/exportDefaultAsyncFunction2.ts:2:17]
  1 │ export function async<T>(...args: any[]): any { }
@@ -6103,6 +6179,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │     export class XDate {
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/externSyntax.ts:8:20]
+ 7 │         public f();
+ 8 │         public g() { } // error body
+   ·                    ▲
+ 9 │     }
+   ╰────
 
   × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
@@ -7786,6 +7870,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  1 │ const a =!@#!@$
    ·             ─
  2 │ const b = !@#!@#!@#!
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/methodInAmbientClass1.ts:2:20]
+ 1 │     declare class Foo {
+ 2 │         fn(): boolean {
+   ·                       ▲
+ 3 │         }
    ╰────
 
   × Identifier `baz` has already been declared
@@ -12238,6 +12330,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  21 │ 
     ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:39:23]
+ 38 │         y = 4;
+ 39 │         constructor() { }
+    ·                       ▲
+ 40 │         fn() { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:40:14]
+ 39 │         constructor() { }
+ 40 │         fn() { }
+    ·              ▲
+ 41 │         static sfn() { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:41:22]
+ 40 │         fn() { }
+ 41 │         static sfn() { }
+    ·                      ▲
+ 42 │     }
+    ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
     ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
  56 │     export var q;
@@ -12786,6 +12902,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │     }
    ·     ─
  9 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts:2:28]
+ 1 │ declare abstract class A {
+ 2 │     abstract constructor() {}
+   ·                            ▲
+ 3 │ }
    ╰────
 
   × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
@@ -15104,6 +15228,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  16 │     declare nonce: any; // ok, even though it's not in the base
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:15:17]
+ 14 │ class BOther extends A {
+ 15 │     declare m() { return 2 } // not allowed on methods
+    ·                 ▲
+ 16 │     declare nonce: any; // ok, even though it's not in the base
+    ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:3:12]
@@ -19675,6 +19807,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                      ─
    ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts:6:16]
+ 5 │     "some prop" = 42;
+ 6 │     fn(): boolean {
+   ·                   ▲
+ 7 │         return false;
+   ╰────
+
   × Expected `as` but found `from`
    ╭─[typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithAMD.ts:1:10]
  1 │ import * from Zero from "./0"
@@ -21146,6 +21286,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors5.ts:2:13]
+ 1 │ declare class C {
+ 2 │   get foo() { return 0; }
+   ·             ▲
+ 3 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors6.ts:2:14]
+ 1 │ declare class C {
+ 2 │   set foo(v) { }
+   ·              ▲
+ 3 │ }
+   ╰────
+
   × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors7.ts:1:18]
  1 │ var v = { get foo(v: number) { } };
@@ -21292,6 +21448,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │    foo();
    ·    ───
  3 │    constructor() { }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts:4:25]
+ 3 │     constructor(n: number);
+ 4 │     constructor(x: any) {
+   ·                         ▲
+ 5 │     }
    ╰────
 
   × TS(1175): 'implements' clause already seen
@@ -22589,6 +22753,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts:2:19]
+ 1 │ class C {
+ 2 │     declare Foo() { }
+   ·                   ▲
+ 3 │ }
+   ╰────
 
   × Identifier `public` has already been declared
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:2:3]

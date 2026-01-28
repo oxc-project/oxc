@@ -738,6 +738,12 @@ impl<'a> ParserImpl<'a> {
                 }
             }
         }
+
+        if self.ctx.has_ambient()
+            && let Some(body) = &method.value.body
+        {
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
+        }
     }
 
     fn check_method_definition_accessor(&mut self, method: &MethodDefinition<'a>) {

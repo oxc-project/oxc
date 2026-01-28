@@ -176,6 +176,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts:17:19]
+ 16 │ declare class DeclaredClass extends BaseClass {
+ 17 │   override test() {}
+    ·                   ▲
+ 18 │ }
+    ╰────
+
   × Identifier `show` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts:2:12]
  1 │ class MyClass extends BaseClass {
@@ -12510,6 +12518,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-method/input.ts:2:17]
+ 1 │ class A {
+ 2 │   declare foo() {}
+   ·                 ▲
+ 3 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/declare-new-line-abstract/input.ts:1:8]
  1 │ declare abstract
@@ -12633,6 +12649,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  8 │   protected *g() {}
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:7:16]
+ 6 │   readonly *e() {}
+ 7 │   declare *f() {}
+   ·                ▲
+ 8 │   protected *g() {}
+   ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/generator-method-with-modifiers/input.ts:5:13]
@@ -12779,6 +12803,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:4:17]
+ 3 │   readonly *e?() { }
+ 4 │   declare *f?() { }
+   ·                 ▲
+ 5 │ }
+   ╰────
+
   × TS(1245): Method 'd?.d' cannot have an implementation because it is marked abstract.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:8:14]
  7 │ class A {
@@ -12804,6 +12836,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  11 │ }
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:10:22]
+  9 │   readonly *[e?.e]?() { }
+ 10 │   declare *[f?.f]?() { }
+    ·                      ▲
+ 11 │ }
+    ╰────
 
   × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/optional-generator-method-with-invalid-modifiers/input.ts:2:13]

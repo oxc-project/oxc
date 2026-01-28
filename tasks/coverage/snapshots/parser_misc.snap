@@ -733,6 +733,14 @@ Negative Passed: 134/134 (100.00%)
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[misc/fail/oxc-11713-24.ts:2:20]
+ 1 │ class Foo {
+ 2 │   declare method() {}
+   ·                    ▲
+ 3 │ }
+   ╰────
+
   × TS(1024): 'readonly' modifier can only appear on a property declaration or index signature.
    ╭─[misc/fail/oxc-11713-25.ts:2:3]
  1 │ class Foo {

@@ -367,6 +367,7 @@ Function implementation is missing or not immediately following the declaration.
 Function implementation is missing or not immediately following the declaration.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/modifiers-override/input.ts
+An implementation cannot be declared in ambient contexts.
 Identifier `show` has already been declared
 Identifier `size` has already been declared
 
