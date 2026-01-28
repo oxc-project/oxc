@@ -337,6 +337,13 @@ function formatTestCase(testCase: TestCase | null, code: string): string | null 
   // Remove `code` property if it's the same as the test case's code
   if (testCase.code === code) (testCase as { code?: string }).code = undefined;
 
+  // Shorten `filename` if it's a full path
+  let { filename } = testCase;
+  if (filename != null) {
+    if (filename.startsWith(ROOT_DIR_PATH)) filename = filename.slice(ROOT_DIR_PATH.length);
+    testCase.filename = normalizeSlashes(filename);
+  }
+
   try {
     return JSON.stringify(testCase, null, 2);
   } catch {
