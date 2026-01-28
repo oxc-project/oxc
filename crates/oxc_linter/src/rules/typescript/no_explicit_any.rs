@@ -106,9 +106,9 @@ impl Rule for NoExplicitAny {
 impl NoExplicitAny {
     fn is_in_rest<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
-        ctx.nodes()
-            .ancestors(node.id())
-            .any(|parent| matches!(parent.kind(), AstKind::FormalParameterRest(_)))
+        ctx.is_inside(node.id(), |ancestor| {
+            matches!(ancestor.kind(), AstKind::FormalParameterRest(_))
+        })
     }
 }
 

@@ -68,10 +68,6 @@ declare_oxc_lint!(
     config = PreferAwaitToThenConfig,
 );
 
-fn is_inside_yield_or_await(node: &AstNode) -> bool {
-    matches!(node.kind(), AstKind::YieldExpression(_) | AstKind::AwaitExpression(_))
-}
-
 impl Rule for PreferAwaitToThen {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
@@ -92,7 +88,9 @@ impl Rule for PreferAwaitToThen {
 
         if !self.strict {
             // Already inside a yield or await
-            if ctx.nodes().ancestors(node.id()).any(is_inside_yield_or_await) {
+            if ctx.is_inside(node.id(), |ancestor| {
+                matches!(ancestor.kind(), AstKind::YieldExpression(_) | AstKind::AwaitExpression(_))
+            }) {
                 return;
             }
         }

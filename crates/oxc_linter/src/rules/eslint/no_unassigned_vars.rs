@@ -74,7 +74,7 @@ impl Rule for NoUnassignedVars {
         ) {
             return;
         }
-        if ctx.nodes().ancestors(node.id()).skip(1).any(|ancestor| {
+        if ctx.is_inside(ctx.nodes().parent_id(node.id()), |ancestor| {
             matches!(
                 ancestor.kind(),
                 AstKind::TSModuleDeclaration(_) | AstKind::TSGlobalDeclaration(_)
