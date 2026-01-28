@@ -1,6 +1,7 @@
 use std::cmp::max;
 
 use oxc_allocator::StringBuilder;
+use oxc_span::Ident;
 
 use crate::diagnostics;
 
@@ -271,5 +272,13 @@ impl<'a> Lexer<'a> {
             _ => {}
         }
         &source_text[start..end]
+    }
+
+    /// Get the current identifier with precomputed hash.
+    #[inline]
+    pub(crate) fn get_ident(&self, token: Token) -> Ident<'a> {
+        let s = self.get_string(token);
+        let hash = self.identifier_hasher.finish();
+        Ident::new_with_hash(s, hash)
     }
 }

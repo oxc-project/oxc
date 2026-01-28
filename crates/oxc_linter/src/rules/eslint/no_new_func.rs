@@ -2,7 +2,7 @@ use oxc_ast::{AstKind, ast::IdentifierReference};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, IDENT_FUNCTION, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -104,7 +104,7 @@ impl Rule for NoNewFunc {
 }
 
 fn check(ident: &IdentifierReference, span: Span, ctx: &LintContext) {
-    if ident.is_global_reference_name("Function", ctx.scoping()) {
+    if ident.is_global_reference_name(&IDENT_FUNCTION, ctx.scoping()) {
         ctx.diagnostic(no_new_func(span));
     }
 }

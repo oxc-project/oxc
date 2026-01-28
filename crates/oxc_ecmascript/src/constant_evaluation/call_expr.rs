@@ -10,6 +10,7 @@ use std::borrow::Cow;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::{IDENT_MATH, IDENT_NUMBER, IDENT_STRING};
 use oxc_syntax::number::ToJsString;
 
 use cow_utils::CowUtils;
@@ -300,7 +301,7 @@ fn try_fold_string_from_char_code<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !ctx.is_global_expr("String", object) {
+    if !ctx.is_global_expr(&IDENT_STRING, object) {
         return None;
     }
     let mut s = String::with_capacity(args.len());
@@ -396,7 +397,7 @@ fn try_fold_number_methods<'a>(
     name: &str,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !ctx.is_global_expr("Number", object) {
+    if !ctx.is_global_expr(&IDENT_NUMBER, object) {
         return None;
     }
     if args.len() != 1 {
@@ -427,7 +428,7 @@ fn try_fold_roots<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
+    if !ctx.is_global_expr(&IDENT_MATH, object) || !validate_arguments(args, 1) {
         return None;
     }
     let arg_val = args[0].to_expression().get_side_free_number_value(ctx)?;
@@ -451,7 +452,7 @@ fn try_fold_math_unary<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
+    if !ctx.is_global_expr(&IDENT_MATH, object) || !validate_arguments(args, 1) {
         return None;
     }
     let arg_val = args[0].to_expression().get_side_free_number_value(ctx)?;
@@ -493,7 +494,7 @@ fn try_fold_math_variadic<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
-    if !ctx.is_global_expr("Math", object) {
+    if !ctx.is_global_expr(&IDENT_MATH, object) {
         return None;
     }
     let mut numbers = std::vec::Vec::new();

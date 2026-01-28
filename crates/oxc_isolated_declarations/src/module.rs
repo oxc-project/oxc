@@ -1,6 +1,6 @@
 use oxc_allocator::{Box as ArenaBox, CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN};
 
 use crate::{IsolatedDeclarations, diagnostics::default_export_inferred};
 
@@ -21,11 +21,11 @@ impl<'a> IsolatedDeclarations<'a> {
         ))
     }
 
-    pub(crate) fn create_unique_name(&self, name: &str) -> Atom<'a> {
-        let mut binding = self.ast.atom(name);
+    pub(crate) fn create_unique_name(&self, name: &str) -> Ident<'a> {
+        let mut binding = self.ast.ident(name);
         let mut i = 1;
-        while self.scope.has_reference(&binding) {
-            binding = self.ast.atom(format!("{name}_{i}").as_str());
+        while self.scope.has_reference(binding) {
+            binding = self.ast.ident(format!("{name}_{i}").as_str());
             i += 1;
         }
         binding
@@ -144,17 +144,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let mut new_specifiers = self.ast.vec_with_capacity(specifiers.len());
         specifiers.iter().for_each(|specifier| {
-            let is_referenced = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                    self.scope.has_reference(&specifier.local.name)
-                }
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                    self.scope.has_reference(&specifier.local.name)
-                }
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                    self.scope.has_reference(&specifier.name())
-                }
-            };
+            let is_referenced = self.scope.has_reference(specifier.local().name);
             if is_referenced {
                 new_specifiers.push(specifier.clone_in(self.ast.allocator));
             }

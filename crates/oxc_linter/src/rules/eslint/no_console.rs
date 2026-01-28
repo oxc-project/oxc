@@ -105,7 +105,7 @@ impl Rule for NoConsole {
         };
 
         if ident.name != "console"
-            || !ctx.scoping().root_unresolved_references().contains_key("console")
+            || !ctx.scoping().root_unresolved_references_contains_by_name("console")
         {
             return;
         }

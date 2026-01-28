@@ -3,7 +3,7 @@
 use std::borrow::Cow;
 
 use oxc_allocator::{Allocator, AllocatorAccessor, Box, FromIn, IntoIn, Vec};
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{Atom, Ident, SPAN, Span};
 use oxc_syntax::{
     comment_node::CommentNodeId, number::NumberBase, operator::UnaryOperator, scope::ScopeId,
 };
@@ -102,6 +102,12 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn atom(self, value: &str) -> Atom<'a> {
         Atom::from_in(value, self.allocator)
+    }
+
+    /// Allocate an [`Ident`] from a string slice.
+    #[inline]
+    pub fn ident(self, value: &str) -> Ident<'a> {
+        Ident::from_in(value, self.allocator)
     }
 
     /// Allocate an [`Atom`] from an array of string slices.

@@ -107,13 +107,14 @@ impl Rule for NoEval {
                     });
 
                 for name in globals {
-                    let Some(references) = ctx.scoping().root_unresolved_references().get(name)
+                    let Some(references) =
+                        ctx.scoping().get_root_unresolved_reference_by_name(name)
                     else {
                         continue;
                     };
 
                     for reference_id in references {
-                        let reference = ctx.scoping().get_reference(*reference_id);
+                        let reference = ctx.scoping().get_reference(reference_id);
                         let node = ctx.nodes().get_node(reference.node_id());
 
                         if name == "eval" {

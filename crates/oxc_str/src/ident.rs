@@ -1,10 +1,13 @@
 //! Identifier string type.
 
-use std::{
-    borrow::{Borrow, Cow},
-    fmt, hash,
-    ops::Deref,
-};
+#![expect(
+    clippy::cast_possible_truncation,
+    clippy::len_without_is_empty,
+    clippy::undocumented_unsafe_blocks,
+    clippy::cast_lossless
+)]
+
+use std::{borrow::Cow, fmt, hash, marker::PhantomData, ops::Deref, ptr::NonNull};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
 #[cfg(feature = "serialize")]
@@ -14,20 +17,95 @@ use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{Atom, CompactStr};
 
+/// Multiplier constant for incremental hashing.
+/// Uses u64 to ensure consistent behavior on 32-bit and 64-bit platforms.
+const K: u64 = 0xf135_7aea_2e62_a9c5;
+
+/// Incremental hasher for computing Ident hashes byte-by-byte.
+///
+/// This allows computing hash while scanning identifier bytes in the lexer,
+/// avoiding a second pass over the data.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct IncrementalIdentHasher {
+    state: u64,
+}
+
+impl IncrementalIdentHasher {
+    /// Create a new hasher with initial state.
+    #[inline]
+    pub const fn new() -> Self {
+        Self { state: 0 }
+    }
+
+    /// Add a byte to the hash.
+    #[inline]
+    pub fn write_byte(&mut self, byte: u8) {
+        self.state = self.state.wrapping_add(byte as u64).wrapping_mul(K);
+    }
+
+    /// Add multiple bytes to the hash.
+    #[inline]
+    pub fn write_bytes(&mut self, bytes: &[u8]) {
+        for &byte in bytes {
+            self.write_byte(byte);
+        }
+    }
+
+    /// Finalize and return the hash value.
+    #[inline]
+    pub fn finish(self) -> u32 {
+        // 0xff marker (like str's Hash impl)
+        let state = self.state.wrapping_add(0xff).wrapping_mul(K);
+        // Rotate and extract top 32 bits
+        (state.rotate_left(26) >> 32) as u32
+    }
+}
+
+/// Compute the hash of a string using the incremental algorithm.
+/// This is a const-compatible version for `Ident::new_const`.
+const fn compute_hash(s: &str) -> u32 {
+    let bytes = s.as_bytes();
+    let mut state: u64 = 0;
+    let mut i = 0;
+    while i < bytes.len() {
+        state = state.wrapping_add(bytes[i] as u64).wrapping_mul(K);
+        i += 1;
+    }
+    // 0xff marker
+    state = state.wrapping_add(0xff).wrapping_mul(K);
+    // Rotate and extract top 32 bits
+    (state.rotate_left(26) >> 32) as u32
+}
+
 /// An identifier string for oxc_allocator.
+///
+/// This type stores a string reference with a precomputed hash for fast equality
+/// checks and efficient hash map operations.
 ///
 /// Use [CompactStr] with [Ident::to_compact_str] or [Ident::into_compact_str] for
 /// the lifetimeless form.
-#[repr(transparent)]
 #[derive(Clone, Copy, Eq)]
-pub struct Ident<'a>(&'a str);
+pub struct Ident<'a> {
+    ptr: NonNull<u8>,
+    len: u32,
+    hash: u32,
+    _marker: PhantomData<&'a str>,
+}
+
+// SAFETY: `Ident` only contains a pointer to immutable string data,
+// which is safe to share across threads.
+unsafe impl Sync for Ident<'_> {}
+unsafe impl Send for Ident<'_> {}
 
 impl Ident<'static> {
     /// Get an [`Ident`] containing a static string.
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     pub const fn new_const(s: &'static str) -> Self {
-        Ident(s)
+        let ptr = unsafe { NonNull::new_unchecked(s.as_ptr().cast_mut()) };
+        let len = s.len() as u32;
+        let hash = compute_hash(s);
+        Self { ptr, len, hash, _marker: PhantomData }
     }
 
     /// Get an [`Ident`] containing the empty string (`""`).
@@ -38,18 +116,51 @@ impl Ident<'static> {
 }
 
 impl<'a> Ident<'a> {
+    /// Create a new [`Ident`] from a string slice.
+    #[inline]
+    pub fn new(s: &'a str) -> Self {
+        let ptr = NonNull::from(s).cast::<u8>();
+        let len = s.len() as u32;
+
+        // Compute hash using incremental hasher
+        let mut hasher = IncrementalIdentHasher::new();
+        hasher.write_bytes(s.as_bytes());
+        let hash = hasher.finish();
+
+        Self { ptr, len, hash, _marker: PhantomData }
+    }
+
+    /// Create a new [`Ident`] from a string slice with a precomputed hash.
+    ///
+    /// This is useful when the hash has already been computed incrementally
+    /// during lexing.
+    #[inline]
+    pub fn new_with_hash(s: &'a str, hash: u32) -> Self {
+        let ptr = NonNull::from(s).cast::<u8>();
+        let len = s.len() as u32;
+        Self { ptr, len, hash, _marker: PhantomData }
+    }
+
+    /// Get the length of this identifier.
+    #[inline]
+    pub fn len(&self) -> usize {
+        self.len as usize
+    }
+
     /// Borrow a string slice.
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline]
     pub fn as_str(&self) -> &'a str {
-        self.0
+        unsafe {
+            let slice = std::slice::from_raw_parts(self.ptr.as_ptr(), self.len());
+            std::str::from_utf8_unchecked(slice)
+        }
     }
 
     /// Convert this [`Ident`] into an [`Atom`].
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     pub fn as_atom(&self) -> Atom<'a> {
-        Atom::from(self.0)
+        Atom::from(self.as_str())
     }
 
     /// Convert this [`Ident`] into a [`String`].
@@ -111,7 +222,9 @@ impl<'new_alloc> CloneIn<'new_alloc> for Ident<'_> {
 
     #[inline]
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
-        Ident::from_in(self.as_str(), allocator)
+        let s = allocator.alloc_str(self.as_str());
+        let ptr = NonNull::from(s).cast::<u8>();
+        Ident { ptr, len: self.len, hash: self.hash, _marker: PhantomData }
     }
 }
 
@@ -142,14 +255,14 @@ impl<'alloc> FromIn<'alloc, &str> for Ident<'alloc> {
 impl<'alloc> FromIn<'alloc, String> for Ident<'alloc> {
     #[inline]
     fn from_in(s: String, allocator: &'alloc Allocator) -> Self {
-        Self::from_in(s.as_str(), allocator)
+        Self::from(allocator.alloc_str(&s))
     }
 }
 
 impl<'alloc> FromIn<'alloc, &String> for Ident<'alloc> {
     #[inline]
     fn from_in(s: &String, allocator: &'alloc Allocator) -> Self {
-        Self::from_in(s.as_str(), allocator)
+        Self::from(allocator.alloc_str(s))
     }
 }
 
@@ -161,10 +274,9 @@ impl<'alloc> FromIn<'alloc, Cow<'_, str>> for Ident<'alloc> {
 }
 
 impl<'a> From<&'a str> for Ident<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline]
     fn from(s: &'a str) -> Self {
-        Self(s)
+        Self::new(s)
     }
 }
 
@@ -177,25 +289,23 @@ impl<'alloc> From<ArenaStringBuilder<'alloc>> for Ident<'alloc> {
 
 impl<'a> From<Ident<'a>> for &'a str {
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn from(s: Ident<'a>) -> Self {
         s.as_str()
     }
 }
 
 impl<'a> From<Ident<'a>> for Atom<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline]
     fn from(s: Ident<'a>) -> Self {
         s.as_atom()
     }
 }
 
 impl<'a> From<Atom<'a>> for Ident<'a> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline]
     fn from(s: Atom<'a>) -> Self {
-        Self(s.as_str())
+        Self::new(s.as_str())
     }
 }
 
@@ -224,7 +334,7 @@ impl Deref for Ident<'_> {
     type Target = str;
 
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn deref(&self) -> &Self::Target {
         self.as_str()
     }
@@ -232,31 +342,25 @@ impl Deref for Ident<'_> {
 
 impl AsRef<str> for Ident<'_> {
     #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
+    #[inline(always)]
     fn as_ref(&self) -> &str {
         self.as_str()
     }
 }
 
-impl Borrow<str> for Ident<'_> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn borrow(&self) -> &str {
-        self.as_str()
-    }
-}
-
-impl<T: AsRef<str>> PartialEq<T> for Ident<'_> {
-    #[inline]
-    fn eq(&self, other: &T) -> bool {
-        self.as_str() == other.as_ref()
-    }
-}
-
-impl PartialEq<Ident<'_>> for &str {
+impl PartialEq for Ident<'_> {
     #[inline]
     fn eq(&self, other: &Ident<'_>) -> bool {
-        *self == other.as_str()
+        // First compare len and hash for fast rejection (single 64-bit compare),
+        // then fall back to string comparison for potential hash collisions.
+        self.len == other.len && self.hash == other.hash && self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<&Ident<'_>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &&Ident<'_>) -> bool {
+        self == *other
     }
 }
 
@@ -264,6 +368,41 @@ impl PartialEq<str> for Ident<'_> {
     #[inline]
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
+    }
+}
+
+impl PartialEq<&str> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &&str) -> bool {
+        self.as_str() == *other
+    }
+}
+
+impl PartialEq<String> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &String) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Atom<'_>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &Atom<'_>) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<&Atom<'_>> for Ident<'_> {
+    #[inline]
+    fn eq(&self, other: &&Atom<'_>) -> bool {
+        self.as_str() == other.as_str()
+    }
+}
+
+impl PartialEq<Ident<'_>> for &str {
+    #[inline]
+    fn eq(&self, other: &Ident<'_>) -> bool {
+        *self == other.as_str()
     }
 }
 
@@ -277,7 +416,22 @@ impl PartialEq<Ident<'_>> for Cow<'_, str> {
 impl hash::Hash for Ident<'_> {
     #[inline]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
-        self.as_str().hash(hasher);
+        // Use precomputed hash.
+        // `hashbrown` only uses top 7 bits and bottom N bits of hash,
+        // where N is the exponent of number of buckets in the hash table.
+        // Rotate by 57 bits (= 64 - 7) so that:
+        // - Original bits 0-6 end up in u64 bits 57-63 (top 7 bits for group matching)
+        // - Original bits 7-31 end up in u64 bits 0-24 (bottom 25 bits for bucket selection)
+        // This gives good entropy as long as HashMap contains less than 33 million entries.
+        let hash = (self.hash as u64).rotate_left(64 - 7);
+        hasher.write_u64(hash);
+    }
+}
+
+impl std::borrow::Borrow<str> for Ident<'_> {
+    #[inline]
+    fn borrow(&self) -> &str {
+        self.as_str()
     }
 }
 
@@ -344,4 +498,251 @@ macro_rules! format_ident {
         write!(s, $($arg)*).unwrap();
         Ident::from(s)
     }}
+}
+
+/// Hash map keyed by [`Ident`].
+///
+/// This uses [`IdentHasher`] which leverages the precomputed hash stored in `Ident`,
+/// making hash map operations very fast.
+#[expect(clippy::disallowed_types)]
+pub type IdentHashMap<'a, V> = std::collections::HashMap<Ident<'a>, V, IdentHasher>;
+
+/// Arena-allocated hash map keyed by [`Ident`].
+///
+/// This uses [`IdentHasher`] which leverages the precomputed hash stored in `Ident`,
+/// making hash map operations very fast, and stores entries in the arena allocator.
+pub type ArenaIdentHashMap<'alloc, V> =
+    oxc_allocator::hash_map::HashMapImpl<'alloc, Ident<'alloc>, V, IdentHasher>;
+
+/// Hash set of [`Ident`].
+///
+/// This uses [`IdentHasher`] which leverages the precomputed hash stored in `Ident`,
+/// making hash set operations very fast.
+#[expect(clippy::disallowed_types)]
+pub type IdentHashSet<'a> = std::collections::HashSet<Ident<'a>, IdentHasher>;
+
+/// Hasher for use in hash maps keyed by [`Ident`].
+///
+/// This hasher simply stores the precomputed hash from `Ident::hash()`,
+/// making it essentially a no-op hasher for maximum performance.
+#[derive(Debug)]
+pub struct IdentHasher(u64);
+
+impl IdentHasher {
+    #[inline]
+    fn new() -> Self {
+        Self(0)
+    }
+}
+
+impl hash::Hasher for IdentHasher {
+    #[inline]
+    fn write_u64(&mut self, n: u64) {
+        self.0 = n;
+    }
+
+    #[inline]
+    fn write(&mut self, _: &[u8]) {}
+
+    #[inline]
+    fn finish(&self) -> u64 {
+        self.0
+    }
+}
+
+impl hash::BuildHasher for IdentHasher {
+    type Hasher = Self;
+
+    #[inline]
+    fn build_hasher(&self) -> Self::Hasher {
+        Self::new()
+    }
+}
+
+impl Default for IdentHasher {
+    #[inline]
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Clone for IdentHasher {
+    #[inline]
+    fn clone(&self) -> Self {
+        Self::new()
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn ident_eq() {
+        let foo = Ident::new("foo");
+        let foo2 = Ident::new("foo");
+        let bar = Ident::new("bar");
+        assert_eq!(foo, foo2);
+        assert_ne!(foo, bar);
+    }
+
+    #[test]
+    fn ident_as_str() {
+        let s = "hello_world";
+        let ident = Ident::new(s);
+        assert_eq!(ident.as_str(), s);
+    }
+
+    #[test]
+    fn ident_len() {
+        let ident = Ident::new("hello");
+        assert_eq!(ident.len(), 5);
+    }
+
+    #[test]
+    fn ident_empty() {
+        let ident = Ident::empty();
+        assert_eq!(ident.len(), 0);
+        assert_eq!(ident.as_str(), "");
+    }
+
+    #[test]
+    fn ident_hashset_lookup() {
+        use rustc_hash::FxHashSet;
+
+        let mut set: FxHashSet<Ident<'_>> = FxHashSet::default();
+
+        // Insert Idents
+        set.insert(Ident::new("foo"));
+        set.insert(Ident::new("bar"));
+
+        // Look up with new Idents - should find them
+        assert!(set.contains(&Ident::new("foo")));
+        assert!(set.contains(&Ident::new("bar")));
+
+        // Verify that a different key is not found
+        assert!(!set.contains(&Ident::new("baz")));
+    }
+
+    #[test]
+    fn ident_hash_compatible_with_str() {
+        use rustc_hash::FxHashSet;
+
+        // This test verifies that Ident's Hash impl is compatible with str lookups
+        // which is required for correct behavior in mixed hash containers
+        let mut set: FxHashSet<Ident<'_>> = FxHashSet::default();
+        set.insert(Ident::new("foo"));
+
+        // The hash of Ident("foo") should allow finding it via another Ident("foo")
+        let lookup = Ident::new("foo");
+        assert!(set.contains(&lookup));
+    }
+
+    #[test]
+    fn new_const_equals_new() {
+        // Test that Ident::new_const and Ident::new produce equal Idents
+        // for the same string content.
+
+        // Test various string lengths to exercise different code paths in const_fx_hash_str
+        let test_cases: &[&str] = &[
+            "",                                    // empty
+            "a",                                   // 1 byte
+            "ab",                                  // 2 bytes
+            "abc",                                 // 3 bytes
+            "abcd",                                // 4 bytes
+            "abcde",                               // 5 bytes
+            "abcdef",                              // 6 bytes
+            "abcdefg",                             // 7 bytes
+            "abcdefgh",                            // 8 bytes (exactly one chunk)
+            "abcdefghi",                           // 9 bytes (one chunk + 1 remaining)
+            "0123456789abcdef",                    // 16 bytes (two chunks)
+            "0123456789abcdefghij",                // 20 bytes (two chunks + 4 remaining)
+            "hello_world_this_is_a_longer_string", // longer string
+        ];
+
+        for s in test_cases {
+            let runtime = Ident::new(s);
+            let compile_time = Ident::new_const(s);
+
+            // Check that the string content is the same
+            assert_eq!(runtime.as_str(), compile_time.as_str(), "String content differs for {s:?}");
+
+            // Check that len is the same
+            assert_eq!(runtime.len, compile_time.len, "len differs for {s:?}");
+
+            // Check that hash is the same - this is the critical test!
+            assert_eq!(
+                runtime.hash, compile_time.hash,
+                "hash differs for {s:?}: new={:#x}, new_const={:#x}",
+                runtime.hash, compile_time.hash
+            );
+
+            // Check that they compare equal (uses both len and hash)
+            assert_eq!(runtime, compile_time, "Idents not equal for {s:?}");
+        }
+    }
+
+    #[test]
+    fn new_const_in_hashset() {
+        use rustc_hash::FxHashSet;
+
+        // Verify that Ident::new_const works correctly with hash sets
+        let mut set: FxHashSet<Ident<'_>> = FxHashSet::default();
+
+        // Insert using new_const
+        set.insert(Ident::new_const("foo"));
+        set.insert(Ident::new_const("bar"));
+
+        // Look up using new - should find them
+        assert!(set.contains(&Ident::new("foo")), "Failed to find 'foo' inserted with new_const");
+        assert!(set.contains(&Ident::new("bar")), "Failed to find 'bar' inserted with new_const");
+
+        // Look up using new_const - should also find them
+        assert!(
+            set.contains(&Ident::new_const("foo")),
+            "Failed to find 'foo' with new_const lookup"
+        );
+
+        // Insert using new, look up using new_const
+        set.insert(Ident::new("baz"));
+        assert!(set.contains(&Ident::new_const("baz")), "Failed to find 'baz' inserted with new");
+    }
+
+    #[test]
+    fn incremental_hasher_matches_const() {
+        // Test that IncrementalIdentHasher produces the same hash as compute_hash
+        let test_cases: &[&str] = &["", "a", "ab", "abc", "abcdefgh", "hello_world"];
+
+        for s in test_cases {
+            let const_hash = compute_hash(s);
+
+            let incremental_hash = {
+                let mut hasher = IncrementalIdentHasher::new();
+                hasher.write_bytes(s.as_bytes());
+                hasher.finish()
+            };
+
+            assert_eq!(
+                const_hash, incremental_hash,
+                "Hash mismatch for {s:?}: const={const_hash:#x}, incremental={incremental_hash:#x}"
+            );
+        }
+    }
+
+    #[test]
+    fn ident_hashmap_lookup() {
+        let mut map: IdentHashMap<i32> = IdentHashMap::default();
+
+        // Insert with one Ident
+        let foo1 = Ident::new("foo");
+        map.insert(foo1, 42);
+
+        // Look up with a new Ident created from the same string
+        let foo2 = Ident::new("foo");
+        assert_eq!(map.get(&foo2), Some(&42));
+
+        // Verify that a different key is not found
+        let bar = Ident::new("bar");
+        assert_eq!(map.get(&bar), None);
+    }
 }

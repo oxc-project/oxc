@@ -190,9 +190,9 @@ impl<'a> InjectGlobalVariables<'a> {
                         if self.replaced_dot_defines.iter().any(|d| d.0 == i.specifier.local()) {
                             false
                         } else {
-                            scoping
-                                .root_unresolved_references()
-                                .contains_key(i.specifier.local().as_str())
+                            scoping.root_unresolved_references_contains_by_name(
+                                i.specifier.local().as_str(),
+                            )
                         }
                     }
                 }
