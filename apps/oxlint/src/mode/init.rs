@@ -3,7 +3,7 @@ use std::{fs, path::Path};
 use oxc_linter::Oxlintrc;
 use serde_json::Value;
 
-use crate::{DEFAULT_OXLINTRC, cli::CliRunResult, lint::print_and_flush_stdout};
+use crate::{DEFAULT_OXLINTRC_NAME, cli::CliRunResult, lint::print_and_flush_stdout};
 
 pub fn run_init(cwd: &Path, stdout: &mut dyn std::io::Write) -> CliRunResult {
     let oxlintrc_for_print = serde_json::to_string_pretty(&Oxlintrc::default()).unwrap();
@@ -22,7 +22,7 @@ pub fn run_init(cwd: &Path, stdout: &mut dyn std::io::Write) -> CliRunResult {
         oxlintrc_for_print
     };
 
-    if fs::write(DEFAULT_OXLINTRC, configuration).is_ok() {
+    if fs::write(DEFAULT_OXLINTRC_NAME, configuration).is_ok() {
         print_and_flush_stdout(stdout, "Configuration file created\n");
         return CliRunResult::ConfigFileInitSucceeded;
     }

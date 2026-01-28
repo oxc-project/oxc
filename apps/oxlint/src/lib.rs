@@ -47,7 +47,7 @@ mod js_plugins;
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
-const DEFAULT_OXLINTRC: &str = ".oxlintrc.json";
+const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
 
 /// Return a JSON blob containing metadata for all available oxlint rules.
 ///

@@ -27,7 +27,7 @@ use oxc_language_server::{
 };
 
 use crate::{
-    DEFAULT_OXLINTRC,
+    DEFAULT_OXLINTRC_NAME,
     lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
@@ -80,7 +80,7 @@ impl ServerLinterBuilder {
             FxHashMap::default()
         };
         let config_path = match options.config_path.as_deref() {
-            Some("") | None => DEFAULT_OXLINTRC,
+            Some("") | None => DEFAULT_OXLINTRC_NAME,
             Some(v) => v,
         };
         let config = normalize_path(root_path.join(config_path));

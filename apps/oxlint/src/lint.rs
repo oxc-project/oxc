@@ -18,7 +18,7 @@ use oxc_linter::{
 };
 
 use crate::{
-    DEFAULT_OXLINTRC,
+    DEFAULT_OXLINTRC_NAME,
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -571,7 +571,7 @@ impl CliRunner {
     // when no config is provided, it will search for the default file names in the current working directory
     // when no file is found, the default configuration is returned
     fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
-        let path: &Path = config.map_or(DEFAULT_OXLINTRC.as_ref(), PathBuf::as_ref);
+        let path: &Path = config.map_or(DEFAULT_OXLINTRC_NAME.as_ref(), PathBuf::as_ref);
         let full_path = cwd.join(path);
 
         if config.is_some() || full_path.exists() {
@@ -583,7 +583,7 @@ impl CliRunner {
     /// Looks in a directory for an oxlint config file and returns the path if it exists.
     /// Does not validate the file or apply the default config file.
     fn find_oxlint_config_path_in_directory(dir: &Path) -> Option<PathBuf> {
-        let possible_config_path = dir.join(DEFAULT_OXLINTRC);
+        let possible_config_path = dir.join(DEFAULT_OXLINTRC_NAME);
         if possible_config_path.is_file() { Some(possible_config_path) } else { None }
     }
 }
@@ -613,7 +613,7 @@ mod test {
     use std::{fs, path::PathBuf};
 
     use super::CliRunner;
-    use crate::{DEFAULT_OXLINTRC, tester::Tester};
+    use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
     use oxc_linter::rules::RULES;
 
     // lints the full directory of fixtures,
@@ -989,14 +989,14 @@ mod test {
 
     #[test]
     fn test_init_config() {
-        assert!(!fs::exists(DEFAULT_OXLINTRC).unwrap());
+        assert!(!fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
 
         let args = &["--init"];
         Tester::new().with_cwd("fixtures".into()).test(args);
 
-        assert!(fs::exists(DEFAULT_OXLINTRC).unwrap());
+        assert!(fs::exists(DEFAULT_OXLINTRC_NAME).unwrap());
 
-        fs::remove_file(DEFAULT_OXLINTRC).unwrap();
+        fs::remove_file(DEFAULT_OXLINTRC_NAME).unwrap();
     }
 
     #[test]
