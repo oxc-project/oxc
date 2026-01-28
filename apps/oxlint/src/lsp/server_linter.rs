@@ -28,6 +28,7 @@ use oxc_language_server::{
 
 use crate::{
     DEFAULT_OXLINTRC_NAME,
+    config_loader::ConfigLoader,
     lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
@@ -276,36 +277,20 @@ impl ServerLinterBuilder {
         extended_paths: &mut FxHashSet<PathBuf>,
     ) -> FxHashMap<PathBuf, Config> {
         let paths = ConfigWalker::new(root_path).paths();
-        let mut nested_configs =
-            FxHashMap::with_capacity_and_hasher(paths.capacity(), FxBuildHasher);
 
-        for path in paths {
-            let file_path = Path::new(&path);
-            let Some(dir_path) = file_path.parent() else {
-                continue;
-            };
+        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, &[]);
+        let (configs, errors) = loader.load_many(paths.iter().map(Path::new));
 
-            let Ok(oxlintrc) = Oxlintrc::from_file(file_path) else {
-                warn!("Skipping invalid config file: {}", file_path.display());
-                continue;
-            };
-            // Collect ignore patterns and their root
-            nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
-            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
-                false,
-                oxlintrc,
-                external_linter,
-                external_plugin_store,
-            ) else {
-                warn!("Skipping config (builder failed): {}", file_path.display());
-                continue;
-            };
-            extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config = config_store_builder.build(external_plugin_store).unwrap_or_else(|err| {
-                warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                ConfigStoreBuilder::empty().build(external_plugin_store).unwrap()
-            });
-            nested_configs.insert(dir_path.to_path_buf(), config);
+        for error in errors {
+            warn!("Skipping config file {}: {:?}", error.path().display(), error);
+        }
+
+        let mut nested_configs = FxHashMap::with_capacity_and_hasher(configs.len(), FxBuildHasher);
+
+        for loaded in configs {
+            nested_ignore_patterns.push((loaded.ignore_patterns, loaded.dir.clone()));
+            extended_paths.extend(loaded.extended_paths);
+            nested_configs.insert(loaded.dir, loaded.config);
         }
 
         nested_configs

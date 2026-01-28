@@ -20,6 +20,7 @@ use oxc_linter::{
 use crate::{
     DEFAULT_OXLINTRC_NAME,
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
+    config_loader::{ConfigLoadError, ConfigLoader},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -467,8 +468,8 @@ impl CliRunner {
     fn get_nested_configs(
         stdout: &mut dyn Write,
         handler: &GraphicalReportHandler,
-        filters: &Vec<LintFilter>,
-        paths: &Vec<Arc<OsStr>>,
+        filters: &[LintFilter],
+        paths: &[Arc<OsStr>],
         external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
@@ -501,66 +502,37 @@ impl CliRunner {
             }
         }
 
-        let mut nested_configs = FxHashMap::<PathBuf, Config>::with_capacity_and_hasher(
-            nested_oxlintrc.len(),
-            FxBuildHasher,
-        );
+        // Load all discovered configs
+        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, filters);
+        let (configs, errors) = loader.load_many(nested_oxlintrc);
 
-        // iterate over each config path and build the ConfigStore
-        for path in nested_oxlintrc {
-            let oxlintrc = match Oxlintrc::from_file(&path) {
-                Ok(oxlintrc) => oxlintrc,
-                Err(e) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Failed to parse oxlint configuration file at {}.\n{}\n",
-                            path.to_string_lossy().cow_replace('\\', "/"),
-                            render_report(handler, &e)
-                        ),
-                    );
-                    return Err(CliRunResult::InvalidOptionConfig);
+        if let Some(error) = errors.first() {
+            let message = match error {
+                ConfigLoadError::Parse { path, error } => {
+                    format!(
+                        "Failed to parse oxlint configuration file at {}.\n{}\n",
+                        path.to_string_lossy().cow_replace('\\', "/"),
+                        render_report(handler, error)
+                    )
+                }
+                ConfigLoadError::Build { path, error } => {
+                    format!(
+                        "Failed to build oxlint configuration file at {}.\n{}\n",
+                        path.to_string_lossy().cow_replace('\\', "/"),
+                        render_report(handler, &OxcDiagnostic::error(error.clone()))
+                    )
                 }
             };
-            let dir = oxlintrc.path.parent().unwrap().to_path_buf();
-            // Collect ignore patterns and their root
-            nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir.clone()));
 
-            // TODO(refactor): clean up all of the error handling in this function
-            let builder = match ConfigStoreBuilder::from_oxlintrc(
-                false,
-                oxlintrc,
-                external_linter,
-                external_plugin_store,
-            ) {
-                Ok(builder) => builder,
-                Err(e) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Failed to parse oxlint configuration file.\n{}\n",
-                            render_report(handler, &OxcDiagnostic::error(e.to_string()))
-                        ),
-                    );
-                    return Err(CliRunResult::InvalidOptionConfig);
-                }
-            }
-            .with_filters(filters);
+            print_and_flush_stdout(stdout, &message);
+            return Err(CliRunResult::InvalidOptionConfig);
+        }
 
-            let config = match builder.build(external_plugin_store) {
-                Ok(config) => config,
-                Err(e) => {
-                    print_and_flush_stdout(
-                        stdout,
-                        &format!(
-                            "Failed to build configuration.\n{}\n",
-                            render_report(handler, &OxcDiagnostic::error(e.to_string()))
-                        ),
-                    );
-                    return Err(CliRunResult::InvalidOptionConfig);
-                }
-            };
-            nested_configs.insert(dir, config);
+        let mut nested_configs =
+            FxHashMap::<PathBuf, Config>::with_capacity_and_hasher(configs.len(), FxBuildHasher);
+        for loaded in configs {
+            nested_ignore_patterns.push((loaded.ignore_patterns, loaded.dir.clone()));
+            nested_configs.insert(loaded.dir, loaded.config);
         }
 
         Ok(nested_configs)
