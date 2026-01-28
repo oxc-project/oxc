@@ -9,6 +9,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    rules::ContextHost,
     utils::{is_es5_component, is_es6_component},
 };
 
@@ -83,9 +84,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDidMountSetState {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -150,6 +149,10 @@ impl Rule for NoDidMountSetState {
         }
 
         ctx.diagnostic(no_did_mount_set_state_diagnostic(call_expr.callee.span()));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

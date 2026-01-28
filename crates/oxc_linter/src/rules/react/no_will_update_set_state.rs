@@ -10,6 +10,7 @@ use crate::{
     config::ReactVersion,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    rules::ContextHost,
     utils::{is_es5_component, is_es6_component},
 };
 
@@ -23,7 +24,6 @@ fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 #[serde(rename_all = "kebab-case")]
 pub enum NoWillUpdateSetStateConfig {
     #[default]
-    #[serde(skip)]
     Allowed,
     DisallowInFunc,
 }
@@ -158,6 +158,10 @@ impl Rule for NoWillUpdateSetState {
         }
 
         ctx.diagnostic(no_will_update_set_state_diagnostic(call_expr.callee.span()));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 
