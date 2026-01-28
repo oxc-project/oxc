@@ -178,6 +178,7 @@ fn get_snapshot_from_report(report: &FileResult) -> String {
 pub struct Tester<'t> {
     relative_root_dir: &'t str,
     options: serde_json::Value,
+    builder: Option<ServerLinterBuilder>,
 }
 
 struct FileResult {
@@ -188,12 +189,22 @@ struct FileResult {
 
 impl Tester<'_> {
     pub fn new(relative_root_dir: &'static str, options: serde_json::Value) -> Self {
-        Self { relative_root_dir, options }
+        Self { relative_root_dir, options, builder: None }
+    }
+
+    pub fn with_builder(mut self, builder: ServerLinterBuilder) -> Self {
+        self.builder = Some(builder);
+        self
     }
 
     fn create_linter(&self) -> ServerLinter {
-        ServerLinterBuilder::default()
-            .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
+        match &self.builder {
+            Some(builder) => {
+                builder.build(&Self::get_root_uri(self.relative_root_dir), self.options.clone())
+            }
+            None => ServerLinterBuilder::default()
+                .build(&Self::get_root_uri(self.relative_root_dir), self.options.clone()),
+        }
     }
 
     pub fn get_root_uri(relative_root_dir: &str) -> Uri {

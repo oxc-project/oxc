@@ -752,10 +752,6 @@ impl CliRunner {
                 DEFAULT_OXLINTRC_NAME,
                 DEFAULT_TS_OXLINTRC_NAME,
                 dir.display()
-            ))
-            .with_note("Only `.oxlintrc.json` or `oxlint.config.ts` are allowed, not both.")
-            .with_help("Delete one of the configuration files."));
-        }
 
         if ts_exists {
             return Ok(Some(ConfigFile::TypeScript(ts_path)));

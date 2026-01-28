@@ -1,0 +1,13 @@
+---
+source: apps/oxlint/src/lsp/tester.rs
+---
+########## 
+Linted file: fixtures/lsp/ts_config_basic/test.js
+----------
+########## Diagnostic Reports
+File URI: file://<variable>/fixtures/lsp/ts_config_basic/test.js
+
+########### Code Actions/Commands
+
+########### Fix All Action
+None

@@ -147,7 +147,16 @@ async fn lint_impl(
 
     // If --lsp flag is set, run the language server
     if command.lsp {
-        crate::lsp::run_lsp().await;
+        #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
+        {
+            let js_config_loader = Some(crate::js_config::create_js_config_loader(load_js_configs));
+            crate::lsp::run_lsp_with_js_config_loader(js_config_loader).await;
+        }
+        #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
+        {
+            let (_, _, _, _) = (load_plugin, setup_rule_configs, lint_file, load_js_configs);
+            crate::lsp::run_lsp().await;
+        }
         return CliRunResult::LintSucceeded;
     }
 
