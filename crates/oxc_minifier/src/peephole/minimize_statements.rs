@@ -1024,7 +1024,7 @@ impl<'a> PeepholeOptimizations {
                     // where the inlined expression might reference a variable with the same name
                     // as the for-in variable, but after inlining, it would incorrectly refer to
                     // the shadowed for-in variable instead.
-                    // See: https://github.com/oxc-project/oxc/issues/8592
+                    // See: https://github.com/oxc-project/oxc/issues/18650
                     let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
                     if !has_side_effectful_initializer && !is_block_scoped {
                         let a = &mut prev_expr_stmt.expression;

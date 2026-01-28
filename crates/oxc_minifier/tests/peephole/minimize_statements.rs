@@ -36,7 +36,7 @@ fn test_for_continue_in_for() {
 #[test]
 fn test_for_in_block_scoped_no_inline() {
     // Should NOT inline when for-in uses `let` or `const` because it can cause variable shadowing
-    // https://github.com/oxc-project/oxc/issues/8592
+    // https://github.com/oxc-project/oxc/issues/18650
     // The inlined expression might reference a variable with the same name as the for-in variable,
     // causing it to incorrectly reference the shadowed for-in variable instead of the outer variable.
     test(
