@@ -58,6 +58,29 @@ fn fuse_into_for_in2() {
 }
 
 #[test]
+fn fuse_into_for_in_block_scoped() {
+    // Should NOT inline when for-in uses `let` or `const` because it can cause variable shadowing
+    // https://github.com/oxc-project/oxc/issues/8592
+    // The main thing we're testing is that the assignment and object are NOT inlined into the for-in
+    test(
+        "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (let name in foo) { console.log(name); } console.log(name); }",
+        "{ var name = 'name1'; let foo = { foo: 1 }; name = 'name2'; for (let name in foo) console.log(name); console.log(name); }"
+    );
+    // const in for-in is converted to let by the minifier
+    test(
+        "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (const name in foo) { console.log(name); } console.log(name); }",
+        "{ var name = 'name1'; let foo = { foo: 1 }; name = 'name2'; for (let name in foo) console.log(name); console.log(name); }"
+    );
+    
+    // Should still inline when for-in uses `var` (no shadowing issue)
+    // Block is eliminated in this case since var hoisting makes it safe
+    test(
+        "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (var name in foo) { console.log(name); } console.log(name); }",
+        "var name = 'name1'; for (var name in name = 'name2', { foo: 1 }) console.log(name); console.log(name);"
+    );
+}
+
+#[test]
 fn fuse_into_vanilla_for1() {
     test("a;b;c;for(;g;){}", "for(a,b,c;g;);");
     test("a;b;c;for(d;g;){}", "for(a,b,c,d;g;);");
