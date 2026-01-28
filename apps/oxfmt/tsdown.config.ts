@@ -13,9 +13,6 @@ export default defineConfig({
   shims: false,
   fixedExtension: false,
   noExternal: [
-    // Bundle it to control version
-    "prettier",
-
     // We are using patched version, so we must bundle it
     // Also, it internally loads plugins dynamically, so they also must be bundled
     "prettier-plugin-tailwindcss",
