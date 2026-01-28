@@ -207,10 +207,7 @@ impl DiagnosticService {
         diagnostics
             .into_iter()
             .map(|diagnostic| {
-                Error::from(OxcDiagnosticWithSource {
-                    diagnostic,
-                    source: Arc::clone(&source),
-                })
+                Error::from(OxcDiagnosticWithSource { diagnostic, source: Arc::clone(&source) })
             })
             .collect()
     }

@@ -492,20 +492,12 @@ impl GraphicalReportHandlerWithDiff {
                 ChangeTag::Delete => {
                     let num = old_line_num;
                     old_line_num += 1;
-                    if self.use_colors {
-                        ("-", num, RED, RESET)
-                    } else {
-                        ("-", num, "", "")
-                    }
+                    if self.use_colors { ("-", num, RED, RESET) } else { ("-", num, "", "") }
                 }
                 ChangeTag::Insert => {
                     let num = new_line_num;
                     new_line_num += 1;
-                    if self.use_colors {
-                        ("+", num, GREEN, RESET)
-                    } else {
-                        ("+", num, "", "")
-                    }
+                    if self.use_colors { ("+", num, GREEN, RESET) } else { ("+", num, "", "") }
                 }
                 ChangeTag::Equal => {
                     old_line_num += 1;
