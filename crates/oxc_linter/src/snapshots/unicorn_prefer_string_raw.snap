@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────────────────────────────────
    ╰────
   help: Replace `"C:\\windows\\style\\path\\to\\file.js"` with `String.raw`C:\windows\style\path\to\file.js``.
+    ╭╴
+  1 - const file = "C:\\windows\\style\\path\\to\\file.js";
+  1 + const file = String.raw`C:\windows\style\path\to\file.js`;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:27]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────────
    ╰────
   help: Replace `'foo\\.bar'` with `String.raw`foo\.bar``.
+    ╭╴
+  1 - const regexp = new RegExp('foo\\.bar');
+  1 + const regexp = new RegExp(String.raw`foo\.bar`);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:5]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `'a\\b'` with `String.raw`a\b``.
+    ╭╴
+  1 - a = 'a\\b'
+  1 + a = String.raw`a\b`
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:7]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `'a\\b'` with `String.raw`a\b``.
+    ╭╴
+  1 - a = {['a\\b']: b}
+  1 + a = {[String.raw`a\b`]: b}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:21]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
+    ╭╴
+  1 - function a() {return'a\\b'}
+  1 + function a() {return String.raw`a\b`}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:21]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
+    ╭╴
+  1 - function* a() {yield'a\\b'}
+  1 + function* a() {yield String.raw`a\b`}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:20]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
+    ╭╴
+  1 - function a() {throw'a\\b'}
+  1 + function a() {throw String.raw`a\b`}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:11]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
+    ╭╴
+  1 - if (typeof'a\\b' === 'string') {}
+  1 + if (typeof String.raw`a\b` === 'string') {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:21]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
+    ╭╴
+  1 - const a = () => void'a\\b';
+  1 + const a = () => void String.raw`a\b`;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:13]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Replace `'foo \\x46'` with `String.raw`foo \x46``.
+    ╭╴
+  1 - const foo = 'foo \\x46';
+  1 + const foo = String.raw`foo \x46`;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:16]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────
    ╰────
   help: Replace `'a\\b'` with ` String.raw`a\b``.
+    ╭╴
+  1 - for (const f of'a\\b') {}
+  1 + for (const f of String.raw`a\b`) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-raw): `String.raw` should be used to avoid escaping `\`.
    ╭─[prefer_string_raw.tsx:1:11]
@@ -84,3 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────────────
    ╰────
   help: Replace `'c:\\someöäü\\path'` with `String.raw`c:\someöäü\path``.
+    ╭╴
+  1 - const a = 'c:\\someöäü\\path';
+  1 + const a = String.raw`c:\someöäü\path`;
+    ╰╴

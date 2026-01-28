@@ -10,6 +10,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │         
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			var App;
+  2 + 			
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'unused' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:3:16]
@@ -20,6 +24,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             React.render(<App unused=""/>);
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  3 -           	var unused;
+  3 +           	
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'App' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:8]
@@ -30,6 +38,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             var Hello;
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			var App;
+  2 + 			
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'Hello' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:3:16]
@@ -40,6 +52,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             React.render(<App:Hello/>);
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  3 -           	var Hello;
+  3 +           	
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'Input' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:3:8]
@@ -50,6 +66,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             React.render(<Button.Input unused=""/>);
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  3 - 			var Input;
+  3 + 			
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Class 'unused' is declared but never used.
    ╭─[no_unused_vars.tsx:2:10]
@@ -80,6 +100,9 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function Greetings() {
    ╰────
   help: Consider removing this import.
+    ╭╴
+  2 - 			import {Hello} from 'Hello';
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'lowercase' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:8]
@@ -90,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             React.render(<lowercase />);
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			var lowercase;
+  2 + 			
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'div' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:2:23]

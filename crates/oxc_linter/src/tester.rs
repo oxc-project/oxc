@@ -14,7 +14,9 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
+use oxc_diagnostics::{
+    GraphicalReportHandler, GraphicalReportHandlerWithDiff, GraphicalTheme, NamedSource,
+};
 
 use crate::{
     AllowWarnDeny, ConfigStore, ConfigStoreBuilder, LintPlugins, LintService, LintServiceOptions,
@@ -277,6 +279,9 @@ impl Tester {
         expect_pass: Vec<T>,
         expect_fail: Vec<T>,
     ) -> Self {
+        // Enable fix diff capture for linter snapshots
+        oxc_diagnostics::enable_fix_diff();
+
         let rule_path =
             PathBuf::from(rule_name.cow_replace('-', "_").into_owned()).with_extension("tsx");
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
@@ -624,15 +629,18 @@ impl Tester {
         }
         .to_string_lossy();
 
-        let handler = GraphicalReportHandler::new()
+        let inner_handler = GraphicalReportHandler::new()
             .with_links(false)
             .with_theme(GraphicalTheme::unicode_nocolor());
-        for diagnostic in result {
-            let diagnostic = diagnostic.error.with_source_code(NamedSource::new(
-                diagnostic_path.clone(),
-                source_text.to_string(),
-            ));
-            handler.render_report(&mut self.snapshot, diagnostic.as_ref()).unwrap();
+        let handler = GraphicalReportHandlerWithDiff::with_handler(inner_handler)
+            .always_show_diff()
+            .without_colors();
+        for message in result {
+            // Convert Message to OxcDiagnostic, which attaches fixes as patches
+            let diagnostic: oxc_diagnostics::OxcDiagnostic = message.into();
+            let source =
+                NamedSource::new(diagnostic_path.clone().into_owned(), source_text.to_string());
+            handler.render_oxc_diagnostic(&mut self.snapshot, &diagnostic, &source).unwrap();
         }
         TestResult::Failed
     }

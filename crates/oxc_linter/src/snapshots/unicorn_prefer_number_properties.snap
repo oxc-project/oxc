@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Replace it with `Number.parseInt`
+    ╭╴
+  1 - parseInt("10", 2);
+  1 + Number.parseInt("10", 2);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Replace it with `Number.parseFloat`
+    ╭╴
+  1 - parseFloat("10.5");
+  1 + Number.parseFloat("10.5");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Replace it with `Number.isNaN`
+    ╭╴
+  1 - isNaN(10);
+  1 + Number.isNaN(10);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isFinite` instead of the global `isFinite`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Replace it with `Number.isFinite`
+    ╭╴
+  1 - isFinite(10);
+  1 + Number.isFinite(10);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseInt` instead of the global `parseInt`
    ╭─[prefer_number_properties.tsx:1:11]
@@ -36,6 +52,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │     const b = parseFloat("10.5");
    ╰────
   help: Replace it with `Number.parseInt`
+    ╭╴
+  1 - const a = parseInt("10", 2);
+  1 + const a = Number.parseInt("10", 2);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
    ╭─[prefer_number_properties.tsx:2:15]
@@ -45,6 +65,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │     const c = isNaN(10);
    ╰────
   help: Replace it with `Number.parseFloat`
+    ╭╴
+  2 -     const b = parseFloat("10.5");
+  2 +     const b = Number.parseFloat("10.5");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
    ╭─[prefer_number_properties.tsx:3:15]
@@ -54,6 +78,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │     const d = isFinite(10);
    ╰────
   help: Replace it with `Number.isNaN`
+    ╭╴
+  3 -     const c = isNaN(10);
+  3 +     const c = Number.isNaN(10);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isFinite` instead of the global `isFinite`
    ╭─[prefer_number_properties.tsx:4:15]
@@ -62,6 +90,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace it with `Number.isFinite`
+    ╭╴
+  4 -     const d = isFinite(10);
+  4 +     const d = Number.isFinite(10);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:13]
@@ -69,6 +101,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const foo = NaN;
+  1 + const foo = Number.NaN;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:18]
@@ -76,6 +112,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - if (Number.isNaN(NaN)) {}
+  1 + if (Number.isNaN(Number.NaN)) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:20]
@@ -83,6 +123,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - if (Object.is(foo, NaN)) {}
+  1 + if (Object.is(foo, Number.NaN)) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:17]
@@ -90,6 +134,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const foo = bar[NaN];
+  1 + const foo = bar[Number.NaN];
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -97,6 +145,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const foo = {NaN};
+  1 + const foo = {NaN: Number.NaN};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:19]
@@ -104,6 +156,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const foo = {NaN: NaN};
+  1 + const foo = {NaN: Number.NaN};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -111,6 +167,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const {foo = NaN} = {};
+  1 + const {foo = Number.NaN} = {};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:13]
@@ -118,6 +178,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const foo = NaN.toString();
+  1 + const foo = Number.NaN.toString();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -125,6 +189,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - class Foo3 {[NaN] = 1}
+  1 + class Foo3 {[Number.NaN] = 1}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:13]
@@ -132,6 +200,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = Infinity;
+  1 + const foo = Number.POSITIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -139,6 +211,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = -Infinity;
+  1 + const foo = Number.NEGATIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -146,6 +222,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - class Foo2 {[NaN] = 1}
+  1 + class Foo2 {[Number.NaN] = 1}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:13]
@@ -153,6 +233,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - class Foo {[NaN] = 1}
+  1 + class Foo {[Number.NaN] = 1}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:15]
@@ -160,6 +244,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const foo = {[NaN]: 1}
+  1 + const foo = {[Number.NaN]: 1}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:15]
@@ -167,6 +255,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const foo = {[NaN]() {}}
+  1 + const foo = {[Number.NaN]() {}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:5]
@@ -174,6 +266,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - foo[NaN] = 1;
+  1 + foo[Number.NaN] = 1;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:11]
@@ -181,6 +277,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - class A {[NaN](){}}
+  1 + class A {[Number.NaN](){}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:9]
@@ -188,6 +288,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - foo = {[NaN]: 1}
+  1 + foo = {[Number.NaN]: 1}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:13]
@@ -195,6 +299,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = Infinity;
+  1 + const foo = Number.POSITIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:18]
@@ -202,6 +310,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - if (Number.isNaN(Infinity)) {}
+  1 + if (Number.isNaN(Number.POSITIVE_INFINITY)) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:20]
@@ -209,6 +321,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - if (Object.is(foo, Infinity)) {}
+  1 + if (Object.is(foo, Number.POSITIVE_INFINITY)) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:17]
@@ -216,6 +332,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = bar[Infinity];
+  1 + const foo = bar[Number.POSITIVE_INFINITY];
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -223,6 +343,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = {Infinity};
+  1 + const foo = {Infinity: Number.POSITIVE_INFINITY};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:24]
@@ -230,6 +354,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = {Infinity: Infinity};
+  1 + const foo = {Infinity: Number.POSITIVE_INFINITY};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:15]
@@ -237,6 +365,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = {[Infinity]: -Infinity};
+  1 + const foo = {[Number.POSITIVE_INFINITY]: -Infinity};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:27]
@@ -244,6 +376,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = {[Infinity]: -Infinity};
+  1 + const foo = {[Infinity]: Number.NEGATIVE_INFINITY};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:16]
@@ -251,6 +387,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = {[-Infinity]: Infinity};
+  1 + const foo = {[Number.NEGATIVE_INFINITY]: Infinity};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:27]
@@ -258,6 +398,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = {[-Infinity]: Infinity};
+  1 + const foo = {[-Infinity]: Number.POSITIVE_INFINITY};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:25]
@@ -265,6 +409,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = {Infinity: -Infinity};
+  1 + const foo = {Infinity: Number.NEGATIVE_INFINITY};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -272,6 +420,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const {foo = Infinity} = {};
+  1 + const {foo = Number.POSITIVE_INFINITY} = {};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:15]
@@ -279,6 +431,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const {foo = -Infinity} = {};
+  1 + const {foo = Number.NEGATIVE_INFINITY} = {};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:13]
@@ -286,6 +442,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = Infinity.toString();
+  1 + const foo = Number.POSITIVE_INFINITY.toString();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -293,6 +453,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = -Infinity.toString();
+  1 + const foo = Number.NEGATIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:15]
@@ -300,6 +464,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = (-Infinity).toString();
+  1 + const foo = (Number.NEGATIVE_INFINITY).toString();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -307,6 +475,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = +Infinity;
+  1 + const foo = +Number.POSITIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:15]
@@ -314,6 +486,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = +-Infinity;
+  1 + const foo = +Number.NEGATIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:14]
@@ -321,6 +497,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = -Infinity;
+  1 + const foo = Number.NEGATIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:16]
@@ -328,6 +508,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = -(-Infinity);
+  1 + const foo = -(Number.NEGATIVE_INFINITY);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:17]
@@ -335,6 +519,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = 1 - Infinity;
+  1 + const foo = 1 - Number.POSITIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:18]
@@ -342,6 +530,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const foo = 1 - -Infinity;
+  1 + const foo = 1 - Number.NEGATIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:62]
@@ -349,6 +541,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                              ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const isPositiveZero = value => value === 0 && 1 / value === Infinity;
+  1 + const isPositiveZero = value => value === 0 && 1 / value === Number.POSITIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:63]
@@ -356,6 +552,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                               ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - const isNegativeZero = value => value === 0 && 1 / value === -Infinity;
+  1 + const isNegativeZero = value => value === 0 && 1 / value === Number.NEGATIVE_INFINITY;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:12]
@@ -363,6 +563,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const {a = NaN} = {};
+  1 + const {a = Number.NaN} = {};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:9]
@@ -370,6 +574,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const {[NaN]: a = NaN} = {};
+  1 + const {[Number.NaN]: a = NaN} = {};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:19]
@@ -377,6 +585,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const {[NaN]: a = NaN} = {};
+  1 + const {[NaN]: a = Number.NaN} = {};
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:12]
@@ -384,6 +596,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - const [a = NaN] = [];
+  1 + const [a = Number.NaN] = [];
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:19]
@@ -391,6 +607,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - function foo({a = NaN}) {}
+  1 + function foo({a = Number.NaN}) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:16]
@@ -398,6 +618,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - function foo({[NaN]: a = NaN}) {}
+  1 + function foo({[Number.NaN]: a = NaN}) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:26]
@@ -405,6 +629,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - function foo({[NaN]: a = NaN}) {}
+  1 + function foo({[NaN]: a = Number.NaN}) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:19]
@@ -412,6 +640,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - function foo([a = NaN]) {}
+  1 + function foo([a = Number.NaN]) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:24]
@@ -419,6 +651,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - function foo() {return-Infinity}
+  1 + function foo() {returnNumber.NEGATIVE_INFINITY}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -426,6 +662,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Replace it with `Number.isNaN`
+    ╭╴
+  1 - globalThis.isNaN(foo);
+  1 + Number.isNaN(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -433,6 +673,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────
    ╰────
   help: Replace it with `Number.isNaN`
+    ╭╴
+  1 - global.isNaN(foo);
+  1 + Number.isNaN(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -440,6 +684,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────
    ╰────
   help: Replace it with `Number.isNaN`
+    ╭╴
+  1 - window.isNaN(foo);
+  1 + Number.isNaN(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.isNaN` instead of the global `isNaN`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -447,6 +695,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Replace it with `Number.isNaN`
+    ╭╴
+  1 - self.isNaN(foo);
+  1 + Number.isNaN(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -454,6 +706,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Replace it with `Number.parseFloat`
+    ╭╴
+  1 - globalThis.parseFloat(foo);
+  1 + Number.parseFloat(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -461,6 +717,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace it with `Number.parseFloat`
+    ╭╴
+  1 - global.parseFloat(foo);
+  1 + Number.parseFloat(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -468,6 +728,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace it with `Number.parseFloat`
+    ╭╴
+  1 - window.parseFloat(foo);
+  1 + Number.parseFloat(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -475,6 +739,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Replace it with `Number.parseFloat`
+    ╭╴
+  1 - self.parseFloat(foo);
+  1 + Number.parseFloat(foo);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.NaN` instead of the global `NaN`
    ╭─[prefer_number_properties.tsx:1:1]
@@ -482,6 +750,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Replace it with `Number.NaN`
+    ╭╴
+  1 - globalThis.NaN
+  1 + Number.NaN
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.Infinity` instead of the global `Infinity`
    ╭─[prefer_number_properties.tsx:1:2]
@@ -489,6 +761,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────────
    ╰────
   help: Replace it with `Number.Infinity`
+    ╭╴
+  1 - -globalThis.Infinity
+  1 + -Number.Infinity
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseFloat` instead of the global `parseFloat`
    ╭─[prefer_number_properties.tsx:2:24]
@@ -498,6 +774,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │              parseInt,
    ╰────
   help: Replace it with `Number.parseFloat`
+    ╭╴
+  2 -             normalize: parseFloat,
+  2 +             normalize: Number.parseFloat,
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseInt` instead of the global `parseInt`
    ╭─[prefer_number_properties.tsx:3:14]
@@ -507,3 +787,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │          };
    ╰────
   help: Replace it with `Number.parseInt`
+    ╭╴
+  3 -              parseInt,
+  3 +              parseInt: Number.parseInt,
+    ╰╴

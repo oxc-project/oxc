@@ -16,6 +16,9 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a=10
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Function 'f' is declared but never used.
    ╭─[no_unused_vars.tsx:1:10]
@@ -49,6 +52,9 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a=10;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -58,6 +64,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - var a=10; a=20;
+  1 + var _a=10; _a=20;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -66,6 +76,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a=10; (function() { var a = 1; alert(a); })();
+  1 +  (function() { var a = 1; alert(a); })();
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'c' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:16]
@@ -74,6 +88,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'c' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a=10, b=0, c=null; alert(a+b)
+  1 + var a=10, b=0; alert(a+b)
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:11]
@@ -82,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a=10, b=0, c=null; setTimeout(function() { var b=2; alert(a+b+c); }, 0);
+  1 + var a=10, c=null; setTimeout(function() { var b=2; alert(a+b+c); }, 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:11]
@@ -90,6 +112,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a=10, b=0, c=null; setTimeout(function() { var b=2; var c=2; alert(a+b+c); }, 0);
+  1 + var a=10, c=null; setTimeout(function() { var b=2; var c=2; alert(a+b+c); }, 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'c' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:16]
@@ -98,6 +124,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'c' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a=10, b=0, c=null; setTimeout(function() { var b=2; var c=2; alert(a+b+c); }, 0);
+  1 + var a=10, b=0; setTimeout(function() { var b=2; var c=2; alert(a+b+c); }, 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Function 'f' is declared but never used.
    ╭─[no_unused_vars.tsx:1:10]
@@ -171,6 +201,9 @@ source: crates/oxc_linter/src/tester.rs
    ·      ╰── 'min' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var min = Math.min
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'min' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -179,6 +212,9 @@ source: crates/oxc_linter/src/tester.rs
    ·      ╰── 'min' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var min = {min: 1}
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'baz' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:20]
@@ -195,6 +231,9 @@ source: crates/oxc_linter/src/tester.rs
    ·      ╰── 'min' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var min = {min: 1}
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'bar' is declared but never used.
    ╭─[no_unused_vars.tsx:1:18]
@@ -243,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── 'bar' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - (function z(foo) { var bar = 33; })();
+  1 + (function z(foo) {  })();
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'foo' is declared but never used.
    ╭─[no_unused_vars.tsx:1:13]
@@ -276,6 +319,9 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'x' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import x from "y";
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'y' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:26]
@@ -300,6 +346,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ╰── 'max' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - /*exported max*/ var max = 1, min = {min: 1}
+  1 + /*exported max*/ var min = {min: 1}
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'min' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:31]
@@ -308,6 +358,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ╰── 'min' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - /*exported max*/ var max = 1, min = {min: 1}
+  1 + /*exported max*/ var max = 1
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:22]
@@ -316,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ╰── 'x' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - /*exported x*/ var { x, y } = z
+  1 + /*exported x*/ var { y } = z
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'y' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:25]
@@ -324,6 +382,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── 'y' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - /*exported x*/ var { x, y } = z
+  1 + /*exported x*/ var { x, } = z
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
@@ -332,6 +394,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var _a; var b;
+  1 + var _a; 
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'c_' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:37]
@@ -340,6 +406,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ╰── 'c_' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a; function foo() { var _b; var c_; } foo();
+  1 + var a; function foo() { var _b;  } foo();
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -372,6 +442,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ╰── 'secondItem' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var [ firstItemIgnored, secondItem ] = items;
+  1 + var [ firstItemIgnored] = items;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'newArray' is declared but never used.
    ╭─[no_unused_vars.tsx:4:19]
@@ -382,6 +456,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  4 -             const newArray = [a, c];
+  4 +             
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
    ╭─[no_unused_vars.tsx:3:20]
@@ -392,6 +470,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  3 -             const [a, _b, c] = array;
+  3 +             const [,_b, c] = array;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'c' is declared but never used.
    ╭─[no_unused_vars.tsx:3:27]
@@ -402,6 +484,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  3 -             const [a, _b, c] = array;
+  3 +             const [a, _b] = array;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should match /ignore/.
    ╭─[no_unused_vars.tsx:3:20]
@@ -412,6 +498,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             const fooArray = ['foo'];
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  3 -             const [a, _b, c] = array;
+  3 +             const [,_b, c] = array;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'c' is declared but never used. Unused variables should match /ignore/.
    ╭─[no_unused_vars.tsx:3:27]
@@ -422,6 +512,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             const fooArray = ['foo'];
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  3 -             const [a, _b, c] = array;
+  3 +             const [a, _b] = array;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'fooArray' is declared but never used. Unused variables should match /ignore/.
    ╭─[no_unused_vars.tsx:4:19]
@@ -432,6 +526,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             const barArray = ['bar'];
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  4 -             const fooArray = ['foo'];
+  4 +             
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'barArray' is declared but never used. Unused variables should match /ignore/.
    ╭─[no_unused_vars.tsx:5:19]
@@ -442,6 +540,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │             const ignoreArray = ['ignore'];
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  5 -             const barArray = ['bar'];
+  5 +             
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable '_a' is declared but never used.
    ╭─[no_unused_vars.tsx:3:21]
@@ -472,6 +574,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │ 
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 -             let _a, b;
+  2 +             let b;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is assigned a value but never used.
    ╭─[no_unused_vars.tsx:2:21]
@@ -496,6 +602,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ╰── 'name' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - (function(obj) { var name; for ( name in obj ) { i(); return; } })({});
+  1 + (function(obj) { var _name; for ( _name in obj ) { i(); return; } })({});
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'name' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:22]
@@ -505,6 +615,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ╰── 'name' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - (function(obj) { var name; for ( name in obj ) { } })({});
+  1 + (function(obj) { var _name; for ( _name in obj ) { } })({});
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'name' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:28]
@@ -513,6 +627,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ╰── 'name' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - (function(obj) { for ( var name in obj ) { } })({});
+  1 + (function(obj) { for ( var _name in obj ) { } })({});
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
@@ -521,6 +639,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - for ( var { foo } in bar ) { }
+  1 + for ( var { _foo } in bar ) { }
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
@@ -529,6 +651,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - for ( var [ foo ] in bar ) { }
+  1 + for ( var [ _foo ] in bar ) { }
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'name' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:23]
@@ -538,6 +664,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── 'name' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - (function(iter) { var name; for ( name of iter ) { i(); return; } })({});
+  1 + (function(iter) { var _name; for ( _name of iter ) { i(); return; } })({});
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'name' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:23]
@@ -547,6 +677,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── 'name' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - (function(iter) { var name; for ( name of iter ) { } })({});
+  1 + (function(iter) { var _name; for ( _name of iter ) { } })({});
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'name' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:29]
@@ -555,6 +689,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ╰── 'name' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - (function(iter) { for ( var name of iter ) { } })({});
+  1 + (function(iter) { for ( var _name of iter ) { } })({});
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'type' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:12]
@@ -565,6 +703,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │              console.log(coords);
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			const { type, ...coords } = data;
+  2 + 			const { ...coords } = data;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'coords' is declared but never used.
    ╭─[no_unused_vars.tsx:2:21]
@@ -575,6 +717,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │              console.log(type)
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			const { type, ...coords } = data;
+  2 + 			const { type, } = data;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'coords' is assigned a value but never used.
    ╭─[no_unused_vars.tsx:1:11]
@@ -597,6 +743,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │              console.log(type)
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			const { type, ...coords } = data;
+  2 + 			const { type, } = data;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:19]
@@ -681,6 +831,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(err){};
+  1 + try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
    ╭─[no_unused_vars.tsx:1:12]
@@ -689,6 +843,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(err){};
+  1 + try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used. Unused caught errors should match /^ignore/.
    ╭─[no_unused_vars.tsx:1:12]
@@ -697,6 +855,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(err){};
+  1 + try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
    ╭─[no_unused_vars.tsx:1:12]
@@ -705,6 +867,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(err){};
+  1 + try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
    ╭─[no_unused_vars.tsx:1:12]
@@ -713,6 +879,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(err){};
+  1 + try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used. Unused caught errors should match /^ignore/.
    ╭─[no_unused_vars.tsx:1:35]
@@ -721,6 +891,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(ignoreErr){}try{}catch(err){};
+  1 + try{}catch(ignoreErr){}try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'error' is caught but never used. Unused caught errors should match /^ignore/.
    ╭─[no_unused_vars.tsx:1:12]
@@ -729,6 +903,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── 'error' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(error){}try{}catch(err){};
+  1 + try{}catch{}try{}catch(err){};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used. Unused caught errors should match /^ignore/.
    ╭─[no_unused_vars.tsx:1:31]
@@ -737,6 +915,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(error){}try{}catch(err){};
+  1 + try{}catch(error){}try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
    ╭─[no_unused_vars.tsx:1:12]
@@ -745,6 +927,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(err){};
+  1 + try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'err' is caught but never used.
    ╭─[no_unused_vars.tsx:1:12]
@@ -753,6 +939,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'err' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try{}catch(err){};
+  1 + try{}catch{};
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -762,6 +952,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - var a = 0; a = a + 1;
+  1 + var _a = 0; _a = _a + 1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -771,6 +965,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - var a = 0; a = a + a;
+  1 + var _a = 0; _a = _a + _a;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -780,6 +978,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - var a = 0; a += a + 1;
+  1 + var _a = 0; _a += _a + 1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -789,6 +991,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - var a = 0; a++;
+  1 + var _a = 0; _a++;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -822,6 +1028,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - var a = 3; a = a * 5 + 6;
+  1 + var _a = 3; _a = _a * 5 + 6;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -831,6 +1041,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - var a = 2, b = 4; a = a * 2 + b;
+  1 + var _a = 2, b = 4; _a = _a * 2 + b;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'cb' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -972,6 +1186,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ╰── it was last assigned here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0;
+  2 - 			            x++, x = 0;
+  1 + let _x = 0;
+  2 + 			            _x++, _x = 0;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -984,6 +1204,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── it was last assigned here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0;
+  2 - 			            x++, x = 0;
+  3 - 			            x=3;
+  1 + let _x = 0;
+  2 + 			            _x++, _x = 0;
+  3 + 			            _x=3;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -993,6 +1221,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; x++, 0;
+  1 + let _x = 0; _x++, 0;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1002,6 +1234,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; 0, x++;
+  1 + let _x = 0; 0, _x++;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1011,6 +1247,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; 0, (1, x++);
+  1 + let _x = 0; 0, (1, _x++);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1020,6 +1260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; foo = (x++, 0);
+  1 + let _x = 0; foo = (_x++, 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1029,6 +1273,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; foo = ((0, x++), 0);
+  1 + let _x = 0; foo = ((0, _x++), 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1038,6 +1286,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; x += 1, 0;
+  1 + let _x = 0; _x += 1, 0;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1047,6 +1299,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; 0, x += 1;
+  1 + let _x = 0; 0, _x += 1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1056,6 +1312,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; 0, (1, x += 1);
+  1 + let _x = 0; 0, (1, _x += 1);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1065,6 +1325,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; foo = (x += 1, 0);
+  1 + let _x = 0; foo = (_x += 1, 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1074,6 +1338,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; foo = ((0, x += 1), 0);
+  1 + let _x = 0; foo = ((0, _x += 1), 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'z' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1086,6 +1354,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │                         
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let z = 0;
+  2 - 			            z = z + 1, z = 2;
+  1 + let _z = 0;
+  2 + 			            _z = _z + 1, _z = 2;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'z' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1098,6 +1372,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ╰── it was last assigned here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let z = 0;
+  2 - 			            z = z+1, z = 2;
+  3 - 			            z = 3;
+  1 + let _z = 0;
+  2 + 			            _z = _z+1, _z = 2;
+  3 + 			            _z = 3;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'z' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1111,6 +1393,14 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let z = 0;
+  2 - 			            z = z+1, z = 2;
+  3 - 			            z = z+3;
+  1 + let _z = 0;
+  2 + 			            _z = _z+1, _z = 2;
+  3 + 			            _z = _z+3;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1120,6 +1410,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; 0, x = x+1;
+  1 + let _x = 0; 0, _x = _x+1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1129,6 +1423,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; x = x+1, 0;
+  1 + let _x = 0; _x = _x+1, 0;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1138,6 +1436,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; foo = ((0, x = x + 1), 0);
+  1 + let _x = 0; foo = ((0, _x = _x + 1), 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1147,6 +1449,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; foo = (x = x+1, 0);
+  1 + let _x = 0; foo = (_x = _x+1, 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -1156,6 +1462,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'x' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x = 0; 0, (1, x=x+1);
+  1 + let _x = 0; 0, (1, _x=_x+1);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -1263,6 +1573,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ╰── it was last assigned here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let myArray = [1,2,3,4].filter((x) => x == 0);
+  2 - 			    myArray = myArray.filter((x) => x == 1);
+  1 + let _myArray = [1,2,3,4].filter((x) => x == 0);
+  2 + 			    _myArray = _myArray.filter((x) => x == 1);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:7]
@@ -1272,6 +1588,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - const a = 1; a += 1;
+  1 + const _a = 1; _a += 1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:7]
@@ -1296,6 +1616,18 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 }
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 'a';
+  2 -             a = 10;
+  1 + let _a = 'a';
+  2 +             _a = 10;
+  4 -                 a = 11;
+  5 -                 a = () => {
+  6 -                     a = 13
+  4 +                 _a = 11;
+  5 +                 _a = () => {
+  6 +                     _a = 13
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
    ╭─[no_unused_vars.tsx:3:22]
@@ -1322,6 +1654,14 @@ source: crates/oxc_linter/src/tester.rs
  6 │             }
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let foo;
+  1 + let _foo;
+  3 -             foo = foo + 2;
+  3 +             _foo = _foo + 2;
+  5 -                 foo = 1;
+  5 +                 _foo = 1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Function 'foo' is declared but never used.
    ╭─[no_unused_vars.tsx:1:10]
@@ -1346,6 +1686,18 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── it was last assigned here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let c = 'c'
+  2 - 			c = 10
+  1 + let _c = 'c'
+  2 + 			_c = 10
+  4 - 			    c = 11
+  5 - 			    c = () => { c = 13 }
+  4 + 			    _c = 11
+  5 + 			    _c = () => { _c = 13 }
+  7 - 			c = foo1
+  7 + 			_c = foo1
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
    ╭─[no_unused_vars.tsx:1:7]
@@ -1370,6 +1722,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ╰── 'bar' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - class Foo { static { var bar; } }
+  1 + class Foo { static {  } }
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Class 'Foo' is declared but never used.
    ╭─[no_unused_vars.tsx:1:7]
@@ -1494,6 +1850,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │               _ = 'foo'
    ╰────
   help: Consider handling this error.
+    ╭╴
+  3 - 			} catch (_) {
+  3 + 			} catch  {
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter '_' is caught but never used. Unused caught errors should match /ignored/.
    ╭─[no_unused_vars.tsx:3:13]
@@ -1504,6 +1864,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │               _ = 'foo'
    ╰────
   help: Consider handling this error.
+    ╭╴
+  3 - 			} catch (_) {
+  3 + 			} catch  {
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'message' is caught but never used. Unused caught errors should match /foo/.
    ╭─[no_unused_vars.tsx:1:17]
@@ -1512,6 +1876,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ╰── 'message' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try {} catch ({ message, errors: [firstError] }) {}
+  1 + try {} catch  {}
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter 'firstError' is caught but never used. Unused caught errors should match /foo/.
    ╭─[no_unused_vars.tsx:1:35]
@@ -1520,6 +1888,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ╰── 'firstError' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try {} catch ({ message, errors: [firstError] }) {}
+  1 + try {} catch  {}
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Catch parameter '$' is caught but never used. Unused caught errors should match /\w/.
    ╭─[no_unused_vars.tsx:1:24]
@@ -1528,6 +1900,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ╰── '$' is declared here
    ╰────
   help: Consider handling this error.
+    ╭╴
+  1 - try {} catch ({ stack: $ }) { $ = 'Something broke: ' + $; }
+  1 + try {} catch  { $ = 'Something broke: ' + $; }
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter '_' is declared but never used. Unused parameters should match /ignored/.
    ╭─[no_unused_vars.tsx:2:4]
@@ -1546,6 +1922,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, b, c] = foo; alert(a + c);
+  1 + const [a, ,c] = foo; alert(a + c);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:8]
@@ -1554,6 +1934,9 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a = aDefault] = foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:9]
@@ -1578,6 +1961,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [[a = aDefault], b]= foo;
+  1 + const [[a = aDefault]]= foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:8]
@@ -1586,6 +1973,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a = aDefault, b] = foo; alert(b);
+  1 + const [,b] = foo; alert(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
@@ -1626,6 +2017,9 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'a1' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a: a1 } = foo
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a1' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:12]
@@ -1634,6 +2028,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'a1' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a: a1, b: b1 } = foo; alert(b1);
+  1 + const { b: b1 } = foo; alert(b1);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b1' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:19]
@@ -1642,6 +2040,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ╰── 'b1' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a: a1, b: b1 } = foo; alert(a1);
+  1 + const { a: a1, } = foo; alert(a1);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a1' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:17]
@@ -1658,6 +2060,9 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'a1' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a: a1 = aDefault } = foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a1' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
@@ -1674,6 +2079,9 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a = aDefault } = foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:9]
@@ -1682,6 +2090,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a = aDefault, b } = foo; alert(b);
+  1 + const { b } = foo; alert(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:12]
@@ -1690,6 +2102,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a, b = bDefault } = foo; alert(a);
+  1 + const { a, } = foo; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:12]
@@ -1698,6 +2114,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a, b = bDefault, c } = foo; alert(a + c);
+  1 + const { a, c } = foo; alert(a + c);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:16]
@@ -1706,6 +2126,9 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { [key]: a } = foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:16]
@@ -1714,6 +2137,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [...{ a, b }] = array; alert(a);
+  1 + const [] = array; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:18]
@@ -1738,6 +2165,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const {...rest} = foo;
+  1 + const {} = foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -1746,6 +2177,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const {a, ...rest} = foo; alert(a);
+  1 + const {a, } = foo; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:11]
@@ -1754,6 +2189,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const {...rest} = foo, a = bar; alert(a);
+  1 + const {} = foo, a = bar; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:20]
@@ -1762,6 +2201,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const a = bar, {...rest} = foo; alert(a);
+  1 + const a = bar, {} = foo; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:19]
@@ -1794,6 +2237,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [...rest] = foo;
+  1 + const [] = foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:12]
@@ -1810,6 +2257,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...rest] = foo; alert(a);
+  1 + const [a] = foo; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'rest' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:19]
@@ -1826,6 +2277,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...{ b }] = array; alert(a);
+  1 + const [a] = array; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:17]
@@ -1842,6 +2297,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [...[a]] = array;
+  1 + const [] = array;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
@@ -1858,6 +2317,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [...[a, b]] = array; alert(a);
+  1 + const [] = array; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:15]
@@ -1866,6 +2329,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...[b]] = array; alert(a);
+  1 + const [a] = array; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:16]
@@ -1882,6 +2349,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...[b]] = array; alert(b);
+  1 + const [,...[b]] = array; alert(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:17]
@@ -1890,6 +2361,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...[[ b ]]] = array; alert(a);
+  1 + const [a] = array; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:17]
@@ -1898,6 +2373,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...[{ b }]] = array; alert(a);
+  1 + const [a] = array; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:15]
@@ -2130,6 +2609,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - let a = foo, b = 'bar'; alert(b);
+  1 + let b = 'bar'; alert(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -2138,6 +2621,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── 'b' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - let a = foo, b = 'bar'; alert(a);
+  1 + let a = foo; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:7]
@@ -2162,6 +2649,9 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'a' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import a from 'module';
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
    ╭─[no_unused_vars.tsx:1:13]
@@ -2170,6 +2660,9 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── 'foo' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import * as foo from 'module';
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
    ╭─[no_unused_vars.tsx:1:16]
@@ -2178,6 +2671,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── 'foo' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import a, * as foo from 'module'; a();
+  1 + import a from 'module'; a();
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
    ╭─[no_unused_vars.tsx:1:8]
@@ -2186,6 +2683,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'a' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import a, * as foo from 'module'; foo.hello;
+  1 + import * as foo from 'module'; foo.hello;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
    ╭─[no_unused_vars.tsx:1:10]
@@ -2194,6 +2695,9 @@ source: crates/oxc_linter/src/tester.rs
    ·          ╰── 'a' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import { a } from 'module';
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
    ╭─[no_unused_vars.tsx:1:10]
@@ -2202,6 +2706,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ╰── 'a' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import { a, b } from 'module'; alert(b);
+  1 + import { b } from 'module'; alert(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'b' is imported but never used.
    ╭─[no_unused_vars.tsx:1:13]
@@ -2210,6 +2718,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── 'b' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import { a, b } from 'module'; alert(a);
+  1 + import { a } from 'module'; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
    ╭─[no_unused_vars.tsx:1:15]
@@ -2218,6 +2730,9 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'foo' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import { a as foo } from 'module';
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
    ╭─[no_unused_vars.tsx:1:15]
@@ -2226,6 +2741,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'foo' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import { a as foo, b } from 'module'; alert(b);
+  1 + import { b } from 'module'; alert(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
    ╭─[no_unused_vars.tsx:1:18]
@@ -2234,6 +2753,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ╰── 'foo' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import { a, b as foo } from 'module'; alert(a);
+  1 + import { a } from 'module'; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
    ╭─[no_unused_vars.tsx:1:21]
@@ -2242,6 +2765,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ╰── 'foo' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import { default as foo, a } from 'module'; alert(a);
+  1 + import { a } from 'module'; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'foo' is imported but never used.
    ╭─[no_unused_vars.tsx:1:8]
@@ -2250,6 +2777,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── 'foo' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import foo, { a } from 'module'; alert(a);
+  1 + import { a } from 'module'; alert(a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
    ╭─[no_unused_vars.tsx:1:15]
@@ -2258,6 +2789,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'a' is imported here
    ╰────
   help: Consider removing this import.
+    ╭╴
+  1 - import foo, { a } from 'module'; foo();
+  1 + import foo from 'module'; foo();
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -2267,6 +2802,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a; a = foo;
+  1 + let _a; _a = foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:15]
@@ -2283,6 +2822,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── 'bar' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - if (foo()) var bar;
+  1 + if (foo()) 
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -2291,6 +2834,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - for (;;) var foo;
+  1 + for (;;) 
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:18]
@@ -2299,6 +2846,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - for (a in b) var foo;
+  1 + for (a in b) var _foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:18]
@@ -2307,6 +2858,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - for (a of b) var foo;
+  1 + for (a of b) var _foo;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:15]
@@ -2315,6 +2870,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - while (a) var foo;
+  1 + while (a) 
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:8]
@@ -2323,6 +2882,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - do var foo; while (b);
+  1 + do  while (b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -2331,6 +2894,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'foo' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - with (a) var foo;
+  1 + with (a) 
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -2339,6 +2906,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var a;'use strict';b(00);
+  1 + 'use strict';b(00);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:6]
@@ -2347,6 +2918,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var [a] = foo;'use strict';b(00);
+  1 + 'use strict';b(00);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:9]
@@ -2355,6 +2930,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var [...a] = foo;'use strict';b(00);
+  1 + var [] = foo;'use strict';b(00);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:6]
@@ -2363,6 +2942,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - var {a} = foo;'use strict';b(00);
+  1 + 'use strict';b(00);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:8]
@@ -2373,6 +2956,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             +b > 0 ? bar() : baz()
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			var a
+  2 + 			
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:9]
@@ -2383,6 +2970,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             +b > 0 ? bar() : baz()
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			var [a] = foo;
+  2 + 			
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:2:9]
@@ -2393,6 +2984,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             +b > 0 ? bar() : baz()
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  2 - 			var {a} = foo;
+  2 + 			
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'x' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -2404,6 +2999,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ╰── it was last assigned here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let x;
+  2 - 			() => x = 1;
+  1 + let _x;
+  2 + 			() => _x = 1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:6]
@@ -2415,6 +3016,12 @@ source: crates/oxc_linter/src/tester.rs
    ·             ╰── it was last assigned here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let [a = 1] = arr;
+  2 - 			a = 2;
+  1 + let [_a = 1] = arr;
+  2 + 			_a = 2;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used. Unused parameters should start with a '_'.
    ╭─[no_unused_vars.tsx:1:14]
@@ -2447,6 +3054,9 @@ source: crates/oxc_linter/src/tester.rs
    ·           ╰── 'resource' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - using resource = getResource();
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'resource' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]
@@ -2455,3 +3065,6 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── 'resource' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - await using resource = getResource();
+    ╰╴

@@ -21,6 +21,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────
    ╰────
   help: Add parentheses around the nested ternary expression.
+    ╭╴
+  1 - const foo = i > 5 ? i < 100 ? true : false : true;
+  1 + const foo = i > 5 ? (i < 100 ? true : false) : true;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.
    ╭─[no_nested_ternary.tsx:1:21]
@@ -28,6 +32,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────
    ╰────
   help: Add parentheses around the nested ternary expression.
+    ╭╴
+  1 - const foo = i > 5 ? i < 100 ? true : false : i < 100 ? true : false;
+  1 + const foo = i > 5 ? (i < 100 ? true : false) : i < 100 ? true : false;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.
    ╭─[no_nested_ternary.tsx:1:46]
@@ -35,6 +43,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              ──────────────────────
    ╰────
   help: Add parentheses around the nested ternary expression.
+    ╭╴
+  1 - const foo = i > 5 ? i < 100 ? true : false : i < 100 ? true : false;
+  1 + const foo = i > 5 ? i < 100 ? true : false : (i < 100 ? true : false);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.
    ╭─[no_nested_ternary.tsx:1:28]
@@ -42,6 +54,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ──────────────────────
    ╰────
   help: Add parentheses around the nested ternary expression.
+    ╭╴
+  1 - const foo = i > 5 ? true : i < 100 ? true : false;
+  1 + const foo = i > 5 ? true : (i < 100 ? true : false);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.
    ╭─[no_nested_ternary.tsx:1:13]
@@ -49,6 +65,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────
    ╰────
   help: Add parentheses around the nested ternary expression.
+    ╭╴
+  1 - foo ? bar : baz === qux ? quxx : foobar;
+  1 + foo ? bar : (baz === qux ? quxx : foobar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.
    ╭─[no_nested_ternary.tsx:1:7]
@@ -56,6 +76,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────────────────────
    ╰────
   help: Add parentheses around the nested ternary expression.
+    ╭╴
+  1 - foo ? baz === qux ? quxx : foobar : bar;
+  1 + foo ? (baz === qux ? quxx : foobar) : bar;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected deeply nested ternary expression.
    ╭─[no_nested_ternary.tsx:1:47]

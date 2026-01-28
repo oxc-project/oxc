@@ -1,19 +1,85 @@
 use std::{
     borrow::Cow,
+    fmt::Display,
     io::{ErrorKind, Write},
     path::{Path, PathBuf},
     sync::{Arc, mpsc},
 };
 
 use cow_utils::CowUtils;
+use miette::{Diagnostic, LabeledSpan, SourceCode};
 use percent_encoding::AsciiSet;
 #[cfg(not(windows))]
 use std::fs::canonicalize as strict_canonicalize;
 
 use crate::{
-    Error, NamedSource, OxcDiagnostic, Severity,
+    Error, NamedSource, OxcDiagnostic, Patch, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
+
+/// A wrapper around [`OxcDiagnostic`] that includes source code and preserves
+/// access to patches for diff rendering.
+///
+/// This is used instead of miette's `with_source_code` to allow reporters to
+/// access the patches after wrapping.
+#[derive(Debug)]
+pub struct OxcDiagnosticWithSource {
+    pub diagnostic: OxcDiagnostic,
+    pub source: Arc<NamedSource<String>>,
+}
+
+impl OxcDiagnosticWithSource {
+    /// Get the patches from the underlying diagnostic, if any.
+    pub fn patches(&self) -> Option<&Vec<Vec<Patch>>> {
+        self.diagnostic.patches.as_ref()
+    }
+}
+
+impl std::fmt::Display for OxcDiagnosticWithSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.diagnostic.fmt(f)
+    }
+}
+
+impl std::error::Error for OxcDiagnosticWithSource {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        self.diagnostic.source()
+    }
+}
+
+impl Diagnostic for OxcDiagnosticWithSource {
+    fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.diagnostic.code()
+    }
+
+    fn severity(&self) -> Option<miette::Severity> {
+        self.diagnostic.severity()
+    }
+
+    fn help<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.diagnostic.help()
+    }
+
+    fn url<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.diagnostic.url()
+    }
+
+    fn labels(&self) -> Option<Box<dyn Iterator<Item = LabeledSpan> + '_>> {
+        self.diagnostic.labels()
+    }
+
+    fn source_code(&self) -> Option<&dyn SourceCode> {
+        Some(&self.source)
+    }
+
+    fn related<'a>(&'a self) -> Option<Box<dyn Iterator<Item = &'a dyn Diagnostic> + 'a>> {
+        self.diagnostic.related()
+    }
+
+    fn note<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        self.diagnostic.note()
+    }
+}
 
 pub type DiagnosticSender = mpsc::Sender<Vec<Error>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Vec<Error>>;
@@ -115,6 +181,8 @@ impl DiagnosticService {
 
     /// Wrap [diagnostics] with the source code and path, converting them into [Error]s.
     ///
+    /// Uses [`OxcDiagnosticWithSource`] to preserve access to patches for diff rendering.
+    ///
     /// [diagnostics]: OxcDiagnostic
     pub fn wrap_diagnostics<C: AsRef<Path>, P: AsRef<Path>>(
         cwd: C,
@@ -138,7 +206,12 @@ impl DiagnosticService {
         let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
         diagnostics
             .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
+            .map(|diagnostic| {
+                Error::from(OxcDiagnosticWithSource {
+                    diagnostic,
+                    source: Arc::clone(&source),
+                })
+            })
             .collect()
     }
 

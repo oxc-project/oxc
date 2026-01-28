@@ -10,6 +10,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition) {
+  2 - 				element.classList.add('className');
+  3 - 			} else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + element.classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -19,6 +27,13 @@ source: crates/oxc_linter/src/tester.rs
  4 │ ╰─▶                 element.classList.remove('className');
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition)
+  2 - 				element.classList.add('className');
+  3 - 			else
+  4 - 				element.classList.remove('className');
+  1 + element.classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -29,6 +44,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition)
+  2 - 				element.classList.add('className');
+  3 - 			else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + element.classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -39,6 +62,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition) {
+  2 - 				element?.classList.add('className');
+  3 - 			} else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + element?.classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -48,6 +79,13 @@ source: crates/oxc_linter/src/tester.rs
  4 │ ╰─▶                 element?.classList.remove('className');
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition)
+  2 - 				element.classList.add('className');
+  3 - 			else
+  4 - 				element?.classList.remove('className');
+  1 + element.classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -58,6 +96,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition) {
+  2 - 				element.classList.add('className');
+  3 - 			} else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + element.classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -68,6 +114,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(condition));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -78,6 +132,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition) {
+  2 - 				(( element )).classList.add('className');
+  3 - 			} else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + (( element )).classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -88,6 +150,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (0, condition) {
+  2 - 				element.classList.add('className');
+  3 - 			} else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + element.classList.toggle('className', 0, condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -98,6 +168,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (0, condition) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(0, condition));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -108,6 +186,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition) {
+  2 - 				element.classList.remove(((className)));
+  3 - 			} else {
+  4 - 				element.classList.add(((className)));
+  5 - 			}
+  1 + element.classList.toggle(((className)), !(condition));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:4]
@@ -119,6 +205,14 @@ source: crates/oxc_linter/src/tester.rs
  6 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  2 - 			if (condition) {
+  3 - 				(( element )).classList.add('className')
+  4 - 			} else {
+  5 - 				element.classList.remove('className')
+  6 - 			}
+  2 + 			(( element )).classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -130,6 +224,14 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 [].forEach(foo);
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition) {
+  2 - 				(( element )).classList.add('className')
+  3 - 			} else {
+  4 - 				element.classList.remove('className')
+  5 - 			}
+  1 + (( element )).classList.toggle('className', condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -140,6 +242,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element.classList.contains('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(element.classList.contains('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -150,6 +260,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element?.classList.contains('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(element?.classList.contains('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -160,6 +278,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element.classList.contains?.('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(element.classList.contains?.('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -170,6 +296,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element.classList?.contains('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(element.classList?.contains('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -180,6 +314,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element.classList.notContains('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(element.classList.notContains('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -190,6 +332,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element.classList.contains('not-same-class-name')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(element.classList.contains('not-same-class-name')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -200,6 +350,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element.notClassList.contains('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(element.notClassList.contains('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -210,6 +368,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (contains('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(contains('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -220,6 +386,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (notSameElement.classList.contains('className')) {
+  2 - 				element.classList.remove('className');
+  3 - 			} else {
+  4 - 				element.classList.add('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !(notSameElement.classList.contains('className')));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -230,6 +404,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (element.classList.contains('className')) {
+  2 - 				element.classList.add('className');
+  3 - 			} else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + element.classList.toggle('className', element.classList.contains('className'));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -240,6 +422,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │ ╰─▶             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (!element.classList.contains('className')) {
+  2 - 				element.classList.add('className');
+  3 - 			} else {
+  4 - 				element.classList.remove('className');
+  5 - 			}
+  1 + element.classList.toggle('className', !element.classList.contains('className'));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:13]
@@ -247,6 +437,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - condition ? element.classList.add(className) : element.classList.remove(className)
+  1 + element.classList.toggle(className, condition)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:13]
@@ -254,6 +448,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - condition ? element?.classList.add(className) : element.classList.remove(className)
+  1 + element?.classList.toggle(className, condition)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:13]
@@ -261,6 +459,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - condition ? element.classList.add(className) : element?.classList.remove(className)
+  1 + element.classList.toggle(className, condition)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:13]
@@ -268,6 +470,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - condition ? element.classList.remove(className) : element.classList.add(className)
+  1 + element.classList.toggle(className, !(condition))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:17]
@@ -275,6 +481,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - if (condition ? element.classList.add(className) : element.classList.remove(className));
+  1 + if (element.classList.toggle(className, condition));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:18]
@@ -284,6 +494,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             }
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  2 - 				return!foo ? element.classList.add(className) : element.classList.remove(className)
+  2 + 				returnelement.classList.toggle(className, !foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:16]
@@ -292,6 +506,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  2 - 			condition ? (( element )).classList.add(className) : element.classList.remove(className);
+  2 + 			(( element )).classList.toggle(className, condition);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -300,6 +518,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList.contains('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(element.classList.contains('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -308,6 +532,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element?.classList.contains('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(element?.classList.contains('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -316,6 +546,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList.contains?.('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(element.classList.contains?.('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -324,6 +560,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList?.contains('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(element.classList?.contains('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -332,6 +574,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList.notContains('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(element.classList.notContains('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -340,6 +588,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList.contains('not-same-class-name')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(element.classList.contains('not-same-class-name')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -348,6 +602,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.notClassList.contains('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(element.notClassList.contains('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -356,6 +616,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - contains('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(contains('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -364,6 +630,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.add('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - notSameElement.classList.contains('className')
+  2 - 				? element.classList.remove('className')
+  3 - 				: element.classList.add('className')
+  1 + element.classList.toggle('className', !(notSameElement.classList.contains('className')))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -372,6 +644,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.remove('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList.contains('className')
+  2 - 				? element.classList.add('className')
+  3 - 				: element.classList.remove('className')
+  1 + element.classList.toggle('className', element.classList.contains('className'))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:2:7]
@@ -380,6 +658,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶                 : element.classList.remove('className')
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - !element.classList.contains('className')
+  2 - 				? element.classList.add('className')
+  3 - 				: element.classList.remove('className')
+  1 + element.classList.toggle('className', !element.classList.contains('className'))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -387,6 +671,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList[condition ? "add" : "remove"](className)
+  1 + element.classList.toggle(className, condition)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -394,6 +682,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList[condition ? "remove": "add"](className)
+  1 + element.classList.toggle(className, !(condition))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -401,6 +693,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element?.classList[condition ? "add" : "remove"](className)
+  1 + element?.classList.toggle(className, condition)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:29]
@@ -408,6 +704,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - const toggle = (element) => element.classList[condition ? "add" : "remove"](className)
+  1 + const toggle = (element) => element.classList.toggle(className, condition)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -415,6 +715,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList[condition ? "add" : "remove"](((className)))
+  1 + element.classList.toggle(((className)), condition)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -422,6 +726,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList[index % 2 ? "remove" : "add"](className)
+  1 + element.classList.toggle(className, !(index % 2))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -429,6 +737,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList[(index % 2) ? "remove" : "add"](className)
+  1 + element.classList.toggle(className, !((index % 2)))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
@@ -436,3 +748,7 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────────
    ╰────
   help: Use `classList.toggle()` instead
+    ╭╴
+  1 - element.classList[(0, condition) ? "add" : "remove"](className)
+  1 + element.classList.toggle(className, (0, condition))
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  1 - new Response(JSON.stringify(data))
+  1 + Response.json(data)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:14]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  1 - new Response(JSON.stringify(data), extraArgument)
+  1 + Response.json(data, extraArgument)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:18]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  1 - new Response( (( JSON.stringify( (( 0, data )), ) )), )
+  1 + Response.json( (( 0, data )), )
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:3:15]
@@ -30,6 +42,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  2 - 				return new // comment
+  3 - 					Response(JSON.stringify(data))
+  2 + 				return ( // comment
+  3 + 					Response.json(data))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:14]
@@ -37,6 +55,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  1 - new Response(JSON.stringify(data), {status: 200})
+  1 + Response.json(data, {status: 200})
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:2:23]
@@ -45,6 +67,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  2 - 			new (( Response ))(JSON.stringify(data))
+  2 + 			;(( Response.json ))(data)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:2:23]
@@ -53,6 +79,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  2 - 			new (( Response ))(JSON.stringify(data))
+  2 + 			(( Response.json ))(data)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:2:26]
@@ -61,6 +91,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  2 - 			(( new (( Response ))(JSON.stringify(data)) ))
+  2 + 			(( (( Response.json ))(data) ))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:2:26]
@@ -69,3 +103,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ──────────────
    ╰────
   help: Replace `new Response(JSON.stringify(...))` with `Response.json(...)`
+    ╭╴
+  2 - 			(( new (( Response ))(JSON.stringify(data)) ))
+  2 + 			(( (( Response.json ))(data) ))
+    ╰╴

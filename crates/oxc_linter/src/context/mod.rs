@@ -509,11 +509,19 @@ impl<'a> LintContext<'a> {
             _ => diagnostic,
         };
 
-        if self.parent.fix.can_apply(rule_fix.kind()) && !rule_fix.is_empty() {
+        // Capture fixes if either:
+        // 1. Fix mode is enabled and the fix kind is applicable, or
+        // 2. The diff display feature is enabled (for showing potential fixes)
+        let should_capture_fix = (self.parent.fix.can_apply(rule_fix.kind())
+            || oxc_diagnostics::show_fix_diff())
+            && !rule_fix.is_empty();
+
+        if should_capture_fix {
             let fix = rule_fix.into_fix(self.source_text());
             #[cfg(debug_assertions)]
             {
-                if fix.span.size() > 1 {
+                // Only check fix message if the span is valid and has size > 1
+                if fix.span.start <= fix.span.end && fix.span.size() > 1 {
                     debug_assert!(
                         fix.message.as_ref().is_some_and(|msg| !msg.is_empty()),
                         "Rule `{}/{}` fix should have a message for a complex fix. Did you forget to add a message?\n   Source text: {:?}\n    Fixed text: {:?}\nhelp: You can add a message to a fix with `RuleFix.with_message()`",

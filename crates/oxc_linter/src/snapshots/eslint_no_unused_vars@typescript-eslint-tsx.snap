@@ -10,3 +10,6 @@ source: crates/oxc_linter/src/tester.rs
  4 │ 
    ╰────
   help: Consider removing this import.
+    ╭╴
+  3 -         import { Fragment } from 'react';
+    ╰╴

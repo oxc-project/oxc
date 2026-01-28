@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = bar;
+  1 + const foo = bar;
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = bar, toast = most;
+  1 + const foo = bar, toast = most;
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = bar; let toast = most;
+  1 + const foo = bar; let toast = most;
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:6]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - for (var a of b) { console.log(a); }
+  1 + for (let a of b) { console.log(a); }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:6]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - for (var a in b) { console.log(a); }
+  1 + for (let a in b) { console.log(a); }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:20]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - for (let a of b) { var c = 1; console.log(c); }
+  1 + for (let a of b) { const c = 1; console.log(c); }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:6]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - for (var i = 0; i < list.length; ++i) { foo(i) }
+  1 + for (let i = 0; i < list.length; ++i) { foo(i) }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:6]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - for (var i = 0, i = 0; false;);
+  1 + for (const i = 0, i = 0; false;);
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var i = 0; for (var i = 1; false;); console.log(i);
+  1 + const i = 0; for (var i = 1; false;); console.log(i);
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:17]
@@ -77,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a, b, c; var a;
+  1 + let a, b, c; var a;
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:14]
@@ -84,6 +124,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a, b, c; var a;
+  1 + var a, b, c; let a;
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -91,6 +135,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a; if (b) { var a; }
+  1 + let a; if (b) { var a; }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:17]
@@ -98,6 +146,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a; if (b) { var a; }
+  1 + var a; if (b) { let a; }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:12]
@@ -133,6 +185,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - switch (a) { case 0: var b = 1 }
+  1 + switch (a) { case 0: const b = 1 }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:6]
@@ -140,6 +196,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - for (var a of b) { arr.push(() => a); }
+  1 + for (let a of b) { arr.push(() => a); }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:20]
@@ -147,6 +207,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - for (let a of b) { var c; console.log(c); c = 'hello'; }
+  1 + for (let a of b) { let c; console.log(c); c = 'hello'; }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -154,6 +218,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a = a
+  1 + const a = a
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -161,6 +229,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var {a = a} = {}
+  1 + let {a = a} = {}
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -168,6 +240,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var {a = b, b} = {}
+  1 + let {a = b, b} = {}
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -175,6 +251,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var {a, b = a} = {}
+  1 + let {a, b = a} = {}
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -182,6 +262,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a = b, b = 1
+  1 + const a = b, b = 1
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -189,6 +273,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a = b; var b = 1
+  1 + const a = b; var b = 1
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:12]
@@ -196,6 +284,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var a = b; var b = 1
+  1 + var a = b; const b = 1
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:22]
@@ -203,6 +295,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - function foo() { a } var a = 1; foo()
+  1 + function foo() { a } const a = 1; foo()
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:10]
@@ -210,6 +306,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - if (foo) var bar = 1;
+  1 + if (foo) const bar = 1;
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -217,6 +317,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = 1
+  1 + const foo = 1
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:3]
@@ -224,6 +328,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - { var foo = 1 }
+  1 + { const foo = 1 }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:13]
@@ -231,6 +339,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - if (true) { var foo = 1 }
+  1 + if (true) { const foo = 1 }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -238,6 +350,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = 1
+  1 + const foo = 1
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:9]
@@ -245,6 +361,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - declare var foo = 2;
+  1 + declare let foo = 2;
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:18]
@@ -252,6 +372,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - function foo() { var let; }
+  1 + function foo() { let let; }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:18]
@@ -259,6 +383,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - function foo() { var { let } = {}; }
+  1 + function foo() { const { let } = {}; }
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -266,6 +394,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var fx = function (i = 0) { if (i < 5) { return fx(i + 1); } console.log(i); }; fx();
+  1 + const fx = function (i = 0) { if (i < 5) { return fx(i + 1); } console.log(i); }; fx();
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -273,6 +405,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = function () { foo() };
+  1 + const foo = function () { foo() };
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -280,6 +416,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = () => foo();
+  1 + const foo = () => foo();
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -287,6 +427,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = (function () { foo(); })();
+  1 + const foo = (function () { foo(); })();
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -294,6 +438,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var foo = bar(function () { foo(); });
+  1 + const foo = bar(function () { foo(); });
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -301,6 +449,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var bar = foo, foo = function () { foo(); };
+  1 + const bar = foo, foo = function () { foo(); };
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -308,6 +460,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var bar = foo; var foo = function () { foo(); };
+  1 + const bar = foo; var foo = function () { foo(); };
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:16]
@@ -315,6 +471,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var bar = foo; var foo = function () { foo(); };
+  1 + var bar = foo; const foo = function () { foo(); };
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -322,6 +482,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var { foo = foo } = function () { foo(); };
+  1 + let { foo = foo } = function () { foo(); };
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -329,6 +493,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var { bar = foo, foo } = function () { foo(); };
+  1 + let { bar = foo, foo } = function () { foo(); };
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
@@ -336,6 +504,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var bar = function () { foo(); }; var foo = function() {};
+  1 + const bar = function () { foo(); }; var foo = function() {};
+    ╰╴
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:35]
@@ -343,3 +515,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ───
    ╰────
   help: Replace var with let or const
+    ╭╴
+  1 - var bar = function () { foo(); }; var foo = function() {};
+  1 + var bar = function () { foo(); }; const foo = function() {};
+    ╰╴

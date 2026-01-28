@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
@@ -8,6 +7,10 @@ assertion_line: 444
    ·         ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - if (foo.find(fn)) {}
+  1 + if (foo.some(fn)) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
@@ -15,6 +18,10 @@ assertion_line: 444
    ·         ────────
    ╰────
   help: Replace `findLast` with `some`.
+    ╭╴
+  1 - if (foo.findLast(fn)) {}
+  1 + if (foo.some(fn)) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:11]
@@ -22,6 +29,10 @@ assertion_line: 444
    ·           ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - if (array.find(element => element === "🦄")) {}
+  1 + if (array.some(element => element === "🦄")) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:19]
@@ -29,6 +40,10 @@ assertion_line: 444
    ·                   ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - const foo = array.find(element => element === "🦄") ? bar : baz;
+  1 + const foo = array.some(element => element === "🦄") ? bar : baz;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.
    ╭─[prefer_array_some.tsx:1:7]
@@ -36,6 +51,10 @@ assertion_line: 444
    ·       ──────
    ╰────
   help: Replace `.filter(…).length` with `.some(…)`
+    ╭╴
+  1 - array.filter(fn).length > 0
+  1 + array.some(fn)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.
    ╭─[prefer_array_some.tsx:1:7]
@@ -43,6 +62,10 @@ assertion_line: 444
    ·       ──────
    ╰────
   help: Replace `.filter(…).length` with `.some(…)`
+    ╭╴
+  1 - array.filter(fn).length !== 0
+  1 + array.some(fn)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
@@ -50,6 +73,10 @@ assertion_line: 444
    ·     ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - foo.find(fn) == null
+  1 + foo.some(fn) == null
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
@@ -57,6 +84,10 @@ assertion_line: 444
    ·     ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - foo.find(fn) == undefined
+  1 + foo.some(fn) == undefined
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
@@ -64,6 +95,10 @@ assertion_line: 444
    ·     ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - foo.find(fn) === undefined
+  1 + foo.some(fn) === undefined
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
@@ -71,6 +106,10 @@ assertion_line: 444
    ·     ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - foo.find(fn) != null
+  1 + foo.some(fn) != null
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
@@ -78,6 +117,10 @@ assertion_line: 444
    ·     ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - foo.find(fn) != undefined
+  1 + foo.some(fn) != undefined
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:5]
@@ -85,6 +128,10 @@ assertion_line: 444
    ·     ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - foo.find(fn) !== undefined
+  1 + foo.some(fn) !== undefined
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:14]
@@ -92,6 +139,10 @@ assertion_line: 444
    ·              ────
    ╰────
   help: Replace `find` with `some`.
+    ╭╴
+  1 - a = (( ((foo.find(fn))) == ((null)) )) ? "no" : "yes";
+  1 + a = (( ((foo.some(fn))) == ((null)) )) ? "no" : "yes";
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.findIndex(…)` or `.findLastIndex(…)`.
    ╭─[prefer_array_some.tsx:1:5]

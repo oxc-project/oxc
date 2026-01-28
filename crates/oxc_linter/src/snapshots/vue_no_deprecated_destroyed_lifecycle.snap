@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     destroyed () {},
    ╰────
   help: Replace `beforeDestroy` with `beforeUnmount`.
+    ╭╴
+  4 - 			        beforeDestroy () {},
+  4 + 			        beforeUnmount () {},
+    ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `destroyed` lifecycle hook is deprecated. Use `unmounted` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:5:12]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   }
    ╰────
   help: Replace `destroyed` with `unmounted`.
+    ╭╴
+  5 - 			        destroyed () {},
+  5 + 			        unmounted () {},
+    ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `beforeDestroy` lifecycle hook is deprecated. Use `beforeUnmount` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:4:12]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     destroyed,
    ╰────
   help: Replace `beforeDestroy` with `beforeUnmount`.
+    ╭╴
+  4 - 			        beforeDestroy,
+  4 + 			        beforeUnmount:beforeDestroy,
+    ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `destroyed` lifecycle hook is deprecated. Use `unmounted` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:5:12]
@@ -36,6 +48,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   }
    ╰────
   help: Replace `destroyed` with `unmounted`.
+    ╭╴
+  5 - 			        destroyed,
+  5 + 			        unmounted:destroyed,
+    ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `beforeDestroy` lifecycle hook is deprecated. Use `beforeUnmount` instead.
     ╭─[no_deprecated_destroyed_lifecycle.tsx:12:12]
@@ -45,6 +61,10 @@ source: crates/oxc_linter/src/tester.rs
  13 │                     destroyed,
     ╰────
   help: Replace `beforeDestroy` with `beforeUnmount`.
+     ╭╴
+  12 - 			        beforeDestroy,
+  12 + 			        beforeUnmount:beforeDestroy,
+     ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `destroyed` lifecycle hook is deprecated. Use `unmounted` instead.
     ╭─[no_deprecated_destroyed_lifecycle.tsx:13:12]
@@ -54,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
  14 │                     errorCaptured,
     ╰────
   help: Replace `destroyed` with `unmounted`.
+     ╭╴
+  13 - 			        destroyed,
+  13 + 			        unmounted:destroyed,
+     ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `beforeDestroy` lifecycle hook is deprecated. Use `beforeUnmount` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:4:13]
@@ -63,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     ['destroyed']() {},
    ╰────
   help: Replace `beforeDestroy` with `beforeUnmount`.
+    ╭╴
+  4 - 			        ['beforeDestroy']() {},
+  4 + 			        ['beforeUnmount']() {},
+    ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `destroyed` lifecycle hook is deprecated. Use `unmounted` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:5:13]
@@ -72,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   }
    ╰────
   help: Replace `destroyed` with `unmounted`.
+    ╭╴
+  5 - 			        ['destroyed']() {},
+  5 + 			        ['unmounted']() {},
+    ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `beforeDestroy` lifecycle hook is deprecated. Use `beforeUnmount` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:4:13]
@@ -81,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     [`destroyed`]() {},
    ╰────
   help: Replace `beforeDestroy` with `beforeUnmount`.
+    ╭╴
+  4 - 			        [`beforeDestroy`]() {},
+  4 + 			        [`beforeUnmount`]() {},
+    ╰╴
 
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `destroyed` lifecycle hook is deprecated. Use `unmounted` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:5:13]
@@ -90,3 +126,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                   }
    ╰────
   help: Replace `destroyed` with `unmounted`.
+    ╭╴
+  5 - 			        [`destroyed`]() {},
+  5 + 			        [`unmounted`]() {},
+    ╰╴

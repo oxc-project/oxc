@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a function call, which may be unintentional
    ╰────
   help: If you did not intend to make a function call, insert ';' before the parenthesis
+    ╭╴
+  2 - (x || y).doSomething()
+  2 + ;(x || y).doSomething()
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
    ╭─[no_unexpected_multiline.tsx:2:1]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a function call, which may be unintentional
    ╰────
   help: If you did not intend to make a function call, insert ';' before the parenthesis
+    ╭╴
+  2 - (x || y).doSomething()
+  2 + ;(x || y).doSomething()
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
    ╭─[no_unexpected_multiline.tsx:2:1]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a function call, which may be unintentional
    ╰────
   help: If you did not intend to make a function call, insert ';' before the parenthesis
+    ╭╴
+  2 - (x).doSomething()
+  2 + ;(x).doSomething()
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
    ╭─[no_unexpected_multiline.tsx:2:1]
@@ -36,6 +48,10 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a property access, which may be unintentional
    ╰────
   help: If you did not intend to access a property, insert ';' before the bracket
+    ╭╴
+  2 - [a, b, c].forEach(doSomething)
+  2 + ;[a, b, c].forEach(doSomething)
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between function name and open parenthesis of function call
    ╭─[no_unexpected_multiline.tsx:2:5]
@@ -45,6 +61,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── this is parsed as a function call, which may be unintentional
    ╰────
   help: If you did not intend to make a function call, insert ';' before the parenthesis
+    ╭╴
+  2 -     (x || y).doSomething()
+  2 +     ;(x || y).doSomething()
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
    ╭─[no_unexpected_multiline.tsx:2:3]
@@ -54,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ╰── this is parsed as a property access, which may be unintentional
    ╰────
   help: If you did not intend to access a property, insert ';' before the bracket
+    ╭╴
+  2 -   [a, b, c].forEach(doSomething)
+  2 +   ;[a, b, c].forEach(doSomething)
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
    ╭─[no_unexpected_multiline.tsx:2:2]
@@ -63,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ╰── this is parsed as a tagged template, which may be unintentional
    ╰────
   help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+    ╭╴
+  2 -  `hello`
+  2 +  ;`hello`
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
    ╭─[no_unexpected_multiline.tsx:3:1]
@@ -72,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a tagged template, which may be unintentional
    ╰────
   help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+    ╭╴
+  3 - `hello`
+  3 + ;`hello`
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
    ╭─[no_unexpected_multiline.tsx:4:1]
@@ -81,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a tagged template, which may be unintentional
    ╰────
   help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+    ╭╴
+  4 - `Invalid Test Case`
+  4 + ;`Invalid Test Case`
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
    ╭─[no_unexpected_multiline.tsx:3:4]
@@ -91,6 +127,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         
    ╰────
   help: If you did not intend to divide, insert ';' before the slash
+    ╭╴
+  3 - 			/ bar /gym
+  3 + 			;/ bar /gym
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
    ╭─[no_unexpected_multiline.tsx:3:4]
@@ -101,6 +141,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         
    ╰────
   help: If you did not intend to divide, insert ';' before the slash
+    ╭╴
+  3 - 			/ bar /g
+  3 + 			;/ bar /g
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
    ╭─[no_unexpected_multiline.tsx:3:4]
@@ -111,6 +155,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         
    ╰────
   help: If you did not intend to divide, insert ';' before the slash
+    ╭╴
+  3 - 			/ bar /g.test(baz)
+  3 + 			;/ bar /g.test(baz)
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
    ╭─[no_unexpected_multiline.tsx:3:4]
@@ -121,6 +169,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         
    ╰────
   help: If you did not intend to divide, insert ';' before the slash
+    ╭╴
+  3 - 			/bar/gimuygimuygimuy.test(baz)
+  3 + 			;/bar/gimuygimuygimuy.test(baz)
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between numerator and division operator
    ╭─[no_unexpected_multiline.tsx:3:4]
@@ -131,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         
    ╰────
   help: If you did not intend to divide, insert ';' before the slash
+    ╭╴
+  3 - 			/bar/s.test(baz)
+  3 + 			;/bar/s.test(baz)
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between template tag and template literal
    ╭─[no_unexpected_multiline.tsx:5:3]
@@ -140,6 +196,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ╰── this is parsed as a tagged template, which may be unintentional
    ╰────
   help: If you did not intend for this to be a tagged template, insert ';' before the backtick
+    ╭╴
+  5 - */`foo`
+  5 + */;`foo`
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
    ╭─[no_unexpected_multiline.tsx:2:1]
@@ -149,6 +209,10 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a property access, which may be unintentional
    ╰────
   help: If you did not intend to access a property, insert ';' before the bracket
+    ╭╴
+  2 - [field2]; }
+  2 + ;[field2]; }
+    ╰╴
 
   ⚠ eslint(no-unexpected-multiline): Unexpected newline between object and open bracket of property access
    ╭─[no_unexpected_multiline.tsx:2:1]
@@ -158,3 +222,7 @@ source: crates/oxc_linter/src/tester.rs
    · ╰── this is parsed as a property access, which may be unintentional
    ╰────
   help: If you did not intend to access a property, insert ';' before the bracket
+    ╭╴
+  2 - [field2]; }
+  2 + ;[field2]; }
+    ╰╴

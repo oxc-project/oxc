@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Replace "toBeCalled" with its canonical name of "toHaveBeenCalled"
+    ╭╴
+  1 - expect(a).toBeCalled()
+  1 + expect(a).toHaveBeenCalled()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalledTimes"
    ╭─[no_alias_methods.tsx:1:11]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────────
    ╰────
   help: Replace "toBeCalledTimes" with its canonical name of "toHaveBeenCalledTimes"
+    ╭╴
+  1 - expect(a).toBeCalledTimes()
+  1 + expect(a).toHaveBeenCalledTimes()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalledWith"
    ╭─[no_alias_methods.tsx:1:11]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────
    ╰────
   help: Replace "toBeCalledWith" with its canonical name of "toHaveBeenCalledWith"
+    ╭╴
+  1 - expect(a).toBeCalledWith()
+  1 + expect(a).toHaveBeenCalledWith()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "lastCalledWith"
    ╭─[no_alias_methods.tsx:1:11]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────
    ╰────
   help: Replace "lastCalledWith" with its canonical name of "toHaveBeenLastCalledWith"
+    ╭╴
+  1 - expect(a).lastCalledWith()
+  1 + expect(a).toHaveBeenLastCalledWith()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "nthCalledWith"
    ╭─[no_alias_methods.tsx:1:11]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────────
    ╰────
   help: Replace "nthCalledWith" with its canonical name of "toHaveBeenNthCalledWith"
+    ╭╴
+  1 - expect(a).nthCalledWith()
+  1 + expect(a).toHaveBeenNthCalledWith()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toReturn"
    ╭─[no_alias_methods.tsx:1:11]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────
    ╰────
   help: Replace "toReturn" with its canonical name of "toHaveReturned"
+    ╭╴
+  1 - expect(a).toReturn()
+  1 + expect(a).toHaveReturned()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toReturnTimes"
    ╭─[no_alias_methods.tsx:1:11]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────────
    ╰────
   help: Replace "toReturnTimes" with its canonical name of "toHaveReturnedTimes"
+    ╭╴
+  1 - expect(a).toReturnTimes()
+  1 + expect(a).toHaveReturnedTimes()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toReturnWith"
    ╭─[no_alias_methods.tsx:1:11]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────────
    ╰────
   help: Replace "toReturnWith" with its canonical name of "toHaveReturnedWith"
+    ╭╴
+  1 - expect(a).toReturnWith()
+  1 + expect(a).toHaveReturnedWith()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "lastReturnedWith"
    ╭─[no_alias_methods.tsx:1:11]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────────────
    ╰────
   help: Replace "lastReturnedWith" with its canonical name of "toHaveLastReturnedWith"
+    ╭╴
+  1 - expect(a).lastReturnedWith()
+  1 + expect(a).toHaveLastReturnedWith()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "nthReturnedWith"
    ╭─[no_alias_methods.tsx:1:11]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────────
    ╰────
   help: Replace "nthReturnedWith" with its canonical name of "toHaveNthReturnedWith"
+    ╭╴
+  1 - expect(a).nthReturnedWith()
+  1 + expect(a).toHaveNthReturnedWith()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:11]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
+    ╭╴
+  1 - expect(a).toThrowError()
+  1 + expect(a).toThrow()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:20]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
+    ╭╴
+  1 - expect(a).resolves.toThrowError()
+  1 + expect(a).resolves.toThrow()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:19]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
+    ╭╴
+  1 - expect(a).rejects.toThrowError()
+  1 + expect(a).rejects.toThrow()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:15]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
+    ╭╴
+  1 - expect(a).not.toThrowError()
+  1 + expect(a).not.toThrow()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:15]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
+    ╭╴
+  1 - expect(a).not['toThrowError']()
+  1 + expect(a).not['toThrow']()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalled"
    ╭─[no_alias_methods.tsx:1:11]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Replace "toBeCalled" with its canonical name of "toHaveBeenCalled"
+    ╭╴
+  1 - expect(a).toBeCalled()
+  1 + expect(a).toHaveBeenCalled()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toBeCalledTimes"
    ╭─[no_alias_methods.tsx:1:11]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────────
    ╰────
   help: Replace "toBeCalledTimes" with its canonical name of "toHaveBeenCalledTimes"
+    ╭╴
+  1 - expect(a).toBeCalledTimes()
+  1 + expect(a).toHaveBeenCalledTimes()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-alias-methods): Unexpected alias "toThrowError"
    ╭─[no_alias_methods.tsx:1:15]
@@ -126,3 +194,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────
    ╰────
   help: Replace "toThrowError" with its canonical name of "toThrow"
+    ╭╴
+  1 - expect(a).not["toThrowError"]()
+  1 + expect(a).not["toThrow"]()
+    ╰╴

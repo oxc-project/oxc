@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - new Array()
+  1 + []
+    ╰╴
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - new Array
+  1 + []
+    ╰╴
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - Array();
+  1 + [];
+    ╰╴
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - new Array(x, y)
+  1 + [x, y]
+    ╰╴
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - new Array(0, 1, 2)
+  1 + [0, 1, 2]
+    ╰╴
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
@@ -49,6 +69,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - Array(x, y)
+  1 + [x, y]
+    ╰╴
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
@@ -56,6 +80,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - Array(0, 1, 2)
+  1 + [0, 1, 2]
+    ╰╴
 
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
@@ -70,3 +98,7 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────
    ╰────
   help: Use array literal notation [] instead.
+    ╭╴
+  1 - Array(1, 2, ...args);
+  1 + [1, 2, ...args];
+    ╰╴

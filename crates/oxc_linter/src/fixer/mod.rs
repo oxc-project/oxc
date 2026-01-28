@@ -290,8 +290,54 @@ impl Message {
 impl From<Message> for OxcDiagnostic {
     #[inline]
     fn from(message: Message) -> Self {
-        message.error
+        let mut diagnostic = message.error;
+
+        // Convert PossibleFixes to Vec<Vec<Patch>> for diagnostic rendering
+        let patches = match &message.fixes {
+            PossibleFixes::None => None,
+            PossibleFixes::Single(fix) => {
+                // Check for invalid span first, then check if empty
+                if fix.span.start > fix.span.end
+                    || (fix.span.start == fix.span.end && fix.content.is_empty())
+                {
+                    None
+                } else {
+                    fix_to_patch(fix).map(|p| vec![vec![p]])
+                }
+            }
+            PossibleFixes::Multiple(fixes) => {
+                let patch_groups: Vec<Vec<_>> = fixes
+                    .iter()
+                    // Check for invalid or empty fixes
+                    .filter(|f| {
+                        f.span.start <= f.span.end
+                            && !(f.span.start == f.span.end && f.content.is_empty())
+                    })
+                    .filter_map(|fix| fix_to_patch(fix).map(|p| vec![p]))
+                    .collect();
+                if patch_groups.is_empty() { None } else { Some(patch_groups) }
+            }
+        };
+
+        if let Some(patches) = patches {
+            diagnostic = diagnostic.with_fixes(patches);
+        }
+
+        diagnostic
     }
+}
+
+/// Convert a linter Fix to a diagnostic Patch
+fn fix_to_patch(fix: &Fix) -> Option<oxc_diagnostics::Patch> {
+    use oxc_diagnostics::SourceSpan;
+    // Skip invalid fixes where start > end
+    if fix.span.start > fix.span.end {
+        return None;
+    }
+    let start = fix.span.start as usize;
+    let len = (fix.span.end - fix.span.start) as usize;
+    let span = SourceSpan::new(start.into(), len);
+    Some(oxc_diagnostics::Patch::new(span, fix.content.clone()))
 }
 
 impl GetSpan for Message {

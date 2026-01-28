@@ -7,6 +7,9 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────
    ╰────
   help: Delete this class
+    ╭╴
+  1 - class Foo {}
+    ╰╴
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
    ╭─[no_extraneous_class.tsx:5:14]
@@ -41,6 +44,10 @@ source: crates/oxc_linter/src/tester.rs
  9 │               }
    ╰────
   help: Delete this class
+    ╭╴
+  8 - 			    class nestedClass {}
+  8 + 			    
+    ╰╴
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
    ╭─[no_extraneous_class.tsx:1:16]
@@ -82,6 +89,9 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Delete this class
+    ╭╴
+  1 - abstract class Foo {}
+    ╰╴
 
   ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
    ╭─[no_extraneous_class.tsx:1:16]

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - class A { static a() {}; }
+  1 + const A = { a() {}, }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - class A { static a() {} }
+  1 + const A = { a() {}, }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:11]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - const A = class { static a() {}; }
+  1 + const A =  { a() {}, }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
@@ -34,6 +46,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - class A { static constructor() {}; }
+  1 + const A = { constructor() {}, }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:16]
@@ -47,6 +63,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - export default class { static a() {}; }
+  1 + export default  { a() {}, }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:8]
@@ -54,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - export class A { static a() {}; }
+  1 + export const A = { a() {}, }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
@@ -61,6 +85,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - class A {static [this.a] = 1}
+  1 + const A = {[this.a]: 1,}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
@@ -68,3 +96,7 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Convert to an object instead of a class with only static members.
+    ╭╴
+  1 - class A { static a() {} }
+  1 + const A = { a() {}, }
+    ╰╴

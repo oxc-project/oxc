@@ -1876,6 +1876,7 @@ dependencies = [
  "cow-utils",
  "oxc-miette",
  "percent-encoding",
+ "similar",
 ]
 
 [[package]]

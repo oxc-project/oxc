@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo ? foo : bar;
+  1 + foo || bar;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo.bar ? foo.bar : foo.baz
+  1 + foo.bar || foo.baz
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo?.bar ? foo.bar : baz
+  1 + foo?.bar || baz
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo?.bar ? foo?.bar : baz
+  1 + foo?.bar || baz
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - !bar ? foo : bar;
+  1 + bar || foo;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - !!bar ? foo : !bar;
+  1 + bar || foo;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo() ? foo() : bar
+  1 + foo() || bar
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo ? foo : a && b
+  1 + foo || a && b
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo ? foo : a || b
+  1 + foo || a || b
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo ? foo : a ?? b
+  1 + foo || (a ?? b)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - a && b ? a && b : bar
+  1 + a && b || bar
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - a || b ? a || b : bar
+  1 + a || b || bar
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - a ?? b ? a ?? b : bar
+  1 + (a ?? b) || bar
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - foo ? foo : await a
+  1 + foo || await a
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - await a ? await a : foo
+  1 + await a || foo
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - await a ? (await (a)) : (foo)
+  1 + await a || (foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - (await a) ? await (a) : (foo)
+  1 + await (a) || (foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:1:1]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  1 - (await a) ? (await (a)) : (foo)
+  1 + await (a) || (foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:2:10]
@@ -134,6 +206,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  2 -          !+a ? b : +a
+  2 +          +a || b
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.
    ╭─[prefer_logical_operator_over_ternary.tsx:2:10]
@@ -142,3 +218,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────────────────
    ╰────
   help: Switch to "||" or "??" operator
+    ╭╴
+  2 -          a && b ? a && b : 1
+  2 +          a && b || 1
+    ╰╴

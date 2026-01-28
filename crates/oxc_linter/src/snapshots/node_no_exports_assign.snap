@@ -7,3 +7,7 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use 'module.exports' instead.
+    ╭╴
+  1 - exports = {}
+  1 + module.exports = {}
+    ╰╴

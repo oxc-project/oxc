@@ -14,6 +14,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────────────────
    ╰────
   help: Did you mean 'aria-labelledby'?
+    ╭╴
+  1 - <div aria-labeledby="foobar" />
+  1 + <div aria-labelledby="foobar" />
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(aria-props): 'aria-skldjfaria-klajsd' is not a valid ARIA attribute.
    ╭─[aria_props.tsx:1:6]

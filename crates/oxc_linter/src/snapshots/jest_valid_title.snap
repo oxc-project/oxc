@@ -254,6 +254,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - describe(' foo', function () {})
+  1 + describe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:17]
@@ -261,6 +265,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - describe.each()(' foo', function () {})
+  1 + describe.each()('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:22]
@@ -268,6 +276,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - describe.only.each()(' foo', function () {})
+  1 + describe.only.each()('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:10]
@@ -275,6 +287,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - describe(' foo foe fum', function () {})
+  1 + describe('foo foe fum', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:10]
@@ -282,6 +298,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - describe('foo foe fum ', function () {})
+  1 + describe('foo foe fum', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:11]
@@ -289,6 +309,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - fdescribe(' foo', function () {})
+  1 + fdescribe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:11]
@@ -296,6 +320,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - fdescribe(' foo', function () {})
+  1 + fdescribe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:11]
@@ -303,6 +331,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - xdescribe(' foo', function () {})
+  1 + xdescribe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:4]
@@ -310,6 +342,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - it(' foo', function () {})
+  1 + it('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:15]
@@ -317,6 +353,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - it.concurrent(' foo', function () {})
+  1 + it.concurrent('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:5]
@@ -324,6 +364,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - fit(' foo', function () {})
+  1 + fit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:9]
@@ -331,6 +375,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - it.skip(' foo', function () {})
+  1 + it.skip('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:5]
@@ -338,6 +386,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - fit('foo ', function () {})
+  1 + fit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:9]
@@ -345,6 +397,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - it.skip('foo ', function () {})
+  1 + it.skip('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:4:26]
@@ -354,6 +410,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  4 -                 testThat('foo works ', () => {});
+  4 +                 testThat('foo works', () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:5]
@@ -361,6 +421,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - xit(' foo', function () {})
+  1 + xit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:6]
@@ -368,6 +432,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test(' foo', function () {})
+  1 + test('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:17]
@@ -375,6 +443,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test.concurrent(' foo', function () {})
+  1 + test.concurrent('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:6]
@@ -382,6 +454,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test(` foo`, function () {})
+  1 + test(`foo`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:17]
@@ -389,6 +465,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test.concurrent(` foo`, function () {})
+  1 + test.concurrent(`foo`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:6]
@@ -396,6 +476,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test(` foo bar bang`, function () {})
+  1 + test(`foo bar bang`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:17]
@@ -403,6 +487,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───────────────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test.concurrent(` foo bar bang`, function () {})
+  1 + test.concurrent(`foo bar bang`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:6]
@@ -410,6 +498,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────────────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test(` foo bar bang  `, function () {})
+  1 + test(`foo bar bang`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:17]
@@ -417,6 +509,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - test.concurrent(` foo bar bang  `, function () {})
+  1 + test.concurrent(`foo bar bang`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:7]
@@ -424,6 +520,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - xtest(' foo', function () {})
+  1 + xtest('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:1:7]
@@ -431,6 +531,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  1 - xtest(' foo  ', function () {})
+  1 + xtest('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:2:26]
@@ -440,6 +544,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     it('bar', () => {})
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  2 -                 describe(' foo', () => {
+  2 +                 describe('foo', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have leading or trailing spaces
    ╭─[valid_title.tsx:3:24]
@@ -449,6 +557,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                 })
    ╰────
   help: Remove the leading or trailing spaces
+    ╭╴
+  3 -                     it(' bar', () => {})
+  3 +                     it('bar', () => {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:10]
@@ -456,6 +568,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - describe('describe foo', function () {})
+  1 + describe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:11]
@@ -463,6 +579,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - fdescribe('describe foo', function () {})
+  1 + fdescribe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:11]
@@ -470,6 +590,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - xdescribe('describe foo', function () {})
+  1 + xdescribe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:10]
@@ -477,6 +601,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - describe('describe foo', function () {})
+  1 + describe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:11]
@@ -484,6 +612,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - fdescribe(`describe foo`, function () {})
+  1 + fdescribe(`foo`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:6]
@@ -491,6 +623,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - test('test foo', function () {})
+  1 + test('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:7]
@@ -498,6 +634,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - xtest('test foo', function () {})
+  1 + xtest('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:6]
@@ -505,6 +645,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - test(`test foo`, function () {})
+  1 + test(`foo`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:6]
@@ -512,6 +656,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - test(`test foo test`, function () {})
+  1 + test(`foo test`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:4]
@@ -519,6 +667,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - it('it foo', function () {})
+  1 + it('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:5]
@@ -526,6 +678,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - fit('it foo', function () {})
+  1 + fit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:5]
@@ -533,6 +689,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - xit('it foo', function () {})
+  1 + xit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:1:4]
@@ -540,6 +700,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ──────────────────────
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  1 - it('it foos it correctly', function () {})
+  1 + it('foos it correctly', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:2:26]
@@ -549,6 +713,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     it('bar', () => {})
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  2 -                 describe('describe foo', () => {
+  2 +                 describe('foo', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:2:26]
@@ -558,6 +726,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     it('describes things correctly', () => {})
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  2 -                 describe('describe foo', () => {
+  2 +                 describe('foo', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Should not have duplicate prefix
    ╭─[valid_title.tsx:3:24]
@@ -567,6 +739,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                 })
    ╰────
   help: The function name already has the prefix, try to remove the duplicate prefix
+    ╭╴
+  3 -                     it('it bar', () => {})
+  3 +                     it('bar', () => {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(valid-title): Title must be a string
    ╭─[valid_title.tsx:1:4]

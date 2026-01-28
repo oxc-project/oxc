@@ -18,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── This map call spreads an object
    ╰────
   help: Consider using `Object.assign` instead
+    ╭╴
+  1 - let a = b.map(x => ({ ...x, ...y }))
+  1 + let a = b.map(x => (Object.assign(x, y)))
+    ╰╴
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:23]
@@ -147,6 +151,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── This map call spreads an object
    ╰────
   help: Consider using `Object.assign` instead
+    ╭╴
+  1 - let a = b.map(x => someCond ? { ...x, foo: true } : { ...x, foo: false })
+  1 + let a = b.map(x => someCond ? Object.assign(x, {foo:true}) : { ...x, foo: false })
+    ╰╴
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -156,6 +164,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ╰── This map call spreads an object
    ╰────
   help: Consider using `Object.assign` instead
+    ╭╴
+  1 - let a = b.map(x => someCond ? { ...x, foo: true } : { ...x, foo: false })
+  1 + let a = b.map(x => someCond ? { ...x, foo: true } : Object.assign(x, {foo:false}))
+    ╰╴
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -174,6 +186,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── This map call spreads an object
    ╰────
   help: Consider using `Object.assign` instead
+    ╭╴
+  1 - const b = a.map((x, i) => y ? { ...x, i } : x)
+  1 + const b = a.map((x, i) => y ? Object.assign(x, {i}) : x)
+    ╰╴
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:13]
@@ -183,6 +199,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ╰── This map call spreads an object
    ╰────
   help: Consider using `Object.assign` instead
+    ╭╴
+  1 - const b = a.map((x, i) => y ? x : { ...x, i })
+  1 + const b = a.map((x, i) => y ? x : Object.assign(x, {i}))
+    ╰╴
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]

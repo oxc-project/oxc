@@ -21,6 +21,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object.foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -28,6 +32,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (a, b).foo;
+  1 + var {foo} = (a, b);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:14]
@@ -35,6 +43,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var length = (() => {}).length;
+  1 + var {length} = (() => {});
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -42,6 +54,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (a = b).foo;
+  1 + var {foo} = (a = b);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -49,6 +65,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (a || b).foo;
+  1 + var {foo} = (a || b);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -56,6 +76,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (f()).foo;
+  1 + var {foo} = f();
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -63,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object.bar.foo;
+  1 + var {foo} = object.bar;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:14]
@@ -105,6 +133,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object['foo'];
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:1]
@@ -112,6 +144,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - foo = object.foo;
+  1 + ({ foo } = object);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:1]
@@ -119,6 +155,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - foo = object['foo'];
+  1 + ({ foo } = object);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Array destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -161,6 +201,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - foo = object.foo;
+  1 + ({ foo } = object);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:49]
@@ -168,6 +212,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                 ─────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - class Foo extends Bar { static foo() {var bar = super.foo.bar} }
+  1 + class Foo extends Bar { static foo() {var {bar} = super.foo} }
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:25]
@@ -175,6 +223,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var /* comment */ foo = object.foo;
+  1 + var /* comment */ {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:27]
@@ -182,6 +234,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var a, /* comment */foo = object.foo;
+  1 + var a, /* comment */{foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:25]
@@ -189,6 +245,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo /* comment */ = object.foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:28]
@@ -196,6 +256,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var a, foo /* comment */ = object.foo;
+  1 + var a, {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:25]
@@ -203,6 +267,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo /* comment */ = object.foo, a;
+  1 + var {foo} = object, a;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:2:7]
@@ -211,6 +279,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo // comment
+  2 - 			 = object.foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:25]
@@ -218,6 +291,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = /* comment */ object.foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:2:5]
@@ -226,6 +303,11 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = // comment
+  2 - 			 object.foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -233,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (/* comment */ object).foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -240,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (object /* comment */).foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -247,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = bar(/* comment */).foo;
+  1 + var {foo} = bar(/* comment */);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -254,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = bar/* comment */.baz.foo;
+  1 + var {foo} = bar/* comment */.baz;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -261,6 +359,12 @@ source: crates/oxc_linter/src/tester.rs
  2 │ ╰─▶             baz].foo;
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = bar[// comment
+  2 - 			baz].foo;
+  1 + var {foo} = bar[// comment
+  2 + 			baz];
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:2:7]
@@ -269,6 +373,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo // comment
+  2 - 			 = bar(/* comment */).foo;
+  1 + var {foo} = bar(/* comment */);
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -276,6 +385,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────────────────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = bar/* comment */.baz/* comment */.foo;
+  1 + var {foo} = bar/* comment */.baz;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -283,6 +396,11 @@ source: crates/oxc_linter/src/tester.rs
  2 │ ╰─▶             .foo;
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object// comment
+  2 - 			.foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -290,6 +408,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object./* comment */foo;
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -297,6 +419,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (/* comment */ object.foo);
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -304,6 +430,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────────────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = (object.foo /* comment */);
+  1 + var {foo} = object;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -311,6 +441,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object.foo/* comment */;
+  1 + var {foo} = object/* comment */;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -318,6 +452,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object.foo// comment
+  1 + var {foo} = object// comment
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -325,6 +463,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object.foo/* comment */, a;
+  1 + var {foo} = object/* comment */, a;
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -333,6 +475,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │             , a;
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object.foo// comment
+  1 + var {foo} = object// comment
+    ╰╴
 
   ⚠ eslint(prefer-destructuring): Use Object destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
@@ -340,3 +486,7 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────
    ╰────
   help: Use object destructuring rather than direct member access.
+    ╭╴
+  1 - var foo = object.foo, /* comment */ a;
+  1 + var {foo} = object, /* comment */ a;
+    ╰╴

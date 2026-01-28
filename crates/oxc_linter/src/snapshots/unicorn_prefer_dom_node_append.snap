@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(child);
+  1 + node.append(child);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:15]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - document.body.appendChild(child);
+  1 + document.body.append(child);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:6]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(foo)
+  1 + node.append(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:18]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - const foo = node.appendChild(child);
+  1 + const foo = node.append(child);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:18]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - console.log(node.appendChild(child));
+  1 + console.log(node.append(child));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:25]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(child).appendChild(grandchild);
+  1 + node.appendChild(child).append(grandchild);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:6]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(child).appendChild(grandchild);
+  1 + node.append(child).appendChild(grandchild);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:6]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(child) || "foo";
+  1 + node.append(child) || "foo";
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:6]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(child) + 0;
+  1 + node.append(child) + 0;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:6]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(child) + 0;
+  1 + node.append(child) + 0;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:7]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - +node.appendChild(child);
+  1 + +node.append(child);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:6]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node.appendChild(child) ? "foo" : "bar";
+  1 + node.append(child) ? "foo" : "bar";
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:10]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - if (node.appendChild(child)) {}
+  1 + if (node.append(child)) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:19]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - const foo = [node.appendChild(child)]
+  1 + const foo = [node.append(child)]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:25]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - const foo = { bar: node.appendChild(child) }
+  1 + const foo = { bar: node.append(child) }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:30]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - function foo() { return node.appendChild(child); }
+  1 + function foo() { return node.append(child); }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:33]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - const foo = () => { return node.appendChild(child); }
+  1 + const foo = () => { return node.append(child); }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:16]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - foo(bar = node.appendChild(child))
+  1 + foo(bar = node.append(child))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:7]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - node?.appendChild(child);
+  1 + node?.append(child);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.
    ╭─[prefer_dom_node_append.tsx:1:13]
@@ -140,3 +216,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Replace `Node#appendChild()` with `Node#append()`.
+    ╭╴
+  1 - () => node?.appendChild(child)
+  1 + () => node?.append(child)
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.slice(foo.length - 2, foo.length - 1)
+  1 + foo.slice(- 2, - 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.splice(foo.length - 1, 1)
+  1 + foo.splice(- 1, 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - Array.prototype.slice.call(foo, foo.length - 2, foo.length - 1)
+  1 + Array.prototype.slice.call(foo, - 2, - 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - Array.prototype.slice.apply(foo, [foo.length - 2, foo.length - 1])
+  1 + Array.prototype.slice.apply(foo, [- 2, - 1])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.slice(foo.length - 1 - 1)
+  1 + foo.slice(- 1 - 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.bar.slice(foo.bar.length - 1)
+  1 + foo.bar.slice(- 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo['bar'].slice(foo['bar'].length - 1)
+  1 + foo['bar'].slice(- 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo[1].slice(foo[1].length - 1)
+  1 + foo[1].slice(- 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.slice(foo.length/* comment */ - 1)
+  1 + foo.slice(/* comment */ - 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:2:37]
@@ -82,6 +118,12 @@ source: crates/oxc_linter/src/tester.rs
  14 │                                     
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+   5 -                                         foo.length
+   5 +                                         
+  11 -                                         foo.length // comment 3
+  11 +                                         // comment 3
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -89,6 +131,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.slice((foo.length - 1) - 1)
+  1 + foo.slice((- 1) - 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -96,6 +142,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.slice(/* will keep */(/* will keep 1 */foo.length - 1) - 1)
+  1 + foo.slice(/* will keep */(/* will keep 1 */- 1) - 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:2:37]
@@ -105,6 +155,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                                     [].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  2 -                                     [].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  2 +                                     [].slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:3:37]
@@ -114,6 +168,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                                     [].slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  3 -                                     [].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  3 +                                     [].splice.call(foo, - 1, foo.length - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:4:37]
@@ -123,6 +181,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                                     [].splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  4 -                                     [].slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  4 +                                     [].slice.apply(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:5:37]
@@ -132,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                                     [NOT_EMPTY].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  5 -                                     [].splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  5 +                                     [].splice.apply(foo, [- 1, foo.length - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:6:37]
@@ -141,6 +207,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │                                     [NOT_EMPTY].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  6 -                                     [NOT_EMPTY].slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  6 +                                     [NOT_EMPTY].slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:7:37]
@@ -150,6 +220,10 @@ source: crates/oxc_linter/src/tester.rs
  8 │                                     [NOT_EMPTY].slice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  7 -                                     [NOT_EMPTY].splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  7 +                                     [NOT_EMPTY].splice.call(foo, - 1, foo.length - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:8:37]
@@ -159,6 +233,10 @@ source: crates/oxc_linter/src/tester.rs
  9 │                                     [NOT_EMPTY].splice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  8 -                                     [NOT_EMPTY].slice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  8 +                                     [NOT_EMPTY].slice.call(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:9:37]
@@ -168,6 +246,10 @@ source: crates/oxc_linter/src/tester.rs
  10 │                                 
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+   9 -                                     [NOT_EMPTY].splice.call(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+   9 +                                     [NOT_EMPTY].splice.call(foo, [- 1, foo.length - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:2:37]
@@ -177,6 +259,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                                     ''.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  2 -                                     ''.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  2 +                                     ''.slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:4:37]
@@ -186,6 +272,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                                     ''.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  4 -                                     ''.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  4 +                                     ''.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:6:37]
@@ -195,6 +285,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │                                     'NOT_EMPTY'.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  6 -                                     'NOT_EMPTY'.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  6 +                                     'NOT_EMPTY'.slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:8:37]
@@ -204,6 +298,10 @@ source: crates/oxc_linter/src/tester.rs
  9 │                                     'NOT_EMPTY'.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  8 -                                     'NOT_EMPTY'.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  8 +                                     'NOT_EMPTY'.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:2:37]
@@ -213,6 +311,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                                     Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  2 -                                     Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  2 +                                     Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:3:37]
@@ -222,6 +324,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                                     String.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  3 -                                     Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  3 +                                     Array.prototype.splice.call(foo, - 1, foo.length - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:4:37]
@@ -231,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                                     String.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  4 -                                     String.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  4 +                                     String.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:6:37]
@@ -240,6 +350,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │                                     ArrayBuffer.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  6 -                                     ArrayBuffer.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  6 +                                     ArrayBuffer.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:8:37]
@@ -249,6 +363,10 @@ source: crates/oxc_linter/src/tester.rs
  9 │                                     Int8Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  8 -                                     Int8Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  8 +                                     Int8Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:10:37]
@@ -258,6 +376,10 @@ source: crates/oxc_linter/src/tester.rs
  11 │                                     Uint8Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  10 -                                     Uint8Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  10 +                                     Uint8Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:12:37]
@@ -267,6 +389,10 @@ source: crates/oxc_linter/src/tester.rs
  13 │                                     Uint8ClampedArray.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  12 -                                     Uint8ClampedArray.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  12 +                                     Uint8ClampedArray.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:14:37]
@@ -276,6 +402,10 @@ source: crates/oxc_linter/src/tester.rs
  15 │                                     Int16Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  14 -                                     Int16Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  14 +                                     Int16Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:16:37]
@@ -285,6 +415,10 @@ source: crates/oxc_linter/src/tester.rs
  17 │                                     Uint16Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  16 -                                     Uint16Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  16 +                                     Uint16Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:18:37]
@@ -294,6 +428,10 @@ source: crates/oxc_linter/src/tester.rs
  19 │                                     Int32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  18 -                                     Int32Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  18 +                                     Int32Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:20:37]
@@ -303,6 +441,10 @@ source: crates/oxc_linter/src/tester.rs
  21 │                                     Uint32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  20 -                                     Uint32Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  20 +                                     Uint32Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:22:37]
@@ -312,6 +454,10 @@ source: crates/oxc_linter/src/tester.rs
  23 │                                     Float32Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  22 -                                     Float32Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  22 +                                     Float32Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:24:37]
@@ -321,6 +467,10 @@ source: crates/oxc_linter/src/tester.rs
  25 │                                     Float64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  24 -                                     Float64Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  24 +                                     Float64Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:26:37]
@@ -330,6 +480,10 @@ source: crates/oxc_linter/src/tester.rs
  27 │                                     BigInt64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  26 -                                     BigInt64Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  26 +                                     BigInt64Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:28:37]
@@ -339,6 +493,10 @@ source: crates/oxc_linter/src/tester.rs
  29 │                                     BigUint64Array.prototype.splice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  28 -                                     BigUint64Array.prototype.slice.call(foo, foo.length - 1, foo.length - 2, foo.length - 3);
+  28 +                                     BigUint64Array.prototype.slice.call(foo, - 1, - 2, foo.length - 3);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:2:37]
@@ -348,6 +506,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                                     Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  2 -                                     Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  2 +                                     Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:3:37]
@@ -357,6 +519,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                                     String.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  3 -                                     Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  3 +                                     Array.prototype.splice.apply(foo, [- 1, foo.length - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:4:37]
@@ -366,6 +532,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                                     String.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  4 -                                     String.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  4 +                                     String.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:6:37]
@@ -375,6 +545,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │                                     ArrayBuffer.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  6 -                                     ArrayBuffer.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  6 +                                     ArrayBuffer.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:8:37]
@@ -384,6 +558,10 @@ source: crates/oxc_linter/src/tester.rs
  9 │                                     Int8Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  8 -                                     Int8Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  8 +                                     Int8Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:10:37]
@@ -393,6 +571,10 @@ source: crates/oxc_linter/src/tester.rs
  11 │                                     Uint8Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  10 -                                     Uint8Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  10 +                                     Uint8Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:12:37]
@@ -402,6 +584,10 @@ source: crates/oxc_linter/src/tester.rs
  13 │                                     Uint8ClampedArray.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  12 -                                     Uint8ClampedArray.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  12 +                                     Uint8ClampedArray.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:14:37]
@@ -411,6 +597,10 @@ source: crates/oxc_linter/src/tester.rs
  15 │                                     Int16Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  14 -                                     Int16Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  14 +                                     Int16Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:16:37]
@@ -420,6 +610,10 @@ source: crates/oxc_linter/src/tester.rs
  17 │                                     Uint16Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  16 -                                     Uint16Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  16 +                                     Uint16Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:18:37]
@@ -429,6 +623,10 @@ source: crates/oxc_linter/src/tester.rs
  19 │                                     Int32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  18 -                                     Int32Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  18 +                                     Int32Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:20:37]
@@ -438,6 +636,10 @@ source: crates/oxc_linter/src/tester.rs
  21 │                                     Uint32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  20 -                                     Uint32Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  20 +                                     Uint32Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:22:37]
@@ -447,6 +649,10 @@ source: crates/oxc_linter/src/tester.rs
  23 │                                     Float32Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  22 -                                     Float32Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  22 +                                     Float32Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:24:37]
@@ -456,6 +662,10 @@ source: crates/oxc_linter/src/tester.rs
  25 │                                     Float64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  24 -                                     Float64Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  24 +                                     Float64Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:26:37]
@@ -465,6 +675,10 @@ source: crates/oxc_linter/src/tester.rs
  27 │                                     BigInt64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  26 -                                     BigInt64Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  26 +                                     BigInt64Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
     ╭─[prefer_negative_index.tsx:28:37]
@@ -474,6 +688,10 @@ source: crates/oxc_linter/src/tester.rs
  29 │                                     BigUint64Array.prototype.splice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
     ╰────
   help: Replace length expression with negative index
+     ╭╴
+  28 -                                     BigUint64Array.prototype.slice.apply(foo, [foo.length - 1, foo.length - 2, foo.length - 3]);
+  28 +                                     BigUint64Array.prototype.slice.apply(foo, [- 1, - 2, foo.length - 3]);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:5]
@@ -481,6 +699,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - /**/foo.slice(foo.length - 2, foo.length - 1)
+  1 + /**/foo.slice(- 2, - 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:5]
@@ -488,6 +710,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - /**/foo.splice(foo.length - 1, 1)
+  1 + /**/foo.splice(- 1, 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -495,6 +721,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.bar.slice(foo["bar"].length - 1)
+  1 + foo.bar.slice(- 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -502,6 +732,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo[`bar`].slice(foo["bar"].length - 1)
+  1 + foo[`bar`].slice(- 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -509,6 +743,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo[1].slice(foo["1"].length - 1)
+  1 + foo[1].slice(- 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -516,6 +754,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo['bar'].slice(foo["bar"].length - 1)
+  1 + foo['bar'].slice(- 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -524,6 +766,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │             Array.prototype.at.call(foo, foo.length - 2);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.at(foo.length - 1);
+  1 + foo.at(- 1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:2:4]
@@ -533,6 +779,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             Array.prototype.at.apply(foo, [foo.length - 3]);
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  2 - 			Array.prototype.at.call(foo, foo.length - 2);
+  2 + 			Array.prototype.at.call(foo, - 2);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:3:4]
@@ -541,6 +791,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  3 - 			Array.prototype.at.apply(foo, [foo.length - 3]);
+  3 + 			Array.prototype.at.apply(foo, [- 3]);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -548,6 +802,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.toSpliced(foo.length - 3, foo.length - 6)
+  1 + foo.toSpliced(- 3, foo.length - 6)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -555,6 +813,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - Array.prototype.toSpliced.call(foo, foo.length - 3, foo.length - 6)
+  1 + Array.prototype.toSpliced.call(foo, - 3, foo.length - 6)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -562,6 +824,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - [].toSpliced.call(foo, foo.length - 3, foo.length - 6)
+  1 + [].toSpliced.call(foo, - 3, foo.length - 6)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -569,6 +835,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.with(foo.length - 3, foo.length - 6)
+  1 + foo.with(- 3, foo.length - 6)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -576,6 +846,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - Array.prototype.with.call(foo, foo.length - 3, foo.length - 6)
+  1 + Array.prototype.with.call(foo, - 3, foo.length - 6)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -583,6 +857,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - foo.subarray(foo.length - 3, foo.length - 6)
+  1 + foo.subarray(- 3, - 6)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -590,6 +868,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - Uint8Array.prototype.subarray.call(foo, foo.length - 3, foo.length - 6)
+  1 + Uint8Array.prototype.subarray.call(foo, - 3, - 6)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-negative-index): Prefer negative index over `.length - index` when possible.
    ╭─[prefer_negative_index.tsx:1:1]
@@ -597,3 +879,7 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────────────────────────────
    ╰────
   help: Replace length expression with negative index
+    ╭╴
+  1 - Uint8Array.prototype.subarray.apply(foo, [foo.length - 3, foo.length - 6])
+  1 + Uint8Array.prototype.subarray.apply(foo, [- 3, - 6])
+    ╰╴

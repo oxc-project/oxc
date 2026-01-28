@@ -7,6 +7,9 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - /* tslint:disable */
+    ╰╴
 
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:enable"
    ╭─[ban_tslint_comment.tsx:1:1]
@@ -14,6 +17,9 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - /* tslint:enable */
+    ╰╴
 
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable:rule1 rule2 rule3..."
    ╭─[ban_tslint_comment.tsx:1:1]
@@ -21,6 +27,9 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - /* tslint:disable:rule1 rule2 rule3... */
+    ╰╴
 
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:enable:rule1 rule2 rule3..."
    ╭─[ban_tslint_comment.tsx:1:1]
@@ -28,6 +37,9 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - /* tslint:enable:rule1 rule2 rule3... */
+    ╰╴
 
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-next-line"
    ╭─[ban_tslint_comment.tsx:1:1]
@@ -35,6 +47,9 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - // tslint:disable-next-line
+    ╰╴
 
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-line"
    ╭─[ban_tslint_comment.tsx:1:13]
@@ -42,6 +57,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - someCode(); // tslint:disable-line
+  1 + someCode(); 
+    ╰╴
 
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-next-line:rule1 rule2 rule3..."
    ╭─[ban_tslint_comment.tsx:1:1]
@@ -49,6 +68,9 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────────────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - // tslint:disable-next-line:rule1 rule2 rule3...
+    ╰╴
 
   ⚠ typescript-eslint(ban-tslint-comment): tslint comment detected: "tslint:disable-line"
    ╭─[ban_tslint_comment.tsx:2:9]
@@ -59,3 +81,8 @@ source: crates/oxc_linter/src/tester.rs
  4 │         
    ╰────
   help: Delete this code.
+    ╭╴
+  2 -         // tslint:disable-line
+  3 -         console.log(woah);
+  2 +                 console.log(woah);
+    ╰╴

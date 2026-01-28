@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const foo = [].push.apply(bar, elements);
+  1 + const foo = Array.prototype.push.apply(bar, elements);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const foo = [].slice.call(bar);
+  1 + const foo = Array.prototype.slice.call(bar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - const foo = {}.toString.call(bar);
+  1 + const foo = Object.prototype.toString.call(bar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.hasOwnProperty`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - const foo = {}.hasOwnProperty.call(bar, "property");
+  1 + const foo = Object.prototype.hasOwnProperty.call(bar, "property");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.propertyIsEnumerable`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - const foo = {}.propertyIsEnumerable.call(bar, "property");
+  1 + const foo = Object.prototype.propertyIsEnumerable.call(bar, "property");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.forEach`.
    ╭─[prefer_prototype_methods.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - [].forEach.call(foo, () => {})
+  1 + Array.prototype.forEach.call(foo, () => {})
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.push`.
    ╭─[prefer_prototype_methods.tsx:1:14]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const push = [].push.bind(foo)
+  1 + const push = Array.prototype.push.bind(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const foo = [][method].call(foo)
+  1 + const foo = Array.prototype[method].call(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:45]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                             ──────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const method = "realMethodName";const foo = [][method].call(foo)
+  1 + const method = "realMethodName";const foo = Array.prototype[method].call(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
    ╭─[prefer_prototype_methods.tsx:1:29]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const array = Reflect.apply([].slice, foo, [])
+  1 + const array = Reflect.apply(Array.prototype.slice, foo, [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.bar`.
    ╭─[prefer_prototype_methods.tsx:1:15]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - Reflect.apply([].bar, baz, [])
+  1 + Reflect.apply(Array.prototype.bar, baz, [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - const foo = ({}).toString.call(bar);
+  1 + const foo = (Object.prototype).toString.call(bar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:14]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - const foo = ({}.toString).call(bar);
+  1 + const foo = (Object.prototype.toString).call(bar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:14]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - const foo = ({}.toString.call)(bar);
+  1 + const foo = (Object.prototype.toString.call)(bar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
    ╭─[prefer_prototype_methods.tsx:1:22]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────
    ╰────
   help: Replace `[]` with ` Array.prototype`.
+    ╭╴
+  1 - function foo(){return[].slice.call(bar);}
+  1 + function foo(){return Array.prototype.slice.call(bar);}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:22]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────
    ╰────
   help: Replace `{}` with ` Object.prototype`.
+    ╭╴
+  1 - function foo(){return{}.toString.call(bar)}
+  1 + function foo(){return Object.prototype.toString.call(bar)}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Object.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - Reflect.apply({}[Symbol()], baz, [])
+  1 + Reflect.apply(Object.prototype[Symbol()], baz, [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Object.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - Reflect.apply({}[Symbol("symbol description")], baz, [])
+  1 + Reflect.apply(Object.prototype[Symbol("symbol description")], baz, [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - Reflect.apply([][Symbol()], baz, [])
+  1 + Reflect.apply(Array.prototype[Symbol()], baz, [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Object.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────────────────────
    ╰────
   help: Replace `{}` with `Object.prototype`.
+    ╭╴
+  1 - Reflect.apply({}[Symbol("symbol description")], baz, [])
+  1 + Reflect.apply(Object.prototype[Symbol("symbol description")], baz, [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:1]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - [][Symbol.iterator].call(foo)
+  1 + Array.prototype[Symbol.iterator].call(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.at`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const foo = [].at.call(bar)
+  1 + const foo = Array.prototype.at.call(bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.findLast`.
    ╭─[prefer_prototype_methods.tsx:1:13]
@@ -161,3 +249,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Replace `[]` with `Array.prototype`.
+    ╭╴
+  1 - const foo = [].findLast.call(bar)
+  1 + const foo = Array.prototype.findLast.call(bar)
+    ╰╴

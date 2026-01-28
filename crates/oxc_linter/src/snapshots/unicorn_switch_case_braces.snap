@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────
    ╰────
   help: Add Braces for case clause.
+    ╭╴
+  1 - switch(s){case'':/]/}
+  1 + switch(s){case'': {/]/}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Unexpected braces in empty case clause.
    ╭─[switch_case_braces.tsx:1:29]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──
    ╰────
   help: Remove braces in empty case clause.
+    ╭╴
+  1 - switch(something) { case 1: {} case 2: {console.log('something'); break;}}
+  1 + switch(something) { case 1:  case 2: {console.log('something'); break;}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Missing braces in case clause.
    ╭─[switch_case_braces.tsx:1:29]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────
    ╰────
   help: Add Braces for case clause.
+    ╭╴
+  1 - switch(something) { case 1: case 2: console.log('something'); break;}
+  1 + switch(something) { case 1: case 2: { console.log('something'); break;}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Unexpected braces in empty case clause.
    ╭─[switch_case_braces.tsx:1:23]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──
    ╰────
   help: Remove braces in empty case clause.
+    ╭╴
+  1 - switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }
+  1 + switch(foo) { case 1:  case 2: {} default: { doSomething(); } }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Unexpected braces in empty case clause.
    ╭─[switch_case_braces.tsx:1:34]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ──
    ╰────
   help: Remove braces in empty case clause.
+    ╭╴
+  1 - switch(foo) { case 1: {} case 2: {} default: { doSomething(); } }
+  1 + switch(foo) { case 1: {} case 2:  default: { doSomething(); } }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Unexpected braces in empty case clause.
    ╭─[switch_case_braces.tsx:1:23]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────
    ╰────
   help: Remove braces in empty case clause.
+    ╭╴
+  1 - switch(foo) { case 1: { /* fallthrough */ } default: {}/* fallthrough */ case 3: { doSomething(); break; } }
+  1 + switch(foo) { case 1:  default: {}/* fallthrough */ case 3: { doSomething(); break; } }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Unexpected braces in empty case clause.
    ╭─[switch_case_braces.tsx:1:54]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                      ──
    ╰────
   help: Remove braces in empty case clause.
+    ╭╴
+  1 - switch(foo) { case 1: { /* fallthrough */ } default: {}/* fallthrough */ case 3: { doSomething(); break; } }
+  1 + switch(foo) { case 1: { /* fallthrough */ } default: /* fallthrough */ case 3: { doSomething(); break; } }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Missing braces in case clause.
    ╭─[switch_case_braces.tsx:1:15]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Add Braces for case clause.
+    ╭╴
+  1 - switch(foo) { default: doSomething(); }
+  1 + switch(foo) { default: { doSomething();} }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Missing braces in case clause.
    ╭─[switch_case_braces.tsx:1:15]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────
    ╰────
   help: Add Braces for case clause.
+    ╭╴
+  1 - switch(foo) { case 1: { doSomething(); } break; /* <-- This should be between braces */ }
+  1 + switch(foo) { case 1: { { doSomething(); } break;} /* <-- This should be between braces */ }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Missing braces in case clause.
    ╭─[switch_case_braces.tsx:1:15]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Add Braces for case clause.
+    ╭╴
+  1 - switch(foo) { default: label: {} }
+  1 + switch(foo) { default: { label: {}} }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Missing braces in case clause.
    ╭─[switch_case_braces.tsx:1:74]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                                          ───────
    ╰────
   help: Add Braces for case clause.
+    ╭╴
+  1 - switch(something) { case 1: case 2: { console.log('something'); break; } case 3: console.log('something else'); }
+  1 + switch(something) { case 1: case 2: { console.log('something'); break; } case 3: { console.log('something else');} }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(switch-case-braces): Missing braces in case clause.
    ╭─[switch_case_braces.tsx:1:14]
@@ -84,3 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────
    ╰────
   help: Add Braces for case clause.
+    ╭╴
+  1 - switch(foo){ case 1: {}; break; }
+  1 + switch(foo){ case 1: { {}; break;} }
+    ╰╴

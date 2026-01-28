@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────
    ╰────
   help: Prefer using `vi` instead of `vitest`.
+    ╭╴
+  1 - import { vitest } from "vitest";
+  1 + import { vi } from "vitest";
+    ╰╴
 
   ⚠ eslint-plugin-vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:1:22]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────
    ╰────
   help: Prefer using `vi` instead of `vitest`.
+    ╭╴
+  1 - import { expect, vi, vitest } from "vitest";
+  1 + import { expect, vi } from "vitest";
+    ╰╴
 
   ⚠ eslint-plugin-vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:1:10]
@@ -22,6 +30,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │             vitest.stubEnv("NODE_ENV", "production");
    ╰────
   help: Prefer using `vi` instead of `vitest`.
+    ╭╴
+  1 - import { vitest } from "vitest";
+  1 + import { vi } from "vitest";
+    ╰╴
 
   ⚠ eslint-plugin-vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:2:4]
@@ -30,6 +42,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────
    ╰────
   help: Prefer using `vi` instead of `vitest`.
+    ╭╴
+  2 - 			vitest.stubEnv("NODE_ENV", "production");
+  2 + 			vi.stubEnv("NODE_ENV", "production");
+    ╰╴
 
   ⚠ eslint-plugin-vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:1:1]
@@ -38,6 +54,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │             vi.clearAllMocks();
    ╰────
   help: Prefer using `vitest` instead of `vi`.
+    ╭╴
+  1 - vi.stubEnv("NODE_ENV", "production");
+  1 + vitest.stubEnv("NODE_ENV", "production");
+    ╰╴
 
   ⚠ eslint-plugin-vitest(consistent-vitest-vi): The vitest function accessor used is not allowed
    ╭─[consistent_vitest_vi.tsx:2:4]
@@ -46,3 +66,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──
    ╰────
   help: Prefer using `vitest` instead of `vi`.
+    ╭╴
+  2 - 			vi.clearAllMocks();
+  2 + 			vitest.clearAllMocks();
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
    ╰────
   help: Use `Math.PI` instead.
+    ╭╴
+  1 - const getArea = (radius) => 3.141 * radius * radius;
+  1 + const getArea = (radius) => Math.PI * radius * radius;
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `E` found.
    ╭─[approx_constant.tsx:1:9]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────
    ╰────
   help: Use `Math.E` instead.
+    ╭╴
+  1 - let e = 2.718281
+  1 + let e = Math.E
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `LN10` found.
    ╭─[approx_constant.tsx:1:12]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────
    ╰────
   help: Use `Math.LN10` instead.
+    ╭╴
+  1 - let ln10 = 2.302585
+  1 + let ln10 = Math.LN10
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `LN2` found.
    ╭─[approx_constant.tsx:1:11]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────────
    ╰────
   help: Use `Math.LN2` instead.
+    ╭╴
+  1 - let ln2 = 0.693147
+  1 + let ln2 = Math.LN2
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `LOG10E` found.
    ╭─[approx_constant.tsx:1:14]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Use `Math.LOG10E` instead.
+    ╭╴
+  1 - let log10e = 0.434294
+  1 + let log10e = Math.LOG10E
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `LOG2E` found.
    ╭─[approx_constant.tsx:1:13]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Use `Math.LOG2E` instead.
+    ╭╴
+  1 - let log2e = 1.442695
+  1 + let log2e = Math.LOG2E
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `PI` found.
    ╭─[approx_constant.tsx:1:10]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Use `Math.PI` instead.
+    ╭╴
+  1 - let pi = 3.141592
+  1 + let pi = Math.PI
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `SQRT1_2` found.
    ╭─[approx_constant.tsx:1:14]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Use `Math.SQRT1_2` instead.
+    ╭╴
+  1 - let sqrt12 = 0.707106
+  1 + let sqrt12 = Math.SQRT1_2
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `SQRT2` found.
    ╭─[approx_constant.tsx:1:13]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Use `Math.SQRT2` instead.
+    ╭╴
+  1 - let sqrt2 = 1.414213
+  1 + let sqrt2 = Math.SQRT2
+    ╰╴
 
   ⚠ oxc(approx-constant): Approximate value of `PI` found.
    ╭─[approx_constant.tsx:1:36]
@@ -70,3 +106,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ────────
    ╰────
   help: Use `Math.PI` instead.
+    ╭╴
+  1 - const text = `the value of pi is ${3.141592}`;
+  1 + const text = `the value of pi is ${Math.PI}`;
+    ╰╴

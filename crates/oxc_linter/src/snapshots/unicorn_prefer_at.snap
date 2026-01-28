@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - 1];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array?.[array.length - 1];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length -1];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - /* comment */ 1];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - 1.];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - 0b1];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - 9];
+  1 + array.at(-9);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[0][array[0].length - 1];
+  1 + array[0].at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[(( array.length )) - 1];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - (( 1 ))];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[(( array.length - 1 ))];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array ))[array.length - 1];
+  1 + (( array )).at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:4]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array[array.length - 1] ));
+  1 + (( array.at(-1) ));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - 1].pop().shift()[0];
+  1 + array.at(-1).pop().shift()[0];
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:5]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - a = array[array.length - 1]
+  1 + a = array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:11]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - const a = array[array.length - 1]
+  1 + const a = array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:12]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - const {a = array[array.length - 1]} = {}
+  1 + const {a = array.at(-1)} = {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:8]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - typeof array[array.length - 1]
+  1 + typeof array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:24]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - function foo() {return arguments[arguments.length - 1]}
+  1 + function foo() {return arguments.at(-1)}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:31]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ─────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - class Foo {bar; baz() {return this.bar[this.bar.length - 1]}}
+  1 + class Foo {bar; baz() {return this.bar.at(-1)}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:32]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - class Foo {#bar; baz() {return this.#bar[this.#bar.length - 1]}}
+  1 + class Foo {#bar; baz() {return this.#bar.at(-1)}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - string.charAt(string.length - 1);
+  1 + string.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - string?.charAt(string.length - 1);
+  1 + string.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - string.charAt(string.length - 0o11);
+  1 + string.at(-9);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - some.string.charAt(some.string.length - 1);
+  1 + some.string.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - string.charAt((( string.length )) - 0xFF);
+  1 + string.at(-255);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - string.charAt(string.length - (( 1 )));
+  1 + string.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - string.charAt((( string.length - 1 )));
+  1 + string.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( string )).charAt(string.length - 1);
+  1 + (( string )).at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:1]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( string.charAt ))(string.length - 1);
+  1 + string.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `charAt()`
    ╭─[prefer_at.tsx:1:4]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( string.charAt(string.length - 1) ));
+  1 + (( string.at(-1) ));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1)[0]
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1)[0]
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -238,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array?.slice(-1)[0]
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -245,6 +381,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array?.slice(-1)[0]
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1).pop()
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1.0).shift()
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -266,6 +414,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1)[(( 0 ))];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -273,6 +425,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1)[(( 0 ))];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -280,6 +436,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-(( 1 )))[0];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -287,6 +447,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-(( 1 )))[0];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -294,6 +458,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice((( -1 )))[0];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -301,6 +469,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice((( -1 )))[0];
+  1 + array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -308,6 +480,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array.slice(-1) ))[0];
+  1 + (( array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -315,6 +491,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array )).slice(-1)[0];
+  1 + (( array )).at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -322,6 +502,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array )).slice(-1)[0];
+  1 + (( array )).at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:4]
@@ -329,6 +513,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ──────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array.slice(-1)[0] ));
+  1 + (( array.at(-1) ));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:4]
@@ -336,6 +524,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ──────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array.slice(-1)[0] ));
+  1 + (( array.at(-1) ));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -343,6 +535,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array.slice(-1) )).pop();
+  1 + (( array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -350,6 +546,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array.slice(-1).pop ))();
+  1 + (( array.at(-1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:4]
@@ -357,6 +557,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array.slice(-1).pop() ));
+  1 + (( array.at(-1) ));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -364,6 +568,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1)[0].pop().shift().slice(-1)
+  1 + array.at(-1).pop().shift().slice(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -371,6 +579,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-1)[0].pop().shift().slice(-1)
+  1 + array.at(-1).pop().shift().slice(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -378,6 +590,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, -8)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -385,6 +601,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, -8)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -392,6 +612,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, -0o10)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -399,6 +623,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, -0o10)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -406,6 +634,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, -8).pop()
+  1 + array.at(-8)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -413,6 +645,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, -8).shift()
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -420,6 +656,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice((( -9 )), (( -8 )), ).shift()
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -427,6 +667,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( array.slice(-9, -8).shift ))()
+  1 + (( array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -434,6 +678,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, unknown)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -441,6 +689,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, unknown)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -448,6 +700,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-0o11, -7)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -455,6 +711,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-0o11, -7)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:1]
@@ -462,6 +722,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, unknown).shift()
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:19]
@@ -469,6 +733,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - const KNOWN = -8; array.slice(-9, KNOWN).shift()
+  1 + const KNOWN = -8; array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice().pop/shift`
    ╭─[prefer_at.tsx:1:4]
@@ -476,6 +744,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────────────────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - (( (( array.slice( ((-9)), ((unknown)), ).shift ))() ));
+  1 + (( (( array.at(-9) ));
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -483,6 +755,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, (a, really, _really, complicated, second) => argument)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `slice()[0]`
    ╭─[prefer_at.tsx:1:1]
@@ -490,6 +766,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array.slice(-9, (a, really, _really, complicated, second) => argument)[0]
+  1 + array.at(-9)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:1:1]
@@ -497,6 +777,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - _.last(array)
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `lodash.last()`
    ╭─[prefer_at.tsx:1:1]
@@ -504,6 +788,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - lodash.last(array)
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `underscore.last()`
    ╭─[prefer_at.tsx:1:1]
@@ -511,6 +799,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - underscore.last(array)
+  1 + array.at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:1:1]
@@ -518,6 +810,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - _.last(new Array)
+  1 + (new Array).at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:2:13]
@@ -526,6 +822,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  2 -             _.last([bar])
+  2 +             [bar].at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:2:13]
@@ -534,6 +834,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  2 -             _.last( new Array )
+  2 +             (new Array).at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:2:13]
@@ -542,6 +846,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  2 -             _.last( (( new Array )) )
+  2 +             (( new Array )).at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:1:10]
@@ -549,6 +857,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - if (foo) _.last([bar])
+  1 + if (foo) [bar].at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:1:1]
@@ -556,6 +868,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - _.last(getLast(utils.lastOne(array)))
+  1 + (getLast(utils.lastOne(array))).at(-1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `_.last()`
    ╭─[prefer_at.tsx:1:24]
@@ -563,6 +879,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - function foo() {return _.last(arguments)}
+  1 + function foo() {return arguments.at(-1)}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -570,6 +890,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[1]
+  1 + array.at(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
@@ -577,3 +901,7 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────
    ╰────
   help: Use `.at()` for index access
+    ╭╴
+  1 - array[array.length - 1]
+  1 + array.at(-1)
+    ╰╴

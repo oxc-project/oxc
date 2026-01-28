@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             ];
    ╰────
   help: Replace `[]` with `''`.
+    ╭╴
+  3 -                 ...(test ? "ab" : []),
+  3 +                 ...(test ? "ab" : ''),
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
    ╭─[consistent_empty_array_spread.tsx:3:21]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             ];
    ╰────
   help: Replace `""` with `[]`.
+    ╭╴
+  3 -                 ...(test ? [a, b] : ""),
+  3 +                 ...(test ? [a, b] : []),
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(consistent-empty-array-spread): Prefer consistent types when spreading a ternary in an array literal.
    ╭─[consistent_empty_array_spread.tsx:1:6]
@@ -25,3 +33,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────────
    ╰────
   help: Replace `[]` with `''`.
+    ╭╴
+  1 - [...(foo ? "" : [])]
+  1 + [...(foo ? "" : '')]
+    ╰╴

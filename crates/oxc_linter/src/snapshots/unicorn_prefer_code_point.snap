@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────
    ╰────
   help: Unicode is better supported in `codePointAt` than `charCodeAt`
+    ╭╴
+  1 - string.charCodeAt(index)
+  1 + string.codePointAt(index)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `codePointAt` over `charCodeAt`
    ╭─[prefer_code_point.tsx:1:17]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
    ╰────
   help: Unicode is better supported in `codePointAt` than `charCodeAt`
+    ╭╴
+  1 - (( (( string )).charCodeAt( ((index)), )))
+  1 + (( (( string )).codePointAt( ((index)), )))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `fromCodePoint` over `fromCharCode`
    ╭─[prefer_code_point.tsx:1:8]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────
    ╰────
   help: Unicode is better supported in `fromCodePoint` than `fromCharCode`
+    ╭╴
+  1 - String.fromCharCode( code )
+  1 + String.fromCodePoint( code )
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `fromCodePoint` over `fromCharCode`
    ╭─[prefer_code_point.tsx:1:17]
@@ -28,3 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────
    ╰────
   help: Unicode is better supported in `fromCodePoint` than `fromCharCode`
+    ╭╴
+  1 - (( (( String )).fromCharCode( ((code)), ) ))
+  1 + (( (( String )).fromCodePoint( ((code)), ) ))
+    ╰╴

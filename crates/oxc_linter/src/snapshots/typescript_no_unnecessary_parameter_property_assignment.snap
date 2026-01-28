@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.name = name;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:5:13]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  5 -             this.name = name;
+  5 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             this.name = name;
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.name = name;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:5:13]
@@ -36,6 +48,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │             this.name = name;
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  5 -             this.name = name;
+  5 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:6:13]
@@ -45,6 +61,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  6 -             this.name = name;
+  6 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
@@ -54,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │             } else {
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  5 -               this.name = name;
+  5 +               
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -63,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -72,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo!;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -81,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo as any;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -90,6 +126,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -99,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             this.foo += 'foo';
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -108,6 +152,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo ||= foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -117,6 +165,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo ??= foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -126,6 +178,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo &&= foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -135,6 +191,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this['foo'] = foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:7:13]
@@ -144,6 +204,10 @@ source: crates/oxc_linter/src/tester.rs
  8 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  7 -             this.foo = foo;
+  7 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:7:13]
@@ -153,6 +217,10 @@ source: crates/oxc_linter/src/tester.rs
  8 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  7 -             this.foo = foo;
+  7 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
     ╭─[no_unnecessary_parameter_property_assignment.tsx:9:13]
@@ -162,6 +230,10 @@ source: crates/oxc_linter/src/tester.rs
  10 │           }
     ╰────
   help: Remove the unnecessary assignment
+     ╭╴
+   9 -             this.foo = foo;
+   9 +             
+     ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:6:17]
@@ -171,6 +243,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │               }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  6 -                 this.foo = foo;
+  6 +                 
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -180,6 +256,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -189,6 +269,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:4:13]
@@ -198,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │           }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  4 -             this.foo = foo;
+  4 +             
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:8:15]
@@ -207,6 +295,10 @@ source: crates/oxc_linter/src/tester.rs
  9 │             }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  8 -               this.foo = foo;
+  8 +               
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
@@ -216,6 +308,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │             }
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  5 -               this.foo = foo;
+  5 +               
+    ╰╴
 
   ⚠ typescript-eslint(no-unnecessary-parameter-property-assignment): Assignment of parameter property is unnecessary
    ╭─[no_unnecessary_parameter_property_assignment.tsx:5:15]
@@ -225,3 +321,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │             })();
    ╰────
   help: Remove the unnecessary assignment
+    ╭╴
+  5 -               this.foo = foo;
+  5 +               
+    ╰╴

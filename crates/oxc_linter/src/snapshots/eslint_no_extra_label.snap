@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: while (a) break A;
+  1 + A: while (a) break;
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:30]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: while (a) { B: { continue A; } }
+  1 + A: while (a) { B: { continue; } }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:42]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                          ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - X: while (x) { A: while (a) { B: { break A; break B; continue X; } } }
+  1 + X: while (x) { A: while (a) { B: { break; break B; continue X; } } }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:15]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: do { break A; } while (a);
+  1 + A: do { break; } while (a);
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:21]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: for (;;) { break A; }
+  1 + A: for (;;) { break; }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:27]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: for (a in obj) { break A; }
+  1 + A: for (a in obj) { break; }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:27]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: for (a of ary) { break A; }
+  1 + A: for (a of ary) { break; }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:31]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: switch (a) { case 0: break A; }
+  1 + A: switch (a) { case 0: break; }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:46]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                              ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - X: while (x) { A: switch (a) { case 0: break A; } }
+  1 + X: while (x) { A: switch (a) { case 0: break; } }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:44]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                            ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - X: switch (a) { case 0: A: while (b) break A; }
+  1 + X: switch (a) { case 0: A: while (b) break; }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:3:19]
@@ -79,6 +119,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             while (true) {
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  3 -             break A;
+  3 +             break;
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:35]
@@ -86,6 +130,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: while(true) { /*comment*/break A; }
+  1 + A: while(true) { /*comment*/break; }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:28]
@@ -121,6 +169,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: while(true) { continue A/*comment*/; }
+  1 + A: while(true) { continue/*comment*/; }
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:24]
@@ -129,6 +181,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │              }
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: while(true) { break A//comment
+  1 + A: while(true) { break//comment
+    ╰╴
 
   ⚠ eslint(no-extra-label): This label 'A' is unnecessary
    ╭─[no_extra_label.tsx:1:24]
@@ -137,3 +193,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │             foo() }
    ╰────
   help: Remove this label. It will have the same result because the labeled statement 'A' has no nested loops or switches
+    ╭╴
+  1 - A: while(true) { break A/*comment*/
+  1 + A: while(true) { break/*comment*/
+    ╰╴

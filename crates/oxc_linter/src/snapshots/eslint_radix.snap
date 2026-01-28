@@ -19,6 +19,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - parseInt("10");
+  1 + parseInt("10", 10);
+    ╰╴
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -26,6 +30,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - parseInt("10",);
+  1 + parseInt("10", 10,);
+    ╰╴
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -33,6 +41,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - parseInt((0, "10"));
+  1 + parseInt((0, "10") 10,);
+    ╰╴
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -40,6 +52,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - parseInt((0, "10"),);
+  1 + parseInt((0, "10"), 10,);
+    ╰╴
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:16]
@@ -107,6 +123,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - Number.parseInt("10");
+  1 + Number.parseInt("10", 10);
+    ╰╴
 
   ⚠ eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.
    ╭─[radix.tsx:1:23]
@@ -138,6 +158,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - parseInt?.("10");
+  1 + parseInt?.("10", 10);
+    ╰╴
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -145,6 +169,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - Number.parseInt?.("10");
+  1 + Number.parseInt?.("10", 10);
+    ╰╴
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -152,6 +180,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - Number?.parseInt("10");
+  1 + Number?.parseInt("10", 10);
+    ╰╴
 
   ⚠ eslint(radix): Missing radix parameter.
    ╭─[radix.tsx:1:1]
@@ -159,6 +191,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Add radix parameter `10` for parsing decimal numbers.
+    ╭╴
+  1 - (Number?.parseInt)("10");
+  1 + (Number?.parseInt)("10", 10);
+    ╰╴
 
   ⚠ eslint(radix): Missing parameters.
    ╭─[radix.tsx:1:21]

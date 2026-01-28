@@ -14,6 +14,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
   help: Provide screen reader accessible content when using `a` elements.
+    ╭╴
+  1 - <a><Bar aria-hidden /></a>
+  1 + <a><Bar  /></a>
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
    ╭─[anchor_has_content.tsx:1:1]
@@ -21,6 +25,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────
    ╰────
   help: Provide screen reader accessible content when using `a` elements.
+    ╭╴
+  1 - <a><Bar aria-hidden="true" /></a>
+  1 + <a><Bar  /></a>
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.
    ╭─[anchor_has_content.tsx:1:1]

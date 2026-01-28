@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = new Date().getTime();
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().getTime()`
    ╭─[prefer_date_now.tsx:1:12]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = (new Date).getTime();
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().getTime()`
    ╭─[prefer_date_now.tsx:1:12]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = (new Date()).getTime();
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().valueOf()`
    ╭─[prefer_date_now.tsx:1:12]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = new Date().valueOf();
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().valueOf()`
    ╭─[prefer_date_now.tsx:1:12]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = (new Date).valueOf();
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().valueOf()`
    ╭─[prefer_date_now.tsx:1:12]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = (new Date()).valueOf();
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`
    ╭─[prefer_date_now.tsx:1:20]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────────────────────────────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = /* 1 */ Number(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */
+  1 + const ts = /* 1 */ Date.now() /* 6 */
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`
    ╭─[prefer_date_now.tsx:1:26]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────────────────────────────────────────────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const tsBigInt = /* 1 */ BigInt(/* 2 */ new /* 3 */ Date( /* 4 */ ) /* 5 */) /* 6 */
+  1 + const tsBigInt = /* 1 */ Date.now() /* 6 */
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
    ╭─[prefer_date_now.tsx:1:22]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = + /* 1 */ new Date;
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
    ╭─[prefer_date_now.tsx:1:22]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - const ts = - /* 1 */ new Date();
+  1 + const ts = Date.now();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
    ╭─[prefer_date_now.tsx:1:12]
@@ -175,6 +215,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - function foo(){return+new Date}
+  1 + function foo(){returnDate.now()}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`
    ╭─[prefer_date_now.tsx:1:23]
@@ -182,3 +226,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────
    ╰────
   help: Change to `Date.now()`.
+    ╭╴
+  1 - function foo(){return-new Date}
+  1 + function foo(){returnDate.now()}
+    ╰╴

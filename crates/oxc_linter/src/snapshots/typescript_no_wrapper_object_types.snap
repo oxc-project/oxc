@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Replace `BigInt` with `bigint`.
+    ╭╴
+  1 - let value: BigInt;
+  1 + let value: bigint;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────
    ╰────
   help: Replace `Boolean` with `boolean`.
+    ╭╴
+  1 - let value: Boolean;
+  1 + let value: boolean;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Replace `Number` with `number`.
+    ╭╴
+  1 - let value: Number;
+  1 + let value: number;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Replace `Object` with `object`.
+    ╭╴
+  1 - let value: Object;
+  1 + let value: object;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Replace `String` with `string`.
+    ╭╴
+  1 - let value: String;
+  1 + let value: string;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Replace `Symbol` with `symbol`.
+    ╭╴
+  1 - let value: Symbol;
+  1 + let value: symbol;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Replace `Number` with `number`.
+    ╭╴
+  1 - let value: Number | Symbol;
+  1 + let value: number | Symbol;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:21]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
    ╰────
   help: Replace `Symbol` with `symbol`.
+    ╭╴
+  1 - let value: Number | Symbol;
+  1 + let value: Number | symbol;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:24]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────
    ╰────
   help: Replace `Number` with `number`.
+    ╭╴
+  1 - let value: { property: Number };
+  1 + let value: { property: number };
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:6]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────
    ╰────
   help: Replace `Number` with `number`.
+    ╭╴
+  1 - 0 as Number;
+  1 + 0 as number;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:15]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: Replace `Number` with `number`.
+    ╭╴
+  1 - type MyType = Number;
+  1 + type MyType = number;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:16]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────
    ╰────
   help: Replace `Number` with `number`.
+    ╭╴
+  1 - type MyType = [Number];
+  1 + type MyType = [number];
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:26]
@@ -103,6 +151,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: Replace `Number` with `number`.
+    ╭╴
+  1 - type MyType = Number & String;
+  1 + type MyType = number & String;
+    ╰╴
 
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:24]
@@ -110,3 +162,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────
    ╰────
   help: Replace `String` with `string`.
+    ╭╴
+  1 - type MyType = Number & String;
+  1 + type MyType = Number & string;
+    ╰╴

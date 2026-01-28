@@ -7,3 +7,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Remove the debugger statement
+    ╭╴
+  1 - if (foo) debugger
+  1 + if (foo) {}
+    ╰╴

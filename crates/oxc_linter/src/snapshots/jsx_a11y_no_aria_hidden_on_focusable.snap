@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────────────
    ╰────
   help: Remove `aria-hidden="true"` from focusable elements or modify the element to be not focusable.
+    ╭╴
+  1 - <div aria-hidden="true" tabIndex="0" />;
+  1 + <div  tabIndex="0" />;
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.
    ╭─[no_aria_hidden_on_focusable.tsx:1:8]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────
    ╰────
   help: Remove `aria-hidden="true"` from focusable elements or modify the element to be not focusable.
+    ╭╴
+  1 - <input aria-hidden="true" />;
+  1 + <input  />;
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.
    ╭─[no_aria_hidden_on_focusable.tsx:1:13]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────
    ╰────
   help: Remove `aria-hidden="true"` from focusable elements or modify the element to be not focusable.
+    ╭╴
+  1 - <a href="/" aria-hidden="true" />
+  1 + <a href="/"  />
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.
    ╭─[no_aria_hidden_on_focusable.tsx:1:9]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────────
    ╰────
   help: Remove `aria-hidden="true"` from focusable elements or modify the element to be not focusable.
+    ╭╴
+  1 - <button aria-hidden="true" />
+  1 + <button  />
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.
    ╭─[no_aria_hidden_on_focusable.tsx:1:11]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────────────────
    ╰────
   help: Remove `aria-hidden="true"` from focusable elements or modify the element to be not focusable.
+    ╭╴
+  1 - <textarea aria-hidden="true" />
+  1 + <textarea  />
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.
    ╭─[no_aria_hidden_on_focusable.tsx:1:17]
@@ -42,3 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────
    ╰────
   help: Remove `aria-hidden="true"` from focusable elements or modify the element to be not focusable.
+    ╭╴
+  1 - <p tabIndex="0" aria-hidden="true">text</p>;
+  1 + <p tabIndex="0" >text</p>;
+    ╰╴

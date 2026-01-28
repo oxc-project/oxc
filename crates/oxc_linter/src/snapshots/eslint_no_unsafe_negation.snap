@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
+    ╭╴
+  1 - !a in b
+  1 + !(a in b)
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:2]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
+    ╭╴
+  1 - (!a in b)
+  1 + (!(a in b))
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
+    ╭╴
+  1 - !(a) in b
+  1 + !((a) in b)
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'instanceof' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'instanceof'
+    ╭╴
+  1 - !a instanceof b
+  1 + !(a instanceof b)
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'instanceof' operator.
    ╭─[no_unsafe_negation.tsx:1:2]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'instanceof'
+    ╭╴
+  1 - (!a instanceof b)
+  1 + (!(a instanceof b))
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'instanceof' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'instanceof'
+    ╭╴
+  1 - !(a) instanceof b
+  1 + !((a) instanceof b)
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of 'in' operator.
    ╭─[no_unsafe_negation.tsx:1:9]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than 'in'
+    ╭╴
+  1 - (y=>{if(!/s/ in(l)){}})
+  1 + (y=>{if(!(/s/ in (l))){}})
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '<' operator.
    ╭─[no_unsafe_negation.tsx:1:5]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '<'
+    ╭╴
+  1 - if (! a < b) {}
+  1 + if (!(a < b)) {}
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '>' operator.
    ╭─[no_unsafe_negation.tsx:1:8]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '>'
+    ╭╴
+  1 - while (! a > b) {}
+  1 + while (!(a > b)) {}
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '<=' operator.
    ╭─[no_unsafe_negation.tsx:1:7]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '<='
+    ╭╴
+  1 - foo = ! a <= b;
+  1 + foo = !(a <= b);
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '>=' operator.
    ╭─[no_unsafe_negation.tsx:1:7]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '>='
+    ╭╴
+  1 - foo = ! a >= b;
+  1 + foo = !(a >= b);
+    ╰╴
 
   ⚠ eslint(no-unsafe-negation): Unexpected negation of the left operand of '<=' operator.
    ╭─[no_unsafe_negation.tsx:1:1]
@@ -84,3 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Use `()` to negate the whole expression, as '!' binds more closely than '<='
+    ╭╴
+  1 - ! a <= b
+  1 + !(a <= b)
+    ╰╴

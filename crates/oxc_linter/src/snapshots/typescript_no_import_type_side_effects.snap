@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Convert this to a top-level type qualifier to properly remove the entire import.
+    ╭╴
+  1 - import { type A } from 'mod';
+  1 + import type { A } from 'mod';
+    ╰╴
 
   ⚠ typescript-eslint(no-import-type-side-effects): TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.
    ╭─[no_import_type_side_effects.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────
    ╰────
   help: Convert this to a top-level type qualifier to properly remove the entire import.
+    ╭╴
+  1 - import { type A as AA } from 'mod';
+  1 + import type { A as AA } from 'mod';
+    ╰╴
 
   ⚠ typescript-eslint(no-import-type-side-effects): TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.
    ╭─[no_import_type_side_effects.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────
    ╰────
   help: Convert this to a top-level type qualifier to properly remove the entire import.
+    ╭╴
+  1 - import { type A, type B } from 'mod';
+  1 + import type { A, B } from 'mod';
+    ╰╴
 
   ⚠ typescript-eslint(no-import-type-side-effects): TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.
    ╭─[no_import_type_side_effects.tsx:1:1]
@@ -28,3 +40,7 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────────────
    ╰────
   help: Convert this to a top-level type qualifier to properly remove the entire import.
+    ╭╴
+  1 - import { type A as AA, type B as BB } from 'mod';
+  1 + import type { A as AA, B as BB } from 'mod';
+    ╰╴

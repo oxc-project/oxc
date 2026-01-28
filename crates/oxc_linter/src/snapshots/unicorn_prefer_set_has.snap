@@ -9,6 +9,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 - 			const foo = [1, 2, 3];
+  2 + 			const foo = new Set([1, 2, 3]);
+  4 - 				return foo.includes(1);
+  4 + 				return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -18,6 +24,14 @@ source: crates/oxc_linter/src/tester.rs
  3 │             const isExists = foo.includes(1);
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  3 -             const isExists = foo.includes(1);
+  4 -             const isExists2 = foo.includes(2);
+  2 +             const foo = new Set([1, 2, 3]);
+  3 +             const isExists = foo.has(1);
+  4 +             const isExists2 = foo.has(2);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -27,6 +41,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             for (const a of b) {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	foo.includes(1);
+  4 +             	foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:3:20]
@@ -36,6 +56,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │                 for await (const a of b) {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  3 -             	const foo = [1, 2, 3];
+  3 +             	const foo = new Set([1, 2, 3]);
+  5 -             		foo.includes(1);
+  5 +             		foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -45,6 +71,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             for (let i = 0; i < n; i++) {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	foo.includes(1);
+  4 +             	foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -54,6 +86,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             for (let a in b) {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	foo.includes(1);
+  4 +             	foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -63,6 +101,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             while (a)  {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	foo.includes(1);
+  4 +             	foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -72,6 +116,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             do {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	foo.includes(1);
+  4 +             	foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -81,6 +131,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             do {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  5 -             } while (foo.includes(1))
+  5 +             } while (foo.has(1))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -90,6 +146,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -99,6 +161,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function * unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -108,6 +176,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             async function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -117,6 +191,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             async function * unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -126,6 +206,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             const unicorn = function () {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -135,6 +221,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             const unicorn = () => foo.includes(1);
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  3 -             const unicorn = () => foo.includes(1);
+  2 +             const foo = new Set([1, 2, 3]);
+  3 +             const unicorn = () => foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -144,6 +236,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             const a = {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  5 -             		return foo.includes(1);
+  5 +             		return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -153,6 +251,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             class A {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  5 -             		return foo.includes(1);
+  5 +             		return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -162,6 +266,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [...bar];
+  2 +             const foo = new Set([...bar]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -171,6 +281,14 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	const exists = foo.includes(1);
+  4 +             	const exists = foo.has(1);
+  6 -             		return foo.includes(find);
+  6 +             		return foo.has(find);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:3:20]
@@ -180,6 +298,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │                 function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  3 -             	const foo = [1, 2, 3];
+  3 +             	const foo = new Set([1, 2, 3]);
+  5 -             		return foo.includes(1);
+  5 +             		return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:8:19]
@@ -189,6 +313,12 @@ source: crates/oxc_linter/src/tester.rs
  9 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+     ╭╴
+   8 -             const bar = [4, 5, 6];
+   8 +             const bar = new Set([4, 5, 6]);
+  10 -             	return bar.includes(1);
+  10 +             	return bar.has(1);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -198,6 +328,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function wrap() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = [1, 2, 3];
+  2 +             const foo = new Set([1, 2, 3]);
+  4 -             	const exists = foo.includes(1);
+  4 +             	const exists = foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:7:21]
@@ -207,6 +343,12 @@ source: crates/oxc_linter/src/tester.rs
  8 │                     while (a) {
    ╰────
   help: Switch to `Set`
+     ╭╴
+   7 -             		const foo = [1, 2, 3];
+   7 +             		const foo = new Set([1, 2, 3]);
+   9 -             			foo.includes(1);
+   9 +             			foo.has(1);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
     ╭─[prefer_set_has.tsx:12:22]
@@ -216,6 +358,12 @@ source: crates/oxc_linter/src/tester.rs
  13 │                         while (a) {
     ╰────
   help: Switch to `Set`
+     ╭╴
+  12 -             			const bar = [1, 2, 3];
+  12 +             			const bar = new Set([1, 2, 3]);
+  14 -             				const exists = bar.includes(1);
+  14 +             				const exists = bar.has(1);
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -225,6 +373,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = Array(1, 2);
+  2 +             const foo = new Set([1, 2]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -234,6 +388,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = new Array(1, 2);
+  2 +             const foo = new Set([1, 2]);
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -243,6 +403,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = Array.from({length: 1}, (_, index) => index);
+  2 +             const foo = new Set(Array.from({length: 1}, (_, index) => index));
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -252,6 +418,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const foo = Array.of(1, 2);
+  2 +             const foo = new Set(Array.of(1, 2));
+  4 -             	return foo.includes(1);
+  4 +             	return foo.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:3:19]
@@ -261,6 +433,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │             function unicorn() {
    ╰────
   help: Switch to `Set`
+    ╭╴
+  3 -             const bar = foo.map(value => value);
+  3 +             const bar = new Set(foo.map(value => value));
+  5 -             	return bar.includes(1);
+  5 +             	return bar.has(1);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:19]
@@ -270,3 +448,9 @@ source: crates/oxc_linter/src/tester.rs
  3 │ 
    ╰────
   help: Switch to `Set`
+    ╭╴
+  2 -             const a: Array<'foo' | 'bar'> = ['foo', 'bar']
+  2 +             const a: Array<'foo' | 'bar'> = new Set(['foo', 'bar'])
+  5 -             	if (a.includes(someString)) {
+  5 +             	if (a.has(someString)) {
+    ╰╴

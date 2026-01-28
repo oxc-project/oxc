@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - var foo = 0; foo++;
+  1 + var foo = 0; foo += 1;
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '--' used.
    ╭─[no_plusplus.tsx:1:14]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Use the assignment operator `-=` instead.
+    ╭╴
+  1 - var foo = 0; foo--;
+  1 + var foo = 0; foo -= 1;
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '--' used.
    ╭─[no_plusplus.tsx:1:14]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Use the assignment operator `-=` instead.
+    ╭╴
+  1 - var foo = 0; --foo;
+  1 + var foo = 0; foo -= 1;
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:14]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - var foo = 0; ++foo;
+  1 + var foo = 0; foo += 1;
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:20]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - for (i = 0; i < l; i++) { console.log(i); }
+  1 + for (i = 0; i < l; i += 1) { console.log(i); }
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:25]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - for (i = 0; i < l; foo, i++) { console.log(i); }
+  1 + for (i = 0; i < l; foo, i += 1) { console.log(i); }
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:14]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - var foo = 0; foo++;
+  1 + var foo = 0; foo += 1;
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:27]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - for (i = 0; i < l; i++) { v++; }
+  1 + for (i = 0; i < l; i++) { v += 1; }
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:6]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - for (i++;;);
+  1 + for (i += 1;;);
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '--' used.
    ╭─[no_plusplus.tsx:1:7]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───
    ╰────
   help: Use the assignment operator `-=` instead.
+    ╭╴
+  1 - for (;--i;);
+  1 + for (;i -= 1;);
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:10]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - for (;;) ++i;
+  1 + for (;;) i += 1;
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:13]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - for (;; i = j++);
+  1 + for (;; i = j += 1);
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '--' used.
    ╭─[no_plusplus.tsx:1:16]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Use the assignment operator `-=` instead.
+    ╭╴
+  1 - for (;; i++, f(--j));
+  1 + for (;; i++, f(j -= 1));
+    ╰╴
 
   ⚠ eslint(no-plusplus): Unary operator '++' used.
    ╭─[no_plusplus.tsx:1:16]
@@ -98,3 +150,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Use the assignment operator `+=` instead.
+    ╭╴
+  1 - for (;; foo + (i++, bar));
+  1 + for (;; foo + (i += 1, bar));
+    ╰╴

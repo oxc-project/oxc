@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────
    ╰────
   help: Replace `toBe(false)` with `toBeFalsy()`.
+    ╭╴
+  1 - expect(true).toBe(false);
+  1 + expect(true).toBeFalsy();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
    ╭─[prefer_to_be_falsy.tsx:1:23]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ──────────────
    ╰────
   help: Replace `toEqual(false)` with `toBeFalsy()`.
+    ╭╴
+  1 - expect(wasSuccessful).toEqual(false);
+  1 + expect(wasSuccessful).toBeFalsy();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
    ╭─[prefer_to_be_falsy.tsx:1:40]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ────────────────────
    ╰────
   help: Replace `toStrictEqual(false)` with `toBeFalsy()`.
+    ╭╴
+  1 - expect(fs.existsSync('/path/to/file')).toStrictEqual(false);
+  1 + expect(fs.existsSync('/path/to/file')).toBeFalsy();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
    ╭─[prefer_to_be_falsy.tsx:1:24]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────
    ╰────
   help: Replace `toBe(false)` with `toBeFalsy()`.
+    ╭╴
+  1 - expect("a string").not.toBe(false);
+  1 + expect("a string").not.toBeFalsy();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
    ╭─[prefer_to_be_falsy.tsx:1:24]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────────────
    ╰────
   help: Replace `toEqual(false)` with `toBeFalsy()`.
+    ╭╴
+  1 - expect("a string").not.toEqual(false);
+  1 + expect("a string").not.toBeFalsy();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-to-be-falsy): Use `toBeFalsy` instead.
    ╭─[prefer_to_be_falsy.tsx:1:30]
@@ -42,3 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────────────
    ╰────
   help: Replace `toEqual(false)` with `toBeFalsy()`.
+    ╭╴
+  1 - expectTypeOf("a string").not.toEqual(false);
+  1 + expectTypeOf("a string").not.toBeFalsy();
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────
    ╰────
   help: Replace `factories.User[]` with `Array<factories.User>`.
+    ╭╴
+  1 - let a: factories.User[] = [];
+  1 + let a: Array<factories.User> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────
    ╰────
   help: Replace `Array<string | number>` with `(string | number)[]`.
+    ╭╴
+  1 - let a: Array<string | number> = [];
+  1 + let a: (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<T>' is forbidden. Use 'readonly T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────────────
    ╰────
   help: Replace `ReadonlyArray<string | number>` with `readonly (string | number)[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<string | number> = [];
+  1 + let a: readonly (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────
    ╰────
   help: Replace `Array<string | number>` with `(string | number)[]`.
+    ╭╴
+  1 - let a: Array<string | number> = [];
+  1 + let a: (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<T>' is forbidden. Use 'readonly T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────────────
    ╰────
   help: Replace `ReadonlyArray<string | number>` with `readonly (string | number)[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<string | number> = [];
+  1 + let a: readonly (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────
    ╰────
   help: Replace `Array<string | number>` with `(string | number)[]`.
+    ╭╴
+  1 - let a: Array<string | number> = [];
+  1 + let a: (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden for simple types. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden for non-simple types. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────
    ╰────
   help: Replace `Array<string | number>` with `(string | number)[]`.
+    ╭╴
+  1 - let a: Array<string | number> = [];
+  1 + let a: (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────
    ╰────
   help: Replace `readonly number[]` with `ReadonlyArray<number>`.
+    ╭╴
+  1 - let a: readonly number[] = [];
+  1 + let a: ReadonlyArray<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden for simple types. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden for simple types. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden for non-simple types. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden for simple types. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<T>' is forbidden. Use 'readonly T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────────────
    ╰────
   help: Replace `ReadonlyArray<string | number>` with `readonly (string | number)[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<string | number> = [];
+  1 + let a: readonly (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden for simple types. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden for simple types. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden for non-simple types. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden for simple types. Use 'number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - let a: Array<number> = [];
+  1 + let a: number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────
    ╰────
   help: Replace `readonly number[]` with `ReadonlyArray<number>`.
+    ╭╴
+  1 - let a: readonly number[] = [];
+  1 + let a: ReadonlyArray<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -238,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  1 - let a: number[] = [];
+  1 + let a: Array<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -245,6 +381,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────
    ╰────
   help: Replace `readonly number[]` with `ReadonlyArray<number>`.
+    ╭╴
+  1 - let a: readonly number[] = [];
+  1 + let a: ReadonlyArray<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -266,6 +414,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  1 - let a: number[] = [];
+  1 + let a: Array<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -273,6 +425,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -280,6 +436,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<T>' is forbidden. Use 'readonly T[]' instead.
    ╭─[array_type.ts:1:8]
@@ -287,6 +447,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────────────
    ╰────
   help: Replace `ReadonlyArray<string | number>` with `readonly (string | number)[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<string | number> = [];
+  1 + let a: readonly (string | number)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -294,6 +458,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  1 - let a: number[] = [];
+  1 + let a: Array<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -301,6 +469,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden for simple types. Use 'readonly number[]' instead.
    ╭─[array_type.ts:1:8]
@@ -308,6 +480,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<number> = [];
+  1 + let a: readonly number[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden for non-simple types. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -315,6 +491,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -322,6 +502,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  1 - let a: number[] = [];
+  1 + let a: Array<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -329,6 +513,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  1 - let a: (string | number)[] = [];
+  1 + let a: Array<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
    ╭─[array_type.ts:1:8]
@@ -336,6 +524,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────
    ╰────
   help: Replace `readonly number[]` with `ReadonlyArray<number>`.
+    ╭╴
+  1 - let a: readonly number[] = [];
+  1 + let a: ReadonlyArray<number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -343,6 +535,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | number)[]` with `ReadonlyArray<string | number>`.
+    ╭╴
+  1 - let a: readonly (string | number)[] = [];
+  1 + let a: ReadonlyArray<string | number> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'bigint[]' is forbidden. Use 'Array<bigint>' instead.
    ╭─[array_type.ts:1:8]
@@ -350,6 +546,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Replace `bigint[]` with `Array<bigint>`.
+    ╭╴
+  1 - let a: bigint[] = [];
+  1 + let a: Array<bigint> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -357,6 +557,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | bigint)[]` with `Array<string | bigint>`.
+    ╭╴
+  1 - let a: (string | bigint)[] = [];
+  1 + let a: Array<string | bigint> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<bigint>' is forbidden for simple types. Use 'readonly bigint[]' instead.
    ╭─[array_type.ts:1:8]
@@ -364,6 +568,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<bigint>` with `readonly bigint[]`.
+    ╭╴
+  1 - let a: ReadonlyArray<bigint> = [];
+  1 + let a: readonly bigint[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -371,6 +579,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────
    ╰────
   help: Replace `(string | bigint)[]` with `Array<string | bigint>`.
+    ╭╴
+  1 - let a: (string | bigint)[] = [];
+  1 + let a: Array<string | bigint> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly bigint[]' is forbidden. Use 'ReadonlyArray<bigint>' instead.
    ╭─[array_type.ts:1:8]
@@ -378,6 +590,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────
    ╰────
   help: Replace `readonly bigint[]` with `ReadonlyArray<bigint>`.
+    ╭╴
+  1 - let a: readonly bigint[] = [];
+  1 + let a: ReadonlyArray<bigint> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly T[]' is forbidden. Use 'ReadonlyArray<T>' instead.
    ╭─[array_type.ts:1:8]
@@ -385,6 +601,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────────────────
    ╰────
   help: Replace `readonly (string | bigint)[]` with `ReadonlyArray<string | bigint>`.
+    ╭╴
+  1 - let a: readonly (string | bigint)[] = [];
+  1 + let a: ReadonlyArray<string | bigint> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<Bar>' is forbidden. Use 'Bar[]' instead.
    ╭─[array_type.ts:1:15]
@@ -392,6 +612,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────
    ╰────
   help: Replace `Array<Bar>` with `Bar[]`.
+    ╭╴
+  1 - let a: { foo: Array<Bar> }[] = [];
+  1 + let a: { foo: Bar[] }[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Bar[]' is forbidden. Use 'Array<Bar>' instead.
    ╭─[array_type.ts:1:21]
@@ -399,6 +623,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────
    ╰────
   help: Replace `Bar[]` with `Array<Bar>`.
+    ╭╴
+  1 - let a: Array<{ foo: Bar[] }> = [];
+  1 + let a: Array<{ foo: Array<Bar> }> = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<Bar>' is forbidden. Use 'Bar[]' instead.
    ╭─[array_type.ts:1:17]
@@ -406,6 +634,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
    ╰────
   help: Replace `Array<Bar>` with `Bar[]`.
+    ╭╴
+  1 - function foo(a: Array<Bar>): Array<Bar> {}
+  1 + function foo(a: Bar[]): Array<Bar> {}
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<Bar>' is forbidden. Use 'Bar[]' instead.
    ╭─[array_type.ts:1:30]
@@ -413,6 +645,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──────────
    ╰────
   help: Replace `Array<Bar>` with `Bar[]`.
+    ╭╴
+  1 - function foo(a: Array<Bar>): Array<Bar> {}
+  1 + function foo(a: Array<Bar>): Bar[] {}
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<undefined>' is forbidden for simple types. Use 'undefined[]' instead.
    ╭─[array_type.ts:1:8]
@@ -420,6 +656,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────
    ╰────
   help: Replace `Array<undefined>` with `undefined[]`.
+    ╭╴
+  1 - let x: Array<undefined> = [undefined] as undefined[];
+  1 + let x: undefined[] = [undefined] as undefined[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<any>' is forbidden for simple types. Use 'any[]' instead.
    ╭─[array_type.ts:1:8]
@@ -427,6 +667,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Replace `Array` with `any[]`.
+    ╭╴
+  1 - let z: Array = [3, '4'];
+  1 + let z: any[] = [3, '4'];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:24]
@@ -434,6 +678,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────────────────
    ╰────
   help: Replace `[number, string][]` with `Array<[number, string]>`.
+    ╭╴
+  1 - let ya = [[1, '2']] as [number, string][];
+  1 + let ya = [[1, '2']] as Array<[number, string]>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden for simple types. Use 'T[]' instead.
    ╭─[array_type.ts:1:15]
@@ -441,6 +689,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace `Array<T>` with `T[]`.
+    ╭╴
+  1 - type Arr<T> = Array<T>;
+  1 + type Arr<T> = T[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden for simple types. Use 'T[]' instead.
    ╭─[array_type.ts:3:14]
@@ -450,6 +702,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         bar: T[];
    ╰────
   help: Replace `Array<T>` with `T[]`.
+    ╭╴
+  3 -         foo: Array<T>;
+  3 +         foo: T[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:2:35]
@@ -459,6 +715,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │         return bar.map(e => e.bar);
    ╰────
   help: Replace `ArrayClass<String>[]` with `Array<ArrayClass<String>>`.
+    ╭╴
+  2 -         function barFunction(bar: ArrayClass<String>[]) {
+  2 +         function barFunction(bar: Array<ArrayClass<String>>) {
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:13]
@@ -466,6 +726,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────
    ╰────
   help: Replace `((c: number) => number)[]` with `Array<(c: number) => number>`.
+    ╭╴
+  1 - let barVar: ((c: number) => number)[];
+  1 + let barVar: Array<(c: number) => number>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:17]
@@ -473,6 +737,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────────────────────
    ╰────
   help: Replace `(string | number | boolean)[]` with `Array<string | number | boolean>`.
+    ╭╴
+  1 - type barUnion = (string | number | boolean)[];
+  1 + type barUnion = Array<string | number | boolean>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:24]
@@ -480,6 +748,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────────
    ╰────
   help: Replace `(string & number)[]` with `Array<string & number>`.
+    ╭╴
+  1 - type barIntersection = (string & number)[];
+  1 + type barIntersection = Array<string & number>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<undefined>' is forbidden. Use 'undefined[]' instead.
    ╭─[array_type.ts:1:8]
@@ -487,6 +759,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────
    ╰────
   help: Replace `Array<undefined>` with `undefined[]`.
+    ╭╴
+  1 - let x: Array<undefined> = [undefined] as undefined[];
+  1 + let x: undefined[] = [undefined] as undefined[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<any>' is forbidden. Use 'any[]' instead.
    ╭─[array_type.ts:1:8]
@@ -494,6 +770,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Replace `Array` with `any[]`.
+    ╭╴
+  1 - let z: Array = [3, '4'];
+  1 + let z: any[] = [3, '4'];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:15]
@@ -501,6 +781,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace `Array<T>` with `T[]`.
+    ╭╴
+  1 - type Arr<T> = Array<T>;
+  1 + type Arr<T> = T[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:3:14]
@@ -510,6 +794,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         bar: T[];
    ╰────
   help: Replace `Array<T>` with `T[]`.
+    ╭╴
+  3 -         foo: Array<T>;
+  3 +         foo: T[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:2:35]
@@ -519,6 +807,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │         return foo.map(e => e.foo);
    ╰────
   help: Replace `Array<ArrayClass<string>>` with `ArrayClass<string>[]`.
+    ╭╴
+  2 -         function fooFunction(foo: Array<ArrayClass<string>>) {
+  2 +         function fooFunction(foo: ArrayClass<string>[]) {
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:13]
@@ -526,6 +818,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
    ╰────
   help: Replace `Array<(c: number) => number>` with `((c: number) => number)[]`.
+    ╭╴
+  1 - let fooVar: Array<(c: number) => number>;
+  1 + let fooVar: ((c: number) => number)[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:17]
@@ -533,6 +829,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────────────────────
    ╰────
   help: Replace `Array<string | number | boolean>` with `(string | number | boolean)[]`.
+    ╭╴
+  1 - type fooUnion = Array<string | number | boolean>;
+  1 + type fooUnion = (string | number | boolean)[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:24]
@@ -540,6 +840,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────────────────────
    ╰────
   help: Replace `Array<string & number>` with `(string & number)[]`.
+    ╭╴
+  1 - type fooIntersection = Array<string & number>;
+  1 + type fooIntersection = (string & number)[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:1:31]
@@ -547,6 +851,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  1 - let x: Array<number> = [1] as number[];
+  1 + let x: Array<number> = [1] as Array<number>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:1:8]
@@ -554,6 +862,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  1 - let y: string[] = <Array<string>>['2'];
+  1 + let y: Array<string> = <Array<string>>['2'];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:24]
@@ -561,6 +873,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────────────────
    ╰────
   help: Replace `[number, string][]` with `Array<[number, string]>`.
+    ╭╴
+  1 - let ya = [[1, '2']] as [number, string][];
+  1 + let ya = [[1, '2']] as Array<[number, string]>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:4:14]
@@ -570,6 +886,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │         baz: Arr<T>;
    ╰────
   help: Replace `T[]` with `Array<T>`.
+    ╭╴
+  4 -         bar: T[];
+  4 +         bar: Array<T>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:2:35]
@@ -579,6 +899,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │         return bar.map(e => e.bar);
    ╰────
   help: Replace `ArrayClass<String>[]` with `Array<ArrayClass<String>>`.
+    ╭╴
+  2 -         function barFunction(bar: ArrayClass<String>[]) {
+  2 +         function barFunction(bar: Array<ArrayClass<String>>) {
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:13]
@@ -586,6 +910,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────
    ╰────
   help: Replace `((c: number) => number)[]` with `Array<(c: number) => number>`.
+    ╭╴
+  1 - let barVar: ((c: number) => number)[];
+  1 + let barVar: Array<(c: number) => number>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:17]
@@ -593,6 +921,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────────────────────
    ╰────
   help: Replace `(string | number | boolean)[]` with `Array<string | number | boolean>`.
+    ╭╴
+  1 - type barUnion = (string | number | boolean)[];
+  1 + type barUnion = Array<string | number | boolean>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:24]
@@ -600,6 +932,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────────
    ╰────
   help: Replace `(string & number)[]` with `Array<string & number>`.
+    ╭╴
+  1 - type barIntersection = (string & number)[];
+  1 + type barIntersection = Array<string & number>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:3:24]
@@ -609,6 +945,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  3 -         '.bar': { baz: string[] };
+  3 +         '.bar': { baz: Array<string> };
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:1:12]
@@ -616,6 +956,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────────────────────────────────
    ╰────
   help: Replace `Array<new (...args: any[]) => void>` with `(new (...args: any[]) => void)[]`.
+    ╭╴
+  1 - const foo: Array<new (...args: any[]) => void> = [];
+  1 + const foo: (new (...args: any[]) => void)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<T>' is forbidden. Use 'readonly T[]' instead.
    ╭─[array_type.ts:1:12]
@@ -623,6 +967,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────────────────────────────────────────
    ╰────
   help: Replace `ReadonlyArray<new (...args: any[]) => void>` with `readonly (new (...args: any[]) => void)[]`.
+    ╭╴
+  1 - const foo: ReadonlyArray<new (...args: any[]) => void> = [];
+  1 + const foo: readonly (new (...args: any[]) => void)[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:1:16]
@@ -630,6 +978,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  1 - let a: Promise<string[]> = Promise.resolve([]);
+  1 + let a: Promise<Array<string>> = Promise.resolve([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:1:16]
@@ -637,6 +989,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  1 - let a: Promise<string[]> = Promise.resolve([]);
+  1 + let a: Promise<Array<string>> = Promise.resolve([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:10]
@@ -644,6 +1000,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - type x = Array<number>[]
+  1 + type x = number[][]
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<Array<number>>' is forbidden. Use 'Array<number>[]' instead.
    ╭─[array_type.ts:1:12]
@@ -651,6 +1011,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────────
    ╰────
   help: Replace `Array<Array<number>>` with `Array<number>[]`.
+    ╭╴
+  1 - const arr: Array<Array<number>>[] = [];
+  1 + const arr: Array<number>[][] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:18]
@@ -658,6 +1022,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - const arr: Array<Array<number>>[] = [];
+  1 + const arr: Array<number[]>[] = [];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:26]
@@ -665,6 +1033,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - export function fn4(arr: Array<number>[]) { return arr; }
+  1 + export function fn4(arr: number[][]) { return arr; }
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:2:29]
@@ -673,6 +1045,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────────────
    ╰────
   help: Replace `{name: string}[]` with `Array<{name: string}>`.
+    ╭╴
+  2 - export const test2 = testFn<{name: string}[]>([]);
+  2 + export const test2 = testFn<Array<{name: string}>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<T>' is forbidden. Use 'T[]' instead.
    ╭─[array_type.ts:2:29]
@@ -681,6 +1057,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────────
    ╰────
   help: Replace `Array<{name: string}>` with `{name: string}[]`.
+    ╭╴
+  2 - export const test2 = testFn<Array<{name: string}>>([]);
+  2 + export const test2 = testFn<{name: string}[]>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:2:29]
@@ -689,6 +1069,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  2 - export const test2 = testFn<string[]>([]);
+  2 + export const test2 = testFn<Array<string>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:2:29]
@@ -697,6 +1081,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────────────────
    ╰────
   help: Replace `(string | number)[]` with `Array<string | number>`.
+    ╭╴
+  2 - export const test2 = testFn<(string | number)[]>([]);
+  2 + export const test2 = testFn<Array<string | number>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly string[]' is forbidden. Use 'ReadonlyArray<string>' instead.
    ╭─[array_type.ts:2:29]
@@ -705,6 +1093,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────
    ╰────
   help: Replace `readonly string[]` with `ReadonlyArray<string>`.
+    ╭╴
+  2 - export const test2 = testFn<readonly string[]>([]);
+  2 + export const test2 = testFn<ReadonlyArray<string>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<string>' is forbidden. Use 'readonly string[]' instead.
    ╭─[array_type.ts:2:29]
@@ -713,6 +1105,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<string>` with `readonly string[]`.
+    ╭╴
+  2 - export const test2 = testFn<ReadonlyArray<string>>([]);
+  2 + export const test2 = testFn<readonly string[]>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:2:29]
@@ -721,6 +1117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  2 - export const test3 = testFn<string[], number[]>([]);
+  2 + export const test3 = testFn<Array<string>, number[]>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:2:39]
@@ -729,6 +1129,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  2 - export const test3 = testFn<string[], number[]>([]);
+  2 + export const test3 = testFn<string[], Array<number>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
    ╭─[array_type.ts:2:29]
@@ -737,6 +1141,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────
    ╰────
   help: Replace `Array<string>` with `string[]`.
+    ╭╴
+  2 - export const test3 = testFn<Array<string>, Array<number>>([]);
+  2 + export const test3 = testFn<string[], Array<number>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:2:44]
@@ -745,6 +1153,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                            ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  2 - export const test3 = testFn<Array<string>, Array<number>>([]);
+  2 + export const test3 = testFn<Array<string>, number[]>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:2:37]
@@ -753,6 +1165,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  2 - export const test4 = testFn<Promise<string[]>>([]);
+  2 + export const test4 = testFn<Promise<Array<string>>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:2:37]
@@ -761,6 +1177,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  2 - export const test4 = testFn<Promise<string[]>>([]);
+  2 + export const test4 = testFn<Promise<Array<string>>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
    ╭─[array_type.ts:2:37]
@@ -769,6 +1189,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ─────────────
    ╰────
   help: Replace `Array<string>` with `string[]`.
+    ╭╴
+  2 - export const test4 = testFn<Promise<Array<string>>>([]);
+  2 + export const test4 = testFn<Promise<string[]>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
    ╭─[array_type.ts:2:37]
@@ -777,6 +1201,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ─────────────
    ╰────
   help: Replace `Array<string>` with `string[]`.
+    ╭╴
+  2 - export const test4 = testFn<Promise<Array<string>>>([]);
+  2 + export const test4 = testFn<Promise<string[]>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:2:29]
@@ -785,6 +1213,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────────────────
    ╰────
   help: Replace `(string & number)[]` with `Array<string & number>`.
+    ╭╴
+  2 - export const test5 = testFn<(string & number)[]>([]);
+  2 + export const test5 = testFn<Array<string & number>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden for non-simple types. Use 'Array<T>' instead.
    ╭─[array_type.ts:2:29]
@@ -793,6 +1225,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────────────
    ╰────
   help: Replace `(() => void)[]` with `Array<() => void>`.
+    ╭╴
+  2 - export const test5 = testFn<(() => void)[]>([]);
+  2 + export const test5 = testFn<Array<() => void>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:2:30]
@@ -801,6 +1237,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  2 - const instance = new MyClass<number[]>([1, 2, 3]);
+  2 + const instance = new MyClass<Array<number>>([1, 2, 3]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:2:30]
@@ -809,6 +1249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  2 - const instance = new MyClass<Array<number>>([1, 2, 3]);
+  2 + const instance = new MyClass<number[]>([1, 2, 3]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:1:33]
@@ -816,6 +1260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  1 - const value = {} as Map<string, number[]>;
+  1 + const value = {} as Map<string, Array<number>>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:1:33]
@@ -823,6 +1271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  1 - const value = {} as Map<string, Array<number>>;
+  1 + const value = {} as Map<string, number[]>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:2:28]
@@ -831,6 +1283,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  2 - const container: Container<string[]> = { value: [] };
+  2 + const container: Container<Array<string>> = { value: [] };
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<string>' is forbidden. Use 'string[]' instead.
    ╭─[array_type.ts:2:28]
@@ -839,6 +1295,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────────
    ╰────
   help: Replace `Array<string>` with `string[]`.
+    ╭╴
+  2 - const container: Container<Array<string>> = { value: [] };
+  2 + const container: Container<string[]> = { value: [] };
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly string[]' is forbidden. Use 'ReadonlyArray<string>' instead.
    ╭─[array_type.ts:2:29]
@@ -847,6 +1307,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────
    ╰────
   help: Replace `readonly string[]` with `ReadonlyArray<string>`.
+    ╭╴
+  2 - export const test7 = testFn<readonly string[], readonly number[]>([]);
+  2 + export const test7 = testFn<ReadonlyArray<string>, readonly number[]>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly number[]' is forbidden. Use 'ReadonlyArray<number>' instead.
    ╭─[array_type.ts:2:48]
@@ -855,6 +1319,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                ─────────────────
    ╰────
   help: Replace `readonly number[]` with `ReadonlyArray<number>`.
+    ╭╴
+  2 - export const test7 = testFn<readonly string[], readonly number[]>([]);
+  2 + export const test7 = testFn<readonly string[], ReadonlyArray<number>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<string>' is forbidden. Use 'readonly string[]' instead.
    ╭─[array_type.ts:2:29]
@@ -863,6 +1331,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<string>` with `readonly string[]`.
+    ╭╴
+  2 - export const test7 = testFn<ReadonlyArray<string>, ReadonlyArray<number>>([]);
+  2 + export const test7 = testFn<readonly string[], ReadonlyArray<number>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<number>' is forbidden. Use 'readonly number[]' instead.
    ╭─[array_type.ts:2:52]
@@ -871,6 +1343,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                    ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<number>` with `readonly number[]`.
+    ╭╴
+  2 - export const test7 = testFn<ReadonlyArray<string>, ReadonlyArray<number>>([]);
+  2 + export const test7 = testFn<ReadonlyArray<string>, readonly number[]>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'Array<number>' is forbidden. Use 'number[]' instead.
    ╭─[array_type.ts:2:39]
@@ -879,6 +1355,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ─────────────
    ╰────
   help: Replace `Array<number>` with `number[]`.
+    ╭╴
+  2 - export const test8 = testFn<string[], Array<number>>([]);
+  2 + export const test8 = testFn<string[], number[]>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'number[]' is forbidden. Use 'Array<number>' instead.
    ╭─[array_type.ts:2:44]
@@ -887,6 +1367,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                            ────────
    ╰────
   help: Replace `number[]` with `Array<number>`.
+    ╭╴
+  2 - export const test8 = testFn<Array<string>, number[]>([]);
+  2 + export const test8 = testFn<Array<string>, Array<number>>([]);
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'any[]' is forbidden. Use 'Array<any>' instead.
    ╭─[array_type.ts:1:29]
@@ -894,6 +1378,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────
    ╰────
   help: Replace `any[]` with `Array<any>`.
+    ╭╴
+  1 - type IsArray<T> = T extends any[] ? true : false;
+  1 + type IsArray<T> = T extends Array<any> ? true : false;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'T[]' is forbidden. Use 'Array<T>' instead.
    ╭─[array_type.ts:1:40]
@@ -901,6 +1389,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ──────
    ╰────
   help: Replace `T[K][]` with `Array<T[K]>`.
+    ╭╴
+  1 - type MakeArrays<T> = { [K in keyof T]: T[K][] };
+  1 + type MakeArrays<T> = { [K in keyof T]: Array<T[K]> };
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly string[]' is forbidden. Use 'ReadonlyArray<string>' instead.
    ╭─[array_type.ts:1:35]
@@ -908,6 +1400,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─────────────────
    ╰────
   help: Replace `readonly string[]` with `ReadonlyArray<string>`.
+    ╭╴
+  1 - const arr = [] as const satisfies readonly string[];
+  1 + const arr = [] as const satisfies ReadonlyArray<string>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'readonly SupportedDomainName[]' is forbidden. Use 'ReadonlyArray<SupportedDomainName>' instead.
    ╭─[array_type.ts:1:35]
@@ -915,6 +1411,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ──────────────────────────────
    ╰────
   help: Replace `readonly SupportedDomainName[]` with `ReadonlyArray<SupportedDomainName>`.
+    ╭╴
+  1 - const arr = [] as const satisfies readonly SupportedDomainName[];
+  1 + const arr = [] as const satisfies ReadonlyArray<SupportedDomainName>;
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'ReadonlyArray<string>' is forbidden. Use 'readonly string[]' instead.
    ╭─[array_type.ts:1:35]
@@ -922,6 +1422,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─────────────────────
    ╰────
   help: Replace `ReadonlyArray<string>` with `readonly string[]`.
+    ╭╴
+  1 - const arr = [] as const satisfies ReadonlyArray<string>;
+  1 + const arr = [] as const satisfies readonly string[];
+    ╰╴
 
   ⚠ typescript-eslint(array-type): Array type using 'string[]' is forbidden. Use 'Array<string>' instead.
    ╭─[array_type.ts:1:35]
@@ -929,3 +1433,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────────
    ╰────
   help: Replace `string[]` with `Array<string>`.
+    ╭╴
+  1 - const arr = [] as const satisfies string[];
+  1 + const arr = [] as const satisfies Array<string>;
+    ╰╴

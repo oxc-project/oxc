@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 1; a ||= 2;
+  1 + let _a = 1; _a ||= 2;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; a = a + 1;
+  1 + let _a = 0; _a = _a + 1;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; a = a++ as any;
+  1 + let _a = 0; _a = _a++ as any;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -36,6 +48,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; a = a as unknown as string as unknown as number;
+  1 + let _a = 0; _a = _a as unknown as string as unknown as number;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -45,6 +61,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; a = ++a;
+  1 + let _a = 0; _a = ++_a;
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -54,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; a = (0, ++a);
+  1 + let _a = 0; _a = (0, ++_a);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -63,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; a = (a++, 0);
+  1 + let _a = 0; _a = (_a++, 0);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -72,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; let b = (a++, 0); f(b);
+  1 + let _a = 0; let b = (_a++, 0); f(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -81,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; let b = (0, (a++, 0)); f(b);
+  1 + let _a = 0; let b = (0, (_a++, 0)); f(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -90,6 +126,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0; let b = ((0, a++), 0); f(b);
+  1 + let _a = 0; let b = ((0, _a++), 0); f(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -98,6 +138,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - let a = 0; let b = (a, 0) + 1; f(b);
+  1 + let _a = 0; let b = (_a, 0) + 1; f(b);
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is assigned a value but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:5]
@@ -107,3 +151,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── 'a' is declared here
    ╰────
   help: Did you mean to use this variable?
+    ╭╴
+  1 - let a = 0, b = 1; let c = b = a = 1; f(c+b);
+  1 + let _a = 0, b = 1; let c = b = _a = 1; f(c+b);
+    ╰╴

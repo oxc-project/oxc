@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw Error()
+  1 + throw new Error()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw (Error)()
+  1 + throw new (Error)()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw lib.Error()
+  1 + throw new lib.Error()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw lib.mod.Error()
+  1 + throw new lib.mod.Error()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw lib[mod].Error()
+  1 + throw new lib[mod].Error()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw (lib.mod).Error()
+  1 + throw new (lib.mod).Error()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw Error('foo')
+  1 + throw new Error('foo')
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw CustomError('foo')
+  1 + throw new CustomError('foo')
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw FooBarBazError('foo')
+  1 + throw new FooBarBazError('foo')
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw ABCError('foo')
+  1 + throw new ABCError('foo')
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw Abc3Error('foo')
+  1 + throw new Abc3Error('foo')
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw TypeError()
+  1 + throw new TypeError()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw EvalError()
+  1 + throw new EvalError()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw RangeError()
+  1 + throw new RangeError()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw ReferenceError()
+  1 + throw new ReferenceError()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw SyntaxError()
+  1 + throw new SyntaxError()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw URIError()
+  1 + throw new URIError()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:10]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw (( URIError() ))
+  1 + throw (( new URIError() ))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw (( URIError ))()
+  1 + throw new (( URIError ))()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw getGlobalThis().Error()
+  1 + throw new getGlobalThis().Error()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw utils.getGlobalThis().Error()
+  1 + throw new utils.getGlobalThis().Error()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]
@@ -154,3 +238,7 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────────────────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+    ╭╴
+  1 - throw (( getGlobalThis().Error ))()
+  1 + throw new (( getGlobalThis().Error ))()
+    ╰╴

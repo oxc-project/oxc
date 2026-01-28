@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: Prefer passing `Date` directly to the constructor when cloning
+    ╭╴
+  1 - new Date(date.getTime())
+  1 + new Date(date)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(consistent-date-clone): Unnecessary `.getTime()` call
    ╭─[consistent_date_clone.tsx:1:10]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: Prefer passing `Date` directly to the constructor when cloning
+    ╭╴
+  1 - new Date(date.getTime(),)
+  1 + new Date(date,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(consistent-date-clone): Unnecessary `.getTime()` call
    ╭─[consistent_date_clone.tsx:1:10]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────────────────
    ╰────
   help: Prefer passing `Date` directly to the constructor when cloning
+    ╭╴
+  1 - new Date((0, date).getTime())
+  1 + new Date((0, date))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(consistent-date-clone): Unnecessary `.getTime()` call
    ╭─[consistent_date_clone.tsx:1:10]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────────────────────────
    ╰────
   help: Prefer passing `Date` directly to the constructor when cloning
+    ╭╴
+  1 - new Date(date.getTime(/* comment */))
+  1 + new Date(date)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(consistent-date-clone): Unnecessary `.getTime()` call
    ╭─[consistent_date_clone.tsx:1:10]
@@ -35,3 +51,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────────────────────────
    ╰────
   help: Prefer passing `Date` directly to the constructor when cloning
+    ╭╴
+  1 - new Date(date./* comment */getTime())
+  1 + new Date(date)
+    ╰╴

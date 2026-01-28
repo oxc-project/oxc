@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: This logical expression can be simplified. Try using the `<=` operator instead.
+    ╭╴
+  1 - x == y || x < y
+  1 + x <= y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: This logical expression can be simplified. Try using the `<=` operator instead.
+    ╭╴
+  1 - x < y || x == y
+  1 + x <= y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: This logical expression can be simplified. Try using the `>=` operator instead.
+    ╭╴
+  1 - x == y || x > y
+  1 + x >= y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: This logical expression can be simplified. Try using the `>=` operator instead.
+    ╭╴
+  1 - x > y || x == y
+  1 + x >= y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: This logical expression can be simplified. Try using the `!=` operator instead.
+    ╭╴
+  1 - x < y || x > y
+  1 + x != y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: This logical expression can be simplified. Try using the `!=` operator instead.
+    ╭╴
+  1 - x > y || x < y
+  1 + x != y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `==` operator instead.
+    ╭╴
+  1 - x <= y && x >= y
+  1 + x == y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `==` operator instead.
+    ╭╴
+  1 - x >= y && x <= y
+  1 + x == y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `<=` operator instead.
+    ╭╴
+  1 - x === y || x < y
+  1 + x <= y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `<=` operator instead.
+    ╭╴
+  1 - x < y || x === y
+  1 + x <= y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `>=` operator instead.
+    ╭╴
+  1 - x === y || x > y
+  1 + x >= y
+    ╰╴
 
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
@@ -84,3 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: This logical expression can be simplified. Try using the `>=` operator instead.
+    ╭╴
+  1 - x > y || x === y
+  1 + x >= y
+    ╰╴

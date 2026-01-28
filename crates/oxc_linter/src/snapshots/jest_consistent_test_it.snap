@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it("foo")
+  1 + test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:17]
@@ -16,6 +20,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  4 -                 it("foo")
+  4 +                 test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:17]
@@ -25,6 +33,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  4 -                 testThisThing("foo")
+  4 +                 test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -32,6 +44,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - xit("foo")
+  1 + xtest("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -39,6 +55,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - fit("foo")
+  1 + test.only("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -46,6 +66,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it.skip("foo")
+  1 + test.skip("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -53,6 +77,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it.concurrent("foo")
+  1 + test.concurrent("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -60,6 +88,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it.only("foo")
+  1 + test.only("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -67,6 +99,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it.each([])("foo")
+  1 + test.each([])("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -74,6 +110,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it.each``("foo")
+  1 + test.each``("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:32]
@@ -81,6 +121,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+    ╭╴
+  1 - describe.each``("foo", () => { it.each``("bar") })
+  1 + describe.each``("foo", () => { test.each``("bar") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:32]
@@ -88,6 +132,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe.each``("foo", () => { test.each``("bar") })
+  1 + describe.each``("foo", () => { it.each``("bar") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:3:21]
@@ -97,6 +145,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │ 
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  3 -                     test("is valid, but should not be", () => {});
+  3 +                     it("is valid, but should not be", () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:3:21]
@@ -106,6 +158,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │ 
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  3 -                     test("is valid, but should not be", () => {});
+  3 +                     it("is valid, but should not be", () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -113,6 +169,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+    ╭╴
+  1 - describe("suite", () => { it("foo") })
+  1 + describe("suite", () => { test("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -120,6 +180,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test("foo")
+  1 + it("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -127,6 +191,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - xtest("foo")
+  1 + xit("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -134,6 +202,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test.skip("foo")
+  1 + it.skip("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -141,6 +213,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test.concurrent("foo")
+  1 + it.concurrent("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -148,6 +224,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test.only("foo")
+  1 + it.only("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -155,6 +235,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test.each([])("foo")
+  1 + it.each([])("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:32]
@@ -162,6 +246,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe.each``("foo", () => { test.each``("bar") })
+  1 + describe.each``("foo", () => { it.each``("bar") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -169,6 +257,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test.each``("foo")
+  1 + it.each``("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -176,6 +268,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -183,6 +279,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -190,6 +290,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test.only("foo") })
+  1 + describe("suite", () => { it.only("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -197,6 +301,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { xtest("foo") })
+  1 + describe("suite", () => { xit("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:43]
@@ -206,6 +314,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  4 -                 describe("suite", () => { dontTestThis("foo") });
+  4 +                 describe("suite", () => { xit("foo") });
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:42]
@@ -215,6 +327,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  4 -                 context("suite", () => { dontTestThis("foo") });
+  4 +                 context("suite", () => { xit("foo") });
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -222,6 +338,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test.skip("foo") })
+  1 + describe("suite", () => { it.skip("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -229,6 +349,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test.concurrent("foo") })
+  1 + describe("suite", () => { it.concurrent("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -236,6 +360,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -243,6 +371,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test.only("foo") })
+  1 + describe("suite", () => { it.only("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -250,6 +382,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { xtest("foo") })
+  1 + describe("suite", () => { xit("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:43]
@@ -259,6 +395,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  4 -                 describe("suite", () => { dontTestThis("foo") });
+  4 +                 describe("suite", () => { xit("foo") });
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:4:38]
@@ -268,6 +408,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │         
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  4 -             context("suite", () => { dontTestThis("foo") });
+  4 +             context("suite", () => { xit("foo") });
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -275,6 +419,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test.skip("foo") })
+  1 + describe("suite", () => { it.skip("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -282,6 +430,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test.concurrent("foo") })
+  1 + describe("suite", () => { it.concurrent("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -289,6 +441,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+    ╭╴
+  1 - describe("suite", () => { it("foo") })
+  1 + describe("suite", () => { test("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -296,6 +452,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it("foo")
+  1 + test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -303,6 +463,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -310,6 +474,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test("foo")
+  1 + it("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -317,6 +485,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -324,6 +496,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it("foo")
+  1 + test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -331,6 +507,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -338,6 +518,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it("foo")
+  1 + test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -345,6 +529,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+    ╭╴
+  1 - describe("suite", () => { it("foo") })
+  1 + describe("suite", () => { test("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -352,6 +540,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test("shows error", () => {});
+  1 + it("shows error", () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -359,6 +551,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test.skip("shows error");
+  1 + it.skip("shows error");
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -366,6 +562,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test.only('shows error');
+  1 + it.only('shows error');
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:25]
@@ -373,6 +573,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+    ╭╴
+  1 - describe('foo', () => { it('bar', () => {}); });
+  1 + describe('foo', () => { test('bar', () => {}); });
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:2:1]
@@ -381,6 +585,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  2 - test("shows error", () => {});
+  2 + it("shows error", () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -388,6 +596,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it("shows error", () => {});
+  1 + test("shows error", () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -395,6 +607,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+    ╭╴
+  1 - describe("suite", () => { it("foo") })
+  1 + describe("suite", () => { test("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -402,6 +618,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -409,6 +629,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Prefer using "it" instead of "test"
+    ╭╴
+  1 - test("foo")
+  1 + it("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -416,6 +640,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -423,6 +651,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it("foo")
+  1 + test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -430,6 +662,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using "it" instead of "test" within describe
+    ╭╴
+  1 - describe("suite", () => { test("foo") })
+  1 + describe("suite", () => { it("foo") })
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:1]
@@ -437,6 +673,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  1 - it("foo")
+  1 + test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:2:1]
@@ -445,6 +685,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──
    ╰────
   help: Prefer using "test" instead of "it"
+    ╭╴
+  2 - it("foo")
+  2 + test("foo")
+    ╰╴
 
   ⚠ eslint-plugin-jest(consistent-test-it): Enforce `test` and `it` usage conventions
    ╭─[consistent_test_it.tsx:1:27]
@@ -452,3 +696,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──
    ╰────
   help: Prefer using "test" instead of "it" within describe
+    ╭╴
+  1 - describe("suite", () => { it("foo") })
+  1 + describe("suite", () => { test("foo") })
+    ╰╴

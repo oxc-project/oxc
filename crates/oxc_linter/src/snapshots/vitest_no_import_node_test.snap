@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────
    ╰────
   help: Import from `vitest` instead.
+    ╭╴
+  1 - import { test } from "node:test"
+  1 + import { test } from "vitest"
+    ╰╴
 
   ⚠ eslint-plugin-vitest(no-import-node-test): Do not import from `node:test`
    ╭─[no_import_node_test.tsx:1:22]
@@ -14,3 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────────
    ╰────
   help: Import from `vitest` instead.
+    ╭╴
+  1 - import * as foo from 'node:test'
+  1 + import * as foo from "vitest"
+    ╰╴
