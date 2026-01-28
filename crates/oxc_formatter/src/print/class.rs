@@ -613,7 +613,10 @@ impl<'a> Format<'a> for FormatClassElementWithSemicolon<'a, '_> {
             && match f.options().semicolons {
                 Semicolons::Always => true,
                 Semicolons::AsNeeded => self.needs_semicolon(),
-            };
+            }
+            // Don't add semicolon if the element is suppressed (has `oxfmt-ignore`),
+            // because the suppressed source text already includes the original semicolon.
+            && !f.comments().is_suppressed(self.element.span().start);
 
         if needs_semi {
             write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
