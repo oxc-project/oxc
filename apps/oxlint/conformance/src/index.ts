@@ -31,7 +31,7 @@ import { TEST_GROUPS } from "./groups/index.ts";
 import { setCurrentGroup, setCurrentRule, resetCurrentRule } from "./capture.ts";
 import { SHOULD_SKIP_GROUP, SHOULD_SKIP_RULE } from "./filter.ts";
 import { generateReport } from "./report.ts";
-import { RuleTester, parserModules, parserModulePaths } from "./rule_tester.ts";
+import { RuleTester, parseForESLintFns, parserPaths } from "./rule_tester.ts";
 
 import type { RuleResult } from "./capture.ts";
 import type { Language, TestCase } from "./rule_tester.ts";
@@ -254,8 +254,8 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   // Get custom parsers
   console.log(`Loading custom parsers for ${groupName}...`);
 
-  parserModules.clear();
-  parserModulePaths.clear();
+  parseForESLintFns.clear();
+  parserPaths.clear();
 
   for (const parserDetails of group.parsers) {
     const path = resolveFromTestsDir(parserDetails.specifier);
@@ -264,8 +264,10 @@ function runGroup(group: TestGroup, mocks: Mocks) {
     // Set `default` export on parser module to work around apparent bug in `tsx`
     if (parser && parser.default === undefined) parser.default = parser;
 
-    parserModules.set(parser, parserDetails);
-    parserModulePaths.set(path, parserDetails);
+    if (typeof parser.parseForESLint === "function") {
+      parseForESLintFns.set(parser.parseForESLint, parserDetails);
+    }
+    parserPaths.set(path, parserDetails);
   }
 
   // Find test files and run tests

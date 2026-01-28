@@ -34,9 +34,9 @@ export type ValidTestCase = RuleTester.ValidTestCase & TestCaseExtension;
 export type InvalidTestCase = RuleTester.InvalidTestCase & TestCaseExtension;
 export type TestCase = ValidTestCase | InvalidTestCase;
 
-// Maps of parser modules and parser paths to parser details (language + specifier)
-export const parserModules: Map<unknown, ParserDetails> = new Map();
-export const parserModulePaths: Map<string, ParserDetails> = new Map();
+// Maps of parser `parseForESLint` functions and parser paths to parser details (language + specifier)
+export const parseForESLintFns: Map<Function, ParserDetails> = new Map();
+export const parserPaths: Map<string, ParserDetails> = new Map();
 
 // Set up `RuleTester` to use our hooks
 RuleTester.describe = describe;
@@ -174,8 +174,8 @@ function modifyTestCase(test: TestCase): void {
   // - Old ESLint versions: `test.parser` (absolute path to parser)
   let parserDetails: ParserDetails | null = null;
 
-  if (languageOptions.parser != null) {
-    parserDetails = parserModules.get(languageOptions.parser) ?? null;
+  if (languageOptions.parser?.parseForESLint != null) {
+    parserDetails = parseForESLintFns.get(languageOptions.parser.parseForESLint) ?? null;
     if (parserDetails !== null) delete languageOptions.parser;
   }
 
@@ -183,7 +183,7 @@ function modifyTestCase(test: TestCase): void {
     if (parserDetails !== null) {
       throw new Error("Both `test.parser` and `test.languageOptions.parser` specified");
     }
-    parserDetails = parserModulePaths.get(test.parser) ?? null;
+    parserDetails = parserPaths.get(test.parser) ?? null;
     if (parserDetails === null) {
       // Set `languageOptions.parser` so an error is thrown.
       // Store in stored test case so appears in snapshot.
