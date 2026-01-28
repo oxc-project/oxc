@@ -4274,13 +4274,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn items(&self) -> &AstNode<'a, Vec<'a, FormalParameter<'a>>> {
-        let following_span_start = self
-            .inner
-            .rest
-            .as_deref()
-            .map(|n| n.span().start)
-            .or(Some(self.following_span_start))
-            .unwrap_or(0);
+        let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.items,
             allocator: self.allocator,
@@ -4291,7 +4285,7 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, FormalParameterRest<'a>>> {
-        let following_span_start = self.following_span_start;
+        let following_span_start = 0;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),

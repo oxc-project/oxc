@@ -243,7 +243,6 @@ impl_ast_node_vec!(AssignmentTargetProperty<'a>);
 impl_ast_node_vec!(VariableDeclarator<'a>);
 impl_ast_node_vec!(SwitchCase<'a>);
 impl_ast_node_vec!(BindingProperty<'a>);
-impl_ast_node_vec!(FormalParameter<'a>);
 impl_ast_node_vec!(ClassElement<'a>);
 impl_ast_node_vec!(ImportDeclarationSpecifier<'a>);
 impl_ast_node_vec!(ImportAttribute<'a>);
@@ -265,6 +264,10 @@ impl_ast_node_vec_for_option!(Option<BindingPattern<'a>>);
 // Directive needs `following_span_start` to distinguish trailing comments from leading comments
 // of the first statement. See the struct field comment for `following_span_start` for details.
 impl_ast_node_vec!(Directive<'a>, has_following_span_in_the_last_item);
+// FormalParameter needs `following_span_start` to correctly attribute comments between
+// the last parameter and the rest parameter (e.g., `param, /** @type {string[]} */ ...rest`).
+impl_ast_node_vec!(FormalParameter<'a>, has_following_span_in_the_last_item);
+
 // Custom get_span for Statement to handle decorated exports.
 // <https://github.com/oxc-project/oxc/issues/10409>
 impl_ast_node_vec!(Statement<'a>, false, get_statement_span);
