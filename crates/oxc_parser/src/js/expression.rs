@@ -1539,7 +1539,7 @@ impl<'a> ParserImpl<'a> {
 
             if self.ctx.has_top_level() {
                 // At top level - upgrade to ESM immediately (like Babel's `sawUnambiguousESM`)
-                self.module_record_builder.found_unambiguous_await();
+                self.module_record_builder.set_module_syntax();
                 // Defer error - will be discarded when we upgrade to ESM
                 self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
             } else {

@@ -167,7 +167,6 @@ impl TestCaseContent {
 
         let settings = CompilerSettings::new(&current_file_options);
 
-        let is_module = test_unit_data.len() > 1;
         let test_unit_data = test_unit_data
             .into_iter()
             // Some snapshot units contain an invalid file with just a message, not even a comment!
@@ -191,11 +190,7 @@ impl TestCaseContent {
                 !unit.content.lines().any(is_invalid_line)
             })
             .filter_map(|mut unit| {
-                let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
-                if is_module {
-                    source_type = source_type.with_module(true);
-                }
-                unit.source_type = source_type;
+                unit.source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
 
                 // Collect spans of @ts-ignore or @ts-expect-error comments
                 unit.ts_ignore_spans = TS_IGNORE_PATTERN
@@ -222,10 +217,12 @@ impl TestCaseContent {
     }
 
     fn get_source_type(path: &Path, options: &CompilerSettings) -> Option<SourceType> {
-        let source_type = SourceType::from_path(path)
-            .ok()?
-            .with_jsx(!options.jsx.is_empty())
-            .with_unambiguous(true);
+        let mut source_type = SourceType::from_path(path).ok()?.with_jsx(!options.jsx.is_empty());
+        // TypeScript accepts ES imports in CommonJS files by default
+        // (only rejects them with verbatimModuleSyntax or module:preserve, which we don't support)
+        if source_type.is_commonjs() {
+            source_type = source_type.with_module(true);
+        }
         Some(source_type)
     }
 
