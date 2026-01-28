@@ -82,9 +82,23 @@ export function setCurrentTest(test: TestCase): void {
 export function describe(name: string, fn: () => void): void {
   describeStack.push(name);
   try {
-    fn();
-  } finally {
+    const res = fn() as any;
+
+    // If returned a promise, ignore the promise's rejection, and create a test case which throws an error,
+    // so it appears in the snapshot. This can only happen if `describe` is used manually.
+    if (res instanceof Promise) {
+      res.catch(() => {});
+      throw new Error("Test case returned a promise");
+    }
+
     describeStack.pop();
+  } catch (err) {
+    // Error. Treat it as a test case (`it`), so it ends up in snapshot and doesn't cause the file to fail to load.
+    // This is useful for test files which use `describe` and `it` manually.
+    describeStack.pop();
+    it(name, () => {
+      throw err;
+    });
   }
 }
 
