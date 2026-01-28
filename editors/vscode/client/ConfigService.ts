@@ -21,6 +21,16 @@ export class ConfigService implements IDisposable {
 
   private workspaceConfigs: Map<string, WorkspaceConfig> = new Map();
 
+  /**
+   * Normalize workspace URI path for consistent map key lookup.
+   * On Windows, drive letter casing can vary (e.g., `/c:/` vs `/C:/`),
+   * causing Map lookups to fail. Normalize to lowercase on Windows.
+   */
+  private normalizeWorkspacePath(uri: Uri): string {
+    const path = uri.path;
+    return process.platform === "win32" ? path.toLowerCase() : path;
+  }
+
   public onConfigChange:
     | ((this: ConfigService, config: ConfigurationChangeEvent) => Promise<void>)
     | undefined;
@@ -66,15 +76,15 @@ export class ConfigService implements IDisposable {
   }
 
   public addWorkspaceConfig(workspace: WorkspaceFolder): void {
-    this.workspaceConfigs.set(workspace.uri.path, new WorkspaceConfig(workspace));
+    this.workspaceConfigs.set(this.normalizeWorkspacePath(workspace.uri), new WorkspaceConfig(workspace));
   }
 
   public removeWorkspaceConfig(workspace: WorkspaceFolder): void {
-    this.workspaceConfigs.delete(workspace.uri.path);
+    this.workspaceConfigs.delete(this.normalizeWorkspacePath(workspace.uri));
   }
 
   public getWorkspaceConfig(workspace: Uri): WorkspaceConfig | undefined {
-    return this.workspaceConfigs.get(workspace.path);
+    return this.workspaceConfigs.get(this.normalizeWorkspacePath(workspace));
   }
 
   public effectsWorkspaceConfigChange(event: ConfigurationChangeEvent): boolean {
