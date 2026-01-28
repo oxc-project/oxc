@@ -12,42 +12,111 @@ use oxc_span::GetSpan;
 
 use super::{AstNode, AstNodes};
 
+/// Iterator for `AstNode<Vec<T>>`.
 pub struct AstNodeIterator<'a, T> {
     inner: std::iter::Peekable<std::slice::Iter<'a, T>>,
     parent: AstNodes<'a>,
     allocator: &'a Allocator,
+    /// The `following_span_start` for the last element when there's no next element in this iterator.
+    ///
+    /// This is essential for [`Comments::get_trailing_comments`] to correctly distinguish trailing
+    /// comments from leading comments of the following sibling. When `following_span_start` is 0,
+    /// comments after the last element are treated as its trailing comments. But when set to
+    /// the next sibling's span start, `get_trailing_comments` can properly determine which
+    /// comments belong to the current node vs the following sibling outside this iterator.
+    ///
+    /// Example: For directives, without this field, comments between the last directive and
+    /// first statement would be incorrectly treated as trailing comments of the directive,
+    /// when they should be leading comments of the statement.
+    ///
+    /// See [`Comments::get_trailing_comments`] in `crates/oxc_formatter/src/formatter/comments.rs`
+    /// for the detailed handling logic.
+    ///
+    /// [`Comments::get_trailing_comments`]: crate::formatter::Comments::get_trailing_comments
+    following_span_start: u32,
+    /// Function to compute `following_span_start` from the next element.
+    get_following_span_start: fn(&T) -> u32,
+}
+
+/// Custom span getter for Statement that handles decorated exports.
+/// <https://github.com/oxc-project/oxc/issues/10409>
+fn get_statement_span(stmt: &Statement<'_>) -> u32 {
+    match stmt {
+        Statement::ExportDefaultDeclaration(export) => {
+            if let ExportDefaultDeclarationKind::ClassDeclaration(class) = &export.declaration
+                && let Some(decorator) = class.decorators.first()
+            {
+                min(decorator.span.start, export.span.start)
+            } else {
+                export.span.start
+            }
+        }
+        Statement::ExportNamedDeclaration(export) => {
+            if let Some(Declaration::ClassDeclaration(class)) = &export.declaration
+                && let Some(decorator) = class.decorators.first()
+            {
+                min(decorator.span.start, export.span.start)
+            } else {
+                export.span.start
+            }
+        }
+        _ => stmt.span().start,
+    }
 }
 
 macro_rules! impl_ast_node_vec {
     ($type:ty) => {
+        impl_ast_node_vec!($type, false, |n: &$type| n.span().start);
+    };
+    ($type:ty, has_following_span_in_the_last_item) => {
+        impl_ast_node_vec!($type, true, |n: &$type| n.span().start);
+    };
+    ($type:ty, $has_following_span_in_the_last_item:tt, $get_span:expr) => {
         impl<'a> AstNode<'a, Vec<'a, $type>> {
             pub fn iter(&self) -> AstNodeIterator<'a, $type> {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
                     allocator: self.allocator,
+                    following_span_start: if $has_following_span_in_the_last_item {
+                        self.following_span_start
+                    } else {
+                        0
+                    },
+                    get_following_span_start: $get_span,
                 }
             }
 
             pub fn first(&self) -> Option<&'a AstNode<'a, $type>> {
+                let following = if $has_following_span_in_the_last_item {
+                    self.following_span_start
+                } else {
+                    0
+                };
+                let get_span: fn(&$type) -> u32 = $get_span;
                 let mut inner_iter = self.inner.iter();
                 self.allocator
                     .alloc(inner_iter.next().map(|inner| AstNode {
                         inner,
                         parent: self.parent,
                         allocator: self.allocator,
-                        following_span_start: inner_iter.next().map_or(0, |n| n.span().start),
+                        following_span_start: inner_iter.next().map_or(following, get_span),
                     }))
                     .as_ref()
             }
 
             pub fn last(&self) -> Option<&'a AstNode<'a, $type>> {
+                let following = if $has_following_span_in_the_last_item {
+                    self.following_span_start
+                } else {
+                    0
+                };
                 self.allocator
                     .alloc(self.inner.last().map(|inner| AstNode {
                         inner,
                         parent: self.parent,
                         allocator: self.allocator,
-                        following_span_start: 0,
+                        following_span_start: following,
                     }))
                     .as_ref()
             }
@@ -57,12 +126,14 @@ macro_rules! impl_ast_node_vec {
             type Item = &'a AstNode<'a, $type>;
             fn next(&mut self) -> Option<Self::Item> {
                 let allocator = self.allocator;
+                let following = self.following_span_start;
+                let get_span = self.get_following_span_start;
                 allocator
                     .alloc(self.inner.next().map(|inner| AstNode {
                         parent: self.parent,
                         inner,
                         allocator,
-                        following_span_start: self.inner.peek().map_or(0, |n| n.span().start),
+                        following_span_start: self.inner.peek().map_or(following, |n| get_span(*n)),
                     }))
                     .as_ref()
             }
@@ -72,10 +143,16 @@ macro_rules! impl_ast_node_vec {
             type Item = &'a AstNode<'a, $type>;
             type IntoIter = AstNodeIterator<'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
-                AstNodeIterator::<$type> {
+                AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
                     allocator: self.allocator,
+                    following_span_start: if $has_following_span_in_the_last_item {
+                        self.following_span_start
+                    } else {
+                        0
+                    },
+                    get_following_span_start: $get_span,
                 }
             }
         }
@@ -90,6 +167,8 @@ macro_rules! impl_ast_node_vec_for_option {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
                     allocator: self.allocator,
+                    following_span_start: 0,
+                    get_following_span_start: |opt| opt.as_ref().map_or(0, |n| n.span().start),
                 }
             }
 
@@ -126,18 +205,14 @@ macro_rules! impl_ast_node_vec_for_option {
             type Item = &'a AstNode<'a, $type>;
             fn next(&mut self) -> Option<Self::Item> {
                 let allocator = self.allocator;
+                let following = self.following_span_start;
+                let get_span = self.get_following_span_start;
                 allocator
-                    .alloc(self.inner.next().map(|inner| {
-                        AstNode {
-                            parent: self.parent,
-                            inner,
-                            allocator,
-                            following_span_start: self
-                                .inner
-                                .peek()
-                                .and_then(|opt| opt.as_ref().map(|n| n.span().start))
-                                .unwrap_or(0),
-                        }
+                    .alloc(self.inner.next().map(|inner| AstNode {
+                        parent: self.parent,
+                        inner,
+                        allocator,
+                        following_span_start: self.inner.peek().map_or(following, |n| get_span(*n)),
                     }))
                     .as_ref()
             }
@@ -147,17 +222,18 @@ macro_rules! impl_ast_node_vec_for_option {
             type Item = &'a AstNode<'a, $type>;
             type IntoIter = AstNodeIterator<'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
-                AstNodeIterator::<$type> {
+                AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
                     allocator: self.allocator,
+                    following_span_start: 0,
+                    get_following_span_start: |opt| opt.as_ref().map_or(0, |n| n.span().start),
                 }
             }
         }
     };
 }
 
-// Concrete implementations for all Vec types used in the AST
 impl_ast_node_vec!(Expression<'a>);
 impl_ast_node_vec!(ArrayExpressionElement<'a>);
 impl_ast_node_vec!(ObjectPropertyKind<'a>);
@@ -186,167 +262,9 @@ impl_ast_node_vec!(Decorator<'a>);
 impl_ast_node_vec_for_option!(Option<AssignmentTargetMaybeDefault<'a>>);
 impl_ast_node_vec_for_option!(Option<BindingPattern<'a>>);
 
-// Manual implementation for Vec<Statement> because we have to handle span
-// for ExportDefaultDeclaration and ExportNamedDeclaration that may include
-// decorators.
+// Directive needs `following_span_start` to distinguish trailing comments from leading comments
+// of the first statement. See the struct field comment for `following_span_start` for details.
+impl_ast_node_vec!(Directive<'a>, has_following_span_in_the_last_item);
+// Custom get_span for Statement to handle decorated exports.
 // <https://github.com/oxc-project/oxc/issues/10409>
-impl<'a> AstNode<'a, Vec<'a, Statement<'a>>> {
-    pub fn iter(&self) -> AstNodeIterator<'a, Statement<'a>> {
-        AstNodeIterator {
-            inner: self.inner.iter().peekable(),
-            parent: self.parent,
-            allocator: self.allocator,
-        }
-    }
-    pub fn first(&self) -> Option<&'a AstNode<'a, Statement<'a>>> {
-        let mut inner_iter = self.inner.iter();
-        self.allocator
-            .alloc(inner_iter.next().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-                following_span_start: inner_iter.next().map_or(0, |n| n.span().start),
-            }))
-            .as_ref()
-    }
-    pub fn last(&self) -> Option<&'a AstNode<'a, Statement<'a>>> {
-        self.allocator
-            .alloc(self.inner.last().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-                following_span_start: 0,
-            }))
-            .as_ref()
-    }
-}
-impl<'a> Iterator for AstNodeIterator<'a, Statement<'a>> {
-    type Item = &'a AstNode<'a, Statement<'a>>;
-    fn next(&mut self) -> Option<Self::Item> {
-        let allocator = self.allocator;
-        allocator
-            .alloc(self.inner.next().map(|inner| AstNode {
-                parent: self.parent,
-                inner,
-                allocator,
-                following_span_start: {
-                    match self.inner.peek() {
-                        // `@decorator export default class A {}`
-                        // Get the span start of the decorator.
-                        Some(Statement::ExportDefaultDeclaration(export)) => {
-                            if let ExportDefaultDeclarationKind::ClassDeclaration(class) =
-                                &export.declaration
-                                && let Some(decorator) = class.decorators.first()
-                            {
-                                min(decorator.span.start, export.span.start)
-                            } else {
-                                export.span.start
-                            }
-                        }
-                        // `@decorator export class A {}`
-                        // Get the span start of the decorator.
-                        Some(Statement::ExportNamedDeclaration(export)) => {
-                            if let Some(Declaration::ClassDeclaration(class)) = &export.declaration
-                                && let Some(decorator) = class.decorators.first()
-                            {
-                                min(decorator.span.start, export.span.start)
-                            } else {
-                                export.span.start
-                            }
-                        }
-                        Some(next) => next.span().start,
-                        None => 0,
-                    }
-                },
-            }))
-            .as_ref()
-    }
-}
-impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Statement<'a>>> {
-    type Item = &'a AstNode<'a, Statement<'a>>;
-    type IntoIter = AstNodeIterator<'a, Statement<'a>>;
-    fn into_iter(self) -> Self::IntoIter {
-        AstNodeIterator::<Statement<'a>> {
-            inner: self.inner.iter().peekable(),
-            parent: self.parent,
-            allocator: self.allocator,
-        }
-    }
-}
-
-fn get_following_span_start_for_directive_parent(parent: &AstNodes<'_>) -> u32 {
-    match parent {
-        AstNodes::Program(program) => program.body().first().map_or(0, |n| n.span().start),
-        AstNodes::FunctionBody(function_body) => {
-            function_body.statements().first().map_or(0, |n| n.span().start)
-        }
-        AstNodes::TSModuleBlock(ts_module_block) => {
-            ts_module_block.body().first().map_or(0, |n| n.span().start)
-        }
-        _ => 0,
-    }
-}
-
-// Manual implementation for Vec<Directive> because we need to handle
-// following_span for the last directive in Program.body.
-impl<'a> AstNode<'a, Vec<'a, Directive<'a>>> {
-    pub fn iter(&self) -> AstNodeIterator<'a, Directive<'a>> {
-        AstNodeIterator {
-            inner: self.inner.iter().peekable(),
-            parent: self.parent,
-            allocator: self.allocator,
-        }
-    }
-    pub fn first(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
-        let mut inner_iter = self.inner.iter();
-        self.allocator
-            .alloc(inner_iter.next().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-                following_span_start: inner_iter.next().map_or_else(
-                    || get_following_span_start_for_directive_parent(&self.parent),
-                    |n| n.span().start,
-                ),
-            }))
-            .as_ref()
-    }
-    pub fn last(&self) -> Option<&'a AstNode<'a, Directive<'a>>> {
-        self.allocator
-            .alloc(self.inner.last().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-                following_span_start: get_following_span_start_for_directive_parent(&self.parent),
-            }))
-            .as_ref()
-    }
-}
-impl<'a> Iterator for AstNodeIterator<'a, Directive<'a>> {
-    type Item = &'a AstNode<'a, Directive<'a>>;
-    fn next(&mut self) -> Option<Self::Item> {
-        let allocator = self.allocator;
-        allocator
-            .alloc(self.inner.next().map(|inner| AstNode {
-                parent: self.parent,
-                inner,
-                allocator,
-                following_span_start: self.inner.peek().map_or_else(
-                    || get_following_span_start_for_directive_parent(&self.parent),
-                    |n| n.span().start,
-                ),
-            }))
-            .as_ref()
-    }
-}
-impl<'a> IntoIterator for &AstNode<'a, Vec<'a, Directive<'a>>> {
-    type Item = &'a AstNode<'a, Directive<'a>>;
-    type IntoIter = AstNodeIterator<'a, Directive<'a>>;
-    fn into_iter(self) -> Self::IntoIter {
-        AstNodeIterator::<Directive<'a>> {
-            inner: self.inner.iter().peekable(),
-            parent: self.parent,
-            allocator: self.allocator,
-        }
-    }
-}
+impl_ast_node_vec!(Statement<'a>, false, get_statement_span);
