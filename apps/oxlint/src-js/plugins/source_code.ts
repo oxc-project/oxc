@@ -44,23 +44,14 @@ let sourceStartPos: number = 0;
 let sourceByteLen: number = 0;
 export let ast: Program | null = null;
 
-// Parser services object. Set before linting a file by `setupSourceForFile`.
-let parserServices: Record<string, unknown> | null = null;
-
 /**
  * Set up source for the file about to be linted.
  * @param bufferInput - Buffer containing AST
  * @param hasBOMInput - `true` if file's original source text has Unicode BOM
- * @param parserServicesInput - Parser services object for the file
  */
-export function setupSourceForFile(
-  bufferInput: BufferWithArrays,
-  hasBOMInput: boolean,
-  parserServicesInput: Record<string, unknown>,
-): void {
+export function setupSourceForFile(bufferInput: BufferWithArrays, hasBOMInput: boolean): void {
   buffer = bufferInput;
   hasBOM = hasBOMInput;
-  parserServices = parserServicesInput;
 }
 
 /**
@@ -142,7 +133,6 @@ export function resetSourceAndAst(): void {
   buffer = null;
   sourceText = null;
   ast = null;
-  parserServices = null;
   resetBuffer();
   resetLines();
   resetScopeManager();
@@ -227,11 +217,10 @@ export const SOURCE_CODE = Object.freeze({
 
   /**
    * Parser services for the file.
+   *
+   * Oxlint does not offer any parser services.
    */
-  get parserServices(): Record<string, unknown> {
-    debugAssertIsNonNull(parserServices);
-    return parserServices;
-  },
+  parserServices: Object.freeze({} as Record<string, unknown>),
 
   /**
    * Source text as array of lines, split according to specification's definition of line breaks.
