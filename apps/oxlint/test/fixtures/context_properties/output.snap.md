@@ -12,6 +12,7 @@
   | getPhysicalFilename(): <fixture>/files/1.js
   | cwd: <fixture>
   | getCwd(): <fixture>
+  | parserPath: undefined
    ,-[files/1.js:1:1]
  1 | let x;
    : ^
@@ -33,6 +34,7 @@
   | getPhysicalFilename(): <fixture>/files/2.js
   | cwd: <fixture>
   | getCwd(): <fixture>
+  | parserPath: undefined
    ,-[files/2.js:1:1]
  1 | let y;
    : ^
