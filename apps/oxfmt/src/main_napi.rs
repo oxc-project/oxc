@@ -7,7 +7,7 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon},
+    cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
         ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
         JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
@@ -69,8 +69,12 @@ pub async fn run_cli(
         Mode::Init => {
             return ("init".to_string(), None);
         }
-        Mode::Migrate(_) => {
-            return ("migrate:prettier".to_string(), None);
+        Mode::Migrate(source) => {
+            let mode_str = match source {
+                MigrateSource::Prettier => "migrate:prettier",
+                MigrateSource::Biome => "migrate:biome",
+            };
+            return (mode_str.to_string(), None);
         }
         _ => {}
     }

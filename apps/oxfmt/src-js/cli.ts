@@ -40,6 +40,10 @@ void (async () => {
     await import("./cli/migration/migrate-prettier").then((m) => m.runMigratePrettier());
     return;
   }
+  if (mode === "migrate:biome") {
+    await import("./cli/migration/migrate-biome").then((m) => m.runMigrateBiome());
+    return;
+  }
 
   // Other modes are handled by Rust, just need to set `exitCode`
 
