@@ -278,7 +278,9 @@ impl Rule for Curly {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IfStatement(stmt) => self.run_for_if_statement(stmt, ctx),
+            AstKind::IfStatement(stmt) if !is_else_if(node, stmt, ctx) => {
+                self.run_for_if_statement(stmt, ctx);
+            }
             AstKind::ForStatement(stmt) => self.run_for_loop("for", &stmt.body, ctx),
             AstKind::ForInStatement(stmt) => self.run_for_loop("for-in", &stmt.body, ctx),
             AstKind::ForOfStatement(stmt) => self.run_for_loop("for-of", &stmt.body, ctx),
@@ -358,6 +360,15 @@ fn get_if_branches_from_statement<'a>(
 
 fn get_if_else_keyword(is_else: bool) -> &'static str {
     if is_else { "else" } else { "if" }
+}
+
+fn is_else_if(node: &AstNode, stmt: &IfStatement, ctx: &LintContext) -> bool {
+    if let AstKind::IfStatement(parent_if) = ctx.nodes().parent_kind(node.id())
+        && parent_if.alternate.as_ref().is_some_and(|alt| alt.span() == stmt.span)
+    {
+        return true;
+    }
+    false
 }
 
 fn has_braces(body: &Statement) -> bool {
@@ -883,6 +894,17 @@ fn test() {
         ),
         (
             "if (a) { if (b) foo(); } else { bar(); }",
+            Some(serde_json::json!(["multi-or-nest", "consistent"])),
+        ),
+        (
+            "if (dividerPosition) {
+              if (condition1 && condition2) {
+                closePos = state.pos;
+                const y = closePos;
+              }
+            } else if (condition3 && condition4) {
+              dividerPosition = state.pos;
+            }",
             Some(serde_json::json!(["multi-or-nest", "consistent"])),
         ),
         ("if (a) { if (b) { foo(); bar(); } } else baz();", Some(serde_json::json!(["multi"]))),
