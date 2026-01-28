@@ -1019,7 +1019,14 @@ impl<'a> PeepholeOptimizations {
                             false
                         }
                     };
-                    if !has_side_effectful_initializer {
+                    // Only allow inlining when the for-in variable is declared with `var`.
+                    // Block-scoped declarations (let/const) can cause variable shadowing issues
+                    // where the inlined expression might reference a variable with the same name
+                    // as the for-in variable, but after inlining, it would incorrectly refer to
+                    // the shadowed for-in variable instead.
+                    // See: https://github.com/oxc-project/oxc/issues/18650
+                    let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
+                    if !has_side_effectful_initializer && !is_block_scoped {
                         let a = &mut prev_expr_stmt.expression;
                         for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
                         result.pop();
