@@ -43,21 +43,14 @@ fn test_for_in_block_scoped_no_inline() {
         "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (let name in foo) { console.log(name); } console.log(name); }",
         "{ var name = 'name1'; let foo = { foo: 1 }; name = 'name2'; for (let name in foo) console.log(name); console.log(name); }",
     );
-    // const in for-in is converted to let by the minifier
     test(
         "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (const name in foo) { console.log(name); } console.log(name); }",
         "{ var name = 'name1'; let foo = { foo: 1 }; name = 'name2'; for (let name in foo) console.log(name); console.log(name); }",
     );
-
-    // Should still inline when for-in uses `var` (no shadowing issue)
-    // var is function-scoped, not block-scoped, so it doesn't create a new scope
     test(
         "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (var name in foo) { console.log(name); } console.log(name); }",
         "var name = 'name1'; for (var name in name = 'name2', { foo: 1 }) console.log(name); console.log(name);",
     );
-
-    // Should inline when for-in uses an identifier without declaration (no shadowing issue)
-    // The identifier references the outer variable, so no new scope is created
     test(
         "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (name in foo) { console.log(name); } console.log(name); }",
         "var name = 'name1'; for (name in name = 'name2', { foo: 1 }) console.log(name); console.log(name);",
