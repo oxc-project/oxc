@@ -89,6 +89,35 @@ pub struct Oxlintrc {
     ///
     /// Note: JS plugins are experimental and not subject to semver.
     /// They are not supported in the language server (and thus editor integrations) at present.
+    ///
+    /// Examples:
+    ///
+    /// Basic usage with a local plugin path.
+    ///
+    /// ```json
+    /// {
+    ///   "jsPlugins": ["./eslint-plugin-custom.js"],
+    ///   "rules": {
+    ///     "custom/rule-name": "warn"
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// Using a built-in Rust plugin alongside a JS plugin with the same name
+    /// by giving the JS plugin an alias.
+    ///
+    /// ```json
+    /// {
+    ///   "plugins": ["import"],
+    ///   "jsPlugins": [
+    ///     { "name": "import-js", "specifier": "eslint-plugin-import" }
+    ///   ],
+    ///   "rules": {
+    ///     "import/no-cycle": "error",
+    ///     "import-js/no-unresolved": "warn"
+    ///   }
+    /// }
+    /// ```
     #[serde(rename = "jsPlugins", default, skip_serializing_if = "Option::is_none")]
     #[schemars(schema_with = "external_plugins_schema")]
     pub external_plugins: Option<FxHashSet<ExternalPluginEntry>>,
