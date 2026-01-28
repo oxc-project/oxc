@@ -94,12 +94,19 @@ export interface TestGroup {
   /**
    * `RuleTester` instances to replace with the Oxc conformance `RuleTester`.
    *
-   * Array elements are module specifiers which are resolved relative to a file in the tests directory,
-   * using `require.resolve`.
+   * - `specifier` is a module specifier which is resolved relative to the tests directory, using `require.resolve`.
+   * - `propName` is name of the property to set on the module to the `RuleTester` class.
+   *   If `null`, the module is set as `module.exports`.
    *
-   * e.g. `["../../lib/rule-tester.js", "eslint"]`
+   * e.g.:
+   * ```js
+   * [
+   *   { specifier: "eslint", propName: "RuleTester" },
+   *   { specifier: "../../lib/rule-tester.js", propName: null },
+   * ]
+   * ```
    */
-  ruleTesters: string[];
+  ruleTesters: { specifier: string; propName: string | null }[];
 
   /**
    * Known parsers to accept.
@@ -153,12 +160,6 @@ const require = createRequire(import.meta.url);
 
 const normalizePath =
   pathSep === "\\" ? (path: string) => path.replaceAll("\\", "/") : (path: string) => path;
-
-// `RuleTester` will be `module.exports`, so allow loading that module with either:
-// 1. `import RuleTester from "path/to/rule_tester.js";`
-// 2. `import { RuleTester } from "path/to/rule_tester.js";`
-// @ts-expect-error - not a property of `RuleTester`
-RuleTester.RuleTester = RuleTester;
 
 // Run
 const mocks = initMocks();
@@ -228,8 +229,14 @@ function runGroup(group: TestGroup, mocks: Mocks) {
   const requireFromTestsDir = createRequire(pathJoin(testFilesDirPath, "dummy.js"));
   const resolveFromTestsDir = requireFromTestsDir.resolve.bind(requireFromTestsDir);
 
-  for (const specifier of group.ruleTesters) {
-    mocks.set(resolveFromTestsDir(specifier), RuleTester);
+  for (const tester of group.ruleTesters) {
+    const { specifier, propName } = tester;
+    if (propName === null) {
+      mocks.set(resolveFromTestsDir(specifier), RuleTester);
+    } else {
+      const mod = requireFromTestsDir(specifier);
+      mod[propName] = RuleTester;
+    }
   }
 
   // Run `prepare` function

@@ -60,7 +60,11 @@ const group: TestGroup = {
     return false;
   },
 
-  ruleTesters: ["eslint-v7", "eslint-v8", "eslint-v9"],
+  ruleTesters: [
+    { specifier: "eslint-v7", propName: "RuleTester" },
+    { specifier: "eslint-v8", propName: "RuleTester" },
+    { specifier: "eslint-v9", propName: "RuleTester" },
+  ],
 
   parsers: [
     { specifier: "babel-eslint", lang: "jsx" },

@@ -48,7 +48,7 @@ const group: TestGroup = {
     return false;
   },
 
-  ruleTesters: ["../../../lib/rule-tester/rule-tester.js"],
+  ruleTesters: [{ specifier: "../../../lib/rule-tester/rule-tester.js", propName: null }],
   parsers: [{ specifier: "@typescript-eslint/parser", lang: "ts" }],
 };
 
