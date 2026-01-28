@@ -29,13 +29,13 @@ use oxc_language_server::{
 use crate::{
     DEFAULT_OXLINTRC_NAME,
     config_loader::ConfigLoader,
+    config_loader::discover_configs_in_tree,
     lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
             fix_all_text_edit,
         },
         commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
-        config_walker::ConfigWalker,
         error_with_position::{
             DiagnosticReport, LinterCodeAction, create_unused_directives_messages,
             generate_inverted_diagnostics, message_to_lsp_diagnostic,
@@ -276,10 +276,10 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
     ) -> FxHashMap<PathBuf, Config> {
-        let paths = ConfigWalker::new(root_path).paths();
+        let config_paths = discover_configs_in_tree(root_path);
 
         let mut loader = ConfigLoader::new(external_linter, external_plugin_store, &[]);
-        let (configs, errors) = loader.load_many(paths.iter().map(Path::new));
+        let (configs, errors) = loader.load_many(config_paths);
 
         for error in errors {
             warn!("Skipping config file {}: {:?}", error.path().display(), error);

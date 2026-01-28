@@ -9,7 +9,7 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
@@ -20,7 +20,7 @@ use oxc_linter::{
 use crate::{
     DEFAULT_OXLINTRC_NAME,
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
-    config_loader::{ConfigLoadError, ConfigLoader},
+    config_loader::{ConfigLoadError, ConfigLoader, discover_configs_in_ancestors},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -474,40 +474,18 @@ impl CliRunner {
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
     ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
-        // TODO(perf): benchmark whether or not it is worth it to store the configurations on a
-        // per-file or per-directory basis, to avoid calling `.parent()` on every path.
-        let mut nested_oxlintrc = FxHashSet::<PathBuf>::default();
-        // get all of the unique directories among the paths to use for search for
-        // oxlint config files in those directories and their ancestors
-        // e.g. `/some/file.js` will check `/some` and `/`
-        //      `/some/other/file.js` will check `/some/other`, `/some`, and `/`
-        let mut directories = FxHashSet::default();
-        for path in paths {
-            let path = Path::new(path);
-            // Start from the file's parent directory and walk up the tree
-            let mut current = path.parent();
-            while let Some(dir) = current {
-                // NOTE: Initial benchmarking showed that it was faster to iterate over the directories twice
-                // rather than constructing the configs in one iteration. It's worth re-benchmarking that though.
-                let inserted = directories.insert(dir);
-                if !inserted {
-                    break;
-                }
-                current = dir.parent();
-            }
-        }
-        for directory in directories {
-            if let Some(path) = Self::find_oxlint_config_path_in_directory(directory) {
-                nested_oxlintrc.insert(path);
-            }
-        }
+        // Discover config files by walking up from each file's directory
+        let config_paths: Vec<_> =
+            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
+        let discovered_configs = discover_configs_in_ancestors(&config_paths);
 
         // Load all discovered configs
         let mut loader = ConfigLoader::new(external_linter, external_plugin_store, filters);
-        let (configs, errors) = loader.load_many(nested_oxlintrc);
+        let (configs, errors) = loader.load_many(discovered_configs);
 
-        if let Some(error) = errors.first() {
-            let message = match error {
+        // Fail on first error (CLI requires all configs to be valid)
+        if let Some(error) = errors.into_iter().next() {
+            let message = match &error {
                 ConfigLoadError::Parse { path, error } => {
                     format!(
                         "Failed to parse oxlint configuration file at {}.\n{}\n",
@@ -517,17 +495,17 @@ impl CliRunner {
                 }
                 ConfigLoadError::Build { path, error } => {
                     format!(
-                        "Failed to build oxlint configuration file at {}.\n{}\n",
+                        "Failed to build configuration from {}.\n{}\n",
                         path.to_string_lossy().cow_replace('\\', "/"),
                         render_report(handler, &OxcDiagnostic::error(error.clone()))
                     )
                 }
             };
-
             print_and_flush_stdout(stdout, &message);
             return Err(CliRunResult::InvalidOptionConfig);
         }
 
+        // Convert loaded configs to nested config format
         let mut nested_configs =
             FxHashMap::<PathBuf, Config>::with_capacity_and_hasher(configs.len(), FxBuildHasher);
         for loaded in configs {
@@ -550,13 +528,6 @@ impl CliRunner {
             return Oxlintrc::from_file(&full_path);
         }
         Ok(Oxlintrc::default())
-    }
-
-    /// Looks in a directory for an oxlint config file and returns the path if it exists.
-    /// Does not validate the file or apply the default config file.
-    fn find_oxlint_config_path_in_directory(dir: &Path) -> Option<PathBuf> {
-        let possible_config_path = dir.join(DEFAULT_OXLINTRC_NAME);
-        if possible_config_path.is_file() { Some(possible_config_path) } else { None }
     }
 }
 
