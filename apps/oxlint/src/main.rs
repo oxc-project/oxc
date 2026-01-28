@@ -12,7 +12,7 @@ async fn main() -> CliRunResult {
 
     // If --lsp flag is set, run the language server
     if command.lsp {
-        run_lsp().await;
+        run_lsp(None).await;
         return CliRunResult::LintSucceeded;
     }
 

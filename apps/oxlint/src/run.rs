@@ -163,16 +163,6 @@ async fn lint_impl(
     // Both LSP and CLI use `tracing` for logging
     init_tracing();
 
-    // If --lsp flag is set, run the language server
-    if command.lsp {
-        crate::lsp::run_lsp().await;
-        return CliRunResult::LintSucceeded;
-    }
-
-    init_miette();
-
-    command.handle_threads();
-
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
     let external_linter = Some(crate::js_plugins::create_external_linter(
@@ -188,6 +178,16 @@ async fn lint_impl(
             (load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace);
         None
     };
+
+    // If --lsp flag is set, run the language server
+    if command.lsp {
+        crate::lsp::run_lsp(external_linter).await;
+        return CliRunResult::LintSucceeded;
+    }
+
+    init_miette();
+
+    command.handle_threads();
 
     // stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.
     // See `https://github.com/rust-lang/rust/issues/60673`.
