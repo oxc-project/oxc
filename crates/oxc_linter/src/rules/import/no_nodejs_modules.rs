@@ -17,7 +17,7 @@ use crate::{
 };
 
 fn no_nodejs_modules_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Do not import Node.js builtin module {module_name}"))
+    OxcDiagnostic::warn(format!("Do not import Node.js builtin module `{module_name}`"))
         .with_label(span)
 }
 
