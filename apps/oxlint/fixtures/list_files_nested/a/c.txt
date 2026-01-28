@@ -1,0 +1,1 @@
+This is a text file and should be ignored by default linter list (non-js/ts files may be filtered)

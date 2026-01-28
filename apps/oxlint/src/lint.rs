@@ -296,6 +296,16 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
+        if self.options.list_files {
+            let mut sorted_files: Vec<_> = files_to_lint.iter().collect();
+            sorted_files.sort();
+            for path in sorted_files {
+                let path_str = Path::new(path).display();
+                print_and_flush_stdout(stdout, &format!("{path_str}\n"));
+            }
+            return CliRunResult::None;
+        }
+
         let has_external_linter = external_linter.is_some();
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
@@ -1274,6 +1284,32 @@ mod test {
     #[test]
     fn test_dot_folder() {
         Tester::new().with_cwd("fixtures/dot_folder".into()).test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_list_files() {
+        let args = &["--list-files"];
+        Tester::new().with_cwd("fixtures/linter".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    // test a nested directory structure and the ignore file gets applied as expected.
+    fn test_list_files_nested() {
+        let args = &["--list-files", "--ignore-path=.oxignore"];
+        Tester::new().with_cwd("fixtures/list_files_nested".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    // Ensure that `ignorePatterns` from the oxlint config file are respected by `--list-files`.
+    fn test_list_files_with_oxlintrc_ignore_patterns() {
+        let args = &["--list-files", "--config=oxlint.json"];
+        Tester::new().with_cwd("fixtures/list_files_nested".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_list_files_nested_no_ignore() {
+        let args = &["--list-files", "--no-ignore"];
+        Tester::new().with_cwd("fixtures/list_files_nested".into()).test_and_snapshot(args);
     }
 
     #[test]
