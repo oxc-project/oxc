@@ -17,6 +17,7 @@ import tsEslintParser from "@typescript-eslint/parser";
 
 import type { Rule } from "#oxlint/plugin";
 import type { ValidTestCase, InvalidTestCase } from "./src/rule_tester.ts";
+import ts from "typescript";
 
 type ValidTestCaseWithoutCode = Omit<ValidTestCase, "code"> & { code?: string };
 type InvalidTestCaseWithoutCode = Omit<InvalidTestCase, "code"> & { code?: string };
@@ -134,35 +135,46 @@ Leave the eslint repo as it was before you started, ready to investigate another
 
 -----------------------------------------------------------------------------*/
 
-const ruleName = "block-scoped-var";
-const rule = builtinRules.get(ruleName) as unknown as Rule;
+// const ruleName = "block-scoped-var";
+// const rule = builtinRules.get(ruleName) as unknown as Rule;
 
-// import rule from "./submodules/stylistic/packages/eslint-plugin/rules/jsx-props-no-multi-spaces/jsx-props-no-multi-spaces.ts";
+import { rule } from "./submodules/sonarjs/packages/jsts/src/rules/S1128/rule.ts";
 
-const code = `for (var a = 0;;) {} a;`;
+const code = `
+        import { h } from 'some/lib';
+        export class Component {
+          render() {
+            return <div>Hello, world!</div>
+          }
+        }
+`;
 
-const isInvalid = true;
+const isInvalid = false;
 
 const testCase: TestCaseWithoutCode = {
-  errors: [
-    {
-      messageId: "outOfScope",
-      data: {
-        name: "a",
-        definitionLine: 1,
-        definitionColumn: 10,
+  languageOptions: {
+    ecmaVersion: 2022,
+    sourceType: "module",
+    globals: {},
+    parserOptions: {
+      disallowAutomaticSingleRunInference: true,
+      ecmaFeatures: {
+        jsx: true,
       },
-      line: 1,
-      column: 22,
+      project:
+        "/Users/jim/Programming/crates/oxc/apps/oxlint/conformance/submodules/sonarjs/packages/jsts/src/rules/S1128/fixtures/tsconfig.fixture.json",
     },
-  ],
-};
+    parser: tsEslintParser,
+  },
+  filename:
+    "/Users/jim/Programming/crates/oxc/apps/oxlint/conformance/submodules/sonarjs/packages/jsts/src/rules/S1128/fixtures/file.tsx",
+} as TestCaseWithoutCode;
 
 // -----------------------------------------------------------------------------
 // Run test case with both ESLint and Oxlint
 // -----------------------------------------------------------------------------
 
-runBoth(rule, isInvalid, code, testCase);
+runBoth(rule as any, isInvalid, code, testCase);
 
 function runBoth(rule: Rule, isInvalid: boolean, code: string, testCase: TestCaseWithoutCode) {
   testCase = { code, ...testCase };

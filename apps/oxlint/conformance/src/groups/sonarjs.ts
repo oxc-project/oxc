@@ -101,8 +101,16 @@ function createSonarJsRuleTesterModuleMock(tsEslintParser: TSEslintParser) {
     }
   }
 
-  return { DefaultParserRuleTester, NoTypeCheckingRuleTester };
+  class TypeCheckingRuleTester extends NoTypeCheckingRuleTester {
+    constructor(options?: LanguageOptions) {
+      super(mergeWithoutCloningParser(typeCheckingLanguageOptions, options));
+    }
+  }
+
+  return { DefaultParserRuleTester, NoTypeCheckingRuleTester, RuleTester: TypeCheckingRuleTester };
 }
+
+const isWindows = process.platform === "win32";
 
 const baseLanguageOptions = {
   ecmaVersion: 2022,
@@ -121,7 +129,14 @@ const baseLanguageOptions = {
   },
 } as LanguageOptions;
 
-const isWindows = process.platform === "win32";
+const typeCheckingLanguageOptions: LanguageOptions = {
+  parserOptions: {
+    project: pathJoin(
+      toUnixPath(import.meta.dirname),
+      "../../submodules/sonarjs/packages/jsts/tests/tools/testers/fixtures/tsconfig.json",
+    ),
+  },
+} as LanguageOptions;
 
 const placeHolderFilePath = pathJoin(
   toUnixPath(import.meta.dirname),
