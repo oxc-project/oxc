@@ -25,7 +25,13 @@ pub fn get_node_type(ty: &TokenStream) -> TokenStream {
 ///
 /// This ensures trailing comments are correctly attributed to the last child itself,
 /// rather than being treated as leading comments of a following sibling outside the parent.
-const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] = &["FormalParameters"];
+const AST_NODE_WITHOUT_FOLLOWING_NODE_LIST: &[&str] = &[
+    "FormalParameters",
+    "ArrayPattern",
+    "ObjectPattern",
+    "ArrayAssignmentTarget",
+    "ObjectAssignmentTarget",
+];
 
 const AST_NODE_WITH_FOLLOWING_NODE_LIST: &[&str] = &["Function", "Class"];
 

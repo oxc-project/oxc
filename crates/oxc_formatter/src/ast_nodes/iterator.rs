@@ -161,18 +161,33 @@ macro_rules! impl_ast_node_vec {
 
 macro_rules! impl_ast_node_vec_for_option {
     ($type:ty) => {
+        impl_ast_node_vec_for_option!($type, false);
+    };
+    ($type:ty, has_following_span_in_the_last_item) => {
+        impl_ast_node_vec_for_option!($type, true);
+    };
+    ($type:ty, $has_following_span_in_the_last_item:tt) => {
         impl<'a> AstNode<'a, Vec<'a, $type>> {
             pub fn iter(&self) -> AstNodeIterator<'a, $type> {
                 AstNodeIterator {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
                     allocator: self.allocator,
-                    following_span_start: 0,
+                    following_span_start: if $has_following_span_in_the_last_item {
+                        self.following_span_start
+                    } else {
+                        0
+                    },
                     get_following_span_start: |opt| opt.as_ref().map_or(0, |n| n.span().start),
                 }
             }
 
             pub fn first(&self) -> Option<&'a AstNode<'a, $type>> {
+                let following = if $has_following_span_in_the_last_item {
+                    self.following_span_start
+                } else {
+                    0
+                };
                 let mut inner_iter = self.inner.iter();
                 self.allocator
                     .alloc(inner_iter.next().map(|inner| {
@@ -183,19 +198,24 @@ macro_rules! impl_ast_node_vec_for_option {
                             following_span_start: inner_iter
                                 .next()
                                 .and_then(|opt| opt.as_ref().map(|n| n.span().start))
-                                .unwrap_or(0),
+                                .unwrap_or(following),
                         }
                     }))
                     .as_ref()
             }
 
             pub fn last(&self) -> Option<&'a AstNode<'a, $type>> {
+                let following = if $has_following_span_in_the_last_item {
+                    self.following_span_start
+                } else {
+                    0
+                };
                 self.allocator
                     .alloc(self.inner.last().map(|inner| AstNode {
                         inner,
                         parent: self.parent,
                         allocator: self.allocator,
-                        following_span_start: 0,
+                        following_span_start: following,
                     }))
                     .as_ref()
             }
@@ -226,7 +246,11 @@ macro_rules! impl_ast_node_vec_for_option {
                     inner: self.inner.iter().peekable(),
                     parent: self.parent,
                     allocator: self.allocator,
-                    following_span_start: 0,
+                    following_span_start: if $has_following_span_in_the_last_item {
+                        self.following_span_start
+                    } else {
+                        0
+                    },
                     get_following_span_start: |opt| opt.as_ref().map_or(0, |n| n.span().start),
                 }
             }
@@ -239,10 +263,8 @@ impl_ast_node_vec!(ArrayExpressionElement<'a>);
 impl_ast_node_vec!(ObjectPropertyKind<'a>);
 impl_ast_node_vec!(TemplateElement<'a>);
 impl_ast_node_vec!(Argument<'a>);
-impl_ast_node_vec!(AssignmentTargetProperty<'a>);
 impl_ast_node_vec!(VariableDeclarator<'a>);
 impl_ast_node_vec!(SwitchCase<'a>);
-impl_ast_node_vec!(BindingProperty<'a>);
 impl_ast_node_vec!(ClassElement<'a>);
 impl_ast_node_vec!(ImportDeclarationSpecifier<'a>);
 impl_ast_node_vec!(ImportAttribute<'a>);
@@ -258,15 +280,19 @@ impl_ast_node_vec!(TSSignature<'a>);
 impl_ast_node_vec!(TSIndexSignatureName<'a>);
 impl_ast_node_vec!(TSInterfaceHeritage<'a>);
 impl_ast_node_vec!(Decorator<'a>);
-impl_ast_node_vec_for_option!(Option<AssignmentTargetMaybeDefault<'a>>);
-impl_ast_node_vec_for_option!(Option<BindingPattern<'a>>);
-
 // Directive needs `following_span_start` to distinguish trailing comments from leading comments
 // of the first statement. See the struct field comment for `following_span_start` for details.
 impl_ast_node_vec!(Directive<'a>, has_following_span_in_the_last_item);
-// FormalParameter needs `following_span_start` to correctly attribute comments between
-// the last parameter and the rest parameter (e.g., `param, /** @type {string[]} */ ...rest`).
+// These types need `following_span_start` to correctly attribute comments between
+// the last item and the rest element (e.g., `[a, /** @type {string[]} */ ...rest]`).
 impl_ast_node_vec!(FormalParameter<'a>, has_following_span_in_the_last_item);
+impl_ast_node_vec!(BindingProperty<'a>, has_following_span_in_the_last_item);
+impl_ast_node_vec!(AssignmentTargetProperty<'a>, has_following_span_in_the_last_item);
+impl_ast_node_vec_for_option!(Option<BindingPattern<'a>>, has_following_span_in_the_last_item);
+impl_ast_node_vec_for_option!(
+    Option<AssignmentTargetMaybeDefault<'a>>,
+    has_following_span_in_the_last_item
+);
 
 // Custom get_span for Statement to handle decorated exports.
 // <https://github.com/oxc-project/oxc/issues/10409>

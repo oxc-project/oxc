@@ -2336,13 +2336,7 @@ impl<'a> AstNode<'a, AssignmentTargetPattern<'a>> {
 impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
-        let following_span_start = self
-            .inner
-            .rest
-            .as_deref()
-            .map(|n| n.span().start)
-            .or(Some(self.following_span_start))
-            .unwrap_or(0);
+        let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
@@ -2353,7 +2347,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, AssignmentTargetRest<'a>>> {
-        let following_span_start = self.following_span_start;
+        let following_span_start = 0;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -2377,13 +2371,7 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
 impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, AssignmentTargetProperty<'a>>> {
-        let following_span_start = self
-            .inner
-            .rest
-            .as_deref()
-            .map(|n| n.span().start)
-            .or(Some(self.following_span_start))
-            .unwrap_or(0);
+        let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
@@ -2394,7 +2382,7 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, AssignmentTargetRest<'a>>> {
-        let following_span_start = self.following_span_start;
+        let following_span_start = 0;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -3979,13 +3967,7 @@ impl<'a> AstNode<'a, AssignmentPattern<'a>> {
 impl<'a> AstNode<'a, ObjectPattern<'a>> {
     #[inline]
     pub fn properties(&self) -> &AstNode<'a, Vec<'a, BindingProperty<'a>>> {
-        let following_span_start = self
-            .inner
-            .rest
-            .as_deref()
-            .map(|n| n.span().start)
-            .or(Some(self.following_span_start))
-            .unwrap_or(0);
+        let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.properties,
             allocator: self.allocator,
@@ -3996,7 +3978,7 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
-        let following_span_start = self.following_span_start;
+        let following_span_start = 0;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
@@ -4063,13 +4045,7 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
 impl<'a> AstNode<'a, ArrayPattern<'a>> {
     #[inline]
     pub fn elements(&self) -> &AstNode<'a, Vec<'a, Option<BindingPattern<'a>>>> {
-        let following_span_start = self
-            .inner
-            .rest
-            .as_deref()
-            .map(|n| n.span().start)
-            .or(Some(self.following_span_start))
-            .unwrap_or(0);
+        let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
         self.allocator.alloc(AstNode {
             inner: &self.inner.elements,
             allocator: self.allocator,
@@ -4080,7 +4056,7 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
 
     #[inline]
     pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
-        let following_span_start = self.following_span_start;
+        let following_span_start = 0;
         self.allocator
             .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
                 inner: inner.as_ref(),
