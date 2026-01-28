@@ -169,7 +169,7 @@ export function fileIsTs(): boolean {
 // 3. No need for private properties, which are somewhat expensive to access - use top-level variables instead.
 //
 // Freeze the object to prevent user mutating it.
-export const SOURCE_CODE = Object.freeze({
+export const SOURCE_CODE = {
   /**
    * Source text.
    */
@@ -346,6 +346,88 @@ export const SOURCE_CODE = Object.freeze({
   getTokenByRangeStart: tokenMethods.getTokenByRangeStart,
   isSpaceBetween: tokenMethods.isSpaceBetween,
   isSpaceBetweenTokens: tokenMethods.isSpaceBetweenTokens,
-});
+};
 
-export type SourceCode = typeof SOURCE_CODE;
+// In conformance tests, throw an error if any properties of `SOURCE_CODE.parserServices` are accessed.
+// This is have a simple way to skip test cases which rely on `parserServices`, which Oxlint does not offer.
+if (CONFORMANCE) {
+  // prettier-ignore
+  const parserServicesFnKeys = [
+    "getContextualType", "getResolvedSignature", "getSymbolAtLocation",
+    "getTypeAtLocation", "getTypeFromTypeNode", "getTypeOfSymbolAtLocation",
+  ];
+
+  // prettier-ignore
+  const programFnKeys = [
+    'getRootFileNames', 'getSourceFile', 'getSourceFileByPath', 'getSourceFiles', 'getMissingFilePaths',
+    'getModuleResolutionCache', 'getFilesByNameMap', 'getCompilerOptions', 'getSyntacticDiagnostics',
+    'getOptionsDiagnostics', 'getGlobalDiagnostics', 'getSemanticDiagnostics', 'getCachedSemanticDiagnostics',
+    'getSuggestionDiagnostics', 'getDeclarationDiagnostics', 'getBindAndCheckDiagnostics', 'getProgramDiagnostics',
+    'getTypeChecker', 'getClassifiableNames', 'getCommonSourceDirectory', 'emit', 'getCurrentDirectory', 'getNodeCount',
+    'getIdentifierCount', 'getSymbolCount', 'getTypeCount', 'getInstantiationCount', 'getRelationCacheSizes',
+    'getFileProcessingDiagnostics', 'getAutomaticTypeDirectiveNames', 'getAutomaticTypeDirectiveResolutions',
+    'isSourceFileFromExternalLibrary', 'isSourceFileDefaultLibrary', 'getModeForUsageLocation',
+    'getEmitSyntaxForUsageLocation', 'getModeForResolutionAtIndex', 'getSourceFileFromReference',
+    'getLibFileFromReference', 'getProgramDiagnosticsContainer', 'getResolvedModule',
+    'getResolvedModuleFromModuleSpecifier', 'getResolvedTypeReferenceDirective',
+    'getResolvedTypeReferenceDirectiveFromTypeReferenceDirective', 'forEachResolvedModule',
+    'forEachResolvedTypeReferenceDirective', 'getCurrentPackagesMap', 'typesPackageExists', 'packageBundlesTypes',
+    'isEmittedFile', 'getConfigFileParsingDiagnostics', 'getProjectReferences', 'getResolvedProjectReferences',
+    'getRedirectFromSourceFile', 'getResolvedProjectReferenceByPath', 'forEachResolvedProjectReference',
+    'isSourceOfProjectReferenceRedirect', 'getRedirectFromOutput', 'getCompilerOptionsForFile',
+    'getDefaultResolutionModeForFile', 'getEmitModuleFormatOfFile', 'getImpliedNodeFormatForEmit',
+    'shouldTransformImportCall', 'emitBuildInfo', 'fileExists', 'readFile', 'getSymlinkCache', 'realpath',
+    'useCaseSensitiveFileNames', 'getCanonicalFileName', 'getFileIncludeReasons', 'writeFile'
+  ];
+
+  // prettier-ignore
+  const programOtherKeys = [
+    "sourceFileToPackageName", "redirectTargetsMap", "usesUriStyleNodeCoreModules", "resolvedModules",
+    "resolvedTypeReferenceDirectiveNames", "resolvedLibReferences", "directoryExists", "structureIsReused",
+    "getGlobalTypingsCacheLocation",
+  ];
+
+  const program: Record<string, unknown> = {};
+
+  for (const key of programFnKeys) {
+    program[key] = () => {
+      throw new Error(`\`parserServices\` is not supported. Called \`program.${key}\`.`);
+    };
+  }
+
+  for (const key of programOtherKeys) {
+    Object.defineProperty(program, key, {
+      get() {
+        throw new Error(`\`parserServices\` is not supported. Accessed \`program.${key}\`.`);
+      },
+      enumerable: true,
+    });
+  }
+
+  Object.freeze(program);
+
+  const parserServices: Record<string, unknown> = {
+    program,
+    emitDecoratorMetadata: false,
+    experimentalDecorators: false,
+    isolatedDeclarations: false,
+    get esTreeNodeToTSNodeMap() {
+      throw new Error("`parserServices` is not supported. Accessed `esTreeNodeToTSNodeMap`.");
+    },
+    get tsNodeToESTreeNodeMap() {
+      throw new Error("`parserServices` is not supported. Accessed `tsNodeToESTreeNodeMap`.");
+    },
+  };
+
+  for (const key of parserServicesFnKeys) {
+    parserServices[key] = () => {
+      throw new Error(`\`parserServices\` is not supported. Called \`${key}\`.`);
+    };
+  }
+
+  SOURCE_CODE.parserServices = Object.freeze(parserServices);
+}
+
+Object.freeze(SOURCE_CODE);
+
+export type SourceCode = Readonly<typeof SOURCE_CODE>;
