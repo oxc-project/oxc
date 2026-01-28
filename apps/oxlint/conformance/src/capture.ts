@@ -113,18 +113,20 @@ export function it(code: string, fn: () => void): void {
 
     testResult.isPassed = true;
   } catch (err) {
-    testResult.testCase = currentTest;
-
-    if (!(err instanceof Error)) {
-      testResult.error = new Error("Unknown error");
-    } else if (currentTest === null) {
-      testResult.error = new Error("Test case was not run with `RuleTester`");
-    } else {
-      testResult.error = err;
-
-      const ruleName = describeStack[0];
-      if (shouldSkipTest(ruleName, currentTest, code, err)) testResult.isSkipped = true;
+    if (currentTest === null) {
+      // oxlint-disable-next-line no-ex-assign
+      err = new Error("Test case was not run with `RuleTester`");
+      currentTest = { code };
+    } else if (!(err instanceof Error)) {
+      // oxlint-disable-next-line no-ex-assign
+      err = new Error("Unknown error");
     }
+
+    testResult.testCase = currentTest;
+    testResult.error = err;
+
+    const ruleName = describeStack[0];
+    if (shouldSkipTest(ruleName, currentTest, code, err)) testResult.isSkipped = true;
   } finally {
     // Reset current test
     currentTest = null;
