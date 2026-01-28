@@ -2205,6 +2205,46 @@ describe("RuleTester", () => {
           ]
         `);
       });
+
+      it("is overridden by `filename`", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [
+            {
+              code: "let x: number;",
+              filename: "foo.ts",
+              languageOptions: { parserOptions: { lang: "js" } },
+            },
+            {
+              code: "<div />",
+              filename: "foo.jsx",
+              languageOptions: { parserOptions: { lang: "ts" } },
+            },
+          ],
+          invalid: [
+            {
+              code: "let x: number;",
+              filename: "foo.jsx",
+              languageOptions: { parserOptions: { lang: "ts" } },
+              errors: 1,
+            },
+            {
+              code: "<div />",
+              filename: "foo.ts",
+              languageOptions: { parserOptions: { lang: "jsx" } },
+              errors: 1,
+            },
+          ],
+        });
+        expect(runCases()).toMatchInlineSnapshot(`
+          [
+            null,
+            null,
+            [Error: Parsing failed],
+            [Error: Parsing failed],
+          ]
+        `);
+      });
     });
 
     describe("ecmaFeatures.jsx", () => {

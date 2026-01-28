@@ -179,6 +179,9 @@ interface ParserOptions {
   ecmaFeatures?: EcmaFeatures;
   /**
    * Language variant to parse file as.
+   *
+   * If test case provides a filename, that takes precedence over `lang` option.
+   * Language will be inferred from file extension.
    */
   lang?: Language;
   /**
@@ -1090,12 +1093,14 @@ function getParseOptions(test: TestCase): ParseOptions {
     // Handle `parserOptions.ignoreNonFatalErrors`
     if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
 
-    // Handle `parserOptions.lang`
-    const { lang } = parserOptions;
-    if (lang != null) {
-      parseOptions.lang = lang;
-    } else if (parserOptions.ecmaFeatures?.jsx === true) {
-      parseOptions.lang = "jsx";
+    // Handle `parserOptions.lang`. `filename` takes precedence over `lang` if provided.
+    if (test.filename == null) {
+      const { lang } = parserOptions;
+      if (lang != null) {
+        parseOptions.lang = lang;
+      } else if (parserOptions.ecmaFeatures?.jsx === true) {
+        parseOptions.lang = "jsx";
+      }
     }
   }
 

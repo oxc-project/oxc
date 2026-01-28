@@ -194,15 +194,19 @@ function modifyTestCase(test: TestCase): void {
   }
 
   if (parserDetails !== null) {
-    let { lang } = parserDetails;
-    if (parserOptions.ecmaFeatures?.jsx === true) {
-      if (lang === "ts") {
-        lang = "tsx";
-      } else if (lang === "js") {
-        lang = "jsx";
+    // If test case provides a filename, that takes precedence over the parser's default language.
+    // Don't set `lang` option, to allow Rust-side code to determine language from file extension.
+    if (test.filename == null) {
+      let { lang } = parserDetails;
+      if (parserOptions.ecmaFeatures?.jsx === true) {
+        if (lang === "ts") {
+          lang = "tsx";
+        } else if (lang === "js") {
+          lang = "jsx";
+        }
       }
+      parserOptions.lang = lang;
     }
-    parserOptions.lang = lang;
 
     // Store parser details in test case so tests using different parsers don't get detected as duplicates.
     // Store in stored test case so they appear in snapshot.
