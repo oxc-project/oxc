@@ -7,6 +7,9 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - try {} catch (ex) {throw ex}
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:45]
@@ -14,6 +17,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                             ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - try { foo() } catch (ex) {throw ex} finally {}
+  1 + try { foo() } catch (ex) {throw ex} 
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:26]
@@ -28,6 +35,9 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - if (foo) {}
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:13]
@@ -35,6 +45,9 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - while (foo) {}
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:13]
@@ -42,6 +55,9 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - for (;foo;) {}
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:1]
@@ -49,6 +65,9 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Remove this switch or add a comment inside it
+    ╭╴
+  1 - switch(foo) {}
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:1]
@@ -56,6 +75,9 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────
    ╰────
   help: Remove this switch or add a comment inside it
+    ╭╴
+  1 - switch (foo) { /* empty */ }
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:5]
@@ -63,6 +85,9 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - try {} catch (ex) {}
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:38]
@@ -70,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - try { foo(); } catch (ex) {} finally {}
+  1 + try { foo(); } catch (ex) {} 
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:5]
@@ -77,6 +106,9 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - try {} catch (ex) {} finally {}
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:30]
@@ -84,6 +116,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - try {} catch (ex) {} finally {}
+  1 + try {} catch (ex) {} 
+    ╰╴
 
   ⚠ eslint(no-empty): Unexpected empty block statements
    ╭─[no_empty.tsx:1:27]
@@ -98,3 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──
    ╰────
   help: Remove this block or add a comment inside it
+    ╭╴
+  1 - try { foo(); } catch (ex) {} finally {}
+  1 + try { foo(); } catch (ex) {} 
+    ╰╴

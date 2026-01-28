@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: Replace with `trimStart`
+    ╭╴
+  1 - foo.trimLeft()
+  1 + foo.trimStart()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimEnd` over `trimRight`
    ╭─[prefer_string_trim_start_end.tsx:1:5]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace with `trimEnd`
+    ╭╴
+  1 - foo.trimRight()
+  1 + foo.trimEnd()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimEnd` over `trimRight`
    ╭─[prefer_string_trim_start_end.tsx:1:10]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
    ╰────
   help: Replace with `trimEnd`
+    ╭╴
+  1 - trimLeft.trimRight()
+  1 + trimLeft.trimEnd()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimEnd` over `trimRight`
    ╭─[prefer_string_trim_start_end.tsx:1:14]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────
    ╰────
   help: Replace with `trimEnd`
+    ╭╴
+  1 - foo.trimLeft.trimRight()
+  1 + foo.trimLeft.trimEnd()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimStart` over `trimLeft`
    ╭─[prefer_string_trim_start_end.tsx:1:7]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────
    ╰────
   help: Replace with `trimStart`
+    ╭╴
+  1 - "foo".trimLeft()
+  1 + "foo".trimStart()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `trimStart` over `trimLeft`
    ╭─[prefer_string_trim_start_end.tsx:1:6]
@@ -42,3 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      ────────
    ╰────
   help: Replace with `trimStart`
+    ╭╴
+  1 - foo?.trimLeft()
+  1 + foo?.trimStart()
+    ╰╴

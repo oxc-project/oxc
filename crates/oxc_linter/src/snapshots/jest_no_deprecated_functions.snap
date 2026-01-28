@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `jest.resetModuleRegistry` with `jest.resetModules`.
+    ╭╴
+  1 - jest.resetModuleRegistry
+  1 + jest.resetModules
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.resetModuleRegistry" has been deprecated in favor of "jest.resetModules"
    ╭─[no_deprecated_functions.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `jest.resetModuleRegistry` with `jest.resetModules`.
+    ╭╴
+  1 - jest.resetModuleRegistry
+  1 + jest.resetModules
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.addMatchers" has been deprecated in favor of "expect.extend"
    ╭─[no_deprecated_functions.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Replace `jest.addMatchers` with `expect.extend`.
+    ╭╴
+  1 - jest.addMatchers
+  1 + expect.extend
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): "require.requireMock" has been deprecated in favor of "jest.requireMock"
    ╭─[no_deprecated_functions.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Replace `require.requireMock` with `jest.requireMock`.
+    ╭╴
+  1 - require.requireMock
+  1 + jest.requireMock
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): "require.requireActual" has been deprecated in favor of "jest.requireMock"
    ╭─[no_deprecated_functions.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Replace `require.requireActual` with `jest.requireMock`.
+    ╭╴
+  1 - require.requireActual
+  1 + jest.requireMock
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.runTimersToTime" has been deprecated in favor of "jest.advanceTimersByTime"
    ╭─[no_deprecated_functions.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────
    ╰────
   help: Replace `jest.runTimersToTime` with `jest.advanceTimersByTime`.
+    ╭╴
+  1 - jest.runTimersToTime
+  1 + jest.advanceTimersByTime
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-deprecated-functions): "jest.genMockFromModule" has been deprecated in favor of "jest.createMockFromModule"
    ╭─[no_deprecated_functions.tsx:1:1]
@@ -49,3 +73,7 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Replace `jest.genMockFromModule` with `jest.createMockFromModule`.
+    ╭╴
+  1 - jest.genMockFromModule
+  1 + jest.createMockFromModule
+    ╰╴

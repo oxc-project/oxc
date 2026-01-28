@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).toBe(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1,).toBe(true,);
+  1 + expect(value,).toBeGreaterThan(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)['toBe'](true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.toBe(true);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).toBe(false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1)['toBe'](false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.toBe(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).not.toBe(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:26]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1)['not'].toBe(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.not.toBe(true);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).not.toBe(false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.not.toBe(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:35]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"].not.toBe(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"]["not"].toBe(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"]["not"]['toBe'](false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).toEqual(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1,).toEqual(true,);
+  1 + expect(value,).toBeGreaterThan(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)['toEqual'](true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.toEqual(true);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).toEqual(false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1)['toEqual'](false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.toEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).not.toEqual(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:26]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1)['not'].toEqual(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.not.toEqual(true);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).not.toEqual(false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.not.toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:35]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"].not.toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"]["not"].toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ─────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"]["not"]['toEqual'](false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).toStrictEqual(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1,).toStrictEqual(true,);
+  1 + expect(value,).toBeGreaterThan(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)['toStrictEqual'](true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -238,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.toStrictEqual(true);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -245,6 +381,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).toStrictEqual(false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1)['toStrictEqual'](false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -266,6 +414,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).not.toStrictEqual(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:26]
@@ -273,6 +425,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1)['not'].toStrictEqual(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -280,6 +436,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.not.toStrictEqual(true);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -287,6 +447,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).not.toStrictEqual(false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -294,6 +458,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1).resolves.not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:35]
@@ -301,6 +469,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"].not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -308,6 +480,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"]["not"].toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -315,6 +491,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ───────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value > 1)["resolves"]["not"]['toStrictEqual'](false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -322,6 +502,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).toBe(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -329,6 +513,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1,).toBe(true,);
+  1 + expect(value,).toBeLessThan(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -336,6 +524,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)['toBe'](true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -343,6 +535,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.toBe(true);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -350,6 +546,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).toBe(false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -357,6 +557,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1)['toBe'](false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -364,6 +568,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.toBe(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -371,6 +579,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).not.toBe(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:26]
@@ -378,6 +590,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1)['not'].toBe(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -385,6 +601,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.not.toBe(true);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -392,6 +612,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).not.toBe(false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -399,6 +623,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.not.toBe(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:35]
@@ -406,6 +634,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"].not.toBe(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -413,6 +645,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"]["not"].toBe(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -420,6 +656,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"]["not"]['toBe'](false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -427,6 +667,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).toEqual(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -434,6 +678,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1,).toEqual(true,);
+  1 + expect(value,).toBeLessThan(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -441,6 +689,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)['toEqual'](true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -448,6 +700,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.toEqual(true);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -455,6 +711,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).toEqual(false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -462,6 +722,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1)['toEqual'](false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -469,6 +733,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -476,6 +744,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).not.toEqual(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:26]
@@ -483,6 +755,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1)['not'].toEqual(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -490,6 +766,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.not.toEqual(true);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -497,6 +777,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).not.toEqual(false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -504,6 +788,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.not.toEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:35]
@@ -511,6 +799,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"].not.toEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -518,6 +810,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"]["not"].toEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -525,6 +821,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ─────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"]["not"]['toEqual'](false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -532,6 +832,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).toStrictEqual(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -539,6 +843,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1,).toStrictEqual(true,);
+  1 + expect(value,).toBeLessThan(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -546,6 +854,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)['toStrictEqual'](true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -553,6 +865,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.toStrictEqual(true);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -560,6 +876,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).toStrictEqual(false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -567,6 +887,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1)['toStrictEqual'](false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:28]
@@ -574,6 +898,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -581,6 +909,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).not.toStrictEqual(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:26]
@@ -588,6 +920,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1)['not'].toStrictEqual(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -595,6 +931,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.not.toStrictEqual(true);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:23]
@@ -602,6 +942,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).not.toStrictEqual(false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:32]
@@ -609,6 +953,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1).resolves.not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:35]
@@ -616,6 +964,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"].not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -623,6 +975,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"]["not"].toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:38]
@@ -630,6 +986,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ───────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value < 1)["resolves"]["not"]['toStrictEqual'](false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -637,6 +997,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).toBe(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:21]
@@ -644,6 +1008,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1,).toBe(true,);
+  1 + expect(value,).toBeGreaterThanOrEqual(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -651,6 +1019,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)['toBe'](true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -658,6 +1030,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.toBe(true);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -665,6 +1041,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).toBe(false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -672,6 +1052,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1)['toBe'](false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -679,6 +1063,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.toBe(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -686,6 +1074,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).not.toBe(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:27]
@@ -693,6 +1085,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1)['not'].toBe(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -700,6 +1096,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.not.toBe(true);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -707,6 +1107,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).not.toBe(false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -714,6 +1118,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.not.toBe(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:36]
@@ -721,6 +1129,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"].not.toBe(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -728,6 +1140,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"]["not"].toBe(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -735,6 +1151,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ──────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"]["not"]['toBe'](false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -742,6 +1162,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).toEqual(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:21]
@@ -749,6 +1173,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1,).toEqual(true,);
+  1 + expect(value,).toBeGreaterThanOrEqual(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -756,6 +1184,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)['toEqual'](true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -763,6 +1195,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.toEqual(true);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -770,6 +1206,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).toEqual(false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -777,6 +1217,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1)['toEqual'](false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -784,6 +1228,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.toEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -791,6 +1239,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).not.toEqual(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:27]
@@ -798,6 +1250,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1)['not'].toEqual(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -805,6 +1261,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ───────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.not.toEqual(true);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -812,6 +1272,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).not.toEqual(false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -819,6 +1283,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.not.toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:36]
@@ -826,6 +1294,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"].not.toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -833,6 +1305,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"]["not"].toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -840,6 +1316,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ─────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"]["not"]['toEqual'](false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -847,6 +1327,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).toStrictEqual(true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:21]
@@ -854,6 +1338,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1,).toStrictEqual(true,);
+  1 + expect(value,).toBeGreaterThanOrEqual(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -861,6 +1349,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)['toStrictEqual'](true);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -868,6 +1360,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.toStrictEqual(true);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -875,6 +1371,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).toStrictEqual(false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -882,6 +1382,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1)['toStrictEqual'](false);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -889,6 +1393,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -896,6 +1404,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).not.toStrictEqual(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:27]
@@ -903,6 +1415,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1)['not'].toStrictEqual(true);
+  1 + expect(value).toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -910,6 +1426,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.not.toStrictEqual(true);
+  1 + expect(value).resolves.toBeLessThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -917,6 +1437,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).not.toStrictEqual(false);
+  1 + expect(value).toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -924,6 +1448,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1).resolves.not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:36]
@@ -931,6 +1459,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"].not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -938,6 +1470,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"]["not"].toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -945,6 +1481,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────────────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(value >= 1)["resolves"]["not"]['toStrictEqual'](false);
+  1 + expect(value).resolves.toBeGreaterThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -952,6 +1492,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).toBe(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:21]
@@ -959,6 +1503,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1,).toBe(true,);
+  1 + expect(value,).toBeLessThanOrEqual(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -966,6 +1514,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)['toBe'](true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -973,6 +1525,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.toBe(true);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -980,6 +1536,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).toBe(false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -987,6 +1547,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1)['toBe'](false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -994,6 +1558,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.toBe(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -1001,6 +1569,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).not.toBe(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:27]
@@ -1008,6 +1580,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1)['not'].toBe(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -1015,6 +1591,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.not.toBe(true);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -1022,6 +1602,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).not.toBe(false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -1029,6 +1613,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.not.toBe(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:36]
@@ -1036,6 +1624,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"].not.toBe(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -1043,6 +1635,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"]["not"].toBe(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -1050,6 +1646,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ──────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"]["not"]['toBe'](false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1057,6 +1657,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).toEqual(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:21]
@@ -1064,6 +1668,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1,).toEqual(true,);
+  1 + expect(value,).toBeLessThanOrEqual(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1071,6 +1679,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)['toEqual'](true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -1078,6 +1690,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.toEqual(true);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1085,6 +1701,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).toEqual(false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1092,6 +1712,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1)['toEqual'](false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -1099,6 +1723,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.toEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -1106,6 +1734,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).not.toEqual(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:27]
@@ -1113,6 +1745,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1)['not'].toEqual(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -1120,6 +1756,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ───────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.not.toEqual(true);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -1127,6 +1767,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).not.toEqual(false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -1134,6 +1778,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.not.toEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:36]
@@ -1141,6 +1789,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"].not.toEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -1148,6 +1800,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"]["not"].toEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -1155,6 +1811,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ─────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"]["not"]['toEqual'](false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1162,6 +1822,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).toStrictEqual(true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:21]
@@ -1169,6 +1833,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1,).toStrictEqual(true,);
+  1 + expect(value,).toBeLessThanOrEqual(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1176,6 +1844,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)['toStrictEqual'](true);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -1183,6 +1855,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.toStrictEqual(true);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1190,6 +1866,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).toStrictEqual(false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1197,6 +1877,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1)['toStrictEqual'](false);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:29]
@@ -1204,6 +1888,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.toStrictEqual(false);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -1211,6 +1899,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).not.toStrictEqual(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:27]
@@ -1218,6 +1910,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1)['not'].toStrictEqual(true);
+  1 + expect(value).toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -1225,6 +1921,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.not.toStrictEqual(true);
+  1 + expect(value).resolves.toBeGreaterThan(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:24]
@@ -1232,6 +1932,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).not.toStrictEqual(false);
+  1 + expect(value).toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:33]
@@ -1239,6 +1943,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1).resolves.not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:36]
@@ -1246,6 +1954,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"].not.toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -1253,6 +1965,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ─────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"]["not"].toStrictEqual(false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:39]
@@ -1260,6 +1976,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────────────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(value <= 1)["resolves"]["not"]['toStrictEqual'](false);
+  1 + expect(value).resolves.toBeLessThanOrEqual(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:15]
@@ -1267,6 +1987,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
    ╰────
   help: Prefer using `"toBeGreaterThan"` instead
+    ╭╴
+  1 - expect(a > b).toBe(true)
+  1 + expect(a).toBeGreaterThan(b)
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:15]
@@ -1274,6 +1998,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(a < b).toBe(true)
+  1 + expect(a).toBeLessThan(b)
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:16]
@@ -1281,6 +2009,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(a >= b).toBe(true)
+  1 + expect(a).toBeGreaterThanOrEqual(b)
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:16]
@@ -1288,6 +2020,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(a <= b).toBe(true)
+  1 + expect(a).toBeLessThanOrEqual(b)
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -1295,6 +2031,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Prefer using `"toBeLessThanOrEqual"` instead
+    ╭╴
+  1 - expect(a > b).not.toBe(true)
+  1 + expect(a).toBeLessThanOrEqual(b)
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:19]
@@ -1302,6 +2042,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Prefer using `"toBeGreaterThanOrEqual"` instead
+    ╭╴
+  1 - expect(a < b).not.toBe(true)
+  1 + expect(a).toBeGreaterThanOrEqual(b)
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers
    ╭─[prefer_comparison_matcher.tsx:1:20]
@@ -1309,3 +2053,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Prefer using `"toBeLessThan"` instead
+    ╭╴
+  1 - expect(a >= b).not.toBe(true)
+  1 + expect(a).toBeLessThan(b)
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: `Promise.resolve` is not a constructor. Call it as a function instead.
+    ╭╴
+  1 - new Promise.resolve()
+  1 + Promise.resolve()
+    ╰╴
 
   ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.reject`
    ╭─[no_new_statics.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: `Promise.reject` is not a constructor. Call it as a function instead.
+    ╭╴
+  1 - new Promise.reject()
+  1 + Promise.reject()
+    ╰╴
 
   ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.all`
    ╭─[no_new_statics.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: `Promise.all` is not a constructor. Call it as a function instead.
+    ╭╴
+  1 - new Promise.all()
+  1 + Promise.all()
+    ╰╴
 
   ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.allSettled`
    ╭─[no_new_statics.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: `Promise.allSettled` is not a constructor. Call it as a function instead.
+    ╭╴
+  1 - new Promise.allSettled()
+  1 + Promise.allSettled()
+    ╰╴
 
   ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.any`
    ╭─[no_new_statics.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: `Promise.any` is not a constructor. Call it as a function instead.
+    ╭╴
+  1 - new Promise.any()
+  1 + Promise.any()
+    ╰╴
 
   ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.race`
    ╭─[no_new_statics.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: `Promise.race` is not a constructor. Call it as a function instead.
+    ╭╴
+  1 - new Promise.race()
+  1 + Promise.race()
+    ╰╴
 
   ⚠ eslint-plugin-promise(no-new-statics): Do not use `new` on `Promise.resolve`
    ╭─[no_new_statics.tsx:3:13]
@@ -51,3 +75,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: `Promise.resolve` is not a constructor. Call it as a function instead.
+    ╭╴
+  3 - 			  return new Promise.resolve(a)
+  3 + 			  return Promise.resolve(a)
+    ╰╴

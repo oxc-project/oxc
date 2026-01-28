@@ -8,6 +8,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a, ...rest } = obj
+  1 + const { a, } = obj
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'a' is declared but never used.
    ╭─[no_unused_vars.tsx:1:8]
@@ -16,6 +20,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ╰── 'a' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...rest] = arr
+  1 + const [,...rest] = arr
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'rest' is declared but never used.
    ╭─[no_unused_vars.tsx:1:14]
@@ -24,6 +32,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const [a, ...rest] = arr
+  1 + const [a] = arr
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used.
    ╭─[no_unused_vars.tsx:1:14]
@@ -40,6 +52,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ╰── 'rest' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const { a: { b }, ...rest } = obj; console.log(a)
+  1 + const { a: { b }, } = obj; console.log(a)
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'b' is declared but never used.
    ╭─[no_unused_vars.tsx:1:14]
@@ -56,6 +72,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ╰── 'l' is declared here
    ╰────
   help: Consider removing this declaration.
+    ╭╴
+  1 - const l="",{e}=r
+  1 + const {e}=r
+    ╰╴
 
   ⚠ eslint(no-unused-vars): Variable 'e' is declared but never used. Unused variables should start with a '_'.
    ╭─[no_unused_vars.tsx:1:13]

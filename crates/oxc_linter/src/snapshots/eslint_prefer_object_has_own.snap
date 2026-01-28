@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────
    ╰────
   help: Replace `Object.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - Object.hasOwnProperty.call(obj, 'foo')
+  1 + Object.hasOwn(obj, 'foo')
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Replace `Object.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - Object.hasOwnProperty.call(obj, property)
+  1 + Object.hasOwn(obj, property)
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────────────
    ╰────
   help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - Object.prototype.hasOwnProperty.call(obj, 'foo')
+  1 + Object.hasOwn(obj, 'foo')
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────
    ╰────
   help: Replace `({}).hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - ({}).hasOwnProperty.call(obj, 'foo')
+  1 + Object.hasOwn(obj, 'foo')
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -41,6 +57,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────────────────────────────────────
    ╰────
   help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = Object.prototype.hasOwnProperty.call(object, property);
+  1 + const hasProperty = Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:24]
@@ -48,6 +68,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ──────────────────────────────────────────────────────
    ╰────
   help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( Object.prototype.hasOwnProperty.call(object, property) ));
+  1 + const hasProperty = (( Object.hasOwn(object, property) ));
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -55,6 +79,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────────────────────────────────────────────────────
    ╰────
   help: Replace `Object.prototype.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( Object.prototype.hasOwnProperty.call ))(object, property);
+  1 + const hasProperty = (( Object.hasOwn ))(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -62,6 +90,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────────────────────────────────────────────────────
    ╰────
   help: Replace `(( Object.prototype.hasOwnProperty )).call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( Object.prototype.hasOwnProperty )).call(object, property);
+  1 + const hasProperty = Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -69,6 +101,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────────────────────────────────────────────────────
    ╰────
   help: Replace `(( Object.prototype )).hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( Object.prototype )).hasOwnProperty.call(object, property);
+  1 + const hasProperty = Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -76,6 +112,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────────────────────────────────────────────────────
    ╰────
   help: Replace `(( Object )).prototype.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( Object )).prototype.hasOwnProperty.call(object, property);
+  1 + const hasProperty = Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -83,6 +123,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = {}.hasOwnProperty.call(object, property);
+  1 + const hasProperty = Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:19]
@@ -90,6 +134,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty={}.hasOwnProperty.call(object, property);
+  1 + const hasProperty=Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:24]
@@ -97,6 +145,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( {}.hasOwnProperty.call(object, property) ));
+  1 + const hasProperty = (( Object.hasOwn(object, property) ));
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -104,6 +156,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( {}.hasOwnProperty.call ))(object, property);
+  1 + const hasProperty = (( Object.hasOwn ))(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -111,6 +167,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────────────────────────────
    ╰────
   help: Replace `(( {}.hasOwnProperty )).call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( {}.hasOwnProperty )).call(object, property);
+  1 + const hasProperty = Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:21]
@@ -118,6 +178,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────────────────────────────
    ╰────
   help: Replace `(( {} )).hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - const hasProperty = (( {} )).hasOwnProperty.call(object, property);
+  1 + const hasProperty = Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:23]
@@ -125,6 +189,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - function foo(){return {}.hasOwnProperty.call(object, property)}
+  1 + function foo(){return Object.hasOwn(object, property)}
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:22]
@@ -132,6 +200,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+    ╭╴
+  1 - function foo(){return{}.hasOwnProperty.call(object, property)}
+  1 + function foo(){return Object.hasOwn(object, property)}
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:33]
@@ -139,6 +211,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - function foo(){return/*comment*/{}.hasOwnProperty.call(object, property)}
+  1 + function foo(){return/*comment*/Object.hasOwn(object, property)}
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:34]
@@ -146,6 +222,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                  ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+    ╭╴
+  1 - async function foo(){return await{}.hasOwnProperty.call(object, property)}
+  1 + async function foo(){return await Object.hasOwn(object, property)}
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:45]
@@ -153,6 +233,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                             ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - async function foo(){return await/*comment*/{}.hasOwnProperty.call(object, property)}
+  1 + async function foo(){return await/*comment*/Object.hasOwn(object, property)}
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:16]
@@ -160,6 +244,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+    ╭╴
+  1 - for (const x of{}.hasOwnProperty.call(object, property).toString());
+  1 + for (const x of Object.hasOwn(object, property).toString());
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:27]
@@ -167,6 +255,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - for (const x of/*comment*/{}.hasOwnProperty.call(object, property).toString());
+  1 + for (const x of/*comment*/Object.hasOwn(object, property).toString());
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:16]
@@ -174,6 +266,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with ` Object.hasOwn`.
+    ╭╴
+  1 - for (const x in{}.hasOwnProperty.call(object, property).toString());
+  1 + for (const x in Object.hasOwn(object, property).toString());
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:27]
@@ -181,6 +277,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - for (const x in/*comment*/{}.hasOwnProperty.call(object, property).toString());
+  1 + for (const x in/*comment*/Object.hasOwn(object, property).toString());
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:22]
@@ -188,6 +288,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────────────────────────────────────
    ╰────
   help: Replace `{}.hasOwnProperty.call` with `Object.hasOwn`.
+    ╭╴
+  1 - function foo(){return({}.hasOwnProperty.call)(object, property)}
+  1 + function foo(){return(Object.hasOwn)(object, property)}
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -195,6 +299,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────────
    ╰────
   help: Replace `Object['prototype']['hasOwnProperty']['call']` with `Object.hasOwn`.
+    ╭╴
+  1 - Object['prototype']['hasOwnProperty']['call'](object, property);
+  1 + Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -202,6 +310,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────────────────────────────
    ╰────
   help: Replace `Object[`prototype`][`hasOwnProperty`][`call`]` with `Object.hasOwn`.
+    ╭╴
+  1 - Object[`prototype`][`hasOwnProperty`][`call`](object, property);
+  1 + Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -209,6 +321,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────
    ╰────
   help: Replace `Object['hasOwnProperty']['call']` with `Object.hasOwn`.
+    ╭╴
+  1 - Object['hasOwnProperty']['call'](object, property);
+  1 + Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -216,6 +332,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────────────────────
    ╰────
   help: Replace `Object[`hasOwnProperty`][`call`]` with `Object.hasOwn`.
+    ╭╴
+  1 - Object[`hasOwnProperty`][`call`](object, property);
+  1 + Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -223,6 +343,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────────────
    ╰────
   help: Replace `({})['hasOwnProperty']['call']` with `Object.hasOwn`.
+    ╭╴
+  1 - ({})['hasOwnProperty']['call'](object, property);
+  1 + Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:1]
@@ -230,6 +354,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────────────
    ╰────
   help: Replace `({})[`hasOwnProperty`][`call`]` with `Object.hasOwn`.
+    ╭╴
+  1 - ({})[`hasOwnProperty`][`call`](object, property);
+  1 + Object.hasOwn(object, property);
+    ╰╴
 
   ⚠ eslint(prefer-object-has-own): Disallow use of `Object.prototype.hasOwnProperty.call()` and prefer use of `Object.hasOwn()`.
    ╭─[prefer_object_has_own.tsx:1:3]
@@ -237,3 +365,7 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────────────────────────────────
    ╰────
   help: Replace `Object.prototype.hasOwnProperty.call` with ` Object.hasOwn`.
+    ╭╴
+  1 - Object.prototype.hasOwnProperty.call(C,x);
+  1 +  Object.hasOwn(C,x);
+    ╰╴

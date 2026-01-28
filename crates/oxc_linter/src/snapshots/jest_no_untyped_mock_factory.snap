@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     return jest.fn(() => 42);
    ╰────
   help: Add a type parameter to the mock factory such as `typeof import("../moduleName")`
+    ╭╴
+  2 -                 jest.mock('../moduleName', () => {
+  2 +                 jest.mock<typeof import('../moduleName')>('../moduleName', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
    ╭─[no_untyped_mock_factory.tsx:2:22]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     ...jest.requireActual('./module'),
    ╰────
   help: Add a type parameter to the mock factory such as `typeof import("./module")`
+    ╭╴
+  2 -                 jest.mock("./module", () => ({
+  2 +                 jest.mock<typeof import('./module')>("./module", () => ({
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
    ╭─[no_untyped_mock_factory.tsx:2:22]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     return jest.fn(() => 42);
    ╰────
   help: Add a type parameter to the mock factory such as `typeof import("random-num")`
+    ╭╴
+  2 -                 jest.mock('random-num', () => {
+  2 +                 jest.mock<typeof import('random-num')>('random-num', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
    ╭─[no_untyped_mock_factory.tsx:2:22]
@@ -36,6 +48,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     return jest.fn(() => 42);
    ╰────
   help: Add a type parameter to the mock factory such as `typeof import("random-num")`
+    ╭╴
+  2 -                 jest.doMock('random-num', () => {
+  2 +                 jest.doMock<typeof import('random-num')>('random-num', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
    ╭─[no_untyped_mock_factory.tsx:2:22]
@@ -45,6 +61,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     return jest.fn(() => 42);
    ╰────
   help: Add a type parameter to the mock factory such as `typeof import("random-num")`
+    ╭╴
+  2 -                 jest['mock']('random-num', () => {
+  2 +                 jest['mock']<typeof import('random-num')>('random-num', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-untyped-mock-factory): `jest.mock()` factories should not be used without an explicit type parameter.
    ╭─[no_untyped_mock_factory.tsx:3:22]

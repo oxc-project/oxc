@@ -147,6 +147,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────
    ╰────
   help: Use Ok instead.
+    ╭╴
+  1 - let b: { c: Banned };
+  1 + let b: { c: Ok };
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
    ╭─[no_restricted_types.tsx:1:6]
@@ -154,6 +158,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────
    ╰────
   help: Use Ok instead.
+    ╭╴
+  1 - 1 as Banned;
+  1 + 1 as Ok;
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
    ╭─[no_restricted_types.tsx:1:26]
@@ -161,6 +169,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────
    ╰────
   help: Use Ok instead.
+    ╭╴
+  1 - class Derived implements Banned {}
+  1 + class Derived implements Ok {}
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned1` as a type
    ╭─[no_restricted_types.tsx:1:26]
@@ -168,6 +180,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Use Ok1 instead.
+    ╭╴
+  1 - class Derived implements Banned1, Banned2 {}
+  1 + class Derived implements Ok1, Banned2 {}
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned2` as a type
    ╭─[no_restricted_types.tsx:1:35]
@@ -175,6 +191,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ───────
    ╰────
   help: Use Ok2 instead.
+    ╭╴
+  1 - class Derived implements Banned1, Banned2 {}
+  1 + class Derived implements Banned1, Ok2 {}
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
    ╭─[no_restricted_types.tsx:1:27]
@@ -182,6 +202,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────
    ╰────
   help: Use Ok instead.
+    ╭╴
+  1 - interface Derived extends Banned {}
+  1 + interface Derived extends Ok {}
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
    ╭─[no_restricted_types.tsx:1:21]
@@ -189,6 +213,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────
    ╰────
   help: Use Ok instead.
+    ╭╴
+  1 - type Intersection = Banned & {};
+  1 + type Intersection = Ok & {};
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
    ╭─[no_restricted_types.tsx:1:14]
@@ -196,6 +224,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────
    ╰────
   help: Use Ok instead.
+    ╭╴
+  1 - type Union = Banned | {};
+  1 + type Union = Ok | {};
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `NS.Banned` as a type
    ╭─[no_restricted_types.tsx:1:12]
@@ -203,6 +235,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─────────
    ╰────
   help: Use NS.Ok instead.
+    ╭╴
+  1 - let value: NS.Banned;
+  1 + let value: NS.Ok;
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `{}` as a type
    ╭─[no_restricted_types.tsx:1:12]
@@ -210,6 +246,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──
    ╰────
   help: Use object instead.
+    ╭╴
+  1 - let value: {} = {};
+  1 + let value: object = {};
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `NS.Banned` as a type
    ╭─[no_restricted_types.tsx:1:12]
@@ -217,6 +257,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─────────
    ╰────
   help: Use NS.Ok instead.
+    ╭╴
+  1 - let value: NS.Banned;
+  1 + let value: NS.Ok;
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned` as a type
    ╭─[no_restricted_types.tsx:1:20]
@@ -224,6 +268,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: Use Ok instead.
+    ╭╴
+  1 - let value: Type<   Banned   >;
+  1 + let value: Type<   Ok   >;
+    ╰╴
 
   ⚠ typescript-eslint(no-restricted-types): Do not use `Banned<any>` as a type
    ╭─[no_restricted_types.tsx:1:21]
@@ -245,3 +293,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────
    ╰────
   help: Use a safer type
+    ╭╴
+  1 - let value: Banned;
+  1 + let value: SafeType;
+    ╰╴

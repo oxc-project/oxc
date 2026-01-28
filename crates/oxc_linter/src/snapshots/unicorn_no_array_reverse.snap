@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - reversed = [...array].reverse()
+  1 + reversed = [...array].toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:24]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - reversed = [...array]?.reverse()
+  1 + reversed = [...array]?.toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:18]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - reversed = array.reverse()
+  1 + reversed = array.toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:19]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - reversed = array?.reverse()
+  1 + reversed = array?.toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:7]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - array.reverse()
+  1 + array.toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:8]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - array?.reverse()
+  1 + array?.toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:12]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - [...array].reverse()
+  1 + [...array].toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:28]
@@ -56,3 +84,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───────
    ╰────
   help: `Array#reverse()` mutates the original array. Use `Array#toReversed()` to return a new reversed array without modifying the original.
+    ╭╴
+  1 - reversed = [...(0, array)].reverse()
+  1 + reversed = [...(0, array)].toReversed()
+    ╰╴

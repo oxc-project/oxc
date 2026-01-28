@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────
    ╰────
   help: Replace `module` with `namespace`.
+    ╭╴
+  1 - module foo {}
+  1 + namespace foo {}
+    ╰╴
 
   ⚠ typescript-eslint(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
    ╭─[prefer_namespace_keyword.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────
    ╰────
   help: Replace `module` with `namespace`.
+    ╭╴
+  1 - module A.B {}
+  1 + namespace A.B {}
+    ╰╴
 
   ⚠ typescript-eslint(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
    ╭─[prefer_namespace_keyword.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Replace `module` with `namespace`.
+    ╭╴
+  1 - declare module foo {}
+  1 + declare namespace foo {}
+    ╰╴
 
   ⚠ typescript-eslint(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
    ╭─[prefer_namespace_keyword.tsx:2:9]
@@ -31,6 +43,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │             
    ╰────
   help: Replace `module` with `namespace`.
+    ╭╴
+  2 -         declare module foo {
+  2 +         declare namespace foo {
+    ╰╴
 
   ⚠ typescript-eslint(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
    ╭─[prefer_namespace_keyword.tsx:3:11]
@@ -40,6 +56,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: Replace `module` with `namespace`.
+    ╭╴
+  3 -           declare module bar {}
+  3 +           declare namespace bar {}
+    ╰╴
 
   ⚠ typescript-eslint(prefer-namespace-keyword): Use `namespace` instead of `module` to declare custom TypeScript modules.
    ╭─[prefer_namespace_keyword.tsx:3:13]
@@ -49,3 +69,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: Replace `module` with `namespace`.
+    ╭╴
+  3 -             module foo {}
+  3 +             namespace foo {}
+    ╰╴

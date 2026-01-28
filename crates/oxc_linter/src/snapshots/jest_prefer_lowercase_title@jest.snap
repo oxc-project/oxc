@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - it('Foo', function () {})
+  1 + it('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:5]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - xit('Foo', function () {})
+  1 + xit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:4]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - it("Foo", function () {})
+  1 + it("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:4]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - it(`Foo`, function () {})
+  1 + it(`foo`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:6]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - test('Foo', function () {})
+  1 + test('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:7]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - xtest('Foo', function () {})
+  1 + xtest('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:6]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - test("Foo", function () {})
+  1 + test("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:6]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - test(`Foo`, function () {})
+  1 + test(`foo`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:10]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - describe('Foo', function () {})
+  1 + describe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:10]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - describe("Foo", function () {})
+  1 + describe("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:10]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - describe(`Foo`, function () {})
+  1 + describe(`foo`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:3:25]
@@ -86,6 +130,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  3 -                 context(`Foo`, () => {});
+  3 +                 context(`foo`, () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:10]
@@ -93,6 +141,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────────────────────
    ╰────
   help: `"Some longer description"`s should begin with lowercase
+    ╭╴
+  1 - describe(`Some longer description`, function () {})
+  1 + describe(`some longer description`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:11]
@@ -100,6 +152,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────────────────────
    ╰────
   help: `"Some longer description"`s should begin with lowercase
+    ╭╴
+  1 - fdescribe(`Some longer description`, function () {})
+  1 + fdescribe(`some longer description`, function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:29]
@@ -107,6 +163,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ─────────────────
    ╰────
   help: `"Should return %"`s should begin with lowercase
+    ╭╴
+  1 - it.each(['green', 'black'])('Should return %', () => {})
+  1 + it.each(['green', 'black'])('should return %', () => {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:35]
@@ -114,6 +174,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─────────────────
    ╰────
   help: `"Should return %"`s should begin with lowercase
+    ╭╴
+  1 - describe.each(['green', 'black'])('Should return %', () => {})
+  1 + describe.each(['green', 'black'])('should return %', () => {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:6]
@@ -121,6 +185,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - test('Foo', function () {})
+  1 + test('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:5]
@@ -128,6 +196,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - xit('Foo', function () {})
+  1 + xit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:10]
@@ -135,6 +207,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - describe('Foo', function () {})
+  1 + describe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:4]
@@ -142,6 +218,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - it('Foo', function () {})
+  1 + it('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:5]
@@ -149,6 +229,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - xit('Foo', function () {})
+  1 + xit('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:10]
@@ -156,6 +240,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - describe('Foo', function () {})
+  1 + describe('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:6]
@@ -163,6 +251,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - test('Foo', function () {})
+  1 + test('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:7]
@@ -170,6 +262,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────
    ╰────
   help: `"Foo"`s should begin with lowercase
+    ╭╴
+  1 - xtest('Foo', function () {})
+  1 + xtest('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:4]
@@ -177,6 +273,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ────────
    ╰────
   help: `"Works!"`s should begin with lowercase
+    ╭╴
+  1 - it("Works!", () => {});
+  1 + it("works!", () => {});
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:3:30]
@@ -186,6 +286,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         it('Does things', () => {
    ╰────
   help: `"MyMethod"`s should begin with lowercase
+    ╭╴
+  3 -                     describe('MyMethod', () => {
+  3 +                     describe('myMethod', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:4:28]
@@ -195,6 +299,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                             //
    ╰────
   help: `"Does things"`s should begin with lowercase
+    ╭╴
+  4 -                         it('Does things', () => {
+  4 +                         it('does things', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:4:29]
@@ -204,6 +312,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         it('Does things', () => {
    ╰────
   help: `"MyMethod"`s should begin with lowercase
+    ╭╴
+  4 -                     context('MyMethod', () => {
+  4 +                     context('myMethod', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:5:28]
@@ -213,6 +325,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                             //
    ╰────
   help: `"Does things"`s should begin with lowercase
+    ╭╴
+  5 -                         it('Does things', () => {
+  5 +                         it('does things', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:2:26]
@@ -222,6 +338,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                     describe('MyMethod', () => {
    ╰────
   help: `"MyClass"`s should begin with lowercase
+    ╭╴
+  2 -                 describe('MyClass', () => {
+  2 +                 describe('myClass', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:3:30]
@@ -231,6 +351,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         it('Does things', () => {
    ╰────
   help: `"MyMethod"`s should begin with lowercase
+    ╭╴
+  3 -                     describe('MyMethod', () => {
+  3 +                     describe('myMethod', () => {
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:4:28]
@@ -240,3 +364,7 @@ source: crates/oxc_linter/src/tester.rs
  5 │                             //
    ╰────
   help: `"Does things"`s should begin with lowercase
+    ╭╴
+  4 -                         it('Does things', () => {
+  4 +                         it('does things', () => {
+    ╰╴

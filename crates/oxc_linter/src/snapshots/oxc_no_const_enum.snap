@@ -7,3 +7,7 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Const enums are not supported by bundlers and are incompatible with the isolatedModules mode. Their use can lead to import nonexistent values (because const enums are erased).
+    ╭╴
+  1 - const enum Color { Red, Green, Blue }
+  1 + enum Color { Red, Green, Blue }
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc ", "def");
+  1 + console.log("abc", "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc", " def");
+  1 + console.log("abc", "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:14]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log(" abc ", "def");
+  1 + console.log("abc", "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.debug` parameters
    ╭─[no_console_spaces.tsx:1:16]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.debug("abc ", "def");
+  1 + console.debug("abc", "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.debug` parameters
    ╭─[no_console_spaces.tsx:1:15]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.debug(`abc `, "def");
+  1 + console.debug(`abc`, "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.info` parameters
    ╭─[no_console_spaces.tsx:1:15]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.info("abc ", "def");
+  1 + console.info("abc", "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.warn` parameters
    ╭─[no_console_spaces.tsx:1:15]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.warn("abc ", "def");
+  1 + console.warn("abc", "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:16]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("abc ", "def");
+  1 + console.error("abc", "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc", " def ", "ghi");
+  1 + console.log("abc", "def", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc", " def ", "ghi");
+  1 + console.log("abc", "def", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:14]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc ", "def ", "ghi");
+  1 + console.log("abc", "def ", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:22]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc ", "def ", "ghi");
+  1 + console.log("abc ", "def", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:14]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log('abc ', "def");
+  1 + console.log('abc', "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:13]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log(`abc `, "def");
+  1 + console.log(`abc`, "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:16]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error('abc ', "def");
+  1 + console.error('abc', "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:15]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error(`abc `, "def");
+  1 + console.error(`abc`, "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:13]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log(`abc ${1 + 2} `, "def");
+  1 + console.log(`abc ${1 + 2}`, "def");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc", " def ", "ghi");
+  1 + console.log("abc", "def", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("abc", " def ", "ghi");
+  1 + console.log("abc", "def", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("_", " leading", "_")
+  1 + console.log("_", "leading", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("_", "trailing ", "_")
+  1 + console.log("_", "trailing", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────────────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("_", " leading and trailing ", "_")
+  1 + console.log("_", "leading and trailing", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────────────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("_", " leading and trailing ", "_")
+  1 + console.log("_", "leading and trailing", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:23]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("abc", " def ", "ghi");
+  1 + console.error("abc", "def", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:23]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("abc", " def ", "ghi");
+  1 + console.error("abc", "def", "ghi");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("_", " leading", "_")
+  1 + console.error("_", "leading", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("_", "trailing ", "_")
+  1 + console.error("_", "trailing", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("_", " leading and trailing ", "_")
+  1 + console.error("_", "leading and trailing", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("_", " leading and trailing ", "_")
+  1 + console.error("_", "leading and trailing", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("_", " log ", "_")
+  1 + console.log("_", "log", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.log("_", " log ", "_")
+  1 + console.log("_", "log", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.debug` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.debug("_", " debug ", "_")
+  1 + console.debug("_", "debug", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.debug` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.debug("_", " debug ", "_")
+  1 + console.debug("_", "debug", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.info` parameters
    ╭─[no_console_spaces.tsx:1:20]
@@ -238,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.info("_", " info ", "_")
+  1 + console.info("_", "info", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.info` parameters
    ╭─[no_console_spaces.tsx:1:20]
@@ -245,6 +381,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.info("_", " info ", "_")
+  1 + console.info("_", "info", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.warn` parameters
    ╭─[no_console_spaces.tsx:1:20]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.warn("_", " warn ", "_")
+  1 + console.warn("_", "warn", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.warn` parameters
    ╭─[no_console_spaces.tsx:1:20]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ──────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.warn("_", " warn ", "_")
+  1 + console.warn("_", "warn", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -266,6 +414,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("_", " error ", "_")
+  1 + console.error("_", "error", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:21]
@@ -273,6 +425,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console.error("_", " error ", "_")
+  1 + console.error("_", "error", "_")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:17]
@@ -280,6 +436,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["log"](" a ", " b ");
+  1 + console["log"]("a", " b ");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.log` parameters
    ╭─[no_console_spaces.tsx:1:24]
@@ -287,6 +447,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["log"](" a ", " b ");
+  1 + console["log"](" a ", "b");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.debug` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -294,6 +458,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["debug"](" a ", " b ");
+  1 + console["debug"]("a", " b ");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.debug` parameters
    ╭─[no_console_spaces.tsx:1:26]
@@ -301,6 +469,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["debug"](" a ", " b ");
+  1 + console["debug"](" a ", "b");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.info` parameters
    ╭─[no_console_spaces.tsx:1:18]
@@ -308,6 +480,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["info"](" a ", " b ");
+  1 + console["info"]("a", " b ");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.info` parameters
    ╭─[no_console_spaces.tsx:1:25]
@@ -315,6 +491,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["info"](" a ", " b ");
+  1 + console["info"](" a ", "b");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.warn` parameters
    ╭─[no_console_spaces.tsx:1:18]
@@ -322,6 +502,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["warn"](" a ", " b ");
+  1 + console["warn"]("a", " b ");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.warn` parameters
    ╭─[no_console_spaces.tsx:1:25]
@@ -329,6 +513,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["warn"](" a ", " b ");
+  1 + console["warn"](" a ", "b");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use trailing spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:19]
@@ -336,6 +524,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["error"](" a ", " b ");
+  1 + console["error"]("a", " b ");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-console-spaces): Do not use leading spaces with `console.error` parameters
    ╭─[no_console_spaces.tsx:1:26]
@@ -343,3 +535,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
    ╰────
   help: The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.
+    ╭╴
+  1 - console["error"](" a ", " b ");
+  1 + console["error"](" a ", "b");
+    ╰╴

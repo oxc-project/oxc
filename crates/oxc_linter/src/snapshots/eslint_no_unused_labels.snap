@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: var foo = 0;` with `var foo = 0;`.
+    ╭╴
+  1 - A: var foo = 0;
+  1 + var foo = 0;
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: { foo(); bar(); }` with `{ foo(); bar(); }`.
+    ╭╴
+  1 - A: { foo(); bar(); }
+  1 + { foo(); bar(); }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: if (a) { foo(); bar(); }` with `if (a) { foo(); bar(); }`.
+    ╭╴
+  1 - A: if (a) { foo(); bar(); }
+  1 + if (a) { foo(); bar(); }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }` with `for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }`.
+    ╭╴
+  1 - A: for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }
+  1 + for (var i = 0; i < 10; ++i) { foo(); if (a) break; bar(); }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }` with `for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }`.
+    ╭╴
+  1 - A: for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }
+  1 + for (var i = 0; i < 10; ++i) { foo(); if (a) continue; bar(); }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:35]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ─
    ╰────
   help: Replace `B: break A;` with `break A;`.
+    ╭╴
+  1 - A: for (var i = 0; i < 10; ++i) { B: break A; }
+  1 + A: for (var i = 0; i < 10; ++i) { break A; }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: { var A = 0; console.log(A); }` with `{ var A = 0; console.log(A); }`.
+    ╭╴
+  1 - A: { var A = 0; console.log(A); }
+  1 + { var A = 0; console.log(A); }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: /* comment */ foo` with `foo`.
+    ╭╴
+  1 - A: /* comment */ foo
+  1 + foo
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A /* comment */: foo` with `foo`.
+    ╭╴
+  1 - A /* comment */: foo
+  1 + foo
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: "use strict"` with `"use strict"`.
+    ╭╴
+  1 - A: "use strict"
+  1 + "use strict"
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'foo:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:15]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
    ╰────
   help: Replace `foo: "bar"` with `"bar"`.
+    ╭╴
+  1 - "use strict"; foo: "bar"
+  1 + "use strict"; "bar"
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: ("use strict")` with `("use strict")`.
+    ╭╴
+  1 - A: ("use strict")
+  1 + ("use strict")
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: `use strict`` with ``use strict``.
+    ╭╴
+  1 - A: `use strict`
+  1 + `use strict`
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'bar:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:12]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───
    ╰────
   help: Replace `bar: 'baz'` with `'baz'`.
+    ╭╴
+  1 - if (foo) { bar: 'baz' }
+  1 + if (foo) { 'baz' }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:4]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─
    ╰────
   help: Replace `B: 'foo'` with `'foo'`.
+    ╭╴
+  1 - A: B: 'foo'
+  1 + A: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: B: 'foo'` with `B: 'foo'`.
+    ╭╴
+  1 - A: B: 'foo'
+  1 + B: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'C:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:7]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─
    ╰────
   help: Replace `C: 'foo'` with `'foo'`.
+    ╭╴
+  1 - A: B: C: 'foo'
+  1 + A: B: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:4]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─
    ╰────
   help: Replace `B: C: 'foo'` with `C: 'foo'`.
+    ╭╴
+  1 - A: B: C: 'foo'
+  1 + A: C: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: B: C: 'foo'` with `B: C: 'foo'`.
+    ╭╴
+  1 - A: B: C: 'foo'
+  1 + B: C: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'D:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:10]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─
    ╰────
   help: Replace `D: 'foo'` with `'foo'`.
+    ╭╴
+  1 - A: B: C: D: 'foo'
+  1 + A: B: C: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'C:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:7]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─
    ╰────
   help: Replace `C: D: 'foo'` with `D: 'foo'`.
+    ╭╴
+  1 - A: B: C: D: 'foo'
+  1 + A: B: D: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:4]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─
    ╰────
   help: Replace `B: C: D: 'foo'` with `C: D: 'foo'`.
+    ╭╴
+  1 - A: B: C: D: 'foo'
+  1 + A: C: D: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: B: C: D: 'foo'` with `B: C: D: 'foo'`.
+    ╭╴
+  1 - A: B: C: D: 'foo'
+  1 + B: C: D: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'E:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:13]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─
    ╰────
   help: Replace `E: 'foo'` with `'foo'`.
+    ╭╴
+  1 - A: B: C: D: E: 'foo'
+  1 + A: B: C: D: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'D:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:10]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─
    ╰────
   help: Replace `D: E: 'foo'` with `E: 'foo'`.
+    ╭╴
+  1 - A: B: C: D: E: 'foo'
+  1 + A: B: C: E: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'C:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:7]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─
    ╰────
   help: Replace `C: D: E: 'foo'` with `D: E: 'foo'`.
+    ╭╴
+  1 - A: B: C: D: E: 'foo'
+  1 + A: B: D: E: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:4]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─
    ╰────
   help: Replace `B: C: D: E: 'foo'` with `C: D: E: 'foo'`.
+    ╭╴
+  1 - A: B: C: D: E: 'foo'
+  1 + A: C: D: E: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: B: C: D: E: 'foo'` with `B: C: D: E: 'foo'`.
+    ╭╴
+  1 - A: B: C: D: E: 'foo'
+  1 + B: C: D: E: 'foo'
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'A:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─
    ╰────
   help: Replace `A: 42` with `42`.
+    ╭╴
+  1 - A: 42
+  1 + 42
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'B:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:21]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─
    ╰────
   help: Replace `B: { }` with `{ }`.
+    ╭╴
+  1 - A: { function f() { B: { } } break A; }
+  1 + A: { function f() { { } } break A; }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'label:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:32]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────
    ╰────
   help: Replace `label: while (false) {}` with `while (false) {}`.
+    ╭╴
+  1 - label: while (true) { (() => { label: while (false) {} })(); }
+  1 + label: while (true) { (() => { while (false) {} })(); }
+    ╰╴
 
   ⚠ eslint(no-unused-labels): 'label:' is defined but never used.
    ╭─[no_unused_labels.tsx:1:1]
@@ -224,3 +348,7 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Replace `label: while (true) { (() => { label: while (false) {} })(); }` with `while (true) { (() => { label: while (false) {} })(); }`.
+    ╭╴
+  1 - label: while (true) { (() => { label: while (false) {} })(); }
+  1 + while (true) { (() => { label: while (false) {} })(); }
+    ╰╴

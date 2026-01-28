@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ▲
    ╰────
   help: File must begin with the Unicode BOM
+    ╭╴
+  1 - var a = 123;
+  1 + ﻿var a = 123;
+    ╰╴
 
   ⚠ eslint(unicode-bom): Expected Unicode BOM (Byte Order Mark)
    ╭─[unicode_bom.tsx:1:1]
@@ -15,6 +19,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │             var a = 123;
    ╰────
   help: File must begin with the Unicode BOM
+    ╭╴
+  1 -  // here's a comment
+  1 + ﻿ // here's a comment
+    ╰╴
 
   ⚠ eslint(unicode-bom): Unexpected Unicode BOM (Byte Order Mark)
    ╭─[unicode_bom.tsx:1:1]
@@ -22,6 +30,10 @@ source: crates/oxc_linter/src/tester.rs
    · ▲
    ╰────
   help: File must not begin with the Unicode BOM
+    ╭╴
+  1 - ﻿ var a = 123;
+  1 +  var a = 123;
+    ╰╴
 
   ⚠ eslint(unicode-bom): Unexpected Unicode BOM (Byte Order Mark)
    ╭─[unicode_bom.tsx:1:1]
@@ -29,3 +41,7 @@ source: crates/oxc_linter/src/tester.rs
    · ▲
    ╰────
   help: File must not begin with the Unicode BOM
+    ╭╴
+  1 - ﻿ var a = 123;
+  1 +  var a = 123;
+    ╰╴

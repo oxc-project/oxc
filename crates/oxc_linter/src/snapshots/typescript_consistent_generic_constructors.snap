@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Foo<string> = new Foo();
+  1 + const a = new Foo<string>();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Map<string, number> = new Map();
+  1 + const a = new Map<string, number>();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Map <string, number> = new Map();
+  1 + const a = new Map<string, number>();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Map< string, number > = new Map();
+  1 + const a = new Map< string, number >();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Map<string, number> = new Map ();
+  1 + const a = new Map<string, number> ();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Foo<number> = new Foo;
+  1 + const a = new Foo<number>();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────────────────────────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: /* comment */ Foo/* another */ <string> = new Foo();
+  1 + const a = new Foo/* comment *//* another */<string>();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────────────
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Foo/* comment */ <string> = new Foo /* another */();
+  1 + const a = new Foo/* comment */<string> /* another */();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
@@ -64,6 +96,12 @@ source: crates/oxc_linter/src/tester.rs
  2 │              Foo
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  1 - const a: Foo<string> = new
+  2 - 			 Foo
+  1 + const a = new
+  2 + 			 Foo<string>
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:3:7]
@@ -73,6 +111,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  3 - 			  a: Foo<string> = new Foo();
+  3 + 			  a = new Foo<string>();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:3:9]
@@ -82,6 +124,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  3 - 			  [a]: Foo<string> = new Foo();
+  3 + 			  [a] = new Foo<string>();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:2:18]
@@ -91,6 +137,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  2 - 			function foo(a: Foo<string> = new Foo()) {}
+  2 + 			function foo(a = new Foo<string>()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:2:22]
@@ -100,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  2 - 			function foo({ a }: Foo<string> = new Foo()) {}
+  2 + 			function foo({ a } = new Foo<string>()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:2:20]
@@ -109,6 +163,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  2 - 			function foo([a]: Foo<string> = new Foo()) {}
+  2 + 			function foo([a] = new Foo<string>()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:3:19]
@@ -118,6 +176,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  3 - 			  constructor(a: Foo<string> = new Foo()) {}
+  3 + 			  constructor(a = new Foo<string>()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:2:25]
@@ -127,6 +189,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the type annotation to the constructor
+    ╭╴
+  2 - 			const a = function (a: Foo<string> = new Foo()) {};
+  2 + 			const a = function (a = new Foo<string>()) {};
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:1:18]
@@ -134,6 +200,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  1 - const a = new Foo<string>();
+  1 + const a: Foo<string> = new Foo();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:1:18]
@@ -141,6 +211,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────────────
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  1 - const a = new Map<string, number>();
+  1 + const a: Map<string, number> = new Map();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:1:19]
@@ -148,6 +222,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  1 - const a = new Map <string, number> ();
+  1 + const a: Map<string, number> = new Map ();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:1:18]
@@ -155,6 +233,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ──────────────────
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  1 - const a = new Map< string, number >();
+  1 + const a: Map< string, number > = new Map();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:2:8]
@@ -164,6 +246,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │              ();
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  1 - const a = new
+  2 - 			 Foo<string>
+  1 + const a: Foo<string> = new
+  2 + 			 Foo
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:1:32]
@@ -171,6 +259,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────────
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  1 - const a = new Foo/* comment */ <string> /* another */();
+  1 + const a: Foo<string> = new Foo/* comment */ /* another */();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:1:18]
@@ -178,6 +270,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────────────────────────────────────────
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  1 - const a = new Foo</* comment */ string, /* another */ number>();
+  1 + const a: Foo</* comment */ string, /* another */ number> = new Foo();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:3:17]
@@ -187,6 +283,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  3 - 			  a = new Foo<string>();
+  3 + 			  a: Foo<string> = new Foo();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:3:19]
@@ -196,6 +296,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  3 - 			  [a] = new Foo<string>();
+  3 + 			  [a]: Foo<string> = new Foo();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:3:23]
@@ -205,6 +309,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  3 - 			  [a + b] = new Foo<string>();
+  3 + 			  [a + b]: Foo<string> = new Foo();
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:2:28]
@@ -214,6 +322,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  2 - 			function foo(a = new Foo<string>()) {}
+  2 + 			function foo(a: Foo<string> = new Foo()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:2:32]
@@ -223,6 +335,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  2 - 			function foo({ a } = new Foo<string>()) {}
+  2 + 			function foo({ a }: Foo<string> = new Foo()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:2:30]
@@ -232,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  2 - 			function foo([a] = new Foo<string>()) {}
+  2 + 			function foo([a]: Foo<string> = new Foo()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:3:29]
@@ -241,6 +361,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  3 - 			  constructor(a = new Foo<string>()) {}
+  3 + 			  constructor(a: Foo<string> = new Foo()) {}
+    ╰╴
 
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the type annotation.
    ╭─[consistent_generic_constructors.tsx:2:35]
@@ -250,3 +374,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │                   
    ╰────
   help: Move the generic type to the type annotation
+    ╭╴
+  2 - 			const a = function (a = new Foo<string>()) {};
+  2 + 			const a = function (a: Foo<string> = new Foo()) {};
+    ╰╴

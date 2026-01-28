@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::output_formatter::InternalFormatter;
 use oxc_diagnostics::{
-    Error, GraphicalReportHandler,
+    Error, GraphicalReportHandlerWithDiff,
     reporter::{DiagnosticReporter, DiagnosticResult},
 };
 use oxc_linter::table::RuleTable;
@@ -64,14 +64,17 @@ impl DefaultOutputFormatter {
 /// Pretty-prints diagnostics. Primarily meant for human-readable output in a terminal.
 ///
 /// See [`GraphicalReportHandler`] for how to configure colors, context lines, etc.
+///
+/// When `OXC_DIAGNOSTIC_SHOW_FIX_DIFF` is set, this reporter will also render
+/// inline diffs for any available fixes.
 #[cfg_attr(all(not(test), feature = "testing"), expect(dead_code))]
 struct GraphicalReporter {
-    handler: GraphicalReportHandler,
+    handler: GraphicalReportHandlerWithDiff,
 }
 
 impl Default for GraphicalReporter {
     fn default() -> Self {
-        Self { handler: GraphicalReportHandler::new() }
+        Self { handler: GraphicalReportHandlerWithDiff::new() }
     }
 }
 
@@ -82,7 +85,21 @@ impl DiagnosticReporter for GraphicalReporter {
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         let mut output = String::new();
-        self.handler.render_report(&mut output, error.as_ref()).unwrap();
+
+        // Try to find OxcDiagnosticWithSource which preserves patches
+        if let Some(diag_with_source) =
+            error.downcast_ref::<oxc_diagnostics::OxcDiagnosticWithSource>()
+        {
+            self.handler
+                .render_oxc_diagnostic(
+                    &mut output,
+                    &diag_with_source.diagnostic,
+                    diag_with_source.source.as_ref(),
+                )
+                .unwrap();
+        } else {
+            self.handler.render_report(&mut output, error.as_ref()).unwrap();
+        }
         Some(output)
     }
 }

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!foo) {}
+  1 + if (foo) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!foo)
+  1 + do {} while (foo)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!foo) {}
+  1 + while (foo) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!foo ? bar : baz
+  1 + foo ? bar : baz
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!foo;) {}
+  1 + for (; foo;) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!foo
+  1 + !foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!foo)
+  1 + Boolean(foo)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!foo)
+  1 + new Boolean(foo)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(foo)) {}
+  1 + if (foo) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean(foo))
+  1 + do {} while (foo)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean(foo)) {}
+  1 + while (foo) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(foo) ? bar : baz
+  1 + foo ? bar : baz
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean(foo);) {}
+  1 + for (; foo;) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo)
+  1 + !foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo && bar)
+  1 + !(foo && bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo + bar)
+  1 + !(foo + bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(+foo)
+  1 + !+foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo())
+  1 + !foo()
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo = bar)
+  1 + !(foo = bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -154,6 +230,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean((foo, bar()));
+  1 + !(foo, bar());
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -210,6 +290,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(Boolean(foo))
+  1 + Boolean(foo)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -217,6 +301,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!foo, bar)
+  1 + Boolean(foo, bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -224,6 +312,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield!!a ? b : c }
+  1 + function *foo() { yielda ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -231,6 +323,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield!! a ? b : c }
+  1 + function *foo() { yielda ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -238,6 +334,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield! !a ? b : c }
+  1 + function *foo() { yielda ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -245,6 +345,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield !!a ? b : c }
+  1 + function *foo() { yield a ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -252,6 +356,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield(!!a) ? b : c }
+  1 + function *foo() { yield(a) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:28]
@@ -259,6 +367,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield/**/!!a ? b : c }
+  1 + function *foo() { yield/**/a ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -266,6 +378,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - x=!!a ? b : c 
+  1 + x=a ? b : c 
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -329,6 +445,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !/**/!!foo
+  1 + !/**/foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -336,6 +456,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!/**/!foo
+  1 + !foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -343,6 +467,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!/**/foo
+  1 + !foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -350,6 +478,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!foo/**/
+  1 + !foo/**/
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:4]
@@ -357,6 +489,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if(!/**/!foo);
+  1 + if(foo);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -364,6 +500,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - (!!/**/foo ? 1 : 2)
+  1 + (foo ? 1 : 2)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -371,6 +511,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !/**/Boolean(foo)
+  1 + !/**/foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -378,6 +522,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean/**/(foo)
+  1 + !foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -385,6 +533,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(/**/foo)
+  1 + !foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -392,6 +544,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo/**/)
+  1 + !foo
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -399,6 +555,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo)/**/
+  1 + !foo/**/
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:4]
@@ -406,6 +566,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if(Boolean/**/(foo));
+  1 + if(foo);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -413,6 +577,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - (Boolean(foo/**/) ? 1 : 2)
+  1 + (foo ? 1 : 2)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -504,6 +672,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!foo || bar) {}
+  1 + if (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -511,6 +683,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!foo && bar) {}
+  1 + if (foo && bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -518,6 +694,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!foo || bar) && bat) {}
+  1 + if ((foo || bar) && bat) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:12]
@@ -525,6 +705,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (foo && !!bar) {}
+  1 + if (foo && bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -532,6 +716,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!foo || bar)
+  1 + do {} while (foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -539,6 +727,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!foo || bar) {}
+  1 + while (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -546,6 +738,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!foo && bat ? bar : baz
+  1 + foo && bat ? bar : baz
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -553,6 +749,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!foo || bar;) {}
+  1 + for (; foo || bar;) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -560,6 +760,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!foo || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -567,6 +771,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!foo || bar)
+  1 + Boolean(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -574,6 +782,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!foo || bar)
+  1 + new Boolean(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -581,6 +793,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(foo) || bar) {}
+  1 + if (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -588,6 +804,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean(foo) || bar)
+  1 + do {} while (foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -595,6 +815,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean(foo) || bar) {}
+  1 + while (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -602,6 +826,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(foo) || bat ? bar : baz
+  1 + foo || bat ? bar : baz
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -609,6 +837,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean(foo) || bar;) {}
+  1 + for (; foo || bar;) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -616,6 +848,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -623,6 +859,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo && bar) || bat
+  1 + !(foo && bar) || bat
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -630,6 +870,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo + bar) || bat
+  1 + !(foo + bar) || bat
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -637,6 +881,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(+foo)  || bar
+  1 + !+foo  || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -644,6 +892,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo()) || bar
+  1 + !foo() || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -651,6 +903,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo() || bar)
+  1 + !(foo() || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -658,6 +914,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo = bar) || bat
+  1 + !(foo = bar) || bat
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -679,6 +939,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean((foo, bar()) || bat);
+  1 + !((foo, bar()) || bat);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -735,6 +999,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield(!!a || d) ? b : c }
+  1 + function *foo() { yield(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -742,6 +1010,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield(!! a || d) ? b : c }
+  1 + function *foo() { yield(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -749,6 +1021,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield(! !a || d) ? b : c }
+  1 + function *foo() { yield(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:26]
@@ -756,6 +1032,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield (!!a || d) ? b : c }
+  1 + function *foo() { yield (a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:29]
@@ -763,6 +1043,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield/**/(!!a || d) ? b : c }
+  1 + function *foo() { yield/**/(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -770,6 +1054,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - x=!!a || d ? b : c 
+  1 + x=a || d ? b : c 
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:7]
@@ -812,6 +1100,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !/**/(!!foo || bar)
+  1 + !/**/(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -819,6 +1111,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!/**/!foo || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -826,6 +1122,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!/**/foo || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -833,6 +1133,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !(!!foo || bar)/**/
+  1 + !(foo || bar)/**/
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:4]
@@ -840,6 +1144,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if(!/**/!foo || bar);
+  1 + if(foo || bar);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -847,6 +1155,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - (!!/**/foo || bar ? 1 : 2)
+  1 + (foo || bar ? 1 : 2)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:7]
@@ -854,6 +1166,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !/**/(Boolean(foo) || bar)
+  1 + !/**/(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -861,6 +1177,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean/**/(foo) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -868,6 +1188,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(/**/foo) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -875,6 +1199,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo/**/) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -882,6 +1210,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !(Boolean(foo)|| bar)/**/
+  1 + !(foo|| bar)/**/
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:4]
@@ -889,6 +1221,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if(Boolean/**/(foo) || bar);
+  1 + if(foo || bar);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -896,6 +1232,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - (Boolean(foo/**/)|| bar ? 1 : 2)
+  1 + (foo|| bar ? 1 : 2)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -987,6 +1327,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (a && !!(b ? c : d)){}
+  1 + if (a && (b ? c : d)){}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -994,6 +1338,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield!!a || d ? b : c }
+  1 + function *foo() { yielda || d ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1001,6 +1349,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!foo || bar) {}
+  1 + if (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1008,6 +1360,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!foo && bar) {}
+  1 + if (foo && bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -1015,6 +1371,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!foo || bar) && bat) {}
+  1 + if ((foo || bar) && bat) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:12]
@@ -1022,6 +1382,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (foo && !!bar) {}
+  1 + if (foo && bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1029,6 +1393,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!foo || bar)
+  1 + do {} while (foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1036,6 +1404,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!foo || bar) {}
+  1 + while (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -1043,6 +1415,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!foo && bat ? bar : baz
+  1 + foo && bat ? bar : baz
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1050,6 +1426,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!foo || bar;) {}
+  1 + for (; foo || bar;) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1057,6 +1437,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!foo || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1064,6 +1448,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!foo || bar)
+  1 + Boolean(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1071,6 +1459,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!foo || bar)
+  1 + new Boolean(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1078,6 +1470,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(foo) || bar) {}
+  1 + if (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1085,6 +1481,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean(foo) || bar)
+  1 + do {} while (foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1092,6 +1492,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean(foo) || bar) {}
+  1 + while (foo || bar) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -1099,6 +1503,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(foo) || bat ? bar : baz
+  1 + foo || bat ? bar : baz
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1106,6 +1514,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean(foo) || bar;) {}
+  1 + for (; foo || bar;) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1113,6 +1525,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1120,6 +1536,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo && bar) || bat
+  1 + !(foo && bar) || bat
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1127,6 +1547,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo + bar) || bat
+  1 + !(foo + bar) || bat
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1134,6 +1558,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(+foo)  || bar
+  1 + !+foo  || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1141,6 +1569,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo()) || bar
+  1 + !foo() || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1148,6 +1580,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo() || bar)
+  1 + !(foo() || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1155,6 +1591,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo = bar) || bat
+  1 + !(foo = bar) || bat
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1176,6 +1616,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean((foo, bar()) || bat);
+  1 + !((foo, bar()) || bat);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1232,6 +1676,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield(!!a || d) ? b : c }
+  1 + function *foo() { yield(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -1239,6 +1687,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield(!! a || d) ? b : c }
+  1 + function *foo() { yield(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -1246,6 +1698,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield(! !a || d) ? b : c }
+  1 + function *foo() { yield(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:26]
@@ -1253,6 +1709,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield (!!a || d) ? b : c }
+  1 + function *foo() { yield (a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:29]
@@ -1260,6 +1720,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield/**/(!!a || d) ? b : c }
+  1 + function *foo() { yield/**/(a || d) ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -1267,6 +1731,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - x=!!a || d ? b : c 
+  1 + x=a || d ? b : c 
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:7]
@@ -1309,6 +1777,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !/**/(!!foo || bar)
+  1 + !/**/(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1316,6 +1788,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!/**/!foo || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1323,6 +1799,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!/**/foo || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -1330,6 +1810,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !(!!foo || bar)/**/
+  1 + !(foo || bar)/**/
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:4]
@@ -1337,6 +1821,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if(!/**/!foo || bar);
+  1 + if(foo || bar);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1344,6 +1832,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - (!!/**/foo || bar ? 1 : 2)
+  1 + (foo || bar ? 1 : 2)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:7]
@@ -1351,6 +1843,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !/**/(Boolean(foo) || bar)
+  1 + !/**/(foo || bar)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1358,6 +1854,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean/**/(foo) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1365,6 +1865,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(/**/foo) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1372,6 +1876,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(foo/**/) || bar
+  1 + !foo || bar
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -1379,6 +1887,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !(Boolean(foo)|| bar)/**/
+  1 + !(foo|| bar)/**/
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:4]
@@ -1386,6 +1898,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if(Boolean/**/(foo) || bar);
+  1 + if(foo || bar);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -1393,6 +1909,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - (Boolean(foo/**/)|| bar ? 1 : 2)
+  1 + (foo|| bar ? 1 : 2)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -1484,6 +2004,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (a && !!(b ? c : d)){}
+  1 + if (a && (b ? c : d)){}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -1491,6 +2015,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - function *foo() { yield!!a || d ? b : c }
+  1 + function *foo() { yielda || d ? b : c }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1498,6 +2026,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!(a, b))
+  1 + Boolean((a, b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1505,6 +2037,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(Boolean((a, b)))
+  1 + Boolean(a, b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:10]
@@ -1512,6 +2048,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean((!!(a, b)))
+  1 + Boolean(((a, b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:10]
@@ -1519,6 +2059,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean((Boolean((a, b))))
+  1 + Boolean((a, b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1526,6 +2070,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!(!(a, b)))
+  1 + Boolean((a, b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:10]
@@ -1533,6 +2081,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean((!(!(a, b))))
+  1 + Boolean(((a, b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1540,6 +2092,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!(a = b))
+  1 + Boolean((a = b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:10]
@@ -1547,6 +2103,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean((!!(a = b)))
+  1 + Boolean(((a = b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1554,6 +2114,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(Boolean(a = b))
+  1 + Boolean(a = b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1561,6 +2125,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(Boolean((a += b)))
+  1 + Boolean(a += b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1568,6 +2136,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!(a === b))
+  1 + Boolean((a === b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1575,6 +2147,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!((a !== b)))
+  1 + Boolean(((a !== b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1582,6 +2158,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!!a.b)
+  1 + Boolean(a.b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1589,6 +2169,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(Boolean((a)))
+  1 + Boolean(a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:10]
@@ -1596,6 +2180,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean((!!(a)))
+  1 + Boolean(((a)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1603,6 +2191,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!(a, b))
+  1 + new Boolean((a, b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1610,6 +2202,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(Boolean((a, b)))
+  1 + new Boolean(a, b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1617,6 +2213,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean((!!(a, b)))
+  1 + new Boolean(((a, b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1624,6 +2224,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean((Boolean((a, b))))
+  1 + new Boolean((a, b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1631,6 +2235,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!(!(a, b)))
+  1 + new Boolean((a, b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1638,6 +2246,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean((!(!(a, b))))
+  1 + new Boolean(((a, b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1645,6 +2257,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!(a = b))
+  1 + new Boolean((a = b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1652,6 +2268,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean((!!(a = b)))
+  1 + new Boolean(((a = b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1659,6 +2279,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(Boolean(a = b))
+  1 + new Boolean(a = b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1666,6 +2290,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(Boolean((a += b)))
+  1 + new Boolean(a += b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1673,6 +2301,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!(a === b))
+  1 + new Boolean((a === b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1680,6 +2312,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!((a !== b)))
+  1 + new Boolean(((a !== b)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1687,6 +2323,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(!!a.b)
+  1 + new Boolean(a.b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:13]
@@ -1694,6 +2334,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean(Boolean((a)))
+  1 + new Boolean(a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1701,6 +2345,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - new Boolean((!!(a)))
+  1 + new Boolean(((a)))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1708,6 +2356,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b));
+  1 + if ((a, b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1715,6 +2367,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)));
+  1 + if (a, b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1722,6 +2378,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!(!(a, b)));
+  1 + if ((a, b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1729,6 +2389,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a = b));
+  1 + if ((a = b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1736,6 +2400,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a = b));
+  1 + if (a = b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1743,6 +2411,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a > b));
+  1 + if ((a > b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1750,6 +2422,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a === b));
+  1 + if (a === b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1757,6 +2433,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!f(a));
+  1 + if (f(a));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1764,6 +2444,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(f(a)));
+  1 + if (f(a));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1771,6 +2455,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(f(a)));
+  1 + if ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -1778,6 +2466,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!f(a)));
+  1 + if ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -1785,6 +2477,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((Boolean(f(a))));
+  1 + if ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1792,6 +2488,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!a);
+  1 + if (a);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -1799,6 +2499,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a));
+  1 + if (a);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1806,6 +2510,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!(a, b));
+  1 + while ((a, b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1813,6 +2521,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean((a, b)));
+  1 + while (a, b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1820,6 +2532,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!(!(a, b)));
+  1 + while ((a, b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1827,6 +2543,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!(a = b));
+  1 + while ((a = b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1834,6 +2554,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean(a = b));
+  1 + while (a = b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1841,6 +2565,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!(a > b));
+  1 + while ((a > b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1848,6 +2576,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean(a === b));
+  1 + while (a === b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1855,6 +2587,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!f(a));
+  1 + while (f(a));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1862,6 +2598,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean(f(a)));
+  1 + while (f(a));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1869,6 +2609,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!(f(a)));
+  1 + while ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1876,6 +2620,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while ((!!f(a)));
+  1 + while ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -1883,6 +2631,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while ((Boolean(f(a))));
+  1 + while ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1890,6 +2642,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - while (!!a);
+  1 + while (a);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -1897,6 +2653,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - while (Boolean(a));
+  1 + while (a);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1904,6 +2664,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!(a, b));
+  1 + do {} while ((a, b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1911,6 +2675,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean((a, b)));
+  1 + do {} while (a, b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1918,6 +2686,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!(!(a, b)));
+  1 + do {} while ((a, b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1925,6 +2697,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!(a = b));
+  1 + do {} while ((a = b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1932,6 +2708,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean(a = b));
+  1 + do {} while (a = b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1939,6 +2719,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!(a > b));
+  1 + do {} while ((a > b));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1946,6 +2730,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean(a === b));
+  1 + do {} while (a === b);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1953,6 +2741,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!f(a));
+  1 + do {} while (f(a));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1960,6 +2752,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean(f(a)));
+  1 + do {} while (f(a));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1967,6 +2763,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!(f(a)));
+  1 + do {} while ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:15]
@@ -1974,6 +2774,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while ((!!f(a)));
+  1 + do {} while ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:15]
@@ -1981,6 +2785,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while ((Boolean(f(a))));
+  1 + do {} while ((f(a)));
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1988,6 +2796,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (!!a);
+  1 + do {} while (a);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:14]
@@ -1995,6 +2807,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - do {} while (Boolean(a));
+  1 + do {} while (a);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2002,6 +2818,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!(a, b););
+  1 + for (; (a, b););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2009,6 +2829,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean((a, b)););
+  1 + for (; a, b;);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2016,6 +2840,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !(!(a, b)););
+  1 + for (; (a, b););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2023,6 +2851,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!(a = b););
+  1 + for (; (a = b););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2030,6 +2862,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean(a = b););
+  1 + for (; a = b;);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2037,6 +2873,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!(a > b););
+  1 + for (; (a > b););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2044,6 +2884,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean(a === b););
+  1 + for (; a === b;);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2051,6 +2895,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!f(a););
+  1 + for (; f(a););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2058,6 +2906,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean(f(a)););
+  1 + for (; f(a););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2065,6 +2917,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!(f(a)););
+  1 + for (; (f(a)););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -2072,6 +2928,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; (!!f(a)););
+  1 + for (; (f(a)););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:9]
@@ -2079,6 +2939,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; (Boolean(f(a))););
+  1 + for (; (f(a)););
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2086,6 +2950,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; !!a;);
+  1 + for (; a;);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:8]
@@ -2093,6 +2961,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - for (; Boolean(a););
+  1 + for (; a;);
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2100,6 +2972,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(a, b) ? c : d
+  1 + (a, b) ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2107,6 +2983,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - (!!(a, b)) ? c : d
+  1 + ((a, b)) ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2114,6 +2994,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean((a, b)) ? c : d
+  1 + a, b ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2121,6 +3005,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(a = b) ? c : d
+  1 + (a = b) ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2128,6 +3016,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(a -= b) ? c : d
+  1 + a -= b ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2135,6 +3027,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - (Boolean((a *= b))) ? c : d
+  1 + (a *= b) ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2142,6 +3038,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(a ? b : c) ? d : e
+  1 + (a ? b : c) ? d : e
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2149,6 +3049,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(a ? b : c) ? d : e
+  1 + a ? b : c ? d : e
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2156,6 +3060,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(a || b) ? c : d
+  1 + (a || b) ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2163,6 +3071,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(a && b) ? c : d
+  1 + a && b ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2170,6 +3082,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(a === b) ? c : d
+  1 + (a === b) ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2177,6 +3093,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(a < b) ? c : d
+  1 + a < b ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2184,6 +3104,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!((a !== b)) ? c : d
+  1 + ((a !== b)) ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2191,6 +3115,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean((a >= b)) ? c : d
+  1 + a >= b ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2198,6 +3126,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!+a ? b : c
+  1 + +a ? b : c
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2205,6 +3137,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!+(a) ? b : c
+  1 + +(a) ? b : c
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2212,6 +3148,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(!a) ? b : c
+  1 + !a ? b : c
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2219,6 +3159,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!f(a) ? b : c
+  1 + f(a) ? b : c
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2226,6 +3170,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - (!!f(a)) ? b : c
+  1 + (f(a)) ? b : c
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2233,6 +3181,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(a.b) ? c : d
+  1 + a.b ? c : d
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2240,6 +3192,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!a ? b : c
+  1 + a ? b : c
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:1]
@@ -2247,6 +3203,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - Boolean(a) ? b : c
+  1 + a ? b : c
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2254,6 +3214,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a, b)
+  1 + !(a, b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2261,6 +3225,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean((a, b))
+  1 + !(a, b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2268,6 +3236,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a = b)
+  1 + !(a = b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2275,6 +3247,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(!(a += b))
+  1 + !(a += b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -2282,6 +3258,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !(!!(a += b))
+  1 + !((a += b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2289,6 +3269,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(a -= b)
+  1 + !(a -= b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2296,6 +3280,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean((a -= b))
+  1 + !(a -= b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -2303,6 +3291,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !(Boolean(a -= b))
+  1 + !((a -= b))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2310,6 +3302,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a || b)
+  1 + !(a || b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2317,6 +3313,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(a || b)
+  1 + !(a || b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2324,6 +3324,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a && b)
+  1 + !(a && b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2331,6 +3335,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(a && b)
+  1 + !(a && b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2338,6 +3346,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a != b)
+  1 + !(a != b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2345,6 +3357,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a === b)
+  1 + !(a === b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:10]
@@ -2352,6 +3368,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - var x = !Boolean(a > b)
+  1 + var x = !(a > b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2359,6 +3379,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a - b)
+  1 + !(a - b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2366,6 +3390,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(a ** b)
+  1 + !(a ** b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2373,6 +3401,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(a ** b)
+  1 + !(a ** b)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:23]
@@ -2380,6 +3412,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - async function f() { !!!(await a) }
+  1 + async function f() { !(await a) }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:23]
@@ -2387,6 +3423,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - async function f() { !Boolean(await a) }
+  1 + async function f() { !await a }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2394,6 +3434,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!!a
+  1 + !!a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -2401,6 +3445,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!!a
+  1 + !!a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2408,6 +3456,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(!(!a))
+  1 + !(!a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:4]
@@ -2415,6 +3467,10 @@ source: crates/oxc_linter/src/tester.rs
    ·    ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(!(!a))
+  1 + !!(a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2422,6 +3478,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(!a)
+  1 + !!a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2429,6 +3489,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean((!a))
+  1 + !!a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2436,6 +3500,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(!(a))
+  1 + !!(a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -2443,6 +3511,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !(Boolean(!a))
+  1 + !(!a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2450,6 +3522,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!+a
+  1 + !+a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2457,6 +3533,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(+a)
+  1 + !(+a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2464,6 +3544,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!(!+a)
+  1 + !+a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:3]
@@ -2471,6 +3555,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !(!!+a)
+  1 + !(+a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2478,6 +3566,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean((-a))
+  1 + !-a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2485,6 +3577,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(-(a))
+  1 + !-(a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2492,6 +3588,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(--a)
+  1 + !(--a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2499,6 +3599,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(a++)
+  1 + !a++
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2506,6 +3610,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!f(a)
+  1 + !f(a)
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2513,6 +3621,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!(f(a))
+  1 + !(f(a))
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2520,6 +3632,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - !!!a
+  1 + !a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:2]
@@ -2527,6 +3643,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - !Boolean(a)
+  1 + !a
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2534,6 +3654,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) || !!(c, d)) {}
+  1 + if ((a, b) || !!(c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:17]
@@ -2541,6 +3665,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) || !!(c, d)) {}
+  1 + if (!!(a, b) || (c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2548,6 +3676,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) || Boolean((c, d))) {}
+  1 + if (a, b || Boolean((c, d))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2555,6 +3687,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) || Boolean((c, d))) {}
+  1 + if (Boolean((a, b)) || c, d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -2562,6 +3698,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) || (!!((c, d)))) {}
+  1 + if ((((a, b))) || (!!((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -2569,6 +3709,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) || (!!((c, d)))) {}
+  1 + if ((!!((a, b))) || (((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2576,6 +3720,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) && !!(c, d)) {}
+  1 + if ((a, b) && !!(c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:17]
@@ -2583,6 +3731,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) && !!(c, d)) {}
+  1 + if (!!(a, b) && (c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2590,6 +3742,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) && Boolean((c, d))) {}
+  1 + if (a, b && Boolean((c, d))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2597,6 +3753,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) && Boolean((c, d))) {}
+  1 + if (Boolean((a, b)) && c, d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -2604,6 +3764,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) && (!!((c, d)))) {}
+  1 + if ((((a, b))) && (!!((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -2611,6 +3775,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) && (!!((c, d)))) {}
+  1 + if ((!!((a, b))) && (((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2618,6 +3786,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a = b) || !!(c = d)) {}
+  1 + if ((a = b) || !!(c = d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:18]
@@ -2625,6 +3797,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a = b) || !!(c = d)) {}
+  1 + if (!!(a = b) || (c = d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2632,6 +3808,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a /= b) || Boolean(c /= d)) {}
+  1 + if (a /= b || Boolean(c /= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2639,6 +3819,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a /= b) || Boolean(c /= d)) {}
+  1 + if (Boolean(a /= b) || c /= d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2646,6 +3830,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a >>= b) && !!(c >>= d)) {}
+  1 + if ((a >>= b) && !!(c >>= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -2653,6 +3841,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a >>= b) && !!(c >>= d)) {}
+  1 + if (!!(a >>= b) && (c >>= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2660,6 +3852,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a **= b) && Boolean(c **= d)) {}
+  1 + if (a **= b && Boolean(c **= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -2667,6 +3863,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a **= b) && Boolean(c **= d)) {}
+  1 + if (Boolean(a **= b) && c **= d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2674,6 +3874,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) || !!(d ? e : f)) {}
+  1 + if ((a ? b : c) || !!(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -2681,6 +3885,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) || !!(d ? e : f)) {}
+  1 + if (!!(a ? b : c) || (d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2688,6 +3896,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) || Boolean(d ? e : f)) {}
+  1 + if (a ? b : c || Boolean(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:27]
@@ -2695,6 +3907,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) || Boolean(d ? e : f)) {}
+  1 + if (Boolean(a ? b : c) || d ? e : f) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2702,6 +3918,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) && !!(d ? e : f)) {}
+  1 + if ((a ? b : c) && !!(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -2709,6 +3929,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) && !!(d ? e : f)) {}
+  1 + if (!!(a ? b : c) && (d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2716,6 +3940,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) && Boolean(d ? e : f)) {}
+  1 + if (a ? b : c && Boolean(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:27]
@@ -2723,6 +3951,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) && Boolean(d ? e : f)) {}
+  1 + if (Boolean(a ? b : c) && d ? e : f) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2730,6 +3962,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) || !!(c || d)) {}
+  1 + if ((a || b) || !!(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -2737,6 +3973,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) || !!(c || d)) {}
+  1 + if (!!(a || b) || (c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2744,6 +3984,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) || Boolean(c || d)) {}
+  1 + if (a || b || Boolean(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2751,6 +3995,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) || Boolean(c || d)) {}
+  1 + if (Boolean(a || b) || c || d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2758,6 +4006,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) && !!(c || d)) {}
+  1 + if ((a || b) && !!(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -2765,6 +4017,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) && !!(c || d)) {}
+  1 + if (!!(a || b) && (c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2772,6 +4028,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) && Boolean(c || d)) {}
+  1 + if (a || b && Boolean(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2779,6 +4039,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) && Boolean(c || d)) {}
+  1 + if (Boolean(a || b) && c || d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2786,6 +4050,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) || !!(c && d)) {}
+  1 + if ((a && b) || !!(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -2793,6 +4061,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) || !!(c && d)) {}
+  1 + if (!!(a && b) || (c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2800,6 +4072,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) || Boolean(c && d)) {}
+  1 + if (a && b || Boolean(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2807,6 +4083,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) || Boolean(c && d)) {}
+  1 + if (Boolean(a && b) || c && d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2814,6 +4094,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) && !!(c && d)) {}
+  1 + if ((a && b) && !!(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -2821,6 +4105,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) && !!(c && d)) {}
+  1 + if (!!(a && b) && (c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2828,6 +4116,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) && Boolean(c && d)) {}
+  1 + if (a && b && Boolean(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2835,6 +4127,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) && Boolean(c && d)) {}
+  1 + if (Boolean(a && b) && c && d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2842,6 +4138,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a !== b) || !!(c !== d)) {}
+  1 + if ((a !== b) || !!(c !== d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -2849,6 +4149,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a !== b) || !!(c !== d)) {}
+  1 + if (!!(a !== b) || (c !== d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2856,6 +4160,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a != b) || Boolean(c != d)) {}
+  1 + if (a != b || Boolean(c != d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -2863,6 +4171,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a != b) || Boolean(c != d)) {}
+  1 + if (Boolean(a != b) || c != d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2870,6 +4182,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a === b) && !!(c === d)) {}
+  1 + if ((a === b) && !!(c === d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -2877,6 +4193,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a === b) && !!(c === d)) {}
+  1 + if (!!(a === b) && (c === d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2884,6 +4204,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a > b) || !!(c < d)) {}
+  1 + if ((a > b) || !!(c < d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:18]
@@ -2891,6 +4215,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a > b) || !!(c < d)) {}
+  1 + if (!!(a > b) || (c < d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2898,6 +4226,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(!a) || Boolean(+b)) {}
+  1 + if (!a || Boolean(+b)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -2905,6 +4237,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(!a) || Boolean(+b)) {}
+  1 + if (Boolean(!a) || +b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2912,6 +4248,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!f(a) && !!b.c) {}
+  1 + if (f(a) && !!b.c) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:15]
@@ -2919,6 +4259,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!f(a) && !!b.c) {}
+  1 + if (!!f(a) && b.c) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2926,6 +4270,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a) || !!b) {}
+  1 + if (a || !!b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -2933,6 +4281,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a) || !!b) {}
+  1 + if (Boolean(a) || b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2940,6 +4292,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!a && Boolean(b)) {}
+  1 + if (a && Boolean(b)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:12]
@@ -2947,6 +4303,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!a && Boolean(b)) {}
+  1 + if (!!a && b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -2954,6 +4314,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!a) || (Boolean(b))) {}
+  1 + if ((a) || (Boolean(b))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:15]
@@ -2961,6 +4325,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!a) || (Boolean(b))) {}
+  1 + if ((!!a) || (b)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2968,6 +4336,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ?? b) || c) {}
+  1 + if (a ?? b || c) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2975,6 +4347,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean?.(foo)) {};
+  1 + if (foo) {};
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2982,6 +4358,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean?.(a ?? b) || c) {}
+  1 + if (a ?? b || c) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -2989,6 +4369,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!Boolean(a as any)) { }
+  1 + if (!(a as any)) { }
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -2996,6 +4380,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) || !!(c, d)) {}
+  1 + if ((a, b) || !!(c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:17]
@@ -3003,6 +4391,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) || !!(c, d)) {}
+  1 + if (!!(a, b) || (c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3010,6 +4402,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) || Boolean((c, d))) {}
+  1 + if (a, b || Boolean((c, d))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3017,6 +4413,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) || Boolean((c, d))) {}
+  1 + if (Boolean((a, b)) || c, d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -3024,6 +4424,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) || (!!((c, d)))) {}
+  1 + if ((((a, b))) || (!!((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -3031,6 +4435,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) || (!!((c, d)))) {}
+  1 + if ((!!((a, b))) || (((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3038,6 +4446,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) && !!(c, d)) {}
+  1 + if ((a, b) && !!(c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:17]
@@ -3045,6 +4457,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a, b) && !!(c, d)) {}
+  1 + if (!!(a, b) && (c, d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3052,6 +4468,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) && Boolean((c, d))) {}
+  1 + if (a, b && Boolean((c, d))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3059,6 +4479,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean((a, b)) && Boolean((c, d))) {}
+  1 + if (Boolean((a, b)) && c, d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -3066,6 +4490,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) && (!!((c, d)))) {}
+  1 + if ((((a, b))) && (!!((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -3073,6 +4501,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!((a, b))) && (!!((c, d)))) {}
+  1 + if ((!!((a, b))) && (((c, d)))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3080,6 +4512,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a = b) || !!(c = d)) {}
+  1 + if ((a = b) || !!(c = d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:18]
@@ -3087,6 +4523,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a = b) || !!(c = d)) {}
+  1 + if (!!(a = b) || (c = d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3094,6 +4534,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a /= b) || Boolean(c /= d)) {}
+  1 + if (a /= b || Boolean(c /= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3101,6 +4545,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a /= b) || Boolean(c /= d)) {}
+  1 + if (Boolean(a /= b) || c /= d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3108,6 +4556,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a >>= b) && !!(c >>= d)) {}
+  1 + if ((a >>= b) && !!(c >>= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -3115,6 +4567,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a >>= b) && !!(c >>= d)) {}
+  1 + if (!!(a >>= b) && (c >>= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3122,6 +4578,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a **= b) && Boolean(c **= d)) {}
+  1 + if (a **= b && Boolean(c **= d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:25]
@@ -3129,6 +4589,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a **= b) && Boolean(c **= d)) {}
+  1 + if (Boolean(a **= b) && c **= d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3136,6 +4600,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) || !!(d ? e : f)) {}
+  1 + if ((a ? b : c) || !!(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -3143,6 +4611,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) || !!(d ? e : f)) {}
+  1 + if (!!(a ? b : c) || (d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3150,6 +4622,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) || Boolean(d ? e : f)) {}
+  1 + if (a ? b : c || Boolean(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:27]
@@ -3157,6 +4633,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) || Boolean(d ? e : f)) {}
+  1 + if (Boolean(a ? b : c) || d ? e : f) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3164,6 +4644,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) && !!(d ? e : f)) {}
+  1 + if ((a ? b : c) && !!(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:22]
@@ -3171,6 +4655,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a ? b : c) && !!(d ? e : f)) {}
+  1 + if (!!(a ? b : c) && (d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3178,6 +4666,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) && Boolean(d ? e : f)) {}
+  1 + if (a ? b : c && Boolean(d ? e : f)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:27]
@@ -3185,6 +4677,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ? b : c) && Boolean(d ? e : f)) {}
+  1 + if (Boolean(a ? b : c) && d ? e : f) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3192,6 +4688,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) || !!(c || d)) {}
+  1 + if ((a || b) || !!(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -3199,6 +4699,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) || !!(c || d)) {}
+  1 + if (!!(a || b) || (c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3206,6 +4710,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) || Boolean(c || d)) {}
+  1 + if (a || b || Boolean(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3213,6 +4721,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) || Boolean(c || d)) {}
+  1 + if (Boolean(a || b) || c || d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3220,6 +4732,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) && !!(c || d)) {}
+  1 + if ((a || b) && !!(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -3227,6 +4743,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a || b) && !!(c || d)) {}
+  1 + if (!!(a || b) && (c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3234,6 +4754,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) && Boolean(c || d)) {}
+  1 + if (a || b && Boolean(c || d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3241,6 +4765,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a || b) && Boolean(c || d)) {}
+  1 + if (Boolean(a || b) && c || d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3248,6 +4776,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) || !!(c && d)) {}
+  1 + if ((a && b) || !!(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -3255,6 +4787,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) || !!(c && d)) {}
+  1 + if (!!(a && b) || (c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3262,6 +4798,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) || Boolean(c && d)) {}
+  1 + if (a && b || Boolean(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3269,6 +4809,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) || Boolean(c && d)) {}
+  1 + if (Boolean(a && b) || c && d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3276,6 +4820,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) && !!(c && d)) {}
+  1 + if ((a && b) && !!(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -3283,6 +4831,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a && b) && !!(c && d)) {}
+  1 + if (!!(a && b) && (c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3290,6 +4842,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) && Boolean(c && d)) {}
+  1 + if (a && b && Boolean(c && d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3297,6 +4853,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a && b) && Boolean(c && d)) {}
+  1 + if (Boolean(a && b) && c && d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3304,6 +4864,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a !== b) || !!(c !== d)) {}
+  1 + if ((a !== b) || !!(c !== d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -3311,6 +4875,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a !== b) || !!(c !== d)) {}
+  1 + if (!!(a !== b) || (c !== d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3318,6 +4886,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a != b) || Boolean(c != d)) {}
+  1 + if (a != b || Boolean(c != d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:24]
@@ -3325,6 +4897,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a != b) || Boolean(c != d)) {}
+  1 + if (Boolean(a != b) || c != d) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3332,6 +4908,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a === b) && !!(c === d)) {}
+  1 + if ((a === b) && !!(c === d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -3339,6 +4919,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a === b) && !!(c === d)) {}
+  1 + if (!!(a === b) && (c === d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3346,6 +4930,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a > b) || !!(c < d)) {}
+  1 + if ((a > b) || !!(c < d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:18]
@@ -3353,6 +4941,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─────────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!(a > b) || !!(c < d)) {}
+  1 + if (!!(a > b) || (c < d)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3360,6 +4952,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(!a) || Boolean(+b)) {}
+  1 + if (!a || Boolean(+b)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:20]
@@ -3367,6 +4963,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(!a) || Boolean(+b)) {}
+  1 + if (Boolean(!a) || +b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3374,6 +4974,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!f(a) && !!b.c) {}
+  1 + if (f(a) && !!b.c) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:15]
@@ -3381,6 +4985,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!f(a) && !!b.c) {}
+  1 + if (!!f(a) && b.c) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3388,6 +4996,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a) || !!b) {}
+  1 + if (a || !!b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:19]
@@ -3395,6 +5007,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a) || !!b) {}
+  1 + if (Boolean(a) || b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3402,6 +5018,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!a && Boolean(b)) {}
+  1 + if (a && Boolean(b)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:12]
@@ -3409,6 +5029,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (!!a && Boolean(b)) {}
+  1 + if (!!a && b) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:6]
@@ -3416,6 +5040,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───
    ╰────
   help: Remove the double negation as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!a) || (Boolean(b))) {}
+  1 + if ((a) || (Boolean(b))) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:15]
@@ -3423,6 +5051,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if ((!!a) || (Boolean(b))) {}
+  1 + if ((!!a) || (b)) {}
+    ╰╴
 
   ⚠ eslint(no-extra-boolean-cast): Redundant Boolean call
    ╭─[no_extra_boolean_cast.tsx:1:5]
@@ -3430,3 +5062,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────────────
    ╰────
   help: Remove the Boolean call as it will already be coerced to a boolean
+    ╭╴
+  1 - if (Boolean(a ?? b) || c) {}
+  1 + if (a ?? b || c) {}
+    ╰╴

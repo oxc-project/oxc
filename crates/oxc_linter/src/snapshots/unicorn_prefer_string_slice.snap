@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr()
+  1 + foo.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:6]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo?.substr()
+  1 + foo?.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:10]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.bar?.substring()
+  1 + foo.bar?.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:11]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo?.[0]?.substring()
+  1 + foo?.[0]?.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:9]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.bar.substr?.()
+  1 + foo.bar.slice?.()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:10]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.bar?.substring?.()
+  1 + foo.bar?.slice?.()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:15]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.bar?.baz?.substr()
+  1 + foo.bar?.baz?.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:14]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.bar?.baz.substring()
+  1 + foo.bar?.baz.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:14]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.bar.baz?.substr()
+  1 + foo.bar.baz?.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr()
+  1 + "foo".slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(1)
+  1 + "foo".slice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(1, 2)
+  1 + "foo".slice(1, 2)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(bar.length, Math.min(baz, 100))
+  1 + "foo".slice(bar.length, Math.min(baz, 100))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(1, length)
+  1 + "foo".slice(1, length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(1, "abc".length)
+  1 + "foo".slice(1, "abc".length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr("1", 2)
+  1 + "foo".slice("1", 2)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(0, -1)
+  1 + "foo".slice(0, -1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(0, "foo".length)
+  1 + "foo".slice(0, "foo".length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(1, length)
+  1 + "foo".slice(1, length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr(start)
+  1 + foo.slice(start)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(1)
+  1 + "foo".slice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr(start, length)
+  1 + foo.slice(start, length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "foo".substr(1, 2)
+  1 + "foo".slice(1, 2)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr(1, 2, 3)
+  1 + foo.slice(1, 2, 3)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:10]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - "Sample".substr(0, "Sample".lastIndexOf("/"))
+  1 + "Sample".slice(0, "Sample".lastIndexOf("/"))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring()
+  1 + foo.slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring()
+  1 + "foo".slice()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(1)
+  1 + "foo".slice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(1, 2)
+  1 + "foo".slice(1, 2)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(2, 1)
+  1 + "foo".slice(2, 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(-1, -5)
+  1 + "foo".slice(-1, -5)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(-1, 2)
+  1 + "foo".slice(-1, 2)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(length)
+  1 + "foo".slice(length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:10]
@@ -238,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foobar".substring("foo".length)
+  1 + "foobar".slice("foo".length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -245,6 +381,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(0, length)
+  1 + "foo".slice(0, length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(length, 0)
+  1 + "foo".slice(length, 0)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring(start)
+  1 + foo.slice(start)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -266,6 +414,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(1)
+  1 + "foo".slice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -273,6 +425,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring(start, end)
+  1 + foo.slice(start, end)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:7]
@@ -280,6 +436,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - "foo".substring(1, 3)
+  1 + "foo".slice(1, 3)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -287,6 +447,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring(1, 2, 3)
+  1 + foo.slice(1, 2, 3)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -294,6 +458,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr(0, ...bar)
+  1 + foo.slice(0, ...bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -301,6 +469,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr(...bar)
+  1 + foo.slice(...bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -308,6 +480,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr(0, (100, 1))
+  1 + foo.slice(0, (100, 1))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -315,6 +491,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr(0, 1, extraArgument)
+  1 + foo.slice(0, 1, extraArgument)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -322,6 +502,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──────
    ╰────
   help: Replace `substr` with `slice`.
+    ╭╴
+  1 - foo.substr((0, bar.length), (0, baz.length))
+  1 + foo.slice((0, bar.length), (0, baz.length))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -329,6 +513,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring((10, 1), 0)
+  1 + foo.slice((10, 1), 0)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -336,6 +524,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring(0, (10, 1))
+  1 + foo.slice(0, (10, 1))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -343,6 +535,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring(0, await 1)
+  1 + foo.slice(0, await 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substring()
    ╭─[prefer_string_slice.tsx:1:5]
@@ -350,3 +546,7 @@ source: crates/oxc_linter/src/tester.rs
    ·     ─────────
    ╰────
   help: Replace `substring` with `slice`.
+    ╭╴
+  1 - foo.substring((10, bar))
+  1 + foo.slice((10, bar))
+    ╰╴

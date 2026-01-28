@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────
    ╰────
   help: Replace `.innerText` with `.textContent`.
+    ╭╴
+  1 - node.innerText;
+  1 + node.textContent;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
    ╭─[prefer_dom_node_text_content.tsx:1:7]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ─────────
    ╰────
   help: Replace `.innerText` with `.textContent`.
+    ╭╴
+  1 - node?.innerText;
+  1 + node?.textContent;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
    ╭─[prefer_dom_node_text_content.tsx:1:6]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────────
    ╰────
   help: Replace `.innerText` with `.textContent`.
+    ╭╴
+  1 - node.innerText = 'foo';
+  1 + node.textContent = 'foo';
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
    ╭─[prefer_dom_node_text_content.tsx:1:11]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────
    ╰────
   help: Replace `.innerText` with `.textContent`.
+    ╭╴
+  1 - innerText.innerText;
+  1 + innerText.textContent;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
    ╭─[prefer_dom_node_text_content.tsx:1:8]

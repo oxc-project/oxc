@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[a]]
+  1 + const array = [a]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:17]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {...{a}}
+  1 + const object = ({ a })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[a])
+  1 + foo(a)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[a])
+  1 + new Foo(a)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[a,]]
+  1 + const array = [a,]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:17]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {...{a,}}
+  1 + const object = ({ a })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[a,])
+  1 + foo(a)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[a,])
+  1 + new Foo(a)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[a,],]
+  1 + const array = [a,]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:17]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {...{a,},}
+  1 + const object = ({ a })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[a,],)
+  1 + foo(a,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[a,],)
+  1 + new Foo(a,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...(( [a] ))]
+  1 + const array = [a]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:17]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {...(( {a} ))}
+  1 + const object = ({ a })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...(( [a] )))
+  1 + foo(a)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...(( [a] )))
+  1 + new Foo(a)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[]]
+  1 + const array = []
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:17]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {...{}}
+  1 + const object = ({})
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[])
+  1 + foo()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[])
+  1 + new Foo()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[,]]
+  1 + const array = [,]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[,])
+  1 + foo(,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[,])
+  1 + new Foo(,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[,,]]
+  1 + const array = [,,]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[,,])
+  1 + foo(,,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[,,])
+  1 + new Foo(,,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[a, , b,]]
+  1 + const array = [a, , b,]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[a, , b,])
+  1 + foo(a, , b)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[a, , b,])
+  1 + new Foo(a, , b)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = [...[a, , b,],]
+  1 + const array = [a, , b,]
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[a, , b,],)
+  1 + foo(a, , b,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[a, , b,],)
+  1 + new Foo(a, , b,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[,, ,(( a )), ,,(0, b), ,,])
+  1 + foo(,, ,(( a )), ,,(0, b), ,,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:19]
@@ -245,6 +377,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {a, ...{a, b}}
+  1 + const object = ({
+  2 + 	a,
+  3 + 	a,
+  4 + 	b
+  5 + })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:8]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(a, ...[a, b])
+  1 + foo(a, a, b)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:12]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(a, ...[a, b])
+  1 + new Foo(a, a, b)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:16]
@@ -273,6 +421,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {...{a, b}, b,}
+  1 + const object = ({
+  2 + 	a,
+  3 + 	b,
+  4 + 	b
+  5 + })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:5]
@@ -280,6 +436,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(...[a, b], b,)
+  1 + foo(a, b, b,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -287,6 +447,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(...[a, b], b,)
+  1 + new Foo(a, b, b,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:19]
@@ -301,6 +465,15 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = {a, ...{a, b}, b,}
+  1 + const object = ({
+  2 + 	a,
+  3 + 	a,
+  4 + 	b,
+  5 + 	b
+  6 + })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:8]
@@ -308,6 +481,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - foo(a, ...[a, b], b,)
+  1 + foo(a, a, b, b,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:12]
@@ -315,6 +492,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Foo(a, ...[a, b], b,)
+  1 + new Foo(a, a, b, b,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:8]
@@ -322,6 +503,13 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - ({a:1, ...{a: 2}})
+  1 + (({
+  2 + 	a: 1,
+  3 + 	a: 2
+  4 + }))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:3]
@@ -329,6 +517,13 @@ source: crates/oxc_linter/src/tester.rs
    ·   ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - ({...{a:1}, ...{a: 2}})
+  1 + (({
+  2 + 	a: 1,
+  3 + 	...{ a: 2 }
+  4 + }))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:13]
@@ -336,6 +531,13 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - ({...{a:1}, ...{a: 2}})
+  1 + (({
+  2 + 	...{ a: 1 },
+  3 + 	a: 2
+  4 + }))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:10]
@@ -343,6 +545,13 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - ({[a]:1, ...{[a]: 2}})
+  1 + (({
+  2 + 	[a]: 1,
+  3 + 	[a]: 2
+  4 + }))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:13]
@@ -350,6 +559,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - Promise.all(...[...iterable])
+  1 + Promise.all(...iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:9]
@@ -357,6 +570,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  1 - new Map(...[...iterable])
+  1 + new Map(...iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:22]
@@ -364,6 +581,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const map = new Map([...iterable])
+  1 + const map = new Map(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `WeakMap` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:30]
@@ -371,6 +592,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const weakMap = new WeakMap([...iterable])
+  1 + const weakMap = new WeakMap(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Set` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:22]
@@ -378,6 +603,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const set = new Set([...iterable])
+  1 + const set = new Set(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `WeakSet` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:30]
@@ -385,6 +614,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const weakSet = new WeakSet([...iterable])
+  1 + const weakSet = new WeakSet(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `BigUint64Array` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:35]
@@ -392,6 +625,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const typed = new BigUint64Array([...iterable], byteOffset, length)
+  1 + const typed = new BigUint64Array(iterable, byteOffset, length)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `BigUint64Array` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:35]
@@ -399,6 +636,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                   ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const typed = new BigUint64Array([...iterable], ...args)
+  1 + const typed = new BigUint64Array(iterable, ...args)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.all` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:30]
@@ -406,6 +647,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const promise = Promise.all([...iterable])
+  1 + const promise = Promise.all(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.allSettled` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:37]
@@ -413,6 +658,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const promise = Promise.allSettled([...iterable])
+  1 + const promise = Promise.allSettled(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.any` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:30]
@@ -420,6 +669,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const promise = Promise.any([...iterable])
+  1 + const promise = Promise.any(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Promise.race` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:31]
@@ -427,6 +680,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const promise = Promise.race([...iterable])
+  1 + const promise = Promise.race(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Array.from` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:27]
@@ -434,6 +691,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const array = Array.from([...iterable])
+  1 + const array = Array.from(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `BigUint64Array.from` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:36]
@@ -441,6 +702,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const typed = BigUint64Array.from([...iterable])
+  1 + const typed = BigUint64Array.from(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Object.fromEntries` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:36]
@@ -448,6 +713,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const object = Object.fromEntries([...iterable])
+  1 + const object = Object.fromEntries(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:20]
@@ -469,6 +738,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const map = new Map([...iterable,])
+  1 + const map = new Map(iterable)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:20]
@@ -483,6 +756,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const map = new Map([...iterable,],)
+  1 + const map = new Map(iterable,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:22]
@@ -490,6 +767,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const map = new Map([...(( iterable ))])
+  1 + const map = new Map((( iterable )))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:20]
@@ -504,6 +785,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───
    ╰────
   help: Consider removing the spread operator.
+    ╭╴
+  1 - const map = new Map((( [...(( iterable ))] )))
+  1 + const map = new Map((( iterable )))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:23]
@@ -525,6 +810,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.concat` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.concat(bar)]
+  1 + foo.concat(bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -532,6 +821,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.copyWithin` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.copyWithin(-2)]
+  1 + foo.copyWithin(-2)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -539,6 +832,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.filter` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.filter(bar)]
+  1 + foo.filter(bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -546,6 +843,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.flat` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.flat()]
+  1 + foo.flat()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -553,6 +854,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.flatMap` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.flatMap(bar)]
+  1 + foo.flatMap(bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -560,6 +865,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.map` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.map(bar)]
+  1 + foo.map(bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -567,6 +876,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.slice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.slice(1)]
+  1 + foo.slice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -574,6 +887,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.splice` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.splice(1)]
+  1 + foo.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -581,6 +898,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.toReversed` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.toReversed()]
+  1 + foo.toReversed()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -588,6 +909,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.toSorted` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.toSorted()]
+  1 + foo.toSorted()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -595,6 +920,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.toSpliced` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.toSpliced(0, 1)]
+  1 + foo.toSpliced(0, 1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -602,6 +931,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.with` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.with(0, bar)]
+  1 + foo.with(0, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -609,6 +942,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo.split` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...foo.split("|")]
+  1 + foo.split("|")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -616,6 +953,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `new Array(3)` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...new Array(3)]
+  1 + new Array(3).fill()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -623,6 +964,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `Object.keys` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...Object.keys(foo)]
+  1 + Object.keys(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -630,6 +975,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `Object.values` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...Object.values(foo)]
+  1 + Object.values(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -637,6 +986,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `Array.from` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...Array.from(foo)]
+  1 + Array.from(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -644,6 +997,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `Array.of` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...Array.of()]
+  1 + Array.of()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -651,6 +1008,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `Promise.all` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...await Promise.all(foo)]
+  1 + await Promise.all(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -658,6 +1019,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `Promise.allSettled` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...await Promise.allSettled(foo)]
+  1 + await Promise.allSettled(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:19]
@@ -681,6 +1046,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: Pass arguments directly instead of spreading an array.
+    ╭╴
+  3 -             availableAggregates.push(...['p50', 'p75', 'p95', 'p99']);
+  3 +             availableAggregates.push('p50', 'p75', 'p95', 'p99');
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -688,6 +1057,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo ? [1] : [2]` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...(foo ? [1] : [2])]
+  1 + (foo ? [1] : [2])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -696,6 +1069,12 @@ source: crates/oxc_linter/src/tester.rs
  2 │             ? [1]
    ╰────
   help: This expression returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...(foo
+  1 + (foo
+  6 -                 )]
+  6 +                 )
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -703,6 +1082,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `foo ? x.map(x => x) : await Promise.all(foo)` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...(foo ? x.map(x => x) : await Promise.all(foo))]
+  1 + (foo ? x.map(x => x) : await Promise.all(foo))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -710,6 +1093,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `(0, [])` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...((0, []))]
+  1 + ((0, []))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -717,6 +1104,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...arr.reduce((a, b) => a.push(b), [])]
+  1 + arr.reduce((a, b) => a.push(b), [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -724,6 +1115,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...arr.reduce((a, b) => a.push(b), await [])]
+  1 + arr.reduce((a, b) => a.push(b), await [])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -731,6 +1126,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...arr.reduce((a, b) => a.push(b), new Array())]
+  1 + arr.reduce((a, b) => a.push(b), new Array())
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -738,6 +1137,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...arr.reduce((a, b) => a.push(b), new Array(1, 2, 3))]
+  1 + arr.reduce((a, b) => a.push(b), new Array(1, 2, 3))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -745,6 +1148,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...arr.reduce((a, b) => a.push(b), Array.from(iter))]
+  1 + arr.reduce((a, b) => a.push(b), Array.from(iter))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -752,6 +1159,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...arr.reduce((a, b) => a.push(b), foo.map(x => x))]
+  1 + arr.reduce((a, b) => a.push(b), foo.map(x => x))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -759,6 +1170,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `arr.reduce` returns a new array. Spreading it into an array expression to create a new array is redundant.
+    ╭╴
+  1 - [...arr.reduce((a, b) => a.push(b), await Promise.all(promises))]
+  1 + arr.reduce((a, b) => a.push(b), await Promise.all(promises))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:15]
@@ -766,6 +1181,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
    ╰────
   help: `foo ? { a: 1 } : { a: 2 }` returns a new object. Spreading it into an object expression to create a new object is redundant.
+    ╭╴
+  1 - const obj = { ...(foo ? { a: 1 } : { a: 2 }) }
+  1 + const obj = (foo ? { a: 1 } : { a: 2 })
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new object unnecessarily.
    ╭─[no_useless_spread.mjs:1:15]
@@ -773,3 +1192,7 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───
    ╰────
   help: This expression returns a new object. Spreading it into an object expression to create a new object is redundant.
+    ╭╴
+  1 - const obj = { ...(foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 }) }
+  1 + const obj = (foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 })
+    ╰╴

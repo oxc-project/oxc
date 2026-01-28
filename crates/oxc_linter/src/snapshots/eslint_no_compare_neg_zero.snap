@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - x === -0
+  1 + Object.is(x, -0)
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the === operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - -0 === x
+  1 + Object.is(x, -0)
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the == operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - x == -0
+  1 + x == 0
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the == operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - -0 == x
+  1 + 0 == x
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the > operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - x > -0
+  1 + x > 0
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the > operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - -0 > x
+  1 + 0 > x
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the >= operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - x >= -0
+  1 + x >= 0
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the >= operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - -0 >= x
+  1 + 0 >= x
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the < operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - x < -0
+  1 + x < 0
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the < operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - -0 < x
+  1 + 0 < x
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the <= operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - x <= -0
+  1 + x <= 0
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the <= operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - -0 <= x
+  1 + 0 <= x
+    ╰╴
 
   ⚠ eslint(no-compare-neg-zero): Do not use the <= operator to compare against -0.
    ╭─[no_compare_neg_zero.tsx:1:1]
@@ -91,3 +139,7 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+    ╭╴
+  1 - -0n <= x
+  1 + 0n <= x
+    ╰╴

@@ -23,3 +23,4 @@ doctest = false
 cow-utils = { workspace = true }
 miette = { workspace = true }
 percent-encoding = { workspace = true }
+similar = { workspace = true }

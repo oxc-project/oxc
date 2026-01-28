@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - async function foo() { doSomething() }
+  1 + function foo() { doSomething() }
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:2]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ──────────────────────────────────
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - (async function() { doSomething() })
+  1 + (function() { doSomething() })
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - async () => { doSomething() }
+  1 + () => { doSomething() }
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - async () => doSomething()
+  1 + () => doSomething()
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:10]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - ({ async foo() { doSomething() } })
+  1 + ({ foo() { doSomething() } })
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:17]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - class A { async foo() { doSomething() } }
+  1 + class A { foo() { doSomething() } }
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:16]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - (class { async foo() { doSomething() } })
+  1 + (class { foo() { doSomething() } })
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:18]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────────────────
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - (class { async ''() { doSomething() } })
+  1 + (class { ''() { doSomething() } })
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:16]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - async function foo() { async () => { await doSomething() } }
+  1 + function foo() { async () => { await doSomething() } }
+    ╰╴
 
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.mts:1:31]
@@ -70,3 +106,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ─────────────────────────────
    ╰────
   help: Consider removing the 'async' keyword.
+    ╭╴
+  1 - async function foo() { await (async () => { doSomething() }) }
+  1 + async function foo() { await (() => { doSomething() }) }
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Replace `fdescribe` with `describe.only`.
+    ╭╴
+  1 - fdescribe('foo', function () {})
+  1 + describe.only('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `describe.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Replace `xdescribe.each` with `describe.skip.each`.
+    ╭╴
+  1 - xdescribe.each([])('foo', function () {})
+  1 + describe.skip.each([])('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.only` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace `fit` with `it.only`.
+    ╭╴
+  1 - fit('foo', function () {})
+  1 + it.only('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `describe.skip` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Replace `xdescribe` with `describe.skip`.
+    ╭╴
+  1 - xdescribe('foo', function () {})
+  1 + describe.skip('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace `xit` with `it.skip`.
+    ╭╴
+  1 - xit('foo', function () {})
+  1 + it.skip('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `test.skip` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Replace `xtest` with `test.skip`.
+    ╭╴
+  1 - xtest('foo', function () {})
+  1 + test.skip('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Replace `xit.each` with `it.skip.each`.
+    ╭╴
+  1 - xit.each``('foo', function () {})
+  1 + it.skip.each``('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `test.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Replace `xtest.each` with `test.skip.each`.
+    ╭╴
+  1 - xtest.each``('foo', function () {})
+  1 + test.skip.each``('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Replace `xit.each` with `it.skip.each`.
+    ╭╴
+  1 - xit.each([])('foo', function () {})
+  1 + it.skip.each([])('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `test.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Replace `xtest.each` with `test.skip.each`.
+    ╭╴
+  1 - xtest.each([])('foo', function () {})
+  1 + test.skip.each([])('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip` instead.
    ╭─[no_test_prefixes.tsx:3:17]
@@ -79,6 +119,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Replace `xit` with `it.skip`.
+    ╭╴
+  3 -                 xit('foo', function () {})
+  3 +                 it.skip('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip` instead.
    ╭─[no_test_prefixes.tsx:3:17]
@@ -88,6 +132,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Replace `skipThis` with `it.skip`.
+    ╭╴
+  3 -                 skipThis('foo', function () {})
+  3 +                 it.skip('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.only` instead.
    ╭─[no_test_prefixes.tsx:3:17]
@@ -97,6 +145,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Replace `onlyThis` with `it.only`.
+    ╭╴
+  3 -                 onlyThis('foo', function () {})
+  3 +                 it.only('foo', function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `describe.only` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -104,6 +156,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Replace `fdescribe` with `describe.only`.
+    ╭╴
+  1 - fdescribe("foo", function () {})
+  1 + describe.only("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `describe.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -111,6 +167,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
    ╰────
   help: Replace `xdescribe.each` with `describe.skip.each`.
+    ╭╴
+  1 - xdescribe.each([])("foo", function () {})
+  1 + describe.skip.each([])("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.only` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -118,6 +178,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace `fit` with `it.only`.
+    ╭╴
+  1 - fit("foo", function () {})
+  1 + it.only("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `describe.skip` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -125,6 +189,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Replace `xdescribe` with `describe.skip`.
+    ╭╴
+  1 - xdescribe("foo", function () {})
+  1 + describe.skip("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -132,6 +200,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───
    ╰────
   help: Replace `xit` with `it.skip`.
+    ╭╴
+  1 - xit("foo", function () {})
+  1 + it.skip("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `test.skip` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -139,6 +211,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────
    ╰────
   help: Replace `xtest` with `test.skip`.
+    ╭╴
+  1 - xtest("foo", function () {})
+  1 + test.skip("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -146,6 +222,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Replace `xit.each` with `it.skip.each`.
+    ╭╴
+  1 - xit.each``("foo", function () {})
+  1 + it.skip.each``("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `test.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -153,6 +233,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Replace `xtest.each` with `test.skip.each`.
+    ╭╴
+  1 - xtest.each``("foo", function () {})
+  1 + test.skip.each``("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `it.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -160,6 +244,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Replace `xit.each` with `it.skip.each`.
+    ╭╴
+  1 - xit.each([])("foo", function () {})
+  1 + it.skip.each([])("foo", function () {})
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `test.skip.each` instead.
    ╭─[no_test_prefixes.tsx:1:1]
@@ -167,3 +255,7 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────
    ╰────
   help: Replace `xtest.each` with `test.skip.each`.
+    ╭╴
+  1 - xtest.each([])("foo", function () {})
+  1 + test.skip.each([])("foo", function () {})
+    ╰╴

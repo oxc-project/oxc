@@ -35,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────────────
    ╰────
   help: "prefer using Jest's own API"
+    ╭╴
+  1 - jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000;
+  1 + jest.setTimeout(5000);
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
    ╭─[no_jasmine_globals.tsx:1:9]
@@ -63,6 +67,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───
    ╰────
   help: "prefer use Jest own API `expect.any`"
+    ╭╴
+  1 - jasmine.any()
+  1 + expect.any()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `anything`"
    ╭─[no_jasmine_globals.tsx:1:9]
@@ -70,6 +78,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────
    ╰────
   help: "prefer use Jest own API `expect.anything`"
+    ╭╴
+  1 - jasmine.anything()
+  1 + expect.anything()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `arrayContaining`"
    ╭─[no_jasmine_globals.tsx:1:9]
@@ -77,6 +89,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────
    ╰────
   help: "prefer use Jest own API `expect.arrayContaining`"
+    ╭╴
+  1 - jasmine.arrayContaining()
+  1 + expect.arrayContaining()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `objectContaining`"
    ╭─[no_jasmine_globals.tsx:1:9]
@@ -84,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────
    ╰────
   help: "prefer use Jest own API `expect.objectContaining`"
+    ╭╴
+  1 - jasmine.objectContaining()
+  1 + expect.objectContaining()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of `stringMatching`"
    ╭─[no_jasmine_globals.tsx:1:9]
@@ -91,6 +111,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
    ╰────
   help: "prefer use Jest own API `expect.stringMatching`"
+    ╭╴
+  1 - jasmine.stringMatching()
+  1 + expect.stringMatching()
+    ╰╴
 
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of jasmine global"
    ╭─[no_jasmine_globals.tsx:1:9]

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = x === 2 ? true : false;
+  1 + var a = x === 2;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = (x === 2) ? true : false;
+  1 + var a = !!((x === 2));
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = x >= 2 ? true : false;
+  1 + var a = x >= 2;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = x ? true : false;
+  1 + var a = !!x;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = x === 1 ? false : true;
+  1 + var a = x !== 1;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = x != 1 ? false : true;
+  1 + var a = x == 1;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = foo() ? false : true;
+  1 + var a = !foo();
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = !foo() ? false : true;
+  1 + var a = !!foo();
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = foo + bar ? false : true;
+  1 + var a = !(foo + bar);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = x instanceof foo ? false : true;
+  1 + var a = !(x instanceof foo);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = foo ? false : false;
+  1 + var a = false;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = foo() ? false : false;
+  1 + var a = false;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = x instanceof foo ? true : false;
+  1 + var a = x instanceof foo;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - var a = !foo ? true : false;
+  1 + var a = !foo;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:4:33]
@@ -107,6 +163,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  4 - 			                var result = value ? value : canSet ? 'unset' : 'can not set'
+  4 + 			                var result = value || (canSet ? 'unset' : 'can not set')
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:1]
@@ -114,6 +174,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - foo ? foo : (bar ? baz : qux)
+  1 + foo || (bar ? baz : qux)
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:18]
@@ -121,6 +185,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─────────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - function* fn() { foo ? foo : yield bar }
+  1 + function* fn() { foo || (yield bar) }
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -128,6 +196,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = foo ? foo : 'No';
+  1 + var a = foo || 'No';
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -135,6 +207,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────────────────────────────────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = ((foo)) ? (((((foo))))) : ((((((((((((((bar))))))))))))));
+  1 + var a = ((foo)) || ((((((((((((((bar))))))))))))));
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -142,6 +218,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = b ? b : c => c;
+  1 + var a = b || (c => c);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -149,6 +229,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = b ? b : c = 0;
+  1 + var a = b || (c = 0);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -156,6 +240,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = b ? b : (c => c);
+  1 + var a = b || (c => c);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -163,6 +251,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = b ? b : (c = 0);
+  1 + var a = b || (c = 0);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -170,6 +262,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = b ? b : (c) => (c);
+  1 + var a = b || ((c) => (c));
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -177,6 +273,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = b ? b : c, d; // this is ((b ? b : c), (d))
+  1 + var a = b || c, d; // this is ((b ? b : c), (d))
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -184,6 +284,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = b ? b : (c, d);
+  1 + var a = b || (c, d);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:3]
@@ -191,6 +295,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ─────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - f(x ? x : 1);
+  1 + f(x || 1);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:1]
@@ -198,6 +306,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - x ? x : 1;
+  1 + x || 1;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -205,6 +317,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ───────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = foo ? foo : bar;
+  1 + var a = foo || bar;
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:9]
@@ -212,6 +328,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - var a = foo ? foo : a ?? b;
+  1 + var a = foo || (a ?? b);
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of boolean literals in conditional expression
    ╭─[no_unneeded_ternary.tsx:1:1]
@@ -219,6 +339,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Remove this ternary operator
+    ╭╴
+  1 - foo as any ? false : true
+  1 + !(foo as any)
+    ╰╴
 
   ⚠ eslint(no-unneeded-ternary): Unnecessary use of conditional expression for default assignment
    ╭─[no_unneeded_ternary.tsx:1:1]
@@ -226,3 +350,7 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Remove this ternary operator and use the variable directly
+    ╭╴
+  1 - foo ? foo : bar as any
+  1 + foo || (bar as any)
+    ╰╴

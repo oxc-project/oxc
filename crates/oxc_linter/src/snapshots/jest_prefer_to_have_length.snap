@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────
    ╰────
   help: Replace `expect(files["length"]).toBe` with `expect(files).toHaveLength`.
+    ╭╴
+  1 - expect(files["length"]).toBe(1);
+  1 + expect(files).toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:25]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────
    ╰────
   help: Replace `expect(files["length"]).toBe` with `expect(files).toHaveLength`.
+    ╭╴
+  1 - expect(files["length"]).toBe(1,);
+  1 + expect(files).toHaveLength(1,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:32]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ────
    ╰────
   help: Replace `expect(files["length"])["not"].toBe` with `expect(files)["not"].toHaveLength`.
+    ╭╴
+  1 - expect(files["length"])["not"].toBe(1);
+  1 + expect(files)["not"].toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:25]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────
    ╰────
   help: Replace `expect(files["length"])["toBe"]` with `expect(files).toHaveLength`.
+    ╭╴
+  1 - expect(files["length"])["toBe"](1);
+  1 + expect(files).toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:29]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────
    ╰────
   help: Replace `expect(files["length"]).not["toBe"]` with `expect(files).not.toHaveLength`.
+    ╭╴
+  1 - expect(files["length"]).not["toBe"](1);
+  1 + expect(files).not.toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:32]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ──────
    ╰────
   help: Replace `expect(files["length"])["not"]["toBe"]` with `expect(files)["not"].toHaveLength`.
+    ╭╴
+  1 - expect(files["length"])["not"]["toBe"](1);
+  1 + expect(files)["not"].toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:22]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────
    ╰────
   help: Replace `expect(files.length).toBe` with `expect(files).toHaveLength`.
+    ╭╴
+  1 - expect(files.length).toBe(1);
+  1 + expect(files).toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:22]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ───────
    ╰────
   help: Replace `expect(files.length).toEqual` with `expect(files).toHaveLength`.
+    ╭╴
+  1 - expect(files.length).toEqual(1);
+  1 + expect(files).toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:22]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────
    ╰────
   help: Replace `expect(files.length).toStrictEqual` with `expect(files).toHaveLength`.
+    ╭╴
+  1 - expect(files.length).toStrictEqual(1);
+  1 + expect(files).toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:26]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────
    ╰────
   help: Replace `expect(files.length).not.toStrictEqual` with `expect(files).not.toHaveLength`.
+    ╭╴
+  1 - expect(files.length).not.toStrictEqual(1);
+  1 + expect(files).not.toHaveLength(1);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:55]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                       ────
    ╰────
   help: Replace `expect((meta.get('pages') as YArray<unknown>).length).toBe` with `expect((meta.get('pages') as YArray<unknown>)).toHaveLength`.
+    ╭╴
+  1 - expect((meta.get('pages') as YArray<unknown>).length).toBe((originalMeta.get('pages') as YArray<unknown>).length);
+  1 + expect((meta.get('pages') as YArray<unknown>)).toHaveLength((originalMeta.get('pages') as YArray<unknown>).length);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:64]
@@ -85,3 +129,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │           0,
    ╰────
   help: Replace `expect(assetTypeContainer.getElementsByTagName('time').length).toEqual` with `expect(assetTypeContainer.getElementsByTagName('time')).toHaveLength`.
+    ╭╴
+  1 - expect(assetTypeContainer.getElementsByTagName('time').length).toEqual(
+  1 + expect(assetTypeContainer.getElementsByTagName('time')).toHaveLength(
+    ╰╴

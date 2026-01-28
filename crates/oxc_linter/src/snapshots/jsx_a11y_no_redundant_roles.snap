@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the redundant role `button` from the element `button`.
+    ╭╴
+  1 - <button role='button' />
+  1 + <button  />
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `body` element has an implicit role of `document`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:7]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ───────────────
    ╰────
   help: Remove the redundant role `document` from the element `body`.
+    ╭╴
+  1 - <body role='document' />
+  1 + <body  />
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(no-redundant-roles): The `button` element has an implicit role of `button`. Defining this explicitly is redundant and should be avoided.
    ╭─[no_redundant_roles.tsx:1:9]
@@ -21,3 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────
    ╰────
   help: Remove the redundant role `button` from the element `button`.
+    ╭╴
+  1 - <Button role='button' />
+  1 + <Button  />
+    ╰╴

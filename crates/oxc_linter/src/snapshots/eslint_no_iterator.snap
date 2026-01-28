@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
+    ╭╴
+  1 - var a = test.__iterator__;
+  1 + var a = test[Symbol.iterator];
+    ╰╴
 
   ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
+    ╭╴
+  1 - Foo.prototype.__iterator__ = function() {};
+  1 + Foo.prototype[Symbol.iterator] = function() {};
+    ╰╴
 
   ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:9]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
+    ╭╴
+  1 - var a = test['__iterator__'];
+  1 + var a = test[Symbol.iterator];
+    ╰╴
 
   ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:9]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ────────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
+    ╭╴
+  1 - var a = test[`__iterator__`];
+  1 + var a = test[Symbol.iterator];
+    ╰╴
 
   ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:1]
@@ -35,3 +51,7 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────
    ╰────
   help: Consider using [Symbol.iterator] instead
+    ╭╴
+  1 - test[`__iterator__`] = function () {};
+  1 + test[Symbol.iterator] = function () {};
+    ╰╴

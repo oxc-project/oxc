@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...(foo || {})}
+  1 + const object = {...foo}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...(foo ?? {})}
+  1 + const object = {...foo}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...(foo ?? (( {} )))}
+  1 + const object = {...foo}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...((( foo )) ?? (( {} )))}
+  1 + const object = {...(( foo ))}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...(( (( foo )) ?? (( {} )) ))}
+  1 + const object = {...(( foo ))}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:14]
@@ -98,6 +118,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...((a && b) || {})}
+  1 + const object = {...(a && b)}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -126,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...({} || {})}
+  1 + const object = {...{}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -133,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...(foo || {}),}
+  1 + const object = {...foo,}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -140,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...((foo ?? {}) || {})}
+  1 + const object = {...(foo ?? {})}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -147,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...((foo && {}) || {})}
+  1 + const object = {...(foo && {})}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -154,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ────────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...(foo && {} || {})}
+  1 + const object = {...foo && {}}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:22]
@@ -161,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...({...(foo || {})})}
+  1 + const object = {...({...foo})}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:19]
@@ -168,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - function foo(a = {...(bar || {})}){}
+  1 + function foo(a = {...bar}){}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
@@ -175,3 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───────────────────────
    ╰────
   help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+    ╭╴
+  1 - const object = {...(document.all || {})}
+  1 + const object = {...document.all}
+    ╰╴

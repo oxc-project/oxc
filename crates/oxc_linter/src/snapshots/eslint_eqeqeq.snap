@@ -14,6 +14,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - typeof foo == 'undefined'
+  1 + typeof foo === 'undefined'
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected !== and instead saw !=
    ╭─[eqeqeq.tsx:1:9]
@@ -21,6 +25,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──
    ╰────
   help: Prefer !== operator
+    ╭╴
+  1 - 'hello' != 'world'
+  1 + 'hello' !== 'world'
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:3]
@@ -28,6 +36,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - 0 == 0
+  1 + 0 === 0
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:6]
@@ -35,6 +47,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - true == true
+  1 + true === true
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:5]
@@ -42,6 +58,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - foo == null
+  1 + foo === null
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:3]
@@ -49,6 +69,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - a == b
+  1 + a === b
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:5]
@@ -56,6 +80,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - foo == true
+  1 + foo === true
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected !== and instead saw !=
    ╭─[eqeqeq.tsx:1:9]
@@ -63,6 +91,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──
    ╰────
   help: Prefer !== operator
+    ╭╴
+  1 - bananas != 1
+  1 + bananas !== 1
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:7]
@@ -70,6 +102,10 @@ source: crates/oxc_linter/src/tester.rs
    ·       ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - value == undefined
+  1 + value === undefined
+    ╰╴
 
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:6]
@@ -77,3 +113,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      ──
    ╰────
   help: Prefer === operator
+    ╭╴
+  1 - null == null
+  1 + null === null
+    ╰╴

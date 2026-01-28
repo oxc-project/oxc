@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────
    ╰────
   help: Prefer toBeCalledWith(/* expected args */)
+    ╭╴
+  1 - expect(fn).toBeCalled();
+  1 + expect(fn).toBeCalledWith();
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:21]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
    ╰────
   help: Prefer toBeCalledWith(/* expected args */)
+    ╭╴
+  1 - expect(fn).resolves.toBeCalled();
+  1 + expect(fn).resolves.toBeCalledWith();
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:12]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────
    ╰────
   help: Prefer toHaveBeenCalledWith(/* expected args */)
+    ╭╴
+  1 - expect(fn).toHaveBeenCalled();
+  1 + expect(fn).toHaveBeenCalledWith();
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:12]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────
    ╰────
   help: Prefer toBeCalledWith(/* expected args */)
+    ╭╴
+  1 - expect(fn).toBeCalled();
+  1 + expect(fn).toBeCalledWith();
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:21]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────
    ╰────
   help: Prefer toBeCalledWith(/* expected args */)
+    ╭╴
+  1 - expect(fn).resolves.toBeCalled();
+  1 + expect(fn).resolves.toBeCalledWith();
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:12]
@@ -42,3 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────
    ╰────
   help: Prefer toHaveBeenCalledWith(/* expected args */)
+    ╭╴
+  1 - expect(fn).toHaveBeenCalled();
+  1 + expect(fn).toHaveBeenCalledWith();
+    ╰╴

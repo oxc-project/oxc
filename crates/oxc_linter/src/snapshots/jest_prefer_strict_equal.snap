@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Use `toStrictEqual()` instead
+    ╭╴
+  1 - expect(something).toEqual(somethingElse);
+  1 + expect(something).toStrictEqual(somethingElse);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.
    ╭─[prefer_strict_equal.tsx:1:19]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────
    ╰────
   help: Use `toStrictEqual()` instead
+    ╭╴
+  1 - expect(something).toEqual(somethingElse,);
+  1 + expect(something).toStrictEqual(somethingElse,);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.
    ╭─[prefer_strict_equal.tsx:1:19]
@@ -21,3 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────
    ╰────
   help: Use `toStrictEqual()` instead
+    ╭╴
+  1 - expect(something)["toEqual"](somethingElse);
+  1 + expect(something)["toStrictEqual"](somethingElse);
+    ╰╴

@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error();
+  3 +                 throw new TypeError();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error();
+  3 +                 throw new TypeError();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error('foo is an Array');
+  3 +                 throw new TypeError('foo is an Array');
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -36,6 +48,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error(foobar);
+  3 +                 throw new TypeError(foobar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -45,6 +61,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error();
+  3 +                 throw new TypeError();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -54,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error;
+  3 +                 throw new TypeError;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -63,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error;
+  3 +                 throw new TypeError;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -72,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error();
+  3 +                 throw new TypeError();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -81,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error();
+  3 +                 throw new TypeError();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -90,6 +126,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error();
+  3 +                 throw new TypeError();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
@@ -99,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw new Error();
+  3 +                 throw new TypeError();
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:28]
@@ -108,3 +152,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │             }
    ╰────
   help: Change to `throw new TypeError(...)`
+    ╭╴
+  3 -                 throw (new Error());
+  3 +                 throw (new TypeError());
+    ╰╴

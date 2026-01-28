@@ -52,11 +52,13 @@ use std::{
     borrow::Cow,
     fmt::{self, Display},
     ops::{Deref, DerefMut},
+    sync::OnceLock,
 };
 
 pub mod reporter;
 
-pub use crate::service::{DiagnosticSender, DiagnosticService};
+pub use crate::reporter::GraphicalReportHandlerWithDiff;
+pub use crate::service::{DiagnosticSender, DiagnosticService, OxcDiagnosticWithSource};
 
 pub type Error = miette::Error;
 pub type Severity = miette::Severity;
@@ -64,7 +66,63 @@ pub type Severity = miette::Severity;
 pub type Result<T> = std::result::Result<T, OxcDiagnostic>;
 
 use miette::{Diagnostic, SourceCode};
-pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource};
+pub use miette::{GraphicalReportHandler, GraphicalTheme, LabeledSpan, NamedSource, SourceSpan};
+
+use std::sync::atomic::{AtomicBool, Ordering};
+
+/// Global flag for forcing fix diff display in tests.
+static FORCE_SHOW_FIX_DIFF: AtomicBool = AtomicBool::new(false);
+
+/// Returns `true` if fix diffs should be shown in diagnostic output.
+///
+/// Controlled by the `OXC_DIAGNOSTIC_SHOW_FIX_DIFF` environment variable.
+/// Set to "1" or "true" to enable.
+///
+/// Can also be enabled programmatically via [`enable_fix_diff`] for testing.
+pub fn show_fix_diff() -> bool {
+    // Check the force flag first (for testing)
+    if FORCE_SHOW_FIX_DIFF.load(Ordering::Relaxed) {
+        return true;
+    }
+    static SHOW_FIX_DIFF: OnceLock<bool> = OnceLock::new();
+    *SHOW_FIX_DIFF.get_or_init(|| {
+        std::env::var("OXC_DIAGNOSTIC_SHOW_FIX_DIFF")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false)
+    })
+}
+
+/// Force-enable fix diff display.
+///
+/// This is useful for testing when you want to ensure fix diffs are captured
+/// and displayed regardless of environment variables.
+pub fn enable_fix_diff() {
+    FORCE_SHOW_FIX_DIFF.store(true, Ordering::Relaxed);
+}
+
+/// Force-disable fix diff display (revert to env var behavior).
+pub fn disable_fix_diff() {
+    FORCE_SHOW_FIX_DIFF.store(false, Ordering::Relaxed);
+}
+
+/// A suggested edit to source code for fixing a diagnostic.
+///
+/// Modeled after annotate-snippets' Patch type. Represents a span to replace
+/// and its replacement text.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Patch {
+    /// The byte span in the source to replace.
+    pub span: SourceSpan,
+    /// The replacement text.
+    pub replacement: Cow<'static, str>,
+}
+
+impl Patch {
+    /// Create a new patch that replaces the given span with the replacement text.
+    pub fn new<S: Into<SourceSpan>, R: Into<Cow<'static, str>>>(span: S, replacement: R) -> Self {
+        Self { span: span.into(), replacement: replacement.into() }
+    }
+}
 
 /// Describes an error or warning that occurred.
 ///
@@ -123,6 +181,12 @@ pub struct OxcDiagnosticInner {
     pub severity: Severity,
     pub code: OxcCode,
     pub url: Option<Cow<'static, str>>,
+    /// Suggested fixes/patches for this diagnostic.
+    ///
+    /// Each inner `Vec<Patch>` represents one possible fix (which may consist of
+    /// multiple edits that should be applied together). Multiple inner vecs
+    /// represent alternative fixes.
+    pub patches: Option<Vec<Vec<Patch>>>,
 }
 
 impl Display for OxcDiagnostic {
@@ -188,6 +252,7 @@ impl OxcDiagnostic {
                 severity: Severity::Error,
                 code: OxcCode::default(),
                 url: None,
+                patches: None,
             }),
         }
     }
@@ -203,6 +268,7 @@ impl OxcDiagnostic {
                 severity: Severity::Warning,
                 code: OxcCode::default(),
                 url: None,
+                patches: None,
             }),
         }
     }
@@ -359,6 +425,41 @@ impl OxcDiagnostic {
     /// Add a URL that provides more information about this diagnostic.
     pub fn with_url<S: Into<Cow<'static, str>>>(mut self, url: S) -> Self {
         self.inner.url = Some(url.into());
+        self
+    }
+
+    /// Set a single fix (which may consist of multiple patches) for this diagnostic.
+    ///
+    /// Existing patches will be removed. Use [`OxcDiagnostic::and_fix`] to add additional
+    /// alternative fixes.
+    ///
+    /// Each patch in the provided iterator represents an edit that should be applied together
+    /// as part of this fix.
+    pub fn with_fix<P: Into<Patch>, T: IntoIterator<Item = P>>(mut self, patches: T) -> Self {
+        self.inner.patches = Some(vec![patches.into_iter().map(Into::into).collect()]);
+        self
+    }
+
+    /// Add an alternative fix to this diagnostic without removing existing fixes.
+    ///
+    /// Each call adds another possible fix. When rendered, all alternative fixes will be shown.
+    pub fn and_fix<P: Into<Patch>, T: IntoIterator<Item = P>>(mut self, patches: T) -> Self {
+        let mut all_patches = self.inner.patches.unwrap_or_default();
+        all_patches.push(patches.into_iter().map(Into::into).collect());
+        self.inner.patches = Some(all_patches);
+        self
+    }
+
+    /// Set multiple alternative fixes for this diagnostic.
+    ///
+    /// Each inner iterator represents one possible fix (which may consist of multiple patches
+    /// that should be applied together). The outer iterator contains all alternatives.
+    pub fn with_fixes<P: Into<Patch>, I: IntoIterator<Item = P>, T: IntoIterator<Item = I>>(
+        mut self,
+        fixes: T,
+    ) -> Self {
+        self.inner.patches =
+            Some(fixes.into_iter().map(|f| f.into_iter().map(Into::into).collect()).collect());
         self
     }
 

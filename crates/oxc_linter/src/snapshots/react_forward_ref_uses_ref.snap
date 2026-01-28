@@ -10,6 +10,16 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       
    ╰────
   help: Add a `ref` parameter, or remove `forwardRef`
+    ╭╴
+  3 - 			        forwardRef((props) => {
+  3 + 			        (props) => {
+  5 - 			        });
+  5 + 			        };
+    │╴
+    ├╴
+  3 - 			        forwardRef((props) => {
+  3 + 			        forwardRef((props, ref) => {
+    ╰╴
 
   ⚠ eslint-plugin-react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
    ╭─[forward_ref_uses_ref.tsx:3:23]
@@ -20,6 +30,16 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       
    ╰────
   help: Add a `ref` parameter, or remove `forwardRef`
+    ╭╴
+  3 - 			        forwardRef(props => {
+  3 + 			        props => {
+  5 - 			        });
+  5 + 			        };
+    │╴
+    ├╴
+  3 - 			        forwardRef(props => {
+  3 + 			        forwardRef((props, ref) => {
+    ╰╴
 
   ⚠ eslint-plugin-react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
    ╭─[forward_ref_uses_ref.tsx:3:29]
@@ -29,6 +49,14 @@ source: crates/oxc_linter/src/tester.rs
  4 │                   
    ╰────
   help: Add a `ref` parameter, or remove `forwardRef`
+    ╭╴
+  3 - 			        React.forwardRef((props) => null);
+  3 + 			        (props) => null;
+    │╴
+    ├╴
+  3 - 			        React.forwardRef((props) => null);
+  3 + 			        React.forwardRef((props, ref) => null);
+    ╰╴
 
   ⚠ eslint-plugin-react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
    ╭─[forward_ref_uses_ref.tsx:3:41]
@@ -39,6 +67,16 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       
    ╰────
   help: Add a `ref` parameter, or remove `forwardRef`
+    ╭╴
+  3 - 			        const Component = forwardRef(function (props) {
+  3 + 			        const Component = function (props) {
+  5 - 			        });
+  5 + 			        };
+    │╴
+    ├╴
+  3 - 			        const Component = forwardRef(function (props) {
+  3 + 			        const Component = forwardRef(function (props, ref) {
+    ╰╴
 
   ⚠ eslint-plugin-react(forward-ref-uses-ref): Components wrapped with `forwardRef` must have a `ref` parameter
    ╭─[forward_ref_uses_ref.tsx:3:29]
@@ -49,3 +87,13 @@ source: crates/oxc_linter/src/tester.rs
  6 │                       
    ╰────
   help: Add a `ref` parameter, or remove `forwardRef`
+    ╭╴
+  3 - 			        React.forwardRef(function Component(props) {
+  3 + 			        function Component(props) {
+  5 - 			        });
+  5 + 			        };
+    │╴
+    ├╴
+  3 - 			        React.forwardRef(function Component(props) {
+  3 + 			        React.forwardRef(function Component(props, ref) {
+    ╰╴

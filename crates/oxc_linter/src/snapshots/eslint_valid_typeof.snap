@@ -104,6 +104,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
+    ╭╴
+  1 - if (typeof bar !== undefined) {}
+  1 + if (typeof bar !== "undefined") {}
+    ╰╴
 
   ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:15]
@@ -117,6 +121,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
+    ╭╴
+  1 - typeof foo === undefined
+  1 + typeof foo === "undefined"
+    ╰╴
 
   ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:1]
@@ -124,6 +132,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
+    ╭╴
+  1 - undefined === typeof foo
+  1 + "undefined" === typeof foo
+    ╰╴
 
   ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:1]
@@ -131,6 +143,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────
    ╰────
   help: Use `"undefined"` instead of `undefined`.
+    ╭╴
+  1 - undefined == typeof foo
+  1 + "undefined" == typeof foo
+    ╰╴
 
   ⚠ eslint(valid-typeof): `typeof` comparisons should be to string literals.
    ╭─[valid_typeof.tsx:1:16]

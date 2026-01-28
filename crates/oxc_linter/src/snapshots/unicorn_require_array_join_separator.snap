@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──
    ╰────
   help: Missing the separator argument.
+    ╭╴
+  1 - foo.join()
+  1 + foo.join(",")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:13]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Missing the separator argument.
+    ╭╴
+  1 - [].join.call(foo)
+  1 + [].join.call(foo, ",")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:13]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────
    ╰────
   help: Missing the separator argument.
+    ╭╴
+  1 - [].join.call(foo,)
+  1 + [].join.call(foo, ",",)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:13]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Missing the separator argument.
+    ╭╴
+  1 - [].join.call(foo , );
+  1 + [].join.call(foo, "," , );
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:26]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────
    ╰────
   help: Missing the separator argument.
+    ╭╴
+  1 - Array.prototype.join.call(foo)
+  1 + Array.prototype.join.call(foo, ",")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:26]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Missing the separator argument.
+    ╭╴
+  1 - Array.prototype.join.call(foo, )
+  1 + Array.prototype.join.call(foo, ",", )
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()
    ╭─[require_array_join_separator.tsx:1:10]
@@ -49,3 +73,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──
    ╰────
   help: Missing the separator argument.
+    ╭╴
+  1 - foo?.join()
+  1 + foo?.join(",")
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - array.flatMap(x => x)
+  1 + array.flat()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - array?.flatMap(x => x)
+  1 + array?.flat()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:22]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - function foo(){return[].flatMap(x => x)}
+  1 + function foo(){return[].flat()}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - foo.flatMap(x => x) instanceof Array
+  1 + foo.flat() instanceof Array
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - array.reduce((a, b) => a.concat(b), [])
+  1 + array.flat()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - array?.reduce((a, b) => a.concat(b), [])
+  1 + array?.flat()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:22]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - function foo(){return[].reduce((a, b) => a.concat(b), [])}
+  1 + function foo(){return[].flat()}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:22]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - function foo(){return[]?.reduce((a, b) => a.concat(b), [])}
+  1 + function foo(){return[]?.flat()}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - array.reduce((a, b) => [...a, ...b], [])
+  1 + array.flat()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - array.reduce((a, b) => [...a, ...b,], [])
+  1 + array.flat()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:22]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────────────────────────────────
    ╰────
   help: Call `.flat()` on the array instead.
+    ╭╴
+  1 - function foo(){return[].reduce((a, b) => [...a, ...b,], [])}
+  1 + function foo(){return[].flat()}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.
    ╭─[prefer_array_flat.tsx:1:1]

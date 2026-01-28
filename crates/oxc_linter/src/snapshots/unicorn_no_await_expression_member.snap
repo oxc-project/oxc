@@ -42,6 +42,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
+    ╭╴
+  1 - const firstElement = (await getArray())[0]
+  1 + const [firstElement] = await getArray()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
    ╭─[no_await_expression_member.mts:1:23]
@@ -49,6 +53,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
+    ╭╴
+  1 - const secondElement = (await getArray())[1]
+  1 + const [, secondElement] = await getArray()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
    ╭─[no_await_expression_member.mts:1:22]
@@ -84,6 +92,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
+    ╭╴
+  1 - let foo, firstElement = (await getArray())[0]
+  1 + let foo, [firstElement] = await getArray()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
    ╭─[no_await_expression_member.mts:1:20]
@@ -91,6 +103,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ─────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
+    ╭╴
+  1 - var firstElement = (await getArray())[0], bar
+  1 + var [firstElement] = await getArray(), bar
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
    ╭─[no_await_expression_member.mts:1:18]
@@ -98,6 +114,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────────────────────────
    ╰────
   help: Assign the result of the await expression to a variable, then access the member from that variable.
+    ╭╴
+  1 - const property = (await getObject()).property
+  1 + const {property} = await getObject()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Do not access a member directly from an await expression.
    ╭─[no_await_expression_member.mts:1:17]

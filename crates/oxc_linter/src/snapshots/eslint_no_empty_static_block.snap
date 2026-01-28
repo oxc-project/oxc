@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────
    ╰────
   help: Remove this empty block or add content to it.
+    ╭╴
+  1 - class Foo { static {} }
+  1 + class Foo {  }
+    ╰╴
 
   ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
    ╭─[no_empty_static_block.tsx:1:13]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
    ╰────
   help: Remove this empty block or add content to it.
+    ╭╴
+  1 - class Foo { static { } }
+  1 + class Foo {  }
+    ╰╴
 
   ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
    ╭─[no_empty_static_block.tsx:1:13]
@@ -22,6 +30,12 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶              } }
    ╰────
   help: Remove this empty block or add content to it.
+    ╭╴
+  1 - class Foo { static {
+  2 - 
+  3 - 			 } }
+  1 + class Foo {  }
+    ╰╴
 
   ⚠ eslint(no-empty-static-block): Unexpected empty static blocks
    ╭─[no_empty_static_block.tsx:1:31]
@@ -29,3 +43,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                               ─────────
    ╰────
   help: Remove this empty block or add content to it.
+    ╭╴
+  1 - class Foo { static { bar(); } static {} }
+  1 + class Foo { static { bar(); }  }
+    ╰╴

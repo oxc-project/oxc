@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────
    ╰────
   help: Replace `height < 50 ? height : 50` with `Math.min(height, 50)`.
+    ╭╴
+  1 - const foo = height < 50 ? height : 50;
+  1 + const foo = Math.min(height, 50);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────
    ╰────
   help: Replace `height <= -50 ? height : -50` with `Math.min(height, -50)`.
+    ╭╴
+  1 - const foo = height <= -50 ? height : -50;
+  1 + const foo = Math.min(height, -50);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────────────
    ╰────
   help: Replace `150.34 < height ? 150.34 : height` with `Math.min(150.34, height)`.
+    ╭╴
+  1 - const foo = 150.34 < height ? 150.34 : height;
+  1 + const foo = Math.min(150.34, height);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────────
    ╰────
   help: Replace `-2.34 <= height ? -2.34 : height` with `Math.min(-2.34, height)`.
+    ╭╴
+  1 - const foo = -2.34 <= height ? -2.34 : height;
+  1 + const foo = Math.min(-2.34, height);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────────
    ╰────
   help: Replace `height > 10e3 ? 10e3 : height` with `Math.min(10e3, height)`.
+    ╭╴
+  1 - const foo = height > 10e3 ? 10e3 : height;
+  1 + const foo = Math.min(10e3, height);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────────────
    ╰────
   help: Replace `height >= -10e3 ? -10e3 : height` with `Math.min(-10e3, height)`.
+    ╭╴
+  1 - const foo = height >= -10e3 ? -10e3 : height;
+  1 + const foo = Math.min(-10e3, height);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────
    ╰────
   help: Replace `50 > height ? height : 50` with `Math.min(height, 50)`.
+    ╭╴
+  1 - const foo = 50 > height ? height : 50;
+  1 + const foo = Math.min(height, 50);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────────────────
    ╰────
   help: Replace `50 >= height ? height : 50` with `Math.min(height, 50)`.
+    ╭╴
+  1 - const foo = 50 >= height ? height : 50;
+  1 + const foo = Math.min(height, 50);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:8]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ───────────────────────────
    ╰────
   help: Replace `height > 100 ? height : 100` with `Math.max(height, 100)`.
+    ╭╴
+  1 - return height > 100 ? height : 100;
+  1 + return Math.max(height, 100);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:8]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ──────────────────────────
    ╰────
   help: Replace `height >= 50 ? height : 50` with `Math.max(height, 50)`.
+    ╭╴
+  1 - return height >= 50 ? height : 50;
+  1 + return Math.max(height, 50);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:14]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────────────────────
    ╰────
   help: Replace `50 > height ? 50 : height` with `Math.max(50, height)`.
+    ╭╴
+  1 - const foo = (50 > height ? 50 : height) || 0;
+  1 + const foo = (Math.max(50, height)) || 0;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:14]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────────────────────
    ╰────
   help: Replace `50 >= height ? 50 : height` with `Math.max(50, height)`.
+    ╭╴
+  1 - const foo = (50 >= height ? 50 : height) || 0;
+  1 + const foo = (Math.max(50, height)) || 0;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:9]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────────────────────
    ╰────
   help: Replace `height < 50 ? 50 : height` with `Math.max(50, height)`.
+    ╭╴
+  1 - return (height < 50 ? 50 : height) || 100;
+  1 + return (Math.max(50, height)) || 100;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:9]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ──────────────────────────
    ╰────
   help: Replace `height <= 50 ? 50 : height` with `Math.max(50, height)`.
+    ╭╴
+  1 - return (height <= 50 ? 50 : height) || 200;
+  1 + return (Math.max(50, height)) || 200;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────────────
    ╰────
   help: Replace `50 < height ? height: 50` with `Math.max(height, 50)`.
+    ╭╴
+  1 - const foo = 50 < height ? height: 50;
+  1 + const foo = Math.max(height, 50);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-math-min-max): Prefer `Math.min()` and `Math.max()` over ternaries for simple comparisons.
    ╭─[prefer_math_min_max.tsx:1:13]
@@ -112,3 +172,7 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────────────
    ╰────
   help: Replace `50 <= height ? height: 50` with `Math.max(height, 50)`.
+    ╭╴
+  1 - const foo = 50 <= height ? height: 50;
+  1 + const foo = Math.max(height, 50);
+    ╰╴

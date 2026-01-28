@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `parseInt("111110111", 2)` with `0b111110111`.
+    ╭╴
+  1 - parseInt("111110111", 2) === 503;
+  1 + 0b111110111 === 503;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Replace `parseInt("767", 8)` with `0o767`.
+    ╭╴
+  1 - parseInt("767", 8) === 503;
+  1 + 0o767 === 503;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Replace `parseInt("1F7", 16)` with `0x1F7`.
+    ╭╴
+  1 - parseInt("1F7", 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────
    ╰────
   help: Replace `Number.parseInt("111110111", 2)` with `0b111110111`.
+    ╭╴
+  1 - Number.parseInt("111110111", 2) === 503;
+  1 + 0b111110111 === 503;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────
    ╰────
   help: Replace `Number.parseInt("767", 8)` with `0o767`.
+    ╭╴
+  1 - Number.parseInt("767", 8) === 503;
+  1 + 0o767 === 503;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────
    ╰────
   help: Replace `Number.parseInt("1F7", 16)` with `0x1F7`.
+    ╭╴
+  1 - Number.parseInt("1F7", 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -97,6 +121,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `parseInt(`111110111`, 2)` with `0b111110111`.
+    ╭╴
+  1 - parseInt(`111110111`, 2) === 503;
+  1 + 0b111110111 === 503;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -104,6 +132,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────
    ╰────
   help: Replace `parseInt(`767`, 8)` with `0o767`.
+    ╭╴
+  1 - parseInt(`767`, 8) === 503;
+  1 + 0o767 === 503;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -111,6 +143,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: Replace `parseInt(`1F7`, 16)` with `0x1F7`.
+    ╭╴
+  1 - parseInt(`1F7`, 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -148,6 +184,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace `parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - parseInt('11', 2)
+  1 + 0b11
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -155,6 +195,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `Number.parseInt('67', 8)` with `0o67`.
+    ╭╴
+  1 - Number.parseInt('67', 8)
+  1 + 0o67
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:3]
@@ -162,6 +206,10 @@ source: crates/oxc_linter/src/tester.rs
    ·   ─────────────────
    ╰────
   help: Replace `parseInt('A', 16)` with `0xA`.
+    ╭╴
+  1 - 5+parseInt('A', 16)
+  1 + 5+0xA
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:21]
@@ -169,6 +217,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────────
    ╰────
   help: Replace `(Number).parseInt('11', 2)` with ` 0b11`.
+    ╭╴
+  1 - function *f(){ yield(Number).parseInt('11', 2) }
+  1 + function *f(){ yield 0b11 }
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:21]
@@ -176,6 +228,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────────────
    ╰────
   help: Replace `(Number.parseInt)('67', 8)` with ` 0o67`.
+    ╭╴
+  1 - function *f(){ yield(Number.parseInt)('67', 8) }
+  1 + function *f(){ yield 0o67 }
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:21]
@@ -183,6 +239,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────────────
    ╰────
   help: Replace `(parseInt)('A', 16)` with ` 0xA`.
+    ╭╴
+  1 - function *f(){ yield(parseInt)('A', 16) }
+  1 + function *f(){ yield 0xA }
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:22]
@@ -190,6 +250,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ────────────────────────
    ╰────
   help: Replace `Number.parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - function *f(){ yield Number.parseInt('11', 2) }
+  1 + function *f(){ yield 0b11 }
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:25]
@@ -197,6 +261,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ────────────────────────
    ╰────
   help: Replace `Number.parseInt('67', 8)` with `0o67`.
+    ╭╴
+  1 - function *f(){ yield/**/Number.parseInt('67', 8) }
+  1 + function *f(){ yield/**/0o67 }
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:22]
@@ -204,6 +272,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────────
    ╰────
   help: Replace `parseInt('A', 16)` with `0xA`.
+    ╭╴
+  1 - function *f(){ yield(parseInt('A', 16)) }
+  1 + function *f(){ yield(0xA) }
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -211,6 +283,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace `parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - parseInt('11', 2)+5
+  1 + 0b11+5
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -218,6 +294,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `Number.parseInt('17', 8)` with `0o17`.
+    ╭╴
+  1 - Number.parseInt('17', 8)+5
+  1 + 0o17+5
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -225,6 +305,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace `parseInt('A', 16)` with `0xA`.
+    ╭╴
+  1 - parseInt('A', 16)+5
+  1 + 0xA+5
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -232,6 +316,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace `parseInt('11', 2)` with `0b11 `.
+    ╭╴
+  1 - parseInt('11', 2)in foo
+  1 + 0b11 in foo
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -239,6 +327,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `Number.parseInt('17', 8)` with `0o17 `.
+    ╭╴
+  1 - Number.parseInt('17', 8)in foo
+  1 + 0o17 in foo
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -246,6 +338,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace `parseInt('A', 16)` with `0xA `.
+    ╭╴
+  1 - parseInt('A', 16)in foo
+  1 + 0xA in foo
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -253,6 +349,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
   help: Replace `parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - parseInt('11', 2) in foo
+  1 + 0b11 in foo
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -260,6 +360,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `Number.parseInt('17', 8)` with `0o17`.
+    ╭╴
+  1 - Number.parseInt('17', 8)/**/in foo
+  1 + 0o17/**/in foo
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:2]
@@ -267,6 +371,10 @@ source: crates/oxc_linter/src/tester.rs
    ·  ─────────────────
    ╰────
   help: Replace `parseInt('A', 16)` with `0xA`.
+    ╭╴
+  1 - (parseInt('A', 16))in foo
+  1 + (0xA)in foo
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:14]
@@ -274,6 +382,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────────────────────
    ╰────
   help: Replace `Number.parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - /* comment */Number.parseInt('11', 2);
+  1 + /* comment */0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -281,6 +393,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────
    ╰────
   help: Replace `Number/**/.parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - Number/**/.parseInt('11', 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -289,6 +405,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `Number//
         			.parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - Number//
+  2 - 			.parseInt('11', 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -296,6 +417,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────
    ╰────
   help: Replace `Number./**/parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - Number./**/parseInt('11', 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -303,6 +428,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────
    ╰────
   help: Replace `Number.parseInt(/**/'11', 2)` with `0b11`.
+    ╭╴
+  1 - Number.parseInt(/**/'11', 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -310,6 +439,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────────
    ╰────
   help: Replace `Number.parseInt('11', /**/2)` with `0b11`.
+    ╭╴
+  1 - Number.parseInt('11', /**/2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -317,6 +450,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: Replace `Number.parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - Number.parseInt('11', 2)/* comment */;
+  1 + 0b11/* comment */;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -324,6 +461,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Replace `parseInt/**/('11', 2)` with `0b11`.
+    ╭╴
+  1 - parseInt/**/('11', 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -332,6 +473,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `parseInt(//
         			'11', 2)` with `0b11`.
+    ╭╴
+  1 - parseInt(//
+  2 - 			'11', 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -339,6 +485,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Replace `parseInt('11'/**/, 2)` with `0b11`.
+    ╭╴
+  1 - parseInt('11'/**/, 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -346,6 +496,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Replace `parseInt(`11`/**/, 2)` with `0b11`.
+    ╭╴
+  1 - parseInt(`11`/**/, 2);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -353,6 +507,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────
    ╰────
   help: Replace `parseInt('11', 2 /**/)` with `0b11`.
+    ╭╴
+  1 - parseInt('11', 2 /**/);
+  1 + 0b11;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -361,6 +519,10 @@ source: crates/oxc_linter/src/tester.rs
  2 │             ;
    ╰────
   help: Replace `parseInt('11', 2)` with `0b11`.
+    ╭╴
+  1 - parseInt('11', 2)//comment
+  1 + 0b11//comment
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -368,6 +530,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: Replace `parseInt?.("1F7", 16)` with `0x1F7`.
+    ╭╴
+  1 - parseInt?.("1F7", 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -375,6 +541,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: Replace `Number?.parseInt("1F7", 16)` with `0x1F7`.
+    ╭╴
+  1 - Number?.parseInt("1F7", 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -382,6 +552,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Replace `Number?.parseInt?.("1F7", 16)` with `0x1F7`.
+    ╭╴
+  1 - Number?.parseInt?.("1F7", 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -389,6 +563,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────
    ╰────
   help: Replace `(Number?.parseInt)("1F7", 16)` with `0x1F7`.
+    ╭╴
+  1 - (Number?.parseInt)("1F7", 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use hexadecimal literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -396,6 +574,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────
    ╰────
   help: Replace `(Number?.parseInt)?.("1F7", 16)` with `0x1F7`.
+    ╭╴
+  1 - (Number?.parseInt)?.("1F7", 16) === 255;
+  1 + 0x1F7 === 255;
+    ╰╴
 
   ⚠ eslint(prefer-numeric-literals): Use binary literals instead of parseInt().
    ╭─[prefer_numeric_literals.tsx:1:1]
@@ -429,3 +611,7 @@ source: crates/oxc_linter/src/tester.rs
  3 │             function foo() {
    ╰────
   help: Replace `parseInt("767", 8)` with `0o767`.
+    ╭╴
+  2 -             parseInt("767", 8) === 503;
+  2 +             0o767 === 503;
+    ╰╴

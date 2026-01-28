@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Use `undefined` instead
+    ╭╴
+  1 - void 0
+  1 + undefined
+    ╰╴
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Use `undefined` instead
+    ╭╴
+  1 - void 0
+  1 + undefined
+    ╰╴
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────
    ╰────
   help: Use `undefined` instead
+    ╭╴
+  1 - void 0
+  1 + undefined
+    ╰╴
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────
    ╰────
   help: Use `undefined` instead
+    ╭╴
+  1 - void(0)
+  1 + undefined
+    ╰╴
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:11]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────
    ╰────
   help: Use `undefined` instead
+    ╭╴
+  1 - var foo = void 0
+  1 + var foo = undefined
+    ╰╴
 
   ⚠ eslint(no-void): Unexpected `void` operator
    ╭─[no_void.tsx:1:11]
@@ -42,3 +62,7 @@ source: crates/oxc_linter/src/tester.rs
    ·           ──────
    ╰────
   help: Use `undefined` instead
+    ╭╴
+  1 - var foo = void 0
+  1 + var foo = undefined
+    ╰╴

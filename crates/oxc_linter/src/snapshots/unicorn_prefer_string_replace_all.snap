@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a/g, bar)
+  1 + foo.replaceAll(/a/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/"'/g, '\'')
+  1 + foo.replaceAll(/"'/g, '\'')
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\./g, bar)
+  1 + foo.replaceAll(/\./g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\\\./g, bar)
+  1 + foo.replaceAll(/\\\./g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\|/g, bar)
+  1 + foo.replaceAll(/\|/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a/gu, bar)
+  1 + foo.replaceAll(/a/gu, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a/ug, bar)
+  1 + foo.replaceAll(/a/ug, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/[a]/g, bar)
+  1 + foo.replaceAll(/[a]/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a?/g, bar)
+  1 + foo.replaceAll(/a?/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/.*/g, bar)
+  1 + foo.replaceAll(/.*/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a|b/g, bar)
+  1 + foo.replaceAll(/a|b/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\W/g, bar)
+  1 + foo.replaceAll(/\W/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u{61}/g, bar)
+  1 + foo.replaceAll(/\u{61}/g, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u{61}/gu, bar)
+  1 + foo.replaceAll(/\u{61}/gu, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u{61}/gv, bar)
+  1 + foo.replaceAll(/\u{61}/gv, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/]/g, "bar")
+  1 + foo.replaceAll(/]/g, "bar")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a/gi, bar)
+  1 + foo.replaceAll(/a/gi, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a/gui, bar)
+  1 + foo.replaceAll(/a/gui, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a/uig, bar)
+  1 + foo.replaceAll(/a/uig, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a/vig, bar)
+  1 + foo.replaceAll(/a/vig, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(new RegExp("foo", "g"), bar)
+  1 + foo.replaceAll(new RegExp("foo", "g"), bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a]/g, _)
+  1 + foo.replaceAll(/a]/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/[a]/g, _)
+  1 + foo.replaceAll(/[a]/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a{1/g, _)
+  1 + foo.replaceAll(/a{1/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/a{1}/g, _)
+  1 + foo.replaceAll(/a{1}/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u0022/g, _)
+  1 + foo.replaceAll(/\u0022/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u0027/g, _)
+  1 + foo.replaceAll(/\u0027/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\cM\cj/g, _)
+  1 + foo.replaceAll(/\cM\cj/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\x22/g, _)
+  1 + foo.replaceAll(/\x22/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\x27/g, _)
+  1 + foo.replaceAll(/\x27/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\uD83D\ude00/g, _)
+  1 + foo.replaceAll(/\uD83D\ude00/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u{1f600}/gu, _)
+  1 + foo.replaceAll(/\u{1f600}/gu, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\n/g, _)
+  1 + foo.replaceAll(/\n/g, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -238,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u{20}/gu, _)
+  1 + foo.replaceAll(/\u{20}/gu, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -245,6 +381,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/\u{20}/gv, _)
+  1 + foo.replaceAll(/\u{20}/gv, _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `a]`.
    ╭─[prefer_string_replace_all.tsx:1:16]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─────
    ╰────
   help: Replace `/a]/g` with `'a]'`.
+    ╭╴
+  1 - foo.replaceAll(/a]/g, _)
+  1 + foo.replaceAll('a]', _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string`.
    ╭─[prefer_string_replace_all.tsx:1:16]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
    ╰────
   help: Replace `/a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string/g` with `'a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string'`.
+    ╭╴
+  1 - foo.replaceAll(/a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string/g, _)
+  1 + foo.replaceAll('a very very very very very very very very very very very very very very very very very very very very very very very very very very very very very long string', _)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.
    ╭─[prefer_string_replace_all.tsx:1:5]
@@ -266,6 +414,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ───────
    ╰────
   help: Replace `replace` with `replaceAll`.
+    ╭╴
+  1 - foo.replace(/(?!a)+/g, "")
+  1 + foo.replaceAll(/(?!a)+/g, "")
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `world`.
    ╭─[prefer_string_replace_all.tsx:1:26]
@@ -273,3 +425,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────────
    ╰────
   help: Replace `/world/g` with `'world'`.
+    ╭╴
+  1 - "Hello world".replaceAll(/world/g, 'world!');
+  1 + "Hello world".replaceAll('world', 'world!');
+    ╰╴

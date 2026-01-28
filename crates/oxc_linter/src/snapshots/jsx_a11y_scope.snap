@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·      ─────
    ╰────
   help: Remove the `scope` prop on elements other than `<th>`.
+    ╭╴
+  1 - <div scope />
+  1 + <div  />
+    ╰╴
 
   ⚠ eslint-plugin-jsx-a11y(scope): The `scope` prop can only be used on `<th>` elements
    ╭─[scope.tsx:1:6]
@@ -14,3 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ·      ───────────
    ╰────
   help: Remove the `scope` prop on elements other than `<th>`.
+    ╭╴
+  1 - <Foo scope='bar' />;
+  1 + <Foo  />;
+    ╰╴

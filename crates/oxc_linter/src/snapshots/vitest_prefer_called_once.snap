@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ──────────────────
    ╰────
   help: Prefer `toBeCalledOnce()`.
+    ╭╴
+  1 - expect(fn).toBeCalledTimes(1);
+  1 + expect(fn).toBeCalledOnce();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
    ╭─[prefer_called_once.tsx:1:12]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────────────
    ╰────
   help: Prefer `toHaveBeenCalledOnce()`.
+    ╭╴
+  1 - expect(fn).toHaveBeenCalledTimes(1);
+  1 + expect(fn).toHaveBeenCalledOnce();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
    ╭─[prefer_called_once.tsx:1:16]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────────────────
    ╰────
   help: Prefer `toBeCalledOnce()`.
+    ╭╴
+  1 - expect(fn).not.toBeCalledTimes(1);
+  1 + expect(fn).not.toBeCalledOnce();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
    ╭─[prefer_called_once.tsx:1:16]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────────────────────
    ╰────
   help: Prefer `toHaveBeenCalledOnce()`.
+    ╭╴
+  1 - expect(fn).not.toHaveBeenCalledTimes(1);
+  1 + expect(fn).not.toHaveBeenCalledOnce();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
    ╭─[prefer_called_once.tsx:1:21]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────
    ╰────
   help: Prefer `toBeCalledOnce()`.
+    ╭╴
+  1 - expect(fn).resolves.toBeCalledTimes(1);
+  1 + expect(fn).resolves.toBeCalledOnce();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
    ╭─[prefer_called_once.tsx:1:21]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ────────────────────────
    ╰────
   help: Prefer `toHaveBeenCalledOnce()`.
+    ╭╴
+  1 - expect(fn).resolves.toHaveBeenCalledTimes(1);
+  1 + expect(fn).resolves.toHaveBeenCalledOnce();
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
    ╭─[prefer_called_once.tsx:1:21]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────────────────────────────
    ╰────
   help: Prefer `toHaveBeenCalledOnce()`.
+    ╭╴
+  1 - expect(fn).resolves.toHaveBeenCalledTimes(/*comment*/1);
+  1 + expect(fn).resolves.toHaveBeenCalledOnce(/*comment*/);
+    ╰╴
 
   ⚠ eslint-plugin-vitest(prefer-called-once): The use of `toBeCalledTimes(1)` and `toHaveBeenCalledTimes(1)` is discouraged.
    ╭─[prefer_called_once.tsx:1:53]
@@ -57,3 +85,9 @@ source: crates/oxc_linter/src/tester.rs
  3 │ ╰─▶             );
    ╰────
   help: Prefer `toHaveBeenCalledOnce()`.
+    ╭╴
+  1 - expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(
+  2 -               1,
+  1 + expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledOnce(
+  2 +               
+    ╰╴

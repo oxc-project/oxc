@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			            throw new Error("Something failed");
+  4 + 			            throw new Error("Something failed", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:5:16]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 			            throw new Error("Something failed", { cause: unrelated });
+  5 + 			            throw new Error("Something failed", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:5:16]
@@ -27,6 +35,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 			            throw new Error("Failed", { cause: e });
+  5 + 			            throw new Error("Failed", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:16]
@@ -36,6 +48,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			            throw new Error("Failed", { cause: error.message });
+  4 + 			            throw new Error("Failed", { cause: error });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:7:28]
@@ -45,6 +61,10 @@ source: crates/oxc_linter/src/tester.rs
  8 │                                 }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  7 - 			                        throw new Error("Failed without cause");
+  7 + 			                        throw new Error("Failed without cause", { cause: error });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:6:24]
@@ -54,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │                             case "B":
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  6 - 			                    throw new Error("Type A");
+  6 + 			                    throw new Error("Type A", { cause: error });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:16]
@@ -63,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 			${err.message}`);
+  5 + 			${err.message}`, { cause: error });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:5:16]
@@ -72,6 +100,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 			            throw new Error(errorMessage);
+  5 + 			            throw new Error(errorMessage, { cause: error });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:5:16]
@@ -81,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 			            throw new Error(errorMessage, { existingOption: true, complexOption: { moreOptions: {} } });
+  5 + 			            throw new Error(errorMessage, { existingOption: true, complexOption: { moreOptions: {} }, cause: error });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:5:20]
@@ -90,6 +126,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 			                throw new Error("Type A");
+  5 + 			                throw new Error("Type A", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:7:16]
@@ -99,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
  8 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  7 - 			            throw new TypeError("Fallback error");
+  7 + 			            throw new TypeError("Fallback error", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:16]
@@ -108,6 +152,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			            throw Error("Something failed");
+  4 + 			            throw Error("Something failed", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:16]
@@ -117,6 +165,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			            throw new Error("Failed without cause");
+  4 + 			            throw new Error("Failed without cause", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:20]
@@ -126,6 +178,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			                throw new Error("Something went wrong");
+  4 + 			                throw new Error("Something went wrong", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:20]
@@ -135,6 +191,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			                throw new Error();
+  4 + 			                throw new Error("", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:20]
@@ -144,6 +204,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			                throw new AggregateError([], "Lorem ipsum");
+  4 + 			                throw new AggregateError([], "Lorem ipsum", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:20]
@@ -153,6 +217,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			                throw new AggregateError();
+  4 + 			                throw new AggregateError([], "", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:20]
@@ -162,6 +230,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			                throw new AggregateError([]);
+  4 + 			                throw new AggregateError([], "", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): The caught error is not accessible because the catch clause has no error parameter.
    ╭─[preserve_caught_error.tsx:3:8]
@@ -180,6 +252,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 			            throw new Error("Something failed", { cause });
+  4 + 			            throw new Error("Something failed", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:8]
@@ -217,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
  7 │                             }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 								"Something went wrong" // some comments
+  5 + 								"Something went wrong", { cause: error } // some comments
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:8]
@@ -226,6 +306,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 							throw new Error("Something failed", {});
+  4 + 							throw new Error("Something failed", { cause: err });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:5:7]
@@ -235,6 +319,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │                     }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  5 - 						throw new Error("Something failed", { [cause]: "Some error" });
+  5 + 						throw new Error("Something failed", { [cause]: "Some error", cause: error });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:7]
@@ -244,6 +332,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  4 - 						throw new Error("Something failed", { cause() { /* do something */ }  });
+  4 + 						throw new Error("Something failed", { cause: error  });
+    ╰╴
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:2:5]
@@ -255,3 +347,7 @@ source: crates/oxc_linter/src/tester.rs
  6 │                 }
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.
+    ╭╴
+  3 - 					get cause() { return error; },
+  3 + 					cause: error,
+    ╰╴

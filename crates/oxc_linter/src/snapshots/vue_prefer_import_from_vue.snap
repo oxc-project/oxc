@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ──────────────────
    ╰────
   help: Replace `'@vue/runtime-dom'` with `'vue'`.
+    ╭╴
+  1 - import { createApp } from '@vue/runtime-dom'
+  1 + import { createApp } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:26]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────────────────
    ╰────
   help: Replace `'@vue/runtime-core'` with `'vue'`.
+    ╭╴
+  1 - import { computed } from '@vue/runtime-core'
+  1 + import { computed } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:26]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────────
    ╰────
   help: Replace `'@vue/reactivity'` with `'vue'`.
+    ╭╴
+  1 - import { computed } from '@vue/reactivity'
+  1 + import { computed } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:32]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                ─────────────
    ╰────
   help: Replace `'@vue/shared'` with `'vue'`.
+    ╭╴
+  1 - import { normalizeClass } from '@vue/shared'
+  1 + import { normalizeClass } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:25]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────────
    ╰────
   help: Replace `'@vue/reactivity'` with `'vue'`.
+    ╭╴
+  1 - import { unknown } from '@vue/reactivity'
+  1 + import { unknown } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:25]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────────────
    ╰────
   help: Replace `'@vue/runtime-dom'` with `'vue'`.
+    ╭╴
+  1 - import { unknown } from '@vue/runtime-dom'
+  1 + import { unknown } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:22]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ─────────────────
    ╰────
   help: Replace `'@vue/reactivity'` with `'vue'`.
+    ╭╴
+  1 - import * as Foo from '@vue/reactivity'
+  1 + import * as Foo from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:22]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────────────
    ╰────
   help: Replace `'@vue/runtime-dom'` with `'vue'`.
+    ╭╴
+  1 - import * as Foo from '@vue/runtime-dom'
+  1 + import * as Foo from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:15]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ─────────────────
    ╰────
   help: Replace `'@vue/reactivity'` with `'vue'`.
+    ╭╴
+  1 - export * from '@vue/reactivity'
+  1 + export * from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:15]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────────────
    ╰────
   help: Replace `'@vue/runtime-dom'` with `'vue'`.
+    ╭╴
+  1 - export * from '@vue/runtime-dom'
+  1 + export * from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:26]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────────────
    ╰────
   help: Replace `'@vue/reactivity'` with `'vue'`.
+    ╭╴
+  1 - export { computed } from '@vue/reactivity'
+  1 + export { computed } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:26]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ──────────────────
    ╰────
   help: Replace `'@vue/runtime-dom'` with `'vue'`.
+    ╭╴
+  1 - export { computed } from '@vue/runtime-dom'
+  1 + export { computed } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:25]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ─────────────────
    ╰────
   help: Replace `'@vue/reactivity'` with `'vue'`.
+    ╭╴
+  1 - export { unknown } from '@vue/reactivity'
+  1 + export { unknown } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:25]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────────────
    ╰────
   help: Replace `'@vue/runtime-dom'` with `'vue'`.
+    ╭╴
+  1 - export { unknown } from '@vue/runtime-dom'
+  1 + export { unknown } from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:21]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────────────
    ╰────
   help: Replace `'@vue/reactivity'` with `'vue'`.
+    ╭╴
+  1 - import unknown from '@vue/reactivity'
+  1 + import unknown from 'vue'
+    ╰╴
 
   ⚠ eslint-plugin-vue(prefer-import-from-vue): Use `import from 'vue'` instead of `import from '@vue/*'`.
    ╭─[prefer_import_from_vue.tsx:1:21]
@@ -112,3 +172,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ──────────────────
    ╰────
   help: Replace `'@vue/runtime-dom'` with `'vue'`.
+    ╭╴
+  1 - import unknown from '@vue/runtime-dom'
+  1 + import unknown from 'vue'
+    ╰╴

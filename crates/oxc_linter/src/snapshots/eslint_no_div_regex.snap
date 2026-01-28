@@ -7,3 +7,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                             ──────
    ╰────
   help: Rewrite `/=` into `/[=]`
+    ╭╴
+  1 - var f = function() { return /=foo/; };
+  1 + var f = function() { return /[=]foo/; };
+    ╰╴

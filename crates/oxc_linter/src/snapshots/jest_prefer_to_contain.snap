@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Replace `expect(a.includes(b)).toEqual(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toEqual(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:25]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────
    ╰────
   help: Replace `expect(a.includes(b,),).toEqual(true,)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b,),).toEqual(true,)
+  1 + expect(a).toContain(b)
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:26]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Replace `expect(a['includes'](b)).toEqual(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b)).toEqual(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:26]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────
    ╰────
   help: Replace `expect(a['includes'](b))['toEqual'](true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b))['toEqual'](true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:26]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Replace `expect(a['includes'](b)).toEqual(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b)).toEqual(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:30]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ───────
    ╰────
   help: Replace `expect(a['includes'](b)).not.toEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b)).not.toEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ───────
    ╰────
   help: Replace `expect(a['includes'](b))['not'].toEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b))['not'].toEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────
    ╰────
   help: Replace `expect(a['includes'](b))['not']['toEqual'](false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b))['not']['toEqual'](false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Replace `expect(a.includes(b)).toEqual(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toEqual(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────
    ╰────
   help: Replace `expect(a.includes(b)).not.toEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────
    ╰────
   help: Replace `expect(a.includes(b)).not.toEqual(true)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toEqual(true);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Replace `expect(a.includes(b)).toBe(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toBe(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Replace `expect(a.includes(b)).toBe(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toBe(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Replace `expect(a.includes(b)).not.toBe(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toBe(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Replace `expect(a.includes(b)).not.toBe(true)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toBe(true);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).toStrictEqual(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toStrictEqual(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).toStrictEqual(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toStrictEqual(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).not.toStrictEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toStrictEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).not.toStrictEqual(true)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toStrictEqual(true);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:39]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).toEqual(true)` with `expect(a.test(t)).toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).toEqual(true);
+  1 + expect(a.test(t)).toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:39]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).toEqual(false)` with `expect(a.test(t)).not.toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).toEqual(false);
+  1 + expect(a.test(t)).not.toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:43]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).not.toEqual(true)` with `expect(a.test(t)).not.toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).not.toEqual(true);
+  1 + expect(a.test(t)).not.toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:43]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).not.toEqual(false)` with `expect(a.test(t)).toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).not.toEqual(false);
+  1 + expect(a.test(t)).toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Replace `expect([{a:1}].includes({b:1})).toBe(true)` with `expect([{ a: 1 }]).toContain({ b: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({b:1})).toBe(true);
+  1 + expect([{ a: 1 }]).toContain({ b: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).toBe(false)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).toBe(false);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toBe(true)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toBe(true);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toBe(false)` with `expect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toBe(false);
+  1 + expect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).toStrictEqual(true)` with `expect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).toStrictEqual(true);
+  1 + expect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).toStrictEqual(false)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).toStrictEqual(false);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toStrictEqual(true)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toStrictEqual(true);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toStrictEqual(false)` with `expect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toStrictEqual(false);
+  1 + expect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:3:59]
@@ -226,6 +350,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Replace `pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false)` with `pleaseExpect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  3 -                 pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false);
+  3 +                 pleaseExpect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -233,6 +361,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Replace `expect(a.includes(b)).toEqual(false as boolean)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toEqual(false as boolean);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -240,6 +372,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Replace `expect(a.includes(b)).toEqual(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toEqual(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:25]
@@ -247,6 +383,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ───────
    ╰────
   help: Replace `expect(a.includes(b,),).toEqual(true,)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b,),).toEqual(true,);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:26]
@@ -254,6 +394,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Replace `expect(a['includes'](b)).toEqual(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b)).toEqual(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:26]
@@ -261,6 +405,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ─────────
    ╰────
   help: Replace `expect(a['includes'](b))['toEqual'](true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b))['toEqual'](true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:26]
@@ -268,6 +416,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ───────
    ╰────
   help: Replace `expect(a['includes'](b)).toEqual(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b)).toEqual(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:30]
@@ -275,6 +427,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ───────
    ╰────
   help: Replace `expect(a['includes'](b)).not.toEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b)).not.toEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -282,6 +438,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ───────
    ╰────
   help: Replace `expect(a['includes'](b))['not'].toEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b))['not'].toEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -289,6 +449,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────
    ╰────
   help: Replace `expect(a['includes'](b))['not']['toEqual'](false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a['includes'](b))['not']['toEqual'](false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -296,6 +460,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Replace `expect(a.includes(b)).toEqual(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toEqual(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -303,6 +471,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────
    ╰────
   help: Replace `expect(a.includes(b)).not.toEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -310,6 +482,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ───────
    ╰────
   help: Replace `expect(a.includes(b)).not.toEqual(true)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toEqual(true);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -317,6 +493,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Replace `expect(a.includes(b)).toBe(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toBe(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -324,6 +504,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Replace `expect(a.includes(b)).toBe(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toBe(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -331,6 +515,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Replace `expect(a.includes(b)).not.toBe(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toBe(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -338,6 +526,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Replace `expect(a.includes(b)).not.toBe(true)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toBe(true);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -345,6 +537,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).toStrictEqual(true)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toStrictEqual(true);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -352,6 +548,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).toStrictEqual(false)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toStrictEqual(false);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -359,6 +559,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).not.toStrictEqual(false)` with `expect(a).toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toStrictEqual(false);
+  1 + expect(a).toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:27]
@@ -366,6 +570,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ─────────────
    ╰────
   help: Replace `expect(a.includes(b)).not.toStrictEqual(true)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).not.toStrictEqual(true);
+  1 + expect(a).not.toContain(b);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:39]
@@ -373,6 +581,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).toEqual(true)` with `expect(a.test(t)).toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).toEqual(true);
+  1 + expect(a.test(t)).toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:39]
@@ -380,6 +592,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).toEqual(false)` with `expect(a.test(t)).not.toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).toEqual(false);
+  1 + expect(a.test(t)).not.toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:43]
@@ -387,6 +603,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).not.toEqual(true)` with `expect(a.test(t)).not.toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).not.toEqual(true);
+  1 + expect(a.test(t)).not.toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:43]
@@ -394,6 +614,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                           ───────
    ╰────
   help: Replace `expect(a.test(t).includes(b.test(p))).not.toEqual(false)` with `expect(a.test(t)).toContain(b.test(p))`.
+    ╭╴
+  1 - expect(a.test(t).includes(b.test(p))).not.toEqual(false);
+  1 + expect(a.test(t)).toContain(b.test(p));
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -401,6 +625,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).toBe(true)` with `expect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).toBe(true);
+  1 + expect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -408,6 +636,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).toBe(false)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).toBe(false);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -415,6 +647,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toBe(true)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toBe(true);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -422,6 +658,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toBe(false)` with `expect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toBe(false);
+  1 + expect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -429,6 +669,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).toStrictEqual(true)` with `expect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).toStrictEqual(true);
+  1 + expect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:33]
@@ -436,6 +680,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                 ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).toStrictEqual(false)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).toStrictEqual(false);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -443,6 +691,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toStrictEqual(true)` with `expect([{ a: 1 }]).not.toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toStrictEqual(true);
+  1 + expect([{ a: 1 }]).not.toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:37]
@@ -450,6 +702,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ─────────────
    ╰────
   help: Replace `expect([{a:1}].includes({a:1})).not.toStrictEqual(false)` with `expect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  1 - expect([{a:1}].includes({a:1})).not.toStrictEqual(false);
+  1 + expect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:3:63]
@@ -459,6 +715,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                 
    ╰────
   help: Replace `pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false)` with `pleaseExpect([{ a: 1 }]).toContain({ a: 1 })`.
+    ╭╴
+  3 -                     pleaseExpect([{a:1}].includes({a:1})).not.toStrictEqual(false);
+  3 +                     pleaseExpect([{ a: 1 }]).toContain({ a: 1 });
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.
    ╭─[prefer_to_contain.tsx:1:23]
@@ -466,3 +726,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────
    ╰────
   help: Replace `expect(a.includes(b)).toEqual(false as boolean)` with `expect(a).not.toContain(b)`.
+    ╭╴
+  1 - expect(a.includes(b)).toEqual(false as boolean);
+  1 + expect(a).not.toContain(b);
+    ╰╴

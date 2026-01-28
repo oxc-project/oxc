@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.splice(1, foo.length)
+  1 + foo.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.splice(1, foo.length)
+  1 + foo?.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.splice(1, foo.length,)
+  1 + foo.splice(1,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.splice(1, (( foo.length )))
+  1 + foo.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:15]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.splice(1, foo?.length)
+  1 + foo.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.splice(1, foo?.length)
+  1 + foo?.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Infinity` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.splice(1, Infinity)
+  1 + foo?.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Number.POSITIVE_INFINITY` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:16]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────────────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.splice(1, Number.POSITIVE_INFINITY)
+  1 + foo?.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `….length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.bar.splice(1, foo.bar.length)
+  1 + foo.bar.splice(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.toSpliced(1, foo.length)
+  1 + foo.toSpliced(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.toSpliced(1, foo.length)
+  1 + foo?.toSpliced(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ──────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.toSpliced(1, foo.length,)
+  1 + foo.toSpliced(1,)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.toSpliced(1, (( foo.length )))
+  1 + foo.toSpliced(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:18]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.toSpliced(1, foo?.length)
+  1 + foo.toSpliced(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `foo?.length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ───────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.toSpliced(1, foo?.length)
+  1 + foo?.toSpliced(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Infinity` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.toSpliced(1, Infinity)
+  1 + foo?.toSpliced(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `Number.POSITIVE_INFINITY` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:19]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────────────────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo?.toSpliced(1, Number.POSITIVE_INFINITY)
+  1 + foo?.toSpliced(1)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-unnecessary-array-splice-count): Passing `….length` as the `deleteCount` argument is unnecessary.
    ╭─[no_unnecessary_array_splice_count.tsx:1:22]
@@ -126,3 +194,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                      ──────────────
    ╰────
   help: Omit the argument to delete all elements after the start index.
+    ╭╴
+  1 - foo.bar.toSpliced(1, foo.bar.length)
+  1 + foo.bar.toSpliced(1)
+    ╰╴

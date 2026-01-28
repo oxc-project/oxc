@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementById("foo");
+  1 + document.querySelector("#foo");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName("foo");
+  1 + document.querySelectorAll(".foo");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName("foo bar");
+  1 + document.querySelectorAll(".foo .bar");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByTagName("foo");
+  1 + document.querySelectorAll("foo");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementById("");
+  1 + document.querySelector("");
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementById('foo');
+  1 + document.querySelector('#foo');
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName('foo');
+  1 + document.querySelectorAll('.foo');
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName('foo bar');
+  1 + document.querySelectorAll('.foo .bar');
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByTagName('foo');
+  1 + document.querySelectorAll('foo');
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName('');
+  1 + document.querySelectorAll('');
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementById(`foo`);
+  1 + document.querySelector(`#foo`);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName(`foo`);
+  1 + document.querySelectorAll(`.foo`);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName(`foo bar`);
+  1 + document.querySelectorAll(`.foo .bar`);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByTagName(`foo`);
+  1 + document.querySelectorAll(`foo`);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByTagName(``);
+  1 + document.querySelectorAll(``);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -126,6 +186,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByClassName(null);
+  1 + document.querySelectorAll(null);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
    ╭─[prefer_query_selector.tsx:1:10]
@@ -133,6 +197,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+    ╭╴
+  1 - document.getElementsByTagName(null);
+  1 + document.querySelectorAll(null);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
    ╭─[prefer_query_selector.tsx:1:10]

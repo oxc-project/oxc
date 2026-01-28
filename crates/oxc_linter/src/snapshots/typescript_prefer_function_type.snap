@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ───────────
    ╰────
   help: The function type form `() => string` is generally preferred when possible for being more succinct.
+    ╭╴
+  1 - interface Foo { (): string; }
+  1 + type Foo = () => string;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:47]
@@ -21,6 +25,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                                               ───────────
    ╰────
   help: The function type form `() => string` is generally preferred when possible for being more succinct.
+    ╭╴
+  1 - export default interface Foo { /** comment */ (): string; }
+  1 + export default /** comment */
+  2 + type Foo = () => string;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:4:11]
@@ -30,6 +39,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │         }
    ╰────
   help: The function type form `() => string` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         interface Foo {
+  3 -           // comment
+  4 -           (): string;
+  5 -         }
+  2 +         // comment
+  3 + type Foo = () => string;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:39]
@@ -37,6 +54,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                                       ───────────
    ╰────
   help: The function type form `() => string` is generally preferred when possible for being more succinct.
+    ╭╴
+  1 - export interface Foo { /** comment */ (): string; }
+  1 + /** comment */
+  2 + export type Foo = () => string;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:4:11]
@@ -46,6 +68,14 @@ source: crates/oxc_linter/src/tester.rs
  5 │         }
    ╰────
   help: The function type form `() => string` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         export interface Foo {
+  3 -           // comment
+  4 -           (): string;
+  5 -         }
+  2 +         // comment
+  3 + export type Foo = () => string;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:2:43]
@@ -55,6 +85,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │           return bar('hello');
    ╰────
   help: The function type form `(s: string) => number` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         function foo(bar: { /* comment */ (s: string): number } | undefined): number {
+  2 +         function foo(bar: ((s: string) => number) | undefined): number {
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:3:11]
@@ -64,6 +98,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │         };
    ╰────
   help: The function type form `() => string` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         type Foo = {
+  3 -           (): string;
+  4 -         };
+  2 +         type Foo = () => string;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:2:29]
@@ -73,6 +113,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │           return bar('hello');
    ╰────
   help: The function type form `(s: string) => number` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         function foo(bar: { (s: string): number }): number {
+  2 +         function foo(bar: (s: string) => number): number {
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:2:29]
@@ -82,6 +126,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │           return bar('hello');
    ╰────
   help: The function type form `(s: string) => number` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         function foo(bar: { (s: string): number } | undefined): number {
+  2 +         function foo(bar: ((s: string) => number) | undefined): number {
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:3:11]
@@ -91,6 +139,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: The function type form `() => void` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         interface Foo extends Function {
+  3 -           (): void;
+  4 -         }
+  2 +         type Foo = () => void;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:3:11]
@@ -100,6 +154,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: The function type form `(bar: T) => string` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         interface Foo<T> {
+  3 -           (bar: T): string;
+  4 -         }
+  2 +         type Foo<T> = (bar: T) => string;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:3:11]
@@ -109,6 +169,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: The function type form `(this: T) => void` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         interface Foo<T> {
+  3 -           (this: T): void;
+  4 -         }
+  2 +         type Foo<T> = (this: T) => void;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:2:25]
@@ -118,6 +184,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │               
    ╰────
   help: The function type form `(this: string) => T` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         type Foo<T> = { (this: string): T };
+  2 +         type Foo<T> = (this: string) => T;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:3:11]
@@ -127,6 +197,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: The function type form `(arg: this) => void` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         interface Foo {
+  3 -           (arg: this): void;
+  4 -         }
+  2 +         type Foo = (arg: this) => void;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:3:11]
@@ -136,6 +212,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │         }
    ╰────
   help: The function type form `(arg: number) => this | undefined` is generally preferred when possible for being more succinct.
+    ╭╴
+  2 -         interface Foo {
+  3 -           (arg: number): this | undefined;
+  4 -         }
+  2 +         type Foo = (arg: number) => this | undefined;
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
     ╭─[prefer_function_type.tsx:4:11]
@@ -160,6 +242,12 @@ source: crates/oxc_linter/src/tester.rs
                       nested: string;
                     };
                   }` is generally preferred when possible for being more succinct.
+     ╭╴
+   3 -         interface Foo {
+   4 -           (): {
+   3 +         type Foo = () => {
+  13 -         }
+     ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:17]
@@ -167,6 +255,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────
    ╰────
   help: The function type form `() => void` is generally preferred when possible for being more succinct.
+    ╭╴
+  1 - type X = {} | { (): void; }
+  1 + type X = {} | (() => void)
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:17]
@@ -174,6 +266,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────
    ╰────
   help: The function type form `() => void` is generally preferred when possible for being more succinct.
+    ╭╴
+  1 - type X = {} & { (): void; };
+  1 + type X = {} & (() => void);
+    ╰╴
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:12]
@@ -181,3 +277,7 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────
    ╰────
   help: The function type form `new() => T` is generally preferred when possible for being more succinct.
+    ╭╴
+  1 - type K = { new(): T };
+  1 + type K = new() => T;
+    ╰╴

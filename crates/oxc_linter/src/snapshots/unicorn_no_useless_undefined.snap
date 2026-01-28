@@ -15,6 +15,12 @@ source: crates/oxc_linter/src/tester.rs
  9 │         )
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  5 -             undefined,
+  6 -             undefined,
+  7 -             undefined,
+  8 -             undefined,
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:21]
@@ -22,6 +28,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - function foo([bar = undefined] = []) {}
+  1 + function foo([bar] = []) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:5:5]
@@ -37,6 +47,12 @@ source: crates/oxc_linter/src/tester.rs
  9 │             )
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  5 - 				undefined,
+  6 - 				undefined,
+  7 - 				undefined,
+  8 - 				undefined,
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:21]
@@ -44,6 +60,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - function foo([bar = undefined] = []) {}
+  1 + function foo([bar] = []) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:10]
@@ -51,6 +71,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────  ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - foo(bar, undefined, undefined);
+  1 + foo(bar);
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:9]
@@ -58,6 +82,10 @@ source: crates/oxc_linter/src/tester.rs
    ·         ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - let a = undefined, b = 2;
+  1 + let a, b = 2;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:7:21]
@@ -76,6 +104,18 @@ source: crates/oxc_linter/src/tester.rs
  8 │                     /* */
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+     ╭╴
+   3 -             yield /* */ (
+   4 -                 /* */
+   5 -                 (
+   6 -                     /* */
+   7 -                     undefined
+   8 -                     /* */
+   9 -                 )
+  10 -                 /* */
+  11 -             ) /* */ ;
+   3 +             yield /* */ ;
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:6:17]
@@ -85,6 +125,18 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 /* */
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+     ╭╴
+   2 -         const foo = () => /* */ (
+   3 -             /* */
+   4 -             (
+   5 -                 /* */
+   6 -                 undefined
+   7 -                 /* */
+   8 -             )
+   9 -             /* */
+  10 -         );
+   2 +         const foo = () => /* */ {};
+     ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:10]
@@ -92,6 +144,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - foo.bind(undefined)
+  1 + foo.bind()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:11]
@@ -99,6 +155,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - bind(foo, undefined)
+  1 + bind(foo)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:17]
@@ -106,6 +166,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - foo.bind?.(bar, undefined)
+  1 + foo.bind?.(bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:16]
@@ -113,6 +177,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - foo[bind](bar, undefined)
+  1 + foo[bind](bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:18]
@@ -120,3 +188,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ─────────
    ╰────
   help: Consider removing `undefined` or using `null` instead.
+    ╭╴
+  1 - foo.notBind(bar, undefined)
+  1 + foo.notBind(bar)
+    ╰╴

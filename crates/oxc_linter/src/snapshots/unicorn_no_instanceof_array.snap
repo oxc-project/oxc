@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - arr instanceof Array
+  1 + Array.isArray(arr)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - [] instanceof Array
+  1 + Array.isArray([])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - [] instanceof (Array)
+  1 + Array.isArray([])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - [1,2,3] instanceof Array === true
+  1 + Array.isArray([1,2,3]) === true
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - fun.call(1, 2, 3) instanceof Array
+  1 + Array.isArray(fun.call(1, 2, 3))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - obj.arr instanceof Array
+  1 + Array.isArray(obj.arr)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - foo.bar[2] instanceof Array
+  1 + Array.isArray(foo.bar[2])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:1]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - (0, array) instanceof Array
+  1 + Array.isArray((0, array))
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.
    ╭─[no_instanceof_array.tsx:1:23]
@@ -63,3 +95,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ───────────────────
    ╰────
   help: The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.
+    ╭╴
+  1 - function foo(){return [] instanceof Array}
+  1 + function foo(){return Array.isArray([])}
+    ╰╴

@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0b10_10_0001
+  1 + const foo = 0b1010_0001
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0b0_00_0
+  1 + const foo = 0b0000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0b10101010101010
+  1 + const foo = 0b10_1010_1010_1010
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0B10101010101010
+  1 + const foo = 0B10_1010_1010_1010
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0xA_B_CDE_F0
+  1 + const foo = 0xA_BC_DE_F0
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0xABCDEF
+  1 + const foo = 0xAB_CD_EF
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0xA_B
+  1 + const foo = 0xAB
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0XAB_C_D
+  1 + const foo = 0XAB_CD
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0o12_34_5670
+  1 + const foo = 0o1234_5670
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0o7_7_77
+  1 + const foo = 0o7777
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0o010101010101
+  1 + const foo = 0o0101_0101_0101
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0O010101010101
+  1 + const foo = 0O0101_0101_0101
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -91,6 +139,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0b10_10_0001n
+  1 + const foo = 0b1010_0001n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -98,6 +150,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0b0_00_0n
+  1 + const foo = 0b0000n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -105,6 +161,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0b10101010101010n
+  1 + const foo = 0b10_1010_1010_1010n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -112,6 +172,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0B10101010101010n
+  1 + const foo = 0B10_1010_1010_1010n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -119,6 +183,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 1_9_223n
+  1 + const foo = 19_223n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -126,6 +194,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 80_7n
+  1 + const foo = 807n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -133,6 +205,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 123456789_100n
+  1 + const foo = 123_456_789_100n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -140,6 +216,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 1e10000
+  1 + const foo = 1e10_000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -147,6 +227,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 39804e10000
+  1 + const foo = 39_804e10_000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:14]
@@ -154,6 +238,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = -123456e100
+  1 + const foo = -123_456e100
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:14]
@@ -161,6 +249,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = -100000e-10000
+  1 + const foo = -100_000e-10_000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:14]
@@ -168,6 +260,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = -1000e+10000
+  1 + const foo = -1000e+10_000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:14]
@@ -175,6 +271,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ──────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = -1000e+00010000
+  1 + const foo = -1000e+00_010_000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -182,6 +282,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 3.6e12000
+  1 + const foo = 3.6e12_000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:14]
@@ -189,6 +293,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = -1200000e5
+  1 + const foo = -1_200_000e5
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -196,6 +304,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 3.65432E12000
+  1 + const foo = 3.654_32E12_000
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -203,6 +315,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 9807.1234567
+  1 + const foo = 9807.123_456_7
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -210,6 +326,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 3819.123_4325
+  1 + const foo = 3819.123_432_5
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -217,6 +337,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 138789.12343_2_42
+  1 + const foo = 138_789.123_432_42
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -224,6 +348,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = .000000_1
+  1 + const foo = .000_000_1
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -231,6 +359,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 12345678..toString()
+  1 + const foo = 12_345_678.toString()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -238,6 +370,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 12345678 .toString()
+  1 + const foo = 12_345_678 .toString()
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -245,6 +381,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = .00000
+  1 + const foo = .000_00
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -252,6 +392,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 0.00000
+  1 + const foo = 0.000_00
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -259,6 +403,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ───────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 1_2_345_678
+  1 + const foo = 12_345_678
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -266,6 +414,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 12_3
+  1 + const foo = 123
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]
@@ -273,6 +425,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ──────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = 1234567890
+  1 + const foo = 1_234_567_890
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:14]
@@ -280,3 +436,7 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────────
    ╰────
   help: Group digits with numeric separators (_) so longer numbers are easier to read.
+    ╭╴
+  1 - const foo = -100000_1
+  1 + const foo = -1_000_001
+    ╰╴

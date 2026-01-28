@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - const foo = null
+  1 + const foo = undefined
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:5]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo(null)
+  1 + foo(undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:12]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (foo == null) {}
+  1 + if (foo == undefined) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:12]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (foo != null) {}
+  1 + if (foo != undefined) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:5]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (null == foo) {}
+  1 + if (undefined == foo) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:5]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (null != foo) {}
+  1 + if (undefined != foo) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:2:16]
@@ -50,6 +74,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  2 - while (curr != null) { curr = stack.pop() }
+  2 + while (curr != undefined) { curr = stack.pop() }
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:2:20]
@@ -59,6 +87,10 @@ source: crates/oxc_linter/src/tester.rs
  3 │             }
    ╰────
   help: Delete this code.
+    ╭╴
+  2 -             return null;
+  2 +             return ;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:11]
@@ -66,6 +98,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - let foo = null;
+  1 + let foo;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:11]
@@ -73,6 +109,10 @@ source: crates/oxc_linter/src/tester.rs
    ·           ────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - var foo = null;
+  1 + var foo;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:20]
@@ -80,6 +120,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Delete this code.
+    ╭╴
+  1 - var foo = 1, bar = null, baz = 2;
+  1 + var foo = 1, bar, baz = 2;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:13]
@@ -87,6 +131,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - const foo = null;
+  1 + const foo = undefined;
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:13]
@@ -94,6 +142,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (foo === null) {}
+  1 + if (foo === undefined) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:5]
@@ -101,6 +153,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (null === foo) {}
+  1 + if (undefined === foo) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:13]
@@ -108,6 +164,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (foo !== null) {}
+  1 + if (foo !== undefined) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:5]
@@ -115,6 +175,10 @@ source: crates/oxc_linter/src/tester.rs
    ·     ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - if (null !== foo) {}
+  1 + if (undefined !== foo) {}
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:19]
@@ -122,6 +186,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - new Object.create(null)
+  1 + new Object.create(undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:27]
@@ -129,6 +197,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - new foo.insertBefore(bar, null)
+  1 + new foo.insertBefore(bar, undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:8]
@@ -136,6 +208,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - create(null)
+  1 + create(undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:19]
@@ -143,6 +219,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - insertBefore(bar, null)
+  1 + insertBefore(bar, undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:18]
@@ -150,6 +230,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object['create'](null)
+  1 + Object['create'](undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:26]
@@ -157,6 +241,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo['insertBefore'](bar, null)
+  1 + foo['insertBefore'](bar, undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:16]
@@ -164,6 +252,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object[create](null)
+  1 + Object[create](undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:24]
@@ -171,6 +263,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo[insertBefore](bar, null)
+  1 + foo[insertBefore](bar, undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:8]
@@ -178,6 +274,10 @@ source: crates/oxc_linter/src/tester.rs
    ·        ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object[null](null)
+  1 + Object[undefined](null)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:14]
@@ -185,6 +285,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object[null](null)
+  1 + Object[null](undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:18]
@@ -192,6 +296,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object.notCreate(null)
+  1 + Object.notCreate(undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:26]
@@ -199,6 +307,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo.notInsertBefore(foo, null)
+  1 + foo.notInsertBefore(foo, undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:18]
@@ -206,6 +318,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - NotObject.create(null)
+  1 + NotObject.create(undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:19]
@@ -213,6 +329,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - lib.Object.create(null)
+  1 + lib.Object.create(undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:19]
@@ -220,6 +340,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object.create(...[null])
+  1 + Object.create(...[undefined])
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:15]
@@ -227,6 +351,10 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object.create(null, bar, extraArgument)
+  1 + Object.create(undefined, bar, extraArgument)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:18]
@@ -234,6 +362,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo.insertBefore(null)
+  1 + foo.insertBefore(undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:18]
@@ -241,6 +373,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo.insertBefore(null as any)
+  1 + foo.insertBefore(undefined as any)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:23]
@@ -248,6 +384,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                       ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo.insertBefore(foo, null, bar)
+  1 + foo.insertBefore(foo, undefined, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:28]
@@ -255,6 +395,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                            ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo.insertBefore(...[foo], null)
+  1 + foo.insertBefore(...[foo], undefined)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:18]
@@ -262,6 +406,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                  ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - foo.insertBefore(null, bar)
+  1 + foo.insertBefore(undefined, bar)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(no-null): Do not use `null` literals
    ╭─[no_null.tsx:1:20]
@@ -269,3 +417,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────
    ╰────
   help: Replace `null` with `undefined`.
+    ╭╴
+  1 - Object.create(bar, null)
+  1 + Object.create(bar, undefined)
+    ╰╴

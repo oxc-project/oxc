@@ -9,6 +9,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │                 });
    ╰────
   help: Use `await expect(...).resolves` instead
+    ╭╴
+  3 -                     expect(await someValue(),).toBe(true);
+  3 +                     await expect(someValue()).resolves.toBe(true);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.
    ╭─[prefer_expect_resolves.tsx:4:28]
@@ -18,6 +22,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 });
    ╰────
   help: Use `await expect(...).resolves` instead
+    ╭╴
+  4 -                     expect(await myPromise).toBe(true);
+  4 +                     await expect(myPromise).resolves.toBe(true);
+    ╰╴
 
   ⚠ eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.
    ╭─[prefer_expect_resolves.tsx:6:34]
@@ -27,3 +35,7 @@ source: crates/oxc_linter/src/tester.rs
  7 │                 });
    ╰────
   help: Use `await expect(...).resolves` instead
+    ╭╴
+  6 -                     pleaseExpect(await myPromise).toBe(true);
+  6 +                     await pleaseExpect(myPromise).resolves.toBe(true);
+    ╰╴

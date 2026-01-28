@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { type Foo, type Bar } from 'Foo'
+  1 + import type { Foo, Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:20]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { type Foo, type Bar } from 'Foo'
+  1 + import type { Foo, Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using inline type specifiers instead of a top-level type-only import.
    ╭─[consistent_type_specifier_style.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────
    ╰────
   help: Replace top‐level import type with an inline type specifier.
+    ╭╴
+  1 - import type { Foo } from 'Foo'
+  1 + import  { type Foo } from 'Foo'
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───────────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { type Foo as Bar } from 'Foo';
+  1 + import type { Foo as Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { type Foo, type Bar } from 'Foo';
+  1 + import type { Foo, Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:20]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { type Foo, type Bar } from 'Foo';
+  1 + import type { Foo, Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:15]
@@ -49,6 +73,11 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { Foo, type Bar } from 'Foo';
+  1 + import { Foo } from 'Foo';
+  2 + import type { Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -56,6 +85,11 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { type Foo, Bar } from 'Foo';
+  1 + import { Bar } from 'Foo';
+  2 + import type { Foo } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:15]
@@ -63,6 +97,11 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import Foo, { type Bar } from 'Foo';
+  1 + import Foo from 'Foo';
+  2 + import type { Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:15]
@@ -70,6 +109,11 @@ source: crates/oxc_linter/src/tester.rs
    ·               ────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import Foo, { type Bar, Baz } from 'Foo';
+  1 + import Foo, { Baz } from 'Foo';
+  2 + import type { Bar } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:21]
@@ -77,6 +121,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ───────────────────
    ╰────
   help: Replace inline type specifiers with a top‐level import type statement.
+    ╭╴
+  1 - import { Component, type ComponentProps } from 'package-1';
+  1 + import { Component } from 'package-1';
+  2 + import type { ComponentProps } from 'package-1';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using inline type specifiers instead of a top-level type-only import.
    ╭─[consistent_type_specifier_style.tsx:1:1]
@@ -84,6 +133,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────────────
    ╰────
   help: Replace top‐level import type with an inline type specifier.
+    ╭╴
+  1 - import type { Foo, Bar, Baz } from 'Foo';
+  1 + import  { type Foo, type Bar, type Baz } from 'Foo';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -91,6 +144,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './index.d.ts';
+  1 + import type { Foo } from './index.d.ts';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -98,6 +155,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './index.d.ts';
+  1 + import type { Foo } from './index.d.ts';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -105,6 +166,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './index.d.mts';
+  1 + import type { Foo } from './index.d.mts';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -112,6 +177,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './index.d.mts';
+  1 + import type { Foo } from './index.d.mts';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -119,6 +188,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './index.d.cts';
+  1 + import type { Foo } from './index.d.cts';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -126,6 +199,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './index.d.cts';
+  1 + import type { Foo } from './index.d.cts';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -133,6 +210,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './app.d.css.ts';
+  1 + import type { Foo } from './app.d.css.ts';
+    ╰╴
 
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Type imports from declaration files must use top-level `import type` syntax.
    ╭─[consistent_type_specifier_style.tsx:1:10]
@@ -140,3 +221,7 @@ source: crates/oxc_linter/src/tester.rs
    ·          ────────
    ╰────
   help: Replace inline type specifiers with a top-level import type statement.
+    ╭╴
+  1 - import { type Foo } from './app.d.css.ts';
+  1 + import type { Foo } from './app.d.css.ts';
+    ╰╴

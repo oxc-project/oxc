@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  1 - // @ts-ignore
+  1 + // @ts-expect-error
+    ╰╴
 
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:1:1]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  1 - // @ts-ignore: Suppress next line
+  1 + // @ts-expect-error: Suppress next line
+    ╰╴
 
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:1:1]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────────────────────
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  1 - ///@ts-ignore: Suppress next line
+  1 + ///@ts-expect-error: Suppress next line
+    ╰╴
 
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:3:1]
@@ -30,6 +42,10 @@ source: crates/oxc_linter/src/tester.rs
  4 │ console.log('hello');
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  3 - // @ts-ignore: Unreachable code error
+  3 + // @ts-expect-error: Unreachable code error
+    ╰╴
 
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:1:1]
@@ -37,6 +53,10 @@ source: crates/oxc_linter/src/tester.rs
    · ────────────────
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  1 - /* @ts-ignore */
+  1 + /* @ts-expect-error */
+    ╰╴
 
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:2:1]
@@ -48,6 +68,10 @@ source: crates/oxc_linter/src/tester.rs
  6 │             
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  5 - * @ts-ignore */
+  5 + * @ts-expect-error */
+    ╰╴
 
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:1:1]
@@ -55,6 +79,10 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────────────────────────
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  1 - /* @ts-ignore in a single block */
+  1 + /* @ts-expect-error in a single block */
+    ╰╴
 
   ⚠ typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`
    ╭─[prefer_ts_expect_error.tsx:2:1]
@@ -64,3 +92,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │             
    ╰────
   help: Use "@ts-expect-error" to ensure an error is actually being suppressed.
+    ╭╴
+  3 - // @ts-ignore in a block with single line comments */
+  3 + // @ts-expect-error in a block with single line comments */
+    ╰╴

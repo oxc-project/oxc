@@ -7,6 +7,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
    ╰────
   help: Use lowercase for the number literal prefix `0b`.
+    ╭╴
+  1 - const foo = 0B10
+  1 + const foo = 0b10
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]
@@ -14,6 +18,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
    ╰────
   help: Use lowercase for the number literal prefix `0o`.
+    ╭╴
+  1 - const foo = 0O1234567
+  1 + const foo = 0o1234567
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
    ╭─[number_literal_case.tsx:1:13]
@@ -21,6 +29,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────
    ╰────
   help: Use lowercase for the number literal prefix `0x` and uppercase for hexadecimal digits.
+    ╭╴
+  1 - const foo = 0XaBcDeF
+  1 + const foo = 0xABCDEF
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]
@@ -28,6 +40,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
    ╰────
   help: Use lowercase for the number literal prefix `0b`.
+    ╭╴
+  1 - const foo = 0B10n
+  1 + const foo = 0b10n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]
@@ -35,6 +51,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
    ╰────
   help: Use lowercase for the number literal prefix `0o`.
+    ╭╴
+  1 - const foo = 0O1234567n
+  1 + const foo = 0o1234567n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
    ╭─[number_literal_case.tsx:1:13]
@@ -42,6 +62,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ─────────
    ╰────
   help: Use lowercase for the number literal prefix `0x` and uppercase for hexadecimal digits.
+    ╭╴
+  1 - const foo = 0XaBcDeFn
+  1 + const foo = 0xABCDEFn
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]
@@ -49,6 +73,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
    ╰────
   help: Use lowercase for the number literal prefix `0b`.
+    ╭╴
+  1 - const foo = 0B0n
+  1 + const foo = 0b0n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]
@@ -56,6 +84,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
    ╰────
   help: Use lowercase for the number literal prefix `0o`.
+    ╭╴
+  1 - const foo = 0O0n
+  1 + const foo = 0o0n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]
@@ -63,6 +95,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ─
    ╰────
   help: Use lowercase for the number literal prefix `0x`.
+    ╭╴
+  1 - const foo = 0X0n
+  1 + const foo = 0x0n
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
    ╭─[number_literal_case.tsx:1:16]
@@ -70,6 +106,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─
    ╰────
   help: Use lowercase for `e` in exponential notations.
+    ╭╴
+  1 - const foo = 1.2E3
+  1 + const foo = 1.2e3
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
    ╭─[number_literal_case.tsx:1:16]
@@ -77,6 +117,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─
    ╰────
   help: Use lowercase for `e` in exponential notations.
+    ╭╴
+  1 - const foo = 1.2E-3
+  1 + const foo = 1.2e-3
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
    ╭─[number_literal_case.tsx:1:16]
@@ -84,6 +128,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                ─
    ╰────
   help: Use lowercase for `e` in exponential notations.
+    ╭╴
+  1 - const foo = 1.2E+3
+  1 + const foo = 1.2e+3
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected hexadecimal digits in lowercase.
    ╭─[number_literal_case.tsx:4:27]
@@ -93,6 +141,10 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 console.log('invalid');
    ╰────
   help: Use uppercase for hexadecimal digits.
+    ╭╴
+  4 -             if (foo === 0xff) {
+  4 +             if (foo === 0xFF) {
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
    ╭─[number_literal_case.tsx:1:13]
@@ -100,6 +152,10 @@ source: crates/oxc_linter/src/tester.rs
    ·             ────────────
    ╰────
   help: Use lowercase for the number literal prefix `0x` and uppercase for hexadecimal digits.
+    ╭╴
+  1 - const foo = 0XdeEd_Beefn
+  1 + const foo = 0xDEED_BEEFn
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:21]
@@ -107,6 +163,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ─
    ╰────
   help: Use lowercase for the number literal prefix `0b`.
+    ╭╴
+  1 - console.log(BigInt(0B10 + 1.2E+3) + 0XdeEd_Beefn)
+  1 + console.log(BigInt(0b10 + 1.2E+3) + 0XdeEd_Beefn)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.
    ╭─[number_literal_case.tsx:1:30]
@@ -114,6 +174,10 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ─
    ╰────
   help: Use lowercase for `e` in exponential notations.
+    ╭╴
+  1 - console.log(BigInt(0B10 + 1.2E+3) + 0XdeEd_Beefn)
+  1 + console.log(BigInt(0B10 + 1.2e+3) + 0XdeEd_Beefn)
+    ╰╴
 
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.
    ╭─[number_literal_case.tsx:1:37]
@@ -121,3 +185,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ────────────
    ╰────
   help: Use lowercase for the number literal prefix `0x` and uppercase for hexadecimal digits.
+    ╭╴
+  1 - console.log(BigInt(0B10 + 1.2E+3) + 0XdeEd_Beefn)
+  1 + console.log(BigInt(0B10 + 1.2E+3) + 0xDEED_BEEFn)
+    ╰╴
