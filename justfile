@@ -269,6 +269,10 @@ website path:
 linter-schema-json:
   cargo run -p website_linter schema-json > npm/oxlint/configuration_schema.json
 
+# Generate linter config TypeScript types for `apps/oxlint/src-js/package/config.generated.ts`
+linter-config-ts:
+  pnpm --filter oxlint-app generate-config-types
+
 # Generate formatter schema json for `npm/oxfmt/configuration_schema.json`
 formatter-schema-json:
   cargo run -p website_formatter schema-json > npm/oxfmt/configuration_schema.json
