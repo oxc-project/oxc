@@ -55,7 +55,7 @@ function setup(sourceText: string) {
 
   // Set file path
   const path = "dummy.js";
-  setupFileContext(path);
+  setupFileContext(process.cwd(), path);
 
   // Parse source text into buffer
   parseRaw(path, sourceText);

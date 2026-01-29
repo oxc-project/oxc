@@ -42,6 +42,7 @@ import type { SourceCode } from "./source_code.ts";
 import type { ModuleKind, Program } from "../generated/types.d.ts";
 
 // Cached current working directory
+// When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
 let cwd: string | null = null;
 
 // Absolute path of file being linted.
@@ -50,9 +51,11 @@ export let filePath: string | null = null;
 
 /**
  * Set up context for linting a file.
+ * @param cwdInput - Current working directory
  * @param filePathInput - Absolute path of file being linted
  */
-export function setupFileContext(filePathInput: string): void {
+export function setupFileContext(cwdInput: string, filePathInput: string): void {
+  cwd = cwdInput;
   filePath = filePathInput;
 }
 
@@ -64,6 +67,7 @@ export function setupFileContext(filePathInput: string): void {
  * properties in next tick, in between linting files (highly unlikely). But it's cheap to do, so we cover this odd case.
  */
 export function resetFileContext(): void {
+  cwd = null;
   filePath = null;
 }
 
@@ -362,9 +366,9 @@ const FILE_CONTEXT = Object.freeze({
    * Current working directory.
    */
   get cwd(): string {
-    // Note: If we change this implementation, also change `getCwd` method below
-    if (filePath === null) throw new Error("Cannot access `context.cwd` in `createOnce`");
-    if (cwd === null) cwd = process.cwd();
+    if (cwd === null) {
+      throw new Error("Cannot access `context.cwd` in `createOnce`");
+    }
     return cwd;
   },
 
@@ -374,8 +378,9 @@ const FILE_CONTEXT = Object.freeze({
    * @deprecated Use `context.cwd` property instead.
    */
   getCwd(): string {
-    if (filePath === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
-    if (cwd === null) cwd = process.cwd();
+    if (cwd === null) {
+      throw new Error("Cannot call `context.getCwd` in `createOnce`");
+    }
     return cwd;
   },
 

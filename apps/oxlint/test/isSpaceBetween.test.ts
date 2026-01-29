@@ -25,7 +25,7 @@ import type { Program } from "../src-js/generated/types.d.ts";
  */
 function parse(path: string, sourceText: string, options?: ParseOptions): Program {
   // Set file path
-  setupFileContext(path);
+  setupFileContext(process.cwd(), path);
 
   // Parse source, writing source text and AST into buffer
   parseRaw(path, sourceText, options);

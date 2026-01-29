@@ -9,6 +9,7 @@ import metaSchema from "ajv/lib/refs/json-schema-draft-04.json" with { type: "js
 import { registeredRules } from "./load.ts";
 import { deepCloneJsonValue, deepFreezeJsonArray } from "./json.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
+import { getWorkspace, WorkspaceIdentifier } from "../workspace/index.ts";
 
 import type { JSONSchema4 } from "json-schema";
 import type { Writable } from "type-fest";
@@ -49,7 +50,7 @@ export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 // All rule options.
 // `lintFile` is called with an array of options IDs, which are indices into this array.
 // First element is irrelevant - never accessed - because 0 index is a sentinel meaning default options.
-export let allOptions: Readonly<Options>[] | null = null;
+export const allOptions: Map<WorkspaceIdentifier, Readonly<Options>[]> = new Map();
 
 // Index into `allOptions` for default options
 export const DEFAULT_OPTIONS_ID = 0;
@@ -180,23 +181,26 @@ function wrapSchemaValidator(validate: Ajv.ValidateFunction): SchemaValidator {
  */
 export function setOptions(optionsJson: string): void {
   const details = JSON.parse(optionsJson);
-  allOptions = details.options;
   debugAssertIsNonNull(allOptions);
 
-  const { ruleIds } = details;
+  const { ruleIds, cwd, options } = details;
+  allOptions.set(cwd, options);
 
   // Validate
   if (DEBUG) {
-    assert(Array.isArray(allOptions), `options must be an array, got ${typeof allOptions}`);
-    assert(Array.isArray(ruleIds), `ruleIds must be an array, got ${typeof allOptions}`);
+    assert(typeof cwd === "string", `cwd must be a string, got ${typeof cwd}`);
+    assert(getWorkspace(cwd) !== null, `cwd "${cwd}" is not a workspace`);
+    assert(registeredRules.has(cwd), `No registered rules for workspace cwd "${cwd}"`);
+    assert(Array.isArray(options), `options must be an array, got ${typeof options}`);
+    assert(Array.isArray(ruleIds), `ruleIds must be an array, got ${typeof ruleIds}`);
     assert.strictEqual(
-      allOptions.length,
+      options.length,
       ruleIds.length,
       "ruleIds and options arrays must be the same length",
     );
 
-    for (const options of allOptions) {
-      assert(Array.isArray(options), `Elements of options must be arrays, got ${typeof options}`);
+    for (const option of options) {
+      assert(Array.isArray(option), `Elements of options must be arrays, got ${typeof option}`);
     }
 
     for (const ruleId of ruleIds) {
@@ -211,11 +215,12 @@ export function setOptions(optionsJson: string): void {
   // For each options array, merge with default options and apply schema defaults for the corresponding rule.
   // Skip the first, as index 0 is a sentinel value meaning default options. First element is never accessed.
   // `processOptions` also deep-freezes the options.
-  for (let i = 1, len = allOptions.length; i < len; i++) {
-    allOptions[i] = processOptions(
+  const registeredWorkspaceRules = registeredRules.get(cwd)!;
+  for (let i = 1, len = options.length; i < len; i++) {
+    options[i] = processOptions(
       // `allOptions`' type is `Readonly`, but the array is mutable at present
-      allOptions[i] as Writable<(typeof allOptions)[number]>,
-      registeredRules[ruleIds[i]],
+      options[i] as Writable<(typeof options)[number]>,
+      registeredWorkspaceRules[ruleIds[i]],
     );
   }
 }
@@ -367,4 +372,24 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   }
 
   return configValue;
+}
+
+/**
+ * Setups all needed data structures to hold options for a workspace.
+ *
+ * @param workspace the workspace identifier
+ */
+export function setupOptionsForWorkspace(workspace: WorkspaceIdentifier) {
+  debugAssert(
+    !allOptions.has(workspace),
+    "Workspace must not already have registered options array",
+  );
+  allOptions.set(workspace, []);
+}
+
+/**
+ * Remove all options associated with a workspace.
+ */
+export function removeOptionsInWorkspace(workspace: WorkspaceIdentifier) {
+  allOptions.delete(workspace);
 }

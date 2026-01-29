@@ -34,6 +34,14 @@ export declare const enum Severity {
  */
 export declare function getBufferOffset(buffer: Uint8Array): number
 
+/** JS callback to create a workspace. */
+export type JsCreateWorkspaceCb =
+  ((arg0: string) => Promise<undefined>)
+
+/** JS callback to destroy a workspace. */
+export type JsDestroyWorkspaceCb =
+  ((arg0: string) => void)
+
 /** JS callback to lint a file. */
 export type JsLintFileCb =
   ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string) => string | null)
@@ -57,7 +65,7 @@ export type JsSetupRuleConfigsCb =
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.

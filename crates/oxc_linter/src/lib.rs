@@ -67,8 +67,9 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+        JsFix, LintFileResult, LoadPluginResult,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},

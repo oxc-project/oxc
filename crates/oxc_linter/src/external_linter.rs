@@ -9,6 +9,10 @@ use crate::{
     context::ContextHost,
 };
 
+pub type ExternalLinterCreateWorkspaceCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
+
+pub type ExternalLinterDestroyWorkspaceCb = Box<dyn Fn(String) + Send + Sync>;
+
 pub type ExternalLinterLoadPluginCb = Box<
     dyn Fn(
             // File URL to load plugin from
@@ -67,6 +71,8 @@ pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
     pub(crate) lint_file: ExternalLinterLintFileCb,
+    pub create_workspace: ExternalLinterCreateWorkspaceCb,
+    pub destroy_workspace: ExternalLinterDestroyWorkspaceCb,
 }
 
 impl ExternalLinter {
@@ -74,8 +80,10 @@ impl ExternalLinter {
         load_plugin: ExternalLinterLoadPluginCb,
         setup_rule_configs: ExternalLinterSetupRuleConfigsCb,
         lint_file: ExternalLinterLintFileCb,
+        create_workspace: ExternalLinterCreateWorkspaceCb,
+        destroy_workspace: ExternalLinterDestroyWorkspaceCb,
     ) -> Self {
-        Self { load_plugin, setup_rule_configs, lint_file }
+        Self { load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace }
     }
 }
 
