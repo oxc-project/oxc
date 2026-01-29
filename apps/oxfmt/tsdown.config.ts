@@ -13,13 +13,12 @@ export default defineConfig({
   shims: false,
   fixedExtension: false,
   noExternal: [
-    // Bundle it to control version
-    "prettier",
-
-    // We are using patched version, so we must bundle it
-    // Also, it internally loads plugins dynamically, so they also must be bundled
+    // See `/patches/prettier-plugin-tailwindcss@0.7.2.patch` for details.
+    // We are using patched version which:
+    // - Expose some internal APIs we need
+    // - Also updated TS definitions
+    // so, we must bundle it
     "prettier-plugin-tailwindcss",
-    /^prettier\/plugins\//,
 
     // Cannot bundle: `cli-worker.js` runs in separate thread and can't resolve bundled chunks
     // Be sure to add it to "dependencies" in `npm/oxfmt/package.json`!

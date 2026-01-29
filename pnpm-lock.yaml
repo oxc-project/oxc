@@ -298,6 +298,9 @@ importers:
 
   npm/oxfmt:
     dependencies:
+      prettier:
+        specifier: 3.8.1
+        version: 3.8.1
       tinypool:
         specifier: 2.1.0
         version: 2.1.0
