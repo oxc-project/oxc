@@ -228,13 +228,14 @@ fn is_only_simple_params(params: &FormalParameters) -> bool {
 /// This ensures we don't flag constructors that transform arguments before passing to super,
 /// such as `super(...args.map(x => x))`.
 fn is_spread_arguments(super_args: &[Argument<'_>]) -> bool {
-    if super_args.len() != 1 {
-        return false;
+    if super_args.len() == 1
+        && let Argument::SpreadElement(spread) = &super_args[0]
+        && spread.argument.is_specific_id("arguments")
+    {
+        return true;
     }
-    let Argument::SpreadElement(spread) = &super_args[0] else {
-        return false;
-    };
-    matches!(&spread.argument, Expression::Identifier(ident) if ident.name == "arguments")
+
+    false
 }
 
 fn is_passing_through<'a>(
