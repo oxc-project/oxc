@@ -14,35 +14,50 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_importing_vitest_globals_diagnostic(spans: &[Span]) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+    let help = format!("You can import anything except `{}`.", VITEST_GLOBALS.join(", "));
+
+    OxcDiagnostic::warn("Do not import/require global functions from 'vitest'.")
+        .with_help(help)
         .with_labels(spans.iter().map(|span| span.label("Remove this global vitest import")))
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoImportingVitestGlobals;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// The rule disallows import any vitest global function.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// If the project is configured to use globals from vitest, the rule ensure
+    /// that never imports the globals from `import` or `require`.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// import { test, expect } from 'vitest'
+    ///
+    /// test('foo', () => {
+    ///   expect(1).toBe(1)
+    /// })
+    /// ```
+    ///
+    /// ```js
+    /// const { test, expect } = require('vitest')
+    ///
+    /// test('foo', () => {
+    ///   expect(1).toBe(1)
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// test('foo', () => {
+    ///   expect(1).toBe(1)
+    /// })
     /// ```
     NoImportingVitestGlobals,
     vitest,
