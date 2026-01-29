@@ -8,7 +8,7 @@ use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_language_server::{Capabilities, Tool, ToolBuilder, ToolRestartChanges};
 
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
+    ConfigResolver, ExternalFormatter, FormatResult, FormatStrategyResolver, SourceFormatter,
     resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 use crate::lsp::{FORMAT_CONFIG_FILES, options::FormatOptions as LSPFormatOptions};
@@ -66,15 +66,19 @@ impl ServerFormatterBuilder {
         // Use `block_in_place()` to avoid nested async runtime access
         match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
             // TODO: Plugins support
+            // - Build `FormatStrategyResolver` with plugin languages
             Ok(_) => {}
             Err(err) => {
                 error!("Failed to setup external formatter.\n{err}\n");
             }
         }
+
+        let resolver = FormatStrategyResolver::new();
+
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_formatter(Some(self.external_formatter.clone()));
 
-        ServerFormatter::new(source_formatter, config_resolver, gitignore_glob)
+        ServerFormatter::new(source_formatter, config_resolver, gitignore_glob, resolver)
     }
 }
 
@@ -155,6 +159,7 @@ pub struct ServerFormatter {
     source_formatter: SourceFormatter,
     config_resolver: ConfigResolver,
     gitignore_glob: Option<Gitignore>,
+    resolver: FormatStrategyResolver,
 }
 
 impl Tool for ServerFormatter {
@@ -252,7 +257,7 @@ impl Tool for ServerFormatter {
         }
 
         // Determine format strategy from file path (supports JS/TS, JSON, YAML, CSS, etc.)
-        let Ok(strategy) = FormatFileStrategy::try_from(path.to_path_buf()) else {
+        let Some(strategy) = self.resolver.resolve(path.to_path_buf()) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return Ok(Vec::new());
         };
@@ -305,8 +310,9 @@ impl ServerFormatter {
         source_formatter: SourceFormatter,
         config_resolver: ConfigResolver,
         gitignore_glob: Option<Gitignore>,
+        resolver: FormatStrategyResolver,
     ) -> Self {
-        Self { source_formatter, config_resolver, gitignore_glob }
+        Self { source_formatter, config_resolver, gitignore_glob, resolver }
     }
 
     fn is_ignored(&self, path: &Path) -> bool {

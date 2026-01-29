@@ -13,7 +13,7 @@ pub use config::{
     ConfigResolver, ResolvedOptions, resolve_editorconfig_path, resolve_oxfmtrc_path,
 };
 pub use format::{FormatResult, SourceFormatter};
-pub use support::FormatFileStrategy;
+pub use support::{FormatFileStrategy, FormatStrategyResolver};
 
 #[cfg(feature = "napi")]
 pub use external_formatter::{

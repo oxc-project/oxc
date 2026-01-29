@@ -10,7 +10,8 @@ use super::{
     walk::Walk,
 };
 use crate::core::{
-    ConfigResolver, SourceFormatter, resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
+    ConfigResolver, FormatStrategyResolver, SourceFormatter, resolve_editorconfig_path,
+    resolve_oxfmtrc_path, utils,
 };
 
 #[derive(Debug)]
@@ -103,8 +104,7 @@ impl FormatRunner {
         }) {
             // TODO: Plugins support
             // - Parse returned `languages`
-            // - Allow its `extensions` and `filenames` in `walk.rs`
-            // - Pass `parser` to `SourceFormatter`
+            // - Build `FormatStrategyResolver` with plugin languages
             Ok(_) => {}
             Err(err) => {
                 utils::print_and_flush(
@@ -115,6 +115,8 @@ impl FormatRunner {
             }
         }
 
+        let resolver = FormatStrategyResolver::new();
+
         let walker = match Walk::build(
             &cwd,
             &paths,
@@ -122,6 +124,7 @@ impl FormatRunner {
             ignore_options.with_node_modules,
             oxfmtrc_path.as_deref(),
             &ignore_patterns,
+            resolver,
         ) {
             Ok(Some(walker)) => walker,
             // All target paths are ignored

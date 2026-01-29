@@ -6,7 +6,7 @@ use std::{
 
 use crate::cli::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
-    ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult, SourceFormatter,
+    ConfigResolver, ExternalFormatter, FormatResult, FormatStrategyResolver, SourceFormatter,
     resolve_editorconfig_path, resolve_oxfmtrc_path, utils,
 };
 
@@ -78,6 +78,7 @@ impl StdinRunner {
         // Use `block_in_place()` to avoid nested async runtime access
         match tokio::task::block_in_place(|| self.external_formatter.init(num_of_threads)) {
             // TODO: Plugins support
+            // - Build `FormatStrategyResolver` with plugin languages
             Ok(_) => {}
             Err(err) => {
                 utils::print_and_flush(
@@ -88,8 +89,10 @@ impl StdinRunner {
             }
         }
 
+        let resolver = FormatStrategyResolver::new();
+
         // Determine format strategy from filepath
-        let Ok(strategy) = FormatFileStrategy::try_from(filepath) else {
+        let Some(strategy) = resolver.resolve(filepath) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };

@@ -9,7 +9,7 @@ use serde_json::Value;
 use crate::{
     cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
-        ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
+        ExternalFormatter, FormatResult as CoreFormatResult, FormatStrategyResolver,
         JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
         SourceFormatter, resolve_options_from_value, utils,
     },
@@ -162,6 +162,7 @@ pub async fn format(
     // Use `block_in_place()` to avoid nested async runtime access
     match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
         // TODO: Plugins support
+        // - Build `FormatStrategyResolver` with plugin languages
         Ok(_) => {}
         Err(err) => {
             return FormatResult {
@@ -171,8 +172,10 @@ pub async fn format(
         }
     }
 
+    let resolver = FormatStrategyResolver::new();
+
     // Determine format strategy from file path
-    let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
+    let Some(strategy) = resolver.resolve(PathBuf::from(&filename)) else {
         return FormatResult {
             code: source_text,
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],

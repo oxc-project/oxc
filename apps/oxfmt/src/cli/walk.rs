@@ -5,10 +5,11 @@ use std::{
 
 use ignore::gitignore::{Gitignore, GitignoreBuilder};
 
-use crate::core::{FormatFileStrategy, utils::normalize_relative_path};
+use crate::core::{FormatFileStrategy, FormatStrategyResolver, utils::normalize_relative_path};
 
 pub struct Walk {
     inner: ignore::WalkParallel,
+    resolver: FormatStrategyResolver,
 }
 
 impl Walk {
@@ -19,6 +20,7 @@ impl Walk {
         with_node_modules: bool,
         oxfmtrc_path: Option<&Path>,
         ignore_patterns: &[String],
+        resolver: FormatStrategyResolver,
     ) -> Result<Option<Self>, String> {
         //
         // Classify and normalize specified paths
@@ -203,7 +205,7 @@ impl Walk {
             // Git is not required
             .require_git(false)
             .build_parallel();
-        Ok(Some(Self { inner }))
+        Ok(Some(Self { inner, resolver }))
     }
 
     /// Stream entries through a channel as they are discovered
@@ -212,7 +214,7 @@ impl Walk {
 
         // Spawn the walk operation in a separate thread
         rayon::spawn(move || {
-            let mut builder = WalkBuilder { sender };
+            let mut builder = WalkBuilder { sender, resolver: self.resolver };
             self.inner.visit(&mut builder);
             // Channel will be closed when builder is dropped
         });
@@ -276,16 +278,18 @@ fn load_ignore_paths(cwd: &Path, ignore_paths: &[PathBuf]) -> Result<Vec<PathBuf
 
 struct WalkBuilder {
     sender: mpsc::Sender<FormatFileStrategy>,
+    resolver: FormatStrategyResolver,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for WalkBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
-        Box::new(WalkVisitor { sender: self.sender.clone() })
+        Box::new(WalkVisitor { sender: self.sender.clone(), resolver: self.resolver.clone() })
     }
 }
 
 struct WalkVisitor {
     sender: mpsc::Sender<FormatFileStrategy>,
+    resolver: FormatStrategyResolver,
 }
 
 impl ignore::ParallelVisitor for WalkVisitor {
@@ -303,9 +307,9 @@ impl ignore::ParallelVisitor for WalkVisitor {
                     // Tier 1 = `.js`, `.tsx`, etc: JS/TS files supported by `oxc_formatter`
                     // Tier 2 = `.toml`, etc: Some files supported by `oxfmt` directly
                     // Tier 3 = `.html`, `.json`, etc: Other files supported by Prettier
-                    // (Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins)
+                    // Tier 4 = `.astro`, `.svelte`, etc: Other files supported by Prettier plugins
                     // Everything else: Ignored
-                    let Ok(strategy) = FormatFileStrategy::try_from(entry.into_path()) else {
+                    let Some(strategy) = self.resolver.resolve(entry.into_path()) else {
                         return ignore::WalkState::Continue;
                     };
 
