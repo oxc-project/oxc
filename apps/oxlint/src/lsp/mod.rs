@@ -1,6 +1,5 @@
 mod code_actions;
 mod commands;
-mod config_walker;
 mod error_with_position;
 mod lsp_file_system;
 mod options;
