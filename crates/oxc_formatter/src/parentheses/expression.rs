@@ -249,9 +249,10 @@ impl NeedsParentheses<'_> for AstNode<'_, ThisExpression> {
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, ArrayExpression<'_>> {
-    #[inline]
     fn needs_parentheses(&self, _f: &Formatter<'_, '_>) -> bool {
-        false
+        // Wrap array expressions in for-in initializers
+        // e.g., `for (var a = ([b in c]) in {})`
+        is_for_in_statement_init(self, self.parent())
     }
 }
 
@@ -262,6 +263,13 @@ impl NeedsParentheses<'_> for AstNode<'_, ObjectExpression<'_>> {
         }
 
         let parent = self.parent();
+
+        // Wrap object expressions in for-in initializers
+        // e.g., `for (var a = ({ b: b in c }) in {})`
+        if is_for_in_statement_init(self, parent) {
+            return true;
+        }
+
         is_class_extends(self.span, parent)
             || is_first_in_statement(
                 self.span,
@@ -393,12 +401,30 @@ impl NeedsParentheses<'_> for AstNode<'_, BinaryExpression<'_>> {
             return false;
         }
 
-        (self.operator.is_in() && is_in_for_initializer(self))
-            || binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self))
+        let parent = self.parent();
+
+        // Wrap binary expressions in for-in initializers
+        // e.g., `for (var a = (1 in b) in {})`
+        if is_for_in_statement_init(self, parent) {
+            return true;
+        }
+
+        // For `in` expressions in ForStatement: wrap to avoid ambiguity
+        // e.g., `for (var a = (b in c);;)`
+        if self.operator.is_in() && is_in_for_initializer(self) {
+            return true;
+        }
+
+        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self))
     }
 }
 
-/// Add parentheses if the `in` is inside of a `for` initializer (see tests).
+/// Add parentheses if the `in` binary expression is inside of a `ForStatement` initializer.
+///
+/// Only checks ForStatement, NOT ForInStatement. ForInStatement init wrapping is handled
+/// separately at the VariableDeclarator level (see `is_for_in_statement_init`).
+///
+/// <https://github.com/prettier/prettier/issues/907#issuecomment-284304321>
 fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
     let mut ancestors = expr.ancestors();
 
@@ -412,31 +438,48 @@ fn is_in_for_initializer(expr: &AstNode<'_, BinaryExpression<'_>>) -> bool {
                     debug_assert!(matches!(skipped, Some(AstNodes::ArrowFunctionExpression(_))));
                     continue;
                 }
-                // Block body: `() => { expr; }` - check if we're inside a FunctionBody
+                // Block body: `() => { expr; }` or `function() { expr; }` - continue checking
+                // because for regular ForStatement, parens are still needed
                 if matches!(stmt.parent(), AstNodes::FunctionBody(_)) {
                     continue;
                 }
 
                 return false;
             }
-            // FunctionBody: Continue checking - could be inside arrow function in ForStatement.init
             AstNodes::ForStatement(stmt) => {
                 return stmt
                     .init
                     .as_ref()
                     .is_some_and(|init| init.span().contains_inclusive(expr.span));
             }
-            AstNodes::ForInStatement(stmt) => {
-                return stmt.left.span().contains_inclusive(expr.span);
-            }
-            AstNodes::Program(_) => {
-                return false;
-            }
+            // ForInStatement is handled at VariableDeclarator level, not here
+            AstNodes::ForInStatement(_) | AstNodes::Program(_) => return false,
+            // Skip through function bodies - could be inside arrow/function in for init
             _ => {}
         }
     }
 
     false
+}
+
+/// Check if an expression is the init of a VariableDeclarator in a ForInStatement's LEFT.
+///
+/// Following Prettier's approach: wrap ANY expression that is the init of a
+/// VariableDeclarator when that VariableDeclaration is the left side of a ForInStatement.
+///
+/// Legacy syntax: `for (var a = 1 in b);`
+/// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Invalid_for-in_initializer>
+fn is_for_in_statement_init<T: GetSpan>(node: &T, parent: &AstNodes<'_>) -> bool {
+    let AstNodes::VariableDeclarator(declarator) = parent else { return false };
+    let Some(init) = &declarator.init else { return false };
+    if init.span() != node.span() {
+        return false;
+    }
+    let AstNodes::VariableDeclaration(decl) = declarator.parent() else { return false };
+    // Check that this VariableDeclaration is the LEFT of a ForInStatement,
+    // not just anywhere inside it (e.g., not in the body)
+    matches!(decl.parent(), AstNodes::ForInStatement(stmt)
+        if matches!(&stmt.left, ForStatementLeft::VariableDeclaration(d) if ptr::eq(d.as_ref(), decl.as_ref())))
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, PrivateInExpression<'_>> {
@@ -458,6 +501,13 @@ impl NeedsParentheses<'_> for AstNode<'_, LogicalExpression<'_>> {
         }
 
         let parent = self.parent();
+
+        // Wrap logical expressions in for-in initializers
+        // e.g., `for (var a = (1 || b in c) in {})`
+        if is_for_in_statement_init(self, parent) {
+            return true;
+        }
+
         if let AstNodes::LogicalExpression(parent) = parent {
             parent.operator() != self.operator()
         } else if self.operator().is_coalesce()
@@ -510,6 +560,13 @@ impl NeedsParentheses<'_> for AstNode<'_, Function<'_>> {
         }
 
         let parent = self.parent();
+
+        // Wrap function expressions in for-in initializers
+        // e.g., `for (var a = (function (x = b in c) {}) in {})`
+        if is_for_in_statement_init(self, parent) {
+            return true;
+        }
+
         matches!(parent, AstNodes::TaggedTemplateExpression(_))
             || self.is_call_like_callee()
             || is_first_in_statement(
@@ -682,6 +739,13 @@ impl NeedsParentheses<'_> for AstNode<'_, Class<'_>> {
         }
 
         let parent = self.parent();
+
+        // Wrap class expressions in for-in initializers
+        // e.g., `for (var a = (class extends (b in c) {}) in {})`
+        if is_for_in_statement_init(self, parent) {
+            return true;
+        }
+
         matches!(parent, AstNodes::TaggedTemplateExpression(_))
             || self.is_call_like_callee()
             || (is_class_extends(self.span, self.parent()) && !self.decorators.is_empty())
@@ -706,6 +770,13 @@ impl NeedsParentheses<'_> for AstNode<'_, ArrowFunctionExpression<'_>> {
         }
 
         let parent = self.parent();
+
+        // Wrap arrow functions in for-in initializers
+        // e.g., `for (var a = (() => b in c) in {})`
+        if is_for_in_statement_init(self, parent) {
+            return true;
+        }
+
         if matches!(
             parent,
             AstNodes::TSAsExpression(_)
