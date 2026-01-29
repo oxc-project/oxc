@@ -42,6 +42,7 @@ pub struct CompilerSettings {
     pub preserve_const_enums: Vec<bool>,
     pub use_define_for_class_fields: Vec<bool>,
     pub experimental_decorators: Vec<bool>,
+    pub module_detection: Vec<String>, // "auto", "legacy", "force"
 }
 
 impl CompilerSettings {
@@ -81,6 +82,7 @@ impl CompilerSettings {
                 .filter(|&v| v == "*")
                 .map(|_| vec![true, false])
                 .unwrap_or_default(),
+            module_detection: Self::split_value_options(options.get("moduledetection")),
         }
     }
 
@@ -167,7 +169,6 @@ impl TestCaseContent {
 
         let settings = CompilerSettings::new(&current_file_options);
 
-        let is_module = test_unit_data.len() > 1;
         let test_unit_data = test_unit_data
             .into_iter()
             // Some snapshot units contain an invalid file with just a message, not even a comment!
@@ -192,7 +193,9 @@ impl TestCaseContent {
             })
             .filter_map(|mut unit| {
                 let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
-                if is_module {
+                if Self::get_module_detection_mode(&settings, &unit.name) == "force"
+                    && !Self::is_declaration_file(&unit.name)
+                {
                     source_type = source_type.with_module(true);
                 }
                 unit.source_type = source_type;
@@ -227,6 +230,27 @@ impl TestCaseContent {
             .with_jsx(!options.jsx.is_empty())
             .with_unambiguous(true);
         Some(source_type)
+    }
+
+    fn get_module_detection_mode<'a>(settings: &'a CompilerSettings, filename: &str) -> &'a str {
+        let mode = settings.module_detection.first().map_or("auto", |v| v.as_str());
+        if mode != "auto" {
+            return mode;
+        }
+
+        let file_ext = std::path::Path::new(filename).extension();
+        if file_ext
+            .is_some_and(|ext| ext.eq_ignore_ascii_case("jsx") || ext.eq_ignore_ascii_case("tsx"))
+            && settings.jsx.first() == Some(&"react-jsx".to_string())
+        {
+            return "force";
+        }
+        // NOTE: should check `package.json` "type" field, use `legacy` for now
+        "legacy"
+    }
+
+    fn is_declaration_file(name: &str) -> bool {
+        name.ends_with(".d.ts") || name.ends_with(".d.mts") || name.ends_with(".d.cts")
     }
 
     // TypeScript error files can be:

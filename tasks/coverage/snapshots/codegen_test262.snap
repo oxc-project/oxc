@@ -1,5 +1,5 @@
-commit: fff41f05
+commit: 3c6180f5
 
 codegen_test262 Summary:
-AST Parsed     : 46595/46595 (100.00%)
-Positive Passed: 46595/46595 (100.00%)
+AST Parsed     : 46712/46712 (100.00%)
+Positive Passed: 46712/46712 (100.00%)
