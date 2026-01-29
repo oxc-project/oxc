@@ -1907,6 +1907,7 @@ version = "0.27.0"
 dependencies = [
  "cow-utils",
  "insta",
+ "lazy-regex",
  "natord",
  "nodejs-built-in-modules",
  "oxc_allocator",
