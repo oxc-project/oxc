@@ -588,6 +588,9 @@ mod test {
         let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
         assert_eq!(config.max_warnings, Some(10));
 
+        let config: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 0}"#).unwrap();
+        assert_eq!(config.max_warnings, Some(0));
+
         let config: Oxlintrc = serde_json::from_str(r"{}").unwrap();
         assert_eq!(config.max_warnings, None);
 
@@ -601,5 +604,10 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 20}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.max_warnings, Some(20));
+
+        let config1: Oxlintrc = serde_json::from_str(r#"{"maxWarnings": 10}"#).unwrap();
+        let config2: Oxlintrc = serde_json::from_str(r"{}").unwrap();
+        let merged = config1.merge(config2);
+        assert_eq!(merged.max_warnings, Some(10));
     }
 }
