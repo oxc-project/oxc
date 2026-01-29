@@ -36,7 +36,7 @@ pub use self::{
 // the crates/oxc_linter/data/vitest_compatible_jest_rules.json
 // file is also updated. The JSON file is used by the oxlint-migrate
 // and eslint-plugin-oxlint repos to keep everything synced.
-const VITEST_COMPATIBLE_JEST_RULES: [&str; 41] = [
+const VITEST_COMPATIBLE_JEST_RULES: [&str; 42] = [
     "consistent-test-it",
     "expect-expect",
     "max-expects",
@@ -67,6 +67,7 @@ const VITEST_COMPATIBLE_JEST_RULES: [&str; 41] = [
     "prefer-hooks-on-top",
     "prefer-lowercase-title",
     "prefer-mock-promise-shorthand",
+    "prefer-mock-return-shorthand",
     "prefer-spy-on",
     "prefer-strict-equal",
     "prefer-to-be",
