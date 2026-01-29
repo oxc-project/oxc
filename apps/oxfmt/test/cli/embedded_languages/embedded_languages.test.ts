@@ -19,6 +19,14 @@ describe("embedded_languages", () => {
     expect(snapshot).toMatchSnapshot();
   });
 
+  it("should format with CLRF", async () => {
+    const snapshot = await runWriteModeAndSnapshot(fixturesDir, languages, [
+      "--config",
+      "crlf_embedded.json",
+    ]);
+    expect(snapshot).toMatchSnapshot();
+  });
+
   describe("Misc", () => {
     it("should format multiple embedded languages in one file", async () => {
       const snapshot = await runWriteModeAndSnapshot(fixturesDir, ["mixed.js"]);

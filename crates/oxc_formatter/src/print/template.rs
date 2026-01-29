@@ -821,7 +821,8 @@ fn format_embedded_template<'a>(
     // - Closing backtick
     let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
         let content = f.context().allocator().alloc_str(&formatted);
-        for line in content.split('\n') {
+        // Use `lines()` to handle both LF and CRLF line endings
+        for line in content.lines() {
             if line.is_empty() {
                 write!(f, [empty_line()]);
             } else {
