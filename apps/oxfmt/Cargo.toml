@@ -31,8 +31,6 @@ oxc_allocator = { workspace = true, features = ["pool"] }
 oxc_data_structures = { workspace = true, features = ["rope"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
-oxc_language_server = { workspace = true }
-oxc_napi = { workspace = true }
 oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 
@@ -51,14 +49,16 @@ serde_json = { workspace = true }
 simdutf8 = { workspace = true }
 sort-package-json = { workspace = true }
 oxc-toml = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
-tower-lsp-server = { workspace = true, features = ["proposed"] }
 
 # NAPI dependencies (conditional on napi feature)
 napi = { workspace = true, features = ["async", "serde-json"], optional = true }
 napi-derive = { workspace = true, optional = true }
+oxc_language_server = { workspace = true, optional = true }
+oxc_napi = { workspace = true, optional = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"], optional = true }
+tower-lsp-server = { workspace = true, features = ["proposed"], optional = true }
 
 [build-dependencies]
 napi-build = { workspace = true }
@@ -83,6 +83,13 @@ mimalloc-safe = { workspace = true, optional = true, features = [
 
 [features]
 default = ["napi"]
-napi = ["dep:napi", "dep:napi-derive"]
+napi = [
+  "dep:napi",
+  "dep:napi-derive",
+  "dep:oxc_language_server",
+  "dep:oxc_napi",
+  "dep:tokio",
+  "dep:tower-lsp-server",
+]
 allocator = ["dep:mimalloc-safe"]
 detect_code_removal = ["oxc_formatter/detect_code_removal"]
