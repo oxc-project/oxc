@@ -1,4 +1,4 @@
-ts compatibility: 587/601 (97.67%)
+ts compatibility: 588/601 (97.84%)
 
 # Failed
 
@@ -15,6 +15,5 @@ ts compatibility: 587/601 (97.67%)
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/union/comments/18106.ts | 💥 | 92.68% |
-| typescript/union/comments/18379.ts | 💥 | 87.27% |
 | typescript/union/comments/18389.ts | 💥 | 51.28% |
 | typescript/union/single-type/single-type.ts | 💥 | 66.67% |
