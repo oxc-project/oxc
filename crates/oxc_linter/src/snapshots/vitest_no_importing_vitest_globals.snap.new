@@ -74,22 +74,60 @@ assertion_line: 444
   help: Should be a command-like statement that tells the user how to fix the issue.
 
   ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:16]
+ 1 │ const x = 1, { describe } = require('vitest');
+   ·                ────┬───
+   ·                    ╰── Remove this global vitest import
+   ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
 
   ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:16]
+ 1 │ const x = 1, { describe } = require('vitest'), y = 2;
+   ·                ────┬───
+   ·                    ╰── Remove this global vitest import
+   ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
 
   ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:9]
+ 1 │ const { describe, it } = require('vitest');
+   ·         ────┬───  ─┬
+   ·             │      ╰── Remove this global vitest import
+   ·             ╰── Remove this global vitest import
+   ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
 
   ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:9]
+ 1 │ const { describe, BenchFactory } = require('vitest');
+   ·         ────┬───
+   ·             ╰── Remove this global vitest import
+   ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
 
   ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:23]
+ 1 │ const { BenchFactory, describe } = require('vitest');
+   ·                       ────┬───
+   ·                           ╰── Remove this global vitest import
+   ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
 
   ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:9]
+ 1 │ const { describe, BenchFactory, it } = require('vitest');
+   ·         ────┬───                ─┬
+   ·             │                    ╰── Remove this global vitest import
+   ·             ╰── Remove this global vitest import
+   ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
 
   ⚠ eslint-plugin-vitest(no-importing-vitest-globals): Should be an imperative statement about what is wrong.
+   ╭─[no_importing_vitest_globals.tsx:1:20]
+ 1 │ const { BenchTask, describe, BenchFactory, it } = require('vitest');
+   ·                    ────┬───                ─┬
+   ·                        │                    ╰── Remove this global vitest import
+   ·                        ╰── Remove this global vitest import
+   ╰────
   help: Should be a command-like statement that tells the user how to fix the issue.
