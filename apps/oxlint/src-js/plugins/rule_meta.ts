@@ -28,6 +28,7 @@ export interface RuleMeta {
   /**
    * Type of fixes that the rule provides.
    * Must be `'code'` or `'whitespace'` if the rule provides fixes.
+   * Must be `null` or omitted entirely, if the rule does not provide fixes.
    */
   fixable?: "code" | "whitespace";
   /**
