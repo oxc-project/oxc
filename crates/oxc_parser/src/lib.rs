@@ -98,7 +98,7 @@ use oxc_syntax::module_record::ModuleRecord;
 use crate::{
     context::{Context, StatementContext},
     error_handler::FatalError,
-    lexer::{Lexer, Token},
+    lexer::{Kind, Lexer, Token},
     module_record::ModuleRecordBuilder,
     state::ParserState,
 };
@@ -381,6 +381,9 @@ struct ParserImpl<'a> {
     /// The current parsing token
     token: Token,
 
+    /// Cached kind of the current token
+    token_kind: Kind,
+
     /// The end range of the previous token
     prev_token_end: u32,
 
@@ -422,6 +425,7 @@ impl<'a> ParserImpl<'a> {
             deferred_script_errors: vec![],
             fatal_error: None,
             token: Token::default(),
+            token_kind: Kind::Eof,
             prev_token_end: 0,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
@@ -527,7 +531,8 @@ impl<'a> ParserImpl<'a> {
     fn parse_program(&mut self) -> Program<'a> {
         // Initialize by moving onto the first token.
         // Checks for hashbang comment.
-        self.token = self.lexer.first_token();
+        let token = self.lexer.first_token();
+        self.set_token(token);
 
         let hashbang = self.parse_hashbang();
         self.ctx |= Context::TopLevel;
