@@ -320,7 +320,9 @@ impl<'a> ContextHost<'a> {
                             .with_label(span)
                             .with_severity(rule_severity),
                         PossibleFixes::Single(
-                            Fix::delete(span).with_kind(FixKind::Fix).with_message(fix_message),
+                            Fix::delete(span)
+                                .with_kind(FixKind::Suggestion)
+                                .with_message(fix_message),
                         ),
                     ));
                 }
