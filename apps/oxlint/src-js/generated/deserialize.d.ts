@@ -10,6 +10,7 @@ type GetLoc = (node: { range: [number, number] }) => SourceLocation;
 export declare function deserializeProgramOnly(
   buffer: BufferWithArrays,
   sourceText: string,
+  sourceStartPosInput: number,
   sourceByteLen: number,
   getLoc: GetLoc,
 ): Program;

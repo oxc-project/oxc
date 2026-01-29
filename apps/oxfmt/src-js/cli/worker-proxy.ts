@@ -20,12 +20,17 @@ export async function initExternalFormatter(numThreads: number): Promise<string[
   return resolvePlugins();
 }
 
+export async function disposeExternalFormatter(): Promise<void> {
+  await pool?.destroy();
+  pool = null;
+}
+
 export async function formatEmbeddedCode(
   options: Options,
-  tagName: string,
+  parserName: string,
   code: string,
 ): Promise<string> {
-  return pool!.run({ options, code, tagName } satisfies FormatEmbeddedCodeParam, {
+  return pool!.run({ options, code, parserName } satisfies FormatEmbeddedCodeParam, {
     name: "formatEmbeddedCode",
   });
 }

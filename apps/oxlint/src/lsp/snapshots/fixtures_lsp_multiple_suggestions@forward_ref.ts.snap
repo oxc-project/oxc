@@ -56,7 +56,7 @@ TextEdit: TextEdit {
 
 
 CodeAction: 
-Title: Disable forward-ref-uses-ref for this line
+Title: Disable react/forward-ref-uses-ref for this line
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -69,12 +69,12 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable-next-line forward-ref-uses-ref\n",
+    new_text: "// oxlint-disable-next-line react/forward-ref-uses-ref\n",
 }
 
 
 CodeAction: 
-Title: Disable forward-ref-uses-ref for this whole file
+Title: Disable react/forward-ref-uses-ref for this whole file
 Is Preferred: Some(false)
 TextEdit: TextEdit {
     range: Range {
@@ -87,5 +87,24 @@ TextEdit: TextEdit {
             character: 0,
         },
     },
-    new_text: "// oxlint-disable forward-ref-uses-ref\n",
+    new_text: "// oxlint-disable react/forward-ref-uses-ref\n",
+}
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 25,
+        },
+    },
+    new_text: "(props) => {}",
 }

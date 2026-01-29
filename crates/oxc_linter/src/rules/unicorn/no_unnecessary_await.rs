@@ -160,17 +160,18 @@ fn test() {
     ];
 
     let fix = vec![
-        ("await []", "[]", None),
-        ("await (a == b)", "(a == b)", None),
-        ("+await -1", "+-1", None),
-        ("-await +1", "-+1", None),
-        ("await function() {}", "await function() {}", None), // no autofix
-        ("await class {}", "await class {}", None),           // no autofix
-        ("+await +1", "+await +1", None),                     // no autofix
-        ("-await -1", "-await -1", None),                     // no autofix
+        ("await []", "[]"),
+        ("await (a == b)", "(a == b)"),
+        ("+await -1", "+-1"),
+        ("-await +1", "-+1"),
+        ("await function() {}", "await function() {}"), // no autofix
+        ("await class {}", "await class {}"),           // no autofix
+        ("+await +1", "+await +1"),                     // no autofix
+        ("-await -1", "-await -1"),                     // no autofix
     ];
 
     Tester::new(NoUnnecessaryAwait::NAME, NoUnnecessaryAwait::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .expect_fix(fix)
         .test_and_snapshot();
 }

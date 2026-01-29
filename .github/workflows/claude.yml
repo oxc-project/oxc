@@ -1,59 +1,45 @@
 name: Claude Code
 
 on:
-  issue_comment:
-    types: [created]
-  pull_request_review_comment:
-    types: [created]
   issues:
-    types: [opened, assigned]
-  pull_request_review:
-    types: [submitted]
+    types: [assigned]
 
 jobs:
-  claude:
-    if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
-    runs-on: ubuntu-latest
+  analyze:
+    if: github.event.action == 'assigned' && github.event.assignee.login == 'boshen' && github.event.sender.login == 'boshen'
+    runs-on: ubuntu-slim
     permissions:
-      contents: write
-      pull-requests: write
+      contents: read
       issues: write
       id-token: write
-      actions: read # Required for Claude to read CI results on PRs
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          fetch-depth: 1
-          persist-credentials: false
+          fetch-depth: 100
+          persist-credentials: true
 
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@7145c3e0510bcdbdd29f67cc4a8c1958f1acfa2f # v1.0.27
+        uses: anthropics/claude-code-action@f64219702d7454cf29fe32a74104be6ed43dc637 # v1.0.34
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          assignee_trigger: "boshen"
+          claude_args: --allowedTools "Edit,Write,Read,Glob,Grep,Bash(gh:*),Bash(cargo:*),Bash(git:*),Bash(just:*),WebFetch,TodoWrite"
+          prompt: |
+            Analyze issue #${{ github.event.issue.number }} in ${{ github.repository }} and determine if it can be fixed.
 
-          # Optional: Customize the trigger phrase (default: @claude)
-          # trigger_phrase: "/claude"
+            First, use `gh issue view ${{ github.event.issue.number }}` to read the issue details.
 
-          # Optional: Trigger when specific user is assigned to an issue
-          # assignee_trigger: "claude-bot"
+            Then:
+            1. Search the codebase to gather relevant context (related files, existing implementations, tests)
+            2. Determine if the issue is fixable and estimate the complexity
 
-          # Optional: Configure Claude's behavior with CLI arguments
-          # claude_args: |
-          #   --model claude-opus-4-1-20250805
-          #   --max-turns 10
-          #   --allowedTools "Bash(npm install),Bash(npm run build),Bash(npm run test:*),Bash(npm run lint:*)"
-          #   --system-prompt "Follow our coding standards. Ensure all new code has tests. Use TypeScript for new files."
-
-          # Optional: Advanced settings configuration
-          # settings: |
-          #   {
-          #     "env": {
-          #       "NODE_ENV": "test"
-          #     }
-          #   }
+            Finally, post a comment on the issue with:
+            - A brief summary of your understanding of the issue
+            - Relevant files/code you found
+            - Whether this issue is fixable (yes/no/needs clarification)
+            - If the issue is unclear, ask for more context
+            - If fixable, provide a concrete implementation plan with specific steps
+            - Any potential concerns or blockers

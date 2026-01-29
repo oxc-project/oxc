@@ -176,6 +176,20 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         self.new_fix(CompositeFix::Single(fix), message)
     }
 
+    /// Finds the next occurrence of the given token in the source code,
+    /// starting from the specified position, skipping over comments.
+    ///
+    /// Returns the offset from `start` if the token is found, otherwise `None`.
+    #[inline]
+    pub fn find_next_token_from(&self, start: u32, token: &str) -> Option<u32> {
+        self.ctx.find_next_token_from(start, token)
+    }
+
+    #[inline]
+    pub fn find_next_token_within(&self, start: u32, end: u32, token: &str) -> Option<u32> {
+        self.ctx.find_next_token_within(start, end, token)
+    }
+
     #[must_use]
     pub fn codegen(self) -> Codegen<'a> {
         Codegen::new()
@@ -411,6 +425,8 @@ mod test {
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::{SourceType, Span};
 
+    use crate::FixKind;
+
     use super::{CompositeFix, Fix, FixResult, Fixer, Message, PossibleFixes};
 
     fn insert_at_end() -> OxcDiagnostic {
@@ -466,23 +482,51 @@ mod test {
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
-    const INSERT_AT_END: Fix =
-        Fix { span: Span::new(19, 19), content: Cow::Borrowed("// end"), message: None };
-    const INSERT_AT_START: Fix =
-        Fix { span: Span::new(0, 0), content: Cow::Borrowed("// start"), message: None };
-    const INSERT_AT_MIDDLE: Fix =
-        Fix { span: Span::new(13, 13), content: Cow::Borrowed("5 *"), message: None };
-    const REPLACE_ID: Fix =
-        Fix { span: Span::new(4, 10), content: Cow::Borrowed("foo"), message: None };
-    const REPLACE_VAR: Fix =
-        Fix { span: Span::new(0, 3), content: Cow::Borrowed("let"), message: None };
-    const REPLACE_NUM: Fix =
-        Fix { span: Span::new(13, 14), content: Cow::Borrowed("5"), message: None };
+    const INSERT_AT_END: Fix = Fix {
+        span: Span::new(19, 19),
+        content: Cow::Borrowed("// end"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const INSERT_AT_START: Fix = Fix {
+        span: Span::new(0, 0),
+        content: Cow::Borrowed("// start"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const INSERT_AT_MIDDLE: Fix = Fix {
+        span: Span::new(13, 13),
+        content: Cow::Borrowed("5 *"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_ID: Fix = Fix {
+        span: Span::new(4, 10),
+        content: Cow::Borrowed("foo"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_VAR: Fix = Fix {
+        span: Span::new(0, 3),
+        content: Cow::Borrowed("let"),
+        message: None,
+        kind: FixKind::None,
+    };
+    const REPLACE_NUM: Fix = Fix {
+        span: Span::new(13, 14),
+        content: Cow::Borrowed("5"),
+        message: None,
+        kind: FixKind::None,
+    };
     const REMOVE_START: Fix = Fix::delete(Span::new(0, 4));
     const REMOVE_MIDDLE: Fix = Fix::delete(Span::new(5, 10));
     const REMOVE_END: Fix = Fix::delete(Span::new(14, 18));
-    const REVERSE_RANGE: Fix =
-        Fix { span: Span::new(3, 0), content: Cow::Borrowed(" "), message: None };
+    const REVERSE_RANGE: Fix = Fix {
+        span: Span::new(3, 0),
+        content: Cow::Borrowed(" "),
+        message: None,
+        kind: FixKind::None,
+    };
 
     fn get_fix_result(messages: Vec<Message>) -> FixResult<'static> {
         Fixer::new(TEST_CODE, messages, Some(SourceType::default())).fix()

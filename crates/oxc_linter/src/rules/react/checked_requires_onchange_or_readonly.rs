@@ -28,7 +28,7 @@ fn exclusive_checked_attribute(checked_span: Span, default_checked_span: Span) -
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct CheckedRequiresOnchangeOrReadonly {
     /// Ignore the requirement to provide either `onChange` or `readOnly` when the `checked` prop is present.
     ignore_missing_properties: bool,
@@ -39,8 +39,15 @@ pub struct CheckedRequiresOnchangeOrReadonly {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule enforces onChange or readonly attribute for checked property of input elements.
-    /// It also warns when checked and defaultChecked properties are used together.
+    /// This rule enforces `onChange` or `readOnly` attribute for checked property of input elements.
+    /// It also warns when `checked` and `defaultChecked` properties are used together.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// `checked` should generally always be used with one of `onChange` or `readOnly`.
+    ///
+    /// And using `checked` and `defaultChecked` together is likely an error as they are mutually
+    /// exclusive ways to control the checked state of an input element.
     ///
     /// ### Examples
     ///
@@ -193,9 +200,7 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 

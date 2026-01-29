@@ -4,6 +4,73 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.27.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 52b5003 formatter,oxfmt: Support Angular `@Component({ template, styles })` (#18324) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 30b467e formatter: Preserve trailing comments before the semicolon in class methods without a body (#18446) (Dunqing)
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- 164bbd7 formatter: Preserve trailing comments inside ternary alternate branch (#18433) (Dunqing)
+- 1c50800 formatter: Use HTML entity escaping for JSX attribute strings (#18385) (Boshen)
+- 4e156d2 formatter: Preserve parentheses for `in` expressions in arrow function block bodies (#18352) (Boshen)
+- 29966eb formatter/dead-code-removal: Handle tailwind sorting (#18321) (leaysgur)
+- 29f41be formatter: Only expand mapped types when newline immediately follows opening brace (#18087) (Boshen)
+- 2194552 formatter: Relocate leading comments for single-element union/intersection types (#18083) (Boshen)
+
+### ⚡ Performance
+
+- 85ab400 formatter: Store `AstNodes` itself instead of `&'a AstNodes` as the `parent` field of `AstNode` (#18428) (Dunqing)
+- 194d384 formatter: Reduce AstNode size by 8 bytes using following_span_start (#18347) (Dunqing)
+
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- fd2c792 formatter: Support css prop, styled jsx, and member/computed `styled.tags` (#17990) (magic-akari)
+- c4c55cc formatter: Add `oxfmt-ignore` ignore comment support (#17916) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 3e141f0 formatter: Normalize `ChainExpression` with `TSNonNullExpression` to match Prettier (#18061) (Boshen)
+- 9b902b6 formatter: Use soft indent for empty objects in JSX spread attributes (#18063) (Boshen)
+- 8da749b formatter: Allow parameters to break in angular test wrappers (#18060) (Boshen)
+- 125962d formatter: Fix 4 prettier conformance tests (#18057) (Boshen)
+- bbadb8e oxfmt/sort-imports: Hard line inside multiline import leads to i… (#17880) (nilptr)
+
+### ⚡ Performance
+
+- 138637c formatter: Use VecDeque for member chain groups (#18094) (Boshen)
+
+## [0.24.0] - 2026-01-12
+
+### 🚀 Features
+
+- 539b350 formatter/sort_imports: Update `NODE_BUILTINS` modules (#17771) (nilptr)
+- 86c0168 oxfmt/sort_package_json: Handle `oxfmtrc.sort_scripts` option (#17738) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- fdd1e1e formatter: Don't wrap parenthesis for type assertion when it's an declaration of export default (#17878) (Dunqing)
+- f0813ad formatter: Incorrect type annotation check for short argument (#17877) (Dunqing)
+- 9e89389 formatter/tailwindcss: Nested class string doesn't respect `singleQuote: true` (#17838) (Dunqing)
+- e2f534c formatter/sort_imports: Handle alignable comment with JsLabels (#17791) (leaysgur)
+- f0cedd4 formatter/tailwindcss: Class name is broken after sorting when its contains single quotes with `singleQuote: true` (#17790) (Dunqing)
+- 0563217 formatter: Classes will be stripped out when both `experimentalTailwindcss` and `experimentalSortImports` are enabled (#17726) (Dunqing)
+
+### ⚡ Performance
+
+- d1bc514 formatter: Optimize RegExpLiteral formatting to avoid heap allocations (#17797) (Dunqing)
+
 ## [0.23.0] - 2026-01-06
 
 ### 🐛 Bug Fixes

@@ -59,6 +59,11 @@ pub fn unexpected_token(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn html_comment_in_module(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("HTML comments are not allowed in modules").with_label(span)
+}
+
+#[cold]
 pub fn merge_conflict_marker(
     start_span: Span,
     middle_span: Option<Span>,
@@ -302,14 +307,6 @@ pub fn class_declaration(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-/// A class member cannot have the 'const' keyword. ts(1248)
-#[cold]
-pub fn const_class_member(span: Span) -> OxcDiagnostic {
-    ts_error("1248", "A class member cannot have the 'const' keyword.")
-        .with_help("Did you mean `readonly`?")
-        .with_label(span)
-}
-
 // 'extends' clause already seen. ts(1172)
 #[cold]
 pub fn extends_clause_already_seen(span: Span) -> OxcDiagnostic {
@@ -341,6 +338,45 @@ pub fn implements_clause_already_seen(span: Span, seen_span: Span) -> OxcDiagnos
     ts_error("1175", "'implements' clause already seen")
         .with_labels([seen_span, span])
         .with_help("Merge the two 'implements' clauses into one by a ','")
+}
+
+/// A class member cannot have the 'const' keyword. ts(1248)
+#[cold]
+pub fn const_class_member(span: Span) -> OxcDiagnostic {
+    ts_error("1248", "A class member cannot have the 'const' keyword.")
+        .with_help("Did you mean `readonly`?")
+        .with_label(span)
+}
+
+// A required element cannot follow an optional element. ts(1257)
+#[cold]
+pub fn required_element_cannot_follow_optional_element(
+    span: Span,
+    optional_span: Span,
+) -> OxcDiagnostic {
+    ts_error("1257", "A required element cannot follow an optional element.").with_labels([
+        span.label("Required element here"),
+        optional_span.label("Optional element seen here"),
+    ])
+}
+
+/// A rest element cannot follow another rest element. ts(1265)
+#[cold]
+pub fn rest_element_cannot_follow_another_rest_element(
+    seen_span: Span,
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1265", "A rest element cannot follow another rest element.")
+        .with_labels([span.label("Second rest element here"), seen_span.label("First seen here")])
+}
+
+/// An optional element cannot follow a rest element. ts(1266)
+#[cold]
+pub fn optional_element_cannot_follow_rest_element(span: Span, rest_span: Span) -> OxcDiagnostic {
+    ts_error("1266", "An optional element cannot follow a rest element.").with_labels([
+        span.label("Optional element here"),
+        rest_span.label("Rest element seen here"),
+    ])
 }
 
 // A type-only import can specify a default import or named bindings, but not both. ts(1363)
@@ -520,6 +556,17 @@ pub fn identifier_reserved_word(span: Span, reserved: &str) -> OxcDiagnostic {
 #[cold]
 pub fn constructor_generator(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Constructor can't be a generator").with_label(span)
+}
+
+#[cold]
+pub fn declare_constructor(span: Span) -> OxcDiagnostic {
+    ts_error("1031", "'declare' modifier cannot appear on a constructor declaration.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn constructor_return_type(span: Span) -> OxcDiagnostic {
+    ts_error("1093", "Type annotation cannot appear on a constructor declaration.").with_label(span)
 }
 
 #[cold]
@@ -728,6 +775,11 @@ pub fn new_target(span: Span) -> OxcDiagnostic {
 #[cold]
 pub fn private_in_private(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
+}
+
+#[cold]
+pub fn unexpected_private_identifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Unexpected private identifier").with_label(span)
 }
 
 #[cold]
@@ -1063,16 +1115,14 @@ pub fn interface_extend(span: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn reg_exp_flag_u_and_v(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "The 'u' and 'v' regular expression flags cannot be enabled at the same time",
-    )
-    .with_label(span)
-    .with_help("v flag enables additional syntax over u flag")
+    ts_error("1502", "The 'u' and 'v' regular expression flags cannot be enabled at the same time")
+        .with_label(span)
+        .with_help("v flag enables additional syntax over u flag")
 }
 
 #[cold]
 pub fn setter_with_parameters(span: Span, parameters_count: usize) -> OxcDiagnostic {
-    OxcDiagnostic::error("A 'set' accessor must have exactly one parameter.")
+    ts_error("1049", "A 'set' accessor must have exactly one parameter.")
         .with_label(span)
         .with_help(if parameters_count == 0 {
             "Add a parameter here"
@@ -1086,7 +1136,7 @@ pub fn setter_with_rest_parameter(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have rest parameter.").with_label(span)
 }
 #[cold]
-pub fn setter_with_assignment_pattern(span: Span) -> OxcDiagnostic {
+pub fn setter_with_initializer(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'set' accessor cannot have an initializer.").with_label(span)
 }
 
@@ -1095,6 +1145,16 @@ pub fn getter_parameters(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A 'get' accessor must not have any formal parameters.")
         .with_label(span)
         .with_help("Remove these parameters here")
+}
+
+#[cold]
+pub fn setter_with_optional_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("1051", "A 'set' accessor cannot have an optional parameter.").with_label(span)
+}
+
+#[cold]
+pub fn accessor_cannot_have_this_parameter(span: Span) -> OxcDiagnostic {
+    ts_error("2784", "'get' and 'set' accessors cannot declare 'this' parameters.").with_label(span)
 }
 
 #[cold]

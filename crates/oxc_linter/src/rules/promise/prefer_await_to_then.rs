@@ -28,7 +28,7 @@ impl std::ops::Deref for PreferAwaitToThen {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct PreferAwaitToThenConfig {
     /// If true, enforces the rule even after an `await` or `yield` expression.
     strict: bool,
@@ -74,9 +74,7 @@ fn is_inside_yield_or_await(node: &AstNode) -> bool {
 
 impl Rule for PreferAwaitToThen {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

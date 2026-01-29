@@ -1,5 +1,16 @@
 <p align="center">
-  <img alt="OXC Logo" src="https://raw.githubusercontent.com/oxc-project/oxc-assets/main/preview-universal.png" width="600">
+  <br>
+  <br>
+  <a href="https://oxc.rs" target="_blank" rel="noopener noreferrer">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://oxc.rs/oxc-light.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://oxc.rs/oxc-dark.svg">
+      <img alt="Oxc logo" src="https://oxc.rs/oxc-dark.svg" height="60">
+    </picture>
+  </a>
+  <br>
+  <br>
+  <br>
 </p>
 
 <div align="center">
@@ -39,7 +50,7 @@ The Oxidation Compiler is creating a suite of high-performance tools for JavaScr
 
 This is the formatter for oxc.
 
-See [usage instructions](https://oxc.rs/docs/guide/usage/formatter.html).
+See [usage instructions](https://oxc.rs/docs/guide/usage/formatter).
 
 Run
 

@@ -1,4 +1,4 @@
-import type { Plugin, Rule, Context, Diagnostic, Node } from "#oxlint";
+import type { Plugin, Rule, Context, Diagnostic, Node } from "#oxlint/plugin";
 
 const SPAN: Node = {
   start: 0,

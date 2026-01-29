@@ -1,3 +1,4 @@
+use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -60,7 +61,7 @@ impl Rule for PreferEventTarget {
                     return;
                 };
 
-                if !std::ptr::eq(ident, callee_ident.as_ref()) {
+                if ident.unstable_address() != callee_ident.address() {
                     return;
                 }
             }
@@ -76,35 +77,39 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"class Foo {}",
-        r"class Foo extends OtherClass {}",
-        r"class Foo extends EventTarget {}",
-        r"const Foo = class extends EventTarget {}",
-        r"const Foo = class extends foo.EventTarget {}",
-        r"const Foo = class extends foo.bar.EventTarget {}",
-        r"class Foo extends foo.EventEmitter {}",
-        r"class Foo extends foo.bar.EventEmitter {}",
-        r"class EventEmitter extends Foo {}",
-        r"const Foo = class EventEmitter extends Foo {}",
-        r"new Foo(EventEmitter)",
-        r"new foo.EventEmitter()",
-        r"EventTarget()",
-        r"new EventTarget",
-        r"const target = new EventTarget;",
-        r"const target = EventTarget()",
-        r"const target = new Foo(EventEmitter);",
-        r"EventEmitter()",
-        r"const emitter = EventEmitter()",
+        "class Foo {}",
+        "class Foo extends OtherClass {}",
+        "class Foo extends EventTarget {}",
+        "const Foo = class extends EventTarget {}",
+        "const Foo = class extends foo.EventTarget {}",
+        "const Foo = class extends foo.bar.EventTarget {}",
+        "class Foo extends foo.EventEmitter {}",
+        "class Foo extends foo.bar.EventEmitter {}",
+        "class EventEmitter extends Foo {}",
+        "const Foo = class EventEmitter extends Foo {}",
+        "new Foo(EventEmitter)",
+        "new foo.EventEmitter()",
+        "EventTarget()",
+        "new EventTarget",
+        "const target = new EventTarget;",
+        "const target = EventTarget()",
+        "const target = new Foo(EventEmitter);",
+        "EventEmitter()",
+        "const emitter = EventEmitter()",
     ];
 
     let fail = vec![
-        r"class Foo extends EventEmitter {}",
-        r"class Foo extends EventEmitter { someMethod() {} }",
-        r"const Foo = class extends EventEmitter {}",
-        r"new EventEmitter",
-        r"const emitter = new EventEmitter;",
-        r"for (const {EventEmitter} of []) {new EventEmitter}",
-        r"for (const EventEmitter of []) {new EventEmitter}",
+        "class Foo extends EventEmitter {}",
+        "class Foo extends EventEmitter { someMethod() {} }",
+        "const Foo = class extends EventEmitter {}",
+        "class Foo extends EventEmitter {
+				addListener() {}
+				removeListener() {}
+			}",
+        "new EventEmitter",
+        "const emitter = new EventEmitter;",
+        "for (const {EventEmitter} of []) {new EventEmitter}",
+        "for (const EventEmitter of []) {new EventEmitter}",
     ];
 
     Tester::new(PreferEventTarget::NAME, PreferEventTarget::PLUGIN, pass, fail).test_and_snapshot();

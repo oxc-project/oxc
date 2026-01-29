@@ -275,7 +275,7 @@ pub struct TSGlobalDeclarationId<'a, 'b>(pub &'b TSGlobalDeclaration<'a>);
 
 impl ESTree for TSGlobalDeclarationId<'_, '_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
-        let ident = IdentifierName { span: self.0.global_span, name: Atom::from("global") };
+        let ident = IdentifierName { span: self.0.global_span, name: Atom::from("global").into() };
         ident.serialize(serializer);
     }
 }
@@ -301,46 +301,6 @@ impl ESTree for TSMappedTypeOptional<'_, '_> {
         } else {
             false.serialize(serializer);
         }
-    }
-}
-
-/// Serializer for `key` field of `TSMappedType`.
-#[ast_meta]
-#[estree(
-    ts_type = "TSTypeParameter['name']",
-    raw_deser = "
-        const typeParameter = DESER[Box<TSTypeParameter>](POS_OFFSET.type_parameter),
-            key = typeParameter.name;
-        if (PARENT) key.parent = parent;
-        key
-    "
-)]
-pub struct TSMappedTypeKey<'a, 'b>(pub &'b TSMappedType<'a>);
-
-impl ESTree for TSMappedTypeKey<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.type_parameter.name.serialize(serializer);
-    }
-}
-
-/// Serializer for `constraint` field of `TSMappedType`.
-///
-/// NOTE: Variable `typeParameter` in `raw_deser` is shared between `key` and `constraint` serializers.
-/// They will be concatenated in the generated code.
-#[ast_meta]
-#[estree(
-    ts_type = "TSTypeParameter['constraint']",
-    raw_deser = "
-        const { constraint } = typeParameter;
-        if (PARENT && constraint !== null) constraint.parent = parent;
-        constraint
-    "
-)]
-pub struct TSMappedTypeConstraint<'a, 'b>(pub &'b TSMappedType<'a>);
-
-impl ESTree for TSMappedTypeConstraint<'_, '_> {
-    fn serialize<S: Serializer>(&self, serializer: S) {
-        self.0.type_parameter.constraint.serialize(serializer);
     }
 }
 

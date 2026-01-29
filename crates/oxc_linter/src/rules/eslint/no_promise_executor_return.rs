@@ -26,7 +26,7 @@ fn no_promise_executor_return_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoPromiseExecutorReturn(Box<NoPromiseExecutorReturnConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoPromiseExecutorReturnConfig {
     /// If `true`, allows returning `void` expressions (e.g., `return void resolve()`).
     allow_void: bool,
@@ -121,9 +121,7 @@ declare_oxc_lint!(
 
 impl Rule for NoPromiseExecutorReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -131,7 +129,12 @@ impl Rule for NoPromiseExecutorReturn {
             return;
         };
 
-        if !new_expr.callee.is_specific_id("Promise") {
+        // Check if the callee is `Promise` and it's a reference to the global `Promise`
+        let Some(ident) = new_expr.callee.get_identifier_reference() else {
+            return;
+        };
+
+        if ident.name != "Promise" || !ctx.is_reference_to_global_variable(ident) {
             return;
         }
 
@@ -227,61 +230,182 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        // Empty return is allowed
-        ("new Promise((resolve, reject) => { return; })", None),
-        ("new Promise(function (resolve, reject) { return; })", None),
-        // No return at all
-        ("new Promise((resolve, reject) => { resolve(1); })", None),
-        ("new Promise(function (resolve, reject) { resolve(1); })", None),
-        // Arrow with block body, no return
-        ("new Promise(r => { r(1) })", None),
-        // Not a Promise
-        ("new Foo((resolve, reject) => { return 1; })", None),
-        ("new Foo(r => r(1))", None),
-        // Nested function with return is ok
-        ("new Promise((resolve) => { function inner() { return 1; } inner(); resolve(); })", None),
-        ("new Promise((resolve) => { const inner = () => 1; resolve(inner()); })", None),
-        // void is allowed with allowVoid option (explicit return)
+        ("function foo(resolve, reject) { return 1; }", None),
+        ("function Promise(resolve, reject) { return 1; }", None),
+        ("(function (resolve, reject) { return 1; })", None),
+        ("(function foo(resolve, reject) { return 1; })", None),
+        ("(function Promise(resolve, reject) { return 1; })", None),
+        ("var foo = function (resolve, reject) { return 1; }", None),
+        ("var foo = function Promise(resolve, reject) { return 1; }", None),
+        ("var Promise = function (resolve, reject) { return 1; }", None),
+        ("(resolve, reject) => { return 1; }", None),
+        ("(resolve, reject) => 1", None),
+        ("var foo = (resolve, reject) => { return 1; }", None),
+        ("var Promise = (resolve, reject) => { return 1; }", None),
+        ("var foo = (resolve, reject) => 1", None),
+        ("var Promise = (resolve, reject) => 1", None),
+        ("var foo = { bar(resolve, reject) { return 1; } }", None),
+        ("var foo = { Promise(resolve, reject) { return 1; } }", None),
+        ("new foo(function (resolve, reject) { return 1; });", None),
+        ("new foo(function bar(resolve, reject) { return 1; });", None),
+        ("new foo(function Promise(resolve, reject) { return 1; });", None),
+        ("new foo((resolve, reject) => { return 1; });", None),
+        ("new foo((resolve, reject) => 1);", None),
+        ("new promise(function foo(resolve, reject) { return 1; });", None),
+        ("new Promise.foo(function foo(resolve, reject) { return 1; });", None),
+        ("new foo.Promise(function foo(resolve, reject) { return 1; });", None),
+        ("new Promise.Promise(function foo(resolve, reject) { return 1; });", None),
+        ("new Promise()(function foo(resolve, reject) { return 1; });", None),
+        ("Promise(function (resolve, reject) { return 1; });", None),
+        ("Promise((resolve, reject) => { return 1; });", None),
+        ("Promise((resolve, reject) => 1);", None),
+        ("new Promise(foo, function (resolve, reject) { return 1; });", None),
+        ("new Promise(foo, (resolve, reject) => { return 1; });", None),
+        ("new Promise(foo, (resolve, reject) => 1);", None),
+        // globals are not supported in tests.
+        // ("/* globals Promise:off */ new Promise(function (resolve, reject) { return 1; });", None)
+        // ("new Promise((resolve, reject) => { return 1; });", None), // { "globals": { "Promise": "off" } }
+        ("let Promise; new Promise(function (resolve, reject) { return 1; });", None),
+        ("function f() { new Promise((resolve, reject) => { return 1; }); var Promise; }", None),
+        ("function f(Promise) { new Promise((resolve, reject) => 1); }", None),
         (
-            "new Promise((resolve) => { return void resolve(1); })",
-            Some(serde_json::json!([{ "allowVoid": true }])),
+            "if (x) { const Promise = foo(); new Promise(function (resolve, reject) { return 1; }); }",
+            None,
+        ),
+        ("x = function Promise() { new Promise((resolve, reject) => { return 1; }); }", None),
+        ("new Promise(function (resolve, reject) { return; });", None),
+        ("new Promise(function (resolve, reject) { reject(new Error()); return; });", None),
+        ("new Promise(function (resolve, reject) { if (foo) { return; } });", None),
+        ("new Promise((resolve, reject) => { return; });", None),
+        (
+            "new Promise((resolve, reject) => { if (foo) { resolve(1); return; } reject(new Error()); });",
+            None,
+        ),
+        ("new Promise(function (resolve, reject) { throw new Error(); });", None),
+        ("new Promise((resolve, reject) => { throw new Error(); });", None),
+        ("new Promise(function (resolve, reject) { function foo() { return 1; } });", None),
+        ("new Promise((resolve, reject) => { (function foo() { return 1; })(); });", None),
+        ("new Promise(function (resolve, reject) { () => { return 1; } });", None),
+        ("new Promise((resolve, reject) => { () => 1 });", None),
+        (
+            "function foo() { return new Promise(function (resolve, reject) { resolve(bar); }) };",
+            None,
         ),
         (
-            "new Promise((resolve) => { return void 0; })",
-            Some(serde_json::json!([{ "allowVoid": true }])),
+            "foo => new Promise((resolve, reject) => { bar(foo, (err, data) => { if (err) { reject(err); return; } resolve(data); })});",
+            None,
         ),
-        // void is allowed with allowVoid option (implicit return in arrow expression body)
-        ("new Promise(r => void r(1))", Some(serde_json::json!([{ "allowVoid": true }]))),
+        ("new Promise(function (resolve, reject) {}); function foo() { return 1; }", None),
+        ("new Promise((resolve, reject) => {}); (function () { return 1; });", None),
+        ("new Promise(function (resolve, reject) {}); () => { return 1; };", None),
+        ("new Promise((resolve, reject) => {}); () => 1;", None),
+        ("return 1;", None), // { "sourceType": "commonjs" }
+        ("return 1;", None), // { "sourceType": "script", "parserOptions": { "ecmaFeatures": { "globalReturn": true } } }
+        ("return 1; function foo(){ return 1; } return 1;", None), // { "sourceType": "commonjs" }
+        (
+            "function foo(){} return 1; var bar = function*(){ return 1; }; return 1; var baz = () => {}; return 1;",
+            None,
+        ), // { "sourceType": "commonjs" }
+        ("new Promise(function (resolve, reject) {}); return 1;", None), // { "sourceType": "commonjs" }
+        ("new Promise((r) => void cbf(r));", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => void 0)", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        (
+            "new Promise(r => { return void 0 })",
+            Some(serde_json::json!([ { "allowVoid": true, }, ])),
+        ),
+        (
+            "new Promise(r => { if (foo) { return void 0 } return void 0 })",
+            Some(serde_json::json!([ { "allowVoid": true, }, ])),
+        ),
+        ("new Promise(r => {0})", None),
     ];
 
     let fail = vec![
-        // Arrow with expression body (implicit return)
-        ("new Promise(r => r(1))", None),
-        ("new Promise((resolve, reject) => resolve(1))", None),
-        // Explicit return with value
-        ("new Promise((resolve, reject) => { return 1; })", None),
         ("new Promise(function (resolve, reject) { return 1; })", None),
-        // Return in control flow
-        ("new Promise((resolve, reject) => { if (true) { return 1; } })", None),
-        ("new Promise((resolve, reject) => { if (true) return 1; })", None),
-        // Return variable
-        ("new Promise((resolve, reject) => { return resolve; })", None),
-        // Return function call result (not resolve/reject call itself)
-        ("new Promise((resolve, reject) => { return foo(); })", None),
-        // Return resolve/reject call result - these should NOT be special-cased as valid
-        ("new Promise((resolve, reject) => { return resolve(1); })", None),
-        ("new Promise((resolve, reject) => { return reject(new Error('fail')); })", None),
-        // Nested blocks
-        ("new Promise((resolve, reject) => { { { return 1; } } })", None),
-        // In try-catch
+        (
+            "new Promise((resolve, reject) => resolve(1))",
+            Some(serde_json::json!([ { "allowVoid": true, }, ])),
+        ),
+        (
+            "new Promise((resolve, reject) => { return 1 })",
+            Some(serde_json::json!([ { "allowVoid": true, }, ])),
+        ),
+        ("new Promise(r => 1)", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => 1 ? 2 : 3)", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => (1 ? 2 : 3))", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => (1))", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => () => {})", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => null)", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => null)", Some(serde_json::json!([ { "allowVoid": false, }, ]))),
+        ("new Promise(r => /*hi*/ ~0)", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => /*hi*/ ~0)", Some(serde_json::json!([ { "allowVoid": false, }, ]))),
+        ("new Promise(r => { return 0 })", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => { return 0 })", Some(serde_json::json!([ { "allowVoid": false, }, ]))),
+        (
+            "new Promise(r => { if (foo) { return void 0 } return 0 })",
+            Some(serde_json::json!([ { "allowVoid": true, }, ])),
+        ),
+        (
+            "new Promise(resolve => { return (foo = resolve(1)); })",
+            Some(serde_json::json!([ { "allowVoid": true, }, ])),
+        ),
+        (
+            "new Promise(resolve => r = resolve)",
+            Some(serde_json::json!([ { "allowVoid": true, }, ])),
+        ),
+        ("new Promise(r => { return(1) })", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r =>1)", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(r => ((1)))", Some(serde_json::json!([ { "allowVoid": true, }, ]))),
+        ("new Promise(function foo(resolve, reject) { return 1; })", None),
+        ("new Promise((resolve, reject) => { return 1; })", None),
+        ("new Promise(function (resolve, reject) { return undefined; })", None),
+        ("new Promise((resolve, reject) => { return null; })", None),
+        ("new Promise(function (resolve, reject) { return false; })", None),
+        ("new Promise((resolve, reject) => resolve)", None),
+        ("new Promise((resolve, reject) => null)", None),
+        ("new Promise(function (resolve, reject) { return resolve(foo); })", None),
+        ("new Promise((resolve, reject) => { return reject(foo); })", None),
+        ("new Promise((resolve, reject) => x + y)", None),
+        ("new Promise((resolve, reject) => { return Promise.resolve(42); })", None),
+        ("new Promise(function (resolve, reject) { if (foo) { return 1; } })", None),
         ("new Promise((resolve, reject) => { try { return 1; } catch(e) {} })", None),
-        // void is not allowed by default
-        ("new Promise((resolve) => { return void resolve(1); })", None),
-        // In switch
-        ("new Promise((resolve) => { switch(x) { case 1: return 1; } })", None),
-        // In loops
-        ("new Promise((resolve) => { while(true) { return 1; } })", None),
-        ("new Promise((resolve) => { for(;;) { return 1; } })", None),
+        (
+            "new Promise(function (resolve, reject) { while (foo){ if (bar) break; else return 1; } })",
+            None,
+        ),
+        ("new Promise(() => { return void 1; })", None),
+        ("new Promise(() => (1))", None),
+        ("() => new Promise(() => ({}));", None),
+        ("new Promise(function () { return 1; })", None),
+        ("new Promise(() => { return 1; })", None),
+        ("new Promise(() => 1)", None),
+        ("function foo() {} new Promise(function () { return 1; });", None),
+        ("function foo() { return; } new Promise(() => { return 1; });", None),
+        ("function foo() { return 1; } new Promise(() => { return 2; });", None),
+        ("function foo () { return new Promise(function () { return 1; }); }", None),
+        (
+            "function foo() { return new Promise(() => { bar(() => { return 1; }); return false; }); }",
+            None,
+        ),
+        (
+            "() => new Promise(() => { if (foo) { return 0; } else bar(() => { return 1; }); })",
+            None,
+        ),
+        (
+            "function foo () { return 1; return new Promise(function () { return 2; }); return 3;}",
+            None,
+        ),
+        ("() => 1; new Promise(() => { return 1; })", None),
+        ("new Promise(function () { return 1; }); function foo() { return 1; } ", None),
+        ("() => new Promise(() => { return 1; });", None),
+        ("() => new Promise(() => 1);", None),
+        ("() => new Promise(() => () => 1);", None),
+        ("() => new Promise(() => async () => 1);", None), // { "ecmaVersion": 2017 }
+        ("() => new Promise(() => function () {});", None),
+        ("() => new Promise(() => function foo() {});", None),
+        ("() => new Promise(() => []);", None),
+        ("new Promise((Promise) => { return 1; })", None),
+        ("new Promise(function Promise(resolve, reject) { return 1; })", None),
     ];
 
     Tester::new(NoPromiseExecutorReturn::NAME, NoPromiseExecutorReturn::PLUGIN, pass, fail)

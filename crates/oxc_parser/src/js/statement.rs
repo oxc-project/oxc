@@ -31,23 +31,49 @@ impl<'a> ParserImpl<'a> {
     ///     `StatementList`[?Yield, ?Await, ?Return] `StatementListItem`[?Yield, ?Await, ?Return]
     pub(crate) fn parse_directives_and_statements(
         &mut self,
-        is_top_level: bool,
     ) -> (Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>) {
         let mut directives = self.ast.vec();
         let mut statements = self.ast.vec();
 
-        let stmt_ctx = if is_top_level {
-            StatementContext::TopLevelStatementList
-        } else {
-            StatementContext::StatementList
-        };
+        let is_top_level = self.ctx.has_top_level();
+        let stmt_ctx = StatementContext::StatementList;
+
+        // Check if we need to track potential await reparsing.
+        // This is only needed in unambiguous mode at top level when not in await context.
+        let mut track_await_reparse =
+            is_top_level && self.source_type.is_unambiguous() && !self.ctx.has_await();
 
         let mut expecting_directives = true;
         while !self.has_fatal_error() {
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
             }
+
+            // Once ESM syntax is detected, enable await context for remaining statements
+            // and stop tracking (we'll reparse earlier statements at the end)
+            if track_await_reparse && self.module_record_builder.has_module_syntax() {
+                track_await_reparse = false;
+                self.ctx = self.ctx.and_await(true);
+            }
+
+            // Take checkpoint for every statement when tracking await reparse.
+            // We reset the flag and only store the checkpoint if an await identifier
+            // was actually encountered during parsing.
+            let checkpoint = if track_await_reparse {
+                self.state.encountered_await_identifier = false;
+                Some((statements.len(), self.checkpoint()))
+            } else {
+                None
+            };
+
             let stmt = self.parse_statement_list_item(stmt_ctx);
+
+            // Store checkpoint only if await identifier was encountered
+            if let Some((stmt_index, checkpoint)) = checkpoint
+                && self.state.encountered_await_identifier
+            {
+                self.state.potential_await_reparse.push((stmt_index, checkpoint));
+            }
 
             // Section 11.2.1 Directive Prologue
             // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
@@ -104,9 +130,7 @@ impl<'a> ParserImpl<'a> {
                 &Modifiers::empty(),
                 self.ast.vec(),
             ),
-            Kind::Export => {
-                self.parse_export_declaration(self.start_span(), self.ast.vec(), stmt_ctx)
-            }
+            Kind::Export => self.parse_export_declaration(self.start_span(), self.ast.vec()),
             // [+Return] ReturnStatement[?Yield, ?Await]
             Kind::Return => self.parse_return_statement(),
             Kind::Var => {
@@ -121,7 +145,7 @@ impl<'a> ParserImpl<'a> {
             Kind::At => self.parse_decorated_statement(stmt_ctx),
             Kind::Let if !self.cur_token().escaped() => self.parse_let(stmt_ctx),
             Kind::Async => self.parse_async_statement(self.start_span(), stmt_ctx),
-            Kind::Import => self.parse_import_statement(stmt_ctx),
+            Kind::Import => self.parse_import_statement(),
             Kind::Const => self.parse_const_statement(stmt_ctx),
             Kind::Using if self.is_using_declaration() => self.parse_using_statement(stmt_ctx),
             Kind::Await if self.is_using_statement() => self.parse_using_statement(stmt_ctx),
@@ -295,7 +319,9 @@ impl<'a> ParserImpl<'a> {
         // [+Await]
         let r#await = if self.at(Kind::Await) {
             if !self.ctx.has_await() {
-                self.error(diagnostics::await_expression(self.cur_token().span()));
+                // For `ModuleKind::Unambiguous`, defer the error until we know whether
+                // this is a Module (where for-await is valid at top-level) or Script.
+                self.error_on_script(diagnostics::await_expression(self.cur_token().span()));
             }
             self.bump_any();
             true
@@ -375,11 +401,23 @@ impl<'a> ParserImpl<'a> {
         }
 
         // [+Using] using [no LineTerminator here] ForBinding[?Yield, ?Await, ~Pattern]
-        if self.at(Kind::Using) && {
-            let token = self.lexer.peek_token();
-            let kind = token.kind();
-            !token.is_on_new_line() && kind != Kind::Of && kind.is_binding_identifier()
-        } {
+        if self.at(Kind::Using)
+            && self.lookahead(|p| {
+                p.bump_any(); // bump `using`
+                let token = p.cur_token();
+                if token.is_on_new_line() {
+                    return false;
+                }
+                let kind = token.kind();
+                // `for (using of` is only a using declaration if followed by `=`, `;`, or `:`
+                // to distinguish from `for (using of collection)` which is a for-of loop
+                if kind == Kind::Of {
+                    p.bump_any(); // bump `of`
+                    return matches!(p.cur_kind(), Kind::Eq | Kind::Semicolon | Kind::Colon);
+                }
+                kind.is_binding_identifier()
+            })
+        {
             return self.parse_using_declaration_for_statement(
                 span,
                 parenthesis_opening_span,
@@ -756,7 +794,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Parse import statement or import expression.
-    fn parse_import_statement(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+    fn parse_import_statement(&mut self) -> Statement<'a> {
         let checkpoint = self.checkpoint();
         let span = self.start_span();
         self.bump_any();
@@ -765,7 +803,7 @@ impl<'a> ParserImpl<'a> {
             self.rewind(checkpoint);
             self.parse_expression_or_labeled_statement()
         } else {
-            self.parse_import_declaration(span, stmt_ctx.is_top_level())
+            self.parse_import_declaration(span, self.ctx.has_top_level())
         }
     }
 
@@ -791,7 +829,7 @@ impl<'a> ParserImpl<'a> {
         let kind = self.cur_kind();
         if kind == Kind::Export {
             // Export span.start starts after decorators.
-            return self.parse_export_declaration(self.start_span(), decorators, stmt_ctx);
+            return self.parse_export_declaration(self.start_span(), decorators);
         }
         let modifiers = self.parse_modifiers(false, false);
         if self.at(Kind::Class) {

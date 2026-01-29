@@ -3,13 +3,16 @@ use std::borrow::Cow;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXChild, JSXElement, JSXElementName, JSXExpression, JSXMemberExpression,
-        JSXMemberExpressionObject, JSXOpeningElement, StaticMemberExpression,
+        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
+        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
+        JSXOpeningElement, Statement, StaticMemberExpression,
     },
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::AstNode;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{LintContext, OxlintSettings};
 
@@ -61,6 +64,8 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
     get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
 }
 
+// TODO: Move the a11y methods to their own util for jsx-a11y?
+
 // ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/isHiddenFromScreenReader.js
 pub fn is_hidden_from_screen_reader<'a>(
     ctx: &LintContext<'a>,
@@ -105,6 +110,7 @@ pub fn object_has_accessible_child<'a>(ctx: &LintContext<'a>, node: &JSXElement<
         || has_jsx_prop_ignore_case(&node.opening_element, "children").is_some()
 }
 
+// ref: https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/8f75961d965e47afb88854d324bd32fafde7acfe/src/util/isPresentationRole.js
 pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
     let Some(role) = has_jsx_prop(jsx_opening_el, "role") else {
         return false;
@@ -113,9 +119,8 @@ pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
     matches!(get_string_literal_prop_value(role), Some("presentation" | "none"))
 }
 
-// TODO: Should re-implement
+// TODO: Should re-implement based on
 // https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/4c7e7815c12a797587bb8e3cdced7f3003848964/src/util/isInteractiveElement.js
-// with `oxc-project/aria-query` which is currently W.I.P.
 //
 // Until then, use simplified version by https://html.spec.whatwg.org/multipage/dom.html#interactive-content
 pub fn is_interactive_element(element_type: &str, jsx_opening_el: &JSXOpeningElement) -> bool {
@@ -347,6 +352,144 @@ pub fn is_state_member_expression(expression: &StaticMemberExpression<'_>) -> bo
     }
 
     false
+}
+
+/// Checks if a function call is a Higher-Order Component (HOC)
+pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
+    // Check built-in HOCs with exact matching (matches ESLint behavior)
+    // Matches: memo, forwardRef, React.memo, React.forwardRef
+    if matches!(callee_name, "memo" | "forwardRef" | "React.memo" | "React.forwardRef") {
+        return true;
+    }
+
+    // Check component wrapper functions from settings
+    ctx.settings().react.is_component_wrapper_function(callee_name)
+}
+
+/// Finds the innermost function with JSX in a chain of HOC calls
+#[derive(Debug)]
+pub enum InnermostFunction<'a> {
+    Function(&'a Function<'a>),
+    /// Arrow functions never have an id, so we don't need to store the reference
+    ArrowFunction,
+}
+
+pub fn find_innermost_function_with_jsx<'a>(
+    expr: &'a Expression<'a>,
+    ctx: &LintContext<'_>,
+) -> Option<InnermostFunction<'a>> {
+    match expr {
+        Expression::CallExpression(call) => {
+            // Check if this is a HOC call
+            if let Some(callee_name) = call.callee_name()
+                && is_hoc_call(callee_name, ctx)
+            {
+                // This is a HOC, recursively check the first argument
+                if let Some(first_arg) = call.arguments.first()
+                    && let Some(inner_expr) = first_arg.as_expression()
+                {
+                    return find_innermost_function_with_jsx(inner_expr, ctx);
+                }
+            }
+            None
+        }
+        Expression::FunctionExpression(func) => {
+            // Check if this function contains JSX
+            if function_contains_jsx(func) { Some(InnermostFunction::Function(func)) } else { None }
+        }
+        Expression::ArrowFunctionExpression(arrow_func) => {
+            // Check if this arrow function contains JSX
+            if expression_contains_jsx(expr) {
+                Some(InnermostFunction::ArrowFunction)
+            } else {
+                // Check if this arrow function returns another function that contains JSX
+                if arrow_func.expression {
+                    // Expression-bodied arrow function: () => () => <div />
+                    if arrow_func.body.statements.len() == 1
+                        && let Statement::ExpressionStatement(expr_stmt) =
+                            &arrow_func.body.statements[0]
+                    {
+                        return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
+                    }
+                } else {
+                    // Block-bodied arrow function: () => { return () => <div /> }
+                    for stmt in &arrow_func.body.statements {
+                        if let Statement::ReturnStatement(ret_stmt) = stmt
+                            && let Some(expr) = &ret_stmt.argument
+                        {
+                            return find_innermost_function_with_jsx(expr, ctx);
+                        }
+                    }
+                }
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
+/// Visitor that searches for JSX elements within a function body.
+/// Stops at nested function boundaries to avoid detecting JSX from child components.
+struct JsxFinder {
+    found: bool,
+}
+
+impl JsxFinder {
+    fn new() -> Self {
+        Self { found: false }
+    }
+}
+
+impl<'a> Visit<'a> for JsxFinder {
+    fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
+        self.found = true;
+        // Don't walk children - we found what we need
+    }
+
+    fn visit_jsx_fragment(&mut self, _frag: &JSXFragment<'a>) {
+        self.found = true;
+    }
+
+    fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
+        if crate::utils::is_create_element_call(call) {
+            self.found = true;
+        }
+        if !self.found {
+            walk::walk_call_expression(self, call);
+        }
+    }
+
+    // Don't recurse into nested functions - they're separate components
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+    fn visit_arrow_function_expression(&mut self, _arrow: &ArrowFunctionExpression<'a>) {}
+}
+
+/// Checks if a function contains JSX anywhere in its body.
+/// This uses a visitor pattern to handle JSX in if/else blocks, try/catch,
+/// loops, and other control flow constructs.
+pub fn function_contains_jsx(func: &Function) -> bool {
+    if let Some(body) = &func.body {
+        return function_body_contains_jsx(body);
+    }
+    false
+}
+
+/// Checks if a function body contains JSX anywhere.
+pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
+    let mut finder = JsxFinder::new();
+    finder.visit_function_body(body);
+    finder.found
+}
+
+/// Checks if a function-like expression (function or arrow function) contains JSX
+pub fn expression_contains_jsx(expr: &Expression) -> bool {
+    match expr {
+        Expression::FunctionExpression(func) => function_contains_jsx(func),
+        Expression::ArrowFunctionExpression(arrow_func) => {
+            function_body_contains_jsx(&arrow_func.body)
+        }
+        _ => false,
+    }
 }
 
 #[cfg(test)]

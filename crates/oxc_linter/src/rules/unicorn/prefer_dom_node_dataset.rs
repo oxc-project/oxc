@@ -274,5 +274,6 @@ fn test() {
     ];
 
     Tester::new(PreferDomNodeDataset::NAME, PreferDomNodeDataset::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .test_and_snapshot();
 }

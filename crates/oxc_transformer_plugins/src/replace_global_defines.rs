@@ -501,7 +501,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         debug_assert!(!meta_define.parts.is_empty());
 
         let mut current_part_member_expression = Some(member);
-        let mut cur_part_name = &member.property.name;
+        let mut cur_part_name: &str = &member.property.name;
         let mut is_full_match = true;
         let mut i = meta_define.parts.len() - 1;
         let mut has_matched_part = false;
@@ -512,7 +512,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
         };
         loop {
             let part = &meta_define.parts[i];
-            let matched = cur_part_name.as_str() == part;
+            let matched = cur_part_name == part;
             if matched {
                 has_matched_part = true;
             } else {
@@ -580,13 +580,14 @@ impl<'a> ReplaceGlobalDefines<'a> {
     ) -> bool {
         debug_assert!(dot_define.parts.len() > 1);
         let should_replace_this_expr = should_replace_this_expr(ctx.current_scope_flags());
-        let Some(mut cur_part_name) = member.name() else {
+        let Some(cur_part_name) = member.name() else {
             return false;
         };
+        let mut cur_part_name: &str = cur_part_name.as_str();
         let mut current_part_member_expression = Some(member);
 
         for (i, part) in dot_define.parts.iter().enumerate().rev() {
-            if cur_part_name.as_str() != part {
+            if cur_part_name != part {
                 return false;
             }
             if i == 0 {
@@ -601,7 +602,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                     }
                     Expression::ComputedMemberExpression(computed_member) => {
                         static_property_name_of_computed_expr(computed_member).map(|name| {
-                            cur_part_name = name;
+                            cur_part_name = name.as_str();
                             DotDefineMemberExpression::ComputedMemberExpression(computed_member)
                         })
                     }
@@ -613,7 +614,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                         None
                     }
                     Expression::ThisExpression(_) if should_replace_this_expr => {
-                        cur_part_name = &THIS_ATOM;
+                        cur_part_name = THIS_ATOM.as_str();
                         None
                     }
                     Expression::MetaProperty(meta) => {
@@ -653,11 +654,13 @@ pub enum DotDefineMemberExpression<'b, 'ast: 'b> {
 }
 
 impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
-    fn name(&self) -> Option<&'b Atom<'a>> {
+    fn name(&self) -> Option<Atom<'a>> {
         match self {
-            DotDefineMemberExpression::StaticMemberExpression(expr) => Some(&expr.property.name),
+            DotDefineMemberExpression::StaticMemberExpression(expr) => {
+                Some(expr.property.name.as_atom())
+            }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
-                static_property_name_of_computed_expr(expr)
+                static_property_name_of_computed_expr(expr).copied()
             }
         }
     }

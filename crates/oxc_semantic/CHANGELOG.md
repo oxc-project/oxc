@@ -4,6 +4,83 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 22dec6a semantic: [**BREAKING**] Remove `Scoping::scope_build_child_ids` and all related APIs (#18362) (Dunqing)
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 00854e8 semantic: Add TS2337 error code to super call diagnostic (#18531) (camc314)
+
+### 🐛 Bug Fixes
+
+- 74d0998 semantic: Update error msg for multiple `default` cases in switch stmt (#18526) (camc314)
+- b0cd74d semantic: Allow `var` and `function` with same name in static blocks (#18358) (Boshen)
+- 6037995 semantic: Allow `new.target` in class field initializers (#18349) (Boshen)
+- 9a15c6a semantic: Do not rely on spans for node comparison in `Function::bind` (#18296) (overlookmotel)
+
+### ⚡ Performance
+
+- 6b600c4 semantic: Skip parent lookup for function declarations in `Function::bind` (#18293) (overlookmotel)
+- c27ad2d semantic: Move check for function declaration out of `is_function_part_of_if_statement` (#18292) (overlookmotel)
+- 63eb89e semantic: Skip checking redeclarations for function expressions (#18291) (overlookmotel)
+- 7c12743 semantic: Skip checking unresolved exports in CommonJS files (#18250) (overlookmotel)
+
+### 📚 Documentation
+
+- 2ddc073 semantic: Fix typo in comment (#18238) (overlookmotel)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- f1e2dc0 semantic: No error in `check_function_redeclaration` for CommonJS files (#18231) (overlookmotel)
+
+### ⚡ Performance
+
+- 52073d9 semantic: Use cheaper test for source type (#18235) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- e2221e6 semantic: Store `scope_id` in `Reference` (#18053) (Dunqing)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+- 6b29bd1 semantic/example: Add detailed references info (#17938) (camc314)
+
+### 🐛 Bug Fixes
+
+- 1b199af semantic: Report TS18019 for abstract modifier with private identifier (#18173) (Boshen)
+- fb181cc semantic: Error on `using` at top level in scripts (#18090) (Boshen)
+- 4d9582d semantic: Allow `arguments`/`eval` as binding identifier names and identifier reference names in `.d.ts` (#17910) (Dunqing)
+
+### 📚 Documentation
+
+- 06a96da semantic: Document `with` statement limitation in `is_global_reference` (#17996) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### 🚀 Features
+
+- 2261e6e semantic: Improve error message to add `#` for private identifiers (#17779) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 5755b2d semantic: Report duplicate private identifier for static and instance elements (#17591) (camc314)
+
+### ⚡ Performance
+
+- 864f1fa semantic: Mark duplicate class element error reporting as cold (#17746) (camc314)
+- 3a452b8 semantic: Use smallvec for storing reference IDs (#17731) (camchenry)
+
 ## [0.107.0] - 2026-01-05
 
 ### ⚡ Performance

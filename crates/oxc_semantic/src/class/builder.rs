@@ -112,7 +112,7 @@ impl<'a> ClassTableBuilder<'a> {
 
             let reference = PrivateIdentifierReference::new(
                 current_node_id,
-                ident.name,
+                ident.name.into(),
                 ident.span,
                 element_ids,
             );

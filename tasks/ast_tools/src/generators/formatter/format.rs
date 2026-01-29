@@ -90,7 +90,7 @@ impl Generator for FormatterFormatGenerator {
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
                 utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
-                write::{FormatWrite #(#options)*},
+                print::{FormatWrite #(#options)*},
             };
 
             #impls
@@ -278,7 +278,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_span: self.following_span,
+                    following_span_start: self.following_span_start,
                 }).fmt(f);
             },
         })
@@ -301,7 +301,7 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                     inner,
                     parent,
                     allocator,
-                    following_span: self.following_span,
+                    following_span_start: self.following_span_start,
                 }).fmt(f);
             },
         };

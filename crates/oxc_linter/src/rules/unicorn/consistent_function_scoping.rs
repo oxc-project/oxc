@@ -5,7 +5,7 @@ use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeFlags, ScopeId, SymbolId};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -21,7 +21,7 @@ fn consistent_function_scoping(
     fn_span: Span,
     parent_scope_span: Option<Span>,
     parent_scope_kind: Option<&'static str>,
-    function_name: Option<Atom<'_>>,
+    function_name: Option<&str>,
 ) -> OxcDiagnostic {
     let function_label = if let Some(name) = function_name {
         format!("Function `{name}` does not capture any variables from its parent scope")
@@ -54,7 +54,7 @@ fn consistent_function_scoping(
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ConsistentFunctionScoping {
     /// Whether to check scoping with arrow functions.
     check_arrow_functions: bool,
@@ -161,9 +161,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentFunctionScoping {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -201,7 +199,7 @@ impl Rule for ConsistentFunctionScoping {
                     if let Some(binding_ident) = get_function_like_declaration(node, ctx) {
                         (
                             binding_ident.symbol_id(),
-                            Some(binding_ident.name),
+                            Some(binding_ident.name.as_str()),
                             function_body,
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
@@ -212,7 +210,7 @@ impl Rule for ConsistentFunctionScoping {
                     } else if let Some(function_id) = &function.id {
                         (
                             function_id.symbol_id(),
-                            Some(function_id.name),
+                            Some(function_id.name.as_str()),
                             function_body,
                             function_id.span(),
                             func_scope_id,
@@ -228,7 +226,7 @@ impl Rule for ConsistentFunctionScoping {
 
                     (
                         binding_ident.symbol_id(),
-                        Some(binding_ident.name),
+                        Some(binding_ident.name.as_str()),
                         &arrow_function.body,
                         binding_ident.span(),
                         arrow_function.scope_id(),

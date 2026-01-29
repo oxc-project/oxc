@@ -232,7 +232,7 @@ fn get_property_name<'a>(assignment_target: &AssignmentTarget<'a>) -> Option<Ato
             if matches!(&expr.object, Expression::ThisExpression(_)) =>
         {
             // this.property
-            Some(expr.property.name)
+            Some(expr.property.name.into())
         }
         AssignmentTarget::ComputedMemberExpression(expr)
             if matches!(&expr.object, Expression::ThisExpression(_)) =>

@@ -27,7 +27,7 @@ fn no_require_imports_diagnostic(span: Span) -> OxcDiagnostic {
 pub struct NoRequireImports(Box<NoRequireImportsConfig>);
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoRequireImportsConfig {
     /// These strings will be compiled into regular expressions with the u flag and be used to test against the imported path.
     /// A common use case is to allow importing `package.json`. This is because `package.json` commonly lives outside of the TS root directory,
@@ -125,9 +125,7 @@ fn match_argument_value_with_regex(allow: &[CompactStr], argument_value: &str) -
 
 impl Rule for NoRequireImports {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -194,9 +192,8 @@ impl Rule for NoRequireImports {
 
                     ctx.diagnostic(no_require_imports_diagnostic(decl.span));
                 }
-                TSModuleReference::IdentifierReference(_)
-                | TSModuleReference::QualifiedName(_)
-                | TSModuleReference::ThisExpression(_) => {}
+                TSModuleReference::IdentifierReference(_) | TSModuleReference::QualifiedName(_) => {
+                }
             },
             _ => {}
         }

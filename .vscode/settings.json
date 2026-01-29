@@ -3,15 +3,15 @@
   "oxc.typeAware": true,
   "oxc.configPath": "oxlintrc.json",
   "oxc.unusedDisableDirectives": "deny",
-
   // "oxc.path.oxfmt": "apps/oxfmt/dist/cli.js", // debug with local oxfmt build
   "oxc.fmt.configPath": "oxfmtrc.jsonc",
-  "[javascript]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode",
-    "editor.formatOnSave": true
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file", // oxfmt can only format whole files
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "never" // let oxfmt handle import organization
   },
-  "[typescript]": {
-    "editor.defaultFormatter": "oxc.oxc-vscode",
-    "editor.formatOnSave": true
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
   }
 }

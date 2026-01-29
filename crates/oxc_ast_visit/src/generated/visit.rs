@@ -3209,9 +3209,7 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
         visitor.visit_binding_identifier(&it.id);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_enum_body(&it.body);
-        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3219,8 +3217,10 @@ pub mod walk {
     pub fn walk_ts_enum_body<'a, V: Visit<'a>>(visitor: &mut V, it: &TSEnumBody<'a>) {
         let kind = AstKind::TSEnumBody(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&it.span);
         visitor.visit_ts_enum_members(&it.members);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -4049,7 +4049,8 @@ pub mod walk {
         visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&it.span);
-        visitor.visit_ts_type_parameter(&it.type_parameter);
+        visitor.visit_binding_identifier(&it.key);
+        visitor.visit_ts_type(&it.constraint);
         if let Some(name_type) = &it.name_type {
             visitor.visit_ts_type(name_type);
         }
@@ -4126,9 +4127,8 @@ pub mod walk {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
             }
-            match_ts_type_name!(TSModuleReference) => {
-                visitor.visit_ts_type_name(it.to_ts_type_name())
-            }
+            TSModuleReference::IdentifierReference(it) => visitor.visit_identifier_reference(it),
+            TSModuleReference::QualifiedName(it) => visitor.visit_ts_qualified_name(it),
         }
     }
 

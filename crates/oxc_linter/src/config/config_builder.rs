@@ -18,9 +18,10 @@ use crate::{
         external_plugins::ExternalPluginEntry,
         overrides::OxlintOverride,
         plugins::{LintPlugins, is_normal_plugin_name, normalize_plugin_name},
+        rules::OverrideRulesError,
     },
     external_linter::ExternalLinter,
-    external_plugin_store::{ExternalOptionsId, ExternalRuleId, ExternalRuleLookupError},
+    external_plugin_store::{ExternalOptionsId, ExternalRuleId},
     rules::RULES,
 };
 
@@ -227,15 +228,12 @@ impl ConfigStoreBuilder {
         {
             let all_rules = builder.get_all_rules();
 
-            oxlintrc
-                .rules
-                .override_rules(
-                    &mut builder.rules,
-                    &mut builder.external_rules,
-                    &all_rules,
-                    external_plugin_store,
-                )
-                .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+            oxlintrc.rules.override_rules(
+                &mut builder.rules,
+                &mut builder.external_rules,
+                &all_rules,
+                external_plugin_store,
+            )?;
         }
 
         Ok(builder)
@@ -402,9 +400,7 @@ impl ConfigStoreBuilder {
         }
 
         let overrides = std::mem::take(&mut self.overrides);
-        let resolved_overrides = self
-            .resolve_overrides(overrides, external_plugin_store)
-            .map_err(ConfigBuilderError::ExternalRuleLookupError)?;
+        let resolved_overrides = self.resolve_overrides(overrides, external_plugin_store)?;
 
         let mut rules: Vec<_> = self
             .rules
@@ -432,7 +428,7 @@ impl ConfigStoreBuilder {
         &self,
         overrides: OxlintOverrides,
         external_plugin_store: &mut ExternalPluginStore,
-    ) -> Result<ResolvedOxlintOverrides, ExternalRuleLookupError> {
+    ) -> Result<ResolvedOxlintOverrides, Vec<OverrideRulesError>> {
         let resolved = overrides
             .into_iter()
             .map(|override_config| {
@@ -459,7 +455,7 @@ impl ConfigStoreBuilder {
                         .map(|(rule_id, (options_id, severity))| (rule_id, options_id, severity)),
                 );
 
-                Ok(ResolvedOxlintOverride {
+                Ok::<_, Vec<OverrideRulesError>>(ResolvedOxlintOverride {
                     files: override_config.files,
                     env: override_config.env,
                     globals: override_config.globals,
@@ -652,12 +648,16 @@ pub enum ConfigBuilderError {
         plugin_specifier: String,
         error: String,
     },
-    ExternalRuleLookupError(ExternalRuleLookupError),
     NoExternalLinterConfigured {
         plugin_specifier: String,
     },
     ReservedExternalPluginName {
         plugin_name: String,
+    },
+    /// Multiple errors parsing rule configuration options
+    RuleConfigurationErrors {
+        /// The errors that occurred
+        errors: Vec<OverrideRulesError>,
     },
 }
 
@@ -709,12 +709,26 @@ impl Display for ConfigBuilderError {
                 )?;
                 Ok(())
             }
-            ConfigBuilderError::ExternalRuleLookupError(e) => std::fmt::Display::fmt(&e, f),
+            ConfigBuilderError::RuleConfigurationErrors { errors } => {
+                for (i, error) in errors.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str("\n\n")?;
+                    }
+                    write!(f, "{error}")?;
+                }
+                Ok(())
+            }
         }
     }
 }
 
 impl std::error::Error for ConfigBuilderError {}
+
+impl From<Vec<OverrideRulesError>> for ConfigBuilderError {
+    fn from(errors: Vec<OverrideRulesError>) -> Self {
+        ConfigBuilderError::RuleConfigurationErrors { errors }
+    }
+}
 
 #[cfg(test)]
 mod test {

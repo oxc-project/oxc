@@ -6,7 +6,7 @@ arguments: fixtures/vue/debugger.vue
 working directory: 
 ----------
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
    ,-[fixtures/vue/debugger.vue:6:5]
  5 | <script>
  6 |     debugger
@@ -15,7 +15,7 @@ working directory:
    `----
   help: Remove the debugger statement
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
     ,-[fixtures/vue/debugger.vue:11:5]
  10 |     let foo: T; // test ts syntax
  11 |     debugger;

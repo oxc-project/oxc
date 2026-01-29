@@ -451,7 +451,7 @@ const Foo = (/* @__PURE__ */ (() => {})() as unknown) as {
 ########## 27
 const Foo = /* @__PURE__ */ (() => {})() satisfies X
 ----------
-const Foo = ((/* @__PURE__ */ (() => {})()) satisfies X);
+const Foo = /* @__PURE__ */ (() => {})() satisfies X;
 
 ########## 28
 const Foo = /* @__PURE__ */ (() => {})()<X>
@@ -466,7 +466,7 @@ const Foo = (<Foo>(/* @__PURE__ */ (() => {})())!);
 ########## 30
 const Foo = /* @__PURE__ */ <Foo>(() => {})()! as X satisfies Y
 ----------
-const Foo = (((<Foo>(/* @__PURE__ */ (() => {})())!) as X) satisfies Y);
+const Foo = ((<Foo>(/* @__PURE__ */ (() => {})())!) as X) satisfies Y;
 
 ########## 31
 /* @__NO_SIDE_EFFECTS__ */ ((options, extraOptions) => {

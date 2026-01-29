@@ -14,7 +14,7 @@ working directory: fixtures/report_unused_directives
  7 | console.log('regular script');
    `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  ! eslint(no-console): Unexpected console statement.
    ,-[test-multiple-scripts.vue:7:1]
  6 | // eslint-disable-next-line no-debugger
  7 | console.log('regular script');
@@ -31,7 +31,7 @@ working directory: fixtures/report_unused_directives
  10 | debugger;
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
     ,-[test-multiple-scripts.vue:10:1]
   9 | // eslint-disable-next-line no-console
  10 | debugger;
@@ -56,7 +56,7 @@ working directory: fixtures/report_unused_directives
  31 | console.log("complete line");
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  ! eslint(no-console): Unexpected console statement.
     ,-[test-multiple-scripts.vue:31:1]
  30 | // oxlint-disable-next-line no-debugger, no-for-loop
  31 | console.log("complete line");
@@ -81,7 +81,7 @@ working directory: fixtures/report_unused_directives
  11 | debugger;
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
     ,-[test.astro:11:1]
  10 | // eslint-disable-next-line no-console
  11 | debugger;
@@ -114,7 +114,7 @@ working directory: fixtures/report_unused_directives
  32 | console.log("complete line");
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  ! eslint(no-console): Unexpected console statement.
     ,-[test.astro:32:1]
  31 | // oxlint-disable-next-line no-debugger, no-for-loop
  32 | console.log("complete line");
@@ -147,7 +147,7 @@ working directory: fixtures/report_unused_directives
  10 | debugger;
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
     ,-[test.js:10:1]
   9 | // eslint-disable-next-line no-console
  10 | debugger;
@@ -172,7 +172,7 @@ working directory: fixtures/report_unused_directives
  27 | console.log("complete line");
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  ! eslint(no-console): Unexpected console statement.
     ,-[test.js:27:1]
  26 | // oxlint-disable-next-line no-debugger, no-for-loop
  27 | console.log("complete line");
@@ -204,7 +204,7 @@ working directory: fixtures/report_unused_directives
  11 | debugger;
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
     ,-[test.svelte:11:1]
  10 | // eslint-disable-next-line no-console
  11 | debugger;
@@ -237,7 +237,7 @@ working directory: fixtures/report_unused_directives
  28 | console.log("complete line");
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  ! eslint(no-console): Unexpected console statement.
     ,-[test.svelte:28:1]
  27 | // oxlint-disable-next-line no-debugger, no-for-loop
  28 | console.log("complete line");
@@ -270,7 +270,7 @@ working directory: fixtures/report_unused_directives
  15 | debugger;
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-debugger.html\eslint(no-debugger)]8;;\: `debugger` statement is not allowed
+  ! eslint(no-debugger): `debugger` statement is not allowed
     ,-[test.vue:15:1]
  14 | // eslint-disable-next-line no-console
  15 | debugger;
@@ -303,7 +303,7 @@ working directory: fixtures/report_unused_directives
  32 | console.log("complete line");
     `----
 
-  ! ]8;;https://oxc.rs/docs/guide/usage/linter/rules/eslint/no-console.html\eslint(no-console)]8;;\: Unexpected console statement.
+  ! eslint(no-console): Unexpected console statement.
     ,-[test.vue:32:1]
  31 | // oxlint-disable-next-line no-debugger, no-for-loop
  32 | console.log("complete line");

@@ -31,7 +31,7 @@ fn string_in_ref_deprecated(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoStringRefs {
     /// Disallow template literals in addition to string literals.
     no_template_literals: bool,
@@ -40,11 +40,14 @@ pub struct NoStringRefs {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// This rule prevents using string literals in ref attributes.
+    /// This rule prevents using the deprecated behavior of string literals in ref attributes.
     ///
     /// ### Why is this bad?
     ///
-    /// Using string literals in ref attributes is deprecated in React.
+    /// Using string literals in ref attributes has been deprecated since React 16.3.0.
+    ///
+    /// String refs are [removed entirely in React 19](https://react.dev/blog/2024/04/25/react-19-upgrade-guide#removed-string-refs),
+    /// and so this rule can be disabled if on React 19+.
     ///
     /// ### Examples
     ///
@@ -115,9 +118,7 @@ fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> 
 
 impl Rule for NoStringRefs {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

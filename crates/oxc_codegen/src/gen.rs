@@ -1080,6 +1080,7 @@ impl Gen for ExportSpecifier<'_> {
         if let Some(comments) = p.get_comments(self.local.span().start) {
             p.print_comments(&comments);
             p.print_soft_space();
+            p.print_next_indent_as_space = false;
         }
         self.local.print(p, ctx);
         let local_name = get_module_export_name(&self.local, p);
@@ -1089,6 +1090,7 @@ impl Gen for ExportSpecifier<'_> {
             if let Some(comments) = p.get_comments(self.exported.span().start) {
                 p.print_comments(&comments);
                 p.print_soft_space();
+                p.print_next_indent_as_space = false;
             }
             self.exported.print(p, ctx);
         }
@@ -2267,20 +2269,13 @@ impl GenExpr for TSAsExpression<'_> {
 
 impl GenExpr for TSSatisfiesExpression<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, ctx: Context) {
-        p.print_ascii_byte(b'(');
-        let should_wrap =
-            if let Expression::FunctionExpression(func) = &self.expression.without_parentheses() {
-                // pife is handled on Function side
-                !func.pife
-            } else {
-                true
-            };
-        p.wrap(should_wrap, |p| {
-            self.expression.print_expr(p, precedence, Context::default());
+        let wrap = precedence >= Precedence::Compare;
+
+        p.wrap(wrap, |p| {
+            self.expression.print_expr(p, Precedence::Exponentiation, ctx);
+            p.print_str(" satisfies ");
+            self.type_annotation.print(p, ctx);
         });
-        p.print_str(" satisfies ");
-        self.type_annotation.print(p, ctx);
-        p.print_ascii_byte(b')');
     }
 }
 
@@ -3172,15 +3167,9 @@ impl Gen for TSMappedType<'_> {
             None => {}
         }
         p.print_ascii_byte(b'[');
-        self.type_parameter.name.print(p, ctx);
-        if let Some(constraint) = &self.type_parameter.constraint {
-            p.print_str(" in ");
-            constraint.print(p, ctx);
-        }
-        if let Some(default) = &self.type_parameter.default {
-            p.print_str(" = ");
-            default.print(p, ctx);
-        }
+        self.key.print(p, ctx);
+        p.print_str(" in ");
+        self.constraint.print(p, ctx);
         if let Some(name_type) = &self.name_type {
             p.print_str(" as ");
             name_type.print(p, ctx);
@@ -3351,7 +3340,9 @@ impl Gen for TSTypeParameter<'_> {
             constraint.print(p, ctx);
         }
         if let Some(default) = &self.default {
-            p.print_str(" = ");
+            p.print_soft_space();
+            p.print_ascii_byte(b'=');
+            p.print_soft_space();
             default.print(p, ctx);
         }
     }
@@ -3838,7 +3829,9 @@ impl Gen for TSImportEqualsDeclaration<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.print_str("import ");
         self.id.print(p, ctx);
-        p.print_str(" = ");
+        p.print_soft_space();
+        p.print_ascii_byte(b'=');
+        p.print_soft_space();
         self.module_reference.print(p, ctx);
     }
 }
@@ -3851,7 +3844,8 @@ impl Gen for TSModuleReference<'_> {
                 p.print_string_literal(&decl.expression, false);
                 p.print_ascii_byte(b')');
             }
-            match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
+            Self::IdentifierReference(ident) => ident.print(p, ctx),
+            Self::QualifiedName(qualified) => qualified.print(p, ctx),
         }
     }
 }

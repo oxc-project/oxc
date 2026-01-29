@@ -1,4 +1,4 @@
-import type { ESTree, Plugin, Visitor } from "#oxlint";
+import type { ESTree, Plugin, Visitor } from "#oxlint/plugin";
 
 const plugin: Plugin = {
   meta: {

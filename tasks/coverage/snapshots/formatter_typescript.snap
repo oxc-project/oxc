@@ -1,8 +1,8 @@
-commit: f3770c9b
+commit: 7f6a8467
 
 formatter_typescript Summary:
-AST Parsed     : 9841/9841 (100.00%)
-Positive Passed: 9788/9841 (99.46%)
+AST Parsed     : 9843/9843 (100.00%)
+Positive Passed: 9791/9843 (99.47%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/amdLikeInputDeclarationEmit.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/castExpressionParentheses.ts
@@ -87,8 +87,6 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/commaOpe
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/contextualTyping/parenthesizedContexualTyping2.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/elementAccess/letIdentifierInElementAccess01.ts
-Unexpected token
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInTypeAssertions.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/generators/generatorAssignability.ts

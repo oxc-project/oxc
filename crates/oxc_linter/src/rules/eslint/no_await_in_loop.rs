@@ -1,10 +1,10 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, Statement},
+    ast::{Expression, Statement, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -49,7 +49,7 @@ declare_oxc_lint!(
 
 impl Rule for NoAwaitInLoop {
     fn run(&self, node: &AstNode, ctx: &LintContext) {
-        // if node is AwaitExpression or AwaitForOfStatement
+        // if node is AwaitExpression, AwaitForOfStatement, or VariableDeclaration with `await using`
         let span = match node.kind() {
             // if the await attr of ForOfStatement is false, return
             AstKind::ForOfStatement(for_of_stmt) => {
@@ -62,12 +62,21 @@ impl Rule for NoAwaitInLoop {
             }
             // only highlight the 'await' keyword
             AstKind::AwaitExpression(expr) => Span::sized(expr.span.start, 5),
+            // handle `await using` declarations
+            AstKind::VariableDeclaration(decl) => {
+                if decl.kind != VariableDeclarationKind::AwaitUsing {
+                    return;
+                }
+                // only highlight the 'await' keyword
+                Span::sized(decl.span.start, 5)
+            }
             // other node type, return
             _ => return,
         };
 
         let nodes = ctx.nodes();
-        // Perform validation for AwaitExpression and ForOfStatement that contains await
+        // Perform validation for AwaitExpression, ForOfStatement that contains await, and await using
+        let mut current_node = node;
         let mut parent_node = nodes.parent_node(node.id());
         let mut is_in_loop = false;
         while !matches!(parent_node.kind(), AstKind::Program(_)) {
@@ -76,12 +85,13 @@ impl Rule for NoAwaitInLoop {
                 break;
             }
 
-            // if AwaitExpression or AwaitForOfStatement are in loop, break and report error
-            if Self::is_looped(span, parent_node) {
+            // if AwaitExpression, AwaitForOfStatement, or await using are in loop, break and report error
+            if Self::is_looped(current_node, parent_node) {
                 is_in_loop = true;
                 break;
             }
 
+            current_node = parent_node;
             parent_node = nodes.parent_node(parent_node.id());
         }
 
@@ -131,7 +141,8 @@ impl NoAwaitInLoop {
         }
     }
 
-    fn is_looped(span: Span, parent: &AstNode) -> bool {
+    fn is_looped(node: &AstNode, parent: &AstNode) -> bool {
+        let span = node.kind().span();
         match parent.kind() {
             AstKind::ForStatement(stmt) => {
                 let mut result = Self::node_matches_stmt_span(span, &stmt.body);
@@ -152,8 +163,32 @@ impl NoAwaitInLoop {
 
                 result
             }
-            AstKind::ForInStatement(stmt) => Self::node_matches_stmt_span(span, &stmt.body),
-            AstKind::ForOfStatement(stmt) => Self::node_matches_stmt_span(span, &stmt.body),
+            AstKind::ForInStatement(stmt) => {
+                if Self::node_matches_stmt_span(span, &stmt.body) {
+                    return true;
+                }
+                // Check if this is `await using` in the left position
+                if let AstKind::VariableDeclaration(decl) = node.kind()
+                    && decl.kind == VariableDeclarationKind::AwaitUsing
+                    && stmt.left.span().contains_inclusive(span)
+                {
+                    return true;
+                }
+                false
+            }
+            AstKind::ForOfStatement(stmt) => {
+                if Self::node_matches_stmt_span(span, &stmt.body) {
+                    return true;
+                }
+                // Check if this is `await using` in the left position
+                if let AstKind::VariableDeclaration(decl) = node.kind()
+                    && decl.kind == VariableDeclarationKind::AwaitUsing
+                    && stmt.left.span().contains_inclusive(span)
+                {
+                    return true;
+                }
+                false
+            }
             AstKind::WhileStatement(stmt) => {
                 Self::node_matches_stmt_span(span, &stmt.body)
                     || Self::node_matches_expr_span(span, &stmt.test)
@@ -201,6 +236,13 @@ fn test() {
         "async function foo() { while (true) { class Foo { async foo() { await bar; } } } }",
         // Asynchronous iteration intentionally
         "async function foo() { for await (var x of xs) { await f(x) } }",
+        "while (true) { const value = 0; }",
+        "while (true) { let value = 0; }",
+        "while (true) { var value = 0; }",
+        "await using resource = getResource();", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "while (true) { using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "async function foo() { while (true) { async function foo() { await using resource = getResource(); } } }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "for (await using resource = getResource(); ;) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
     ];
 
     let fail = vec![
@@ -226,6 +268,10 @@ fn test() {
         "async function foo() { while (xyz || 5 > await x) {  } }",
         // In a nested loop of for-await-of
         "async function foo() { for await (var x of xs) { while (1) await f(x) } }",
+        // `await using` declarations
+        "while (true) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "for (;;) { await using resource = getResource(); }", // { "sourceType": "module", "ecmaVersion": 2026 }
+        "for (await using resource of resources) {}", // { "sourceType": "module", "ecmaVersion": 2026 }
     ];
 
     Tester::new(NoAwaitInLoop::NAME, NoAwaitInLoop::PLUGIN, pass, fail).test_and_snapshot();

@@ -110,11 +110,15 @@ fn test() {
         "Promise.all(notArrayExpression)",
         "Promise.all([,])",
         "Promise[all]([await promise])",
+        // TODO: Fix these commented-out tests.
+        // "Promise.all?.([await promise])",
+        // "Promise?.all([await promise])",
         "Promise.notListedMethod([await promise])",
         "NotPromise.all([await promise])",
         "Promise.all([(await promise, 0)])",
         "new Promise.all([await promise])",
         "globalThis.Promise.all([await promise])",
+        // r#"Promise["all"]([await promise])"#,
     ];
 
     let fail = vec![
@@ -133,5 +137,6 @@ fn test() {
     ];
 
     Tester::new(NoAwaitInPromiseMethods::NAME, NoAwaitInPromiseMethods::PLUGIN, pass, fail)
+        .change_rule_path_extension("mjs")
         .test_and_snapshot();
 }

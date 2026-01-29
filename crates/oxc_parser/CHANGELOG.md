@@ -4,6 +4,63 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 0a02026 semantic: Add TS1499 code to diagnostic (#18557) (camc314)
+- 8b4618f parser: Add TS1500 code to diagnostic (#18547) (camc314)
+- 866b6b3 parser: Add TS1048 code to diagnostic (#18546) (camc314)
+- 1117c44 parser: Add TS1054 code to diagnostic (#18541) (camc314)
+- e4fcdde semantic: Add TS1053 code to diagnostic (#18539) (camc314)
+- bcbf396 semantic: Add TS1052 code to diagnostic (#18538) (camc314)
+- 8155edf semantic: Add TS1049 code to diagnostic (#18535) (camc314)
+- 51d3b3f parser: Add TS1502 code to diagnostic (#18534) (camc314)
+- 993fd2b parser: Parse unambiguous await with better error messages (#18480) (Boshen)
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- aed3669 parser: Parse HTML-like comments in unambiguous mode (#18442) (Boshen)
+- c4132fb parser: Validate accessor parameters in interface method signatures (#18391) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### 🚀 Features
+
+- 8a1cbbd parser: Add syntax errors for constructor declarations (#18220) (Boshen)
+- 175b73a parser: Add ts error 1257 for `TSTupleElement` (#18146) (Sysix)
+- fa2ffe2 parser: Add ts error 1266 for `TSTupleElement` (#18145) (Sysix)
+- acf1aba parser: Add ts error 1265 for `TSTupleElement` (#18144) (Sysix)
+- 92e27b4 parser: Reparse await expressions in unambiguous mode when ESM detected (#18139) (Boshen)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 37482eb parser: Respect optional `TSNamedTupleMember`  for ts error 1266 &1257 (#18178) (Sysix)
+- 2c6966d parser: Correct precedence handling for private-in expression (#18169) (Boshen)
+- 91126a0 parser: Reparse all statements with await identifier in unambiguous mode (#18163) (Boshen)
+- c98e5b7 parser: Parse `for (using of = ...)` as using declaration (#18142) (Boshen)
+- a412103 parser: Improve diagnostics for double `export` (#17992) (Boshen)
+
+## [0.108.0] - 2026-01-12
+
+### 🐛 Bug Fixes
+
+- 7422b7e parser/trivia: Correctly mark whether a block comment is on a newline (#17754) (camc314)
+- ef7e014 parser: Preserve `@__NO_SIDE_EFFECTS__` annotation with parenthesized expressions (#17711) (camc314)
+- 59a6228 parser: Detect TS1363 error for type-only imports with mixed default and named/namespace bindings (#17712) (Copilot)
+
+### ⚡ Performance
+
+- 3f4429c parser: Do not re-allocate TS interface heritage (#17692) (camchenry)
+
 ## [0.107.0] - 2026-01-05
 
 ### 🚀 Features

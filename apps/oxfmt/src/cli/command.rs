@@ -70,11 +70,12 @@ fn mode() -> impl bpaf::Parser<Mode> {
             .req_flag(Mode::Init)
             .hide_usage();
         let migrate = bpaf::long("migrate")
-            .help("Migrate configuration to `.oxfmtrc.json` from specified source\nAvailable sources: prettier")
+            .help("Migrate configuration to `.oxfmtrc.json` from specified source\nAvailable sources: prettier, biome")
             .argument::<String>("SOURCE")
             .parse(|s| match s.cow_to_lowercase().as_ref() {
                 "prettier" => Ok(Mode::Migrate(MigrateSource::Prettier)),
-                _ => Err(format!("Unknown migration source: {s}. Supported: prettier.")),
+                "biome" => Ok(Mode::Migrate(MigrateSource::Biome)),
+                _ => Err(format!("Unknown migration source: {s}. Supported: prettier, biome.")),
             })
             .hide_usage();
         let lsp = bpaf::long("lsp")
@@ -131,6 +132,8 @@ fn output_mode() -> impl bpaf::Parser<OutputMode> {
 pub enum MigrateSource {
     /// Migrate from Prettier configuration
     Prettier,
+    /// Migrate from Biome configuration
+    Biome,
 }
 
 // ---

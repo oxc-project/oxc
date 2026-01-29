@@ -7,7 +7,9 @@ use tower_lsp_server::ls_types::{
 
 use oxc_data_structures::rope::{Rope, get_line_column};
 use oxc_diagnostics::{OxcCode, Severity};
-use oxc_linter::{Fix, Message, PossibleFixes};
+use oxc_linter::{
+    AllowWarnDeny, DisableDirectives, Fix, FixKind, Message, PossibleFixes, RuleCommentType,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct DiagnosticReport {
@@ -26,13 +28,14 @@ pub struct FixedContent {
     pub message: String,
     pub code: String,
     pub range: Range,
+    pub kind: FixKind,
 }
 
 // clippy: the source field is checked and assumed to be less than 4GB, and
 // we assume that the fix offset will not exceed 2GB in either direction
 #[expect(clippy::cast_possible_truncation)]
 pub fn message_to_lsp_diagnostic(
-    mut message: Message,
+    message: Message,
     uri: &Uri,
     source_text: &str,
     rope: &Rope,
@@ -112,20 +115,20 @@ pub fn message_to_lsp_diagnostic(
 
     let mut fixed_content = vec![];
     // Convert PossibleFixes directly to PossibleFixContent
-    match &mut message.fixes {
+    match message.fixes {
         PossibleFixes::None => {}
-        PossibleFixes::Single(fix) => {
+        PossibleFixes::Single(mut fix) => {
             if fix.message.is_none() {
                 fix.message = Some(alternative_fix_title);
             }
-            fixed_content.push(fix_to_fixed_content(fix, rope, source_text));
+            fixed_content.push(fix_to_fixed_content(&fix, rope, source_text));
         }
         PossibleFixes::Multiple(fixes) => {
-            fixed_content.extend(fixes.iter_mut().map(|fix| {
+            fixed_content.extend(fixes.into_iter().map(|mut fix| {
                 if fix.message.is_none() {
                     fix.message = Some(alternative_fix_title.clone());
                 }
-                fix_to_fixed_content(fix, rope, source_text)
+                fix_to_fixed_content(&fix, rope, source_text)
             }));
         }
     }
@@ -175,6 +178,7 @@ fn fix_to_fixed_content(fix: &Fix, rope: &Rope, source_text: &str) -> FixedConte
         message: fix.message.as_ref().map(std::string::ToString::to_string).unwrap_or_default(),
         code: fix.content.to_string(),
         range: Range::new(start_position, end_position),
+        kind: fix.kind,
     }
 }
 
@@ -219,11 +223,104 @@ pub fn generate_inverted_diagnostics(
     inverted_diagnostics
 }
 
+/// Almost the same as [oxc_linter::create_unused_directives_diagnostics], but returns `Message`s
+/// with a `PossibleFixes` instead of `OxcDiagnostic`s.
+pub fn create_unused_directives_messages(
+    directives: &DisableDirectives,
+    severity: AllowWarnDeny,
+    source_text: &str,
+) -> Vec<Message> {
+    use oxc_diagnostics::OxcDiagnostic;
+
+    let mut diagnostics = Vec::new();
+    let fix_message = "remove unused disable directive";
+
+    let severity = if severity == AllowWarnDeny::Deny {
+        oxc_diagnostics::Severity::Error
+    } else {
+        oxc_diagnostics::Severity::Warning
+    };
+
+    // Report unused disable comments
+    let unused_disable = directives.collect_unused_disable_comments();
+    for unused_comment in unused_disable {
+        let span = unused_comment.span;
+        match unused_comment.r#type {
+            RuleCommentType::All => {
+                diagnostics.push(Message::new(
+                    OxcDiagnostic::warn(
+                        "Unused eslint-disable directive (no problems were reported).",
+                    )
+                    .with_label(span)
+                    .with_severity(severity),
+                    PossibleFixes::Single(Fix::delete(span).with_message(fix_message)),
+                ));
+            }
+            RuleCommentType::Single(rules) => {
+                for rule in rules {
+                    let rule_message = format!(
+                        "Unused eslint-disable directive (no problems were reported from {}).",
+                        rule.rule_name
+                    );
+                    diagnostics.push(Message::new(
+                        OxcDiagnostic::warn(rule_message)
+                            .with_label(rule.name_span)
+                            .with_severity(severity),
+                        PossibleFixes::Single(
+                            rule.create_fix(source_text, span).with_message(fix_message),
+                        ),
+                    ));
+                }
+            }
+        }
+    }
+
+    // Report unused enable comments
+    let unused_enable = directives.unused_enable_comments();
+    for (rule_name, span) in unused_enable {
+        let message = if let Some(rule_name) = rule_name {
+            format!(
+                "Unused eslint-enable directive (no matching eslint-disable directives were found for {rule_name})."
+            )
+        } else {
+            "Unused eslint-enable directive (no matching eslint-disable directives were found)."
+                .to_string()
+        };
+        diagnostics.push(Message::new(
+            OxcDiagnostic::warn(message).with_label(*span).with_severity(severity),
+            // TODO: fixer
+            // copy the structure of disable directives
+            PossibleFixes::None,
+        ));
+    }
+
+    diagnostics
+}
+
 pub fn offset_to_position(rope: &Rope, offset: u32, source_text: &str) -> Position {
     let (line, column) = get_line_column(rope, offset, source_text);
     Position::new(line, column)
 }
 
+/// Counter part of `oxc_linter::*::plugin_name_to_prefix`.
+fn prefix_to_plugin_name(prefix: &str) -> &str {
+    match prefix {
+        "eslint-plugin-import" => "import",
+        "eslint-plugin-jest" => "jest",
+        "eslint-plugin-jsdoc" => "jsdoc",
+        "eslint-plugin-jsx-a11y" => "jsx_a11y",
+        "eslint-plugin-next" => "nextjs",
+        "eslint-plugin-promise" => "promise",
+        "eslint-plugin-react-perf" => "react_perf",
+        "eslint-plugin-react" => "react",
+        "typescript-eslint" => "typescript",
+        "eslint-plugin-unicorn" => "unicorn",
+        "eslint-plugin-vitest" => "vitest",
+        "eslint-plugin-node" => "node",
+        "eslint-plugin-vue" => "vue",
+        _ => prefix,
+    }
+}
 /// Add "ignore this line" and "ignore this rule" fixes to the existing fixes.
 /// These fixes will be added to the end of the existing fixes.
 /// If the existing fixes already contain an "remove unused disable directive" fix,
@@ -242,15 +339,31 @@ fn add_ignore_fixes(
     }
 
     if let Some(rule_name) = code.number.as_ref() {
+        // this conversion is a bit messy, but basically we need to reconstruct the rule name with plugin prefix
+        let rule_name_with_plugin = if let Some(scope) = &code.scope
+            && !scope.is_empty()
+            // eslint does not has a plugin prefix
+            && scope != "eslint"
+        {
+            format!("{}/{rule_name}", prefix_to_plugin_name(scope))
+        } else {
+            rule_name.to_string()
+        };
+
         // TODO: doesn't support disabling multiple rules by name for a given line.
         fixes.push(disable_for_this_line(
-            rule_name,
+            &rule_name_with_plugin,
             error_offset,
             section_offset,
             rope,
             source_text,
         ));
-        fixes.push(disable_for_this_section(rule_name, section_offset, rope, source_text));
+        fixes.push(disable_for_this_section(
+            &rule_name_with_plugin,
+            section_offset,
+            rope,
+            source_text,
+        ));
     }
 }
 
@@ -298,6 +411,7 @@ fn disable_for_this_line(
             "{content_prefix}{whitespace_string}// oxlint-disable-next-line {rule_name}\n"
         ),
         range: Range::new(position, position),
+        kind: FixKind::SafeFix,
     }
 }
 
@@ -319,6 +433,7 @@ fn disable_for_this_section(
         message: format!("Disable {rule_name} for this whole file"),
         code: content,
         range: Range::new(position, position),
+        kind: FixKind::SafeFix,
     }
 }
 

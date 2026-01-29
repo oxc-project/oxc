@@ -22,7 +22,7 @@
 //! # Performance
 //!
 //! The following optimization techniques are used:
-//! * AST is allocated in a memory arena ([bumpalo](https://docs.rs/bumpalo)) for fast AST drop
+//! * AST is allocated in a memory arena ([oxc_allocator](https://docs.rs/oxc_allocator)) for fast AST drop
 //! * [`oxc_span::Span`] offsets uses `u32` instead of `usize`
 //! * Scope binding, symbol resolution and complicated syntax errors are not done in the parser,
 //! they are delegated to the [semantic analyzer](https://docs.rs/oxc_semantic)
@@ -92,7 +92,7 @@ use oxc_ast::{
     ast::{Expression, Program},
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{ModuleKind, SourceType, Span};
+use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
@@ -369,6 +369,13 @@ struct ParserImpl<'a> {
     /// Note: favor adding to `Diagnostics` instead of raising Err
     errors: Vec<OxcDiagnostic>,
 
+    /// Errors that are only valid if the file is determined to be a Script (not a Module).
+    /// For `ModuleKind::Unambiguous`, we defer ESM-only errors (like top-level await)
+    /// until we know whether the file is ESM or Script.
+    /// If resolved to Module → discard these errors.
+    /// If resolved to Script → emit these errors.
+    deferred_script_errors: Vec<OxcDiagnostic>,
+
     fatal_error: Option<FatalError>,
 
     /// The current parsing token
@@ -412,6 +419,7 @@ impl<'a> ParserImpl<'a> {
             source_type,
             source_text,
             errors: vec![],
+            deferred_script_errors: vec![],
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
@@ -477,11 +485,17 @@ impl<'a> ParserImpl<'a> {
 
         let source_type = program.source_type;
         if source_type.is_unambiguous() {
-            program.source_type = if module_record.has_module_syntax {
-                source_type.with_module(true)
+            if module_record.has_module_syntax {
+                // Resolved to Module - discard deferred script errors (TLA is valid in ESM)
+                // but emit deferred module errors (HTML comments are invalid in ESM)
+                program.source_type = source_type.with_module(true);
+                errors.append(&mut self.lexer.deferred_module_errors);
             } else {
-                source_type.with_script(true)
-            };
+                // Resolved to Script - emit deferred script errors
+                // discard deferred module errors (HTML comments are valid in scripts)
+                program.source_type = source_type.with_script(true);
+                errors.extend(self.deferred_script_errors);
+            }
         }
 
         ParserReturn {
@@ -516,8 +530,19 @@ impl<'a> ParserImpl<'a> {
         self.token = self.lexer.first_token();
 
         let hashbang = self.parse_hashbang();
-        let (directives, statements) =
-            self.parse_directives_and_statements(/* is_top_level */ true);
+        self.ctx |= Context::TopLevel;
+        let (directives, mut statements) = self.parse_directives_and_statements();
+
+        // In unambiguous mode, if ESM syntax was detected (import/export/import.meta),
+        // we need to reparse statements that were originally parsed with `await` as identifier.
+        // TypeScript's behavior: initially parse `await /x/` as division, then reparse as
+        // await expression with regex when ESM is detected.
+        if self.source_type.is_unambiguous()
+            && self.module_record_builder.has_module_syntax()
+            && !self.state.potential_await_reparse.is_empty()
+        {
+            self.reparse_potential_top_level_awaits(&mut statements);
+        }
 
         let span = Span::new(0, self.source_text.len() as u32);
         let comments = self.ast.vec_from_iter(self.lexer.trivia_builder.comments.iter().copied());
@@ -532,13 +557,40 @@ impl<'a> ParserImpl<'a> {
         )
     }
 
+    /// Reparse statements that may contain top-level await expressions.
+    ///
+    /// In unambiguous mode, statements like `await /x/u` are initially parsed as
+    /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
+    /// we need to reparse them with the await context enabled.
+    fn reparse_potential_top_level_awaits(
+        &mut self,
+        statements: &mut oxc_allocator::Vec<'a, oxc_ast::ast::Statement<'a>>,
+    ) {
+        let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        for (stmt_index, checkpoint) in checkpoints {
+            // Rewind to the checkpoint
+            self.rewind(checkpoint);
+
+            // Parse the statement with await context enabled (TopLevel context is already set)
+            let stmt = self.context_add(Context::Await, |p| {
+                p.parse_statement_list_item(StatementContext::StatementList)
+            });
+
+            // Replace the statement if the index is valid
+            if stmt_index < statements.len() {
+                statements[stmt_index] = stmt;
+            }
+        }
+    }
+
     fn default_context(source_type: SourceType, options: ParseOptions) -> Context {
         let mut ctx = Context::default().and_ambient(source_type.is_typescript_definition());
-        if source_type.module_kind() == ModuleKind::Module {
+        if source_type.is_module() {
             // for [top-level-await](https://tc39.es/proposal-top-level-await/)
             ctx = ctx.and_await(true);
         }
-        if options.allow_return_outside_function {
+        // CommonJS files are wrapped in a function, so return is allowed at top-level
+        if options.allow_return_outside_function || source_type.is_commonjs() {
             ctx = ctx.and_return(true);
         }
         ctx
@@ -774,22 +826,63 @@ mod test {
     #[cfg(not(miri))]
     #[test]
     fn overlong_source() {
-        // Avoid allocating 4GB by creating a string that reports length > MAX_LEN
-        // without actually allocating that much memory. This works because:
-        // - Source::new() checks len() before parsing and substitutes "\0" if it exceeds MAX_LEN
-        // - The parser only calls .len() on source_text, never accesses the content when len() > MAX_LEN
-        let small_str = "x";
-        let len = MAX_LEN + 1;
-
-        // SAFETY: We create a string slice with a fake length. The parser only checks
-        // .len() and never accesses the content when length exceeds MAX_LEN, so this is safe.
-        let source: &str = unsafe {
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(small_str.as_ptr(), len))
+        use std::{
+            alloc::{self, Layout},
+            ptr::NonNull,
+            slice, str,
         };
-        assert!(source.len() > MAX_LEN);
 
+        /// A string that has a length of `MAX_LEN + 1`, and is entirely zeros.
+        ///
+        /// We need to create a `&str` with `MAX_LEN + 1` length, but don't want to write 4 GiB of data,
+        /// as it's too slow. This type uses `alloc_zeroed` which on most platforms will just create zeroed pages
+        /// without actually writing any data, and so is much faster.
+        struct ZeroedString {
+            ptr: NonNull<u8>,
+        }
+
+        impl ZeroedString {
+            const LEN: usize = MAX_LEN + 1;
+            const PAGE_SIZE: usize = 4096;
+            const LAYOUT: Layout = match Layout::from_size_align(Self::LEN, Self::PAGE_SIZE) {
+                Ok(layout) => layout,
+                Err(_) => panic!("Failed to create layout"),
+            };
+
+            fn new() -> Self {
+                // SAFETY: `LAYOUT` is valid and non-zero size.
+                let ptr = unsafe { alloc::alloc_zeroed(Self::LAYOUT) };
+                let Some(ptr) = NonNull::new(ptr) else {
+                    panic!("Failed to allocate {} bytes", Self::LEN);
+                };
+                Self { ptr }
+            }
+
+            fn as_str(&self) -> &str {
+                // SAFETY: `self.ptr` is pointer to start of `LEN` initialized and zeroed bytes.
+                // A slice consisting entirely of zeros is valid UTF-8.
+                unsafe {
+                    str::from_utf8_unchecked(slice::from_raw_parts(self.ptr.as_ptr(), Self::LEN))
+                }
+            }
+        }
+
+        impl Drop for ZeroedString {
+            fn drop(&mut self) {
+                // SAFETY: `self.ptr` is address of an allocation made with `LAYOUT`
+                unsafe { alloc::dealloc(self.ptr.as_ptr(), Self::LAYOUT) };
+            }
+        }
+
+        // Create long source text (MAX_LEN + 1 bytes)
+        let zeroed_string = ZeroedString::new();
+        let source_text = zeroed_string.as_str();
+
+        // Attempt to parse the source text
         let allocator = Allocator::default();
-        let ret = Parser::new(&allocator, source, SourceType::default()).parse();
+        let ret = Parser::new(&allocator, source_text, SourceType::default()).parse();
+
+        // Parsing should fail
         assert!(ret.program.is_empty());
         assert!(ret.panicked);
         assert_eq!(ret.errors.len(), 1);

@@ -1,0 +1,93 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:17]
+ 1 │ import foo from "../plugin.js"
+   ·                 ──────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:17]
+ 1 │ import foo from "./../plugin.js"
+   ·                 ────────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:17]
+ 1 │ import foo from "../../api/service"
+   ·                 ───────────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:9]
+ 1 │ require("../plugin.js")
+   ·         ──────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:8]
+ 1 │ import("../plugin.js")
+   ·        ──────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:8]
+ 1 │ import("../../api/service")
+   ·        ───────────────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:17]
+ 1 │ import foo from "./.."
+   ·                 ──────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:9]
+ 1 │ require("./..")
+   ·         ──────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:8]
+ 1 │ import("./..")
+   ·        ──────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:21]
+ 1 │ export { foo } from "../parent"
+   ·                     ───────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:15]
+ 1 │ export * from "../parent"
+   ·               ───────────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:21]
+ 1 │ export { foo } from "./.."
+   ·                     ──────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.
+
+  ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
+   ╭─[index.js:1:15]
+ 1 │ export * from "./.."
+   ·               ──────
+   ╰────
+  help: Move the file to the same directory, use dependency injection, or convert to a package.

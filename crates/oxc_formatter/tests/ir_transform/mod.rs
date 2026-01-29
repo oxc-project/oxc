@@ -1,6 +1,8 @@
 mod sort_imports;
 
-use oxc_formatter::{FormatOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder};
+use oxc_formatter::{
+    CustomGroupDefinition, FormatOptions, QuoteStyle, Semicolons, SortImportsOptions, SortOrder,
+};
 use serde::Deserialize;
 
 pub fn assert_format(code: &str, config_json: &str, expected: &str) {
@@ -56,6 +58,13 @@ struct TestConfig {
 
 #[derive(Debug, Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct TestCustomGroupDefinition {
+    group_name: String,
+    element_name_pattern: Vec<String>,
+}
+
+#[derive(Debug, Default, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct TestSortImportsConfig {
     partition_by_newline: Option<bool>,
     partition_by_comment: Option<bool>,
@@ -66,6 +75,7 @@ struct TestSortImportsConfig {
     internal_pattern: Option<Vec<String>>,
     #[serde(default, deserialize_with = "deserialize_groups")]
     groups: Option<Vec<Vec<String>>>,
+    custom_groups: Option<Vec<TestCustomGroupDefinition>>,
 }
 
 fn deserialize_groups<'de, D>(deserializer: D) -> Result<Option<Vec<Vec<String>>>, D::Error>
@@ -141,6 +151,15 @@ fn parse_test_config(json: &str) -> FormatOptions {
         }
         if let Some(v) = sort_config.groups {
             sort_imports.groups = v;
+        }
+        if let Some(v) = sort_config.custom_groups {
+            sort_imports.custom_groups = v
+                .into_iter()
+                .map(|value| CustomGroupDefinition {
+                    group_name: value.group_name,
+                    element_name_pattern: value.element_name_pattern,
+                })
+                .collect();
         }
         options.experimental_sort_imports = Some(sort_imports);
     }

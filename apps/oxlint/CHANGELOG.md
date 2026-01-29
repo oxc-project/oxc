@@ -4,6 +4,92 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.42.0] - 2026-01-26
+
+### 🚀 Features
+
+- 704c8eb linter/use-isnan: Add more specific error message for equality/inequality (#18542) (camchenry)
+- 1e99ace linter/use-isnan: Support more `indexOf` cases and improve diagnostic messages (#18537) (camchenry)
+- b4b6247 linter/plugins: `RuleTester` support settings (#18445) (overlookmotel)
+- 15d69dc linter: Implement react/display-name rule (#18426) (camchenry)
+- 2fbceae linter: Implement rule docs and config support for rules with tuple config options. (#18372) (connorshea)
+- 8db0e78 linter/plugins: Handle BOMs (#18376) (overlookmotel)
+- 6ac09e2 linter/plugins: Support source text not being at start of buffer (#18375) (overlookmotel)
+- 2cc6ad2 linter/plugins: Add `ecmaFeatures` to `parserOptions` (#18313) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 2acf568 linter/plugins: Keep `Infinity` in rule default options (#18550) (overlookmotel)
+- 332d2ef linter/plugins: Add `jsx` property to `parserOptions.ecmaFeatures` (#18549) (overlookmotel)
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+- c51339a oxlint/lsp: Respect code action `source.fixAll` as an alias for `source.fixAll.oxc` (#18366) (Sysix)
+- 3c0e9b9 oxlint/lsp: Skip dangerous fixes/suggestions for "fix all" code action and command (#18364) (Sysix)
+- b8a371d linter: Fix the path used in the gitlab format output (#18165) (connorshea)
+- a9bfbcf linter: Compatibility issue with `DiagnosticData` type in ESLint (#18396) (루밀LuMir)
+- c163231 linter: Update eslint/sort-imports to validate options. (#18378) (connorshea)
+- b871235 linter/plugins: Fix identifying "use strict" directives in scope analysis (#18402) (overlookmotel)
+- faca4b5 linter/plugins: Tokenize `let`, `static` and `yield` as `Keyword`s (#18368) (overlookmotel)
+- a3914fd linter/plugins: Allow line number passed to `report` to be 1 over line count (#18341) (overlookmotel)
+- 9eec600 linter: Update `react/jsx-fragments` rule to raise an error on invalid configuration options (#18111) (connorshea)
+- 9e359d4 linter/plugins: Set all properties on global vars objects (#18317) (overlookmotel)
+- 39c7f32 linter/plugins: Set `writeable` flag on variables where defined as globals (#18316) (overlookmotel)
+- a570693 linter/plugins: Fix `CatchClause` scopes (#18312) (overlookmotel)
+- 44be0eb linter/plugins: Set scope analyse settings based on source type (#18306) (overlookmotel)
+
+### ⚡ Performance
+
+- 2eefd6d linter/plugins: Remove branch from token parsing (#18369) (overlookmotel)
+
+### 📚 Documentation
+
+- ab506d6 linter/plugins: Correct comment (#18456) (overlookmotel)
+
+## [1.40.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- ba9c750 span: [**BREAKING**] Use `ModuleKind::CommonJS` for `.cjs` and `.cts` file extensions (#18117) (Boshen)
+- 3a0a190 linter/plugins: [**BREAKING**] Prevent access to `cwd` in `createOnce` (#18081) (overlookmotel)
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- 7c86fc3 linter/plugins: Support `commonjs` source type in `RuleTester` (#18198) (overlookmotel)
+- 6e8fa80 napi/parser, napi/transform: Accept `sourceType: "commonjs"` (#18197) (overlookmotel)
+- 66b8c02 parser: Implement unambiguous module parsing for JS/TS files (#18124) (Boshen)
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+- b516088 linter: Implement rule option validation/error handling for jest/no-hooks and eslint/no-return-assign rules. (#17600) (connorshea)
+- e7631dd website: Update website generation flow for JSON rules output (#17973) (connorshea)
+- 1757251 linter: Update linter JSON rule output to include extra information. (#15763) (connorshea)
+
+### 🐛 Bug Fixes
+
+- 4d68448 linter/plugins: `report` accept out of range `column` indexes in `loc` (#18199) (overlookmotel)
+- 8a2dabc linter/plugins: Rule tester default to module source type in ESLint compat mode (#18195) (overlookmotel)
+- 6956543 linter: Fix LSP panic from stale directive spans (#18082) (Boshen)
+- 7a0ca99 linter/plugins: Use correct ScriptKind for tokens (#17185) (Peter Wagenet)
+- 2a397f8 oxlint/lsp: Don't send `workspace/diagnostic/refresh` notification on watched file changes (#17885) (Sysix)
+
+### 📚 Documentation
+
+- d51cb6c linter/plugins: Remove outdated comments (#18194) (overlookmotel)
+
+## [1.39.0] - 2026-01-12
+
+### 🚀 Features
+
+- af1d0e3 linter/prefer-optional-chain: Add rule (#17831) (camc314)
+- 3567304 linter/vitest: Implement `consistent-each-for` (#17601) (Said Atrahouch)
+- 2bd2d5a linter/vitest: Implement hoisted-apis-on-top (#17658) (Said Atrahouch)
+
+### 🐛 Bug Fixes
+
+- 84f4f3c linter: Add doc url for tsgolint diagnostics (#17879) (Sysix)
+
+### 📚 Documentation
+
+- e81a306 linter: Update the tsconfig flag mention for the import plugin. (#17778) (connorshea)
+
 ## [1.37.0] - 2026-01-05
 
 ### 🚀 Features

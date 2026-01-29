@@ -613,13 +613,13 @@ impl<'a> LegacyDecorator<'a, '_> {
         // After: `class C {}` -> `let C = class {}`
         let class_binding = class.id.as_ref().map(|ident| {
             let new_class_binding =
-                ctx.generate_binding(ident.name, class.scope_id(), SymbolFlags::Class);
+                ctx.generate_binding(ident.name.into(), class.scope_id(), SymbolFlags::Class);
             let old_class_symbol_id = ident.symbol_id.replace(Some(new_class_binding.symbol_id));
             let old_class_symbol_id = old_class_symbol_id.expect("class always has a symbol id");
 
             *ctx.scoping_mut().symbol_flags_mut(old_class_symbol_id) =
                 SymbolFlags::BlockScopedVariable;
-            BoundIdentifier::new(ident.name, old_class_symbol_id)
+            BoundIdentifier::new(ident.name.into(), old_class_symbol_id)
         });
         let class_alias_binding = class_binding.as_ref().and_then(|id| {
             ClassReferenceChanger::new(id.clone(), ctx, self.ctx)

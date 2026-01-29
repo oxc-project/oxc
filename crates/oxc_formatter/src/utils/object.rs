@@ -13,9 +13,10 @@ use crate::{
 
 pub fn format_property_key<'a>(key: &AstNode<'a, PropertyKey<'a>>, f: &mut Formatter<'_, 'a>) {
     if let PropertyKey::StringLiteral(s) = key.as_ref() {
-        // `"constructor"` property in the class should be kept quoted
-        let kind = if matches!(key.parent, AstNodes::PropertyDefinition(_))
-            && matches!(key.as_ref(), PropertyKey::StringLiteral(string) if string.value == "constructor")
+        // For TypeScript class property declarations, quotes should always be preserved.
+        // https://github.com/prettier/prettier/issues/4516
+        let kind = if matches!(key.parent(), AstNodes::PropertyDefinition(_))
+            && f.context().source_type().is_typescript()
         {
             StringLiteralParentKind::Expression
         } else {

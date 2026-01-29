@@ -60,7 +60,7 @@ impl VitestFnName {
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "lowercase", deny_unknown_fields)]
 pub struct ConsistentVitestConfig {
     /// Decides whether to prefer vitest function accessor
     #[serde(rename = "fn", default)]
@@ -101,9 +101,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentVitestVi {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

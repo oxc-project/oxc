@@ -93,7 +93,7 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
 fn check_duplicate_bound_names<'a, T: BoundNames<'a>>(bound_names: &T, ctx: &SemanticBuilder<'_>) {
     let mut idents: FxHashMap<Atom<'a>, Span> = FxHashMap::default();
     bound_names.bound_names(&mut |ident| {
-        if let Some(old_span) = idents.insert(ident.name, ident.span) {
+        if let Some(old_span) = idents.insert(ident.name.into(), ident.span) {
             ctx.error(diagnostics::redeclaration(&ident.name, old_span, ident.span));
         }
     });
@@ -271,6 +271,12 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
         if method.kind.is_constructor() {
             ctx.error(diagnostics::illegal_abstract_modifier(method.key.span()));
         }
+        // abstract cannot be used with private identifiers
+        if method.key.is_private_identifier() {
+            ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(
+                method.key.span(),
+            ));
+        }
     }
 
     let is_empty_body = method.value.r#type == FunctionType::TSEmptyBodyFunctionExpression;
@@ -286,6 +292,13 @@ pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &Semantic
     // Illegal to have `get foo();` or `set foo(a)`
     if method.kind.is_accessor() && is_empty_body && !is_abstract && !is_declare {
         ctx.error(diagnostics::accessor_without_body(method.key.span()));
+    }
+}
+
+pub fn check_property_definition(prop: &PropertyDefinition, ctx: &SemanticBuilder<'_>) {
+    // abstract cannot be used with private identifiers
+    if prop.r#type.is_abstract() && prop.key.is_private_identifier() {
+        ctx.error(diagnostics::abstract_cannot_be_used_with_private_identifier(prop.key.span()));
     }
 }
 

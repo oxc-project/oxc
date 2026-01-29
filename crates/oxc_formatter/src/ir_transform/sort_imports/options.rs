@@ -29,7 +29,11 @@ pub struct SortImportsOptions {
     pub internal_pattern: Vec<String>,
     /// Groups configuration for organizing imports.
     /// Each inner `Vec` represents a group, and multiple group names in the same `Vec` are treated as one.
+    /// Default is defined by [`default_groups()`] function.
     pub groups: Vec<Vec<String>>,
+    /// Define your own groups for matching very specific imports.
+    /// Default is `[]`.
+    pub custom_groups: Vec<CustomGroupDefinition>,
 }
 
 impl Default for SortImportsOptions {
@@ -43,6 +47,7 @@ impl Default for SortImportsOptions {
             newlines_between: true,
             internal_pattern: default_internal_patterns(),
             groups: default_groups(),
+            custom_groups: vec![],
         }
     }
 }
@@ -88,6 +93,12 @@ impl fmt::Display for SortOrder {
         };
         f.write_str(s)
     }
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
+pub struct CustomGroupDefinition {
+    pub group_name: String,
+    pub element_name_pattern: Vec<String>,
 }
 
 /// Returns default prefixes for identifying internal imports: `["~/", "@/"]`.

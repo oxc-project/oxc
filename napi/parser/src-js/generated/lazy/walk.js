@@ -4476,8 +4476,10 @@ function walkTSMappedType(pos, ast, visitors) {
     if (enter !== null) enter(node);
   }
 
-  walkOptionTSType(pos + 16, ast, visitors);
-  walkOptionTSType(pos + 32, ast, visitors);
+  walkBindingIdentifier(pos + 8, ast, visitors);
+  walkTSType(pos + 40, ast, visitors);
+  walkOptionTSType(pos + 56, ast, visitors);
+  walkOptionTSType(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }
@@ -4570,16 +4572,13 @@ function walkTSImportEqualsDeclaration(pos, ast, visitors) {
 function walkTSModuleReference(pos, ast, visitors) {
   switch (ast.buffer[pos]) {
     case 0:
-      walkBoxIdentifierReference(pos + 8, ast, visitors);
+      walkBoxTSExternalModuleReference(pos + 8, ast, visitors);
       return;
     case 1:
-      walkBoxTSQualifiedName(pos + 8, ast, visitors);
+      walkBoxIdentifierReference(pos + 8, ast, visitors);
       return;
     case 2:
-      walkBoxThisExpression(pos + 8, ast, visitors);
-      return;
-    case 3:
-      walkBoxTSExternalModuleReference(pos + 8, ast, visitors);
+      walkBoxTSQualifiedName(pos + 8, ast, visitors);
       return;
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for TSModuleReference`);

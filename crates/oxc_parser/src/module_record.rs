@@ -34,6 +34,11 @@ impl<'a> ModuleRecordBuilder<'a> {
         (self.module_record, errors)
     }
 
+    /// Returns true if the file contains module syntax (import/export declarations or import.meta).
+    pub fn has_module_syntax(&self) -> bool {
+        self.module_record.has_module_syntax
+    }
+
     pub fn errors(&self) -> std::vec::Vec<OxcDiagnostic> {
         let mut errors = vec![];
 
@@ -205,17 +210,17 @@ impl<'a> ModuleRecordBuilder<'a> {
                             specifier.imported.name(),
                             specifier.imported.span(),
                         )),
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type() || specifier.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => (
                         ImportImportName::NamespaceObject,
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => (
                         ImportImportName::Default(specifier.span),
-                        NameSpan::new(specifier.local.name, specifier.local.span),
+                        NameSpan::new(specifier.local.name.into(), specifier.local.span),
                         decl.import_kind.is_type(),
                     ),
                 };
@@ -279,20 +284,20 @@ impl<'a> ModuleRecordBuilder<'a> {
     ) {
         let local_name = match &decl.declaration {
             ExportDefaultDeclarationKind::Identifier(ident) => {
-                ExportLocalName::Default(NameSpan::new(ident.name, ident.span))
+                ExportLocalName::Default(NameSpan::new(ident.name.into(), ident.span))
             }
             ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                 func.id.as_ref().map_or_else(
                     || ExportLocalName::Null,
-                    |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
+                    |id| ExportLocalName::Name(NameSpan::new(id.name.into(), id.span)),
                 )
             }
             ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref().map_or_else(
                 || ExportLocalName::Null,
-                |id| ExportLocalName::Name(NameSpan::new(id.name, id.span)),
+                |id| ExportLocalName::Name(NameSpan::new(id.name.into(), id.span)),
             ),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(t) => {
-                ExportLocalName::Name(NameSpan::new(t.id.name, t.id.span))
+                ExportLocalName::Name(NameSpan::new(t.id.name.into(), t.id.span))
             }
             _ => ExportLocalName::Null,
         };
@@ -327,8 +332,10 @@ impl<'a> ModuleRecordBuilder<'a> {
 
         if let Some(d) = &decl.declaration {
             iter_binding_identifiers_of_declaration(d, &mut |ident| {
-                let export_name = ExportExportName::Name(NameSpan::new(ident.name, ident.span));
-                let local_name = ExportLocalName::Name(NameSpan::new(ident.name, ident.span));
+                let export_name =
+                    ExportExportName::Name(NameSpan::new(ident.name.into(), ident.span));
+                let local_name =
+                    ExportLocalName::Name(NameSpan::new(ident.name.into(), ident.span));
                 let export_entry = ExportEntry {
                     statement_span: decl.span,
                     span: d.span(),
@@ -339,7 +346,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                     is_type: decl.export_kind.is_type(),
                 };
                 self.add_export_entry(export_entry);
-                self.add_export_binding(ident.name, ident.span);
+                self.add_export_binding(ident.name.into(), ident.span);
             });
         }
 
@@ -378,6 +385,12 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn found_ts_export(&mut self) {
+        self.module_record.has_module_syntax = true;
+    }
+
+    /// Mark the file as ESM when unambiguous top-level await is detected.
+    /// This is similar to Babel's `sawUnambiguousESM` flag.
+    pub fn found_unambiguous_await(&mut self) {
         self.module_record.has_module_syntax = true;
     }
 }

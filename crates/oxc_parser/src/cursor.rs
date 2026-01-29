@@ -445,10 +445,10 @@ impl<'a> ParserImpl<'a> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
-        f: F,
+        mut f: F,
     ) -> (Vec<'a, T>, Option<u32>)
     where
-        F: Fn(&mut Self) -> T,
+        F: FnMut(&mut Self) -> T,
     {
         let mut list = self.ast.vec();
         // Cache cur_kind() to avoid redundant calls in compound checks

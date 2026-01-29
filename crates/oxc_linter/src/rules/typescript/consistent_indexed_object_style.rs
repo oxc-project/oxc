@@ -110,9 +110,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentIndexedObjectStyle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -167,6 +165,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                         ctx.diagnostic_with_fix(
                             consistent_indexed_object_style_diagnostic(preferred_style, sig.span),
                             |fixer| {
+                                if matches!(
+                                    ctx.nodes().parent_kind(node.id()),
+                                    AstKind::ExportDefaultDeclaration(_)
+                                ) {
+                                    return fixer.noop();
+                                }
+
                                 let key_type = sig.parameters.first().map_or("string", |p| {
                                     fixer.source_range(p.type_annotation.type_annotation.span())
                                 });
@@ -288,13 +293,11 @@ impl Rule for ConsistentIndexedObjectStyle {
                     }
                 }
                 AstKind::TSMappedType(mapped) => {
-                    let key_name = &mapped.type_parameter.name;
-                    let constraint = &mapped.type_parameter.constraint;
+                    let key_name = &mapped.key;
+                    let constraint = &mapped.constraint;
 
                     // Bare `keyof` mapped types preserve structure and can't be converted
-                    if let Some(constraint) = constraint
-                        && is_bare_keyof(constraint)
-                    {
+                    if is_bare_keyof(constraint) {
                         return;
                     }
 
@@ -312,9 +315,7 @@ impl Rule for ConsistentIndexedObjectStyle {
                         {
                             return;
                         }
-                        if let Some(constraint) = constraint
-                            && is_circular_reference(constraint, dec.id.name.as_str(), ctx)
-                        {
+                        if is_circular_reference(constraint, dec.id.name.as_str(), ctx) {
                             return;
                         }
                     }
@@ -322,15 +323,14 @@ impl Rule for ConsistentIndexedObjectStyle {
                     ctx.diagnostic_with_fix(
                         consistent_indexed_object_style_diagnostic(preferred_style, mapped.span),
                         |fixer| {
-                            let unwrapped_constraint = constraint.as_ref().map(|c| {
-                                let mut current = c;
+                            let unwrapped_constraint = {
+                                let mut current = constraint;
                                 while let TSType::TSParenthesizedType(p) = current {
                                     current = &p.type_annotation;
                                 }
                                 current
-                            });
-                            let key_type = unwrapped_constraint
-                                .map_or("string", |c| fixer.source_range(c.span()));
+                            };
+                            let key_type = fixer.source_range(unwrapped_constraint.span());
                             let value_type = mapped
                                 .type_annotation
                                 .as_ref()
@@ -1169,6 +1169,16 @@ fn test() {
 			      ",
             None,
         ),
+        // export default interface cannot be converted to export default type
+        // because TypeScript doesn't allow "export default type"
+        (
+            "
+			export default interface SchedulerService {
+			  [key: string]: unknown;
+			}
+			      ",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -1199,6 +1209,13 @@ fn test() {
 			}
 			      ", "
 			type Foo<A = any> = Record<string, A>;
+			      ", None),
+("
+			export interface Bar {
+			  [key: string]: any;
+			}
+			      ", "
+			export type Bar = Record<string, any>;
 			      ", None),
 ("
 			interface Foo<A> {

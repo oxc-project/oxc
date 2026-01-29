@@ -1,6 +1,6 @@
 import assert from "node:assert";
 
-import type { Plugin, Rule } from "#oxlint";
+import type { Plugin, Rule } from "#oxlint/plugin";
 
 // Aim of this test is:
 //

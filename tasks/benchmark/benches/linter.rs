@@ -31,10 +31,7 @@ fn bench_linter(criterion: &mut Criterion) {
 
                 let parser_ret = Parser::new(&allocator, source_text, source_type).parse();
                 let path = Path::new("");
-                let semantic_ret = SemanticBuilder::new()
-                    .with_scope_tree_child_ids(true)
-                    .with_cfg(true)
-                    .build(&parser_ret.program);
+                let semantic_ret = SemanticBuilder::new().with_cfg(true).build(&parser_ret.program);
                 let semantic = semantic_ret.semantic;
                 let module_record =
                     Arc::new(ModuleRecord::new(path, &parser_ret.module_record, &semantic));

@@ -27,7 +27,8 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/issue-7879.ts
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "Bar",
-            "node_id": 14
+            "node_id": 14,
+            "scope_id": 1
           }
         ]
       },

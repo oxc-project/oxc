@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.42.0] - 2026-01-26
+
+### 🚀 Features
+
+- 15d69dc linter: Implement react/display-name rule (#18426) (camchenry)
+
+### 📚 Documentation
+
+- 8ccd853 npm: Update package homepage URLs and add keywords (#18509) (Boshen)
+
+## [1.41.0] - 2026-01-19
+
+### 📚 Documentation
+
+- 8a294d5 oxfmt, oxlint: Update logo (#18242) (Dunqing)
+
 ## [1.37.0] - 2026-01-05
 
 ### 💥 BREAKING CHANGES

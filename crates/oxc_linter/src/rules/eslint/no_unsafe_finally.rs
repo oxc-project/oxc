@@ -26,8 +26,12 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// JavaScript suspends the control flow statements of try and catch blocks until the execution of finally block finishes.
-    /// So, when return, throw, break, or continue is used in finally, control flow statements inside try and catch are overwritten, which is considered as unexpected behavior.
+    /// JavaScript suspends the control flow statements of `try` and `catch`
+    /// blocks until the execution of a `finally` block finishes.
+    ///
+    /// So, when `return`, `throw`, `break`, or `continue` is used in `finally`,
+    /// control flow statements inside `try` and `catch` are overwritten.
+    /// This is possibly unexpected behavior for the developer.
     ///
     /// ### Examples
     ///
@@ -129,100 +133,37 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        (
-            "var foo = function() {\n try { \n return 1; \n } catch(err) { \n return 2; \n } finally { \n console.log('hola!') \n } \n }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { console.log('hola!') } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { function a(x) { return x } } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { var a = function(x) { if(!x) { throw new Error() } } } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { var a = function(x) { while(true) { if(x) { break } else { continue } } } } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { var a = function(x) { label: while(true) { if(x) { break label; } else { continue } } } } }",
-            None,
-        ),
-        ("var foo = function() { try {} finally { while (true) break; } }", None),
-        ("var foo = function() { try {} finally { while (true) continue; } }", None),
-        ("var foo = function() { try {} finally { switch (true) { case true: break; } } }", None),
-        ("var foo = function() { try {} finally { do { break; } while (true) } }", None),
-        (
-            "var foo = function() { try { return 1; } catch(err) { return 2; } finally { var bar = () => { throw new Error(); }; } };",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1; } catch(err) { return 2 } finally { (x) => x } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1; } finally { class bar { constructor() {} static ehm() { return 'Hola!'; } } } };",
-            None,
-        ),
+        "var foo = function() {\n try { \n return 1; \n } catch(err) { \n return 2; \n } finally { \n console.log('hola!') \n } \n }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { console.log('hola!') } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { function a(x) { return x } } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { var a = function(x) { if(!x) { throw new Error() } } } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { var a = function(x) { while(true) { if(x) { break } else { continue } } } } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { var a = function(x) { label: while(true) { if(x) { break label; } else { continue } } } } }",
+        "var foo = function() { try {} finally { while (true) break; } }",
+        "var foo = function() { try {} finally { while (true) continue; } }",
+        "var foo = function() { try {} finally { switch (true) { case true: break; } } }",
+        "var foo = function() { try {} finally { do { break; } while (true) } }",
+        "var foo = function() { try { return 1; } catch(err) { return 2; } finally { var bar = () => { throw new Error(); }; } };",
+        "var foo = function() { try { return 1; } catch(err) { return 2 } finally { (x) => x } }",
+        "var foo = function() { try { return 1; } finally { class bar { constructor() {} static ehm() { return 'Hola!'; } } } };",
     ];
 
     let fail = vec![
-        (
-            "var foo = function() { \n try { \n return 1; \n } catch(err) { \n return 2; \n } finally { \n return 3; \n } \n }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { if(true) { return 3 } else { return 2 } } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { return 3 } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { return function(x) { return y } } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { return { x: function(c) { return c } } } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { return 1 } catch(err) { return 2 } finally { throw new Error() } }",
-            None,
-        ),
-        (
-            "var foo = function() { try { foo(); } finally { try { bar(); } finally { return; } } };",
-            None,
-        ),
-        (
-            "var foo = function() { label: try { return 0; } finally { break label; } return 1; }",
-            None,
-        ),
-        (
-            "var foo = function() { \n a: try { \n return 1; \n } catch(err) { \n return 2; \n } finally { \n break a; \n } \n }",
-            None,
-        ),
-        ("var foo = function() { while (true) try {} finally { break; } }", None),
-        ("var foo = function() { while (true) try {} finally { continue; } }", None),
-        ("var foo = function() { switch (true) { case true: try {} finally { break; } } }", None),
-        (
-            "var foo = function() { a: while (true) try {} finally { switch (true) { case true: break a; } } }",
-            None,
-        ),
-        (
-            "var foo = function() { a: while (true) try {} finally { switch (true) { case true: continue; } } }",
-            None,
-        ),
-        (
-            "var foo = function() { a: switch (true) { case true: try {} finally { switch (true) { case true: break a; } } } }",
-            None,
-        ),
+        "var foo = function() { \n try { \n return 1; \n } catch(err) { \n return 2; \n } finally { \n return 3; \n } \n }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { if(true) { return 3 } else { return 2 } } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { return 3 } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { return function(x) { return y } } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { return { x: function(c) { return c } } } }",
+        "var foo = function() { try { return 1 } catch(err) { return 2 } finally { throw new Error() } }",
+        "var foo = function() { try { foo(); } finally { try { bar(); } finally { return; } } };",
+        "var foo = function() { label: try { return 0; } finally { break label; } return 1; }",
+        "var foo = function() { \n a: try { \n return 1; \n } catch(err) { \n return 2; \n } finally { \n break a; \n } \n }",
+        "var foo = function() { while (true) try {} finally { break; } }",
+        "var foo = function() { while (true) try {} finally { continue; } }",
+        "var foo = function() { switch (true) { case true: try {} finally { break; } } }",
+        "var foo = function() { a: while (true) try {} finally { switch (true) { case true: break a; } } }",
+        "var foo = function() { a: while (true) try {} finally { switch (true) { case true: continue; } } }",
+        "var foo = function() { a: switch (true) { case true: try {} finally { switch (true) { case true: break a; } } } }",
     ];
 
     Tester::new(NoUnsafeFinally::NAME, NoUnsafeFinally::PLUGIN, pass, fail).test_and_snapshot();

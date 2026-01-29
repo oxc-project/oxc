@@ -12,6 +12,8 @@ use super::PluginPresetEntries;
 pub struct SyntaxTypeScriptOptions {
     #[serde(default)]
     pub dts: bool,
+    #[serde(default, rename = "disallowAmbiguousJSXLike")]
+    pub disallow_ambiguous_jsx_like: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize)]

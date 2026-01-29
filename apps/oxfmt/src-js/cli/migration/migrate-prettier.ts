@@ -3,7 +3,6 @@
 import { join } from "node:path";
 import { readFile } from "node:fs/promises";
 import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
-import { TAILWIND_OPTION_MAPPING } from "../../libs/prettier";
 import { Options } from "prettier";
 
 /**
@@ -61,11 +60,6 @@ export async function runMigratePrettier() {
   // However, to avoid inconsistency, we do not enable options that affect Oxfmt.
   const oxfmtrc = await createBlankOxfmtrcFile(cwd);
   for (const [key, value] of Object.entries(prettierConfig ?? {})) {
-    // Oxfmt does not support this
-    if (key === "overrides") {
-      console.error(`  - "overrides" is not supported, skipping...`);
-      continue;
-    }
     // Handle plugins - check for prettier-plugin-tailwindcss and warn about others
     if (key === "plugins" && Array.isArray(value)) {
       for (const plugin of (value as Options["plugins"])!) {
@@ -123,6 +117,16 @@ export async function runMigratePrettier() {
   delete oxfmtrc.ignorePatterns;
   oxfmtrc.ignorePatterns = ignores;
 
+  // TODO: Oxfmt now supports `overrides`,
+  // but `overrides` field is not included in `resolveConfig()` result.
+  // Automatic migration requires manual config file parsing.
+  // See: https://github.com/oxc-project/oxc/issues/18215
+  if ("overrides" in oxfmtrc) {
+    console.warn(
+      `  - "overrides" cannot be migrated automatically. See: https://github.com/oxc-project/oxc/issues/18215`,
+    );
+  }
+
   const jsonStr = JSON.stringify(oxfmtrc, null, 2);
 
   // TODO: Create napi `validateConfig()` and use to ensure validity?
@@ -157,6 +161,15 @@ async function resolvePrettierIgnore(cwd: string) {
 }
 
 // ---
+
+const TAILWIND_OPTION_MAPPING: Record<string, string> = {
+  config: "tailwindConfig",
+  stylesheet: "tailwindStylesheet",
+  functions: "tailwindFunctions",
+  attributes: "tailwindAttributes",
+  preserveWhitespace: "tailwindPreserveWhitespace",
+  preserveDuplicates: "tailwindPreserveDuplicates",
+};
 
 /**
  * Migrate prettier-plugin-tailwindcss options to Oxfmt's experimentalTailwindcss format.

@@ -850,13 +850,13 @@ fn test_imports() {
         ),
         (
             "import foo, { bar } from './foo'; foo();",
-            "import foo, { } from './foo'; foo();",
+            "import foo from './foo'; foo();",
             None,
             FixKind::DangerousSuggestion,
         ),
         (
             "import { foo, bar, baz } from './foo'; foo(bar);",
-            "import { foo, bar, } from './foo'; foo(bar);",
+            "import { foo, bar } from './foo'; foo(bar);",
             None,
             FixKind::DangerousSuggestion,
         ),
@@ -887,7 +887,7 @@ fn test_imports() {
         ),
         (
             "import foo, { type bar } from './foo'; foo();",
-            "import foo, { } from './foo'; foo();",
+            "import foo from './foo'; foo();",
             None,
             FixKind::DangerousSuggestion,
         ),

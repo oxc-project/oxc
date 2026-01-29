@@ -163,10 +163,10 @@ impl ExternalPluginStore {
     ///
     /// # Errors
     /// Returns an error if serialization of rule options fails.
-    pub fn setup_configs(&self, external_linter: &ExternalLinter) -> Result<(), String> {
+    pub fn setup_rule_configs(&self, external_linter: &ExternalLinter) -> Result<(), String> {
         let json = serde_json::to_string(&ConfigSer::new(self));
         match json {
-            Ok(options_json) => (external_linter.setup_configs)(options_json),
+            Ok(options_json) => (external_linter.setup_rule_configs)(options_json),
             Err(err) => Err(format!("Failed to serialize external plugin options: {err}")),
         }
     }

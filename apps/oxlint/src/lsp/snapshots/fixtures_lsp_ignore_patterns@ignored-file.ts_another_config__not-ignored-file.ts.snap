@@ -9,6 +9,8 @@ File URI: file://<variable>/fixtures/lsp/ignore_patterns/ignored-file.ts
 
 ########### Code Actions/Commands
 
+########### Fix All Action
+None
 ########## 
 Linted file: fixtures/lsp/ignore_patterns/another_config/not-ignored-file.ts
 ----------
@@ -78,4 +80,23 @@ TextEdit: TextEdit {
         },
     },
     new_text: "// oxlint-disable no-debugger\n",
+}
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 0,
+        },
+        end: Position {
+            line: 0,
+            character: 9,
+        },
+    },
+    new_text: "",
 }

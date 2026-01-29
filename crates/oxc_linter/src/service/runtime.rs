@@ -394,7 +394,9 @@ impl Runtime {
 
         // Create a sorted copy of paths for processing
         let mut sorted_paths: Vec<_> = paths.iter().cloned().collect();
-        sorted_paths.par_sort_unstable_by(|a, b| Path::new(b).cmp(Path::new(a)));
+        // Sort by path length descending - longer paths tend to be deeper in the directory tree.
+        // This achieves the "deeper paths first" heuristic described above in O(1) per comparison.
+        sorted_paths.par_sort_unstable_by(|a, b| b.len().cmp(&a.len()));
 
         // The general idea is processing `sorted_paths` and their dependencies in groups. We start from a group of modules
         // in `sorted_paths` that is small enough to hold in memory but big enough to make use of the rayon thread pool.
@@ -1027,7 +1029,6 @@ impl Runtime {
 
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
-            .with_scope_tree_child_ids(true)
             .with_check_syntax_error(check_syntax_errors)
             .build(allocator.alloc(ret.program));
 

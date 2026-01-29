@@ -5,7 +5,7 @@
 import { createRequire } from "node:module";
 import { filePath } from "./context.ts";
 import { getNodeLoc } from "./location.ts";
-import { sourceText } from "./source_code.ts";
+import { sourceText, fileIsJsx, fileIsTs } from "./source_code.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type * as ts from "typescript";
@@ -35,7 +35,7 @@ const TokenProto = Object.create(Object.prototype, {
 /**
  * Initialize TS-ESLint tokens for current file.
  *
- * Caller must ensure `filePath` and `sourceText` are initialized before calling this function.
+ * Caller must ensure `filePath`, `sourceText`, and `buffer` are initialized before calling this function.
  */
 export function parseTokens(): Token[] {
   debugAssertIsNonNull(filePath);
@@ -51,6 +51,15 @@ export function parseTokens(): Token[] {
     tsSyntaxKind = tsModule.SyntaxKind;
   }
 
+  // Determine language from flags in buffer
+  const scriptKind = fileIsTs()
+    ? fileIsJsx()
+      ? tsModule.ScriptKind.TSX
+      : tsModule.ScriptKind.TS
+    : fileIsJsx()
+      ? tsModule.ScriptKind.JSX
+      : tsModule.ScriptKind.JS;
+
   // Parse source text into TypeScript AST
   const tsAst = tsModule.createSourceFile(
     filePath,
@@ -62,8 +71,7 @@ export function parseTokens(): Token[] {
       setExternalModuleIndicator: undefined,
     },
     true, // `setParentNodes`
-    // TODO: Use `TS` or `TSX` depending on source type
-    tsModule.ScriptKind.TSX,
+    scriptKind,
   );
 
   // Check that TypeScript hasn't altered source text.
@@ -217,8 +225,11 @@ function getTokenType(token: ts.Identifier | ts.Token<ts.SyntaxKind>): Token["ty
         : "String";
     }
 
+    /*
+    // Not needed. Handled in `convertToken` instead.
     case tsSyntaxKind.RegularExpressionLiteral:
       return "RegularExpression";
+    */
 
     case tsSyntaxKind.Identifier: {
       // Some JSX tokens have to be determined based on their parent
@@ -230,6 +241,13 @@ function getTokenType(token: ts.Identifier | ts.Token<ts.SyntaxKind>): Token["ty
       ) {
         return "JSXIdentifier";
       }
+
+      // `espree` (ESLint's parser) produces `Keyword` tokens for `let`, `static`, and `yield`.
+      // TS-ESLint parser produces `Identifier` tokens for these keywords, but we go with ESLint's behavior.
+      // https://github.com/typescript-eslint/typescript-eslint/issues/11989
+      // @ts-expect-error - `escapedText` is not public
+      const name = token.escapedText;
+      if (name === "let" || name === "static" || name === "yield") return "Keyword";
     }
 
     /*

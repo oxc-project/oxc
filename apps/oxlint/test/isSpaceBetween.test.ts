@@ -33,7 +33,7 @@ function parse(path: string, sourceText: string, options?: ParseOptions): Progra
   // Set buffer (`parseRaw` adds buffer containing AST to `buffers` at index 0)
   const buffer = buffers[0];
   debugAssertIsNonNull(buffer);
-  setupSourceForFile(buffer, /* hasBOM */ false, /* parserServices */ {});
+  setupSourceForFile(buffer, /* hasBOM */ false);
 
   // Deserialize AST from buffer
   initAst();

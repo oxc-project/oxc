@@ -3,6 +3,7 @@ use std::fmt::Write as _;
 use std::{
     borrow::Cow,
     fmt::{self, Display, Formatter},
+    fs,
     path::Path,
 };
 
@@ -18,6 +19,7 @@ use oxc_ast::ast::{
 use oxc_ast_visit::Visit;
 use oxc_parser::Parser;
 use oxc_span::{GetSpan, SourceType, Span};
+use oxc_tasks_common::project_root;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Serialize;
 
@@ -163,22 +165,26 @@ impl TestCase {
         self.group_comment.as_deref()
     }
 
-    fn output(&self) -> Option<String> {
+    fn output(&self, need_config: bool) -> Option<String> {
         let code = format_code_snippet(self.code.as_ref()?);
         let output = format_code_snippet(self.output.as_ref()?);
-        let config = self.config.as_ref().map_or_else(
-            || "None".to_string(),
-            |config| format!("Some(serde_json::json!({config}))"),
-        );
 
-        // ("null==null", "null === null", None),
-        Some(format!(r"({code}, {output}, {config})"))
+        if need_config {
+            let config = self.config.as_ref().map_or_else(
+                || "None".to_string(),
+                |config| format!("Some(serde_json::json!({config}))"),
+            );
+            Some(format!(r"({code}, {output}, {config})"))
+        } else {
+            Some(format!(r"({code}, {output})"))
+        }
     }
 }
 
 fn format_code_snippet(code: &str) -> String {
     let code = if code.contains('\n') {
-        code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
+        // Use 12 space characters after the newline.
+        code.replace('\n', "\n            ").replace('\\', "\\\\").replace('\"', "\\\"")
     } else {
         code.to_string()
     };
@@ -201,11 +207,19 @@ fn format_code_snippet(code: &str) -> String {
     }
 
     // 'import foo from "foo";' => r#"import foo from "foo";"#
-    format!("r#\"{}\"#", code.replace("\\\"", "\""))
-}
+    if code.contains('"') {
+        return format!("r#\"{}\"#", code.replace("\\\"", "\""));
+    }
 
+    // `foo === bar` => `r"foo === bar"`
+    format!("r\"{code}\"")
+}
 // TODO: handle `noFormat`(in typescript-eslint)
 fn format_tagged_template_expression(tag_expr: &TaggedTemplateExpression) -> Option<String> {
+    // Some test cases use code like this (e.g. no-invalid-regex):
+    // ```js
+    // String.raw`foobar\n\t escapedthing`
+    // ```
     if tag_expr.tag.is_specific_member_access("String", "raw") {
         tag_expr.quasi.quasis.first().map(|quasi| format!("r#\"{}\"#", quasi.value.raw))
     } else if tag_expr.tag.is_specific_id("dedent") || tag_expr.tag.is_specific_id("outdent") {
@@ -719,7 +733,7 @@ impl RuleConfigOutput {
                 output.push_str(
                     "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                 );
-                output.push_str("#[schemars(untagged, rename_all = \"camelCase\")]\n");
+                output.push_str("#[serde(untagged, rename_all = \"camelCase\")]\n");
                 let _ = writeln!(output, "enum {enum_name} {{");
                 let mut unlabeled_enum_value_count = 0;
                 let mut added_default = false;
@@ -784,7 +798,7 @@ impl RuleConfigOutput {
                             if !schemars_tags.is_empty() {
                                 let _ = writeln!(
                                     enum_fields,
-                                    "    #[schemars({})]",
+                                    "    #[serde({})]",
                                     schemars_tags.join(", ")
                                 );
                             }
@@ -828,7 +842,9 @@ impl RuleConfigOutput {
                 let mut output = String::from(
                     "#[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]\n",
                 );
-                output.push_str("#[schemars(rename_all = \"camelCase\")]\n");
+                output.push_str(
+                    "#[serde(rename_all = \"camelCase\", default, deny_unknown_fields)]\n",
+                );
                 let _ = writeln!(output, "struct {struct_name} {{");
                 let mut fields_output = String::new();
                 for (raw_key, value) in hash_map {
@@ -1437,6 +1453,16 @@ fn main() {
         _ => "js",
     };
 
+    // Check whether this rule is marked as unsupported, and bail if it is.
+    if let Some((key, reason)) = find_unsupported_rule(&kebab_rule_name, rule_kind) {
+        eprintln!();
+        eprintln!("Error: This rule is either not planned or not possible to implement in Oxlint.");
+        eprintln!("The rule '{key}' will not be implemented for the following reason:");
+        eprintln!("> {reason}");
+        eprintln!();
+        std::process::exit(1);
+    }
+
     println!("Reading test file from {rule_test_path}");
 
     let test_body = oxc_tasks_common::agent()
@@ -1477,6 +1503,9 @@ fn main() {
                 let mut codes = vec![];
                 let mut fix_codes = vec![];
                 let mut last_comment = String::new();
+                // Check if any case with output has a config
+                let need_config =
+                    cases.iter().any(|case| case.output.is_some() && case.config.is_some());
                 for case in cases {
                     let current_comment = case.group_comment();
                     let mut code = case.code(has_config, has_settings, has_filename);
@@ -1494,7 +1523,7 @@ fn main() {
                         );
                     }
 
-                    if let Some(output) = case.output() {
+                    if let Some(output) = case.output(need_config) {
                         fix_codes.push(output);
                     }
 
@@ -1785,7 +1814,7 @@ fn generate_test_block(ctx: &Context) -> String {
         test_block.push_str("    let fix = vec![\n");
         test_block.push_str("        ");
         test_block.push_str(fix_cases);
-        test_block.push_str("\n    ];\n");
+        test_block.push_str("\n    ];\n\n");
         let _ = writeln!(
             test_block,
             "    Tester::new({}::NAME, {}::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();",
@@ -1824,8 +1853,55 @@ fn get_mod_name(rule_kind: RuleKind) -> String {
     }
 }
 
-/// Adds a module definition for the given rule to the `rules.rs` file, and adds the rule to the
-/// `declare_all_lint_rules!` macro block.
+/// Returns the plugin prefix used in `unsupported-rules.json` for a given `RuleKind`.
+fn get_unsupported_rule_prefix(rule_kind: RuleKind) -> &'static str {
+    match rule_kind {
+        RuleKind::ESLint => "eslint",
+        RuleKind::Jest => "jest",
+        RuleKind::Typescript => "typescript",
+        RuleKind::Unicorn => "unicorn",
+        RuleKind::Import => "import",
+        RuleKind::React => "react",
+        RuleKind::ReactPerf => "react-perf",
+        RuleKind::JSXA11y => "jsx-a11y",
+        RuleKind::Oxc => "oxc",
+        RuleKind::NextJS => "nextjs",
+        RuleKind::JSDoc => "jsdoc",
+        RuleKind::Node => "n",
+        RuleKind::Promise => "promise",
+        RuleKind::Vitest => "vitest",
+        RuleKind::Vue => "vue",
+    }
+}
+
+/// This returns the rule key if it's listed as unsupported (meaning
+/// it isn't possible or isn't planned for support), otherwise it
+/// returns nothing.
+///
+/// See `tasks/lint_rules/src/unsupported-rules.json` for reference.
+fn find_unsupported_rule(kebab_rule: &str, rule_kind: RuleKind) -> Option<(String, String)> {
+    let file_path = project_root().join("tasks/lint_rules/src/unsupported-rules.json");
+    let json = fs::read_to_string(file_path)
+        .expect("Failed to read file")
+        .parse::<serde_json::Value>()
+        .expect("Failed to parse JSON");
+
+    let map = json.get("unsupportedRules")?.as_object()?;
+
+    let prefix = get_unsupported_rule_prefix(rule_kind);
+    let full_rule_key = format!("{prefix}/{kebab_rule}");
+
+    // Check for exact match with the full rule key (e.g., "eslint/dot-notation")
+    if let Some(val) = map.get(&full_rule_key) {
+        let reason = val.as_str().unwrap_or("").to_string();
+        return Some((full_rule_key, reason));
+    }
+
+    None
+}
+
+/// Adds a module definition for the given rule to the `rules.rs` file.
+/// The `RuleEnum` will be regenerated by `oxc_linter_codegen` which is called after this function.
 fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std::error::Error>> {
     let rules_path = "crates/oxc_linter/src/rules.rs";
     let mut rules = std::fs::read_to_string(rules_path)?;
@@ -1842,18 +1918,15 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
 
     // Check if the rule mod def already exists
     let rule_mod_def = format!("pub mod {};", ctx.snake_rule_name);
-    let mut needs_mod_insertion = true;
 
     if mod_rules.contains(&rule_mod_def) {
-        needs_mod_insertion = false;
-        println!("Rule module '{}' already exists, skipping mod insertion", ctx.snake_rule_name);
+        println!("Rule module '{}' already exists in {rules_path}", ctx.snake_rule_name);
+        return Ok(());
     }
 
-    // Insert the rule mod def if it doesn't exist
-    if needs_mod_insertion {
-        // Find the rule name (`pub mod xyz;`) that comes alphabetically before the new rule mod def,
-        // otherwise just append it to the mod.
-        let rule_mod_def_start = mod_rules
+    // Find the rule name (`pub mod xyz;`) that comes alphabetically before the new rule mod def,
+    // otherwise just append it to the mod.
+    let rule_mod_def_start = mod_rules
         .lines()
         .filter_map(|line| line.split_once("pub mod ").map(|(_, rest)| rest))
         .position(|rule_mod| rule_mod < rule_mod_def.as_str())
@@ -1863,79 +1936,193 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
             "failed to find where to insert the new rule mod def ({rule_mod_def}) in {rules_path}"
         ))?;
 
-        rules.insert_str(
-            mod_start + rule_mod_def_start,
-            &format!("    pub mod {};\n", ctx.snake_rule_name),
-        );
-    }
-    // then, insert `{mod_name}::{rule_name};` in the `declare_all_lint_rules!` macro block
-    // in the correct position, alphabetically.
-    let declare_all_lint_rules_start = rules
-        .find("declare_all_lint_rules!")
-        .ok_or(format!("failed to find 'declare_all_lint_rules!' in {rules_path}"))?;
-    let rule_def = format!("{mod_name}::{},", ctx.snake_rule_name);
-    let mut needs_rule_insertion = true;
+    rules.insert_str(
+        mod_start + rule_mod_def_start,
+        &format!("    pub mod {};\n", ctx.snake_rule_name),
+    );
 
-    if rules[declare_all_lint_rules_start..].contains(&rule_def) {
-        needs_rule_insertion = false;
-        println!(
-            "Rule '{}::{}' already declared, skipping rule insertion",
-            mod_name, ctx.snake_rule_name
-        );
-    }
-
-    // Insert the rule declaration if it doesn't exist
-    if needs_rule_insertion {
-        let iter = rules[declare_all_lint_rules_start..]
-            .lines()
-            .scan(0, |acc, line| {
-                let current_offset = *acc;
-                *acc += line.len() + 1; // +1 for newline
-                Some((current_offset, line))
-            })
-            .peekable()
-            .skip_while(|(_, line)| !line.trim().starts_with(&format!("{mod_name}::")));
-
-        let new_rule = format!("{mod_name}::{}", ctx.snake_rule_name);
-        let mut insert_pos = None;
-
-        for (offset, line) in iter {
-            let trimmed = line.trim().trim_end_matches(',');
-            if !trimmed.starts_with(&format!("{mod_name}::")) {
-                // We've reached the next plugin section or the end of the macro
-                insert_pos = Some(offset);
-                break;
-            }
-
-            // Compare alphabetically
-            if trimmed > new_rule.as_str() {
-                insert_pos = Some(offset);
-                break;
-            }
-        }
-
-        let insert_pos =
-            insert_pos.unwrap_or_else(|| rules[declare_all_lint_rules_start..].rfind('}').unwrap());
-
-        let insert_position = declare_all_lint_rules_start + insert_pos - 1;
-
-        rules.insert_str(
-            insert_position,
-            &format!(
-                "\n    {mod_name}::{rule_name},",
-                mod_name = mod_name,
-                rule_name = ctx.snake_rule_name
-            ),
-        );
-    }
-
-    // Only write if we made changes
-    if needs_mod_insertion || needs_rule_insertion {
-        std::fs::write(rules_path, rules)?;
-        println!("Updated {rules_path}",);
-    } else {
-        println!("No changes needed - rule already exists in {rules_path}",);
-    }
+    std::fs::write(rules_path, rules)?;
+    println!("Updated {rules_path}");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_find_unsupported_rule_matches() {
+        // `eslint/no-dupe-args` should be detected by the helper as it's an unsupported rule.
+        let res = find_unsupported_rule("no-dupe-args", RuleKind::ESLint);
+        assert!(res.is_some());
+        let (key, reason) = res.unwrap();
+        assert!(key == "eslint/no-dupe-args");
+        assert!(!reason.is_empty());
+    }
+
+    #[test]
+    fn test_find_unsupported_rule_does_not_match() {
+        // This rule is not in the unsupported list, so it should return None.
+        let res = find_unsupported_rule("foobar", RuleKind::ESLint);
+        assert!(res.is_none());
+    }
+
+    #[test]
+    fn test_find_unsupported_rule_matches_for_n_rule() {
+        let res = find_unsupported_rule("no-hide-core-modules", RuleKind::Node);
+        assert!(res.is_some());
+        let (key, reason) = res.unwrap();
+        assert!(key == "n/no-hide-core-modules");
+        assert!(!reason.is_empty());
+    }
+
+    #[test]
+    fn test_format_code_snippet_simple_identifier() {
+        assert_eq!(format_code_snippet("debugger"), "\"debugger\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_simple_expression() {
+        // Simple expression uses regular quotes
+        assert_eq!(format_code_snippet("foo === bar"), "\"foo === bar\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_double_quotes() {
+        // Code containing double quotes uses raw string
+        assert_eq!(
+            format_code_snippet("import foo from \"foo\";"),
+            "r#\"import foo from \"foo\";\"#"
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_hash_in_quotes() {
+        // Code containing "#" with a double-quote, needs raw string with `r##`.
+        assert_eq!(
+            format_code_snippet("document.querySelector(\"#foo\");"),
+            "r##\"document.querySelector(\"#foo\");\"##"
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_multiline() {
+        // Multiline code with newlines gets escaped and indented
+        let input = "const x = 1;\nconst y = 2;";
+        let result = format_code_snippet(input);
+        assert!(result.contains("const x = 1;"));
+        assert!(result.contains("const y = 2;"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_backslash() {
+        // Code containing backslashes uses raw string
+        let input = "\\u1234";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_raw_string_r_quote() {
+        // Already a raw string with r" - returned as-is
+        assert_eq!(format_code_snippet("r\"foobar\""), "r\"foobar\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_raw_string_r_hash_quote() {
+        // Already a raw string with r#" - returned as-is
+        assert_eq!(format_code_snippet("r#\"foobar\"#"), "r#\"foobar\"#");
+    }
+
+    #[test]
+    fn test_format_code_snippet_quoted_string() {
+        // Quoted string as code - contains both quotes and no backslashes
+        let result = format_code_snippet("\"debugger\"");
+        assert!(result.starts_with("r#"));
+        assert!(result.contains("debugger"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_complex_multiline() {
+        // Complex multiline with multiple special characters
+        let input = "function test() {\n  console.log(\"hello\");\n}";
+        let result = format_code_snippet(input);
+        assert!(result.contains("function test()"));
+        assert!(result.contains("console.log("));
+    }
+
+    #[test]
+    fn test_format_code_snippet_empty_string() {
+        // Empty string code
+        assert_eq!(format_code_snippet(""), "\"\"");
+    }
+
+    #[test]
+    fn test_format_code_snippet_with_tab_characters() {
+        // Code containing tab characters (no quotes or backslashes)
+        assert_eq!(
+            format_code_snippet("const x = 1;\tconst y = 2;"),
+            "\"const x = 1;\tconst y = 2;\""
+        );
+    }
+
+    #[test]
+    fn test_format_code_snippet_multiline_with_quotes() {
+        // Multiline code with double quotes
+        let input = "const msg = \"hello\";\nconsole.log(msg);";
+        let result = format_code_snippet(input);
+        assert!(result.contains("const msg = "));
+        assert!(result.contains("console.log(msg);"));
+        assert!(result.starts_with("r#\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_regex_pattern() {
+        // Regex pattern with backslashes
+        let input = "/\\d+/";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_unicode_escape() {
+        // Unicode escape sequences - has backslash so uses raw string
+        let result = format_code_snippet("\\u0041");
+        assert!(result.starts_with("r\""));
+        assert!(result.contains("u0041"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_mixed_quotes_and_hash() {
+        // Both quotes and # present - needs r##
+        let input = "document.getElementById(\"#id\")";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r##"));
+    }
+
+    #[test]
+    fn test_format_code_snippet_newline_normalization() {
+        // Newline characters get indented with spaces, not tabs
+        let input = "line1\nline2\nline3";
+        let result = format_code_snippet(input);
+        assert!(result.contains("line1"));
+        assert!(result.contains("line2"));
+        assert!(result.contains("line3"));
+        assert!(!result.contains('\t'));
+    }
+
+    #[test]
+    fn test_format_code_snippet_double_backslash() {
+        // Code with escaped backslash
+        let input = "path\\\\to\\\\file";
+        let result = format_code_snippet(input);
+        assert!(result.starts_with("r\""));
+    }
+
+    #[test]
+    fn test_format_code_snippet_single_quotes() {
+        // Single quotes (no double quotes) - treated as regular string
+        assert_eq!(format_code_snippet("const msg = 'hello';"), "\"const msg = 'hello';\"");
+    }
 }

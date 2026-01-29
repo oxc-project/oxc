@@ -1,9 +1,16 @@
 {
   "name": "oxlint",
-  "version": "1.38.0",
+  "version": "1.42.0",
   "description": "Linter for the JavaScript Oxidation Compiler",
-  "keywords": [],
-  "homepage": "https://oxc.rs",
+  "keywords": [
+    "eslint",
+    "javascript",
+    "linter",
+    "oxc",
+    "oxlint",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/linter",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "license": "MIT",
   "author": "Boshen and oxc contributors",
@@ -27,6 +34,20 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./plugin": {
+      "types": "./dist/plugin.d.ts",
+      "default": "./dist/plugin.js"
+    },
+    "./rule-tester": {
+      "types": "./dist/rule-tester.d.ts",
+      "default": "./dist/rule-tester.js"
+    }
+  },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   }

@@ -52,6 +52,17 @@ pub fn test_options_with_source_type(
     assert_eq!(result, expected, "\nfor source: {source_text:?}");
 }
 
+/// Test with unambiguous source type (like .js files)
+#[track_caller]
+pub fn test_unambiguous(source_text: &str, expected: &str) {
+    test_options_with_source_type(
+        source_text,
+        expected,
+        SourceType::unambiguous(),
+        default_options(),
+    );
+}
+
 #[track_caller]
 pub fn test_same_ignore_parse_errors(source_text: &str) {
     let allocator = Allocator::default();

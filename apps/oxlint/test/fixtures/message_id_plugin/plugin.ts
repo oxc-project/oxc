@@ -1,4 +1,4 @@
-import type { Plugin } from "#oxlint";
+import type { Plugin } from "#oxlint/plugin";
 
 const MESSAGE_ID_ERROR = "no-var/error";
 const messages = {

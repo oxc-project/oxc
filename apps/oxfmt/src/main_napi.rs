@@ -7,11 +7,11 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon},
+    cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
-        ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
+        ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
         JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-        SourceFormatter, utils,
+        SourceFormatter, resolve_options_from_value, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -38,7 +38,7 @@ pub async fn run_cli(
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
     )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
@@ -69,8 +69,12 @@ pub async fn run_cli(
         Mode::Init => {
             return ("init".to_string(), None);
         }
-        Mode::Migrate(_) => {
-            return ("migrate:prettier".to_string(), None);
+        Mode::Migrate(source) => {
+            let mode_str = match source {
+                MigrateSource::Prettier => "migrate:prettier",
+                MigrateSource::Biome => "migrate:biome",
+            };
+            return (mode_str.to_string(), None);
         }
         _ => {}
     }
@@ -94,9 +98,7 @@ pub async fn run_cli(
         Mode::Stdin(_) => {
             init_miette();
 
-            // TODO: `.with_external_formatter()` is not needed, just pass with `new(command, external_formatter)`
-            let result =
-                StdinRunner::new(command).with_external_formatter(Some(external_formatter)).run();
+            let result = StdinRunner::new(command, external_formatter).run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
@@ -136,7 +138,7 @@ pub async fn format(
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
     )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
@@ -156,18 +158,6 @@ pub async fn format(
         format_file_cb,
         sort_tailwind_classes_cb,
     );
-
-    // Create resolver from options and resolve format options
-    let mut config_resolver = ConfigResolver::from_value(options.unwrap_or_default());
-    match config_resolver.build_and_validate() {
-        Ok(_) => {}
-        Err(err) => {
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
-            };
-        }
-    }
 
     // Use `block_in_place()` to avoid nested async runtime access
     match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
@@ -189,7 +179,17 @@ pub async fn format(
         };
     };
 
-    let resolved_options = config_resolver.resolve(&strategy);
+    // Resolve format options directly from the provided options
+    let resolved_options = match resolve_options_from_value(options.unwrap_or_default(), &strategy)
+    {
+        Ok(options) => options,
+        Err(err) => {
+            return FormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
+            };
+        }
+    };
 
     // Create formatter and format
     let formatter =

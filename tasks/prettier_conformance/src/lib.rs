@@ -223,8 +223,8 @@ impl TestRunner {
 
         let mut failed_test_files = vec![];
         for path in test_files {
-            if self.options.debug {
-                println!("{}", path.to_string_lossy());
+            if self.options.debug || has_debug_filter {
+                println!("Test: {}", path.to_string_lossy());
             }
             // Single source text is used for multiple options
             let source_text = std::fs::read_to_string(path).unwrap();
@@ -266,16 +266,6 @@ impl TestRunner {
                 }
 
                 if has_debug_filter {
-                    // let print_with_border = |title: &str| {
-                    // let w = format_options.line_width.value() as usize;
-                    // println!("--- {title} {}", "-".repeat(w - title.len() - 5));
-                    // };
-
-                    println!(
-                        "{} Test: {}",
-                        if result { "✨" } else { "💥" },
-                        path.strip_prefix(fixtures_root()).unwrap().to_string_lossy(),
-                    );
                     println!(
                         "Options: {{ {} }}",
                         snapshot_options
@@ -286,22 +276,11 @@ impl TestRunner {
                             .join(", ")
                     );
 
-                    if !result {
-                        // print_with_border("Input");
-                        // println!("{source_text}");
-                        // print_with_border(&format!(
-                        // "PrettierOutput: {}LoC",
-                        // expected.lines().count()
-                        // ));
-                        // println!("{expected}");
-                        // print_with_border(&format!("OxcOutput: {}LoC", actual.lines().count()));
-                        // println!("{actual}");
-                        // print_with_border("Diff");
-                        println!(
-                            "{}",
-                            path.strip_prefix(fixtures_root()).unwrap().to_string_lossy()
-                        );
-                        oxc_tasks_common::print_diff_in_terminal(&diff);
+                    if result {
+                        println!("Passed ✅");
+                    } else {
+                        println!("Failed ❌");
+                        oxc_tasks_common::print_text_diff(&diff);
                     }
                     println!();
                 }

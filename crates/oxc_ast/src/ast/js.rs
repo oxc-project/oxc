@@ -25,7 +25,7 @@ use std::cell::Cell;
 use oxc_allocator::{Box, CloneIn, Dummy, GetAddress, TakeIn, UnstableAddress, Vec};
 use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
-use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, SourceType, Span};
+use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Ident, SourceType, Span};
 use oxc_syntax::{
     operator::{
         AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
@@ -234,7 +234,7 @@ pub use match_expression;
 pub struct IdentifierName<'a> {
     pub span: Span,
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
 }
 
 /// `x` inside `func` in `const x = 0; function func() { console.log(x); }`
@@ -254,7 +254,7 @@ pub struct IdentifierReference<'a> {
     pub span: Span,
     /// The name of the identifier being referenced.
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     /// Reference ID
     ///
     /// Identifies what identifier this refers to, and how it is used. This is
@@ -283,7 +283,7 @@ pub struct BindingIdentifier<'a> {
     pub span: Span,
     /// The identifier name being bound.
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     /// Unique identifier for this binding.
     ///
     /// This gets initialized during [`semantic analysis`] in the bind step. If
@@ -309,7 +309,7 @@ pub struct BindingIdentifier<'a> {
 pub struct LabelIdentifier<'a> {
     pub span: Span,
     #[estree(json_safe)]
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
 }
 
 /// `this` in `return this.prop;`
@@ -2282,7 +2282,7 @@ pub enum MethodDefinitionKind {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 pub struct PrivateIdentifier<'a> {
     pub span: Span,
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
 }
 
 /// Class Static Block

@@ -148,13 +148,18 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
 
-  × Unexpected token
-   ╭─[prefer_object_spread.tsx:3:13]
- 2 │         const test = Object.assign({ ...bar }, {
- 3 │             <!-- html comment
-   ·             ─
- 4 │             foo: 'bar',
+  ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
+   ╭─[prefer_object_spread.tsx:2:22]
+ 1 │     
+ 2 │ ╭─▶         const test = Object.assign({ ...bar }, {
+ 3 │ │               <!-- html comment
+ 4 │ │               foo: 'bar',
+ 5 │ │               baz: "cats"
+ 6 │ │               --> weird
+ 7 │ ╰─▶         })
+ 8 │             
    ╰────
+  help: Use an object spread instead of `Object.assign` eg: `{ ...foo }`.
 
   ⚠ eslint(prefer-object-spread): Disallow using `Object.assign` with an object literal as the first argument and prefer the use of object spread instead
    ╭─[prefer_object_spread.tsx:2:22]

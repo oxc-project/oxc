@@ -1,10 +1,14 @@
-use std::{fs, io, io::Write, path::Path};
+use std::{
+    fs, io,
+    io::Write,
+    path::{Component, Path, PathBuf},
+};
 
 /// To debug `oxc_formatter`:
 /// `OXC_LOG=oxc_formatter oxfmt`
 /// # Panics
 pub fn init_tracing() {
-    use tracing_subscriber::{filter::Targets, prelude::*};
+    use tracing_subscriber::{filter::Targets, fmt::format::FmtSpan, prelude::*};
 
     // Usage without the `regex` feature.
     // <https://github.com/tokio-rs/tracing/issues/1436#issuecomment-918528013>
@@ -18,6 +22,8 @@ pub fn init_tracing() {
         ))
         .with(
             tracing_subscriber::fmt::layer()
+                .with_thread_names(true)
+                .with_span_events(FmtSpan::CLOSE)
                 // https://github.com/tokio-rs/tracing/issues/2492
                 .with_writer(std::io::stderr),
         )
@@ -51,4 +57,42 @@ pub fn print_and_flush(writer: &mut dyn Write, message: &str) {
 
     writer.write_all(message.as_bytes()).or_else(check_for_writer_error).unwrap();
     writer.flush().unwrap();
+}
+
+/// Normalize a relative path by:
+/// - stripping `./` prefix,
+/// - joining with `cwd`,
+/// - and resolving `.` and `..` components logically (without fs access)
+///
+/// This ensures consistent absolute path format,
+/// which is required for gitignore-based pattern matching
+/// (e.g., `ignorePatterns` resolution).
+///
+/// Unlike `fs::canonicalize()`,
+/// this does not resolve symlinks and does not produce `\\?\` prefixed paths on Windows.
+pub fn normalize_relative_path(cwd: &Path, path: &Path) -> PathBuf {
+    if path.is_absolute() {
+        return path.to_path_buf();
+    }
+
+    let joined = if let Ok(stripped) = path.strip_prefix("./") {
+        cwd.join(stripped)
+    } else {
+        cwd.join(path)
+    };
+
+    let mut result = PathBuf::new();
+    for component in joined.components() {
+        match component {
+            Component::ParentDir => {
+                result.pop();
+            }
+            Component::CurDir => {}
+            _ => {
+                result.push(component.as_os_str());
+            }
+        }
+    }
+
+    result
 }

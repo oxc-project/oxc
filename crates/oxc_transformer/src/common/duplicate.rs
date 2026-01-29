@@ -93,7 +93,7 @@ impl<'a> TransformCtx<'a> {
                         || !ctx.scoping().symbol_is_mutated(symbol_id))
                 {
                     // Reading bound identifier cannot have side effects, so no need for temp var
-                    let binding = BoundIdentifier::new(ident.name, symbol_id);
+                    let binding = BoundIdentifier::new(ident.name.into(), symbol_id);
                     let references =
                         array::from_fn(|_| binding.create_spanned_read_expression(ident.span, ctx));
                     return (expr, references);

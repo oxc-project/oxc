@@ -1407,6 +1407,71 @@ fn test() {
             ",
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/17927
+        // https://github.com/typescript-eslint/typescript-eslint/issues/10746
+        // Namespace should not be flagged as unused when shadowed by type parameter
+        // but used in a qualified name
+        (
+            "
+        namespace Database {
+          export type Table<T> = T;
+        }
+
+        export function test<Database, Table extends Database.Table<Database>>(
+          database: Database,
+          table: Table
+        ): { database: Database; table: Table } {
+          return { database, table };
+        }
+            ",
+            None,
+        ),
+        // Namespace used in extends clause, shadowed by type parameter
+        (
+            "
+        export namespace A1 {
+          namespace T {
+            export class C<U = 1> { prop: U }
+          }
+          export class Foo<T> extends T.C { prop2: T }
+        }
+            ",
+            None,
+        ),
+        // Namespace used in type alias, shadowed by type parameter
+        (
+            "
+        export namespace One {
+          namespace T {
+            export type Foo<U = 1> = U;
+          }
+          export type Bar<T> = T.Foo<T>;
+        }
+            ",
+            None,
+        ),
+        // Deeply nested qualified name with shadowing
+        (
+            "
+        namespace A {
+          export namespace B {
+            export type C<T> = T;
+          }
+        }
+        export type Test<A> = A.B.C<A>;
+            ",
+            None,
+        ),
+        // Import namespace used in implements clause, shadowed by type parameter
+        (
+            "
+        import type * as NS from 'foo';
+        export class Bar<NS> implements NS.Foo {
+          value: NS;
+        }
+            ",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -1980,5 +2045,200 @@ fn test_d_ts() {
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()
         .change_rule_path_extension("d.ts")
+        .test();
+}
+
+#[test]
+fn test_autofixer_imports() {
+    let fix = vec![
+        (
+            "
+            import * as Unused from 'module';
+            export {};
+                    ",
+            "
+            export {};
+                    ",
+        ),
+        (
+            "
+            import Unused from 'module';
+            export {};
+                    ",
+            "
+            export {};
+                    ",
+        ),
+        (
+            "
+            import { Unused } from 'module';
+            export {};
+                    ",
+            "
+            export {};
+                    ",
+        ),
+        (
+            "
+            import { Unused, Unused2 } from 'module';
+            export {};
+                    ",
+            "
+            export {};
+                    ",
+        ),
+        (
+            "
+            import { Unused, Used } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import { Used, Unused } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import { Used, Unused, } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used, } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import { Used, Unused, Used2 } from 'module';
+            export { Used, Used2 };
+                    ",
+            "
+            import { Used, Used2 } from 'module';
+            export { Used, Used2 };
+                    ",
+        ),
+        (
+            "
+            import Unused, { Unused2 } from 'module';
+            export {};
+                    ",
+            "
+            export {};
+                    ",
+        ),
+        (
+            "
+            import Unused, { Used } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import Used, { Unused } from 'module';
+            export { Used };
+                    ",
+            "
+            import Used from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import Used, { Unused, } from 'module';
+            export { Used };
+                    ",
+            "
+            import Used from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import Used, { Used2, Unused } from 'module';
+            export { Used, Used2 };
+                    ",
+            "
+            import Used, { Used2 } from 'module';
+            export { Used, Used2 };
+                    ",
+        ),
+        (
+            "
+            import Used, { Unused, Used2 } from 'module';
+            export { Used, Used2 };
+                    ",
+            "
+            import Used, { Used2 } from 'module';
+            export { Used, Used2 };
+                    ",
+        ),
+        (
+            "
+            import Unused, { Unused2, Used } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import Unused, { Used, Unused2 } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import { Unused as Unused1, Used } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import { Used, Unused as Unused1 } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used } from 'module';
+            export { Used };
+                    ",
+        ),
+        (
+            "
+            import { Used, Unused as Unused1, } from 'module';
+            export { Used };
+                    ",
+            "
+            import { Used, } from 'module';
+            export { Used };
+                    ",
+        ),
+    ];
+
+    Tester::new::<&str>(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, vec![], vec![])
+        .expect_fix(fix)
         .test();
 }

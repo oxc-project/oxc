@@ -74,7 +74,17 @@ enum IgnoreClassWithImplements {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Enforce that class methods utilize this.
+    /// Enforce that class methods utilize `this`.
+    ///
+    /// ### Why is this bad?
+    ///
+    /// For class methods that do not use `this`, you should consider converting them
+    /// to `static` methods. This is not always possible or desirable, but it can
+    /// help clarify that the method does not rely on instance state.
+    ///
+    /// If you do convert the method into a `static` function,
+    /// instances of the class that call that particular method have to be converted
+    /// to a `static` call as well.
     ///
     /// ### Examples
     ///

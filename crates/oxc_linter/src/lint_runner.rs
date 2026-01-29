@@ -114,6 +114,18 @@ impl DirectivesStore {
     pub fn clear(&self) {
         self.map.lock().expect("DirectivesStore mutex poisoned in clear").clear();
     }
+
+    /// Remove disable directives for a specific file
+    ///
+    /// This should be called before re-linting a file to ensure stale directives
+    /// from previous linting runs are not used if the new linting run fails to
+    /// produce directives (e.g., due to parse errors).
+    ///
+    /// # Panics
+    /// Panics if the mutex is poisoned.
+    pub fn remove(&self, path: &Path) {
+        self.map.lock().expect("DirectivesStore mutex poisoned in remove").remove(path);
+    }
 }
 
 impl Default for DirectivesStore {

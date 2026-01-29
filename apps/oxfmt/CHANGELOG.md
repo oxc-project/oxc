@@ -4,6 +4,70 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.27.0] - 2026-01-26
+
+### 🚀 Features
+
+- d71c15d oxfmt: Enable tailwind sort inside xxx-in-js (#18417) (leaysgur)
+- 52b5003 formatter,oxfmt: Support Angular `@Component({ template, styles })` (#18324) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 224140c oxfmt: Canonicalize `..` component in config path (#18570) (leaysgur)
+- 7e6c15b oxfmt: Increase Tailwind CSS test timeout for Windows CI (#18339) (Boshen)
+
+### ⚡ Performance
+
+- b2df8fb oxfmt: Enable tailwind plugin only for relevant parser (#18418) (leaysgur)
+
+## [0.26.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 864b4ab oxfmt: Use `format_config` for `external_options` override (#18252) (leaysgur)
+- 90ce4b7 oxfmt: Restore `customGroups` handling lost (#18243) (leaysgur)
+
+## [0.25.0] - 2026-01-19
+
+### 🚀 Features
+
+- a95b9bb oxfmt: Support oxfmtrc `overrides` config (#18068) (leaysgur)
+- 984d5c1 oxfmt/sort-imports: Support `options.customGroups` (#17576) (nilptr)
+- fd2c792 formatter: Support css prop, styled jsx, and member/computed `styled.tags` (#17990) (magic-akari)
+- 361a8f1 oxfmt: Upgrade `prettier` to 3.8.0 (#18024) (Dunqing)
+- 873c683 oxfmt: Add more tracing logs (#18015) (Yuji Sugiura)
+- cc3e74b oxfmt: Add Prettier specific fields in `Oxfmtrc` (#17981) (leaysgur)
+- 6ffe315 oxfmt: Add more `Oxfmtrc` fields description (#17979) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2a397f8 oxlint/lsp: Don't send `workspace/diagnostic/refresh` notification on watched file changes (#17885) (Sysix)
+- efacb13 oxfmt: Do not wrap with `block_indent()` if `format_embedded` fails (#17975) (leaysgur)
+- 9d0f551 oxfmt: Do not panic with subdirectry and config (#17955) (leaysgur)
+- 9d96cc6 oxfmt: Use `std(out/err)._handle.setBlocking(true)` to handle `WouldBlock` error in Rust (#17950) (leaysgur)
+
+## [0.24.0] - 2026-01-12
+
+### 🚀 Features
+
+- 2e03ebf oxfmt/lsp: Use `SourceFormatter` to support non-JS files and napi features (#17655) (leaysgur)
+- 623f7eb oxfmt/sort_package_json: Use `options.sort_scripts` (#17740) (leaysgur)
+- 86c0168 oxfmt/sort_package_json: Handle `oxfmtrc.sort_scripts` option (#17738) (leaysgur)
+- 256636a oxfmt/lsp: Add `.editorconfig` to `get_watcher_patterns` (#17694) (leaysgur)
+- 3f3db39 oxfmt/lsp: Use `ConfigResolver` to align with CLI (#17654) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 9e89389 formatter/tailwindcss: Nested class string doesn't respect `singleQuote: true` (#17838) (Dunqing)
+- f0cedd4 formatter/tailwindcss: Class name is broken after sorting when its contains single quotes with `singleQuote: true` (#17790) (Dunqing)
+- 1864142 oxfmt/tailwindcss: Bundle `prettier/plugins/*` (#17782) (leaysgur)
+- 3a9d43b oxfmt: Ignore explicit positional path which is ignored by directory (#17732) (leaysgur)
+- 0563217 formatter: Classes will be stripped out when both `experimentalTailwindcss` and `experimentalSortImports` are enabled (#17726) (Dunqing)
+
+### 📚 Documentation
+
+- 62b7a01 formatter: Clarify `experimentalTailwindcss` configuration comments (#17898) (Dunqing)
+
 ## [0.23.0] - 2026-01-06
 
 ### 🚀 Features

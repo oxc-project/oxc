@@ -1,11 +1,12 @@
 use oxc_ast::{AstKind, ast::Expression, match_member_expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::precedence::{GetPrecedence, Precedence};
 
 use crate::{
     AstNode, ast_util::is_method_call, context::LintContext, globals::GLOBAL_OBJECT_NAMES,
-    rule::Rule,
+    rule::Rule, utils::get_precedence,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -40,7 +41,7 @@ declare_oxc_lint!(
     PreferExponentiationOperator,
     eslint,
     style,
-    pending,
+    fix,
 );
 
 impl Rule for PreferExponentiationOperator {
@@ -61,8 +62,8 @@ impl Rule for PreferExponentiationOperator {
 
         match member_expor_obj {
             Expression::Identifier(ident) => {
-                if ident.name.as_str() == "Math" && ctx.is_reference_to_global_variable(ident) {
-                    ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));
+                if ident.name.as_str() != "Math" || !ctx.is_reference_to_global_variable(ident) {
+                    return;
                 }
             }
             match_member_expression!(Expression) => {
@@ -78,11 +79,99 @@ impl Rule for PreferExponentiationOperator {
                     && GLOBAL_OBJECT_NAMES.contains(&ident.name.as_str())
                     && ctx.is_reference_to_global_variable(ident)
                 {
-                    ctx.diagnostic(prefer_exponentian_operator_diagnostic(call_expr.span));
+                } else {
+                    return;
                 }
             }
-            _ => {}
+            _ => return,
         }
+
+        ctx.diagnostic_with_fix(prefer_exponentian_operator_diagnostic(call_expr.span), |fixer| {
+            if let AstKind::CallExpression(call_expr) = node.kind()
+                && !ctx.has_comments_between(call_expr.span)
+                && call_expr.arguments.len() == 2
+                && let Some(base) = call_expr.arguments[0].as_expression()
+                && let Some(exponent) = call_expr.arguments[1].as_expression()
+            {
+                let base_text = if does_base_need_parens(base) {
+                    format!("({})", base.span().source_text(ctx.source_text()))
+                } else {
+                    base.span().source_text(ctx.source_text()).to_string()
+                };
+                let exponent_text =
+                    get_exponent_text(fixer.source_range(exponent.span()), exponent);
+
+                let replacement = format!("{base_text} ** {exponent_text}");
+
+                // Check if we need to wrap the entire expression in parentheses based on parent context
+                let replacement = if needs_parens_for_parent(node, ctx) {
+                    format!("({replacement})")
+                } else {
+                    replacement
+                };
+
+                fixer.replace(call_expr.span, replacement)
+            } else {
+                fixer.noop()
+            }
+        });
+    }
+}
+
+fn does_base_need_parens(expr: &Expression) -> bool {
+    let expr = expr.without_parentheses();
+    if matches!(expr, Expression::UnaryExpression(_) | Expression::AwaitExpression(_)) {
+        return true;
+    }
+    if let Some(prec) = get_precedence(expr) {
+        return prec <= Precedence::Exponentiation;
+    }
+    false
+}
+
+/// Determines if the exponent expression needs parentheses when used in `base ** exponent`.
+///
+/// Parentheses are needed only when the exponent has lower precedence than exponentiation.
+/// Since `**` is right-associative, `a ** b ** c` equals `a ** (b ** c)`,
+/// so `Math.pow(a, b ** c)` can safely become `a ** b ** c`.
+fn does_exponent_need_parens(expr: &Expression) -> bool {
+    let expr = expr.without_parentheses();
+
+    if let Some(prec) = get_precedence(expr) {
+        return prec < Precedence::Exponentiation;
+    }
+
+    false
+}
+
+/// Gets the text for the exponent, adding parentheses if needed.
+fn get_exponent_text(source_text: &str, expr: &Expression) -> String {
+    if does_exponent_need_parens(expr) {
+        format!("({source_text})")
+    } else {
+        source_text.to_string()
+    }
+}
+
+fn needs_parens_for_parent(node: &AstNode, ctx: &LintContext) -> bool {
+    let parent = ctx.nodes().parent_node(node.id());
+
+    match parent.kind() {
+        AstKind::BinaryExpression(bin_expr) => {
+            if bin_expr.operator == oxc_ast::ast::BinaryOperator::Exponential {
+                let AstKind::CallExpression(call_expr) = node.kind() else {
+                    return true;
+                };
+                bin_expr.right.span() != call_expr.span
+            } else {
+                bin_expr.precedence() >= Precedence::Exponentiation
+            }
+        }
+        AstKind::UnaryExpression(_)
+        | AstKind::AwaitExpression(_)
+        | AstKind::TSAsExpression(_)
+        | AstKind::TSSatisfiesExpression(_) => true,
+        _ => false,
     }
 }
 
@@ -128,24 +217,46 @@ fn test() {
         "Math.pow(a, b as any)",
         "Math.pow(a as any, b)",
         "Math.pow(a, b) as any",
+        // With comments - no fix should be applied
+        "Math.pow(a, b) + Math.pow(c, /* comment */ d)",
     ];
 
-    // TODO: Implement a fixer.
-    #[expect(clippy::no_effect_underscore_binding)]
-    let _fix = [
-        ("globalThis.Math.pow(a, b)", "a**b", None::<()>),
-        ("globalThis.Math['pow'](a, b)", "a**b", None),
-        (
-            "Math.pow(a, b) + Math.pow(c,
-			 d)",
-            "a**b + c**d",
-            None,
-        ),
-        ("Math.pow(Math.pow(a, b), Math.pow(c, d))", "Math.pow(a, b)**Math.pow(c, d)", None),
-        ("Math.pow(a, b)**Math.pow(c, d)", "(a**b)**c**d", None),
-        ("Math.pow(a, b as any)", "a**(b as any)", None),
-        ("Math.pow(a as any, b)", "(a as any)**b", None),
-        ("Math.pow(a, b) as any", "(a**b) as any", None),
+    let fix = vec![
+        ("globalThis.Math.pow(a, b)", "a ** b"),
+        ("globalThis.Math['pow'](a, b)", "a ** b"),
+        // Nested Math.pow - only fixes outer call first (inner calls remain as arguments)
+        ("Math.pow(Math.pow(a, b), Math.pow(c, d))", "Math.pow(a, b) ** Math.pow(c, d)"),
+        // When Math.pow is the left operand of **, wrap in parens
+        ("Math.pow(a, b)**Math.pow(c, d)", "(a ** b)**c ** d"),
+        // TypeScript: exponent with type assertion needs parens
+        ("Math.pow(a, b as any)", "a ** (b as any)"),
+        // TypeScript: base with type assertion needs parens
+        ("Math.pow(a as any, b)", "(a as any) ** b"),
+        // TypeScript: entire expression cast needs parens around the exponentiation
+        ("Math.pow(a, b) as any", "(a ** b) as any"),
+        // Additional test cases
+        ("Math.pow(a, b)", "a ** b"),
+        ("Math.pow(2, 3)", "2 ** 3"),
+        // Unary expressions in base need parens
+        ("Math.pow(-a, b)", "(-a) ** b"),
+        ("Math.pow(+a, b)", "(+a) ** b"),
+        ("Math.pow(!a, b)", "(!a) ** b"),
+        ("Math.pow(~a, b)", "(~a) ** b"),
+        // Binary expressions with lower precedence need parens
+        ("Math.pow(a + b, c)", "(a + b) ** c"),
+        ("Math.pow(a * b, c)", "(a * b) ** c"),
+        ("Math.pow(a, b + c)", "a ** (b + c)"),
+        ("Math.pow(a, b * c)", "a ** (b * c)"),
+        // Exponentiation in base needs parens (right-associativity)
+        ("Math.pow(a ** b, c)", "(a ** b) ** c"),
+        // Exponentiation in exponent doesn't need parens
+        ("Math.pow(a, b ** c)", "a ** b ** c"),
+        // Identifiers don't need parens
+        ("Math.pow(foo, bar)", "foo ** bar"),
+        // Member expressions don't need parens
+        ("Math.pow(a.b, c.d)", "a.b ** c.d"),
+        // Call expressions don't need parens
+        ("Math.pow(f(), g())", "f() ** g()"),
     ];
 
     Tester::new(
@@ -154,5 +265,6 @@ fn test() {
         pass,
         fail,
     )
+    .expect_fix(fix)
     .test_and_snapshot();
 }

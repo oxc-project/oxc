@@ -327,7 +327,7 @@ impl<'a> ModuleRunnerTransform<'a> {
 
                 // Reuse the `vue` binding identifier by renaming it to `__vite_ssr_import_0__`
                 let mut local = specifier.unbox().local;
-                local.name = self.generate_import_binding_name(ctx);
+                local.name = self.generate_import_binding_name(ctx).into();
                 let binding = BoundIdentifier::from_binding_ident(&local);
                 ctx.scoping_mut().set_symbol_name(binding.symbol_id, &binding.name);
                 self.import_bindings.insert(binding.symbol_id, (binding, None));
@@ -849,7 +849,6 @@ mod test {
     use std::path::Path;
 
     use rustc_hash::FxHashSet;
-    use similar::TextDiff;
 
     use oxc_allocator::Allocator;
     use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
@@ -920,8 +919,7 @@ mod test {
         let expected = format_expected_code(expected);
         let result = transform(source_text, false).unwrap().code;
         if result != expected {
-            let diff = TextDiff::from_lines(&expected, &result);
-            print_diff_in_terminal(&diff);
+            print_diff_in_terminal(&expected, &result);
             panic!("Expected code does not match the result");
         }
     }
@@ -931,8 +929,7 @@ mod test {
         let expected = format_expected_code(expected);
         let result = transform(source_text, true).unwrap().code;
         if result != expected {
-            let diff = TextDiff::from_lines(&expected, &result);
-            print_diff_in_terminal(&diff);
+            print_diff_in_terminal(&expected, &result);
             panic!("Expected code does not match the result");
         }
     }
@@ -943,8 +940,7 @@ mod test {
         let TransformReturn { code, deps: result_deps, dynamic_deps: result_dynamic_deps } =
             transform(source_text, false).unwrap();
         if code != expected {
-            let diff = TextDiff::from_lines(&expected, &code);
-            print_diff_in_terminal(&diff);
+            print_diff_in_terminal(&expected, &code);
             panic!("Expected code does not match the result");
         }
         for dep in deps {

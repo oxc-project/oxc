@@ -91,11 +91,55 @@ impl Generator for AstBuilderGenerator {
             };
 
             ///@@line_break
+            use oxc_span::{Atom, Ident};
+
+            ///@@line_break
             use crate::{AstBuilder, ast::*};
 
             ///@@line_break
             impl<'a> AstBuilder<'a> {
                 #fns
+            }
+
+            ///@@line_break
+            /// Escape special characters for template element raw value.
+            ///
+            /// Escapes: backticks, `${`, backslashes, and carriage returns.
+            fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
+                let bytes = raw.as_bytes();
+                // Calculate size needed for escaped string
+                let mut extra_bytes = 0usize;
+                for i in 0..bytes.len() {
+                    extra_bytes += match bytes[i] {
+                        b'\\' | b'`' | b'\r' => 1,
+                        b'$' if bytes.get(i + 1) == Some(&b'{') => 1,
+                        _ => 0,
+                    };
+                }
+                if extra_bytes == 0 {
+                    return ast.atom(raw);
+                }
+                // Allocate directly in arena
+                let len = bytes.len() + extra_bytes;
+                let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+                let ptr = ast.allocator.alloc_layout(layout);
+                // SAFETY: `ptr` points to `len` bytes of valid memory allocated by the arena.
+                // Input is valid UTF-8, we only escape ASCII bytes, so output is also valid UTF-8.
+                #[expect(clippy::undocumented_unsafe_blocks)]
+                unsafe {
+                    let escaped = std::slice::from_raw_parts_mut(ptr.as_ptr(), len);
+                    let mut j = 0;
+                    for i in 0..bytes.len() {
+                        match bytes[i] {
+                            b'\\' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'\\'; j += 2; }
+                            b'`' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'`'; j += 2; }
+                            b'$' if bytes.get(i + 1) == Some(&b'{') => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'$'; j += 2; }
+                            b'\r' => { *escaped.get_unchecked_mut(j) = b'\\'; *escaped.get_unchecked_mut(j + 1) = b'r'; j += 2; }
+                            b => { *escaped.get_unchecked_mut(j) = b; j += 1; }
+                        }
+                    }
+                    Atom::from(std::str::from_utf8_unchecked(escaped))
+                }
             }
         };
 
@@ -262,13 +306,32 @@ fn generate_builder_methods_for_struct_impl(
 
     let params_docs = generate_doc_comment_for_params(params);
 
+    // Special case for TemplateElement: add `escape_raw` parameter
+    let (extra_params, body) = if struct_name == "TemplateElement" {
+        let extra_params = quote! { , escape_raw: bool };
+        let body = quote! {
+            let value = if escape_raw {
+                TemplateElementValue {
+                    raw: escape_template_element_raw(value.raw.as_str(), self),
+                    cooked: value.cooked,
+                }
+            } else {
+                value
+            };
+            #struct_ident { #fields }
+        };
+        (extra_params, body)
+    } else {
+        (quote! {}, quote! { #struct_ident { #fields } })
+    };
+
     let method = quote! {
         ///@@line_break
         #fn_docs
         #params_docs
         #[inline]
-        pub fn #fn_name #generic_params (self, #fn_params) -> #struct_ty #where_clause {
-            #struct_ident { #fields }
+        pub fn #fn_name #generic_params (self, #fn_params #extra_params) -> #struct_ty #where_clause {
+            #body
         }
     };
 
@@ -345,7 +408,9 @@ fn get_struct_params<'s>(
             }
 
             let generic_details = match type_def {
-                TypeDef::Primitive(primitive_def) if primitive_def.name() == "Atom" => {
+                TypeDef::Primitive(primitive_def)
+                    if matches!(primitive_def.name(), "Atom" | "Ident") =>
+                {
                     atom_generic_count += 1;
                     Some((format_ident!("A{atom_generic_count}"), GenericType::Into))
                 }

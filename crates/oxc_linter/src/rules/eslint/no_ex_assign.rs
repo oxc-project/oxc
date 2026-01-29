@@ -7,7 +7,10 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_ex_assign_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Do not assign to the exception parameter.").with_help("If a catch clause in a try statement accidentally (or purposely) assigns another value to the exception parameter, it is impossible to refer to the error from that point on. Since there is no arguments object to offer alternative access to this data, assignment of the parameter is absolutely destructive.").with_label(span)
+    OxcDiagnostic::warn("Do not assign to the exception parameter.")
+        .with_help("Remove the assignment to the exception parameter, or refactor the code to use a different variable.")
+        .with_note("If code in a catch block assigns a value to the exception parameter, it becomes impossible to refer to the error. Since there is no alternative way to access to this data, assignment of the parameter is absolutely destructive.")
+        .with_label(span.label("this assignment destroys access to the caught exception"))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -79,17 +82,17 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        ("try { } catch (e) { three = 2 + 1; }", None),
-        ("try { } catch ({e}) { this.something = 2; }", None),
-        ("function foo() { try { } catch (e) { return false; } }", None),
+        "try { } catch (e) { three = 2 + 1; }",
+        "try { } catch ({e}) { this.something = 2; }", // { "ecmaVersion": 6 },
+        "function foo() { try { } catch (e) { return false; } }",
     ];
 
     let fail = vec![
-        ("try { } catch (e) { e = 10; }", None),
-        ("try { } catch (ex) { ex = 10; }", None),
-        ("try { } catch (ex) { [ex] = []; }", None),
-        ("try { } catch (ex) { ({x: ex = 0} = {}); }", None),
-        ("try { } catch ({message}) { message = 10; }", None),
+        "try { } catch (e) { e = 10; }",
+        "try { } catch (ex) { ex = 10; }",
+        "try { } catch (ex) { [ex] = []; }", // { "ecmaVersion": 6 },
+        "try { } catch (ex) { ({x: ex = 0} = {}); }", // { "ecmaVersion": 6 },
+        "try { } catch ({message}) { message = 10; }", // { "ecmaVersion": 6 }
     ];
 
     Tester::new(NoExAssign::NAME, NoExAssign::PLUGIN, pass, fail).test_and_snapshot();

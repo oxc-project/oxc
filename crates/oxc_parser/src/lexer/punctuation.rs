@@ -1,4 +1,7 @@
+use oxc_span::Span;
+
 use super::{Kind, Lexer, Token};
+use crate::diagnostics;
 
 impl Lexer<'_> {
     /// Section 12.8 Punctuators
@@ -29,8 +32,21 @@ impl Lexer<'_> {
                 self.consume_char();
                 Some(Kind::LtEq)
             }
-            Some(b'!') if self.source_type.is_script() && self.remaining().starts_with("!--") => {
-                None
+            // `<!--` HTML comment (Annex B.1.1)
+            Some(b'!') if self.remaining().starts_with("!--") => {
+                if self.source_type.is_module() {
+                    if self.token.is_on_new_line() {
+                        let span = Span::new(self.token.start(), self.token.start() + 4);
+                        self.errors.push(diagnostics::html_comment_in_module(span));
+                        None
+                    } else {
+                        // In middle of expression (e.g. `foo <!--bar`) - parse as `<`
+                        Some(Kind::LAngle)
+                    }
+                } else {
+                    self.defer_html_comment_error(4);
+                    None
+                }
             }
             _ => Some(Kind::LAngle),
         }
@@ -41,10 +57,12 @@ impl Lexer<'_> {
         match self.peek_byte() {
             Some(b'-') => {
                 self.consume_char();
+                // `-->` HTML comment (Annex B.1.1) - not recognized in strict mode (.mjs)
                 if self.token.is_on_new_line()
-                    && self.source_type.is_script()
+                    && !self.source_type.is_strict()
                     && self.next_ascii_byte_eq(b'>')
                 {
+                    self.defer_html_comment_error(3);
                     None
                 } else {
                     Some(Kind::Minus2)
@@ -55,6 +73,14 @@ impl Lexer<'_> {
                 Some(Kind::MinusEq)
             }
             _ => Some(Kind::Minus),
+        }
+    }
+
+    /// Defer HTML comment error for unambiguous mode (emitted if file resolves to module)
+    fn defer_html_comment_error(&mut self, len: u32) {
+        if self.source_type.is_unambiguous() {
+            let span = Span::new(self.token.start(), self.token.start() + len);
+            self.deferred_module_errors.push(diagnostics::html_comment_in_module(span));
         }
     }
 

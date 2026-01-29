@@ -205,3 +205,61 @@ TextEdit: TextEdit {
     },
     new_text: "",
 }
+
+
+########### Fix All Action
+CodeAction: 
+Title: quick fix
+Is Preferred: Some(true)
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 2,
+            character: 2,
+        },
+        end: Position {
+            line: 2,
+            character: 11,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 0,
+            character: 2,
+        },
+        end: Position {
+            line: 0,
+            character: 56,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 5,
+            character: 39,
+        },
+        end: Position {
+            line: 5,
+            character: 52,
+        },
+    },
+    new_text: "",
+}
+TextEdit: TextEdit {
+    range: Range {
+        start: Position {
+            line: 8,
+            character: 2,
+        },
+        end: Position {
+            line: 8,
+            character: 52,
+        },
+    },
+    new_text: "",
+}

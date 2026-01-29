@@ -33,6 +33,7 @@ fn main() -> Result<(), String> {
         newlines_between,
         internal_pattern: default_internal_patterns(),
         groups: default_groups(),
+        custom_groups: vec![],
     };
 
     // Read source file

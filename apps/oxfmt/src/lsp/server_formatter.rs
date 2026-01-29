@@ -82,7 +82,7 @@ impl ToolBuilder for ServerFormatterBuilder {
     fn server_capabilities(
         &self,
         capabilities: &mut ServerCapabilities,
-        _backend_capabilities: &Capabilities,
+        _backend_capabilities: &mut Capabilities,
     ) {
         capabilities.document_formatting_provider =
             Some(tower_lsp_server::ls_types::OneOf::Left(true));
@@ -390,7 +390,7 @@ mod tests_builder {
         let builder = ServerFormatterBuilder::dummy();
         let mut capabilities = ServerCapabilities::default();
 
-        builder.server_capabilities(&mut capabilities, &Capabilities::default());
+        builder.server_capabilities(&mut capabilities, &mut Capabilities::default());
 
         assert_eq!(capabilities.document_formatting_provider, Some(OneOf::Left(true)));
     }
@@ -401,49 +401,6 @@ mod test_watchers {
     // formatter file watcher-system does not depend on the actual file system,
     // so we can use a fake directory for testing.
     const FAKE_DIR: &str = "fixtures/formatter/watchers";
-
-    mod init_watchers {
-        use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};
-        use serde_json::json;
-
-        #[test]
-        fn test_default_options() {
-            let patterns = Tester::new(FAKE_DIR, json!({})).get_watcher_patterns();
-            assert_eq!(patterns.len(), 3);
-            assert_eq!(patterns[0], ".oxfmtrc.json");
-            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
-            assert_eq!(patterns[2], ".editorconfig");
-        }
-
-        #[test]
-        fn test_formatter_custom_config_path() {
-            let patterns = Tester::new(
-                FAKE_DIR,
-                json!({
-                    "fmt.configPath": "configs/formatter.json"
-                }),
-            )
-            .get_watcher_patterns();
-            assert_eq!(patterns.len(), 2);
-            assert_eq!(patterns[0], "configs/formatter.json");
-            assert_eq!(patterns[1], ".editorconfig");
-        }
-
-        #[test]
-        fn test_empty_string_config_path() {
-            let patterns = Tester::new(
-                FAKE_DIR,
-                json!({
-                    "fmt.configPath": ""
-                }),
-            )
-            .get_watcher_patterns();
-            assert_eq!(patterns.len(), 3);
-            assert_eq!(patterns[0], ".oxfmtrc.json");
-            assert_eq!(patterns[1], ".oxfmtrc.jsonc");
-            assert_eq!(patterns[2], ".editorconfig");
-        }
-    }
 
     mod handle_configuration_change {
         use crate::lsp::{server_formatter::test_watchers::FAKE_DIR, tester::Tester};

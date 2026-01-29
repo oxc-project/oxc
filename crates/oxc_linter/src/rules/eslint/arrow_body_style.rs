@@ -1,3 +1,5 @@
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use oxc_ast::{
@@ -13,7 +15,7 @@ use crate::{
     AstNode,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
-    rule::Rule,
+    rule::{Rule, TupleRuleConfig},
 };
 
 fn expected_block_diagnostic(span: Span) -> OxcDiagnostic {
@@ -39,7 +41,8 @@ fn unexpected_block_with_unknown_help_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected block statement surrounding arrow body.").with_label(span)
 }
 
-#[derive(Debug, Default, PartialEq, Clone)]
+#[derive(Debug, Default, PartialEq, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 enum Mode {
     #[default]
     AsNeeded,
@@ -47,19 +50,13 @@ enum Mode {
     Never,
 }
 
-impl Mode {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => Self::Always,
-            "never" => Self::Never,
-            _ => Self::AsNeeded,
-        }
-    }
-}
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(default)]
+pub struct ArrowBodyStyle(Mode, ArrowBodyStyleConfig);
 
-#[derive(Debug, Default, Clone)]
-pub struct ArrowBodyStyle {
-    mode: Mode,
+#[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct ArrowBodyStyleConfig {
     require_return_for_object_literal: bool,
 }
 
@@ -178,7 +175,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule with the `{ "requireReturnForObjectLiteral": true }` option:
     /// ```js
-    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
+    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }] */
     ///
     /// /* ✘ Bad: */
     /// const foo = () => ({});
@@ -187,7 +184,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule with the `{ "requireReturnForObjectLiteral": true }` option:
     /// ```js
-    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }]*/
+    /// /* arrow-body-style: ["error", "as-needed", { "requireReturnForObjectLiteral": true }] */
     ///
     /// /* ✔ Good: */
     /// const foo = () => {};
@@ -197,19 +194,12 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
+    config = ArrowBodyStyle,
 );
 
 impl Rule for ArrowBodyStyle {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let mode = value.get(0).and_then(Value::as_str).map(Mode::from).unwrap_or_default();
-
-        let require_return_for_object_literal = value
-            .get(1)
-            .and_then(|v| v.get("requireReturnForObjectLiteral"))
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
-
-        Ok(Self { mode, require_return_for_object_literal })
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -234,11 +224,12 @@ impl ArrowBodyStyle {
         arrow_func_expr: &ArrowFunctionExpression<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let ArrowBodyStyle(mode, config) = self;
         let inner_expr = arrow_func_expr.get_expression().map(Expression::get_inner_expression);
 
-        let should_report = self.mode == Mode::Always
-            || (self.mode == Mode::AsNeeded
-                && self.require_return_for_object_literal
+        let should_report = *mode == Mode::Always
+            || (*mode == Mode::AsNeeded
+                && config.require_return_for_object_literal
                 && matches!(inner_expr, Some(Expression::ObjectExpression(_))));
 
         if !should_report {
@@ -260,9 +251,10 @@ impl ArrowBodyStyle {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
+        let ArrowBodyStyle(mode, _config) = &self;
         let body = &arrow_func_expr.body;
 
-        match self.mode {
+        match mode {
             Mode::Never => {
                 // Mode::Never: report any block body
                 if body.statements.is_empty() {
@@ -288,7 +280,7 @@ impl ArrowBodyStyle {
             Mode::AsNeeded if body.statements.len() == 1 => {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
                     // Skip if requireReturnForObjectLiteral and returning an object
-                    if self.require_return_for_object_literal
+                    if self.1.require_return_for_object_literal
                         && matches!(
                             return_statement.argument,
                             Some(Expression::ObjectExpression(_))

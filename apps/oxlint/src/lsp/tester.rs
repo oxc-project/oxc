@@ -2,8 +2,8 @@ use std::{fmt::Write, path::PathBuf};
 
 use oxc_language_server::{DiagnosticResult, Tool, ToolRestartChanges};
 use tower_lsp_server::ls_types::{
-    CodeAction, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString, Position, Range,
-    Uri,
+    CodeAction, CodeActionKind, CodeActionOrCommand, CodeDescription, Diagnostic, NumberOrString,
+    Position, Range, Uri,
 };
 
 use crate::lsp::server_linter::{ServerLinter, ServerLinterBuilder};
@@ -157,6 +157,8 @@ fn get_snapshot_from_report(report: &FileResult) -> String {
         "########## Diagnostic Reports
 {}
 ########### Code Actions/Commands
+{}
+########### Fix All Action
 {}",
         get_snapshot_from_diagnostic_result(diagnostics),
         report
@@ -165,6 +167,10 @@ fn get_snapshot_from_report(report: &FileResult) -> String {
             .map(get_snapshot_from_code_action_or_command)
             .collect::<Vec<_>>()
             .join("\n"),
+        report
+            .fix_all_action
+            .as_ref()
+            .map_or_else(|| "None".to_string(), get_snapshot_from_code_action_or_command)
     )
 }
 
@@ -177,6 +183,7 @@ pub struct Tester<'t> {
 struct FileResult {
     diagnostic: DiagnosticResult,
     actions: Vec<CodeActionOrCommand>,
+    fix_all_action: Option<CodeActionOrCommand>,
 }
 
 impl Tester<'_> {
@@ -214,6 +221,14 @@ impl Tester<'_> {
                     &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
                     None,
                 ),
+                fix_all_action: linter
+                    .get_code_actions_or_commands(
+                        &uri,
+                        &Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX)),
+                        Some(&vec![CodeActionKind::SOURCE_FIX_ALL]),
+                    )
+                    .into_iter()
+                    .next(),
             };
 
             let _ = write!(

@@ -59,7 +59,7 @@ declare_oxc_lint!(
     PreferReduceTypeParameter(tsgolint),
     typescript,
     style,
-    pending,
+    fix,
 );
 
 impl Rule for PreferReduceTypeParameter {}

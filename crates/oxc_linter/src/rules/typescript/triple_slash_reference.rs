@@ -21,7 +21,7 @@ fn triple_slash_reference_diagnostic(ref_kind: &str, span: Span) -> OxcDiagnosti
 pub struct TripleSlashReference(Box<TripleSlashReferenceConfig>);
 
 #[derive(Debug, Clone, Default, Deserialize, Serialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct TripleSlashReferenceConfig {
     /// What to enforce for `/// <reference lib="..." />` references.
     lib: LibOption,
@@ -102,9 +102,7 @@ declare_oxc_lint!(
 
 impl Rule for TripleSlashReference {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -145,8 +143,7 @@ impl Rule for TripleSlashReference {
                             }
                         }
                         TSModuleReference::IdentifierReference(_)
-                        | TSModuleReference::QualifiedName(_)
-                        | TSModuleReference::ThisExpression(_) => {}
+                        | TSModuleReference::QualifiedName(_) => {}
                     },
                     Statement::ImportDeclaration(decl) => {
                         if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {

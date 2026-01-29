@@ -22,7 +22,7 @@ fn self_closing_comp_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct SelfClosingComp {
     /// Whether to enforce self-closing for custom components.
     component: bool,
@@ -77,9 +77,7 @@ declare_oxc_lint!(
 
 impl Rule for SelfClosingComp {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -357,6 +355,7 @@ fn test() {
             Some(serde_json::json!([{ "html": true }])),
         ),
     ];
+
     Tester::new(SelfClosingComp::NAME, SelfClosingComp::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();

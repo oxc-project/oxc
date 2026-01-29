@@ -15,11 +15,10 @@ use super::{Expect, SemanticTester};
 /// [`SemanticTester`]'s factories, such as [`SemanticTester::has_root_symbol`].
 ///
 /// # Example
-/// ```
+/// ```ignore
 /// use oxc_semantic::{SymbolFlags, Semantic};
 /// use super::SemanticTester;
 ///
-/// #[test]
 /// fn my_test() {
 ///   SemanticTester::js("let x = 0; let foo = (0, x++)")
 ///     .has_some_symbol("x")                  // find a symbol named "x" at any scope

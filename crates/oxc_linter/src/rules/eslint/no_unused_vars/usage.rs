@@ -466,7 +466,7 @@ impl<'a> Symbol<'_, 'a> {
                                 //   cancel = cancel?.();  // `cancel` is used
                                 // }
                                 // ```
-                                if self.get_parent_variable_scope(self.get_ref_scope(reference))
+                                if self.get_parent_variable_scope(Symbol::get_ref_scope(reference))
                                     != self.get_parent_variable_scope(self.scope_id())
                                 {
                                     return false;
@@ -831,8 +831,8 @@ impl<'a> Symbol<'_, 'a> {
 
     /// Get the [`ScopeId`] where a [`Reference`] is located.
     #[inline]
-    fn get_ref_scope(&self, reference: &Reference) -> ScopeId {
-        self.nodes().get_node(reference.node_id()).scope_id()
+    fn get_ref_scope(reference: &Reference) -> ScopeId {
+        reference.scope_id()
     }
 
     /// Get the [`Span`] covering the [`AstNode`] containing a [`Reference`].

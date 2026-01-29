@@ -324,9 +324,9 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
             return;
         }
 
-        let hook_name = match &call_expr.callee {
-            Expression::Identifier(ident) => ident.name,
-            Expression::StaticMemberExpression(member) => member.property.name,
+        let hook_name: Atom = match &call_expr.callee {
+            Expression::Identifier(ident) => ident.name.into(),
+            Expression::StaticMemberExpression(member) => member.property.name.into(),
             _ => return,
         };
 
@@ -336,11 +336,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
-            let (binding_name, is_member_expression) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name), false),
+            let (binding_name, is_member_expression): (Option<Atom>, _) = match &call_expr.callee {
+                Expression::Identifier(ident) => (Some(ident.name.into()), false),
                 Expression::StaticMemberExpression(member) => {
                     if let Expression::Identifier(object) = &member.object {
-                        (Some(object.name), true)
+                        (Some(object.name.into()), true)
                     } else {
                         (None, false)
                     }
@@ -529,9 +529,9 @@ impl<'a> ReactRefresh<'a, '_> {
         id: &BindingIdentifier<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
-        let left = self.create_registration(id.name, ctx);
+        let left = self.create_registration(id.name.into(), ctx);
         let right =
-            ctx.create_bound_ident_expr(SPAN, id.name, id.symbol_id(), ReferenceFlags::Read);
+            ctx.create_bound_ident_expr(SPAN, id.name.into(), id.symbol_id(), ReferenceFlags::Read);
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }

@@ -472,6 +472,10 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
+        if let Some(modifier) = modifiers.iter().find(|m| m.kind == ModifierKind::Declare) {
+            self.error(diagnostics::declare_constructor(modifier.span));
+        }
+
         let value = self.parse_method(
             modifiers.contains(ModifierKind::Async),
             false,
@@ -710,7 +714,7 @@ impl<'a> ParserImpl<'a> {
                 function.params.parameters_count(),
             ));
         } else if self.is_ts && function.params.items.first().unwrap().initializer.is_some() {
-            self.error(diagnostics::setter_with_assignment_pattern(function.params.span));
+            self.error(diagnostics::setter_with_initializer(function.params.span));
         }
     }
 
@@ -733,6 +737,12 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::constructor_generator(span));
                 }
             }
+        }
+
+        if self.ctx.has_ambient()
+            && let Some(body) = &method.value.body
+        {
+            self.error(diagnostics::implementation_in_ambient(Span::empty(body.span.start)));
         }
     }
 
@@ -775,6 +785,11 @@ impl<'a> ParserImpl<'a> {
         if let Some(type_sig) = &method.value.type_parameters {
             // class Foo { constructor<T>(param: T ) {} }
             self.error(diagnostics::ts_constructor_type_parameter(type_sig.span));
+        }
+        if method.value.body.is_some()
+            && let Some(return_type) = &method.value.return_type
+        {
+            self.error(diagnostics::constructor_return_type(return_type.span));
         }
     }
 }

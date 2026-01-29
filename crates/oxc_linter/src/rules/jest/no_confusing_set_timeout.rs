@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// - being called after other Jest functions like hooks, `describe`, `test`, or `it`
     ///
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// All of these are invalid case:
     /// ```javascript

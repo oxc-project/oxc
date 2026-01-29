@@ -36,13 +36,17 @@ pub struct RawTransferMetadata {
     pub data_offset: u32,
     /// `true` if AST is TypeScript.
     pub is_ts: bool,
+    /// This field always contains `false` in parser. It's only used in linter.
+    pub is_jsx: bool,
+    /// This field always contains `false` in parser. It's only used in linter.
+    pub has_bom: bool,
     /// Padding to pad struct to size 16.
     pub(crate) _padding: u64,
 }
 
 impl RawTransferMetadata {
     pub fn new(data_offset: u32, is_ts: bool) -> Self {
-        Self { data_offset, is_ts, _padding: 0 }
+        Self { data_offset, is_ts, is_jsx: false, has_bom: false, _padding: 0 }
     }
 }
 

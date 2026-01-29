@@ -1,7 +1,7 @@
 [alias]
 # Do not append `--` or it will break IDEs
-ck = "check --workspace --all-features --all-targets --locked"
-lint = "clippy --workspace --all-targets --all-features"
+ck = "check --all-features --all-targets --locked"
+lint = "clippy --all-targets --all-features"
 # Skip `tasks/website` due to linker errors with `oxlint`
 codecov = "llvm-cov --workspace --ignore-filename-regex tasks --exclude website"
 coverage = "run -p oxc_coverage --profile coverage --"

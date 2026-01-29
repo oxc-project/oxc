@@ -1,4 +1,4 @@
-import type { Node, Plugin, Rule } from "#oxlint";
+import type { Node, Plugin, Rule } from "#oxlint/plugin";
 
 const SPAN: Node = {
   start: 0,
@@ -20,12 +20,10 @@ const alwaysRunRule: Rule = {
     // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
-    // Check that these APIs don't throw here
-    const { cwd } = context;
-    const getCwd = context.getCwd();
-
     // Check that these APIs throw here
     const idError = tryCatch(() => context.id);
+    const cwdError = tryCatch(() => context.cwd);
+    const getCwdError = tryCatch(() => context.getCwd());
     const filenameError = tryCatch(() => context.filename);
     const getFilenameError = tryCatch(() => context.getFilename());
     const physicalFilenameError = tryCatch(() => context.physicalFilename);
@@ -35,6 +33,7 @@ const alwaysRunRule: Rule = {
     const getSourceCodeError = tryCatch(() => context.getSourceCode());
     const settingsError = tryCatch(() => context.settings);
     const parserOptionsError = tryCatch(() => context.parserOptions);
+    const parserPathError = tryCatch(() => context.parserPath);
     const reportError = tryCatch(() => context.report({ message: "oh no", node: SPAN }));
 
     return {
@@ -44,8 +43,11 @@ const alwaysRunRule: Rule = {
           message: `createOnce: this === rule: ${topLevelThis === alwaysRunRule}`,
           node: SPAN,
         });
-        context.report({ message: `createOnce: cwd: ${cwd}`, node: SPAN });
-        context.report({ message: `createOnce: getCwd(): ${getCwd}`, node: SPAN });
+        context.report({ message: `createOnce: cwd error: ${cwdError?.message}`, node: SPAN });
+        context.report({
+          message: `createOnce: getCwd() error: ${getCwdError?.message}`,
+          node: SPAN,
+        });
         context.report({ message: `createOnce: id error: ${idError?.message}`, node: SPAN });
         context.report({
           message: `createOnce: filename error: ${filenameError?.message}`,
@@ -81,6 +83,10 @@ const alwaysRunRule: Rule = {
         });
         context.report({
           message: `createOnce: parserOptions error: ${parserOptionsError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: parserPath error: ${parserPathError?.message}`,
           node: SPAN,
         });
         context.report({
