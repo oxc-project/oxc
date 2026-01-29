@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -50,92 +50,23 @@ declare_oxc_lint!(
     fix,
 );
 
-fn is_vitest_require_declaration(declaration: &VariableDeclarator<'_>) -> bool {
-    let Some(Expression::CallExpression(call_expr)) = &declaration.init else {
-        return false;
-    };
-
-    if !call_expr.is_require_call() {
-        return false;
-    }
-
-    let Some(Argument::StringLiteral(require_import)) = call_expr.arguments.first() else {
-        return false;
-    };
-
-    if require_import.value.as_str() != "vitest" {
-        return false;
-    }
-
-    if declaration.id.is_binding_identifier() {
-        return false;
-    }
-
-    true
-}
-
 impl Rule for NoImportingVitestGlobals {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let mut spans: Vec<Span> = vec![];
-        let mut new_imports: Vec<String> = vec![];
-        let mut span_start_specifiers: u32 = u32::MAX;
-        let mut span_end_specifiers: u32 = u32::MIN;
-
         match node.kind() {
             AstKind::VariableDeclaration(variable_declarations) => {
-                let mut new_declarations: Vec<DeclarationRenderType> = vec![];
-                for declaration in &variable_declarations.declarations {
-                    if !is_vitest_require_declaration(declaration) {
-                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
-                        continue;
-                    }
-
-                    let BindingPattern::ObjectPattern(obj) = &declaration.id else {
-                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
-                        continue;
-                    };
-
-                    if obj.rest.is_some() {
-                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
-                        continue;
-                    }
-
-                    if obj
-                        .properties
-                        .iter()
-                        .any(|property| property.key.is_specific_static_name("default"))
-                    {
-                        new_declarations.push(DeclarationRenderType::NoVitest(declaration.span));
-
-                        continue;
-                    }
-
-                    let mut global_vitest_spans: Vec<Span> = vec![];
-                    let mut non_global_vitest_import: Vec<String> = vec![];
-
-                    for property in &obj.properties {
-                        let Some(property_name) = property.key.static_name() else {
-                            continue;
-                        };
-
-                        if VITEST_GLOBALS.contains(&property_name.as_ref()) {
-                            global_vitest_spans.push(property.span);
-                        } else {
-                            non_global_vitest_import
-                                .push(ctx.source_range(property.span).to_string());
+                let declaration_processed = variable_declarations
+                    .declarations
+                    .iter()
+                    .map(|declaration| {
+                        if !is_vitest_require_declaration(declaration) {
+                            return DeclarationRenderType::NoVitest(declaration.span);
                         }
-                    }
 
-                    let remove_declaration = non_global_vitest_import.len() == 0;
+                        process_declaration(declaration, ctx)
+                    })
+                    .collect::<Vec<DeclarationRenderType>>();
 
-                    new_declarations.push(DeclarationRenderType::Vitest(VitestRequire {
-                        remove_fully: remove_declaration,
-                        global_vitest_spans,
-                        non_global_vitest_import,
-                    }));
-                }
-
-                let Some(DeclarationRenderType::Vitest(vitest_require)) = &new_declarations
+                let Some(DeclarationRenderType::Vitest(vitest_require)) = &declaration_processed
                     .iter()
                     .find(|value| matches!(value, DeclarationRenderType::Vitest(_)))
                 else {
@@ -152,7 +83,7 @@ impl Rule for NoImportingVitestGlobals {
                             _ => return fixer.noop(),
                         };
 
-                        let declarations = new_declarations
+                        let declarations = declaration_processed
                             .iter()
                             .filter_map(|declaration| match declaration {
                                 DeclarationRenderType::NoVitest(span) => {
@@ -192,6 +123,21 @@ impl Rule for NoImportingVitestGlobals {
                     return;
                 };
 
+                let Some(span_start) =
+                    specifiers.first().map(|specifier| GetSpan::span(specifier).start)
+                else {
+                    return;
+                };
+
+                let Some(span_end) =
+                    specifiers.last().map(|specifier| GetSpan::span(specifier).end)
+                else {
+                    return;
+                };
+
+                let mut spans: Vec<Span> = vec![];
+                let mut new_imports: Vec<String> = vec![];
+
                 for import_specifier in specifiers {
                     match import_specifier {
                         ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
@@ -199,9 +145,6 @@ impl Rule for NoImportingVitestGlobals {
                             continue;
                         }
                         ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                            span_start_specifiers = span_start_specifiers.min(specifier.span.start);
-                            span_end_specifiers = span_end_specifiers.max(specifier.span.end);
-
                             if specifier.import_kind == ImportOrExportKind::Type {
                                 new_imports.push(ctx.source_range(specifier.span).to_string());
                                 continue;
@@ -230,8 +173,7 @@ impl Rule for NoImportingVitestGlobals {
 
                             let import_text = new_imports.join(", ");
 
-                            let specifiers_span =
-                                Span::new(span_start_specifiers, span_end_specifiers);
+                            let specifiers_span = Span::new(span_start, span_end);
 
                             fixer.replace(specifiers_span, import_text)
                         },
@@ -241,6 +183,70 @@ impl Rule for NoImportingVitestGlobals {
             _ => return,
         }
     }
+}
+
+fn is_vitest_require_declaration(declaration: &VariableDeclarator<'_>) -> bool {
+    let Some(Expression::CallExpression(call_expr)) = &declaration.init else {
+        return false;
+    };
+
+    if !call_expr.is_require_call() {
+        return false;
+    }
+
+    let Some(Argument::StringLiteral(require_import)) = call_expr.arguments.first() else {
+        return false;
+    };
+
+    if require_import.value.as_str() != "vitest" {
+        return false;
+    }
+
+    if declaration.id.is_binding_identifier() {
+        return false;
+    }
+
+    true
+}
+
+fn process_declaration(
+    declaration: &VariableDeclarator<'_>,
+    ctx: &LintContext<'_>,
+) -> DeclarationRenderType {
+    let BindingPattern::ObjectPattern(obj) = &declaration.id else {
+        return DeclarationRenderType::NoVitest(declaration.span);
+    };
+
+    if obj.rest.is_some() {
+        return DeclarationRenderType::NoVitest(declaration.span);
+    }
+
+    if obj.properties.iter().any(|property| property.key.is_specific_static_name("default")) {
+        return DeclarationRenderType::NoVitest(declaration.span);
+    }
+
+    let mut global_vitest_spans: Vec<Span> = vec![];
+    let mut non_global_vitest_import: Vec<String> = vec![];
+
+    for property in &obj.properties {
+        let Some(property_name) = property.key.static_name() else {
+            continue;
+        };
+
+        if VITEST_GLOBALS.contains(&property_name.as_ref()) {
+            global_vitest_spans.push(property.span);
+        } else {
+            non_global_vitest_import.push(ctx.source_range(property.span).to_string());
+        }
+    }
+
+    let remove_declaration = non_global_vitest_import.len() == 0;
+
+    DeclarationRenderType::Vitest(VitestImport {
+        remove_fully: remove_declaration,
+        global_vitest_spans,
+        non_global_vitest_import,
+    })
 }
 
 const VITEST_GLOBALS: [&str; 17] = [
@@ -264,7 +270,7 @@ const VITEST_GLOBALS: [&str; 17] = [
 ];
 
 #[derive(Debug, PartialEq, Eq)]
-struct VitestRequire {
+struct VitestImport {
     remove_fully: bool,
     global_vitest_spans: Vec<Span>,
     non_global_vitest_import: Vec<String>,
@@ -273,13 +279,8 @@ struct VitestRequire {
 #[derive(Debug, PartialEq, Eq)]
 enum DeclarationRenderType {
     NoVitest(Span),
-    Vitest(VitestRequire),
+    Vitest(VitestImport),
 }
-
-/*
- * TODO
- * Test: multiples require
- */
 
 #[test]
 fn test() {
