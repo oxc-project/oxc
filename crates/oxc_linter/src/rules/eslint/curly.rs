@@ -983,6 +983,25 @@ fn test() {
         ("if (foo) /* {{ nested }} */ bar()", Some(serde_json::json!(["multi-line"]))),
         ("while (foo) /* [brackets] */ bar()", Some(serde_json::json!(["multi-line"]))),
         ("for (;;) /* (parens) { braces } */ bar()", Some(serde_json::json!(["multi-line"]))),
+        // Test cases for trailing comments on previous line - should NOT trigger curly error
+        // Issue #13352: false positive when one-liner conditionals have trailing comments
+        (
+            "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root); // Lexical\nelse text = extractTextFromDraftJS(rt); // DraftJS",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        (
+            "if (foo) bar(); // comment\nelse baz();",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        (
+            "if (foo) bar(); // comment on if\nelse if (bar) baz(); // comment on else if\nelse qux();",
+            Some(serde_json::json!(["multi-line"])),
+        ),
+        // From issue comment - exact reproduction case
+        (
+            "if (bar < 2) foo = 1 // comment 1\nelse if (bar > 3) foo = 2 // comment 2\nelse foo = 3 // comment 3",
+            Some(serde_json::json!(["multi-line"])),
+        ),
     ];
 
     let fail = vec![
