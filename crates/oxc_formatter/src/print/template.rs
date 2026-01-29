@@ -5,6 +5,7 @@ use std::cmp;
 use oxc_allocator::{Allocator, StringBuilder, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{
     IndentWidth,
@@ -821,7 +822,7 @@ fn format_embedded_template<'a>(
     // - Closing backtick
     let format_content = format_with(|f: &mut Formatter<'_, 'a>| {
         let content = f.context().allocator().alloc_str(&formatted);
-        for line in content.split('\n') {
+        for line in LineTerminatorSplitter::new(content) {
             if line.is_empty() {
                 write!(f, [empty_line()]);
             } else {
