@@ -4216,7 +4216,10 @@ impl RuleRunner for crate::rules::vitest::no_import_node_test::NoImportNodeTest 
 }
 
 impl RuleRunner for crate::rules::vitest::no_importing_vitest_globals::NoImportingVitestGlobals {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ImportDeclaration,
+        AstType::VariableDeclaration,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
