@@ -138,11 +138,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSUnionType<'a>> {
                 f,
                 [
                     ((has_own_line_comment && !only_type)
-                        || (has_end_of_line_comment && only_type))
-                        .then(soft_line_break),
+                        || (has_end_of_line_comment
+                            && (only_type
+                                || matches!(self.parent(), AstNodes::TSTypeAliasDeclaration(_)))))
+                    .then(soft_line_break),
                     FormatLeadingComments::Comments(leading_comments),
-                    (!has_end_of_line_comment && has_own_line_comment && only_type)
-                        .then(soft_line_break),
+                    (!has_end_of_line_comment && has_own_line_comment).then(soft_line_break),
                     group(&content)
                 ]
             );
