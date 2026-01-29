@@ -40,7 +40,13 @@ impl<'a> ParserImpl<'a> {
     /// Get current Kind
     #[inline]
     pub(crate) fn cur_kind(&self) -> Kind {
-        self.token.kind()
+        self.token_kind
+    }
+
+    #[inline]
+    pub(crate) fn set_token(&mut self, token: Token) {
+        self.token_kind = token.kind();
+        self.token = token;
     }
 
     /// Get current source text
@@ -102,14 +108,16 @@ impl<'a> ParserImpl<'a> {
             self.report_escaped_keyword(self.token.span());
         }
         self.prev_token_end = self.token.end();
-        self.token = self.lexer.next_token();
+        let token = self.lexer.next_token();
+        self.set_token(token);
     }
 
     /// Move to the next `JSXChild`
     /// Checks if the current token is escaped if it is a keyword
     pub(crate) fn advance_for_jsx_child(&mut self) {
         self.prev_token_end = self.token.end();
-        self.token = self.lexer.next_jsx_child();
+        let token = self.lexer.next_jsx_child();
+        self.set_token(token);
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
@@ -236,21 +244,22 @@ impl<'a> ParserImpl<'a> {
     /// Tell lexer to read a regex
     pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
         let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind());
-        self.token = token;
+        self.set_token(token);
         (pattern_end, flags, flags_error)
     }
 
     /// Tell lexer to read a template substitution tail
     pub(crate) fn re_lex_template_substitution_tail(&mut self) {
         if self.at(Kind::RCurly) {
-            self.token = self.lexer.next_template_substitution_tail();
+            let token = self.lexer.next_template_substitution_tail();
+            self.set_token(token);
         }
     }
 
     /// Tell lexer to continue reading jsx identifier if the lexer character position is at `-` for `<component-name>`
     pub(crate) fn continue_lex_jsx_identifier(&mut self) {
         if let Some(token) = self.lexer.continue_lex_jsx_identifier() {
-            self.token = token;
+            self.set_token(token);
         }
     }
 
@@ -261,8 +270,9 @@ impl<'a> ParserImpl<'a> {
         }
         let kind = self.cur_kind();
         if kind == Kind::RAngle {
-            self.token = self.lexer.re_lex_right_angle();
-            self.token.kind()
+            let token = self.lexer.re_lex_right_angle();
+            self.set_token(token);
+            self.cur_kind()
         } else {
             kind
         }
@@ -274,10 +284,12 @@ impl<'a> ParserImpl<'a> {
         }
         let kind = self.cur_kind();
         if kind == Kind::ShiftLeft || kind == Kind::LtEq {
-            self.token = self.lexer.re_lex_as_typescript_l_angle(2);
+            let token = self.lexer.re_lex_as_typescript_l_angle(2);
+            self.set_token(token);
             true
         } else if kind == Kind::ShiftLeftEq {
-            self.token = self.lexer.re_lex_as_typescript_l_angle(3);
+            let token = self.lexer.re_lex_as_typescript_l_angle(3);
+            self.set_token(token);
             true
         } else {
             kind == Kind::LAngle
@@ -290,10 +302,12 @@ impl<'a> ParserImpl<'a> {
         }
         let kind = self.cur_kind();
         if kind == Kind::ShiftRight {
-            self.token = self.lexer.re_lex_as_typescript_r_angle(2);
+            let token = self.lexer.re_lex_as_typescript_r_angle(2);
+            self.set_token(token);
             true
         } else if kind == Kind::ShiftRight3 {
-            self.token = self.lexer.re_lex_as_typescript_r_angle(3);
+            let token = self.lexer.re_lex_as_typescript_r_angle(3);
+            self.set_token(token);
             true
         } else {
             kind == Kind::RAngle
@@ -325,7 +339,7 @@ impl<'a> ParserImpl<'a> {
             checkpoint;
 
         self.lexer.rewind(lexer);
-        self.token = cur_token;
+        self.set_token(cur_token);
         self.prev_token_end = prev_span_end;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;

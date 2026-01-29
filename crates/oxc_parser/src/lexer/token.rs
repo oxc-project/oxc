@@ -94,7 +94,8 @@ impl Token {
 
     #[inline]
     pub fn start(&self) -> u32 {
-        ((self.0 >> START_SHIFT) & START_MASK) as u32
+        // SAFETY: `START_SHIFT` is aligned and points at the `u32` start field.
+        unsafe { self.read_u32(START_SHIFT) }
     }
 
     #[inline]
@@ -105,7 +106,8 @@ impl Token {
 
     #[inline]
     pub fn end(&self) -> u32 {
-        ((self.0 >> END_SHIFT) & END_MASK) as u32
+        // SAFETY: `END_SHIFT` is aligned and points at the `u32` end field.
+        unsafe { self.read_u32(END_SHIFT) }
     }
 
     #[inline]
@@ -237,6 +239,26 @@ impl Token {
             debug_assert!(*field_ptr.cast::<u8>() <= 1);
             *field_ptr.as_ref().unwrap_unchecked()
         }
+    }
+
+    /// Read `u32` from 32 bits starting at bit position `shift`.
+    ///
+    /// # SAFETY
+    ///
+    /// `shift` must be the location of a valid `u32` field in [`Token`]
+    /// e.g. `START_SHIFT` or `END_SHIFT`.
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // So `shift` is statically known
+    unsafe fn read_u32(&self, shift: usize) -> u32 {
+        // Byte offset depends on endianness of the system.
+        // For big-endian, the low 32 bits start 4 bytes before the end.
+        let offset = if cfg!(target_endian = "little") {
+            shift / 8
+        } else {
+            (u128::BITS as usize / 8 - 4) - (shift / 8)
+        };
+        // SAFETY: Caller guarantees `shift` points to valid `u32`.
+        unsafe { *ptr::from_ref(self).cast::<u32>().add(offset / 4) }
     }
 }
 
