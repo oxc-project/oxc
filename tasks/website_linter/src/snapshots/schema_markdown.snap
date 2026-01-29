@@ -36,7 +36,14 @@ Example
   "globals": {
     "foo": "readonly"
   },
-  "settings": {},
+  "settings": {
+    "react": {
+      "version": "18.2.0"
+    },
+    "custom": {
+      "option": true
+    }
+  },
   "rules": {
     "eqeqeq": "warn",
     "import/no-cycle": "error",
