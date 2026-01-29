@@ -14,35 +14,50 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_importing_vitest_globals_diagnostic(spans: &[Span]) -> OxcDiagnostic {
-    // See <https://oxc.rs/docs/contribute/linter/adding-rules.html#diagnostics> for details
-    OxcDiagnostic::warn("Should be an imperative statement about what is wrong.")
-        .with_help("Should be a command-like statement that tells the user how to fix the issue.")
+    let help = format!("You can import anything except `{}`.", VITEST_GLOBALS.join(", "));
+
+    OxcDiagnostic::warn("Do not import/require global functions from 'vitest'.")
+        .with_help(help)
         .with_labels(spans.iter().map(|span| span.label("Remove this global vitest import")))
 }
 
 #[derive(Debug, Default, Clone)]
 pub struct NoImportingVitestGlobals;
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// The rule disallows import any vitest global function.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// If the project is configured to use globals from vitest, the rule ensure
+    /// that never imports the globals from `import` or `require`.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// import { test, expect } from 'vitest'
+    ///
+    /// test('foo', () => {
+    ///   expect(1).toBe(1)
+    /// })
+    /// ```
+    ///
+    /// ```js
+    /// const { test, expect } = require('vitest')
+    ///
+    /// test('foo', () => {
+    ///   expect(1).toBe(1)
+    /// })
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// test('foo', () => {
+    ///   expect(1).toBe(1)
+    /// })
     /// ```
     NoImportingVitestGlobals,
     vitest,
@@ -97,7 +112,7 @@ impl Rule for NoImportingVitestGlobals {
 
                                     let new_vitest_declaration = format!(
                                         "{{ {} }} = require('vitest')",
-                                        vitest_require.non_global_vitest_import.join(", ")
+                                        vitest_require.non_global_imports.join(", ")
                                     );
                                     Some(new_vitest_declaration)
                                 }
@@ -141,9 +156,7 @@ impl Rule for NoImportingVitestGlobals {
                 for import_specifier in specifiers {
                     match import_specifier {
                         ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
-                        | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                            continue;
-                        }
+                        | ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {}
                         ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                             if specifier.import_kind == ImportOrExportKind::Type {
                                 new_imports.push(ctx.source_range(specifier.span).to_string());
@@ -163,7 +176,7 @@ impl Rule for NoImportingVitestGlobals {
                     }
                 }
 
-                if spans.len() > 0 {
+                if !spans.is_empty() {
                     ctx.diagnostic_with_fix(
                         no_importing_vitest_globals_diagnostic(spans.as_ref()),
                         |fixer| {
@@ -180,7 +193,7 @@ impl Rule for NoImportingVitestGlobals {
                     );
                 }
             }
-            _ => return,
+            _ => {}
         }
     }
 }
@@ -226,7 +239,7 @@ fn process_declaration(
     }
 
     let mut global_vitest_spans: Vec<Span> = vec![];
-    let mut non_global_vitest_import: Vec<String> = vec![];
+    let mut non_global_imports: Vec<String> = vec![];
 
     for property in &obj.properties {
         let Some(property_name) = property.key.static_name() else {
@@ -236,16 +249,14 @@ fn process_declaration(
         if VITEST_GLOBALS.contains(&property_name.as_ref()) {
             global_vitest_spans.push(property.span);
         } else {
-            non_global_vitest_import.push(ctx.source_range(property.span).to_string());
+            non_global_imports.push(ctx.source_range(property.span).to_string());
         }
     }
 
-    let remove_declaration = non_global_vitest_import.len() == 0;
-
     DeclarationRenderType::Vitest(VitestImport {
-        remove_fully: remove_declaration,
+        remove_fully: non_global_imports.is_empty(),
         global_vitest_spans,
-        non_global_vitest_import,
+        non_global_imports,
     })
 }
 
@@ -273,7 +284,7 @@ const VITEST_GLOBALS: [&str; 17] = [
 struct VitestImport {
     remove_fully: bool,
     global_vitest_spans: Vec<Span>,
-    non_global_vitest_import: Vec<String>,
+    non_global_imports: Vec<String>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
