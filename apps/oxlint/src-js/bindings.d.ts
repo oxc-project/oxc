@@ -38,6 +38,10 @@ export declare function getBufferOffset(buffer: Uint8Array): number
 export type JsLintFileCb =
   ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string) => string | null)
 
+/** JS callback to load JavaScript/TypeScript config files. */
+export type JsLoadJsConfigsCb =
+  ((arg: Array<string>) => Promise<string>)
+
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
   ((arg0: string, arg1: string | undefined | null, arg2: boolean) => Promise<string>)
@@ -54,10 +58,11 @@ export type JsSetupRuleConfigsCb =
  * 2. `load_plugin`: Load a JS plugin from a file path.
  * 3. `setup_rule_configs`: Setup configuration options.
  * 4. `lint_file`: Lint a file.
+ * 5. `load_js_configs`: Load JavaScript/TypeScript config files (experimental).
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
