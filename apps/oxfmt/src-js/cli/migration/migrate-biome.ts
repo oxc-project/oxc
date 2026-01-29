@@ -95,8 +95,7 @@ export async function runMigrateBiome() {
   try {
     const content = await readFile(biomeConfigPath, "utf8");
     // Biome supports JSONC (JSON with comments)
-    const cleanedContent = stripJsonComments(content);
-    biomeConfig = JSON.parse(cleanedContent);
+    biomeConfig = parseJSONC(content);
     console.log("Found Biome configuration at:", biomeConfigPath);
   } catch {
     return exitWithError(`Failed to parse: ${biomeConfigPath}`);
@@ -169,60 +168,18 @@ async function resolveBiomeConfigFile(cwd: string): Promise<string | null> {
   return null;
 }
 
-function stripJsonComments(content: string): string {
-  let result = "";
-  let i = 0;
-  let inString = false;
-  let escapeNext = false;
-
-  while (i < content.length) {
-    const char = content[i];
-    const nextChar = content[i + 1];
-
-    if (escapeNext) {
-      result += char;
-      escapeNext = false;
-      i++;
-      continue;
-    }
-
-    if (char === "\\" && inString) {
-      result += char;
-      escapeNext = true;
-      i++;
-      continue;
-    }
-
-    if (char === '"') {
-      inString = !inString;
-      result += char;
-      i++;
-      continue;
-    }
-
-    if (!inString) {
-      if (char === "/" && nextChar === "/") {
-        while (i < content.length && content[i] !== "\n") {
-          i++;
-        }
-        continue;
-      }
-
-      if (char === "/" && nextChar === "*") {
-        i += 2;
-        while (i < content.length - 1 && !(content[i] === "*" && content[i + 1] === "/")) {
-          i++;
-        }
-        i += 2;
-        continue;
-      }
-    }
-
-    result += char;
-    i++;
+// https://github.com/fabiospampinato/tiny-jsonc/blob/bb722089210174ec9cb53afcce15245e7ee21b9a/src/index.ts
+const stringOrCommentRe = /("(?:\\?[^])*?")|(\/\/.*)|(\/\*[^]*?\*\/)/g;
+const stringOrTrailingCommaRe = /("(?:\\?[^])*?")|(,\s*)(?=]|})/g;
+function parseJSONC(text: string) {
+  text = String(text); // To be extra safe
+  try {
+    // Fast path for valid JSON
+    return JSON.parse(text);
+  } catch {
+    // Slow path for JSONC and invalid inputs
+    return JSON.parse(text.replace(stringOrCommentRe, "$1").replace(stringOrTrailingCommaRe, "$1"));
   }
-
-  return result;
 }
 
 // ---
@@ -365,7 +322,7 @@ function migrateArrowParentheses(
 
 // `bracketSameLine`
 function migrateBracketSameLine(
-  formatterConfig: BiomeFormatterConfig,
+  _formatterConfig: BiomeFormatterConfig,
   jsFormatterConfig: BiomeJsFormatterConfig,
   oxfmtrc: Record<string, unknown>,
 ): void {
