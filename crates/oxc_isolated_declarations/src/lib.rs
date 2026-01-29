@@ -631,7 +631,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         && let AssignmentTarget::StaticMemberExpression(static_member_expr) =
                             &assignment.left
                         && let Expression::Identifier(ident) = &static_member_expr.object
-                        && can_expando_function_names.contains(ident.name.as_str())
+                        && can_expando_function_names.contains(&ident.name)
                         && !assignable_properties_for_namespace
                             .get(ident.name.as_str())
                             .is_some_and(|properties| {
