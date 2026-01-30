@@ -1,3 +1,4 @@
+import { join as pathJoin } from "node:path";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   getTokens,
@@ -53,9 +54,11 @@ function setup(sourceText: string) {
   resetFileContext();
   resetSourceAndAst();
 
-  // Set file path
-  const path = "dummy.js";
-  setupFileContext(path);
+  // Set file path and CWD
+  const filename = "dummy.js";
+  const cwd = import.meta.dirname;
+  const path = pathJoin(cwd, filename);
+  setupFileContext(path, cwd);
 
   // Parse source text into buffer
   parseRaw(path, sourceText);

@@ -34,6 +34,14 @@ export declare const enum Severity {
  */
 export declare function getBufferOffset(buffer: Uint8Array): number
 
+/** JS callback to create a workspace. */
+export type JsCreateWorkspaceCb =
+  ((arg0: string) => Promise<undefined>)
+
+/** JS callback to destroy a workspace. */
+export type JsDestroyWorkspaceCb =
+  ((arg0: string) => void)
+
 /** JS callback to lint a file. */
 export type JsLintFileCb =
   ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string) => string | null)
@@ -57,15 +65,16 @@ export type JsSetupRuleConfigsCb =
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
  *
- * Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
- * provided as `source_len`.
+ * Source text must be written into somewhere towards end of the buffer.
+ * - `source_start` is position of first byte of source text in buffer
+ * - `source_len` is length of source text (in UTF-8 bytes)
  *
- * This function will parse the source, and write the AST into the buffer, starting at the end.
+ * This function will parse the source, and write the AST into the buffer, starting at the end (before the source text).
  *
  * It also writes to the very end of the buffer the offset of `Program` within the buffer.
  *
@@ -74,9 +83,10 @@ export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, se
  * # SAFETY
  *
  * Caller must ensure:
- * * Source text is written into start of the buffer.
+ * * Source text is written into the buffer.
+ * * Start of source text is at `source_start` bytes from the start of the buffer.
  * * Source text's UTF-8 byte length is `source_len`.
- * * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+ * * This section of bytes in the buffer comprises a valid UTF-8 string.
  *
  * If source text is originally a JS string on JS side, and converted to a buffer with
  * `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
@@ -85,7 +95,7 @@ export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, se
  *
  * Panics if source text is too long, or AST takes more memory than is available in the buffer.
  */
-export declare function parseRawSync(filename: string, buffer: Uint8Array, sourceLen: number, options?: ParserOptions | undefined | null): void
+export declare function parseRawSync(filename: string, buffer: Uint8Array, sourceStart: number, sourceLen: number, options?: ParserOptions | undefined | null): void
 
 export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */

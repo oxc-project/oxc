@@ -42,6 +42,10 @@ const STR_LEN_OFFSET: u32 = 8;
 /// Bytes reserved for `malloc`'s metadata
 const MALLOC_RESERVED_SIZE: u32 = 16;
 
+/// Size of `ChunkFooter` struct.
+/// Code in `oxc_allocator` crate checks that this is correct.
+const CHUNK_FOOTER_SIZE: u32 = 48;
+
 /// Minimum alignment requirement for end of `Allocator`'s chunk
 const ALLOCATOR_CHUNK_END_ALIGN: u32 = 16;
 
@@ -172,7 +176,6 @@ fn generate_deserializers(
         /* IF LINTER */
         export function deserializeProgramOnly(buffer, sourceText, sourceStartPosInput, sourceByteLen, getLoc) {{
             sourceStartPos = sourceStartPosInput;
-            sourceEndPos = sourceStartPosInput + sourceByteLen;
             return deserializeWith(buffer, sourceText, sourceByteLen, getLoc, deserializeProgram);
         }}
         /* END_IF */
@@ -865,21 +868,19 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
     ");
 }
 
+// In parser, source text is always at the start of the buffer, and all other strings are after it.
+// In linter, source text is towards the end of the buffer, and all other strings are before it.
 static STR_DESERIALIZER_BODY: &str = "
     const pos32 = pos >> 2,
         len = uint32[pos32 + 2];
     if (len === 0) return '';
 
     pos = uint32[pos32];
-    if (sourceIsAscii && pos < sourceEndPos) {
-        /* IF LINTER */
-        // Source text may not start at position 0, so `pos - sourceStartPos` is the index into `sourceText` string
-        return sourceText.substr(pos - sourceStartPos, len);
-        /* END_IF */
 
-        /* IF !LINTER */
-        return sourceText.substr(pos, len);
-        /* END_IF */
+    if (LINTER) {
+        if (sourceIsAscii && pos >= sourceStartPos) return sourceText.substr(pos - sourceStartPos, len);
+    } else {
+        if (sourceIsAscii && pos < sourceEndPos) return sourceText.substr(pos, len);
     }
 
     // Longer strings use `TextDecoder`
@@ -1292,6 +1293,8 @@ impl DeserializeFunctionName for PointerDef {
 struct Constants {
     /// Size of buffer in bytes
     buffer_size: u32,
+    /// Size of active data section of buffer in bytes (excluding `ChunkFooter`)
+    active_size: u32,
     /// Offset within buffer of `u32` containing position of `RawTransferData`
     data_pointer_pos: u32,
     /// Offset within buffer of `bool` indicating if AST is TS or JS
@@ -1314,6 +1317,7 @@ struct Constants {
 fn generate_constants(consts: Constants) -> (String, TokenStream) {
     let Constants {
         buffer_size,
+        active_size,
         data_pointer_pos,
         is_ts_pos,
         is_jsx_pos,
@@ -1330,6 +1334,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
     let js_output = format!("
         export const BUFFER_SIZE = {buffer_size};
         export const BUFFER_ALIGN = {BLOCK_ALIGN};
+        export const ACTIVE_SIZE = {active_size};
         export const DATA_POINTER_POS_32 = {data_pointer_pos_32};
         export const IS_TS_FLAG_POS = {is_ts_pos};
         export const IS_JSX_FLAG_POS = {is_jsx_pos};
@@ -1343,6 +1348,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
     let block_align = number_lit(BLOCK_ALIGN);
     let buffer_size = number_lit(buffer_size);
     let raw_metadata_size = number_lit(raw_metadata_size);
+    let chunk_footer_size = number_lit(CHUNK_FOOTER_SIZE);
     let rust_output = quote! {
         #![expect(clippy::unreadable_literal)]
         #![allow(dead_code)]
@@ -1352,6 +1358,7 @@ fn generate_constants(consts: Constants) -> (String, TokenStream) {
         pub const BLOCK_ALIGN: usize = #block_align;
         pub const BUFFER_SIZE: usize = #buffer_size;
         pub const RAW_METADATA_SIZE: usize = #raw_metadata_size;
+        pub const CHUNK_FOOTER_SIZE: usize = #chunk_footer_size;
     };
 
     (js_output, rust_output)
@@ -1396,6 +1403,7 @@ fn get_constants(schema: &Schema) -> Constants {
         fixed_metadata_struct.layout_64().size.next_multiple_of(ALLOCATOR_CHUNK_END_ALIGN);
 
     let buffer_size = BLOCK_SIZE - fixed_metadata_size;
+    let active_size = buffer_size - raw_metadata_size - CHUNK_FOOTER_SIZE;
 
     // Get offsets of data within buffer
     let raw_metadata_pos = buffer_size - raw_metadata_size;
@@ -1422,6 +1430,7 @@ fn get_constants(schema: &Schema) -> Constants {
 
     Constants {
         buffer_size,
+        active_size,
         data_pointer_pos,
         is_ts_pos,
         is_jsx_pos,

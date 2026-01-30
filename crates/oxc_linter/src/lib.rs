@@ -67,8 +67,9 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+        JsFix, LintFileResult, LoadPluginResult,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -500,17 +501,10 @@ impl Linter {
         let original_source_text = original_program.source_text;
         original_program.source_text = "";
 
-        // Copy source text to the START of the fixed-size allocator.
-        // This is critical - the JS deserializer expects source text at offset 0.
-        // SAFETY: `js_allocator` is from a fixed-size allocator pool, which wraps the allocator
-        // in a custom `Drop` that doesn't actually drop it (it returns it to the pool), so the
-        // memory remains valid. This matches the safety requirements of `alloc_bytes_start`.
-        let new_source_text: &str = unsafe {
-            let bytes = original_source_text.as_bytes();
-            let ptr = js_allocator.alloc_bytes_start(bytes.len());
-            ptr::copy_nonoverlapping(bytes.as_ptr(), ptr.as_ptr(), bytes.len());
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(ptr.as_ptr(), bytes.len()))
-        };
+        // Copy source text to the fixed-size allocator.
+        // We have to allocate source text first, because the JS deserializer expects source text
+        // to be later in the buffer than all other strings in the AST, and the allocator bumps downwards.
+        let new_source_text = js_allocator.alloc_str(original_source_text);
 
         // Clone `Program` into fixed-size allocator.
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.

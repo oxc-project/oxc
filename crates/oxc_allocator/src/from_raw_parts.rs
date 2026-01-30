@@ -1,9 +1,6 @@
 //! Define additional methods, used only by raw transfer:
 //!
 //! * [`Allocator::from_raw_parts`]
-//! * [`Allocator::alloc_bytes_start`]
-//! * [`Allocator::data_ptr`]
-//! * [`Allocator::set_data_ptr`]
 //! * [`Allocator::set_cursor_ptr`]
 //! * [`Allocator::data_end_ptr`]
 //! * [`Allocator::end_ptr`]
@@ -22,6 +19,17 @@ const MIN_ALIGN: usize = 16;
 
 const CHUNK_FOOTER_SIZE: usize = size_of::<ChunkFooter>();
 const _: () = {
+    // Check the hard-coded value in `ast_tools` raw transfer generator is accurate.
+    // We can only do this check if we're on a 64-bit little-endian platform with the `fixed_size` feature enabled,
+    // because the `fixed_size_constants` module is only compiled under those conditions.
+    // That's good enough, as the size of `ChunkFooter` only matters in that case anyway (Oxlint JS plugins).
+    #[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+    {
+        use crate::generated::fixed_size_constants::CHUNK_FOOTER_SIZE as EXPECTED_CHUNK_FOOTER_SIZE;
+        assert!(CHUNK_FOOTER_SIZE == EXPECTED_CHUNK_FOOTER_SIZE);
+    }
+
+    // Check alignment requirements
     assert!(CHUNK_FOOTER_SIZE >= MIN_ALIGN);
     assert!(align_of::<ChunkFooter>() <= MIN_ALIGN);
 };
@@ -117,134 +125,6 @@ impl Allocator {
         Self::from_bump(bump)
     }
 
-    /// Allocate space for `bytes` bytes at start of [`Allocator`]'s current chunk.
-    ///
-    /// Returns a pointer to the start of an uninitialized section of `bytes` bytes.
-    ///
-    /// Note: [`alloc_layout`] allocates at *end* of the current chunk, because the arena allocator bumps downwards,
-    /// hence the need for this method, to allocate at *start* of current chunk.
-    ///
-    /// This method is dangerous, and should not ordinarily be used.
-    ///
-    /// This method moves the pointer to start of the current chunk forwards, so it no longer correctly
-    /// describes the start of the allocation obtained from system allocator.
-    ///
-    /// The `Allocator` **must not be allowed to be dropped** or it would be UB.
-    /// Only use this method if you prevent that possibility. e.g.:
-    ///
-    /// 1. Set the data pointer back to its correct value before it is dropped, using [`set_data_ptr`].
-    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and deallocate its memory manually with the correct pointer.
-    ///
-    /// # Panics
-    ///
-    /// Panics if insufficient capacity for `bytes`
-    /// (after rounding up to nearest multiple of [`RAW_MIN_ALIGN`]).
-    ///
-    /// # SAFETY
-    ///
-    /// `Allocator` must not be dropped after calling this method (see above).
-    ///
-    /// [`alloc_layout`]: Self::alloc_layout
-    /// [`set_data_ptr`]: Self::set_data_ptr
-    /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
-    pub unsafe fn alloc_bytes_start(&self, bytes: usize) -> NonNull<u8> {
-        // Round up number of bytes to reserve to multiple of `MIN_ALIGN`,
-        // so data pointer remains aligned on `MIN_ALIGN`.
-        //
-        // `saturating_add` is required to prevent overflow in case `bytes > usize::MAX - MIN_ALIGN`.
-        // In that case, `alloc_bytes` will be rounded down instead of up here, but that's OK because
-        // no allocation can be larger than `isize::MAX` bytes, and therefore it's guaranteed that
-        // `free_capacity < isize::MAX`. So `free_capacity > alloc_bytes` check below will always fail
-        // for such a large value of `alloc_bytes`, regardless of rounding.
-        //
-        // It's preferable to use branchless `saturating_add` instead of `assert!(size <= isize::MAX as usize)`,
-        // to avoid a branch here.
-        let alloc_bytes = bytes.saturating_add(MIN_ALIGN - 1) & !(MIN_ALIGN - 1);
-
-        let data_ptr = self.data_ptr();
-        let cursor_ptr = self.cursor_ptr();
-        // SAFETY: Cursor pointer is always `>=` data pointer.
-        // Both pointers are within same allocation, and derived from the same original pointer.
-        let free_capacity = unsafe { cursor_ptr.offset_from_unsigned(data_ptr) };
-
-        // Check sufficient capacity to write `alloc_bytes` bytes, without overwriting data already
-        // stored in allocator.
-        // Could use `>=` here and it would be sufficient capacity, but use `>` instead so this assertion
-        // fails if current chunk is the empty chunk and `bytes` is 0.
-        assert!(free_capacity > alloc_bytes);
-
-        // Calculate new data pointer.
-        // SAFETY: We checked above that distance between data pointer and cursor is `>= alloc_bytes`,
-        // so moving data pointer forwards by `alloc_bytes` cannot place it after cursor pointer.
-        let new_data_ptr = unsafe { data_ptr.add(alloc_bytes) };
-
-        // Set new data pointer.
-        // SAFETY: `Allocator` must have at least 1 allocated chunk or check for sufficient capacity
-        // above would have failed.
-        // `new_data_ptr` cannot be after the cursor pointer, or free capacity check would have failed.
-        // Data pointer is always aligned on `MIN_ALIGN`, and we rounded `alloc_bytes` up to a multiple
-        // of `MIN_ALIGN`, so that remains the case.
-        // It is caller's responsibility to ensure that the `Allocator` is not dropped after this call.
-        unsafe { self.set_data_ptr(new_data_ptr) };
-
-        // Return original data pointer
-        data_ptr
-    }
-
-    /// Get data pointer for this [`Allocator`]'s current chunk.
-    pub fn data_ptr(&self) -> NonNull<u8> {
-        // SAFETY: We don't take any action with the `Allocator` while the `&ChunkFooter`
-        // reference is alive
-        let chunk_footer = unsafe { self.chunk_footer() };
-        chunk_footer.data
-    }
-
-    /// Set data pointer for this [`Allocator`]'s current chunk.
-    ///
-    /// This is dangerous, and this method should not ordinarily be used.
-    /// It is only here for manually writing data to start of the allocator chunk,
-    /// and then adjusting the start pointer to after it.
-    ///
-    /// If calling this method with any pointer which is not the original data pointer for this
-    /// `Allocator` chunk, the `Allocator` must NOT be allowed to be dropped after this call,
-    /// because data pointer no longer correctly describes the start of the allocation obtained
-    /// from system allocator. If the `Allocator` were dropped, it'd be UB.
-    ///
-    /// Only use this method if you prevent that possibility. e.g.:
-    ///
-    /// 1. Set the data pointer back to its correct value before it is dropped, using [`set_data_ptr`].
-    /// 2. Wrap the `Allocator` in `ManuallyDrop`, and deallocate its memory manually with the correct pointer.
-    ///
-    /// # SAFETY
-    ///
-    /// * Allocator must have at least 1 allocated chunk.
-    ///   It is UB to call this method on an `Allocator` which has not allocated
-    ///   i.e. fresh from `Allocator::new`.
-    /// * `ptr` must point to within the `Allocator`'s current chunk.
-    /// * `ptr` must be equal to or before cursor pointer for this chunk.
-    /// * `ptr` must be aligned on [`RAW_MIN_ALIGN`].
-    /// * `Allocator` must not be dropped if `ptr` is not the original data pointer for this chunk.
-    ///
-    /// [`RAW_MIN_ALIGN`]: Self::RAW_MIN_ALIGN
-    /// [`set_data_ptr`]: Self::set_data_ptr
-    pub unsafe fn set_data_ptr(&self, ptr: NonNull<u8>) {
-        debug_assert!((ptr.as_ptr() as usize).is_multiple_of(MIN_ALIGN));
-
-        // SAFETY: Caller guarantees `Allocator` has at least 1 allocated chunk.
-        // We don't take any action with the `Allocator` while the `&mut ChunkFooter` reference
-        // is alive, beyond setting the data pointer.
-        let chunk_footer = unsafe { self.chunk_footer_mut() };
-        chunk_footer.data = ptr;
-    }
-
-    /// Get cursor pointer for this [`Allocator`]'s current chunk.
-    fn cursor_ptr(&self) -> NonNull<u8> {
-        // SAFETY: We don't take any action with the `Allocator` while the `&ChunkFooter`
-        // reference is alive
-        let chunk_footer = unsafe { self.chunk_footer() };
-        chunk_footer.ptr.get()
-    }
-
     /// Set cursor pointer for this [`Allocator`]'s current chunk.
     ///
     /// This is dangerous, and this method should not ordinarily be used.
@@ -278,19 +158,6 @@ impl Allocator {
         // If `Allocator` has not allocated, so `chunk_footer_ptr` returns a pointer to the static
         // empty chunk, it's still valid.
         unsafe { self.chunk_footer_ptr().add(1).cast::<u8>() }
-    }
-
-    /// Get reference to current [`ChunkFooter`].
-    ///
-    /// # SAFETY
-    ///
-    /// Caller must not allocate into this `Allocator`, or perform any other action which would create
-    /// a `&mut ChunkFooter` reference, while the `&ChunkFooter` reference returned by this method is alive.
-    unsafe fn chunk_footer(&self) -> &ChunkFooter {
-        let chunk_footer_ptr = self.chunk_footer_ptr();
-        // SAFETY: Caller promises not to take any other action which would generate a mutable reference
-        // to the `ChunkFooter` while this reference is alive.
-        unsafe { chunk_footer_ptr.as_ref() }
     }
 
     /// Get mutable reference to current [`ChunkFooter`].

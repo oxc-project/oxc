@@ -189,6 +189,17 @@ impl CliRunner {
         }
 
         let base_ignore_patterns = oxlintrc.ignore_patterns.clone();
+
+        // Setup JS workspace before loading any configs (config parsing can load JS plugins).
+        if let Some(external_linter) = &external_linter {
+            let res = (external_linter.create_workspace)(self.cwd.to_string_lossy().into_owned());
+
+            if let Err(err) = res {
+                print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
+                return CliRunResult::JsPluginWorkspaceSetupFailed;
+            }
+        }
+
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc.clone(),
@@ -268,7 +279,8 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = lint_config.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
+        let mut options =
+            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -282,7 +294,9 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_rule_configs(external_linter);
+            let res = config_store
+                .external_plugin_store()
+                .setup_rule_configs(self.cwd.to_string_lossy().into_owned(), external_linter);
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
@@ -297,7 +311,6 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        let has_external_linter = external_linter.is_some();
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
@@ -340,35 +353,7 @@ impl CliRunner {
             }
         };
 
-        // Configure the file system for external linter if needed.
-        // When using the copy-to-fixed-allocator approach (cross-module + JS plugins),
-        // we use `OsFileSystem` instead of `RawTransferFileSystem`, because we use standard allocators for parsing.
-        let file_system = if has_external_linter {
-            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
-            if use_cross_module {
-                // Use standard file system - source text will be copied to fixed-size allocator later
-                None
-            } else {
-                // Use raw transfer file system - source text goes directly to fixed-size allocator
-                Some(
-                    &crate::js_plugins::RawTransferFileSystem
-                        as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
-                )
-            }
-
-            #[cfg(not(all(
-                feature = "napi",
-                target_pointer_width = "64",
-                target_endian = "little"
-            )))]
-            unreachable!(
-                "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
-            );
-        } else {
-            None
-        };
-
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
+        match lint_runner.lint_files(&files_to_lint, tx_error.clone()) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }

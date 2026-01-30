@@ -584,7 +584,7 @@ impl ConfigStoreBuilder {
 
         // Convert path to a `file://...` URL, as required by `import(...)` on JS side.
         // Note: `unwrap()` here is infallible as `plugin_path` is an absolute path.
-        let plugin_url = Url::from_file_path(&plugin_path).unwrap().as_str().to_string();
+        let plugin_url = String::from(Url::from_file_path(&plugin_path).unwrap());
 
         let result = (external_linter.load_plugin)(plugin_url, plugin_name, alias.is_some())
             .map_err(|error| ConfigBuilderError::PluginLoadFailed {

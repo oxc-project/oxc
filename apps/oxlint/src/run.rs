@@ -16,6 +16,36 @@ use crate::{
     result::CliRunResult,
 };
 
+/// JS callback to create a workspace.
+#[napi]
+pub type JsCreateWorkspaceCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(String,)>, // Workspace directory
+    // Return value
+    Promise<()>,
+    // Arguments (repeated)
+    FnArgs<(String,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to destroy a workspace.
+#[napi]
+pub type JsDestroyWorkspaceCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(String,)>, // Workspace directory
+    // Return value
+    (),
+    // Arguments (repeated)
+    FnArgs<(String,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// JS callback to load a JS plugin.
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
@@ -94,8 +124,13 @@ pub async fn lint(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_rule_configs, lint_file).await.report() == ExitCode::SUCCESS
+    lint_impl(args, load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace)
+        .await
+        .report()
+        == ExitCode::SUCCESS
 }
 
 /// Run the linter.
@@ -104,6 +139,8 @@ async fn lint_impl(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -138,11 +175,17 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter =
-        Some(crate::js_plugins::create_external_linter(load_plugin, setup_rule_configs, lint_file));
+    let external_linter = Some(crate::js_plugins::create_external_linter(
+        load_plugin,
+        setup_rule_configs,
+        lint_file,
+        create_workspace,
+        destroy_workspace,
+    ));
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
     let external_linter = {
-        let (_, _, _) = (load_plugin, setup_rule_configs, lint_file);
+        let (_, _, _, _, _) =
+            (load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace);
         None
     };
 
