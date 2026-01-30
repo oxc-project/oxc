@@ -989,10 +989,7 @@ fn test() {
             "if (isLexicalRichText(rt)) text = extractTextFromLexicalJSON(rt.root); // Lexical\nelse text = extractTextFromDraftJS(rt); // DraftJS",
             Some(serde_json::json!(["multi-line"])),
         ),
-        (
-            "if (foo) bar(); // comment\nelse baz();",
-            Some(serde_json::json!(["multi-line"])),
-        ),
+        ("if (foo) bar(); // comment\nelse baz();", Some(serde_json::json!(["multi-line"]))),
         (
             "if (foo) bar(); // comment on if\nelse if (bar) baz(); // comment on else if\nelse qux();",
             Some(serde_json::json!(["multi-line"])),
