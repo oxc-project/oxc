@@ -1,5 +1,5 @@
-use dragonbox_ecma::Buffer as DragonboxBuffer;
 use itoa::Buffer as ItoaBuffer;
+use zmij_ecma::Buffer as ZmijBuffer;
 
 use super::{ESTree, Serializer};
 
@@ -14,7 +14,7 @@ impl ESTree for bool {
 impl ESTree for f64 {
     fn serialize<S: Serializer>(&self, mut serializer: S) {
         if self.is_finite() {
-            let mut buffer = DragonboxBuffer::new();
+            let mut buffer = ZmijBuffer::new();
             let s = buffer.format_finite(*self);
             serializer.buffer_mut().print_str(s);
         } else if self.is_nan() {
