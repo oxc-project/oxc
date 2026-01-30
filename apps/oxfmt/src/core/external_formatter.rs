@@ -1,4 +1,7 @@
-use std::{path::Path, sync::Arc};
+use std::{
+    path::Path,
+    sync::{Arc, Mutex},
+};
 
 use napi::{
     Status,
@@ -67,6 +70,27 @@ pub type JsSortTailwindClassesCb = ThreadsafeFunction<
     false,
 >;
 
+/// Holds raw ThreadsafeFunctions wrapped in Option for cleanup.
+/// The TSFNs can be explicitly dropped via `cleanup()` to prevent
+/// use-after-free during V8 cleanup on Node.js exit.
+#[derive(Clone)]
+struct TsfnHandles {
+    init: Arc<Mutex<Option<JsInitExternalFormatterCb>>>,
+    format_embedded: Arc<Mutex<Option<JsFormatEmbeddedCb>>>,
+    format_file: Arc<Mutex<Option<JsFormatFileCb>>>,
+    sort_tailwind: Arc<Mutex<Option<JsSortTailwindClassesCb>>>,
+}
+
+impl TsfnHandles {
+    /// Drop all ThreadsafeFunctions to prevent use-after-free during V8 cleanup.
+    fn cleanup(&self) {
+        let _ = self.init.lock().unwrap().take();
+        let _ = self.format_embedded.lock().unwrap().take();
+        let _ = self.format_file.lock().unwrap().take();
+        let _ = self.sort_tailwind.lock().unwrap().take();
+    }
+}
+
 /// Callback function type for formatting embedded code with config.
 /// Takes (options, parser_name, code) and returns formatted code or an error.
 type FormatEmbeddedWithConfigCallback =
@@ -90,6 +114,8 @@ type TailwindWithConfigCallback =
 /// External formatter that wraps a JS callback.
 #[derive(Clone)]
 pub struct ExternalFormatter {
+    /// Handles to raw ThreadsafeFunctions for explicit cleanup
+    handles: TsfnHandles,
     pub init: InitExternalFormatterCallback,
     pub format_embedded: FormatEmbeddedWithConfigCallback,
     pub format_file: FormatFileWithConfigCallback,
@@ -109,22 +135,50 @@ impl std::fmt::Debug for ExternalFormatter {
 
 impl ExternalFormatter {
     /// Create an [`ExternalFormatter`] from JS callbacks.
+    ///
+    /// The ThreadsafeFunctions are wrapped in `Arc<Mutex<Option<...>>>` to allow
+    /// explicit cleanup via the `cleanup()` method. This prevents use-after-free
+    /// crashes on Node.js exit when V8 cleans up global handles.
     pub fn new(
         init_cb: JsInitExternalFormatterCb,
         format_embedded_cb: JsFormatEmbeddedCb,
         format_file_cb: JsFormatFileCb,
         sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
     ) -> Self {
-        let rust_init = wrap_init_external_formatter(init_cb);
-        let rust_format_embedded = wrap_format_embedded(format_embedded_cb);
-        let rust_format_file = wrap_format_file(format_file_cb);
-        let rust_tailwind = wrap_sort_tailwind_classes(sort_tailwindcss_classes_cb);
+        // Wrap TSFNs in Arc<Mutex<Option<...>>> so they can be explicitly dropped
+        let init_handle = Arc::new(Mutex::new(Some(init_cb)));
+        let format_embedded_handle = Arc::new(Mutex::new(Some(format_embedded_cb)));
+        let format_file_handle = Arc::new(Mutex::new(Some(format_file_cb)));
+        let sort_tailwind_handle = Arc::new(Mutex::new(Some(sort_tailwindcss_classes_cb)));
+
+        // Create handles struct for cleanup
+        let handles = TsfnHandles {
+            init: Arc::clone(&init_handle),
+            format_embedded: Arc::clone(&format_embedded_handle),
+            format_file: Arc::clone(&format_file_handle),
+            sort_tailwind: Arc::clone(&sort_tailwind_handle),
+        };
+
+        let rust_init = wrap_init_external_formatter(init_handle);
+        let rust_format_embedded = wrap_format_embedded(format_embedded_handle);
+        let rust_format_file = wrap_format_file(format_file_handle);
+        let rust_tailwind = wrap_sort_tailwind_classes(sort_tailwind_handle);
         Self {
+            handles,
             init: rust_init,
             format_embedded: rust_format_embedded,
             format_file: rust_format_file,
             sort_tailwindcss_classes: rust_tailwind,
         }
+    }
+
+    /// Explicitly drop all ThreadsafeFunctions to prevent use-after-free
+    /// during V8 cleanup on Node.js exit.
+    ///
+    /// This should be called before the function returns to ensure the TSFNs
+    /// are released while V8 handles are still valid.
+    pub fn cleanup(&self) {
+        self.handles.cleanup();
     }
 
     /// Initialize external formatter using the JS callback.
@@ -188,6 +242,12 @@ impl ExternalFormatter {
         // Currently, LSP tests are implemented in Rust, while our external formatter relies on JS.
         // Therefore, just provides a dummy external formatter that consistently returns errors.
         Self {
+            handles: TsfnHandles {
+                init: Arc::new(Mutex::new(None)),
+                format_embedded: Arc::new(Mutex::new(None)),
+                format_file: Arc::new(Mutex::new(None)),
+                sort_tailwind: Arc::new(Mutex::new(None)),
+            },
             init: Arc::new(|_| Err("Dummy init called".to_string())),
             format_embedded: Arc::new(|_, _, _| Err("Dummy format_embedded called".to_string())),
             format_file: Arc::new(|_, _, _, _| Err("Dummy format_file called".to_string())),
@@ -228,11 +288,17 @@ fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
 // to temporarily convert the current async task into a blocking context.
 
 /// Wrap JS `initExternalFormatter` callback as a normal Rust function.
-fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFormatterCallback {
+fn wrap_init_external_formatter(
+    cb_handle: Arc<Mutex<Option<JsInitExternalFormatterCb>>>,
+) -> InitExternalFormatterCallback {
     Arc::new(move |num_threads: usize| {
         debug_span!("oxfmt::external::init", num_threads = num_threads).in_scope(|| {
-            block_on(async {
-                #[expect(clippy::cast_possible_truncation)]
+            let guard = cb_handle.lock().unwrap();
+            let Some(cb) = guard.as_ref() else {
+                return Err("JS callback unavailable (environment shutting down)".to_string());
+            };
+            #[expect(clippy::cast_possible_truncation)]
+            let result = block_on(async {
                 let status = cb.call_async(FnArgs::from((num_threads as u32,))).await;
                 match status {
                     Ok(promise) => match promise.await {
@@ -245,16 +311,24 @@ fn wrap_init_external_formatter(cb: JsInitExternalFormatterCb) -> InitExternalFo
                         Err(format!("Failed to call JS initExternalFormatter callback: {err}"))
                     }
                 }
-            })
+            });
+            drop(guard);
+            result
         })
     })
 }
 
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
-fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallback {
+fn wrap_format_embedded(
+    cb_handle: Arc<Mutex<Option<JsFormatEmbeddedCb>>>,
+) -> FormatEmbeddedWithConfigCallback {
     Arc::new(move |options: &Value, parser_name: &str, code: &str| {
         debug_span!("oxfmt::external::format_embedded", parser = %parser_name).in_scope(|| {
-            block_on(async {
+            let guard = cb_handle.lock().unwrap();
+            let Some(cb) = guard.as_ref() else {
+                return Err("JS callback unavailable (environment shutting down)".to_string());
+            };
+            let result = block_on(async {
                 let status = cb
                     .call_async(FnArgs::from((
                         options.clone(),
@@ -278,16 +352,22 @@ fn wrap_format_embedded(cb: JsFormatEmbeddedCb) -> FormatEmbeddedWithConfigCallb
                         "Failed to call JS formatting callback for parser '{parser_name}': {err}"
                     )),
                 }
-            })
+            });
+            drop(guard);
+            result
         })
     })
 }
 
 /// Wrap JS `formatFile` callback as a normal Rust function.
-fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
+fn wrap_format_file(cb_handle: Arc<Mutex<Option<JsFormatFileCb>>>) -> FormatFileWithConfigCallback {
     Arc::new(move |options: &Value, parser_name: &str, file_name: &str, code: &str| {
         debug_span!("oxfmt::external::format_file", parser = %parser_name, file = %file_name).in_scope(|| {
-            block_on(async {
+            let guard = cb_handle.lock().unwrap();
+            let Some(cb) = guard.as_ref() else {
+                return Err("JS callback unavailable (environment shutting down)".to_string());
+            };
+            let result = block_on(async {
                 let status = cb
                     .call_async(FnArgs::from((
                         options.clone(),
@@ -307,17 +387,26 @@ fn wrap_format_file(cb: JsFormatFileCb) -> FormatFileWithConfigCallback {
                         "Failed to call JS formatFile callback for file: '{file_name}', parser: '{parser_name}': {err}"
                     )),
                 }
-            })
+            });
+            drop(guard);
+            result
         })
     })
 }
 
 /// Wrap JS `sortTailwindClasses` callback as a normal Rust function.
-fn wrap_sort_tailwind_classes(cb: JsSortTailwindClassesCb) -> TailwindWithConfigCallback {
+fn wrap_sort_tailwind_classes(
+    cb_handle: Arc<Mutex<Option<JsSortTailwindClassesCb>>>,
+) -> TailwindWithConfigCallback {
     Arc::new(move |filepath: &str, options: &Value, classes: Vec<String>| {
         debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len()).in_scope(
             || {
-                block_on(async {
+                let guard = cb_handle.lock().unwrap();
+                let Some(cb) = guard.as_ref() else {
+                    // Return original classes if callback unavailable
+                    return classes;
+                };
+                let result = block_on(async {
                     let args =
                         FnArgs::from((filepath.to_string(), options.clone(), classes.clone()));
                     match cb.call_async(args).await {
@@ -333,7 +422,9 @@ fn wrap_sort_tailwind_classes(cb: JsSortTailwindClassesCb) -> TailwindWithConfig
                             classes
                         }
                     }
-                })
+                });
+                drop(guard);
+                result
             },
         )
     })
