@@ -357,12 +357,12 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove this assignment.
 
   ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
-   ╭─[no_useless_assignment.tsx:2:20]
- 1 │ 
- 2 │                         var x = 1; // used
-   ·                             ──┬──
-   ·                               ╰── This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:4:20]
  3 │                         x = // used
+ 4 │                             x++; // unused
+   ·                             ─┬─
+   ·                              ╰── This assigned value is not used in subsequent statements.
+ 5 │                         f(x);
    ╰────
   help: Remove this assignment.
 

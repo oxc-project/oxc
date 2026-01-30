@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        Argument, AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
-        Expression,
-    },
+    ast::{AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty, Expression},
 };
 use oxc_cfg::{
     ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::Direction,
@@ -11,8 +8,9 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNode, NodeId, SymbolId};
+use oxc_semantic::{AstNode, NodeId, Reference, SymbolId};
 use oxc_span::{Atom, GetSpan, Span};
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -167,13 +165,30 @@ const STOP_WALKING_ON_THIS_PATH: bool = false;
 fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, symbol_id: SymbolId) {
     let start_node = ctx.nodes().get_node(start_node_id);
     let start_node_bb_id = ctx.nodes().cfg_id(start_node_id);
+    let all_references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
+
+    if all_references.is_empty() {
+        return;
+    }
 
     if pre_checks_skip(ctx, cfg, start_node_id, symbol_id) {
         return;
     }
 
-    // Pre-collect references once before CFG traversal
-    let references: Vec<_> = ctx.scoping().get_resolved_references(symbol_id).collect();
+    let mut references_by_block: FxHashMap<_, Vec<_>> = FxHashMap::default();
+
+    for reference in &all_references {
+        let ref_node_id = reference.node_id();
+        let ref_bb_id = ctx.nodes().cfg_id(ref_node_id);
+        references_by_block.entry(ref_bb_id).or_default().push(reference);
+    }
+
+    if references_by_block.is_empty() {
+        ctx.diagnostic(no_useless_assignment_diagnostic(
+            ctx.nodes().get_node(start_node_id).span(),
+        ));
+        return;
+    }
 
     let found_usages = neighbors_filtered_by_edge_weight(
         cfg.graph(),
@@ -230,16 +245,25 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                 if is_start_block {
                     if instr_span.contains_inclusive(start_node.span()) {
                         found_assignment = true;
-                        continue;
+                        // continue;
                     }
                     if !found_assignment && !has_outgoing_backedge {
                         continue;
                     }
                 }
 
-                for reference in &references {
+                let block_references = match references_by_block.get(basic_block_id) {
+                    Some(references) => references,
+                    None => continue,
+                };
+
+                for reference in block_references {
                     let ref_node_id = reference.node_id();
                     let ref_span = ctx.nodes().get_node(ref_node_id).span();
+
+                    if start_node.span().contains_inclusive(ref_span) {
+                        continue;
+                    }
 
                     if instr_span.contains_inclusive(ref_span) {
                         if reference.is_read() {
@@ -267,7 +291,13 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                             let parent_node = ctx.nodes().parent_node(ref_node_id);
                             if let AstKind::AssignmentExpression(assignment) = parent_node.kind() {
                                 let rhs = &assignment.right;
-                                if expr_uses_symbol(ctx, rhs, symbol_id) {
+                                // UPDATE THIS CALL: Pass the start_node span to exclude it from "usage"
+                                if expr_uses_symbol(
+                                    ctx,
+                                    rhs,
+                                    Some(start_node.span()),
+                                    &all_references,
+                                ) {
                                     return (FoundAssignmentUsage::Yes, STOP_WALKING_ON_THIS_PATH);
                                 }
                             }
@@ -322,10 +352,6 @@ fn pre_checks_skip(
     start_node_id: NodeId,
     symbol_id: SymbolId,
 ) -> bool {
-    if no_references_found(ctx, symbol_id) {
-        return true;
-    }
-
     let start_node = ctx.nodes().get_node(start_node_id);
 
     let (name, span) = match start_node.kind() {
@@ -361,11 +387,6 @@ fn pre_checks_skip(
     }
 
     false
-}
-
-fn no_references_found(ctx: &LintContext, symbol_id: SymbolId) -> bool {
-    let references = ctx.scoping().get_resolved_references(symbol_id);
-    references.count() == 0
 }
 
 fn is_exported(ctx: &LintContext, name: Atom, span: Span) -> bool {
@@ -410,46 +431,28 @@ fn is_in_unreachable_block(ctx: &LintContext, node_id: NodeId) -> bool {
     false
 }
 
-fn expr_uses_symbol(ctx: &LintContext, expr: &Expression, symbol_id: SymbolId) -> bool {
-    let mut stack = vec![expr];
-
-    while let Some(current_expr) = stack.pop() {
-        match current_expr {
-            Expression::Identifier(identifier) => {
-                let reference = identifier.reference_id();
-                if let Some(id_symbol) = ctx.scoping().get_reference(reference).symbol_id()
-                    && id_symbol == symbol_id
-                {
-                    return true;
-                }
-            }
-            Expression::BinaryExpression(binary_expr) => {
-                stack.push(&binary_expr.right);
-                stack.push(&binary_expr.left);
-            }
-            Expression::CallExpression(call_expr) => {
-                stack.push(&call_expr.callee);
-                for arg in call_expr.arguments.iter().rev() {
-                    match arg {
-                        Argument::SpreadElement(spread) => {
-                            stack.push(&spread.argument);
-                        }
-                        _ => {
-                            if arg.is_expression() {
-                                stack.push(arg.to_expression());
-                            }
-                        }
-                    }
-                }
-            }
-            Expression::UnaryExpression(unary_expr) => {
-                stack.push(&unary_expr.argument);
-            }
-            _ => {}
+fn expr_uses_symbol(
+    ctx: &LintContext,
+    expr: &Expression,
+    exclude_span: Option<Span>,
+    all_references: &Vec<&Reference>,
+) -> bool {
+    let expr_span = expr.span();
+    all_references.iter().any(|reference| {
+        // Only count reads, not writes
+        if !reference.is_read() {
+            return false;
         }
-    }
+        let ref_span = ctx.nodes().get_node(reference.node_id()).span();
 
-    false
+        if let Some(exclude) = exclude_span {
+            if exclude.contains_inclusive(ref_span) {
+                return false;
+            }
+        }
+
+        expr_span.contains_inclusive(ref_span)
+    })
 }
 
 fn write_part_of_error_block(ctx: &LintContext, node_id: NodeId) -> bool {
