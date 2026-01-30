@@ -31,7 +31,7 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
-dragonbox_ecma = { workspace = true }
+zmij_ecma = { workspace = true }
 itoa = { workspace = true }
 rustc-hash = { workspace = true }
 
