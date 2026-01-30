@@ -485,6 +485,10 @@ fn is_assignment_in_different_function(
     let decl_node_id = ctx.scoping().symbol_declaration(symbol_id);
     let decl_scope_id = ctx.nodes().get_node(decl_node_id).scope_id();
 
+    if assignment_node_scope_id == decl_scope_id {
+        return false;
+    }
+
     ctx.scoping().scope_ancestors(assignment_node_scope_id).any(|scope_id| {
         let flags = ctx.scoping().scope_flags(scope_id);
         if flags.is_function() || flags.is_arrow() || flags.is_constructor() {
