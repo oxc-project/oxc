@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import {
   createMessageConnection,
+  DiagnosticSeverity,
   DidChangeConfigurationNotification,
   DidChangeTextDocumentNotification,
   DidOpenTextDocumentNotification,
@@ -147,14 +148,43 @@ ${applyDiagnostics(content, diagnostics).join("\n--------------------")}
 
 type OxlintLSPConfig = {};
 
+function getSeverityLabel(severity: number | undefined): string {
+  if (!severity) return "Unknown";
+
+  switch (severity) {
+    case DiagnosticSeverity.Error:
+      return "Error";
+    case DiagnosticSeverity.Warning:
+      return "Warning";
+    case DiagnosticSeverity.Information:
+      return "Information";
+    case DiagnosticSeverity.Hint:
+      return "Hint";
+    default:
+      return "Unknown";
+  }
+}
+
 function applyDiagnostics(content: string, report: DocumentDiagnosticReport): string[] {
   if (report.kind !== "full") {
     throw new Error("Only full reports are supported by oxlint lsp");
   }
 
-  return report.items.map((diagnostic) =>
-    codeFrameColumns(content, diagnostic.range, {
-      message: diagnostic.message,
-    }),
-  );
+  return report.items.map((diagnostic) => {
+    const babelLocation = {
+      start: {
+        line: diagnostic.range.start.line + 1,
+        column: diagnostic.range.start.character + 1,
+      },
+      end: {
+        line: diagnostic.range.end.line + 1,
+        column: diagnostic.range.end.character + 1,
+      },
+    };
+    const severity = getSeverityLabel(diagnostic.severity);
+
+    return codeFrameColumns(content, babelLocation, {
+      message: `${severity}: ${diagnostic.message}`,
+    });
+  });
 }
