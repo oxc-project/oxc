@@ -5,7 +5,9 @@ use oxc_ecmascript::{
     constant_evaluation::{
         ConstantEvaluation, ConstantEvaluationCtx, ConstantValue, binary_operation_evaluate_value,
     },
-    side_effects::{MayHaveSideEffects, PropertyReadSideEffects, is_pure_function},
+    side_effects::{
+        MayHaveSideEffects, PropertyReadSideEffects, PropertyWriteSideEffects, is_pure_function,
+    },
 };
 use oxc_semantic::{IsGlobalReference, Scoping, SymbolId};
 use oxc_span::format_atom;
@@ -77,6 +79,10 @@ impl<'a> oxc_ecmascript::side_effects::MayHaveSideEffectsContext<'a> for Ctx<'a,
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
         self.state.options.treeshake.property_read_side_effects
+    }
+
+    fn property_write_side_effects(&self) -> PropertyWriteSideEffects {
+        self.state.options.treeshake.property_write_side_effects
     }
 
     fn unknown_global_side_effects(&self) -> bool {

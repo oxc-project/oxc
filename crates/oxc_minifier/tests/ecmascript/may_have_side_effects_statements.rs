@@ -5,7 +5,7 @@ use oxc_ecmascript::{
     GlobalContext,
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext},
 };
-use oxc_minifier::PropertyReadSideEffects;
+use oxc_minifier::{PropertyReadSideEffects, PropertyWriteSideEffects};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use rustc_hash::FxHashSet;
@@ -43,6 +43,10 @@ impl MayHaveSideEffectsContext<'_> for Ctx {
 
     fn property_read_side_effects(&self) -> PropertyReadSideEffects {
         PropertyReadSideEffects::All
+    }
+
+    fn property_write_side_effects(&self) -> PropertyWriteSideEffects {
+        PropertyWriteSideEffects::All
     }
 
     fn unknown_global_side_effects(&self) -> bool {

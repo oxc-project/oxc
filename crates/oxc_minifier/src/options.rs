@@ -1,7 +1,7 @@
 use oxc_compat::EngineTargets;
 use rustc_hash::FxHashSet;
 
-pub use oxc_ecmascript::side_effects::PropertyReadSideEffects;
+pub use oxc_ecmascript::side_effects::{PropertyReadSideEffects, PropertyWriteSideEffects};
 
 #[derive(Debug, Clone)]
 pub struct CompressOptions {
@@ -179,6 +179,13 @@ pub struct TreeShakeOptions {
     /// Default [PropertyReadSideEffects::All]
     pub property_read_side_effects: PropertyReadSideEffects,
 
+    /// Whether property write accesses have side effects.
+    ///
+    /// <https://rollupjs.org/configuration-options/#treeshake-propertywritesideeffects>
+    ///
+    /// Default [PropertyWriteSideEffects::All]
+    pub property_write_side_effects: PropertyWriteSideEffects,
+
     /// Whether accessing a global variable has side effects.
     ///
     /// Accessing a non-existing global variable will throw an error.
@@ -204,6 +211,7 @@ impl Default for TreeShakeOptions {
             annotations: true,
             manual_pure_functions: vec![],
             property_read_side_effects: PropertyReadSideEffects::default(),
+            property_write_side_effects: PropertyWriteSideEffects::default(),
             unknown_global_side_effects: true,
             invalid_import_side_effects: true,
         }
