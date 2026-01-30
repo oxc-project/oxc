@@ -158,6 +158,7 @@ suite("code actions", () => {
       .getConfiguration("oxc", fixturesWorkspaceUri())
       .update("fixKind", "dangerous_fix", ConfigurationTarget.WorkspaceFolder);
     await workspace.saveAll();
+    await sleep(500);
 
     const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
       "vscode.executeCodeActionProvider",

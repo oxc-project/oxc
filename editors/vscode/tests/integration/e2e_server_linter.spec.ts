@@ -297,7 +297,7 @@ suite("E2E Server Linter", () => {
 
     await workspace.getConfiguration("oxc").update("tsConfigPath", "fixtures/deep/tsconfig.json");
     await workspace.saveAll();
-    await waitForDiagnosticChange();
+    await sleep(500);
 
     const secondDiagnostics = await getDiagnostics("deep/src/dep-a.ts");
     strictEqual(secondDiagnostics.length, 1);
@@ -326,6 +326,7 @@ suite("E2E Server Linter", () => {
 
   testSingleFolderMode("changing oxc.enable will update the client status", async () => {
     await loadFixture("changing_enable");
+    await sleep(500);
 
     const firstDiagnostics = await getDiagnostics("debugger.js");
     strictEqual(firstDiagnostics.length, 1);
