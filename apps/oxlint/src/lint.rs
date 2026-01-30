@@ -297,7 +297,6 @@ impl CliRunner {
             .filter(|path| !ignore_matcher.should_ignore(Path::new(path)))
             .collect::<Vec<Arc<OsStr>>>();
 
-        let has_external_linter = external_linter.is_some();
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
@@ -340,35 +339,7 @@ impl CliRunner {
             }
         };
 
-        // Configure the file system for external linter if needed.
-        // When using the copy-to-fixed-allocator approach (cross-module + JS plugins),
-        // we use `OsFileSystem` instead of `RawTransferFileSystem`, because we use standard allocators for parsing.
-        let file_system = if has_external_linter {
-            #[cfg(all(feature = "napi", target_pointer_width = "64", target_endian = "little"))]
-            if use_cross_module {
-                // Use standard file system - source text will be copied to fixed-size allocator later
-                None
-            } else {
-                // Use raw transfer file system - source text goes directly to fixed-size allocator
-                Some(
-                    &crate::js_plugins::RawTransferFileSystem
-                        as &(dyn oxc_linter::RuntimeFileSystem + Sync + Send),
-                )
-            }
-
-            #[cfg(not(all(
-                feature = "napi",
-                target_pointer_width = "64",
-                target_endian = "little"
-            )))]
-            unreachable!(
-                "On unsupported platforms, or with `napi` Cargo feature disabled, `ExternalLinter` should not exist"
-            );
-        } else {
-            None
-        };
-
-        match lint_runner.lint_files(&files_to_lint, tx_error.clone(), file_system) {
+        match lint_runner.lint_files(&files_to_lint, tx_error.clone()) {
             Ok(lint_runner) => {
                 lint_runner.report_unused_directives(report_unused_directives, &tx_error);
             }

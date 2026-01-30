@@ -54,10 +54,11 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 
 /// Parse AST into provided `Uint8Array` buffer, synchronously.
 ///
-/// Source text must be written into the start of the buffer, and its length (in UTF-8 bytes)
-/// provided as `source_len`.
+/// Source text must be written into somewhere towards end of the buffer.
+/// - `source_start` is position of first byte of source text in buffer
+/// - `source_len` is length of source text (in UTF-8 bytes)
 ///
-/// This function will parse the source, and write the AST into the buffer, starting at the end.
+/// This function will parse the source, and write the AST into the buffer, starting at the end (before the source text).
 ///
 /// It also writes to the very end of the buffer the offset of `Program` within the buffer.
 ///
@@ -66,9 +67,10 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 /// # SAFETY
 ///
 /// Caller must ensure:
-/// * Source text is written into start of the buffer.
+/// * Source text is written into the buffer.
+/// * Start of source text is at `source_start` bytes from the start of the buffer.
 /// * Source text's UTF-8 byte length is `source_len`.
-/// * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+/// * This section of bytes in the buffer comprises a valid UTF-8 string.
 ///
 /// If source text is originally a JS string on JS side, and converted to a buffer with
 /// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
@@ -81,6 +83,7 @@ pub fn get_buffer_offset(buffer: Uint8Array) -> u32 {
 pub unsafe fn parse_raw_sync(
     filename: String,
     mut buffer: Uint8Array,
+    source_start: u32,
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
@@ -89,7 +92,7 @@ pub unsafe fn parse_raw_sync(
     let buffer = unsafe { buffer.as_mut() };
 
     // SAFETY: `parse_raw_impl` has same safety requirements as this function
-    unsafe { parse_raw_impl(&filename, buffer, source_len, options) };
+    unsafe { parse_raw_impl(&filename, buffer, source_start, source_len, options) };
 }
 
 /// Parse AST into buffer.
@@ -97,9 +100,10 @@ pub unsafe fn parse_raw_sync(
 /// # SAFETY
 ///
 /// Caller must ensure:
-/// * Source text is written into start of the buffer.
+/// * Source text is written into the buffer.
+/// * Start of source text is at `source_start` bytes from the start of the buffer.
 /// * Source text's UTF-8 byte length is `source_len`.
-/// * The 1st `source_len` bytes of the buffer comprises a valid UTF-8 string.
+/// * This section of bytes in the buffer comprises a valid UTF-8 string.
 ///
 /// If source text is originally a JS string on JS side, and converted to a buffer with
 /// `Buffer.from(str)` or `new TextEncoder().encode(str)`, this guarantees it's valid UTF-8.
@@ -107,13 +111,14 @@ pub unsafe fn parse_raw_sync(
 unsafe fn parse_raw_impl(
     filename: &str,
     buffer: &mut [u8],
+    source_start: u32,
     source_len: u32,
     options: Option<ParserOptions>,
 ) {
     // Check buffer has expected size and alignment
     assert_eq!(buffer.len(), BUFFER_SIZE);
-    let buffer_ptr = ptr::from_mut(buffer).cast::<u8>();
-    assert!((buffer_ptr as usize).is_multiple_of(BUFFER_ALIGN));
+    let buffer_ptr = NonNull::from_mut(buffer).cast::<u8>();
+    assert!(buffer_ptr.addr().get().is_multiple_of(BUFFER_ALIGN));
 
     // Get offsets and size of data region to be managed by arena allocator.
     // Leave space for source before it, and space for metadata after it.
@@ -124,24 +129,25 @@ unsafe fn parse_raw_impl(
         assert!(RAW_METADATA_SIZE >= BUMP_ALIGN);
         assert!(RAW_METADATA_SIZE.is_multiple_of(BUMP_ALIGN));
     };
-    let source_len = source_len as usize;
-    let data_offset = source_len.next_multiple_of(BUMP_ALIGN);
-    let data_size = (BUFFER_SIZE - RAW_METADATA_SIZE).saturating_sub(data_offset);
-    assert!(data_size >= Allocator::RAW_MIN_SIZE, "Source text is too long");
+    const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
+    const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
 
     // Create `Allocator`.
     // Wrap in `ManuallyDrop` so the allocation doesn't get freed at end of function, or if panic.
-    // SAFETY: `data_offset` is less than `buffer.len()`, so `.add(data_offset)` cannot wrap
-    // or be out of bounds.
-    let data_ptr = unsafe { buffer_ptr.add(data_offset) };
-    debug_assert!((data_ptr as usize).is_multiple_of(BUMP_ALIGN));
-    debug_assert!(data_size.is_multiple_of(BUMP_ALIGN));
-    // SAFETY: `data_ptr` and `data_size` outline a section of the memory in `buffer`.
-    // `data_ptr` and `data_size` are multiples of 16.
-    // `data_size` is greater than `Allocator::MIN_SIZE`.
-    let allocator =
-        unsafe { Allocator::from_raw_parts(NonNull::new_unchecked(data_ptr), data_size) };
+    // SAFETY: `buffer_ptr` and `RAW_METADATA_OFFSET` outline a section of the memory in `buffer`.
+    // `buffer_ptr` and `RAW_METADATA_OFFSET` are multiples of 16.
+    // `RAW_METADATA_OFFSET` is greater than `Allocator::MIN_SIZE`.
+    let allocator = unsafe { Allocator::from_raw_parts(buffer_ptr, RAW_METADATA_OFFSET) };
     let allocator = ManuallyDrop::new(allocator);
+
+    // Set cursor to before start of source text. AST will be written into the buffer before the source text.
+    // Round down the pointer, so it's aligned on `BUMP_ALIGN`.
+    // SAFETY: Caller guarantees that source text starts at `source_start` bytes from start of buffer.
+    unsafe {
+        let cursor_pos = source_start as usize & !(BUMP_ALIGN - 1);
+        let cursor_ptr = buffer_ptr.add(cursor_pos);
+        allocator.set_cursor_ptr(cursor_ptr);
+    }
 
     // Get source type
     let options = options.unwrap_or_default();
@@ -152,10 +158,12 @@ unsafe fn parse_raw_impl(
     // Parse source.
     // Enclose parsing logic in a scope to make 100% sure no references to within `Allocator` exist after this.
     let (program_offset, has_bom) = {
-        // SAFETY: We checked above that `source_len` does not exceed length of buffer
-        let source_text = unsafe { buffer.get_unchecked(..source_len) };
         // SAFETY: Caller guarantees source occupies this region of the buffer and is valid UTF-8
-        let source_text = unsafe { str::from_utf8_unchecked(source_text) };
+        let source_text = unsafe {
+            let source_end = source_start as usize + source_len as usize;
+            let source_bytes = buffer.get_unchecked(source_start as usize..source_end);
+            str::from_utf8_unchecked(source_bytes)
+        };
 
         // Parse with same options as linter
         let parser_ret = Parser::new(&allocator, source_text, source_type)
@@ -219,11 +227,8 @@ unsafe fn parse_raw_impl(
         source_type.is_jsx(),
         has_bom,
     );
-    const RAW_METADATA_OFFSET: usize = BUFFER_SIZE - RAW_METADATA_SIZE;
-    const _: () = assert!(RAW_METADATA_OFFSET.is_multiple_of(BUMP_ALIGN));
     // SAFETY: `RAW_METADATA_OFFSET` is less than length of `buffer`.
     // `RAW_METADATA_OFFSET` is aligned on 16.
-    #[expect(clippy::cast_ptr_alignment)]
     unsafe {
         buffer_ptr.add(RAW_METADATA_OFFSET).cast::<RawTransferMetadata>().write(metadata);
     }

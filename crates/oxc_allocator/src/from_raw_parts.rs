@@ -22,6 +22,17 @@ const MIN_ALIGN: usize = 16;
 
 const CHUNK_FOOTER_SIZE: usize = size_of::<ChunkFooter>();
 const _: () = {
+    // Check the hard-coded value in `ast_tools` raw transfer generator is accurate.
+    // We can only do this check if we're on a 64-bit little-endian platform with the `fixed_size` feature enabled,
+    // because the `fixed_size_constants` module is only compiled under those conditions.
+    // That's good enough, as the size of `ChunkFooter` only matters in that case anyway (Oxlint JS plugins).
+    #[cfg(all(feature = "fixed_size", target_pointer_width = "64", target_endian = "little"))]
+    {
+        use crate::generated::fixed_size_constants::CHUNK_FOOTER_SIZE as EXPECTED_CHUNK_FOOTER_SIZE;
+        assert!(CHUNK_FOOTER_SIZE == EXPECTED_CHUNK_FOOTER_SIZE);
+    }
+
+    // Check alignment requirements
     assert!(CHUNK_FOOTER_SIZE >= MIN_ALIGN);
     assert!(align_of::<ChunkFooter>() <= MIN_ALIGN);
 };
