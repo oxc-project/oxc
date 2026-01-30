@@ -1,7 +1,6 @@
 use std::{
-    ffi::OsStr,
     path::{Path, PathBuf},
-    sync::{Arc, mpsc},
+    sync::mpsc,
 };
 
 use ignore::DirEntry;
@@ -13,6 +12,11 @@ use rustc_hash::FxHashSet;
 
 use crate::DEFAULT_OXLINTRC_NAME;
 
+#[derive(Debug, Hash, PartialEq, Eq)]
+pub enum DiscoveredConfig {
+    Json(PathBuf),
+}
+
 /// Discover config files by walking UP from each file's directory to ancestors.
 ///
 /// Used by CLI where we have specific files to lint and need to find configs
@@ -23,8 +27,8 @@ use crate::DEFAULT_OXLINTRC_NAME;
 /// - Returns paths to any `.oxlintrc.json` files found
 pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     files: &[P],
-) -> impl IntoIterator<Item = PathBuf> {
-    let mut config_paths = FxHashSet::<PathBuf>::default();
+) -> impl IntoIterator<Item = DiscoveredConfig> {
+    let mut config_paths = FxHashSet::<DiscoveredConfig>::default();
     let mut visited_dirs = FxHashSet::default();
 
     for file in files {
@@ -37,21 +41,21 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             if !inserted {
                 break;
             }
-            if let Some(config_path) = find_config_in_directory(dir) {
-                config_paths.insert(config_path);
+            if let Some(config) = find_config_in_directory(dir) {
+                config_paths.insert(config);
             }
             current = dir.parent();
         }
     }
 
-    config_paths.into_iter()
+    config_paths
 }
 
 /// Discover config files by walking DOWN from a root directory.
 ///
 /// Used by LSP where we have a workspace root and need to discover all configs
 /// upfront for file watching and diagnostics.
-pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = PathBuf> {
+pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = DiscoveredConfig> {
     let walker = ignore::WalkBuilder::new(root)
         .hidden(false) // don't skip hidden files
         .parents(false) // disable gitignore from parent dirs
@@ -60,40 +64,40 @@ pub fn discover_configs_in_tree(root: &Path) -> impl IntoIterator<Item = PathBuf
         .follow_links(true)
         .build_parallel();
 
-    let (sender, receiver) = mpsc::channel::<Vec<Arc<OsStr>>>();
+    let (sender, receiver) = mpsc::channel::<Vec<DiscoveredConfig>>();
     let mut builder = ConfigWalkBuilder { sender };
     walker.visit(&mut builder);
     drop(builder);
 
-    receiver.into_iter().flatten().map(|p| PathBuf::from(p.as_ref()))
+    receiver.into_iter().flatten()
 }
 
 /// Check if a directory contains an oxlint config file.
-fn find_config_in_directory(dir: &Path) -> Option<PathBuf> {
+fn find_config_in_directory(dir: &Path) -> Option<DiscoveredConfig> {
     let config_path = dir.join(DEFAULT_OXLINTRC_NAME);
-    if config_path.is_file() { Some(config_path) } else { None }
+    if config_path.is_file() { Some(DiscoveredConfig::Json(config_path)) } else { None }
 }
 
 // Helper types for parallel directory walking
 struct ConfigWalkBuilder {
-    sender: mpsc::Sender<Vec<Arc<OsStr>>>,
+    sender: mpsc::Sender<Vec<DiscoveredConfig>>,
 }
 
 impl<'s> ignore::ParallelVisitorBuilder<'s> for ConfigWalkBuilder {
     fn build(&mut self) -> Box<dyn ignore::ParallelVisitor + 's> {
-        Box::new(ConfigWalkCollector { paths: vec![], sender: self.sender.clone() })
+        Box::new(ConfigWalkCollector { configs: vec![], sender: self.sender.clone() })
     }
 }
 
 struct ConfigWalkCollector {
-    paths: Vec<Arc<OsStr>>,
-    sender: mpsc::Sender<Vec<Arc<OsStr>>>,
+    configs: Vec<DiscoveredConfig>,
+    sender: mpsc::Sender<Vec<DiscoveredConfig>>,
 }
 
 impl Drop for ConfigWalkCollector {
     fn drop(&mut self) {
-        let paths = std::mem::take(&mut self.paths);
-        self.sender.send(paths).unwrap();
+        let configs = std::mem::take(&mut self.configs);
+        self.sender.send(configs).unwrap();
     }
 }
 
@@ -101,8 +105,8 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     fn visit(&mut self, entry: Result<DirEntry, ignore::Error>) -> ignore::WalkState {
         match entry {
             Ok(entry) => {
-                if is_config_file(&entry) {
-                    self.paths.push(entry.path().as_os_str().into());
+                if let Some(config) = to_discovered_config(&entry) {
+                    self.configs.push(config);
                 }
                 ignore::WalkState::Continue
             }
@@ -111,13 +115,17 @@ impl ignore::ParallelVisitor for ConfigWalkCollector {
     }
 }
 
-fn is_config_file(entry: &DirEntry) -> bool {
-    let Some(file_type) = entry.file_type() else { return false };
+fn to_discovered_config(entry: &DirEntry) -> Option<DiscoveredConfig> {
+    let file_type = entry.file_type()?;
     if file_type.is_dir() {
-        return false;
+        return None;
     }
-    let Some(file_name) = entry.path().file_name() else { return false };
-    file_name == DEFAULT_OXLINTRC_NAME
+    let file_name = entry.path().file_name()?;
+    if file_name == DEFAULT_OXLINTRC_NAME {
+        Some(DiscoveredConfig::Json(entry.path().to_path_buf()))
+    } else {
+        None
+    }
 }
 
 pub struct LoadedConfig {
@@ -201,15 +209,17 @@ impl<'a> ConfigLoader<'a> {
     /// This allows callers to decide how to handle errors (fail fast vs continue)
     pub fn load_many(
         &mut self,
-        paths: impl IntoIterator<Item = impl AsRef<Path>>,
+        paths: impl IntoIterator<Item = DiscoveredConfig>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
         let mut configs = Vec::new();
         let mut errors = Vec::new();
 
         for path in paths {
-            match self.load(path.as_ref()) {
-                Ok(config) => configs.push(config),
-                Err(e) => errors.push(e),
+            match path {
+                DiscoveredConfig::Json(path) => match self.load(&path) {
+                    Ok(config) => configs.push(config),
+                    Err(e) => errors.push(e),
+                },
             }
         }
 
