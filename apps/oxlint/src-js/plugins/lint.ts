@@ -29,6 +29,9 @@ import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { AfterHook, BufferWithArrays } from "./types.ts";
 
+// CWD. Currently the same for all files, but that will change in the future.
+const CWD = process.cwd();
+
 // Buffers cache.
 //
 // All buffers sent from Rust are stored in this array, indexed by `bufferId` (also sent from Rust).
@@ -141,8 +144,8 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
-  // Pass file path to context module, so `Context`s know what file is being linted
-  setupFileContext(filePath);
+  // Pass file path and CWD to context module, so `Context`s know what file is being linted
+  setupFileContext(filePath, CWD);
 
   // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
   //
