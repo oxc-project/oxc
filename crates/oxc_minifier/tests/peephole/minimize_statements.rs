@@ -32,3 +32,27 @@ fn test_for_continue_in_for() {
     test("for( a in b ){ c(); continue; }", "for ( a in b ) c();");
     test("for( ; ; ){ c(); continue; }", "for ( ; ; ) c();");
 }
+
+#[test]
+fn test_for_in_block_scoped_no_inline() {
+    // Should NOT inline when for-in uses `let` or `const` because it can cause variable shadowing
+    // https://github.com/oxc-project/oxc/issues/18650
+    // The inlined expression might reference a variable with the same name as the for-in variable,
+    // causing it to incorrectly reference the shadowed for-in variable instead of the outer variable.
+    test(
+        "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (let name in foo) { console.log(name); } console.log(name); }",
+        "{ var name = 'name1'; let foo = { foo: 1 }; name = 'name2'; for (let name in foo) console.log(name); console.log(name); }",
+    );
+    test(
+        "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (const name in foo) { console.log(name); } console.log(name); }",
+        "{ var name = 'name1'; let foo = { foo: 1 }; name = 'name2'; for (let name in foo) console.log(name); console.log(name); }",
+    );
+    test(
+        "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (var name in foo) { console.log(name); } console.log(name); }",
+        "var name = 'name1'; for (var name in name = 'name2', { foo: 1 }) console.log(name); console.log(name);",
+    );
+    test(
+        "{ var name = 'name1'; const foo = { foo: 1 }; name = 'name2'; for (name in foo) { console.log(name); } console.log(name); }",
+        "var name = 'name1'; for (name in name = 'name2', { foo: 1 }) console.log(name); console.log(name);",
+    );
+}
