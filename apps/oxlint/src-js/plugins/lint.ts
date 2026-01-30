@@ -9,7 +9,7 @@ import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
-
+import { getResponsibleWorkspace } from "../workspace/index.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -28,9 +28,6 @@ import { walkProgram } from '../generated/walk.js';
 import { walkProgram, ancestors } from "../generated/walk.js";
 
 import type { AfterHook, BufferWithArrays } from "./types.ts";
-
-// CWD. Currently the same for all files, but that will change in the future.
-const CWD = process.cwd();
 
 // Buffers cache.
 //
@@ -144,8 +141,18 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
+  // Get workspace containing file
+  const workspace = getResponsibleWorkspace(filePath);
+  debugAssertIsNonNull(workspace, "No workspace responsible for file being linted");
+
   // Pass file path and CWD to context module, so `Context`s know what file is being linted
-  setupFileContext(filePath, CWD);
+  setupFileContext(filePath, workspace);
+
+  // Load all relevant workspace configurations
+  const rules = registeredRules.get(workspace)!;
+  const workspaceOptions = allOptions.get(workspace);
+  debugAssertIsNonNull(rules, "No rules registered for workspace");
+  debugAssertIsNonNull(workspaceOptions, "No options registered for workspace");
 
   // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
   //
@@ -167,21 +174,21 @@ export function lintFileImpl(
 
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
-    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
-    const ruleDetails = registeredRules[ruleId];
+    debugAssert(ruleId < rules.length, "Rule ID out of bounds");
+    const ruleDetails = rules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
-    debugAssertIsNonNull(allOptions);
-    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
+    debugAssertIsNonNull(workspaceOptions);
+    debugAssert(optionsId < workspaceOptions.length, "Options ID out of bounds");
 
     // If the rule has no user-provided options, use the plugin-provided default
     // options (which falls back to `DEFAULT_OPTIONS`)
     ruleDetails.options =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : workspaceOptions[optionsId];
 
     let { visitor } = ruleDetails;
     if (visitor === null) {

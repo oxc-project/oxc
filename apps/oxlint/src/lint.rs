@@ -189,6 +189,17 @@ impl CliRunner {
         }
 
         let base_ignore_patterns = oxlintrc.ignore_patterns.clone();
+
+        // Setup JS workspace before loading any configs (config parsing can load JS plugins).
+        if let Some(external_linter) = &external_linter {
+            let res = (external_linter.create_workspace)(self.cwd.to_string_lossy().into_owned());
+
+            if let Err(err) = res {
+                print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
+                return CliRunResult::JsPluginWorkspaceSetupFailed;
+            }
+        }
+
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc.clone(),
@@ -268,7 +279,8 @@ impl CliRunner {
         // the same functionality.
         let use_cross_module = lint_config.plugins().has_import()
             || nested_configs.values().any(|config| config.plugins().has_import());
-        let mut options = LintServiceOptions::new(self.cwd).with_cross_module(use_cross_module);
+        let mut options =
+            LintServiceOptions::new(self.cwd.clone()).with_cross_module(use_cross_module);
 
         let report_unused_directives = match inline_config_options.report_unused_directives {
             ReportUnusedDirectives::WithoutSeverity(true) => Some(AllowWarnDeny::Warn),
@@ -282,7 +294,9 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store.external_plugin_store().setup_rule_configs(external_linter);
+            let res = config_store
+                .external_plugin_store()
+                .setup_rule_configs(self.cwd.to_string_lossy().into_owned(), external_linter);
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,

@@ -12,12 +12,13 @@ import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:pa
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
 import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
-import { registerPlugin, registeredRules } from "../plugins/load.ts";
+import { registerPlugin } from "../plugins/load.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
-import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
+import { setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
 import { parse } from "./parse.ts";
+import { createWorkspace, destroyWorkspace } from "../workspace/index.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
@@ -975,9 +976,10 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
 
-  // Determine path.
-  // If not provided, use default filename based on `parseOptions.lang`.
-  let path: string;
+  // Determine path and CWD.
+  // If not provided, use default filename based on `parseOptions.lang`,
+  // and the directory of this file as CWD.
+  let path: string, cwd: string;
 
   const { filename } = test;
   if (filename == null) {
@@ -987,21 +989,24 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     } else if (ext === "dts") {
       ext = "d.ts";
     }
-    const cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
+    cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
     path = pathJoin(cwd, `${DEFAULT_FILENAME_BASE}.${ext}`);
   } else if (isAbsolutePath(filename)) {
+    cwd = dirname(filename);
     path = filename;
   } else {
-    const cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
+    cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
     path = pathJoin(cwd, filename);
   }
 
+  createWorkspace(cwd);
+
   try {
     // Register plugin. This adds rule to `registeredRules` array.
-    registerPlugin(plugin, null, false);
+    registerPlugin(path, plugin, null, false);
 
     // Set up options
-    const optionsId = setupOptions(test);
+    const optionsId = setupOptions(test, cwd);
 
     // Parse file into buffer
     parse(path, test.code, parseOptions);
@@ -1056,8 +1061,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     });
   } finally {
     // Reset state
-    registeredRules.length = 0;
-    if (allOptions !== null) allOptions.length = 1;
+    destroyWorkspace(cwd);
 
     // Even if there hasn't been an error, do a full reset of state just to be sure.
     // This includes emptying `diagnostics`.
@@ -1208,9 +1212,10 @@ function getGlobalsJson(test: TestCase): string {
  * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for user-provided options).
  *
  * @param test - Test case
+ * @param cwd - Current working directory for test case
  * @returns Options ID to pass to `lintFileImpl`
  */
-function setupOptions(test: TestCase): number {
+function setupOptions(test: TestCase, cwd: string): number {
   // Initial entries for default options
   const allOptions: Options[] = [[]],
     allRuleIds: number[] = [0];
@@ -1228,7 +1233,11 @@ function setupOptions(test: TestCase): number {
   // Serialize to JSON and pass to `setOptions`
   let allOptionsJson: string;
   try {
-    allOptionsJson = JSON.stringify({ options: allOptions, ruleIds: allRuleIds });
+    allOptionsJson = JSON.stringify({
+      options: allOptions,
+      ruleIds: allRuleIds,
+      cwd,
+    });
   } catch (err) {
     throw new Error(`Failed to serialize options: ${err}`);
   }

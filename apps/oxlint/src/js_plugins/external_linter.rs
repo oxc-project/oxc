@@ -15,7 +15,10 @@ use oxc_linter::{
 
 use crate::{
     generated::raw_transfer_constants::{BLOCK_ALIGN, BUFFER_SIZE},
-    run::{JsLintFileCb, JsLoadPluginCb, JsSetupRuleConfigsCb},
+    run::{
+        JsCreateWorkspaceCb, JsDestroyWorkspaceCb, JsLintFileCb, JsLoadPluginCb,
+        JsSetupRuleConfigsCb,
+    },
 };
 
 /// Wrap JS callbacks as normal Rust functions, and create [`ExternalLinter`].
@@ -23,12 +26,55 @@ pub fn create_external_linter(
     load_plugin: JsLoadPluginCb,
     setup_rule_configs: JsSetupRuleConfigsCb,
     lint_file: JsLintFileCb,
+    create_workspace: JsCreateWorkspaceCb,
+    destroy_workspace: JsDestroyWorkspaceCb,
 ) -> ExternalLinter {
     let rust_load_plugin = wrap_load_plugin(load_plugin);
     let rust_setup_rule_configs = wrap_setup_rule_configs(setup_rule_configs);
     let rust_lint_file = wrap_lint_file(lint_file);
+    let rust_create_workspace = wrap_create_workspace(create_workspace);
+    let rust_destroy_workspace = wrap_destroy_workspace(destroy_workspace);
 
-    ExternalLinter::new(rust_load_plugin, rust_setup_rule_configs, rust_lint_file)
+    ExternalLinter::new(
+        rust_load_plugin,
+        rust_setup_rule_configs,
+        rust_lint_file,
+        rust_create_workspace,
+        rust_destroy_workspace,
+    )
+}
+
+/// Wrap `createWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterCreateWorkspaceCb {
+    Box::new(move |workspace_dir| {
+        let cb = &cb;
+        let res = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async move {
+                cb.call_async(FnArgs::from((workspace_dir,))).await?.into_future().await
+            })
+        });
+
+        match res {
+            // `createWorkspace` completed successfully
+            Ok(()) => Ok(()),
+            // `createWorkspace` threw an error
+            Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
+        }
+    })
+}
+
+/// Wrap `destroyWorkspace` JS callback as a normal Rust function.
+fn wrap_destroy_workspace(
+    cb: JsDestroyWorkspaceCb,
+) -> oxc_linter::ExternalLinterDestroyWorkspaceCb {
+    Box::new(move |root_dir: String| {
+        let _ = cb.call(FnArgs::from((root_dir,)), ThreadsafeFunctionCallMode::Blocking);
+    })
 }
 
 /// Result returned by `loadPlugin` JS callback.
