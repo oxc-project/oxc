@@ -216,6 +216,38 @@ expression: json
       ],
       "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
     },
+    "svelteAllowShorthand": {
+      "description": "Enable/disable component attribute shorthand if the attribute name and expression are the same.\n\n- Default: `true`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Enable/disable component attribute shorthand if the attribute name and expression are the same.\n\n- Default: `true`"
+    },
+    "svelteBracketNewLine": {
+      "description": "Put the `>` of a multiline element on a new line.\n\nDeprecated: Use Prettier's `bracketSameLine` option instead.\n\n- Default: `true`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Put the `>` of a multiline element on a new line.\n\nDeprecated: Use Prettier's `bracketSameLine` option instead.\n\n- Default: `true`"
+    },
+    "svelteIndentScriptAndStyle": {
+      "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Svelte files.\n\n- Default: `true`",
+      "type": [
+        "boolean",
+        "null"
+      ],
+      "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Svelte files.\n\n- Default: `true`"
+    },
+    "svelteSortOrder": {
+      "description": "Sort order for `<script>`, `<style>`, markup, and module context in Svelte files.\n\nJoin the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want.\n\n- Default: `\"options-scripts-markup-styles\"`",
+      "type": [
+        "string",
+        "null"
+      ],
+      "markdownDescription": "Sort order for `<script>`, `<style>`, markup, and module context in Svelte files.\n\nJoin the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want.\n\n- Default: `\"options-scripts-markup-styles\"`"
+    },
     "tabWidth": {
       "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",
       "type": [
@@ -488,6 +520,38 @@ expression: json
             "null"
           ],
           "markdownDescription": "Use single quotes instead of double quotes.\n\nFor JSX, you can set the `jsxSingleQuote` option.\n\n- Default: `false`"
+        },
+        "svelteAllowShorthand": {
+          "description": "Enable/disable component attribute shorthand if the attribute name and expression are the same.\n\n- Default: `true`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Enable/disable component attribute shorthand if the attribute name and expression are the same.\n\n- Default: `true`"
+        },
+        "svelteBracketNewLine": {
+          "description": "Put the `>` of a multiline element on a new line.\n\nDeprecated: Use Prettier's `bracketSameLine` option instead.\n\n- Default: `true`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Put the `>` of a multiline element on a new line.\n\nDeprecated: Use Prettier's `bracketSameLine` option instead.\n\n- Default: `true`"
+        },
+        "svelteIndentScriptAndStyle": {
+          "description": "Whether or not to indent the code inside `<script>` and `<style>` tags in Svelte files.\n\n- Default: `true`",
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "markdownDescription": "Whether or not to indent the code inside `<script>` and `<style>` tags in Svelte files.\n\n- Default: `true`"
+        },
+        "svelteSortOrder": {
+          "description": "Sort order for `<script>`, `<style>`, markup, and module context in Svelte files.\n\nJoin the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want.\n\n- Default: `\"options-scripts-markup-styles\"`",
+          "type": [
+            "string",
+            "null"
+          ],
+          "markdownDescription": "Sort order for `<script>`, `<style>`, markup, and module context in Svelte files.\n\nJoin the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want.\n\n- Default: `\"options-scripts-markup-styles\"`"
         },
         "tabWidth": {
           "description": "Specify the number of spaces per indentation-level.\n\n- Default: `2`\n- Overrides `.editorconfig.indent_size`",

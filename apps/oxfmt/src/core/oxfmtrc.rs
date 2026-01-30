@@ -188,6 +188,34 @@ pub struct FormatConfig {
     pub vue_indent_script_and_style: Option<bool>,
 
     // ============================================================================================
+    // Prettier compatible options for Svelte (prettier-plugin-svelte)
+    // ============================================================================================
+    /// Sort order for `<script>`, `<style>`, markup, and module context in Svelte files.
+    ///
+    /// Join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want.
+    ///
+    /// - Default: `"options-scripts-markup-styles"`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte_sort_order: Option<String>,
+    /// Put the `>` of a multiline element on a new line.
+    ///
+    /// Deprecated: Use Prettier's `bracketSameLine` option instead.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte_bracket_new_line: Option<bool>,
+    /// Enable/disable component attribute shorthand if the attribute name and expression are the same.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte_allow_shorthand: Option<bool>,
+    /// Whether or not to indent the code inside `<script>` and `<style>` tags in Svelte files.
+    ///
+    /// - Default: `true`
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub svelte_indent_script_and_style: Option<bool>,
+
+    // ============================================================================================
     // Below are our own extensions, handled by Oxfmt
     // ============================================================================================
     /// Whether to insert a final newline at the end of the file.

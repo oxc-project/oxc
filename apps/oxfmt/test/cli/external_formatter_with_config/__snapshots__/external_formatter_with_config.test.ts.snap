@@ -1,6 +1,42 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`external_formatter_with_config > should pass config options to prettier 1`] = `
+exports[`external_formatter_with_config > should pass config options to prettier for Svelte 1`] = `
+"--- FILE -----------
+test.svelte
+--- BEFORE ---------
+<script>
+let count=0;function increment(){count+=1;}
+</script>
+
+<button on:click={increment}>{count}</button>
+
+<style>
+.btn{color:red;background:blue}
+</style>
+
+--- AFTER ----------
+<script>
+	let count = 0;
+	function increment() {
+		count += 1;
+	}
+</script>
+
+<button on:click={increment}
+	>{count}</button
+>
+
+<style>
+	.btn {
+		color: red;
+		background: blue;
+	}
+</style>
+
+--------------------"
+`;
+
+exports[`external_formatter_with_config > should pass config options to prettier for Vue 1`] = `
 "--- FILE -----------
 test.vue
 --- BEFORE ---------

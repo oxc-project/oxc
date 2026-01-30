@@ -1004,6 +1004,50 @@ For JSX, you can set the `jsxSingleQuote` option.
 - Default: `false`
 
 
+##### overrides[n].options.svelteAllowShorthand
+
+type: `boolean`
+
+
+Enable/disable component attribute shorthand if the attribute name and expression are the same.
+
+- Default: `true`
+
+
+##### overrides[n].options.svelteBracketNewLine
+
+type: `boolean`
+
+
+Put the `>` of a multiline element on a new line.
+
+Deprecated: Use Prettier's `bracketSameLine` option instead.
+
+- Default: `true`
+
+
+##### overrides[n].options.svelteIndentScriptAndStyle
+
+type: `boolean`
+
+
+Whether or not to indent the code inside `<script>` and `<style>` tags in Svelte files.
+
+- Default: `true`
+
+
+##### overrides[n].options.svelteSortOrder
+
+type: `string`
+
+
+Sort order for `<script>`, `<style>`, markup, and module context in Svelte files.
+
+Join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want.
+
+- Default: `"options-scripts-markup-styles"`
+
+
 ##### overrides[n].options.tabWidth
 
 type: `integer`
@@ -1115,6 +1159,50 @@ Use single quotes instead of double quotes.
 For JSX, you can set the `jsxSingleQuote` option.
 
 - Default: `false`
+
+
+## svelteAllowShorthand
+
+type: `boolean`
+
+
+Enable/disable component attribute shorthand if the attribute name and expression are the same.
+
+- Default: `true`
+
+
+## svelteBracketNewLine
+
+type: `boolean`
+
+
+Put the `>` of a multiline element on a new line.
+
+Deprecated: Use Prettier's `bracketSameLine` option instead.
+
+- Default: `true`
+
+
+## svelteIndentScriptAndStyle
+
+type: `boolean`
+
+
+Whether or not to indent the code inside `<script>` and `<style>` tags in Svelte files.
+
+- Default: `true`
+
+
+## svelteSortOrder
+
+type: `string`
+
+
+Sort order for `<script>`, `<style>`, markup, and module context in Svelte files.
+
+Join the keywords `options`, `scripts`, `markup`, `styles` with a `-` in the order you want.
+
+- Default: `"options-scripts-markup-styles"`
 
 
 ## tabWidth

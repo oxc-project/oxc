@@ -91,10 +91,31 @@ export async function formatFile({
   // But some plugins rely on `filepath`, so we set it too
   options.filepath = fileName;
 
+  // Enable Svelte plugin for .svelte files
+  if (parserName === "svelte") {
+    const sveltePlugin = await loadSveltePlugin();
+    options.plugins = options.plugins || [];
+    options.plugins.push(sveltePlugin as Plugin);
+  }
+
   // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
 
   return prettier.format(code, options);
+}
+
+// ---
+// Svelte support
+// ---
+
+// Shared cache for prettier-plugin-svelte
+let sveltePluginCache: typeof import("prettier-plugin-svelte");
+
+async function loadSveltePlugin(): Promise<typeof import("prettier-plugin-svelte")> {
+  if (sveltePluginCache) return sveltePluginCache;
+
+  sveltePluginCache = await import("prettier-plugin-svelte");
+  return sveltePluginCache;
 }
 
 // ---
@@ -116,7 +137,7 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
 
 // ---
 
-const TAILWIND_RELEVANT_PARSERS = new Set(["html", "vue", "angular", "glimmer"]);
+const TAILWIND_RELEVANT_PARSERS = new Set(["html", "vue", "angular", "glimmer", "svelte"]);
 
 /**
  * Set up Tailwind CSS plugin for Prettier when:

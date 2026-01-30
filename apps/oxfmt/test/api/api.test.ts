@@ -71,6 +71,70 @@ describe("API Tests", () => {
 `.trimStart(),
     );
     expect(result3.errors).toStrictEqual([]);
+
+    // Svelte
+    const svelteCode = `
+<script>let count=0;function increment(){count+=1;}</script>
+<button on:click={increment}>{count}</button>
+<style>.btn{color:red;}</style>
+`.trim();
+    const result4 = await format("Counter.svelte", svelteCode);
+    expect(result4.code).toBe(
+      `
+<script>
+  let count = 0;
+  function increment() {
+    count += 1;
+  }
+</script>
+
+<button on:click={increment}>{count}</button>
+
+<style>
+  .btn {
+    color: red;
+  }
+</style>
+`.trimStart(),
+    );
+    expect(result4.errors).toStrictEqual([]);
+
+    // Svelte 5 runes
+    const svelte5Code = `
+<script lang="ts">let count=$state(0);let doubled=$derived(count*2);</script>
+<button onclick={()=>count++}>{count} x 2 = {doubled}</button>
+`.trim();
+    const result5 = await format("Counter.svelte", svelte5Code);
+    expect(result5.code).toBe(
+      `
+<script lang="ts">
+  let count = $state(0);
+  let doubled = $derived(count * 2);
+</script>
+
+<button onclick={() => count++}>{count} x 2 = {doubled}</button>
+`.trimStart(),
+    );
+    expect(result5.errors).toStrictEqual([]);
+
+    // Svelte with svelteIndentScriptAndStyle: false
+    const svelteNoIndent = `
+<script>let x=1;</script>
+<div>{x}</div>
+`.trim();
+    const result6 = await format("Test.svelte", svelteNoIndent, {
+      svelteIndentScriptAndStyle: false,
+    });
+    expect(result6.code).toBe(
+      `
+<script>
+let x = 1;
+</script>
+
+<div>{x}</div>
+`.trimStart(),
+    );
+    expect(result6.errors).toStrictEqual([]);
   });
 
   test("should sort imports with customGroups", async () => {
