@@ -4264,7 +4264,8 @@ pub mod walk_mut {
         visitor.enter_node(kind);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_span(&mut it.span);
-        visitor.visit_ts_type_parameter(&mut it.type_parameter);
+        visitor.visit_binding_identifier(&mut it.key);
+        visitor.visit_ts_type(&mut it.constraint);
         if let Some(name_type) = &mut it.name_type {
             visitor.visit_ts_type(name_type);
         }
@@ -4350,9 +4351,8 @@ pub mod walk_mut {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
             }
-            match_ts_type_name!(TSModuleReference) => {
-                visitor.visit_ts_type_name(it.to_ts_type_name_mut())
-            }
+            TSModuleReference::IdentifierReference(it) => visitor.visit_identifier_reference(it),
+            TSModuleReference::QualifiedName(it) => visitor.visit_ts_qualified_name(it),
         }
     }
 

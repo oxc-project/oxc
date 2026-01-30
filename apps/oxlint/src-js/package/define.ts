@@ -158,7 +158,7 @@ const FILE_CONTEXT: FileContext = Object.freeze({
     throw new Error("Cannot access `context.parserOptions` in `createOnce`");
   },
 
-  get parserPath(): string {
+  get parserPath(): string | undefined {
     throw new Error("Cannot access `context.parserPath` in `createOnce`");
   },
 });

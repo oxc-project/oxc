@@ -6,12 +6,14 @@ source: crates/oxc_linter/src/tester.rs
  1 │ globalThis.Math.pow(a, b)
    · ─────────────────────────
    ╰────
+  help: Replace `globalThis.Math.pow(a, b)` with `a ** b`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
  1 │ globalThis.Math['pow'](a, b)
    · ────────────────────────────
    ╰────
+  help: Replace `globalThis.Math['pow'](a, b)` with `a ** b`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
@@ -19,57 +21,81 @@ source: crates/oxc_linter/src/tester.rs
    · ──────────────
  2 │              d)
    ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:18]
  1 │ ╭─▶ Math.pow(a, b) + Math.pow(c,
  2 │ ╰─▶              d)
    ╰────
+  help: Replace `Math.pow(c,
+        			 d)` with `c ** d`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
  1 │ Math.pow(Math.pow(a, b), Math.pow(c, d))
    · ────────────────────────────────────────
    ╰────
+  help: Replace `Math.pow(Math.pow(a, b), Math.pow(c, d))` with `Math.pow(a, b) ** Math.pow(c, d)`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:10]
  1 │ Math.pow(Math.pow(a, b), Math.pow(c, d))
    ·          ──────────────
    ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:26]
  1 │ Math.pow(Math.pow(a, b), Math.pow(c, d))
    ·                          ──────────────
    ╰────
+  help: Replace `Math.pow(c, d)` with `c ** d`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
  1 │ Math.pow(a, b)**Math.pow(c, d)
    · ──────────────
    ╰────
+  help: Replace `Math.pow(a, b)` with `(a ** b)`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:17]
  1 │ Math.pow(a, b)**Math.pow(c, d)
    ·                 ──────────────
    ╰────
+  help: Replace `Math.pow(c, d)` with `c ** d`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
  1 │ Math.pow(a, b as any)
    · ─────────────────────
    ╰────
+  help: Replace `Math.pow(a, b as any)` with `a ** (b as any)`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
  1 │ Math.pow(a as any, b)
    · ─────────────────────
    ╰────
+  help: Replace `Math.pow(a as any, b)` with `(a as any) ** b`.
 
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
  1 │ Math.pow(a, b) as any
    · ──────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `(a ** b)`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:1]
+ 1 │ Math.pow(a, b) + Math.pow(c, /* comment */ d)
+   · ──────────────
+   ╰────
+  help: Replace `Math.pow(a, b)` with `a ** b`.
+
+  ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
+   ╭─[prefer_exponentiation_operator.tsx:1:18]
+ 1 │ Math.pow(a, b) + Math.pow(c, /* comment */ d)
+   ·                  ────────────────────────────
    ╰────

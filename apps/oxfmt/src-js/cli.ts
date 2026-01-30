@@ -4,6 +4,7 @@ import {
   formatEmbeddedCode,
   formatFile,
   sortTailwindClasses,
+  disposeExternalFormatter,
 } from "./cli/worker-proxy";
 
 // napi-JS `oxfmt` CLI entry point
@@ -40,8 +41,15 @@ void (async () => {
     await import("./cli/migration/migrate-prettier").then((m) => m.runMigratePrettier());
     return;
   }
+  if (mode === "migrate:biome") {
+    await import("./cli/migration/migrate-biome").then((m) => m.runMigrateBiome());
+    return;
+  }
 
   // Other modes are handled by Rust, just need to set `exitCode`
+
+  // Clean up worker pool to not V8 crashes on process exit
+  await disposeExternalFormatter();
 
   // NOTE: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
   // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

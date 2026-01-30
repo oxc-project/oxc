@@ -52,7 +52,7 @@ fn unknown_prop(span: Span) -> OxcDiagnostic {
 pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 
 #[derive(Default, Debug, Clone, PartialEq, Eq, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct NoUnknownPropertyConfig {
     /// List of properties to ignore.
     ignore: FxHashSet<Cow<'static, str>>,
@@ -474,9 +474,7 @@ fn has_uppercase(name: &str) -> bool {
 
 impl Rule for NoUnknownProperty {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

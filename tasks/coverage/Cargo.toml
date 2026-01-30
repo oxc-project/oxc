@@ -26,13 +26,9 @@ oxc = { workspace = true, features = ["full", "isolated_declarations", "serializ
 oxc_formatter = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_tasks_transform_checker = { workspace = true }
-
 console = { workspace = true }
-constcat = { workspace = true }
-cow-utils = { workspace = true }
 encoding_rs = { workspace = true }
 encoding_rs_io = { workspace = true }
-futures = { workspace = true }
 itertools = { workspace = true }
 lazy-regex = { workspace = true }
 phf = { workspace = true }
@@ -43,5 +39,4 @@ saphyr = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 similar = { workspace = true }
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 walkdir = { workspace = true }

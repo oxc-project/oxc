@@ -13,16 +13,7 @@ fn no_inner_declarations_diagnostic(decl_type: &str, body: &str, span: Span) -> 
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
-pub struct NoInnerDeclarations {
-    /// Determines what type of declarations to check.
-    config: NoInnerDeclarationsConfig,
-    /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
-    #[schemars(with = "BlockScopedFunctions")]
-    block_scoped_functions: Option<BlockScopedFunctions>,
-}
-
+/// Determines what type of declarations to check.
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 enum NoInnerDeclarationsConfig {
@@ -31,6 +22,14 @@ enum NoInnerDeclarationsConfig {
     Functions,
     /// Disallows function and var declarations in nested blocks.
     Both,
+}
+
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+struct NoInnerDeclarationsOptions {
+    /// Controls whether function declarations in nested blocks are allowed in strict mode (ES6+ behavior).
+    #[schemars(with = "BlockScopedFunctions")]
+    block_scoped_functions: Option<BlockScopedFunctions>,
 }
 
 #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -43,10 +42,14 @@ enum BlockScopedFunctions {
     Disallow,
 }
 
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema)]
+#[serde(default)]
+pub struct NoInnerDeclarations(NoInnerDeclarationsConfig, NoInnerDeclarationsOptions);
+
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow variable or function declarations in nested blocks
+    /// Disallow variable or function declarations in nested blocks.
     ///
     /// ### Why is this bad?
     ///
@@ -59,7 +62,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```javascript
     /// if (test) {
-    ///     function doSomethingElse () { }
+    ///   function doSomethingElse () { }
     /// }
     /// ```
     ///
@@ -100,13 +103,13 @@ impl Rule for NoInnerDeclarations {
             None
         };
 
-        Ok(Self { config, block_scoped_functions })
+        Ok(Self(config, NoInnerDeclarationsOptions { block_scoped_functions }))
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclaration(decl) => {
-                if self.config == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
+                if self.0 == NoInnerDeclarationsConfig::Functions || !decl.kind.is_var() {
                     return;
                 }
 
@@ -117,15 +120,19 @@ impl Rule for NoInnerDeclarations {
                     return;
                 }
 
-                if self.config == NoInnerDeclarationsConfig::Functions
-                    && let Some(block_scoped_functions) = self.block_scoped_functions
-                    && block_scoped_functions == BlockScopedFunctions::Allow
+                if self.0 == NoInnerDeclarationsConfig::Functions
+                    && self.1.block_scoped_functions == Some(BlockScopedFunctions::Allow)
                 {
-                    let is_module = ctx.source_type().is_module();
+                    // Modules are always strict mode.
+                    // This check is redundant, because in modules, the scope will have strict mode flag set,
+                    // but checking source type is cheaper than scope flags lookup, so do the quick check first.
+                    if ctx.source_type().is_module() {
+                        return;
+                    }
+
                     let scope_id = node.scope_id();
                     let is_strict = ctx.scoping().scope_flags(scope_id).is_strict_mode();
-
-                    if is_module || is_strict {
+                    if is_strict {
                         return;
                     }
                 }

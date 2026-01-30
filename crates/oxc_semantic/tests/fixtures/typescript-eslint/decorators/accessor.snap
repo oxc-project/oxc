@@ -57,13 +57,15 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/acce
             "flags": "ReferenceFlags(Read)",
             "id": 0,
             "name": "decorator",
-            "node_id": 10
+            "node_id": 10,
+            "scope_id": 2
           },
           {
             "flags": "ReferenceFlags(Read)",
             "id": 1,
             "name": "decorator",
-            "node_id": 19
+            "node_id": 19,
+            "scope_id": 2
           }
         ]
       },

@@ -1,9 +1,9 @@
-commit: f5ccf434
+commit: 7f6a8467
 
 parser_typescript Summary:
-AST Parsed     : 9844/9845 (99.99%)
-Positive Passed: 9836/9845 (99.91%)
-Negative Passed: 1496/2549 (58.69%)
+AST Parsed     : 9842/9843 (99.99%)
+Positive Passed: 9837/9843 (99.94%)
+Negative Passed: 1510/2555 (59.10%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -13,8 +13,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDecl
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorInferredReturnTypeErrorInReturnStatement.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/accessorsInAmbientContext.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/allowSyntheticDefaultImports10.ts
 
@@ -27,8 +25,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExpor
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithRelativeExternalImportDeclaration.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientExternalModuleWithRelativeModuleName.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientGetters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/ambientStatement1.ts
 
@@ -55,8 +51,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/autolift3.ts
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/autolift4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitCallExpressionInSyncFunction.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/baseCheck.ts
 
@@ -158,6 +152,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionExp
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/collisionExportsRequireAndVar.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/commonSourceDirectory_dts.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/complicatedGenericRecursiveBaseClassReference.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/computedPropertiesInDestructuring1.ts
@@ -181,8 +177,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constWithNon
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constantEnumAssert.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads3.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/constructorOverloads7.ts
 
@@ -215,6 +209,12 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationE
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitIndexTypeNotFound.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitMonorepoBaseUrl.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitPathMappingMonorepo2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitRelativeModuleError.ts
 
@@ -356,8 +356,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportAssign
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclarationsInAmbientNamespaces2.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDeclareClass1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultAlias_excludesEverything.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/exportDefaultClassAndValue.ts
@@ -403,8 +401,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendGlobal
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/extendedInterfacesWithDuplicateTypeParameters.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSemantics.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externSyntax.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleImmutableBindings.ts
 
@@ -624,8 +620,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclar
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/methodInAmbientClass1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingDomElement_UsingDomLib.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/missingDomElements.ts
@@ -753,6 +747,10 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/overshifts.t
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterDecoratorsEmitCrash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/parameterPropertyInConstructor3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_aliasWithRoot_realRootFile.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathMappingBasedModuleResolution_rootImport_noAliasWithRoot_realRootFile.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/pathsValidation4.ts
 
@@ -1456,8 +1454,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/importsImplicitlyReadonly.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault2.ts
@@ -1471,6 +1467,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/multipleExportDefault6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelModuleDeclarationAndFile.ts
 
@@ -1726,10 +1724,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors3.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors5.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors6.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserGetAccessorWithTypeParameters1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserSetAccessorWithTypeAnnotation1.ts
@@ -1740,17 +1734,11 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ec
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration12.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration7.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts
 
@@ -1960,6 +1948,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarationsInForOf.4.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-inStatements/for-inStatementsDestructuring.ts
@@ -2068,13 +2058,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/thi
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/contextualTypeTupleEnd.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/unionsOfTupleTypes1.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/typeAliases/intrinsicKeyword.ts
 
@@ -2110,16 +2094,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/uni
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/witness/witness.ts
 
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts:23:1]
- 22 │ // @ts-ignore suppress `with` statement error
- 23 │ with (window)
-    · ────
- 24 │     const enum H {}
-    ╰────
-
 Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDecorators.ts
 
   × Unexpected token
@@ -2129,15 +2103,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidat
     ·       ───
  19 │     }
     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/compiler/withStatementInternalComments.ts
-
-  × 'with' statements are not allowed
-   ╭─[typescript/tests/cases/compiler/withStatementInternalComments.ts:2:7]
- 1 │ // @ts-ignore
- 2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
-   ·       ────
-   ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asyncWithVarShadowing_es6.ts
 
@@ -2161,16 +2126,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport
  2 │ function arguments() { } // this is allow as the file doesn't have implicit "use strict"
    ·          ─────────
    ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts
-
-  × 'with' statements are not allowed
-    ╭─[typescript/tests/cases/conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts:64:1]
- 63 │ // @ts-ignore
- 64 │ with (_) {
-    · ────
- 65 │     var y = _;
-    ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 
@@ -2549,6 +2504,70 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Add a function body (`{}`).
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:3:17]
+ 2 │     class C {
+ 3 │         get X() { return 1; }
+   ·                 ▲
+ 4 │         set X(v) { }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:4:18]
+ 3 │         get X() { return 1; }
+ 4 │         set X(v) { }
+   ·                  ▲
+ 5 │ 
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:6:24]
+ 5 │ 
+ 6 │         static get Y() { return 1; }
+   ·                        ▲
+ 7 │         static set Y(v) { }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:7:25]
+ 6 │         static get Y() { return 1; }
+ 7 │         static set Y(v) { }
+   ·                         ▲
+ 8 │     }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:12:13]
+ 11 │ declare class C {
+ 12 │     get X() { return 1; }
+    ·             ▲
+ 13 │     set X(v) { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:13:14]
+ 12 │     get X() { return 1; }
+ 13 │     set X(v) { }
+    ·              ▲
+ 14 │ 
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:15:20]
+ 14 │ 
+ 15 │     static get Y() { return 1; }
+    ·                    ▲
+ 16 │     static set Y(v) { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/compiler/accessorsInAmbientContext.ts:16:21]
+ 15 │     static get Y() { return 1; }
+ 16 │     static set Y(v) { }
+    ·                     ▲
+ 17 │ }
+    ╰────
+
   × Unexpected token
     ╭─[typescript/tests/cases/compiler/aliasErrors.ts:13:12]
  12 │ import m2 = no.mod;
@@ -2595,6 +2614,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  4 │         var arguments = [];
    ·             ─────────
  5 │     }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/ambientGetters.ts:6:18]
+ 5 │ declare class B {
+ 6 │     get length() { return 0; }
+   ·                  ▲
+ 7 │ }
    ╰────
 
   × Expected `;` but found `:`
@@ -3149,6 +3176,69 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
   9 │         baz = await bar();
     ·               ─────
  10 │     };
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:5:10]
+ 4 │   for await (const _ of []);
+ 5 │   return await p;
+   ·          ─────
+ 6 │ }
+   ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:10:10]
+  9 │   for await (const _ of []);
+ 10 │   return await p;
+    ·          ─────
+ 11 │ }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:15:3]
+ 14 │   for await (const _ of []);
+ 15 │   await p;
+    ·   ─────
+ 16 │ }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:20:10]
+ 19 │   for await (const _ of []);
+ 20 │   return await p;
+    ·          ─────
+ 21 │ };
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:25:9]
+ 24 │   for await (const _ of []);
+ 25 │   yield await p;
+    ·         ─────
+ 26 │ }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:31:5]
+ 30 │     for await (const _ of []);
+ 31 │     await p;
+    ·     ─────
+ 32 │   }
+    ╰────
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × `await` is only allowed within async functions and at the top levels of modules
+    ╭─[typescript/tests/cases/compiler/awaitInNonAsyncFunction.ts:35:5]
+ 34 │   for await (const _ of []);
+ 35 │     await p;
+    ·     ─────
+ 36 │   }
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
@@ -4478,6 +4568,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·     ─────┬─────
    ·          ╰── it cannot be redeclared here
  8 │ 
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/constructorOverloads6.ts:4:25]
+ 3 │     constructor(n: number);
+ 4 │     constructor(x: any) {
+   ·                         ▲
+ 5 │ 
    ╰────
 
   × Multiple constructor implementations are not allowed.
@@ -5954,6 +6052,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  14 │ }
     ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/exportDeclareClass1.ts:2:21]
+ 1 │     export declare class eaC {
+ 2 │         static tF() { };
+   ·                     ▲
+ 3 │         static tsF(param:any) { };
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/exportDeclareClass1.ts:3:31]
+ 2 │         static tF() { };
+ 3 │         static tsF(param:any) { };
+   ·                               ▲
+ 4 │     };
+   ╰────
+
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/compiler/exportDefaultAsyncFunction2.ts:2:17]
  1 │ export function async<T>(...args: any[]): any { }
@@ -6065,6 +6179,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │     export class XDate {
    ╰────
   help: Try inserting a semicolon here
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/externSyntax.ts:8:20]
+ 7 │         public f();
+ 8 │         public g() { } // error body
+   ·                    ▲
+ 9 │     }
+   ╰────
 
   × Expected `,` or `)` but found `=>`
    ╭─[typescript/tests/cases/compiler/fatarrowfunctionsErrors.ts:2:8]
@@ -6432,7 +6554,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  4 │ }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:9:32]
   8 │         var r3 = () => { super(); }
   9 │         var r4 = function () { super(); }
@@ -6440,7 +6562,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  10 │         var r5 = {
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:12:17]
  11 │             get foo() {
  12 │                 super();
@@ -6448,7 +6570,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │                 return 1;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/illegalSuperCallsInConstructor.ts:16:17]
  15 │             set foo(v: number) {
  16 │                 super();
@@ -7748,6 +7870,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  1 │ const a =!@#!@$
    ·             ─
  2 │ const b = !@#!@#!@#!
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/compiler/methodInAmbientClass1.ts:2:20]
+ 1 │     declare class Foo {
+ 2 │         fn(): boolean {
+   ·                       ▲
+ 3 │         }
    ╰────
 
   × Identifier `baz` has already been declared
@@ -11119,7 +11249,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: either remove this super, or extend the class
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/compiler/superCallFromFunction1.ts:2:5]
  1 │ function foo() {
  2 │     super(value => String(value));
@@ -11127,7 +11257,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/compiler/superCallOutsideConstructor.ts:6:9]
  5 │ class D extends C {
  6 │     x = super(); 
@@ -11135,7 +11265,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  7 │  
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/compiler/superCallOutsideConstructor.ts:16:13]
  15 │         var y2 = function() {
  16 │             super();
@@ -11436,39 +11566,39 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  28 │             default: default:
     ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:6:5]
  5 │         case 2:
  6 │ ╭─▶     default:    // No issues.
  7 │ ├─▶         break;
-   · ╰──── `default` has already been declared here
+   · ╰──── First 'default' clause is here.
  8 │         default:    // Error; second 'default' clause.
    ·         ────┬───
-   ·             ╰── It can not be redeclared here
+   ·             ╰── Another 'default' clause cannot appear here.
  9 │         default:    // Error; third 'default' clause.
    ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
     ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults.ts:19:13]
  18 │             switch (x * x) {
  19 │                 default:    // No issues.
     ·                 ────┬───
-    ·                     ╰── `default` has already been declared here
+    ·                     ╰── First 'default' clause is here.
  20 │ ╭─▶             default:    // Error; second 'default' clause.
  21 │ ├─▶                 break;
-    · ╰──── It can not be redeclared here
+    · ╰──── Another 'default' clause cannot appear here.
  22 │                 case 10000:
     ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
    ╭─[typescript/tests/cases/compiler/switchStatementsWithMultipleDefaults1.ts:6:9]
  5 │             case 2:
  6 │ ╭─▶         default:    // No issues.
  7 │ ├─▶             break;
-   · ╰──── `default` has already been declared here
+   · ╰──── First 'default' clause is here.
  8 │             default:    // Error; second 'default' clause.
    ·             ────┬───
-   ·                 ╰── It can not be redeclared here
+   ·                 ╰── Another 'default' clause cannot appear here.
  9 │             default:    // Error; third 'default' clause.
    ╰────
 
@@ -12200,6 +12330,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  21 │ 
     ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:39:23]
+ 38 │         y = 4;
+ 39 │         constructor() { }
+    ·                       ▲
+ 40 │         fn() { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:40:14]
+ 39 │         constructor() { }
+ 40 │         fn() { }
+    ·              ▲
+ 41 │         static sfn() { }
+    ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:41:22]
+ 40 │         fn() { }
+ 41 │         static sfn() { }
+    ·                      ▲
+ 42 │     }
+    ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
     ╭─[typescript/tests/cases/conformance/ambient/ambientErrors.ts:57:5]
  56 │     export var q;
@@ -12646,42 +12800,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  47 │ }
     ╰────
 
-  × A 'yield' expression is only allowed in a generator body.
-   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:6:21]
- 5 │ 
- 6 │         [yield 1] = yield 2;
-   ·                     ─────
- 7 │         static [yield 3] = yield 4;
-   ╰────
-  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
-
-  × A 'yield' expression is only allowed in a generator body.
-   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:7:28]
- 6 │         [yield 1] = yield 2;
- 7 │         static [yield 3] = yield 4;
-   ·                            ─────
- 8 │     }
-   ╰────
-  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
-
-  × A 'yield' expression is only allowed in a generator body.
-    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:14:21]
- 13 │ 
- 14 │         [yield 1] = yield 2;
-    ·                     ─────
- 15 │         static [yield 3] = yield 4;
-    ╰────
-  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
-
-  × A 'yield' expression is only allowed in a generator body.
-    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:15:28]
- 14 │         [yield 1] = yield 2;
- 15 │         static [yield 3] = yield 4;
-    ·                            ─────
- 16 │     }
-    ╰────
-  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
-
   × `await` is only allowed within async functions and at the top levels of modules
    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:3:21]
  2 │     class C {
@@ -12700,6 +12818,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
 
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:6:21]
+ 5 │ 
+ 6 │         [yield 1] = yield 2;
+   ·                     ─────
+ 7 │         static [yield 3] = yield 4;
+   ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
+  × A 'yield' expression is only allowed in a generator body.
+   ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:7:28]
+ 6 │         [yield 1] = yield 2;
+ 7 │         static [yield 3] = yield 4;
+   ·                            ─────
+ 8 │     }
+   ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
   × `await` is only allowed within async functions and at the top levels of modules
     ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:11:21]
  10 │     return class {
@@ -12717,6 +12853,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │ 
     ╰────
   help: Either remove this `await` or add the `async` keyword to the enclosing function
+
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:14:21]
+ 13 │ 
+ 14 │         [yield 1] = yield 2;
+    ·                     ─────
+ 15 │         static [yield 3] = yield 4;
+    ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
+
+  × A 'yield' expression is only allowed in a generator body.
+    ╭─[typescript/tests/cases/conformance/classes/awaitAndYieldInProperty.ts:15:28]
+ 14 │         [yield 1] = yield 2;
+ 15 │         static [yield 3] = yield 4;
+    ·                            ─────
+ 16 │     }
+    ╰────
+  help: Either remove this `yield` or change the enclosing function to a generator function (`function*`)
 
   × TS(1318): Accessor 'aa' cannot have an implementation because it is marked abstract.
    ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
@@ -12748,6 +12902,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  8 │     }
    ·     ─
  9 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts:2:28]
+ 1 │ declare abstract class A {
+ 2 │     abstract constructor() {}
+   ·                            ▲
+ 3 │ }
    ╰────
 
   × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
@@ -13323,7 +13485,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove the duplicate modifier.
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/classes/constructorDeclarations/superCalls/derivedClassConstructorWithoutSuperCall.ts:24:31]
  23 │     constructor() { // error
  24 │         var r = function () { super() } // error
@@ -13438,7 +13600,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  13 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/classes/members/instanceAndStaticMembers/typeOfThisInStaticMembers6.ts:6:16]
  5 │ class D extends C {
  6 │     static c = super();
@@ -14343,12 +14505,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  26 │ 
     ╰────
 
-  × Cannot assign to this expression
-    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInInExpressionTransform.ts:29:9]
- 28 │     invalidLHS(v: any) {
- 29 │         'prop' in v = 10;
-    ·         ───────────
- 30 │         #field in v = 10;
+  × Unexpected private identifier
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNameInInExpressionTransform.ts:20:14]
+ 19 │ 
+ 20 │         v << #field in v << v; // Good precedence (SyntaxError): (v << #field) in (v << v)
+    ·              ──────
+ 21 │ 
     ╰────
 
   × Unexpected token
@@ -14776,6 +14938,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  27 │     async get #asyncProp() { return 1; }         // Error
     ╰────
 
+  × TS(18019): 'abstract' modifier cannot be used with a private identifier.
+    ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+ 31 │ abstract class B {
+ 32 │     abstract #quux = 3;      // Error
+    ·              ─────
+ 33 │ }
+    ╰────
+
   × Private identifier '#prop' is not allowed outside class bodies
     ╭─[typescript/tests/cases/conformance/classes/members/privateNames/privateNamesInterfaceExtendingClass.ts:10:7]
   9 │ function func(x: I) {
@@ -15058,6 +15228,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  16 │     declare nonce: any; // ok, even though it's not in the base
     ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/derivedUninitializedPropertyDeclaration.ts:15:17]
+ 14 │ class BOther extends A {
+ 15 │     declare m() { return 2 } // not allowed on methods
+    ·                 ▲
+ 16 │     declare nonce: any; // ok, even though it's not in the base
+    ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/conformance/classes/propertyMemberDeclarations/memberFunctionDeclarations/memberFunctionOverloadMixingStaticAndInstance.ts:3:12]
@@ -15939,7 +16117,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  11 │     ]() { }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames27_ES5.ts:4:7]
  3 │ class C extends Base {
  4 │     [(super(), "prop")]() { }
@@ -15947,7 +16125,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  5 │ }
    ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames27_ES6.ts:4:7]
  3 │ class C extends Base {
  4 │     [(super(), "prop")]() { }
@@ -15995,7 +16173,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  10 │ }
     ╰────
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames49_ES5.ts:9:16]
   8 │     },
   9 │     set [1 + 1]() {
@@ -16004,7 +16182,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames49_ES6.ts:9:16]
   8 │     },
   9 │     set [1 + 1]() {
@@ -16013,7 +16191,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames50_ES5.ts:11:16]
  10 │     },
  11 │     set [1 + 1]() {
@@ -16022,7 +16200,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/es6/computedProperties/computedPropertyNames50_ES6.ts:11:16]
  10 │     },
  11 │     set [1 + 1]() {
@@ -16683,7 +16861,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·           ──────────
  2 │ const b = () => new.target;
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:2:17]
@@ -16692,7 +16870,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                 ──────────
  3 │ 
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:5:6]
@@ -16701,16 +16879,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·      ──────────
  6 │     c() { return new.target; }
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:9:15]
-  8 │     set e(_) { _ = new.target; }
-  9 │     f = () => new.target;
-    ·               ──────────
- 10 │ 
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:11:13]
@@ -16719,16 +16888,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·             ──────────
  12 │     static g() { return new.target; }
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:15:22]
- 14 │     static set i(_) { _ = new.target; }
- 15 │     static j = () => new.target;
-    ·                      ──────────
- 16 │ }
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:19:6]
@@ -16737,7 +16897,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·      ──────────
  20 │     k() { return new.target; },
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es5.ts:23:8]
@@ -16746,7 +16906,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·        ──────────
  24 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:1:11]
@@ -16754,7 +16914,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·           ──────────
  2 │ const b = () => new.target;
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:2:17]
@@ -16763,7 +16923,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                 ──────────
  3 │ 
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:5:6]
@@ -16772,16 +16932,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·      ──────────
  6 │     c() { return new.target; }
    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:9:15]
-  8 │     set e(_) { _ = new.target; }
-  9 │     f = () => new.target;
-    ·               ──────────
- 10 │ 
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:11:13]
@@ -16790,16 +16941,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·             ──────────
  12 │     static g() { return new.target; }
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
-
-  × Unexpected new.target expression
-    ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:15:22]
- 14 │     static set i(_) { _ = new.target; }
- 15 │     static j = () => new.target;
-    ·                      ──────────
- 16 │ }
-    ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:19:6]
@@ -16808,7 +16950,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·      ──────────
  20 │     k() { return new.target; },
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[typescript/tests/cases/conformance/es6/newTarget/invalidNewTarget.es6.ts:23:8]
@@ -16817,7 +16959,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ·        ──────────
  24 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Expected `:` but found `,`
    ╭─[typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesErrorFromNotUsingIdentifier.ts:3:20]
@@ -19304,7 +19446,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: either remove this super, or extend the class
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:9:9]
   8 │     fn() {
   9 │         super();
@@ -19312,7 +19454,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  10 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:14:9]
  13 │     get foo() {
  14 │         super();
@@ -19320,7 +19462,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  15 │         return null;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:18:9]
  17 │     set foo(v) {
  18 │         super();
@@ -19328,7 +19470,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  19 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:22:9]
  21 │     //super call in class member initializer with no base type
  22 │     p = super();
@@ -19336,7 +19478,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  23 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:26:9]
  25 │     static fn() {
  26 │         super();
@@ -19344,7 +19486,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  27 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:30:16]
  29 │     //super call in static class member initializer with no base type
  30 │     static k = super();
@@ -19352,7 +19494,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  31 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:34:9]
  33 │     static get q() {
  34 │         super();
@@ -19360,7 +19502,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  35 │         return null;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:38:9]
  37 │     static set q(n) {
  38 │         super();
@@ -19368,7 +19510,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  39 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:58:9]
  57 │     //super call in class member initializer of derived type
  58 │     t = super();
@@ -19376,7 +19518,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  59 │ 
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:62:9]
  61 │         //super call in class member function of derived type
  62 │         super();
@@ -19384,7 +19526,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  63 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:67:9]
  66 │     get foo() {
  67 │         super();
@@ -19392,7 +19534,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  68 │         return null;
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[typescript/tests/cases/conformance/expressions/superCalls/errorSuperCalls.ts:71:9]
  70 │     set foo(n) {
  71 │         super();
@@ -19665,6 +19807,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·                      ─
    ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/externalModules/initializersInDeclarations.ts:6:16]
+ 5 │     "some prop" = 42;
+ 6 │     fn(): boolean {
+   ·                   ▲
+ 7 │         return false;
+   ╰────
+
   × Expected `as` but found `from`
    ╭─[typescript/tests/cases/conformance/externalModules/invalidSyntaxNamespaceImportWithAMD.ts:1:10]
  1 │ import * from Zero from "./0"
@@ -19686,109 +19836,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·            ╰── `as` expected
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:1]
+  × Parenthesized expressions may not have a trailing comma.
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:4:9]
  3 │ // reparse call as invalid await should error
  4 │ await (1,);
-   · ─────
+   ·         ─
  5 │ await <number, string>(1);
    ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:5:1]
- 4 │ await (1,);
- 5 │ await <number, string>(1);
-   · ─────
- 6 │ 
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:8:1]
- 7 │ // reparse tagged template as invalid await should error
- 8 │ await <number, string> ``;
-   · ─────
- 9 │ 
-   ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:11:17]
- 10 │ // reparse class extends clause should fail
- 11 │ class C extends await<string> {
-    ·                 ─────
- 12 │ }
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:15:3]
- 14 │ // await in class decorators should fail
- 15 │ @(await)
-    ·   ─────
- 16 │ class C1 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:18:2]
- 17 │ 
- 18 │ @await(x)
-    ·  ─────
- 19 │ class C2 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:21:2]
- 20 │ 
- 21 │ @await
-    ·  ─────
- 22 │ class C3 {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:26:6]
- 25 │ class C4 {
- 26 │     @await
-    ·      ─────
- 27 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:30:6]
- 29 │ class C5 {
- 30 │     @await(1)
-    ·      ─────
- 31 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:34:7]
- 33 │ class C6 {
- 34 │     @(await)
-    ·       ─────
- 35 │     ["foo"]() {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:40:14]
- 39 │ class C7 {
- 40 │     method1(@await [x]) {}
-    ·              ─────
- 41 │     method2(@await(1) [x]) {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:41:14]
- 40 │     method1(@await [x]) {}
- 41 │     method2(@await(1) [x]) {}
-    ·              ─────
- 42 │     method3(@(await) [x]) {}
-    ╰────
-
-  × The keyword 'await' is reserved
-    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.1.ts:42:15]
- 41 │     method2(@await(1) [x]) {}
- 42 │     method3(@(await) [x]) {}
-    ·               ─────
- 43 │ }
-    ╰────
+  help: Remove the trailing comma here
 
   × Identifier expected. 'await' is a reserved word that cannot be used here.
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.10.ts:2:19]
@@ -19818,11 +19873,25 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·        ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
+ 4 │ // await disallowed in import=namespace when in a module
+ 5 │ import await = foo.await;
+   ·        ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
  5 │ import await = foo.await;
    ·        ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.2.ts:4:5]
+ 3 │ // reparse variable name as await should fail
+ 4 │ var await = 1;
+   ·     ─────
    ╰────
 
   × The keyword 'await' is reserved
@@ -19832,10 +19901,24 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·     ─────
    ╰────
 
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.3.ts:4:6]
  3 │ // reparse binding pattern as await should fail
  4 │ var {await} = {await:1};
+   ·      ─────
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.4.ts:4:6]
+ 3 │ // reparse binding pattern as await should fail
+ 4 │ var [await] = [1];
    ·      ─────
    ╰────
 
@@ -19903,23 +19986,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │ import { await } from "./other";
    ·          ─────
    ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:1:1]
- 1 │ await x;
-   · ─────
- 2 │ 
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts:5:5]
- 4 │ 
- 5 │ for await (const item of arr) {
-   ·     ─────
- 6 │   item;
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Expected `=` but found `;`
     ╭─[typescript/tests/cases/conformance/externalModules/typeOnly/exportDeclaration_missingBraces.ts:11:16]
@@ -21220,6 +21286,22 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: No modifiers are allowed here.
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors5.ts:2:13]
+ 1 │ declare class C {
+ 2 │   get foo() { return 0; }
+   ·             ▲
+ 3 │ }
+   ╰────
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors6.ts:2:14]
+ 1 │ declare class C {
+ 2 │   set foo(v) { }
+   ·              ▲
+ 3 │ }
+   ╰────
+
   × A 'get' accessor must not have any formal parameters.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors7.ts:1:18]
  1 │ var v = { get foo(v: number) { } };
@@ -21227,14 +21309,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove these parameters here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors8.ts:1:18]
  1 │ var v = { set foo() { } }
    ·                  ──
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/Accessors/parserAccessors9.ts:1:18]
  1 │ var v = { set foo(a, b) { } }
    ·                  ──────
@@ -21368,6 +21450,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │    constructor() { }
    ╰────
 
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration18.ts:4:25]
+ 3 │     constructor(n: number);
+ 4 │     constructor(x: any) {
+   ·                         ▲
+ 5 │     }
+   ╰────
+
   × TS(1175): 'implements' clause already seen
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ClassDeclarations/parserClassDeclaration2.ts:1:9]
  1 │ class C implements A implements B {
@@ -21472,6 +21562,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
+  × TS(1093): Type annotation cannot appear on a constructor declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts:2:16]
+ 1 │ class C {
+ 2 │   constructor(): number { }
+   ·                ────────
+ 3 │ }
+   ╰────
+
   × TS(1098): Type parameter list cannot be empty.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
@@ -21494,6 +21592,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  1 │ class C {
  2 │   export constructor() { }
    ·   ──────
+ 3 │ }
+   ╰────
+
+  × TS(1031): 'declare' modifier cannot appear on a constructor declaration.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts:2:3]
+ 1 │ class C {
+ 2 │   declare constructor() { }
+   ·   ───────
  3 │ }
    ╰────
 
@@ -22068,7 +22174,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Try inserting a semicolon here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
     ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ErrorRecovery/parserErrantSemicolonInClass1.ts:15:17]
  14 │     }
  15 │     public set d() {
@@ -22552,7 +22658,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Remove these parameters here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration13.ts:2:11]
  1 │ class C {
  2 │    set Foo() { }
@@ -22561,7 +22667,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Add a parameter here
 
-  × A 'set' accessor must have exactly one parameter.
+  × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration14.ts:2:11]
  1 │ class C {
  2 │    set Foo(a: number, b: number) { }
@@ -22647,6 +22753,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
   help: Allowed modifiers are: private, protected, public, static, abstract, override, async
+
+  × TS(1183): An implementation cannot be declared in ambient contexts.
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts:2:19]
+ 1 │ class C {
+ 2 │     declare Foo() { }
+   ·                   ▲
+ 3 │ }
+   ╰────
 
   × Identifier `public` has already been declared
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclarationAmbiguities1.ts:2:3]
@@ -23713,7 +23827,7 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: Replace with `super()` or `super.prop` or `super[prop]`
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/SuperExpressions/parserSuperExpression2.ts:3:5]
  2 │   M() {
  3 │     super<T>(0);
@@ -24103,6 +24217,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  2 │     *constructor() {}
    ·      ───────────
  3 │ }
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[typescript/tests/cases/conformance/salsa/plainJSBinderErrors.ts:3:7]
+ 2 │ export default 13
+ 3 │ const await = 1
+   ·       ─────
+ 4 │ const yield = 2
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -24546,22 +24668,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
     ╰────
   help: Wrap this declaration in a block statement
 
-  × Cannot assign to this expression
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:10]
  1 │ {
  2 │     await using [a] = null;
-   ·     ───────────────
+   ·          ▲
  3 │ }
    ╰────
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.4.ts:2:5]
- 1 │ {
- 2 │     await using [a] = null;
-   ·     ─────
- 3 │ }
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
+  help: Try inserting a semicolon here
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.5.ts:3:17]
@@ -24572,22 +24686,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:16]
+   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:10]
  1 │ {
  2 │     await using {a} = null;
-   ·                ▲
+   ·          ▲
  3 │ }
    ╰────
   help: Try inserting a semicolon here
-
-  × `await` is only allowed within async functions and at the top levels of modules
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:5]
- 1 │ {
- 2 │     await using {a} = null;
-   ·     ─────
- 3 │ }
-   ╰────
-  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Using declarations may not have binding patterns.
    ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.7.ts:3:17]
@@ -24818,13 +24923,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·            ┬
    ·            ╰── `;` expected
  2 │ }
-   ╰────
-
-  × Unexpected token
-   ╭─[typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsInForOf.4.ts:1:15]
- 1 │ for (using of = null;;) break;
-   ·               ─
- 2 │ for (using of: null = null;;) break;
    ╰────
 
   × Illegal break statement
@@ -26538,6 +26636,16 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  17 │ 
     ╰────
 
+  × TS(1257): A required element cannot follow an optional element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/optionalTupleElements1.ts:11:20]
+ 10 │ 
+ 11 │ type T5 = [number, string?, boolean];  // Error
+    ·                    ───┬───  ───┬───
+    ·                       │        ╰── Required element here
+    ·                       ╰── Optional element seen here
+ 12 │ 
+    ╰────
+
   × TS(1354): 'readonly' type modifier is only permitted on array and tuple literal types.
     ╭─[typescript/tests/cases/conformance/types/tuple/readonlyArraysAndTuples.ts:9:12]
   8 │ 
@@ -26568,6 +26676,86 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  12 │ type T33 = readonly Array<string>;  // Error
     ·            ────────
  13 │ 
+    ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/restTupleElements1.ts:3:13]
+ 2 │ type T01 = [string, string?];
+ 3 │ type T02 = [string?, string];  // Error
+   ·             ───┬───  ───┬──
+   ·                │        ╰── Required element here
+   ·                ╰── Optional element seen here
+ 4 │ type T03 = [...string[]];
+   ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
+ 6 │ 
+ 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
+   ·                     ─────┬─────  ──────┬─────
+   ·                          │             ╰── Second rest element here
+   ·                          ╰── First seen here
+ 8 │ type V11 = [number, ...string[], boolean?];  // Error
+   ╰────
+
+  × TS(1266): An optional element cannot follow a rest element.
+   ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:8:21]
+ 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
+ 8 │ type V11 = [number, ...string[], boolean?];  // Error
+   ·                     ─────┬─────  ────┬───
+   ·                          │           ╰── Optional element here
+   ·                          ╰── Rest element seen here
+ 9 │ type V12 = [number, string?, boolean];  // Error
+   ╰────
+
+  × TS(1257): A required element cannot follow an optional element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]
+  8 │ type V11 = [number, ...string[], boolean?];  // Error
+  9 │ type V12 = [number, string?, boolean];  // Error
+    ·                     ───┬───  ───┬───
+    ·                        │        ╰── Required element here
+    ·                        ╰── Optional element seen here
+ 10 │ 
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
+ 10 │ 
+ 11 │ type V15 = [...string[], ...number[]];  // Error
+    ·             ─────┬─────  ─────┬─────
+    ·                  │            ╰── Second rest element here
+    ·                  ╰── First seen here
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:12:13]
+ 11 │ type V15 = [...string[], ...number[]];  // Error
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+    ·             ─────┬─────  ────────┬───────
+    ·                  │               ╰── Second rest element here
+    ·                  ╰── First seen here
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:13:13]
+ 12 │ type V16 = [...string[], ...Array<number>];  // Error
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+    ·             ────────┬───────  ─────┬─────
+    ·                     │              ╰── Second rest element here
+    ·                     ╰── First seen here
+ 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
+    ╰────
+
+  × TS(1265): A rest element cannot follow another rest element.
+    ╭─[typescript/tests/cases/conformance/types/tuple/variadicTuples2.ts:14:13]
+ 13 │ type V17 = [...Array<string>, ...number[]];  // Error
+ 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
+    ·             ────────┬───────  ────────┬───────
+    ·                     │                 ╰── Second rest element here
+    ·                     ╰── First seen here
+ 15 │ 
     ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none

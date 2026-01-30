@@ -1,4 +1,10 @@
-#![expect(clippy::self_named_module_files)] // for rules.rs
+#![expect(clippy::self_named_module_files)]
+// for rules.rs
+// RuleEnum contains rule configs with interior mutability (e.g. Regex),
+// but Hash/Eq/Ord are based only on the rule id, so it's safe as a map key.
+#![expect(clippy::mutable_key_type)]
+// Rule::from_configuration returns Result but documenting errors is not useful here.
+#![expect(clippy::missing_errors_doc)]
 
 use std::{
     mem,
@@ -41,6 +47,7 @@ mod generated {
     #[cfg(debug_assertions)]
     mod assert_layouts;
     mod rule_runner_impls;
+    pub mod rules_enum;
 }
 
 #[cfg(test)]
@@ -60,8 +67,9 @@ pub use crate::{
     },
     context::{ContextSubHost, LintContext},
     external_linter::{
-        ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-        ExternalLinterSetupRuleConfigsCb, JsFix, LintFileResult, LoadPluginResult,
+        ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+        ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+        JsFix, LintFileResult, LoadPluginResult,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -332,7 +340,7 @@ impl Linter {
                     assert_eq!(
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len(),
-                        "Running with and without optimizations produced different diagnostic counts: {} vs {}",
+                        "Running with and without optimizations produced different diagnostic counts: {} vs {}.\nThis can be caused by a mismatch between the rule definition and generated RuleRunner impl. Try `cargo run -p oxc_linter_codegen` to regenerate.",
                         optimized_diagnostics.len(),
                         unoptimized_diagnostics.len()
                     );
@@ -493,17 +501,10 @@ impl Linter {
         let original_source_text = original_program.source_text;
         original_program.source_text = "";
 
-        // Copy source text to the START of the fixed-size allocator.
-        // This is critical - the JS deserializer expects source text at offset 0.
-        // SAFETY: `js_allocator` is from a fixed-size allocator pool, which wraps the allocator
-        // in a custom `Drop` that doesn't actually drop it (it returns it to the pool), so the
-        // memory remains valid. This matches the safety requirements of `alloc_bytes_start`.
-        let new_source_text: &str = unsafe {
-            let bytes = original_source_text.as_bytes();
-            let ptr = js_allocator.alloc_bytes_start(bytes.len());
-            ptr::copy_nonoverlapping(bytes.as_ptr(), ptr.as_ptr(), bytes.len());
-            std::str::from_utf8_unchecked(std::slice::from_raw_parts(ptr.as_ptr(), bytes.len()))
-        };
+        // Copy source text to the fixed-size allocator.
+        // We have to allocate source text first, because the JS deserializer expects source text
+        // to be later in the buffer than all other strings in the AST, and the allocator bumps downwards.
+        let new_source_text = js_allocator.alloc_str(original_source_text);
 
         // Clone `Program` into fixed-size allocator.
         // We need to allocate the `Program` struct ITSELF in the allocator, not just its contents.
@@ -538,10 +539,26 @@ impl Linter {
         program: &mut Program<'_>,
         allocator: &Allocator,
     ) {
-        let source_text = program.source_text;
+        // If has BOM, remove it
+        const BOM: &str = "\u{feff}";
+        const BOM_LEN: usize = BOM.len();
 
-        // Convert spans to UTF-16
-        let span_converter = Utf8ToUtf16::new(source_text);
+        let mut source_text = program.source_text;
+        let has_bom = source_text.starts_with(BOM);
+        if has_bom {
+            source_text = &source_text[BOM_LEN..];
+            program.source_text = source_text;
+        }
+
+        // Convert spans to UTF-16.
+        // If source starts with BOM, create converter which ignores the BOM.
+        let span_converter = if has_bom {
+            #[expect(clippy::cast_possible_truncation)]
+            Utf8ToUtf16::new_with_offset(source_text, BOM_LEN as u32)
+        } else {
+            Utf8ToUtf16::new(source_text)
+        };
+
         span_converter.convert_program(program);
         span_converter.convert_comments(&mut program.comments);
 
@@ -551,7 +568,7 @@ impl Linter {
         // Write offset of `Program` in metadata at end of buffer
         let is_ts = program.source_type.is_typescript();
         let is_jsx = program.source_type.is_jsx();
-        let metadata = RawTransferMetadata::new(program_offset, is_ts, is_jsx);
+        let metadata = RawTransferMetadata::new(program_offset, is_ts, is_jsx, has_bom);
         let metadata_ptr = allocator.end_ptr().cast::<RawTransferMetadata>();
         // SAFETY: `Allocator` was created by `FixedSizeAllocator` which reserved space after `end_ptr`
         // for a `RawTransferMetadata`. `end_ptr` is aligned for `RawTransferMetadata`.
@@ -626,7 +643,7 @@ impl Linter {
                             // That's possible if UTF-16 offset points to middle of a surrogate pair.
                             let mut span = Span::new(fix.range[0], fix.range[1]);
                             span_converter.convert_span_back(&mut span);
-                            Fix::new(fix.text, span)
+                            Fix::new(fix.text, span).with_kind(FixKind::Fix)
                         });
 
                         if is_single {
@@ -686,6 +703,8 @@ pub struct RawTransferMetadata2 {
     pub is_ts: bool,
     /// `true` if AST is JSX.
     pub is_jsx: bool,
+    /// `true` if source text has a BOM.
+    pub has_bom: bool,
     /// Padding to pad struct to size 16.
     pub(crate) _padding: u64,
 }
@@ -693,7 +712,7 @@ pub struct RawTransferMetadata2 {
 use RawTransferMetadata2 as RawTransferMetadata;
 
 impl RawTransferMetadata {
-    pub fn new(data_offset: u32, is_ts: bool, is_jsx: bool) -> Self {
-        Self { data_offset, is_ts, is_jsx, _padding: 0 }
+    pub fn new(data_offset: u32, is_ts: bool, is_jsx: bool, has_bom: bool) -> Self {
+        Self { data_offset, is_ts, is_jsx, has_bom, _padding: 0 }
     }
 }

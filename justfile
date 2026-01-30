@@ -22,7 +22,7 @@ init:
 
 # Clone or update submodules
 submodules:
-  .github/scripts/clone-parallel.sh
+  node .github/scripts/clone-parallel.mjs
   just update-transformer-fixtures
 
 # Install git pre-commit hook to format files
@@ -128,8 +128,12 @@ codecov:
 # This is necessary because JS generators use `oxc_*` crates (e.g. `oxc_minifier`), and those crates may not compile
 # unless Rust code is generated first.
 # See: https://github.com/oxc-project/oxc/issues/15564
+[unix]
 ast:
   cargo run -p oxc_ast_tools || { cargo run -p oxc_ast_tools --no-default-features && cargo run -p oxc_ast_tools; }
+[windows]
+ast:
+  try { cargo run -p oxc_ast_tools } catch { cargo run -p oxc_ast_tools --no-default-features; cargo run -p oxc_ast_tools }
 
 # ==================== PARSER ====================
 
@@ -250,8 +254,8 @@ watch-playground:
 
 # ==================== UTILITIES & ADVANCED ====================
 
-# Generate website documentation, intended for updating the oxc-project.github.io site.
-# Path should be the path to your clone of https://github.com/oxc-project/oxc-project.github.io
+# Generate website documentation, intended for updating the oxc.rs website.
+# Path should be the path to your clone of https://github.com/oxc-project/website
 # When testing changes to the website documentation, you may also want to run `pnpm run fmt`
 # in the website directory.
 website path:

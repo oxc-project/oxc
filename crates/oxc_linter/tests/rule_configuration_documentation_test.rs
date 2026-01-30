@@ -30,17 +30,13 @@ fn test_rules_with_custom_configuration_have_schema() {
     // list - newly-created rules should always be documented before being merged!
     let exceptions: &[&str] = &[
         // eslint
-        "eslint/arrow-body-style",
-        "eslint/func-names",
         "eslint/no-empty-function",
         "eslint/no-restricted-imports",
         "eslint/no-warning-comments",
-        "eslint/yoda",
         // jest
         "jest/valid-title",
         // react
         "react/forbid-dom-props",
-        "react/forbid-elements",
     ];
 
     let exception_set: FxHashSet<&str> = exceptions.iter().copied().collect();

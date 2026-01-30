@@ -37,7 +37,7 @@ declare_oxc_lint!(
     NoArrayDelete(tsgolint),
     typescript,
     correctness,
-    pending,
+    suggestion,
 );
 
 impl Rule for NoArrayDelete {}

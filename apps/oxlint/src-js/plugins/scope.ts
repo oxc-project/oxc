@@ -3,10 +3,11 @@
  */
 
 import { analyze, Variable as TSVariable } from "@typescript-eslint/scope-manager";
+import { ecmaFeaturesOverride } from "./context.ts";
 import { ast, initAst } from "./source_code.ts";
 import { globals, envs, initGlobals } from "./globals.ts";
 import { ENVS } from "../generated/envs.ts";
-import { debugAssert, debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type {
   AnalyzeOptions,
@@ -15,7 +16,6 @@ import type {
 } from "@typescript-eslint/scope-manager";
 import type { Writable } from "type-fest";
 import type * as ESTree from "../generated/types.d.ts";
-import type { SetNullable } from "../utils/types.ts";
 
 export interface Scope {
   type: ScopeType;
@@ -100,12 +100,15 @@ let tsScopeManager: TSESLintScopeManager | null = null;
 
 // Options for TS-ESLint's `analyze` method.
 // `sourceType` property is set before calling `analyze`.
-const analyzeOptions: SetNullable<AnalyzeOptions, "sourceType"> = {
+const analyzeOptions: AnalyzeOptions = {
+  childVisitorKeys: undefined,
   globalReturn: false,
-  jsxFragmentName: null,
+  impliedStrict: false,
   jsxPragma: "React",
+  jsxFragmentName: null,
   lib: [],
-  sourceType: null,
+  sourceType: "module",
+  emitDecoratorMetadata: false,
 };
 
 /**
@@ -115,8 +118,18 @@ function initTsScopeManager() {
   if (ast === null) initAst();
   debugAssertIsNonNull(ast);
 
-  analyzeOptions.sourceType = ast.sourceType;
-  typeAssertIs<AnalyzeOptions>(analyzeOptions);
+  const { sourceType } = ast;
+  analyzeOptions.sourceType = sourceType;
+  analyzeOptions.globalReturn = sourceType === "commonjs";
+  analyzeOptions.impliedStrict = sourceType === "module";
+
+  // Override `globalReturn` and `impliedStrict` if in conformance build
+  if (CONFORMANCE) {
+    const { globalReturn, impliedStrict } = ecmaFeaturesOverride;
+    if (globalReturn !== null) analyzeOptions.globalReturn = globalReturn;
+    if (impliedStrict !== null) analyzeOptions.impliedStrict = impliedStrict;
+  }
+
   // @ts-expect-error - TODO: Our types don't quite align yet
   tsScopeManager = analyze(ast, analyzeOptions);
 
@@ -215,22 +228,29 @@ function addGlobals(): void {
  * @param isWritable - `true` if the variable is writable, `false` otherwise
  */
 function createGlobalVariable(name: string, globalScope: TSScope, isWritable: boolean): void {
-  // Skip vars that already exist in the scope.
-  // These could be from code declarations or previous envs.
-  // This is important because typescript-eslint's scope manager doesn't resolve references
-  // in the global scope for `sourceType: "script"`, so we mustn't overwrite local `var`
-  // declarations with globals of the same name.
-  if (globalScope.set.has(name)) return;
+  // If var already exists in the scope (from code declarations or previous envs), don't create a new one.
+  // TS-ESLint's scope manager doesn't resolve references in the global scope for `sourceType: "script"`,
+  // so we mustn't overwrite local `var` declarations with globals of the same name.
+  // But set properties on the existing variable to indicate it's a configured global.
+  let variable = globalScope.set.get(name);
+  if (variable === undefined) {
+    variable = new TSVariable(name, globalScope);
+    globalScope.set.set(name, variable);
+    globalScope.variables.push(variable);
 
-  // All globals are type + value
-  const variable = new TSVariable(name, globalScope);
-  debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
-  debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
+    // All globals are type + value
+    debugAssert(variable.isTypeVariable, "variable should have `isTypeVariable` set by default");
+    debugAssert(variable.isValueVariable, "variable should have `isValueVariable` set by default");
+  }
+
   // @ts-expect-error - not present in types
   variable.writeable = isWritable;
-
-  globalScope.set.set(name, variable);
-  globalScope.variables.push(variable);
+  // @ts-expect-error - not present in types
+  variable.eslintImplicitGlobalSetting = isWritable ? "writable" : "readonly";
+  // @ts-expect-error - not present in types
+  variable.eslintExplicitGlobal = false;
+  // @ts-expect-error - not present in types
+  variable.eslintExplicitGlobalComments = undefined;
 }
 
 /**

@@ -1,6 +1,6 @@
 //! Create documentation pages for each rule. Pages are printed as Markdown and
-//! get added to the website.
-//! You can test/run this task with `just website ../oxc-project.github.io`,
+//! get added to the oxc.rs website.
+//! You can test/run this task with `just website ../website`,
 //! assuming you have cloned the oxc website repo next to the oxc repo.
 
 use std::{

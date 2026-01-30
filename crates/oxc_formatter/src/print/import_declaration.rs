@@ -95,7 +95,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportDeclarationSpecifier<'a>>> {
                 specifiers_iter.peek().map(AsRef::as_ref),
                 Some(ImportDeclarationSpecifier::ImportSpecifier(_))
             )
-            && f.comments().comments_before_character(self.parent.span().start, b'}').is_empty()
+            && f.comments().comments_before_character(self.parent().span().start, b'}').is_empty()
         {
             write!(
                 f,
@@ -221,7 +221,7 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, ImportAttribute<'a>>> {
 
             if self.len() > 1
                 || self.first().is_some_and(|attribute| attribute.key.as_atom().as_str() != "type")
-                || f.comments().has_comment_before(self.parent.span().end)
+                || f.comments().has_comment_before(self.parent().span().end)
             {
                 write!(
                     f,

@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### 💥 BREAKING CHANGES
+
+- 22dec6a semantic: [**BREAKING**] Remove `Scoping::scope_build_child_ids` and all related APIs (#18362) (Dunqing)
+- 777fc40 ast: [**BREAKING**] Add `Ident` type (#18354) (Boshen)
+
+### 🚀 Features
+
+- 2ef5647 ast: Add escape_raw parameter to template_element builders (#18121) (Boshen)
+
+### 🐛 Bug Fixes
+
+- c205b0d ast: Remove `ThisExpression` from `TSModuleReference` (#18489) (Boshen)
+
+## [0.110.0] - 2026-01-19
+
+### 🐛 Bug Fixes
+
+- 645c3f0 transformer: Use `require` not `import` in CommonJS files (#18226) (overlookmotel)
+
+## [0.109.0] - 2026-01-19
+
+### 💥 BREAKING CHANGES
+
+- 9135b0b ast: [**BREAKING**] Move scope from `TSEnumDeclaration` to `TSEnumBody` (#18058) (Boshen)
+
+### 🚀 Features
+
+- 08dad63 span: Add `sourceType: 'commonjs'` support (#18089) (Boshen)
+
+### ⚡ Performance
+
+- 837edf6 transformer/typescript: Reduce `scope_id()` calls (#18097) (overlookmotel)
+- 8ee6f80 transformer/tagged-template: Add `#[cold]` hint to unlikely path (#18034) (overlookmotel)
+- 23449e0 transformer/tagged-template-transform: Improve performance (#15834) (Dunqing)
+
 ## [0.107.0] - 2026-01-05
 
 ### ⚡ Performance

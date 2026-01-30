@@ -36,7 +36,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
     match (args.next(), args.next(), args.next()) {
         (Some(argument), None, None) if arguments.len() == 1 => {
             if is_angular_test_wrapper(call) && {
-                if let AstNodes::CallExpression(call) = call.parent {
+                if let AstNodes::CallExpression(call) = call.parent() {
                     is_test_call_expression(call)
                 } else {
                     false

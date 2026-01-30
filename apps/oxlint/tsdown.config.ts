@@ -25,6 +25,9 @@ const commonConfig = defineConfig({
   unbundle: false,
   hash: false,
   fixedExtension: false,
+  // tsdown warns about final bundled modules by `unbundle` + `external`.
+  // But we know what we are doing, just suppress the warnings.
+  inlineOnly: false,
 });
 
 const plugins = [createReplaceGlobalsPlugin()];
@@ -34,7 +37,7 @@ export default defineConfig([
   // Main build
   {
     ...commonConfig,
-    entry: ["src-js/cli.ts", "src-js/index.ts"],
+    entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugin.ts", "src-js/rule-tester.ts"],
     format: "esm",
     external: [
       // External native bindings
@@ -48,7 +51,7 @@ export default defineConfig([
       mangle: false,
       codegen: { removeWhitespace: false },
     },
-    dts: { resolve: true },
+    dts: true,
     attw: { profile: "esm-only" },
     define: {
       DEBUG: DEBUG ? "true" : "false",

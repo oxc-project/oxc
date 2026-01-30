@@ -21,7 +21,7 @@ use oxc::{
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
 
-use crate::suite::TestResult;
+use crate::TestResult;
 
 #[expect(clippy::struct_excessive_bools)]
 #[derive(Default)]
@@ -38,6 +38,7 @@ pub struct Driver {
     pub panicked: bool,
     pub errors: Vec<OxcDiagnostic>,
     pub printed: String,
+    pub source_type: Option<SourceType>,
 }
 
 impl CompilerInterface for Driver {
@@ -47,10 +48,6 @@ impl CompilerInterface for Driver {
             allow_return_outside_function: self.allow_return_outside_function,
             ..ParseOptions::default()
         }
-    }
-
-    fn semantic_child_scope_ids(&self) -> bool {
-        true
     }
 
     fn transform_options(&self) -> Option<&TransformOptions> {
@@ -78,6 +75,7 @@ impl CompilerInterface for Driver {
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
         let ParserReturn { program, panicked, errors, .. } = parser_return;
         self.panicked = *panicked;
+        self.source_type = Some(program.source_type);
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
@@ -134,6 +132,8 @@ impl Driver {
     ) -> TestResult {
         self.run(source_text, source_type);
         let printed1 = self.printed.clone();
+        // Use the resolved source type from the first parse for the second parse
+        let source_type = self.source_type.unwrap_or(source_type);
         self.run(&printed1, source_type);
         let printed2 = self.printed.clone();
         if printed1 == printed2 {

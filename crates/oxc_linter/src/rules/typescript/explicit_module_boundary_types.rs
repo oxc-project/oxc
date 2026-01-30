@@ -9,7 +9,7 @@ use oxc_ast_visit::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Ident, Span};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -46,7 +46,7 @@ impl Deref for ExplicitModuleBoundaryTypes {
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema, PartialEq, Eq)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct ExplicitModuleBoundaryTypesConfig {
     /// Whether to ignore arguments that are explicitly typed as `any`.
     allow_arguments_explicitly_typed_as_any: bool,
@@ -163,9 +163,7 @@ declare_oxc_lint!(
 
 impl Rule for ExplicitModuleBoundaryTypes {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -341,7 +339,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol.replace(IdentifierName { name: Atom::from(name), span: id.span() });
+            self.target_symbol.replace(IdentifierName { name: Ident::from(name), span: id.span() });
             true
         } else {
             false

@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+        uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Clone submodules
         uses: ./.github/actions/clone-submodules
@@ -53,7 +53,7 @@ jobs:
   # codecov often fails, use another workflow for retry
   upload-codecov:
     name: Upload coverage file
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     needs: coverage
     # Check if the event is not triggered by a fork by checking whether CODECOV_TOKEN is set
     env:
@@ -61,7 +61,7 @@ jobs:
     steps:
       - name: Checkout
         if: env.CODECOV_TOKEN
-        uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+        uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Download coverage file
         if: env.CODECOV_TOKEN

@@ -121,7 +121,9 @@ pub fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
 #[cold]
 pub fn new_target(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected new.target expression")
-        .with_help("new.target is only allowed in constructors and functions invoked using the `new` operator")
+        .with_help(
+            "new.target is only allowed in constructors, functions, and class field initializers",
+        )
         .with_label(span)
 }
 
@@ -237,7 +239,7 @@ pub fn super_without_derived_class(span: Span, span1: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn unexpected_super_call(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Super calls are not permitted outside constructors or in nested functions inside constructors.")
+    ts_error("2337", "Super calls are not permitted outside constructors or in nested functions inside constructors.")
         .with_label(span)
 }
 
@@ -375,6 +377,13 @@ pub fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
+/// 'abstract' modifier cannot be used with a private identifier. (18019)
+#[cold]
+pub fn abstract_cannot_be_used_with_private_identifier(span: Span) -> OxcDiagnostic {
+    ts_error("18019", "'abstract' modifier cannot be used with a private identifier.")
+        .with_label(span)
+}
+
 /// A parameter property is only allowed in a constructor implementation.ts(2369)
 #[cold]
 pub fn parameter_property_only_in_constructor_impl(span: Span) -> OxcDiagnostic {
@@ -413,4 +422,16 @@ pub fn ts_export_assignment_cannot_be_used_with_other_exports(span: Span) -> Oxc
     ts_error("2309", "An export assignment cannot be used in a module with other exported elements")
         .with_label(span)
         .with_help("If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.")
+}
+
+#[cold]
+pub fn switch_stmt_cannot_have_multiple_default_case(
+    first_default: Span,
+    other_default: Span,
+) -> OxcDiagnostic {
+    ts_error("1113", "A 'default' clause cannot appear more than once in a 'switch' statement.")
+        .with_labels(vec![
+            first_default.label("First 'default' clause is here."),
+            other_default.label("Another 'default' clause cannot appear here."),
+        ])
 }

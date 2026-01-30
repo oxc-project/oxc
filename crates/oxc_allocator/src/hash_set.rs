@@ -13,8 +13,9 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
-use bumpalo::Bump;
 use rustc_hash::FxBuildHasher;
+
+use crate::bump::Bump;
 
 // Re-export additional types from `hashbrown`
 pub use hashbrown::hash_set::{
@@ -120,7 +121,7 @@ impl<'alloc, T> HashSet<'alloc, T> {
     /// Calling this method produces a compile-time panic.
     ///
     /// This method would be unsound, because [`HashSet`] is `Sync`, and the underlying allocator
-    /// (`bumpalo::Bump`) is not `Sync`.
+    /// (`Bump`) is not `Sync`.
     ///
     /// This method exists only to block access as much as possible to the underlying
     /// `hashbrown::HashSet::allocator` method. That method can still be accessed via explicit `Deref`

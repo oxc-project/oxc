@@ -1563,8 +1563,8 @@ export interface TSConstructorType extends Span {
 
 export interface TSMappedType extends Span {
   type: "TSMappedType";
-  key: TSTypeParameter["name"];
-  constraint: TSTypeParameter["constraint"];
+  key: BindingIdentifier;
+  constraint: TSType;
   nameType: TSType | null;
   typeAnnotation: TSType | null;
   optional: TSMappedTypeModifierOperator | false;
@@ -1610,7 +1610,7 @@ export interface TSImportEqualsDeclaration extends Span {
   parent?: Node;
 }
 
-export type TSModuleReference = TSExternalModuleReference | TSTypeName;
+export type TSModuleReference = TSExternalModuleReference | IdentifierReference | TSQualifiedName;
 
 export interface TSExternalModuleReference extends Span {
   type: "TSExternalModuleReference";

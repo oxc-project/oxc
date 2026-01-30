@@ -18,6 +18,17 @@ The `oxfmt` implemented under this directory serves several purposes.
 
 When making changes, consider the impact on all paths.
 
+## Platform Considerations
+
+Oxfmt is built for multiple platforms (Linux, macOS, Windows) and architectures.
+
+When working with file paths in CLI code, be aware of Windows path differences:
+
+- Use `std::path::Path` / `PathBuf` instead of manual string manipulation with `/`
+- Be cautious with path comparisons and normalization across platforms
+  - Avoid hardcoding `/` as a path separator; prefer `Path::join()`
+  - Windows uses `\` as a path separator and has drive letter prefixes (e.g., `C:\`)
+
 ## Verification
 
 ```sh
@@ -38,6 +49,15 @@ pnpm build-test && pnpm t
 cargo t
 ```
 
+To manually verify the CLI behavior after building:
+
+```sh
+pnpm build-test
+node ./dist/cli.js <args>
+```
+
+Note: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
+
 ## Test Organization (`test/` directory)
 
 Tests are organized by domain and colocated with strict structural rules.
@@ -56,11 +76,13 @@ When adding new tests:
 - Place test in the appropriate domain directory
 - If the test needs fixtures, create a `fixtures/` subdirectory
 - If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)
+- When adding fixtures for `--check` tests, save the expected formatted result so that the CLI execution reports no diff
 
-## `Oxfmtrc` Configuration (`src/core/oxfmtrc.rs`)
+## After updating `Oxfmtrc` (`src/core/oxfmtrc.rs`)
 
 When modifying the `Oxfmtrc` struct (configuration options):
 
-1. Update `src-js/index.ts` types to match the Rust struct
-2. Run `just formatter-schema-json` to update `npm/oxfmt/configuration_schema.json`
-3. Run `cargo test -p website_formatter` to update schema markdown snapshots
+- Also update `src-js/index.ts` types to match the Rust struct if needed
+- Run `just formatter-schema-json` to update `npm/oxfmt/configuration_schema.json`
+- Run `cargo test -p website_formatter` to update schema markdown snapshots
+  - Then, `cargo insta accept`

@@ -5383,13 +5383,17 @@ unsafe fn walk_ts_mapped_type<'a, State, Tr: Traverse<'a, State>>(
         .get()
         .unwrap();
     ctx.set_current_scope_id(current_scope_id);
-    let pop_token = ctx.push_stack(Ancestor::TSMappedTypeTypeParameter(
-        ancestor::TSMappedTypeWithoutTypeParameter(node, PhantomData),
-    ));
-    walk_ts_type_parameter(
+    let pop_token = ctx
+        .push_stack(Ancestor::TSMappedTypeKey(ancestor::TSMappedTypeWithoutKey(node, PhantomData)));
+    walk_binding_identifier(
         traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_TYPE_PARAMETER)
-            as *mut Box<TSTypeParameter>)) as *mut _,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_KEY) as *mut BindingIdentifier,
+        ctx,
+    );
+    ctx.retag_stack(AncestorType::TSMappedTypeConstraint);
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_CONSTRAINT) as *mut TSType,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_NAME_TYPE)
@@ -5544,9 +5548,12 @@ unsafe fn walk_ts_module_reference<'a, State, Tr: Traverse<'a, State>>(
         TSModuleReference::ExternalModuleReference(node) => {
             walk_ts_external_module_reference(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSModuleReference::IdentifierReference(_)
-        | TSModuleReference::QualifiedName(_)
-        | TSModuleReference::ThisExpression(_) => walk_ts_type_name(traverser, node as *mut _, ctx),
+        TSModuleReference::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSModuleReference::QualifiedName(node) => {
+            walk_ts_qualified_name(traverser, (&mut **node) as *mut _, ctx)
+        }
     }
     traverser.exit_ts_module_reference(&mut *node, ctx);
 }

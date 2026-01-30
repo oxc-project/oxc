@@ -75,6 +75,13 @@ pub struct Lexer<'a> {
 
     pub(crate) errors: Vec<OxcDiagnostic>,
 
+    /// Errors that are only emitted if the file is determined to be a Module.
+    /// For `ModuleKind::Unambiguous`, HTML-like comments are allowed during lexing,
+    /// but if ESM syntax is found later, these comments become invalid.
+    /// If resolved to Module → emit these errors.
+    /// If resolved to Script → discard these errors.
+    pub(crate) deferred_module_errors: Vec<OxcDiagnostic>,
+
     context: LexerContext,
 
     pub(crate) trivia_builder: TriviaBuilder,
@@ -111,6 +118,7 @@ impl<'a> Lexer<'a> {
             source_type,
             token,
             errors: vec![],
+            deferred_module_errors: vec![],
             context: LexerContext::Regular,
             trivia_builder: TriviaBuilder::default(),
             escaped_strings: FxHashMap::default(),

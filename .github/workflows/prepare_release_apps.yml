@@ -21,7 +21,7 @@ jobs:
       oxlint_version: ${{ steps.run.outputs.OXLINT_VERSION }}
       oxfmt_version: ${{ steps.run.outputs.OXFMT_VERSION }}
     steps:
-      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -55,7 +55,7 @@ jobs:
       - name: Update Cargo.lock
         run: cargo check
 
-      - uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+      - uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         id: pr
         with:
           # bot account with PAT required for triggering workflow runs
@@ -72,12 +72,12 @@ jobs:
   ecosystem-ci:
     needs: prepare
     name: Trigger Ecosystem CI
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       pull-requests: write
       contents: write
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
         id: comment
@@ -108,14 +108,14 @@ jobs:
   website:
     needs: prepare
     name: Update oxc.rs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     permissions:
       actions: write
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
       - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
-          repo: oxc-project/oxc-project.github.io
+          repo: oxc-project/website
           workflow: release.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main

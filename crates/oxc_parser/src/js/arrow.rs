@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate};
-use crate::{ParserImpl, diagnostics, lexer::Kind};
+use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -295,8 +295,10 @@ impl<'a> ParserImpl<'a> {
 
         let expression = !self.at(Kind::LCurly);
         let body = if expression {
-            let expr = self
-                .parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+            // Remove TopLevel context for arrow function expression body
+            let expr = self.context_remove(Context::TopLevel, |p| {
+                p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
+            });
             let span = expr.span();
             let expr_stmt = self.ast.statement_expression(span, expr);
             self.ast.alloc_function_body(span, self.ast.vec(), self.ast.vec1(expr_stmt))

@@ -333,6 +333,7 @@ impl<'a> PeepholeOptimizations {
                             cooked: Some(cooked),
                         },
                         false,
+                        false, // raw is already escaped by escape_string_for_template_literal
                     )
                 }));
                 if let Some(last_quasi) = quasis.last_mut() {

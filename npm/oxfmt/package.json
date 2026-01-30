@@ -1,9 +1,16 @@
 {
   "name": "oxfmt",
-  "version": "0.24.0",
+  "version": "0.27.0",
   "description": "Formatter for the JavaScript Oxidation Compiler",
-  "keywords": [],
-  "homepage": "https://oxc.rs",
+  "keywords": [
+    "formatter",
+    "javascript",
+    "oxc",
+    "oxfmt",
+    "prettier",
+    "typescript"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/formatter",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "license": "MIT",
   "author": "Boshen and oxc contributors",
@@ -28,7 +35,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "dependencies": {
-    "tinypool": "2.0.0"
+    "tinypool": "2.1.0"
   },
   "engines": {
     "node": "^20.19.0 || >=22.12.0"

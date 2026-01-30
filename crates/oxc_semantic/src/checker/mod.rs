@@ -7,7 +7,7 @@ mod typescript;
 use javascript as js;
 use typescript as ts;
 
-pub use javascript::is_function_part_of_if_statement;
+pub use javascript::is_function_decl_part_of_if_statement;
 
 /// Perform syntax error checking for the given AST node.
 ///
@@ -86,6 +86,9 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::MethodDefinition(method) => {
             ts::check_method_definition(method, ctx);
+        }
+        AstKind::PropertyDefinition(prop) => {
+            ts::check_property_definition(prop, ctx);
         }
         AstKind::ObjectProperty(prop) => {
             ts::check_object_property(prop, ctx);

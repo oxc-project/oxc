@@ -16,9 +16,9 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
 
@@ -43,38 +43,17 @@ jobs:
             style
             test
 
-      - name: Get category label from PR title
-        id: get-category
-        env:
-          PR_TYPE: ${{ steps.pr-title.outputs.type }}
-        run: |
-          case "$PR_TYPE" in
-            "feat")
-              CATEGORY="C-enhancement"
-              ;;
-            "fix")
-              CATEGORY="C-bug"
-              ;;
-            "test")
-              CATEGORY="C-test"
-              ;;
-            "refactor" | "chore" | "style")
-              CATEGORY="C-cleanup"
-              ;;
-            "docs")
-              CATEGORY="C-docs"
-              ;;
-            "perf")
-              CATEGORY="C-performance"
-              ;;
-            *)
-              CATEGORY=""
-              ;;
-          esac
-          echo "CATEGORY=$CATEGORY" >> $GITHUB_OUTPUT
-
       - name: Add category label
         uses: actions-ecosystem/action-add-labels@18f1af5e3544586314bbe15c0273249c770b2daf # v1.1.3
-        if: ${{ steps.get-category.outputs.CATEGORY != '' }}
+        env:
+          CATEGORY: ${{ case(
+            steps.pr-title.outputs.type == 'feat', 'C-enhancement',
+            steps.pr-title.outputs.type == 'fix', 'C-bug',
+            steps.pr-title.outputs.type == 'test', 'C-test',
+            contains(fromJson('["refactor", "chore", "style"]'), steps.pr-title.outputs.type), 'C-cleanup',
+            steps.pr-title.outputs.type == 'docs', 'C-docs',
+            steps.pr-title.outputs.type == 'perf', 'C-performance',
+            '') }}
+        if: ${{ env.CATEGORY != '' }}
         with:
-          labels: ${{ steps.get-category.outputs.CATEGORY }}
+          labels: ${{ env.CATEGORY }}

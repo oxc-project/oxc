@@ -8,20 +8,23 @@
  */
 
 import { default as assert, AssertionError } from "node:assert";
+import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:path";
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
-import { setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
-import { registerPlugin, registeredRules } from "../plugins/load.ts";
+import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
+import { registerPlugin } from "../plugins/load.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
-import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
+import { setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
 import { parse } from "./parse.ts";
+import { createWorkspace, destroyWorkspace } from "../workspace/index.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
 import type { Options } from "../plugins/options.ts";
 import type { DiagnosticData, Suggestion } from "../plugins/report.ts";
+import type { Settings } from "../plugins/settings.ts";
 import type { ParseOptions } from "./parse.ts";
 
 // ------------------------------------------------------------------------------
@@ -124,26 +127,26 @@ interface LanguageOptions {
 }
 
 /**
- * Language options config, with `parser` and `ecmaVersion` properties.
+ * Language options config, with `parser` and `ecmaVersion` properties, and extended `parserOptions`.
  * These properties should not be present in `languageOptions` config,
  * but could be if test cases are ported from ESLint.
  * For internal use only.
  */
-interface LanguageOptionsInternal extends LanguageOptions {
+export interface LanguageOptionsInternal extends LanguageOptions {
   ecmaVersion?: number | "latest";
   parser?: {
     parse?: (code: string, options?: Record<string, unknown>) => unknown;
     parseForESLint?: (code: string, options?: Record<string, unknown>) => unknown;
   };
+  parserOptions?: ParserOptionsInternal;
 }
 
 /**
  * Source type.
  *
- * - `'unambiguous'` is not supported in ESLint compatibility mode.
- * - `'commonjs'` is only supported in ESLint compatibility mode.
+ * `'unambiguous'` is not supported in ESLint compatibility mode.
  */
-type SourceType = "script" | "module" | "unambiguous" | "commonjs";
+type SourceType = "script" | "module" | "commonjs" | "unambiguous";
 
 /**
  * Value of a property in `globals` object.
@@ -178,12 +181,25 @@ interface ParserOptions {
   ecmaFeatures?: EcmaFeatures;
   /**
    * Language variant to parse file as.
+   *
+   * If test case provides a filename, that takes precedence over `lang` option.
+   * Language will be inferred from file extension.
    */
   lang?: Language;
   /**
    * `true` to ignore non-fatal parsing errors.
    */
   ignoreNonFatalErrors?: boolean;
+}
+
+/**
+ * Parser options config, with extended `ecmaFeatures`.
+ * These properties should not be present in `languageOptions` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+export interface ParserOptionsInternal extends ParserOptions {
+  ecmaFeatures?: EcmaFeaturesInternal;
 }
 
 /**
@@ -199,9 +215,29 @@ interface EcmaFeatures {
 }
 
 /**
+ * ECMA features config, with `globalReturn` and `impliedStrict` properties.
+ * These properties should not be present in `ecmaFeatures` config,
+ * but could be if test cases are ported from ESLint.
+ * For internal use only.
+ */
+interface EcmaFeaturesInternal extends EcmaFeatures {
+  /**
+   * `true` if file is parsed with top-level `return` statements allowed.
+   */
+  globalReturn?: boolean;
+  /**
+   * `true` if file is parsed as strict mode code.
+   */
+  impliedStrict?: boolean;
+}
+
+/**
  * Parser language.
  */
 type Language = "js" | "jsx" | "ts" | "tsx" | "dts";
+
+// Empty language options
+const EMPTY_LANGUAGE_OPTIONS: LanguageOptionsInternal = {};
 
 // `RuleTester` uses this config as its default. Can be overwritten via `RuleTester.setDefaultConfig()`.
 let sharedConfig: Config = {};
@@ -212,19 +248,27 @@ let sharedConfig: Config = {};
 
 // List of keys that `ValidTestCase` or `InvalidTestCase` can have.
 // Must be kept in sync with properties of `ValidTestCase` and `InvalidTestCase` interfaces.
-const TEST_CASE_PROP_KEYS = new Set([
+// The type constraints enforce this.
+const TEST_CASE_PROP_KEYS_ARRAY = [
   "code",
   "name",
   "only",
   "filename",
   "options",
+  "settings",
   "before",
   "after",
   "output",
   "errors",
   // Not a valid key for `TestCase` interface, but present here to prevent prototype pollution in `createConfigForRun`
   "__proto__",
-]);
+] as const satisfies readonly (TestCaseOwnKeys | "__proto__")[];
+
+type TestCaseOwnKeys = Exclude<keyof ValidTestCase | keyof InvalidTestCase, keyof Config>;
+type MissingKeys = Exclude<TestCaseOwnKeys, (typeof TEST_CASE_PROP_KEYS_ARRAY)[number]>;
+type KeysSet = MissingKeys extends never ? Set<string> : never;
+
+const TEST_CASE_PROP_KEYS: KeysSet = new Set(TEST_CASE_PROP_KEYS_ARRAY);
 
 /**
  * Test case.
@@ -235,6 +279,7 @@ interface TestCase extends Config {
   only?: boolean;
   filename?: string;
   options?: Options;
+  settings?: Settings;
   before?: (this: this) => void;
   after?: (this: this) => void;
 }
@@ -440,7 +485,7 @@ export class RuleTester {
   }
 }
 
-// In debug builds only, we provide a hook to modify test cases before they're run.
+// In conformance build only, we provide a hook to modify test cases before they're run.
 // Hook can be registered by calling `RuleTester.registerModifyTestCaseHook`.
 // This is used in conformance tester.
 let modifyTestCase: ((test: TestCase) => void) | null = null;
@@ -528,6 +573,10 @@ function assertInvalidTestCasePasses(test: InvalidTestCase, plugin: Plugin, conf
   if (typeof errors === "number") {
     // If `errors` is a number, it's expected error count
     assertErrorCountIsCorrect(diagnostics, errors);
+  } else if (CONFORMANCE && (errors as unknown as string) === "__unknown__") {
+    // In conformance tests, sometimes test cases don't specify `errors` property
+    // (e.g. `eslint-plugin-stylistic`'s test cases). Conformance tester sets `errors` to `"__unknown__"`
+    // in those cases. So don't error here.
   } else {
     // `errors` is an array of error objects
     assertErrorCountIsCorrect(diagnostics, errors.length);
@@ -785,32 +834,6 @@ function getMessagePlaceholders(message: string): string[] {
   return Array.from(message.matchAll(PLACEHOLDER_REGEX), ([, name]) => name.trim());
 }
 
-// In conformance build, wrap `runValidTestCase` and `runInvalidTestCase` to add test case to error object.
-// This is used in conformance tests.
-type RunFunction<T> = (test: T, plugin: Plugin, config: Config, seenTestCases: Set<string>) => void;
-
-function wrapRunTestCaseFunction<T extends ValidTestCase | InvalidTestCase>(
-  run: RunFunction<T>,
-): RunFunction<T> {
-  return function (test, plugin, config, seenTestCases) {
-    try {
-      run(test, plugin, config, seenTestCases);
-    } catch (err) {
-      // oxlint-disable-next-line no-ex-assign
-      if (typeof err !== "object" || err === null) err = new Error("Unknown error");
-      err.__testCase = test;
-      throw err;
-    }
-  };
-}
-
-if (CONFORMANCE) {
-  // oxlint-disable-next-line no-func-assign
-  (runValidTestCase as any) = wrapRunTestCaseFunction(runValidTestCase);
-  // oxlint-disable-next-line no-func-assign
-  (runInvalidTestCase as any) = wrapRunTestCaseFunction(runInvalidTestCase);
-}
-
 /**
  * Create config for a test run.
  * Merges config from `RuleTester` instance on top of shared config.
@@ -953,9 +976,12 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
 
-  // Determine filename.
-  // If not provided, use default filename based on `parseOptions.lang`.
-  let { filename } = test;
+  // Determine path and CWD.
+  // If not provided, use default filename based on `parseOptions.lang`,
+  // and the directory of this file as CWD.
+  let path: string, cwd: string;
+
+  const { filename } = test;
   if (filename == null) {
     let ext: string | undefined = parseOptions.lang;
     if (ext == null) {
@@ -963,37 +989,62 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     } else if (ext === "dts") {
       ext = "d.ts";
     }
-    filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+    cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
+    path = pathJoin(cwd, `${DEFAULT_FILENAME_BASE}.${ext}`);
+  } else if (isAbsolutePath(filename)) {
+    cwd = dirname(filename);
+    path = filename;
+  } else {
+    cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
+    path = pathJoin(cwd, filename);
   }
+
+  createWorkspace(cwd);
 
   try {
     // Register plugin. This adds rule to `registeredRules` array.
-    registerPlugin(plugin, null, false);
+    registerPlugin(path, plugin, null, false);
 
     // Set up options
-    const optionsId = setupOptions(test);
+    const optionsId = setupOptions(test, cwd);
 
     // Parse file into buffer
-    parse(filename, test.code, parseOptions);
+    parse(path, test.code, parseOptions);
 
     // In conformance tests, set `context.languageOptions.ecmaVersion`.
     // This is not supported outside of conformance tests.
-    if (CONFORMANCE) setEcmaVersionContext(test);
+    if (CONFORMANCE) setEcmaVersionAndFeatures(test);
 
     // Get globals and settings
-    const globalsJSON: string = getGlobalsJson(test);
-    const settingsJSON = "{}"; // TODO
+    const globalsJSON = getGlobalsJson(test);
+    const settingsJSON = JSON.stringify(test.settings ?? {});
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
-    lintFileImpl(filename, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
+    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
 
     return diagnostics.map((diagnostic) => {
-      const { line, column } = getLineColumnFromOffset(diagnostic.start),
-        { line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end);
+      let line, column, endLine, endColumn;
+
+      // Convert start/end offsets to line/column.
+      // In conformance build, use original `loc` if one was passed to `report`.
+      if (!CONFORMANCE || diagnostic.loc == null) {
+        ({ line, column } = getLineColumnFromOffset(diagnostic.start));
+        ({ line: endLine, column: endColumn } = getLineColumnFromOffset(diagnostic.end));
+      } else {
+        const { loc } = diagnostic;
+        ({ line, column } = loc.start);
+        if (loc.end != null) {
+          ({ line: endLine, column: endColumn } = loc.end);
+        } else {
+          endLine = line;
+          endColumn = column;
+        }
+      }
+
       const node = getNodeByRangeIndex(diagnostic.start);
       return {
         ruleId,
@@ -1010,8 +1061,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     });
   } finally {
     // Reset state
-    registeredRules.length = 0;
-    if (allOptions !== null) allOptions.length = 1;
+    destroyWorkspace(cwd);
 
     // Even if there hasn't been an error, do a full reset of state just to be sure.
     // This includes emptying `diagnostics`.
@@ -1027,38 +1077,27 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 function getParseOptions(test: TestCase): ParseOptions {
   const parseOptions: ParseOptions = {};
 
-  const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  if (languageOptions == null) return parseOptions;
+  let languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
+  if (languageOptions == null) languageOptions = EMPTY_LANGUAGE_OPTIONS;
 
   // Throw error if custom parser is provided
   if (languageOptions.parser != null) throw new Error("Custom parsers are not supported");
 
   // Handle `languageOptions.sourceType`
-  let { sourceType } = languageOptions;
+  const { sourceType } = languageOptions;
   if (sourceType != null) {
-    if (test.eslintCompat === true) {
-      // ESLint compatibility mode.
-      // `unambiguous` is disallowed. Treat `commonjs` as `script`.
-      if (sourceType === "commonjs") {
-        sourceType = "script";
-      } else if (sourceType === "unambiguous") {
-        throw new Error(
-          "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
-            "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
-        );
-      }
-    } else {
-      // Not ESLint compatibility mode.
-      // `commonjs` is disallowed.
-      if (sourceType === "commonjs") {
-        throw new Error(
-          "'commonjs' source type is only supported in ESLint compatibility mode.\n" +
-            "Enable ESLint compatibility mode by setting `eslintCompat` to `true` in the config / test case.",
-        );
-      }
+    // `unambiguous` is disallowed in ESLint compatibility mode
+    if (test.eslintCompat === true && sourceType === "unambiguous") {
+      throw new Error(
+        "'unambiguous' source type is not supported in ESLint compatibility mode.\n" +
+          "Disable ESLint compatibility mode by setting `eslintCompat` to `false` in the config / test case.",
+      );
     }
 
     parseOptions.sourceType = sourceType;
+  } else if (test.eslintCompat === true) {
+    // ESLint defaults to `module` if no source type is specified
+    parseOptions.sourceType = "module";
   }
 
   // Handle `languageOptions.parserOptions`
@@ -1067,12 +1106,14 @@ function getParseOptions(test: TestCase): ParseOptions {
     // Handle `parserOptions.ignoreNonFatalErrors`
     if (parserOptions.ignoreNonFatalErrors === true) parseOptions.ignoreNonFatalErrors = true;
 
-    // Handle `parserOptions.lang`
-    const { lang } = parserOptions;
-    if (lang != null) {
-      parseOptions.lang = lang;
-    } else if (parserOptions.ecmaFeatures?.jsx === true) {
-      parseOptions.lang = "jsx";
+    // Handle `parserOptions.lang`. `filename` takes precedence over `lang` if provided.
+    if (test.filename == null) {
+      const { lang } = parserOptions;
+      if (lang != null) {
+        parseOptions.lang = lang;
+      } else if (parserOptions.ecmaFeatures?.jsx === true) {
+        parseOptions.lang = "jsx";
+      }
     }
   }
 
@@ -1171,9 +1212,10 @@ function getGlobalsJson(test: TestCase): string {
  * Returns the options ID to pass to `lintFileImpl` (either 0 for default options, or 1 for user-provided options).
  *
  * @param test - Test case
+ * @param cwd - Current working directory for test case
  * @returns Options ID to pass to `lintFileImpl`
  */
-function setupOptions(test: TestCase): number {
+function setupOptions(test: TestCase, cwd: string): number {
   // Initial entries for default options
   const allOptions: Options[] = [[]],
     allRuleIds: number[] = [0];
@@ -1191,7 +1233,11 @@ function setupOptions(test: TestCase): number {
   // Serialize to JSON and pass to `setOptions`
   let allOptionsJson: string;
   try {
-    allOptionsJson = JSON.stringify({ options: allOptions, ruleIds: allRuleIds });
+    allOptionsJson = JSON.stringify({
+      options: allOptions,
+      ruleIds: allRuleIds,
+      cwd,
+    });
   } catch (err) {
     throw new Error(`Failed to serialize options: ${err}`);
   }
@@ -1201,28 +1247,40 @@ function setupOptions(test: TestCase): number {
 }
 
 /**
- * Inject `context.languageOptions.ecmaVersion` into `context.languageOptions`.
+ * Inject:
+ * - `languageOptions.ecmaVersion` into `context.languageOptions`.
+ * - `languageOptions.parserOptions.ecmaFeatures.globalReturn` into scope analyzer options.
+ * - `languageOptions.parserOptions.ecmaFeatures.impliedStrict` into scope analyzer options.
+ *
  * This is only supported in conformance tests, where it's necessary to pass some tests.
- * Oxlint doesn't support any version except latest.
+ * Oxlint doesn't support any ECMA version except latest, or the `globalReturn` or `impliedStrict` ECMA features.
  * @param test - Test case
  */
-function setEcmaVersionContext(test: TestCase) {
+function setEcmaVersionAndFeatures(test: TestCase) {
   if (!CONFORMANCE) throw new Error("Should be unreachable outside of conformance tests");
 
+  // Set `ecmaVersion`.
   // Same logic as ESLint's `normalizeEcmaVersionForLanguageOptions` function.
   // https://github.com/eslint/eslint/blob/54bf0a3646265060f5f22faef71ec840d630c701/lib/languages/js/index.js#L71-L100
   // Only difference is that we default to `ECMA_VERSION` not `5` if `ecmaVersion` is undefined.
   // In ESLint, the branch for `undefined` is actually dead code, because `undefined` is replaced by default value
   // in an early step of config parsing.
   const languageOptions = test.languageOptions as LanguageOptionsInternal | undefined;
-  const ecmaVersion = languageOptions?.ecmaVersion;
+  let ecmaVersion = languageOptions?.ecmaVersion;
 
-  let version = ECMA_VERSION;
   if (typeof ecmaVersion === "number") {
-    version = ecmaVersion >= 2015 ? ecmaVersion : ecmaVersion + 2009;
+    if (ecmaVersion > 5 && ecmaVersion < 2015) ecmaVersion += 2009;
+  } else {
+    ecmaVersion = ECMA_VERSION;
   }
+  setEcmaVersion(ecmaVersion);
 
-  setEcmaVersion(version);
+  // Set `globalReturn` and `impliedStrict` in scope analyzer options
+  const ecmaFeatures = languageOptions?.parserOptions?.ecmaFeatures;
+  ecmaFeaturesOverride.globalReturn = ecmaFeatures?.globalReturn ?? null;
+  // Strict mode does not exist in ES3
+  ecmaFeaturesOverride.impliedStrict =
+    ecmaVersion === 3 ? false : (ecmaFeatures?.impliedStrict ?? null);
 }
 
 // Regex to match other control characters (except tab, newline, carriage return)
@@ -1333,6 +1391,10 @@ function assertInvalidTestCaseIsWellFormed(
   const { errors } = test;
   if (typeof errors === "number") {
     assert(errors > 0, "Invalid cases must have `errors` value greater than 0");
+  } else if (CONFORMANCE && (errors as unknown as string) === "__unknown__") {
+    // In conformance tests, sometimes test cases don't specify `errors` property
+    // (e.g. `eslint-plugin-stylistic`'s test cases). Conformance tester sets `errors` to `"__unknown__"`
+    // in those cases. So don't error here.
   } else {
     assert(
       errors !== undefined,

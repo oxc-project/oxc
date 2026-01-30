@@ -5,10 +5,11 @@ import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
+import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
-
+import { getResponsibleWorkspace } from "../workspace/index.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -37,9 +38,6 @@ export const buffers: (BufferWithArrays | null)[] = [];
 
 // Array of `after` hooks to run after traversal. This array reused for every file.
 const afterHooks: AfterHook[] = [];
-
-// Default parser services object (empty object).
-const PARSER_SERVICES_DEFAULT: Record<string, unknown> = Object.freeze({});
 
 /**
  * Lint a file.
@@ -143,8 +141,18 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
-  // Pass file path to context module, so `Context`s know what file is being linted
-  setupFileContext(filePath);
+  // Get workspace containing file
+  const workspace = getResponsibleWorkspace(filePath);
+  debugAssertIsNonNull(workspace, "No workspace responsible for file being linted");
+
+  // Pass file path and CWD to context module, so `Context`s know what file is being linted
+  setupFileContext(filePath, workspace);
+
+  // Load all relevant workspace configurations
+  const rules = registeredRules.get(workspace)!;
+  const workspaceOptions = allOptions.get(workspace);
+  debugAssertIsNonNull(rules, "No rules registered for workspace");
+  debugAssertIsNonNull(workspaceOptions, "No options registered for workspace");
 
   // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
   //
@@ -154,9 +162,8 @@ export function lintFileImpl(
   //
   // But... source text and AST can be accessed in body of `create` method, or `before` hook, via `context.sourceCode`.
   // So we pass the buffer to source code module here, so it can decode source text / deserialize AST on demand.
-  const hasBOM = false; // TODO: Set this correctly
-  const parserServices = PARSER_SERVICES_DEFAULT; // TODO: Set this correctly
-  setupSourceForFile(buffer, hasBOM, parserServices);
+  const hasBOM = buffer[HAS_BOM_FLAG_POS] === 1;
+  setupSourceForFile(buffer, hasBOM);
 
   // Pass settings and globals JSON to modules that handle them
   setSettingsForFile(settingsJSON);
@@ -167,21 +174,21 @@ export function lintFileImpl(
 
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
-    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
-    const ruleDetails = registeredRules[ruleId];
+    debugAssert(ruleId < rules.length, "Rule ID out of bounds");
+    const ruleDetails = rules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
-    debugAssertIsNonNull(allOptions);
-    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
+    debugAssertIsNonNull(workspaceOptions);
+    debugAssert(optionsId < workspaceOptions.length, "Options ID out of bounds");
 
     // If the rule has no user-provided options, use the plugin-provided default
     // options (which falls back to `DEFAULT_OPTIONS`)
     ruleDetails.options =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : workspaceOptions[optionsId];
 
     let { visitor } = ruleDetails;
     if (visitor === null) {

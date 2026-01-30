@@ -76,6 +76,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var obj = {...z, c:1, b:1}
    ·           ────────────────
    ╰────
+  help: Replace `c:1, b:1` with `b:1, c:1`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]
@@ -88,36 +89,42 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var obj = {c:1, b:1, ...a}
    ·           ────────────────
    ╰────
+  help: Replace `c:1, b:1` with `b:1, c:1`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]
  1 │ var obj = {...z, ...a, c:1, b:1}
    ·           ──────────────────────
    ╰────
+  help: Replace `c:1, b:1` with `b:1, c:1`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]
  1 │ var obj = {...z, b:1, a:1, ...d, ...c}
    ·           ────────────────────────────
    ╰────
+  help: Replace `b:1, a:1` with `a:1, b:1`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]
  1 │ var obj = {...z, a:2, b:0, ...x, ...c}
    ·           ────────────────────────────
    ╰────
+  help: Replace `a:2, b:0` with `b:0, a:2`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]
  1 │ var obj = {...z, a:2, b:0, ...x}
    ·           ──────────────────────
    ╰────
+  help: Replace `a:2, b:0` with `b:0, a:2`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]
  1 │ var obj = {...z, '':1, a:2}
    ·           ─────────────────
    ╰────
+  help: Replace `'':1, a:2` with `a:2, '':1`.
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]

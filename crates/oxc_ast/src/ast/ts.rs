@@ -1477,13 +1477,13 @@ pub struct TSConstructorType<'a> {
 /// type Maybe<T> = {
 /// //        _____ constraint
 ///     [P in keyof T]?: T[P]
-/// //   ^ type_parameter
+/// //   ^ key
 /// }
 /// ```
 ///
 /// ```ts
 /// type ReadonlyDefinite<T> = {
-/// //           _ type parameter
+/// //           _ key
 ///    readonly [P in keyof T]-?: T[P]
 /// //                        ^^ `optional` modifier
 /// };
@@ -1495,15 +1495,13 @@ pub struct TSConstructorType<'a> {
 #[scope]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
-#[estree(
-    add_fields(key = TSMappedTypeKey, constraint = TSMappedTypeConstraint),
-    field_order(key, constraint, name_type, type_annotation, optional, readonly, span),
-)]
+#[estree(field_order(key, constraint, name_type, type_annotation, optional, readonly, span))]
 pub struct TSMappedType<'a> {
     pub span: Span,
     /// Key type parameter, e.g. `P` in `[P in keyof T]`.
-    #[estree(skip)]
-    pub type_parameter: Box<'a, TSTypeParameter<'a>>,
+    pub key: BindingIdentifier<'a>,
+    /// Constraint type, e.g. `keyof T` in `[P in keyof T]`.
+    pub constraint: TSType<'a>,
     pub name_type: Option<TSType<'a>>,
     pub type_annotation: Option<TSType<'a>>,
     /// Optional modifier on type annotation
@@ -1630,20 +1628,24 @@ pub struct TSImportEqualsDeclaration<'a> {
     pub import_kind: ImportOrExportKind,
 }
 
-inherit_variants! {
 /// TS Module Reference
 ///
-/// Inherits variants from [`TSTypeName`]. See [`ast` module docs] for explanation of inheritance.
+/// The right-hand side of an `import x = ...` declaration.
 ///
-/// [`ast` module docs]: `super`
+/// ## Examples
+///
+/// ```ts
+/// import x = foo;           // IdentifierReference
+/// import x = foo.bar;       // QualifiedName
+/// import x = require("x");  // ExternalModuleReference
+/// ```
 #[ast(visit)]
 #[derive(Debug)]
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, GetAddress, ContentEq, ESTree)]
 pub enum TSModuleReference<'a> {
-    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 3,
-    // `TSTypeName` variants added here by `inherit_variants!` macro
-    @inherit TSTypeName
-}
+    ExternalModuleReference(Box<'a, TSExternalModuleReference<'a>>) = 0,
+    IdentifierReference(Box<'a, IdentifierReference<'a>>) = 1,
+    QualifiedName(Box<'a, TSQualifiedName<'a>>) = 2,
 }
 
 #[ast(visit)]

@@ -7,8 +7,41 @@ working directory: fixtures/invalid_config_multiple_rules
 ----------
 Failed to parse oxlint configuration file.
 
-  x Invalid configuration for rule `jest/no-hooks`: unknown field `foo`, expected `allow`, received `{ "foo": "bar" }`
-  | Invalid configuration for rule `no-return-assign`: unknown variant `foobar`, expected `always` or `except-parens`, received `"foobar"`
+  x Invalid configuration for rule `import/no-absolute-path`:
+  |   unknown field `foobar`, expected one of `esmodule`, `commonjs`, `amd`
+  |   received config: `{ "foobar": true }`
+  | 
+  | Invalid configuration for rule `import/no-duplicates`:
+  |   invalid type: string "maybe", expected a boolean
+  |   received config: `{ "preferInline": "maybe" }`
+  | 
+  | Invalid configuration for rule `jest/no-hooks`:
+  |   unknown field `foo`, expected `allow`
+  |   received config: `{ "foo": "bar" }`
+  | 
+  | Invalid configuration for rule `no-cond-assign`:
+  |   invalid type: integer `123`, expected string or map
+  |   received config: `123`
+  | 
+  | Invalid configuration for rule `no-console`:
+  |   unknown field `extra`, expected `allow`
+  |   received config: `{ "allow": [ "info" ], "extra": "value" }`
+  | 
+  | Invalid configuration for rule `no-return-assign`:
+  |   unknown variant `foobar`, expected `always` or `except-parens`
+  |   received config: `"foobar"`
+  | 
+  | Invalid configuration for rule `typescript/consistent-indexed-object-style`:
+  |   invalid type: boolean `true`, expected string or map
+  |   received config: `true`
+  | 
+  | Invalid configuration for rule `vitest/consistent-vitest-vi`:
+  |   unknown variant `other`, expected `vi` or `vitest`
+  |   received config: `{ "fn": "other" }`
+  | 
+  | Invalid configuration for rule `vue/define-emits-declaration`:
+  |   unknown variant `declaration`, expected one of `type-based`, `type-literal`, `runtime`
+  |   received config: `{ "declaration": 0 }`
 
 ----------
 CLI result: InvalidOptionConfig

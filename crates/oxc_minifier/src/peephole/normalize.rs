@@ -1,6 +1,9 @@
 use oxc_allocator::{TakeIn, Vec};
 use oxc_ast::ast::*;
-use oxc_ecmascript::constant_evaluation::{DetermineValueType, ValueType};
+use oxc_ecmascript::{
+    constant_evaluation::{DetermineValueType, ValueType},
+    side_effects::is_valid_regexp,
+};
 use oxc_semantic::IsGlobalReference;
 use oxc_span::GetSpan;
 use oxc_syntax::scope::ScopeFlags;
@@ -364,9 +367,14 @@ impl<'a> Normalize {
                 ],
             ),
             "ArrayBuffer" | "Date" => (false, false, &[ValueType::BigInt]),
-            "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError" | "RegExp"
-            | "SyntaxError" | "TypeError" | "URIError" | "Number" | "Object" | "String" => {
-                (false, false, &[])
+            "Boolean" | "Error" | "EvalError" | "RangeError" | "ReferenceError" | "SyntaxError"
+            | "TypeError" | "URIError" | "Number" | "Object" | "String" => (false, false, &[]),
+            // RegExp needs special validation using the regex parser
+            "RegExp" => {
+                if Self::can_set_pure(ident, &ctx) && is_valid_regexp(&new_expr.arguments) {
+                    new_expr.pure = true;
+                }
+                return;
             }
             _ => return,
         };

@@ -7,7 +7,9 @@ working directory: fixtures/invalid_config_type_difference
 ----------
 Failed to parse oxlint configuration file.
 
-  x Invalid configuration for rule `jest/no-hooks`: invalid type: boolean `true`, expected a string, received `{ "allow": [ true, false ] }`
+  x Invalid configuration for rule `jest/no-hooks`:
+  |   invalid type: boolean `true`, expected a string
+  |   received config: `{ "allow": [ true, false ] }`
 
 ----------
 CLI result: InvalidOptionConfig

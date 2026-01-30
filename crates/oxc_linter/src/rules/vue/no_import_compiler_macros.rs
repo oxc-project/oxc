@@ -4,17 +4,17 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
-fn no_import_compiler_macros_diagnostic(span: Span, name: &Atom) -> OxcDiagnostic {
+fn no_import_compiler_macros_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is a compiler macro and doesn't need to be imported."))
         .with_help("Remove the import statement for this macro.")
         .with_label(span)
 }
 
-fn invalid_import_compiler_macros_diagnostic(span: Span, name: &Atom) -> OxcDiagnostic {
+fn invalid_import_compiler_macros_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "'{name}' is a compiler macro and can't be imported outside of `<script setup>`."
     ))

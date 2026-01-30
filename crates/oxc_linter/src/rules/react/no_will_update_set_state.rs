@@ -10,6 +10,7 @@ use crate::{
     config::ReactVersion,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    rules::ContextHost,
     utils::{is_es5_component, is_es6_component},
 };
 
@@ -23,7 +24,6 @@ fn no_will_update_set_state_diagnostic(span: Span) -> OxcDiagnostic {
 #[serde(rename_all = "kebab-case")]
 pub enum NoWillUpdateSetStateConfig {
     #[default]
-    #[serde(skip)]
     Allowed,
     DisallowInFunc,
 }
@@ -76,9 +76,7 @@ declare_oxc_lint!(
 
 impl Rule for NoWillUpdateSetState {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -160,6 +158,10 @@ impl Rule for NoWillUpdateSetState {
         }
 
         ctx.diagnostic(no_will_update_set_state_diagnostic(call_expr.callee.span()));
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 
@@ -243,6 +245,23 @@ fn test() {
 			      ",
             None,
             Some(serde_json::json!({ "settings": { "react": { "version": "16.2.0" } } })),
+        ),
+        // Test to ensure that not providing a value for the config works fine and does not error.
+        (
+            "
+			        var Hello = createReactClass({
+			          componentWillUpdate: function() {
+			            function handleEvent(data) {
+			              this.setState({
+			                data: data
+			              });
+			            }
+			            someClass.onSomeEvent(handleEvent)
+			          }
+			        });
+			      ",
+            Some(serde_json::json!([])),
+            None,
         ),
     ];
 

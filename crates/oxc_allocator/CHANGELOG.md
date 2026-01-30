@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.111.0] - 2026-01-26
+
+### ⚡ Performance
+
+- 2349031 allocator: Increase initial chunk size from 512B to 16KB (#18234) (Boshen)
+
+## [0.109.0] - 2026-01-19
+
+### ⚡ Performance
+
+- 46cd73d allocator: Add #[cold] annotations to error handling functions (#18181) (Boshen)
+- 8da684e allocator: Type-erase RawVec::finish_grow inner function (#18175) (Boshen)
+
 ## [0.106.0] - 2025-12-29
 
 ### 🚀 Features

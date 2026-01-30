@@ -12,22 +12,22 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
-        if f.comments().is_suppressed(self.type_parameter.span.start) {
+        if f.comments().is_suppressed(self.key.span.start) {
             return write!(f, FormatSuppressedNode(self.span));
         }
 
-        let type_parameter = self.type_parameter();
+        let key = self.key();
+        let constraint = self.constraint();
         let name_type = self.name_type();
-        let should_expand = has_line_break_before_property_name(self, f.source_text());
+        let should_expand = has_line_break_after_opening_brace(self, f.source_text());
 
         let format_inner = format_with(|f| {
             if should_expand {
-                let comments =
-                    if f.comments().has_leading_own_line_comment(self.type_parameter.span.start) {
-                        f.context().comments().comments_before(self.type_parameter.span.start)
-                    } else {
-                        f.context().comments().comments_before_character(self.span.start, b'[')
-                    };
+                let comments = if f.comments().has_leading_own_line_comment(self.key.span.start) {
+                    f.context().comments().comments_before(self.key.span.start)
+                } else {
+                    f.context().comments().comments_before_character(self.span.start, b'[')
+                };
                 write!(f, FormatLeadingComments::Comments(comments));
             }
 
@@ -42,17 +42,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
 
             let format_inner_inner = format_with(|f| {
                 write!(f, "[");
-                write!(f, type_parameter.name());
-                if let Some(constraint) = &type_parameter.constraint() {
-                    write!(f, [space(), "in", space(), constraint]);
-                }
-                if let Some(default) = &type_parameter.default() {
-                    write!(f, [space(), "=", space(), default]);
-                }
+                write!(f, key);
+                write!(f, [space(), "in", space(), constraint]);
                 if let Some(name_type) = &name_type {
                     write!(f, [space(), "as", space(), name_type]);
                 }
-                type_parameter.format_trailing_comments(f);
+                key.format_trailing_comments(f);
                 write!(f, "]");
                 if let Some(optional) = self.optional() {
                     write!(
@@ -89,16 +84,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
     }
 }
 
-/// Check if the user introduced a new line inside the node, but only if
-/// that new line occurs at or before the property name. For example,
-/// this would break:
-///   { [
-///     A in B]: T}
-/// Because the line break occurs before `A`, the property name. But this
-/// would _not_ break:
-///   { [A
-///     in B]: T}
-/// Because the break is _after_ the `A`.
-fn has_line_break_before_property_name(node: &TSMappedType, f: SourceText) -> bool {
-    f.contains_newline_between(node.span.start, node.type_parameter.span.start)
+/// Check if the user introduced a new line immediately after the opening brace.
+/// For example, this would break:
+///   {
+///     readonly [A in B]: T}
+/// Because the line break occurs right after `{`. But this would _not_ break:
+///   { readonly
+///     [A in B]: T}
+/// Because the break is not immediately after `{`.
+fn has_line_break_after_opening_brace(node: &TSMappedType, f: SourceText) -> bool {
+    // Check if there's a newline immediately after `{` (before any non-whitespace)
+    f.has_newline_after(node.span.start + 1)
 }

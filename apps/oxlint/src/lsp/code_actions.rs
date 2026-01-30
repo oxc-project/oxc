@@ -1,3 +1,4 @@
+use oxc_linter::FixKind;
 use tower_lsp_server::ls_types::{CodeAction, CodeActionKind, TextEdit, Uri, WorkspaceEdit};
 use tracing::debug;
 
@@ -93,16 +94,19 @@ pub fn fix_all_text_edit(actions: impl Iterator<Item = LinterCodeAction>) -> Vec
 
         // For multiple fixes, we take the first one as a representative fix.
         // Applying all possible fixes at once is not possible in this context.
-        let fixed_content = action.fixed_content.first().unwrap();
+        let fixed_content = action.fixed_content.into_iter().next().unwrap();
+
+        // Only safe fixes or suggestions are applied in "fix all" action/command.
+        if !FixKind::SafeFixOrSuggestion.can_apply(fixed_content.kind) {
+            debug!("Skipping unsafe fix for fix all action: {}", fixed_content.message);
+            continue;
+        }
+
         // when source.fixAll.oxc we collect all changes at ones
         // and return them as one workspace edit.
         // it is possible that one fix will change the range for the next fix
         // see oxc-project/oxc#10422
-        text_edits.push(TextEdit {
-            range: fixed_content.range,
-            // TODO: avoid cloning here
-            new_text: fixed_content.code.clone(),
-        });
+        text_edits.push(TextEdit { range: fixed_content.range, new_text: fixed_content.code });
     }
 
     text_edits

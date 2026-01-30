@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/invalid_config_tuple_rules
+----------
+Failed to parse oxlint configuration file.
+
+  x Invalid configuration for rule `eqeqeq`:
+  |   invalid type: string "foo", expected struct EqeqeqOptions, received `[ "always", "foo" ]`
+  | 
+  | Invalid configuration for rule `sort-keys`:
+  |   unknown variant `foo`, expected `desc` or `asc`, received `[ "foo", { "allowLineSeparatedGroups": true } ]`
+  | 
+  | Invalid configuration for rule `yoda`:
+  |   invalid type: integer `123`, expected a boolean, received `[ "never", { "exceptRange": 123 } ]`
+
+----------
+CLI result: InvalidOptionConfig
+----------

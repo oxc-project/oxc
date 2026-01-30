@@ -77,8 +77,8 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
 
     pub fn parent(&self) -> &AstNodes<'a> {
         match self {
-            Self::LogicalExpression(expr) => expr.parent,
-            Self::BinaryExpression(expr) => expr.parent,
+            Self::LogicalExpression(expr) => expr.parent(),
+            Self::BinaryExpression(expr) => expr.parent(),
         }
     }
 
@@ -148,11 +148,11 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
             | AstNodes::ForStatement(_)
             | AstNodes::TemplateLiteral(_) => true,
             AstNodes::JSXExpressionContainer(container) => {
-                matches!(container.parent, AstNodes::JSXAttribute(_))
+                matches!(container.parent(), AstNodes::JSXAttribute(_))
             }
             AstNodes::ExpressionStatement(statement) => statement.is_arrow_function_body(),
             AstNodes::ConditionalExpression(conditional) => !matches!(
-                conditional.parent,
+                conditional.parent(),
                 AstNodes::ReturnStatement(_)
                     | AstNodes::ThrowStatement(_)
                     | AstNodes::CallExpression(_)

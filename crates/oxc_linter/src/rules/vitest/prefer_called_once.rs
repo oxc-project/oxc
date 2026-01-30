@@ -222,6 +222,7 @@ fn test() {
             "expect(fn).resolves.toHaveBeenCalledOnce(/*comment,*//*comment,*/);",
         ),
     ];
+
     Tester::new(PreferCalledOnce::NAME, PreferCalledOnce::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)

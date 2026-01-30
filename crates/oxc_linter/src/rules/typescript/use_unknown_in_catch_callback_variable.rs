@@ -79,7 +79,7 @@ declare_oxc_lint!(
     UseUnknownInCatchCallbackVariable(tsgolint),
     typescript,
     restriction,
-    pending,
+    suggestion,
 );
 
 impl Rule for UseUnknownInCatchCallbackVariable {}

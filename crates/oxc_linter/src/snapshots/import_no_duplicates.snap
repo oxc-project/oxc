@@ -41,6 +41,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Merge these imports into a single import statement
 
+  ⚠ eslint-plugin-import(no-duplicates): Module './bar.js?optionX' is imported more than once in this file
+   ╭─[index.ts:1:46]
+ 1 │ import x from './bar?optionX'; import y from './bar.js?optionX';
+   ·               ───────────────                ─────────┬────────
+   ·                      │                                ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement
+
   ⚠ eslint-plugin-import(no-duplicates): Module 'non-existent' is imported more than once in this file
    ╭─[index.ts:1:17]
  1 │ import foo from 'non-existent'; import bar from 'non-existent';
@@ -511,6 +519,14 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
    ╭─[index.ts:1:22]
  1 │ import {type x} from 'foo'; import type {y} from 'foo'
+   ·                      ──┬──                       ─────
+   ·                        ╰── It is first imported here
+   ╰────
+  help: Merge these imports into a single import statement
+
+  ⚠ eslint-plugin-import(no-duplicates): Module 'foo' is imported more than once in this file
+   ╭─[index.ts:1:22]
+ 1 │ import type {x} from 'foo'; import {type y} from 'foo'
    ·                      ──┬──                       ─────
    ·                        ╰── It is first imported here
    ╰────

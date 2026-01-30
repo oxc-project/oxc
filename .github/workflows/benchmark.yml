@@ -36,7 +36,7 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - name: Determine affected components
         id: set-matrix
@@ -65,7 +65,7 @@ jobs:
         include: ${{ fromJSON(needs.determine-matrix.outputs.matrix) }}
     name: Bench ${{ matrix.component }}
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
         with:
@@ -83,15 +83,15 @@ jobs:
           else
             cargo build --release -p oxc_benchmark \
               --bench lexer --bench parser --bench transformer --bench semantic \
-              --bench minifier --bench codegen --bench formatter \
+              --bench minifier --bench codegen --bench formatter --bench pipeline \
               --no-default-features --features ${{ matrix.feature }} --features codspeed
           fi
-          mkdir -p target/codspeed/simulation/oxc_benchmark
-          mv target/release/deps/${{ matrix.component }}-* target/codspeed/simulation/oxc_benchmark
-          rm target/codspeed/simulation/oxc_benchmark/*.d
+          mkdir -p target/codspeed/analysis/oxc_benchmark
+          mv target/release/deps/${{ matrix.component }}-* target/codspeed/analysis/oxc_benchmark
+          rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@dbda7111f8ac363564b0c51b992d4ce76bb89f2f # v4.5.2
+        uses: CodSpeedHQ/action@e736f0d2aeb36da38e9f08eca4dff7967408d154 # v4.8.2
         timeout-minutes: 30
         with:
           mode: simulation

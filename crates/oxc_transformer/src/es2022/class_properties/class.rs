@@ -97,7 +97,7 @@ impl<'a> ClassProperties<'a, '_> {
                         // Note: Current scope is outside class.
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
-                            ident.name,
+                            ident.name.into(),
                             PrivateProp::new(binding, prop.r#static, None, false),
                         );
                     }
@@ -134,7 +134,7 @@ impl<'a> ClassProperties<'a, '_> {
                             SymbolFlags::Function,
                         );
 
-                        match private_props.entry(ident.name) {
+                        match private_props.entry(ident.name.into()) {
                             Entry::Occupied(mut entry) => {
                                 // If there's already a binding for this private property,
                                 // it's a setter or getter, so store the binding in `binding2`.
@@ -157,7 +157,7 @@ impl<'a> ClassProperties<'a, '_> {
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
                         let dummy_binding = BoundIdentifier::new(Atom::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name,
+                            ident.name.into(),
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }

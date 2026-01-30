@@ -33,9 +33,9 @@ Arguments:
 /// `print_rules`
 ///
 /// `cargo run -p website linter-rules
-///   --rules-json /path/to/oxc/oxc-project.github.io/.vitepress/data/rules.json
-///   --rule-docs /path/to/oxc/oxc-project.github.io/src/docs/guide/usage/linter/rules
-///   --rule-count /path/to/oxc/oxc-project.github.io/src/docs/guide/usage
+///   --rules-json /path/to/oxc/website/.vitepress/data/rules.json
+///   --rule-docs /path/to/oxc/website/src/docs/guide/usage/linter/rules
+///   --rule-count /path/to/oxc/website/src/docs/guide/usage
 ///   --git-ref dc9dc03872101c15b0d02f05ce45705565665829
 /// `
 /// <https://oxc.rs/docs/guide/usage/linter/rules.html>

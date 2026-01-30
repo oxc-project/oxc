@@ -150,7 +150,7 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &Formatter<'
         };
 
         // Yield expressions only need to check the leading comments on the left side.
-        if matches!(argument.parent, AstNodes::YieldExpression(_)) {
+        if matches!(argument.parent(), AstNodes::YieldExpression(_)) {
             continue;
         }
 

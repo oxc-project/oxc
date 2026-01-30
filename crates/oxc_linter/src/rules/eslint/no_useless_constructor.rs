@@ -222,8 +222,20 @@ fn is_only_simple_params(params: &FormalParameters) -> bool {
         && params.items.iter().all(|param| param.initializer.is_none())
 }
 
+/// Check if the super call is just spreading the `arguments` object, i.e., `super(...arguments)`.
+///
+/// Returns `true` only if there is exactly one spread argument that is the `arguments` identifier.
+/// This ensures we don't flag constructors that transform arguments before passing to super,
+/// such as `super(...args.map(x => x))`.
 fn is_spread_arguments(super_args: &[Argument<'_>]) -> bool {
-    super_args.len() == 1 && super_args[0].is_spread()
+    if super_args.len() == 1
+        && let Argument::SpreadElement(spread) = &super_args[0]
+        && spread.argument.is_specific_id("arguments")
+    {
+        return true;
+    }
+
+    false
 }
 
 fn is_passing_through<'a>(
@@ -339,6 +351,13 @@ fn test() {
         //     }
         // }
         // ",
+        // Argument transformation: constructor is not useless when arguments are processed/transformed
+        // https://github.com/oxc-project/oxc/issues/17469
+        "class A extends B { constructor(...args) { super(...args.map(x => x)); } }",
+        "class A extends B { constructor(...args) { super(...args.filter(x => x)); } }",
+        "class A extends B { constructor(...args) { super(...args.slice(1)); } }",
+        "class A extends B { constructor(...args) { super(...transform(args)); } }",
+        "class A extends B { constructor(...args) { super(...[...args, extra]); } }",
     ];
 
     let pass_typescript = vec![

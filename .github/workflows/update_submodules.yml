@@ -46,7 +46,7 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - uses: taiki-e/checkout-action@afad4df3ab3122b166e8226ac83be4d981fb64e8 # v1.3.2
+      - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
       - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
@@ -121,16 +121,16 @@ jobs:
           fetch_sha "BABEL" "babel/babel"
           fetch_sha "NODE_COMPAT_TABLE" "compat-table/node-compat-table" "gh-pages"
 
-      - name: Get current SHAs from clone-parallel.sh
+      - name: Get current SHAs from clone-parallel.mjs
         id: current-shas
         run: |
           # Extract current SHAs from the script
-          TEST262_CURRENT=$(grep '^TEST262_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
-          BABEL_CURRENT=$(grep '^BABEL_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
-          TYPESCRIPT_CURRENT=$(grep '^TYPESCRIPT_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
-          # PRETTIER_CURRENT=$(grep '^PRETTIER_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
-          ESTREE_CONFORMANCE_CURRENT=$(grep '^ESTREE_CONFORMANCE_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
-          NODE_COMPAT_TABLE_CURRENT=$(grep '^NODE_COMPAT_TABLE_SHA=' .github/scripts/clone-parallel.sh | cut -d'"' -f2)
+          TEST262_CURRENT=$(grep 'const TEST262_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          BABEL_CURRENT=$(grep 'const BABEL_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          TYPESCRIPT_CURRENT=$(grep 'const TYPESCRIPT_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          # PRETTIER_CURRENT=$(grep 'const PRETTIER_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          ESTREE_CONFORMANCE_CURRENT=$(grep 'const ESTREE_CONFORMANCE_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
+          NODE_COMPAT_TABLE_CURRENT=$(grep 'const NODE_COMPAT_TABLE_SHA' .github/scripts/clone-parallel.mjs | cut -d'"' -f2)
 
           echo "TEST262_CURRENT=$TEST262_CURRENT" >> $GITHUB_OUTPUT
           echo "BABEL_CURRENT=$BABEL_CURRENT" >> $GITHUB_OUTPUT
@@ -214,7 +214,7 @@ jobs:
             echo "No updates needed, all SHAs are current"
           fi
 
-      - name: Update clone-parallel.sh with new SHAs
+      - name: Update clone-parallel.mjs with new SHAs
         if: steps.check-updates.outputs.updates_needed == 'true'
         env:
           TEST262_LATEST: ${{ steps.get-shas.outputs.TEST262_LATEST }}
@@ -230,40 +230,40 @@ jobs:
           ESTREE_CONFORMANCE_CURRENT: ${{ steps.current-shas.outputs.ESTREE_CONFORMANCE_CURRENT }}
           NODE_COMPAT_TABLE_CURRENT: ${{ steps.current-shas.outputs.NODE_COMPAT_TABLE_CURRENT }}
         run: |
-          script_path=".github/scripts/clone-parallel.sh"
+          js_script=".github/scripts/clone-parallel.mjs"
 
           # Update each SHA if it changed
           if [ "$TEST262_LATEST" != "$TEST262_CURRENT" ]; then
-            sed -i "s/TEST262_SHA=\"$TEST262_CURRENT\"/TEST262_SHA=\"$TEST262_LATEST\"/g" "$script_path"
+            sed -i "s/const TEST262_SHA = \"$TEST262_CURRENT\";/const TEST262_SHA = \"$TEST262_LATEST\";/g" "$js_script"
             echo "Updated TEST262_SHA"
           fi
 
           if [ "$BABEL_LATEST" != "$BABEL_CURRENT" ]; then
-            sed -i "s/BABEL_SHA=\"$BABEL_CURRENT\"/BABEL_SHA=\"$BABEL_LATEST\"/g" "$script_path"
+            sed -i "s/const BABEL_SHA = \"$BABEL_CURRENT\";/const BABEL_SHA = \"$BABEL_LATEST\";/g" "$js_script"
             echo "Updated BABEL_SHA"
           fi
 
           if [ "$TYPESCRIPT_LATEST" != "$TYPESCRIPT_CURRENT" ]; then
-            sed -i "s/TYPESCRIPT_SHA=\"$TYPESCRIPT_CURRENT\"/TYPESCRIPT_SHA=\"$TYPESCRIPT_LATEST\"/g" "$script_path"
+            sed -i "s/const TYPESCRIPT_SHA = \"$TYPESCRIPT_CURRENT\";/const TYPESCRIPT_SHA = \"$TYPESCRIPT_LATEST\";/g" "$js_script"
             echo "Updated TYPESCRIPT_SHA"
           fi
 
           # if [ "$PRETTIER_LATEST" != "$PRETTIER_CURRENT" ]; then
-          #   sed -i "s/PRETTIER_SHA=\"$PRETTIER_CURRENT\"/PRETTIER_SHA=\"$PRETTIER_LATEST\"/g" "$script_path"
+          #   sed -i "s/const PRETTIER_SHA = \"$PRETTIER_CURRENT\";/const PRETTIER_SHA = \"$PRETTIER_LATEST\";/g" "$js_script"
           #   echo "Updated PRETTIER_SHA"
           # fi
 
           if [ "$ESTREE_CONFORMANCE_LATEST" != "$ESTREE_CONFORMANCE_CURRENT" ]; then
-            sed -i "s/ESTREE_CONFORMANCE_SHA=\"$ESTREE_CONFORMANCE_CURRENT\"/ESTREE_CONFORMANCE_SHA=\"$ESTREE_CONFORMANCE_LATEST\"/g" "$script_path"
+            sed -i "s/const ESTREE_CONFORMANCE_SHA = \"$ESTREE_CONFORMANCE_CURRENT\";/const ESTREE_CONFORMANCE_SHA = \"$ESTREE_CONFORMANCE_LATEST\";/g" "$js_script"
             echo "Updated ESTREE_CONFORMANCE_SHA"
           fi
 
           if [ "$NODE_COMPAT_TABLE_LATEST" != "$NODE_COMPAT_TABLE_CURRENT" ]; then
-            sed -i "s/NODE_COMPAT_TABLE_SHA=\"$NODE_COMPAT_TABLE_CURRENT\"/NODE_COMPAT_TABLE_SHA=\"$NODE_COMPAT_TABLE_LATEST\"/g" "$script_path"
+            sed -i "s/const NODE_COMPAT_TABLE_SHA = \"$NODE_COMPAT_TABLE_CURRENT\";/const NODE_COMPAT_TABLE_SHA = \"$NODE_COMPAT_TABLE_LATEST\";/g" "$js_script"
             echo "Updated NODE_COMPAT_TABLE_SHA"
           fi
 
-          echo "Updated clone-parallel.sh with new SHAs"
+          echo "Updated clone-parallel.mjs with new SHAs"
 
       - name: Run format
         if: steps.check-updates.outputs.updates_needed == 'true'
@@ -277,7 +277,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.check-updates.outputs.updates_needed == 'true'
-        uses: peter-evans/create-pull-request@98357b18bf14b5342f975ff684046ec3b2a07725 # v8.0.0
+        uses: peter-evans/create-pull-request@c0f553fe549906ede9cf27b5156039d195d2ece0 # v8.1.0
         with:
           token: ${{ secrets.OXC_BOT_PAT }}
           commit-message: "chore(submodules): update submodule SHAs to latest commits"

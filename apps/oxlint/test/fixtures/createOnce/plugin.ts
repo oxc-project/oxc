@@ -1,4 +1,4 @@
-import type { Node, Plugin, Rule } from "#oxlint";
+import type { Node, Plugin, Rule } from "#oxlint/plugin";
 
 const SPAN: Node = {
   start: 0,
@@ -33,6 +33,7 @@ const alwaysRunRule: Rule = {
     const getSourceCodeError = tryCatch(() => context.getSourceCode());
     const settingsError = tryCatch(() => context.settings);
     const parserOptionsError = tryCatch(() => context.parserOptions);
+    const parserPathError = tryCatch(() => context.parserPath);
     const reportError = tryCatch(() => context.report({ message: "oh no", node: SPAN }));
 
     return {
@@ -82,6 +83,10 @@ const alwaysRunRule: Rule = {
         });
         context.report({
           message: `createOnce: parserOptions error: ${parserOptionsError?.message}`,
+          node: SPAN,
+        });
+        context.report({
+          message: `createOnce: parserPath error: ${parserPathError?.message}`,
           node: SPAN,
         });
         context.report({

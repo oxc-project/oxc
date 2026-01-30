@@ -25,9 +25,6 @@ import { makeUnitsFromTest } from "./typescript-make-units-from-test.ts";
 
 import type { Node, ParserOptions } from "./parser.ts";
 
-const { hasOwn } = Object,
-  { isArray } = Array;
-
 type TestCaseProps = string | { filename: string; sourceText: string };
 
 // Run test case and return whether it passes.
@@ -279,7 +276,7 @@ function testRangeParent(
   function walk(node: null | Node[] | Node): void {
     if (node === null || typeof node !== "object") return;
 
-    if (isArray(node)) {
+    if (Array.isArray(node)) {
       for (const child of node) {
         walk(child);
       }
@@ -287,9 +284,9 @@ function testRangeParent(
     }
 
     // Check `range`
-    if (hasOwn(node, "start")) {
+    if (Object.hasOwn(node, "start")) {
       const { range } = node;
-      expect(isArray(range)).toBe(true);
+      expect(Array.isArray(range)).toBe(true);
       expect(range.length).toBe(2);
       expect(range[0]).toBe(node.start);
       expect(range[1]).toBe(node.end);
@@ -297,7 +294,7 @@ function testRangeParent(
 
     // Check `parent`
     const previousParent = parent;
-    const isNode = hasOwn(node, "type");
+    const isNode = Object.hasOwn(node, "type");
     if (isNode) {
       expect(node.parent).toBe(parent);
       parent = node;
@@ -305,7 +302,7 @@ function testRangeParent(
 
     // Walk children
     for (const key in node) {
-      if (!hasOwn(node, key)) continue;
+      if (!Object.hasOwn(node, key)) continue;
       if (
         key === "type" ||
         key === "start" ||

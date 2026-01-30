@@ -1,12 +1,18 @@
 {
   "name": "oxc-transform",
-  "version": "0.108.0",
+  "version": "0.111.0",
   "description": "Oxc Transformer Node API",
   "keywords": [
+    "babel",
+    "javascript",
+    "jsx",
     "oxc",
-    "transform"
+    "transform",
+    "transformer",
+    "tsx",
+    "typescript"
   ],
-  "homepage": "https://oxc.rs",
+  "homepage": "https://oxc.rs/docs/guide/usage/transformer",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "license": "MIT",
   "author": "Boshen and oxc contributors",

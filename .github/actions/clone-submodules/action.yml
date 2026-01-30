@@ -53,7 +53,7 @@ runs:
         ESTREE_CONFORMANCE: ${{ inputs.estree-conformance }}
         NODE_COMPAT_TABLE: ${{ inputs.node-compat-table }}
       run: |
-        ${GITHUB_WORKSPACE}/.github/scripts/clone-parallel.sh \
+        node "${GITHUB_WORKSPACE}/.github/scripts/clone-parallel.mjs" \
           "${TEST_262}" \
           "${BABEL}" \
           "${TYPESCRIPT}" \

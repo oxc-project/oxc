@@ -41,7 +41,7 @@ declare_oxc_lint!(
     /// `event`, but using this variable has been considered as a bad practice for a long time. Restricting
     /// this will make sure this variable isn't used in browser code.
     ///
-    /// ### Example
+    /// ### Examples
     ///
     /// If we have options:
     ///

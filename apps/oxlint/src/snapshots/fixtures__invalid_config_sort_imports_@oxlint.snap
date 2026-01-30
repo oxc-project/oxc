@@ -1,0 +1,16 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/invalid_config_sort_imports
+----------
+Failed to parse oxlint configuration file.
+
+  x Invalid configuration for rule `sort-imports`:
+  |   memberSyntaxSortOrder must contain exactly 4 kinds, got 3
+  |   received config: `{ "memberSyntaxSortOrder": [ "none", "all", "multiple" ] }`
+
+----------
+CLI result: InvalidOptionConfig
+----------

@@ -3,10 +3,9 @@
 use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
-use oxc_span::GetSpan;
 use oxc_syntax::{node::NodeId, scope::ScopeFlags, symbol::SymbolFlags};
 
-use crate::{SemanticBuilder, checker::is_function_part_of_if_statement};
+use crate::{SemanticBuilder, checker::is_function_decl_part_of_if_statement};
 
 pub trait Binder<'a> {
     fn bind(&self, builder: &mut SemanticBuilder<'a>);
@@ -99,7 +98,11 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 // Finally, add the variable to all hoisted scopes
                 // to support redeclaration checks when declaring variables with the same name later.
                 for &scope_id in &var_scope_ids {
-                    builder.hoisting_variables.entry(scope_id).or_default().insert(name, symbol_id);
+                    builder
+                        .hoisting_variables
+                        .entry(scope_id)
+                        .or_default()
+                        .insert(name.into(), symbol_id);
                 }
             });
         }
@@ -135,16 +138,18 @@ impl<'a> Binder<'a> for Class<'a> {
 
 impl<'a> Binder<'a> for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let includes = if self.declare {
-            SymbolFlags::Function | SymbolFlags::Ambient
-        } else {
-            SymbolFlags::Function
-        };
+        let is_declaration = self.is_declaration();
 
         if let Some(ident) = &self.id {
+            let includes = if self.declare {
+                SymbolFlags::Function | SymbolFlags::Ambient
+            } else {
+                SymbolFlags::Function
+            };
+
             let excludes = if builder.source_type.is_typescript() {
                 SymbolFlags::FunctionExcludes
-            } else if is_function_part_of_if_statement(self, builder) {
+            } else if is_declaration && is_function_decl_part_of_if_statement(self, builder) {
                 SymbolFlags::empty()
             } else {
                 // `var x; function x() {}` is valid in non-strict mode, but `TypeScript`
@@ -163,12 +168,15 @@ impl<'a> Binder<'a> for Function<'a> {
         }
 
         // Bind scope flags: GetAccessor | SetAccessor
-        if let AstKind::ObjectProperty(prop) = builder.nodes.parent_kind(builder.current_node_id) {
+        if !is_declaration
+            && let AstKind::ObjectProperty(prop) =
+                builder.nodes.parent_kind(builder.current_node_id)
+        {
             // Do not bind scope flags when function is inside of the object property key:
             //
             // { set [function() {}](val) {} }
             //        ^^^^^^^^^^^^^
-            if prop.key.span() == self.span {
+            if prop.key.address() == self.unstable_address() {
                 return;
             }
             let flags = builder.scoping.scope_flags_mut(builder.current_scope_id);
@@ -698,5 +706,18 @@ impl<'a> Binder<'a> for TSTypeParameter<'a> {
             SymbolFlags::TypeParameterExcludes,
         );
         self.name.symbol_id.set(Some(symbol_id));
+    }
+}
+
+impl<'a> Binder<'a> for TSMappedType<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        let symbol_id = builder.declare_symbol_on_scope(
+            self.key.span,
+            &self.key.name,
+            builder.current_scope_id,
+            SymbolFlags::TypeParameter,
+            SymbolFlags::TypeParameterExcludes,
+        );
+        self.key.symbol_id.set(Some(symbol_id));
     }
 }

@@ -17,7 +17,7 @@ function exec(command) {
   } catch (error) {
     console.error(`Error executing command: ${command}`);
     console.error(error.message);
-    return "";
+    throw error;
   }
 }
 
@@ -33,7 +33,7 @@ function getCrateDependencies(packages, options = {}) {
   const pkgs = Array.isArray(packages) ? packages : [packages];
   const packageArgs = pkgs.map((pkg) => `-p ${pkg}`).join(" ");
 
-  let command = `cargo tree ${packageArgs} -f "{lib}" -e normal --no-dedupe --prefix none`;
+  let command = `cargo tree ${packageArgs} -f '{lib}' -e normal --no-dedupe --prefix none`;
 
   if (options.features) {
     command += ` --features ${options.features}`;
@@ -43,17 +43,18 @@ function getCrateDependencies(packages, options = {}) {
     command += " --no-default-features";
   }
 
-  command += " 2>/dev/null | grep oxc | sort -u";
-
   const output = exec(command);
 
-  if (!output) {
+  const deps = output
+    .split("\n")
+    .filter((dep) => dep && dep.includes("oxc") && !pkgs.includes(dep));
+
+  if (deps.length === 0) {
     console.error(`Warning: Could not get dependencies for ${pkgs.join(", ")}`);
     return [];
   }
 
-  // Filter out the queried packages themselves
-  return output.split("\n").filter((dep) => dep && !pkgs.includes(dep));
+  return Array.from(new Set(deps)).sort();
 }
 
 /**

@@ -45,7 +45,7 @@ impl<'a> MaybeBoundIdentifier<'a> {
         ctx: &TraverseCtx<'a, State>,
     ) -> Self {
         let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id();
-        Self { name: ident.name, symbol_id }
+        Self { name: ident.name.into(), symbol_id }
     }
 
     /// Convert `MaybeBoundIdentifier` to `BoundIdentifier`.

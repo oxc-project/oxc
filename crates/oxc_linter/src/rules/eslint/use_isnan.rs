@@ -15,34 +15,43 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn comparison_with_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN")
+fn comparison_with_nan(span: Span, operator: BinaryOperator) -> OxcDiagnostic {
+    let msg = match operator {
+        BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
+            "Checking inequality with NaN will always return true"
+        }
+        BinaryOperator::Equality | BinaryOperator::StrictEquality => {
+            "Checking equality with NaN will always return false"
+        }
+        _ => "Comparison with NaN will always return false",
+    };
+    OxcDiagnostic::warn(msg)
         .with_help("Use the `isNaN` function to compare with NaN.")
         .with_label(span)
 }
 
-fn switch_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN.")
-        .with_help(
-            "`switch(NaN)` can never match a case clause. Use `Number.isNaN` instead of the switch.",
-        )
+fn switch_nan(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Checking `switch` discriminant against NaN will never match")
+        .with_help("Use the `isNaN` function instead of the switch.")
         .with_label(span)
 }
 
-fn case_na_n(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN")
-        .with_help("`case NaN` can never match. Use `Number.isNaN` before the switch.")
+fn case_nan(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Checking for NaN in `case` clause will never match")
+        .with_help("Use the `isNaN` function instead of the switch.")
         .with_label(span)
 }
 
-fn index_of_na_n(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Requires calls to `isNaN()` when checking for NaN")
-        .with_help(format!("Array prototype method '{method_name}' cannot find NaN."))
-        .with_label(span)
+fn index_of_nan(method_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "NaN values will never be found by `Array.prototype.{method_name}`"
+    ))
+    .with_help("Use the `isNaN` function to check for NaN values.")
+    .with_label(span)
 }
 
 #[derive(Debug, Clone, JsonSchema, Deserialize)]
-#[serde(rename_all = "camelCase", default)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct UseIsnan {
     /// Whether to disallow NaN in switch cases and discriminants
     enforce_for_switch_case: bool,
@@ -96,47 +105,48 @@ impl Rule for UseIsnan {
         match node.kind() {
             AstKind::BinaryExpression(expr) if expr.operator.is_compare() => {
                 if is_nan_identifier(&expr.left) {
-                    ctx.diagnostic(comparison_with_na_n(expr.left.span()));
+                    ctx.diagnostic(comparison_with_nan(expr.left.span(), expr.operator));
                 }
                 if is_nan_identifier(&expr.right) {
-                    ctx.diagnostic(comparison_with_na_n(expr.right.span()));
+                    ctx.diagnostic(comparison_with_nan(expr.right.span(), expr.operator));
                 }
             }
             AstKind::BinaryExpression(expr) if expr.operator.is_equality() => {
                 if is_nan_identifier(&expr.left) {
-                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.left.span()), |fixer| {
-                        fixer.replace(expr.span, make_equality_fix(true, expr, ctx))
-                    });
+                    ctx.diagnostic_with_fix(
+                        comparison_with_nan(expr.left.span(), expr.operator),
+                        |fixer| fixer.replace(expr.span, make_equality_fix(true, expr, ctx)),
+                    );
                 }
                 if is_nan_identifier(&expr.right) {
-                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.right.span()), |fixer| {
-                        fixer.replace(expr.span, make_equality_fix(false, expr, ctx))
-                    });
+                    ctx.diagnostic_with_fix(
+                        comparison_with_nan(expr.right.span(), expr.operator),
+                        |fixer| fixer.replace(expr.span, make_equality_fix(false, expr, ctx)),
+                    );
                 }
             }
             AstKind::SwitchCase(case) if self.enforce_for_switch_case => {
                 let Some(test) = &case.test else { return };
                 if is_nan_identifier(test) {
-                    ctx.diagnostic(case_na_n(test.span()));
+                    ctx.diagnostic(case_nan(test.span()));
                 }
             }
             AstKind::SwitchStatement(switch) if self.enforce_for_switch_case => {
                 if is_nan_identifier(&switch.discriminant) {
-                    ctx.diagnostic(switch_na_n(switch.discriminant.span()));
+                    ctx.diagnostic(switch_nan(switch.discriminant.span()));
                 }
             }
             AstKind::CallExpression(call) if self.enforce_for_index_of => {
-                // do this check first b/c it's cheaper than is_target_callee
-                if call.arguments.len() != 1 {
+                // Only check calls with 1 or 2 arguments (standard indexOf/lastIndexOf signature)
+                if call.arguments.is_empty() || call.arguments.len() > 2 {
                     return;
                 }
-                // Match target array prototype methods whose only argument is
-                // NaN
+                // Match target array prototype methods whose first argument is NaN
                 let Some(method) = is_target_callee(&call.callee) else { return };
                 if let Some(expr) = call.arguments[0].as_expression()
-                    && is_nan_identifier(expr)
+                    && let Some((span, _)) = get_nan_in_expression(expr)
                 {
-                    ctx.diagnostic(index_of_na_n(method, expr.span()));
+                    ctx.diagnostic(index_of_nan(method, span));
                 }
             }
             _ => (),
@@ -144,14 +154,36 @@ impl Rule for UseIsnan {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        Ok(serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-            .unwrap_or_default()
-            .into_inner())
+        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
 fn is_nan_identifier<'a>(expr: &'a Expression<'a>) -> bool {
+    let expr = expr.get_inner_expression();
     expr.is_specific_id("NaN") || expr.is_specific_member_access("Number", "NaN")
+}
+
+/// Check if an expression evaluates to NaN, handling sequence expressions.
+/// Returns the span of the NaN identifier and the expression itself if found.
+fn get_nan_in_expression<'a>(expr: &'a Expression<'a>) -> Option<(Span, &'a Expression<'a>)> {
+    let expr = expr.get_inner_expression();
+
+    // Handle sequence expressions like (1, NaN) - the result is the last expression
+    if let Expression::SequenceExpression(seq) = expr {
+        if let Some(last) = seq.expressions.last() {
+            let last = last.get_inner_expression();
+            if is_nan_identifier(last) {
+                return Some((last.span(), last));
+            }
+        }
+        return None;
+    }
+
+    if is_nan_identifier(expr) {
+        return Some((expr.span(), expr));
+    }
+
+    None
 }
 
 /// If callee is calling the `indexOf` or `lastIndexOf` function.
@@ -562,25 +594,24 @@ fn test() {
         ("foo.indexOf?.(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
         ("foo?.indexOf(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
         ("(foo?.indexOf)(Number.NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))),
-        // TODO: Get these cases passing.
-        // ("foo.indexOf((1, NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // ("foo.indexOf((1, Number.NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // ("foo.lastIndexOf((1, NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // (
-        //     "foo.lastIndexOf((1, Number.NaN))",
-        //     Some(serde_json::json!([{ "enforceForIndexOf": true }])),
-        // ), // { "ecmaVersion": 2020 },
-        // ("foo.indexOf(NaN, 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // ("foo.lastIndexOf(NaN, 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // ("foo.indexOf(NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // ("foo.lastIndexOf(NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // ("foo.indexOf(Number.NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // (
-        //     "foo.lastIndexOf(Number.NaN, b)",
-        //     Some(serde_json::json!([{ "enforceForIndexOf": true }])),
-        // ), // { "ecmaVersion": 2020 },
-        // ("foo.lastIndexOf(NaN, NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
-        // ("foo.indexOf((1, NaN), 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 }
+        ("foo.indexOf((1, NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo.indexOf((1, Number.NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo.lastIndexOf((1, NaN))", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        (
+            "foo.lastIndexOf((1, Number.NaN))",
+            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
+        ), // { "ecmaVersion": 2020 },
+        ("foo.indexOf(NaN, 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo.lastIndexOf(NaN, 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo.indexOf(NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo.lastIndexOf(NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo.indexOf(Number.NaN, b)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        (
+            "foo.lastIndexOf(Number.NaN, b)",
+            Some(serde_json::json!([{ "enforceForIndexOf": true }])),
+        ), // { "ecmaVersion": 2020 },
+        ("foo.lastIndexOf(NaN, NaN)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 },
+        ("foo.indexOf((1, NaN), 1)", Some(serde_json::json!([{ "enforceForIndexOf": true }]))), // { "ecmaVersion": 2020 }
     ];
 
     let fix = vec![

@@ -34,6 +34,9 @@ export default class FormatterTool implements ToolInterface {
     outputChannel: LogOutputChannel,
     configService: ConfigService,
   ): Promise<string | undefined> {
+    if (process.env.SERVER_PATH_DEV) {
+      return process.env.SERVER_PATH_DEV;
+    }
     const bin = await configService.getOxfmtServerBinPath();
     if (bin) {
       try {
@@ -43,7 +46,6 @@ export default class FormatterTool implements ToolInterface {
         outputChannel.error(`Invalid bin path: ${bin}`, e);
       }
     }
-    return process.env.SERVER_PATH_DEV;
   }
 
   async activate(
@@ -67,7 +69,7 @@ export default class FormatterTool implements ToolInterface {
 
     outputChannel.info(`Using server binary at: ${binaryPath}`);
 
-    const run: Executable = runExecutable(binaryPath, configService.vsCodeConfig.nodePath);
+    const run: Executable = runExecutable(binaryPath, "oxfmt", configService.vsCodeConfig.nodePath);
 
     const serverOptions: ServerOptions = {
       run,
@@ -132,6 +134,7 @@ export default class FormatterTool implements ToolInterface {
       "yyp",
       // JSONC
       "jsonc",
+      "json5",
       "code-snippets",
       "code-workspace",
       "sublime-build",
@@ -317,19 +320,19 @@ export default class FormatterTool implements ToolInterface {
 
   async restartClient(): Promise<void> {
     if (this.client === undefined) {
-      window.showErrorMessage("oxc client not found");
+      window.showErrorMessage("oxfmt client not found");
       return;
     }
 
     try {
       if (this.client.isRunning()) {
         await this.client.restart();
-        window.showInformationMessage("oxc server restarted.");
+        window.showInformationMessage("oxfmt server restarted.");
       } else {
         await this.client.start();
       }
     } catch (err) {
-      this.client.error("Restarting client failed", err, "force");
+      this.client.error("Restarting oxfmt client failed", err, "force");
     }
   }
 

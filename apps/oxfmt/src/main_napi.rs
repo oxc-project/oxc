@@ -7,11 +7,11 @@ use oxc_napi::OxcError;
 use serde_json::Value;
 
 use crate::{
-    cli::{FormatRunner, Mode, format_command, init_miette, init_rayon},
+    cli::{FormatRunner, MigrateSource, Mode, format_command, init_miette, init_rayon},
     core::{
-        ConfigResolver, ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
+        ExternalFormatter, FormatFileStrategy, FormatResult as CoreFormatResult,
         JsFormatEmbeddedCb, JsFormatFileCb, JsInitExternalFormatterCb, JsSortTailwindClassesCb,
-        SourceFormatter, utils,
+        SourceFormatter, resolve_options_from_value, utils,
     },
     lsp::run_lsp,
     stdin::StdinRunner,
@@ -38,7 +38,7 @@ pub async fn run_cli(
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
     )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
@@ -69,8 +69,12 @@ pub async fn run_cli(
         Mode::Init => {
             return ("init".to_string(), None);
         }
-        Mode::Migrate(_) => {
-            return ("migrate:prettier".to_string(), None);
+        Mode::Migrate(source) => {
+            let mode_str = match source {
+                MigrateSource::Prettier => "migrate:prettier",
+                MigrateSource::Biome => "migrate:biome",
+            };
+            return (mode_str.to_string(), None);
         }
         _ => {}
     }
@@ -85,16 +89,16 @@ pub async fn run_cli(
     );
 
     utils::init_tracing();
-    match command.mode {
+    let result = match command.mode {
         Mode::Lsp => {
-            run_lsp(external_formatter).await;
+            run_lsp(external_formatter.clone()).await;
 
             ("lsp".to_string(), Some(0))
         }
         Mode::Stdin(_) => {
             init_miette();
 
-            let result = StdinRunner::new(command, external_formatter).run();
+            let result = StdinRunner::new(command, external_formatter.clone()).run();
 
             ("stdin".to_string(), Some(result.exit_code()))
         }
@@ -102,13 +106,20 @@ pub async fn run_cli(
             init_miette();
             init_rayon(command.runtime_options.threads);
 
-            let result =
-                FormatRunner::new(command).with_external_formatter(Some(external_formatter)).run();
+            let result = FormatRunner::new(command)
+                .with_external_formatter(Some(external_formatter.clone()))
+                .run();
 
             ("cli".to_string(), Some(result.exit_code()))
         }
         _ => unreachable!("All other modes must have been handled above match arm"),
-    }
+    };
+
+    // Explicitly drop ThreadsafeFunctions before returning to prevent
+    // use-after-free during V8 cleanup (Node.js issue with TSFN cleanup timing)
+    external_formatter.cleanup();
+
+    result
 }
 
 // ---
@@ -134,7 +145,7 @@ pub async fn format(
     #[napi(ts_arg_type = "(numThreads: number) => Promise<string[]>")]
     init_external_formatter_cb: JsInitExternalFormatterCb,
     #[napi(
-        ts_arg_type = "(options: Record<string, any>, tagName: string, code: string) => Promise<string>"
+        ts_arg_type = "(options: Record<string, any>, parserName: string, code: string) => Promise<string>"
     )]
     format_embedded_cb: JsFormatEmbeddedCb,
     #[napi(
@@ -155,23 +166,12 @@ pub async fn format(
         sort_tailwind_classes_cb,
     );
 
-    // Create resolver from options and resolve format options
-    let mut config_resolver = ConfigResolver::from_value(options.unwrap_or_default());
-    match config_resolver.build_and_validate() {
-        Ok(_) => {}
-        Err(err) => {
-            return FormatResult {
-                code: source_text,
-                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
-            };
-        }
-    }
-
     // Use `block_in_place()` to avoid nested async runtime access
     match tokio::task::block_in_place(|| external_formatter.init(num_of_threads)) {
         // TODO: Plugins support
         Ok(_) => {}
         Err(err) => {
+            external_formatter.cleanup();
             return FormatResult {
                 code: source_text,
                 errors: vec![OxcError::new(format!("Failed to setup external formatter: {err}"))],
@@ -181,20 +181,32 @@ pub async fn format(
 
     // Determine format strategy from file path
     let Ok(strategy) = FormatFileStrategy::try_from(PathBuf::from(&filename)) else {
+        external_formatter.cleanup();
         return FormatResult {
             code: source_text,
             errors: vec![OxcError::new(format!("Unsupported file type: {filename}"))],
         };
     };
 
-    let resolved_options = config_resolver.resolve(&strategy);
+    // Resolve format options directly from the provided options
+    let resolved_options = match resolve_options_from_value(options.unwrap_or_default(), &strategy)
+    {
+        Ok(options) => options,
+        Err(err) => {
+            external_formatter.cleanup();
+            return FormatResult {
+                code: source_text,
+                errors: vec![OxcError::new(format!("Failed to parse configuration: {err}"))],
+            };
+        }
+    };
 
     // Create formatter and format
-    let formatter =
-        SourceFormatter::new(num_of_threads).with_external_formatter(Some(external_formatter));
+    let formatter = SourceFormatter::new(num_of_threads)
+        .with_external_formatter(Some(external_formatter.clone()));
 
     // Use `block_in_place()` to avoid nested async runtime access
-    match tokio::task::block_in_place(|| {
+    let result = match tokio::task::block_in_place(|| {
         formatter.format(&strategy, &source_text, resolved_options)
     }) {
         CoreFormatResult::Success { code, .. } => FormatResult { code, errors: vec![] },
@@ -202,5 +214,11 @@ pub async fn format(
             let errors = OxcError::from_diagnostics(&filename, &source_text, diagnostics);
             FormatResult { code: source_text, errors }
         }
-    }
+    };
+
+    // Explicitly drop ThreadsafeFunctions before returning to prevent
+    // use-after-free during V8 cleanup (Node.js issue with TSFN cleanup timing)
+    external_formatter.cleanup();
+
+    result
 }

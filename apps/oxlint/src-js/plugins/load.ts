@@ -1,14 +1,16 @@
+import { getResponsibleWorkspace, isWorkspaceResponsible } from "../workspace/index.ts";
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
 import { getErrorMessage } from "../utils/utils.ts";
-import { debugAssertIsNonNull } from "../utils/asserts.ts";
+import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
 import type { Options, SchemaValidator } from "./options.ts";
 import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
+import type { WorkspaceIdentifier } from "../workspace/index.ts";
 import type { SetNullable } from "../utils/types.ts";
 
 /**
@@ -80,11 +82,11 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 }
 
 // Absolute paths of plugins which have been loaded
-const registeredPluginUrls = new Set<string>();
+export const registeredPluginUrls = new Set<string>();
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
-export const registeredRules: RuleDetails[] = [];
+export const registeredRules: Map<WorkspaceIdentifier, RuleDetails[]> = new Map();
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
@@ -121,7 +123,7 @@ export async function loadPlugin(
     }
 
     const plugin = (await import(url)).default as Plugin;
-    const res = registerPlugin(plugin, pluginName, pluginNameIsAlias);
+    const res = registerPlugin(url, plugin, pluginName, pluginNameIsAlias);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -131,6 +133,7 @@ export async function loadPlugin(
 /**
  * Register a plugin.
  *
+ * @param url - Plugin URL
  * @param plugin - Plugin
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
@@ -140,6 +143,7 @@ export async function loadPlugin(
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
 export function registerPlugin(
+  url: string,
   plugin: Plugin,
   pluginName: string | null,
   pluginNameIsAlias: boolean,
@@ -147,8 +151,13 @@ export function registerPlugin(
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
+  const workspace = getResponsibleWorkspace(url.replace(/^file:\/\//, ""));
+  debugAssertIsNonNull(workspace, "Plugin url must belong to a workspace");
+  debugAssert(registeredRules.has(workspace), "Workspace must have registered rules array");
 
-  const offset = registeredRules.length;
+  const registeredRulesForWorkspace = registeredRules.get(workspace)!;
+
+  const offset = registeredRulesForWorkspace.length ?? 0;
   const { rules } = plugin;
   const ruleNames = Object.keys(rules);
   const ruleNamesLen = ruleNames.length;
@@ -189,17 +198,7 @@ export function registerPlugin(
         // ESLint treats empty `defaultOptions` the same as no `defaultOptions`,
         // and does not validate against schema
         if (inputDefaultOptions.length !== 0) {
-          // Serialize to JSON and deserialize again.
-          // This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
-          // or circular references. It may also be the fastest, as `JSON.parse` and `JSON.serialize` are native code.
-          // If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
-          try {
-            defaultOptions = JSON.parse(JSON.stringify(inputDefaultOptions)) as Options;
-          } catch (err) {
-            throw new Error(
-              `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
-            );
-          }
+          defaultOptions = conformDefaultOptions(inputDefaultOptions);
 
           // Validate default options against schema, if schema was provided.
           // This also applies any defaults from schema.
@@ -283,7 +282,7 @@ export function registerPlugin(
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
 
-    registeredRules.push(ruleDetails);
+    registeredRulesForWorkspace.push(ruleDetails);
   }
 
   return { name: pluginName, offset, ruleNames };
@@ -369,6 +368,61 @@ function normalizePluginName(name: string): string {
 }
 
 /**
+ * Serialize default options to JSON and deserialize again.
+ *
+ * This is the simplest way to make sure that `defaultOptions` does not contain any `undefined` values,
+ * or circular references. It may also be the fastest, as `JSON.parse` and `JSON.stringify` are native code.
+ * If we move to doing options merging on Rust side, we'll need to convert to JSON anyway.
+ *
+ * Special handling for `Infinity` / `-Infinity` values, to ensure they survive the round trip.
+ * Without this, they would be converted to `null`.
+ *
+ * @param defaultOptions - Default options array
+ * @returns Conformed default options array
+ */
+function conformDefaultOptions(defaultOptions: Options): Options {
+  let json,
+    containsInfinity = false;
+  try {
+    json = JSON.stringify(defaultOptions, (key, value) => {
+      if (value === Infinity || value === -Infinity) {
+        containsInfinity = true;
+        return value === Infinity ? POS_INFINITY_PLACEHOLDER : NEG_INFINITY_PLACEHOLDER;
+      }
+      return value;
+    });
+  } catch (err) {
+    throw new Error(
+      `\`rule.meta.defaultOptions\` must be JSON-serializable: ${getErrorMessage(err)}`,
+    );
+  }
+
+  if (containsInfinity) {
+    const plainJson = JSON.stringify(defaultOptions);
+    if (
+      plainJson.includes(POS_INFINITY_PLACEHOLDER) ||
+      plainJson.includes(NEG_INFINITY_PLACEHOLDER)
+    ) {
+      throw new Error(
+        `\`rule.meta.defaultOptions\` cannot contain the strings "${POS_INFINITY_PLACEHOLDER}" or "${NEG_INFINITY_PLACEHOLDER}"`,
+      );
+    }
+
+    // `JSON.parse` will convert these back to `Infinity` / `-Infinity`
+    json = json
+      .replaceAll(POS_INFINITY_PLACEHOLDER_STR, "1e+400")
+      .replaceAll(NEG_INFINITY_PLACEHOLDER_STR, "-1e+400");
+  }
+
+  return JSON.parse(json);
+}
+
+const POS_INFINITY_PLACEHOLDER = "$_$_$_POS_INFINITY_$_$_$";
+const NEG_INFINITY_PLACEHOLDER = "$_$_$_NEG_INFINITY_$_$_$";
+const POS_INFINITY_PLACEHOLDER_STR = JSON.stringify(POS_INFINITY_PLACEHOLDER);
+const NEG_INFINITY_PLACEHOLDER_STR = JSON.stringify(NEG_INFINITY_PLACEHOLDER);
+
+/**
  * Validate and conform `before` / `after` hook function.
  * @param hookFn - Hook function, or `null` / `undefined`
  * @param hookName - Name of the hook
@@ -381,4 +435,24 @@ function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | n
     throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
   }
   return hookFn;
+}
+
+export function setupPluginSystemForWorkspace(workspace: WorkspaceIdentifier) {
+  debugAssert(
+    !registeredRules.has(workspace),
+    "Workspace must not already have registered rules array",
+  );
+  registeredRules.set(workspace, []);
+}
+
+/**
+ * Remove all plugins and rules associated with a workspace.
+ */
+export function removePluginsInWorkspace(workspace: WorkspaceIdentifier) {
+  for (const url of registeredPluginUrls) {
+    if (isWorkspaceResponsible(workspace, url.replace(/^file:\/\//, ""))) {
+      registeredPluginUrls.delete(url);
+    }
+  }
+  registeredRules.delete(workspace);
 }

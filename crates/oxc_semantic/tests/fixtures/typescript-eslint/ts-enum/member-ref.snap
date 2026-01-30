@@ -21,7 +21,8 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-enum/member-
                 "flags": "ReferenceFlags(Read)",
                 "id": 0,
                 "name": "a",
-                "node_id": 9
+                "node_id": 9,
+                "scope_id": 1
               }
             ]
           },

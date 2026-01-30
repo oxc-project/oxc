@@ -1,29 +1,29 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-react(no-is-mounted): Do not use `isMounted`
+  ⚠ eslint-plugin-react(no-is-mounted): Do not use `isMounted`.
    ╭─[no_is_mounted.tsx:4:24]
  3 │                 componentDidUpdate: function() {
  4 │                   if (!this.isMounted()) {
    ·                        ────────────────
  5 │                     return;
    ╰────
-  help: `isMounted` is on its way to being officially deprecated. You can use an `_isMounted` property to track the mounted status yourself.
+  help: `isMounted` is not supported in modern React, and does not work in class or function components.
 
-  ⚠ eslint-plugin-react(no-is-mounted): Do not use `isMounted`
+  ⚠ eslint-plugin-react(no-is-mounted): Do not use `isMounted`.
    ╭─[no_is_mounted.tsx:4:24]
  3 │                 someMethod: function() {
  4 │                   if (!this.isMounted()) {
    ·                        ────────────────
  5 │                     return;
    ╰────
-  help: `isMounted` is on its way to being officially deprecated. You can use an `_isMounted` property to track the mounted status yourself.
+  help: `isMounted` is not supported in modern React, and does not work in class or function components.
 
-  ⚠ eslint-plugin-react(no-is-mounted): Do not use `isMounted`
+  ⚠ eslint-plugin-react(no-is-mounted): Do not use `isMounted`.
    ╭─[no_is_mounted.tsx:4:24]
  3 │                 someMethod() {
  4 │                   if (!this.isMounted()) {
    ·                        ────────────────
  5 │                     return;
    ╰────
-  help: `isMounted` is on its way to being officially deprecated. You can use an `_isMounted` property to track the mounted status yourself.
+  help: `isMounted` is not supported in modern React, and does not work in class or function components.

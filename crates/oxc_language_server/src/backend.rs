@@ -221,7 +221,7 @@ impl LanguageServer for Backend {
             let known_files = self.file_system.read().await.keys();
             let mut new_diagnostics = Vec::new();
 
-            for (index, worker) in needed_configurations.values().enumerate() {
+            for (index, worker) in needed_configurations.values().copied().enumerate() {
                 // get the configuration from the response and start the worker
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
                 worker.start_worker(configuration.clone()).await;
@@ -231,7 +231,7 @@ impl LanguageServer for Backend {
                 for uri in &known_files {
                     // Check if this worker is the most specific one for this URI
                     let responsible_worker = Self::find_worker_for_uri(workers, uri);
-                    if responsible_worker.is_none_or(|w| !std::ptr::eq(w, *worker)) {
+                    if responsible_worker.is_none_or(|w| !std::ptr::eq(w, worker)) {
                         continue;
                     }
                     let content = self.file_system.read().await.get(uri);

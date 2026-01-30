@@ -1,71 +1,10 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`embedded_languages > should format embedded languages by default 1`] = `
+exports[`embedded_languages > Misc > should format multiple embedded languages in one file 1`] = `
 "--- FILE -----------
-embedded_languages.js
+mixed.js
 --- BEFORE ---------
-// ============================================================================
-// CSS - Tagged template literals with css and styled tags
-// ============================================================================
-
-const styles = css\`.button{color:red;background:blue;padding:10px 20px;}.container{display:flex;justify-content:center;}\`;
-
-const styledComponent = styled\`background-color:#ffffff;border-radius:4px;padding:8px;\`;
-
-// ============================================================================
-// Member Expression Tags - styled.div, styled.button, etc.
-// ============================================================================
-
-const cssGlobal = css.global\`.reset{margin:0;padding:0;box-sizing:border-box;}\`;
-
-const styledDiv = styled.div\`width:100%;height:100vh;background-color:#f0f0f0;\`;
-
-const styledLink = styled["a"]\`text-decoration:none;color:#007bff;font-weight:bold;\`;
-
-const styledButton = styled(Button)\`font-size:16px;color:#333;padding:12px 24px;\`;
-
-// ============================================================================
-// Plain template strings within css props or styled-jsx
-// ============================================================================
-
-const cssProp = <div css={\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}>Hello World</div>;
-
-const styledJsx = <style jsx>{\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}</style>;
-
-// ============================================================================
-// GraphQL - Tagged template literals with gql and graphql tags
-// ============================================================================
-
-const query = gql\`query GetUser($id:ID!){user(id:$id){name email posts{title}}}\`;
-
-const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
-
-// ============================================================================
-// HTML - Tagged template literals with html tag
-// ============================================================================
-
-const template = html\`<div class="container"><h1>Hello World</h1><p>This is a paragraph with <strong>bold</strong> text.</p></div>\`;
-
-const component = html\`<button type="button" onclick="handleClick()">Click me</button>\`;
-
-// ============================================================================
-// Markdown - Tagged template literals with md and markdown tags
-// ============================================================================
-
-const documentation = md\`#Heading
-This is **bold** and this is _italic_.
--Item 1
--Item 2\`;
-
-const readme = markdown\`##Installation
-\\\`\\\`\\\`bash
-npm install package
-\\\`\\\`\\\`\`;
-
-// ============================================================================
-// Mixed - Multiple embedded languages in one file
-// ============================================================================
-
+// Multiple embedded languages in one file
 const mixedStyles = css\`.button{color:red;}\`;
 
 const mixedStyled = styled.button\`padding:10px;\`;
@@ -77,226 +16,42 @@ const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
 const mixedDocs = md\`#Documentation
 This is **important**.\`;
 
-// ============================================================================
-// No Embedded Languages - Regular JavaScript (no tagged templates)
-// ============================================================================
-
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
-
-const message = \`This is a regular template string\`;
-
-class Formatter {
-  format(text) {
-    return text.trim();
+// Multi-line with blank lines - should preserve blank lines without trailing whitespace
+const multilineCSS = css\`
+  .foo {
+    color: red;
   }
-}
 
-// ============================================================================
-// prettier-ignore - Skip formatting with prettier-ignore comments
-// ============================================================================
-
-// prettier-ignore
-const unformatted = css\`.button{color:red;background:blue;border:1px solid green;}\`;
-
-const formattedCss = css\`.container{display:flex;align-items:center;}\`;
-
-// prettier-ignore
-const ignoredGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
-
-const normalGql = gql\`query GetPosts{posts{title author}}\`;
-
-// ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
-// ============================================================================
-
-const unknown = customTag\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      This is some content that won't be formatted
-                      because customTag is not recognized.
+  .bar {
+    color: blue;
+  }
 \`;
 
-const sql = sql\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      SELECT * FROM users WHERE id = 1
+const multilineGQL = gql\`
+  type Foo {
+    name: String!
+  }
+
+  type Bar {
+    value: Int!
+  }
 \`;
 
-// ============================================================================
-// Supported Tags contains invalid syntax - To be left unformatted too
-// ============================================================================
+// Empty - Regular template literals retain newlines and spaces, but embedded ones are condensed
+const empty = css\`\`;
+const empty2 = styled\`
+\`;
+const empty3 = styled.div\` \`;
+const empty4 = gql\`   \`;
+const empty5 = html\`
 
-// Value only, key missing
-const invalidCss = css\`
-  repeating-linear-gradient(
-    0deg,
-var(--schemas-lines-color),
-var(--schemas-lines-color) 3px,
-    transparent 3px,
-    transparent 5px,
-    var(--schemas-lines-color) 5px
-  );
+\`;
+const empty6 = md\`
+
 \`;
 
 --- AFTER ----------
-// ============================================================================
-// CSS - Tagged template literals with css and styled tags
-// ============================================================================
-
-const styles = css\`
-  .button {
-    color: red;
-    background: blue;
-    padding: 10px 20px;
-  }
-  .container {
-    display: flex;
-    justify-content: center;
-  }
-\`;
-
-const styledComponent = styled\`
-  background-color: #ffffff;
-  border-radius: 4px;
-  padding: 8px;
-\`;
-
-// ============================================================================
-// Member Expression Tags - styled.div, styled.button, etc.
-// ============================================================================
-
-const cssGlobal = css.global\`
-  .reset {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-\`;
-
-const styledDiv = styled.div\`
-  width: 100%;
-  height: 100vh;
-  background-color: #f0f0f0;
-\`;
-
-const styledLink = styled["a"]\`
-  text-decoration: none;
-  color: #007bff;
-  font-weight: bold;
-\`;
-
-const styledButton = styled(Button)\`
-  font-size: 16px;
-  color: #333;
-  padding: 12px 24px;
-\`;
-
-// ============================================================================
-// Plain template strings within css props or styled-jsx
-// ============================================================================
-
-const cssProp = (
-  <div
-    css={\`
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    \`}
-  >
-    Hello World
-  </div>
-);
-
-const styledJsx = (
-  <style jsx>{\`
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-  \`}</style>
-);
-
-// ============================================================================
-// GraphQL - Tagged template literals with gql and graphql tags
-// ============================================================================
-
-const query = gql\`
-  query GetUser($id: ID!) {
-    user(id: $id) {
-      name
-      email
-      posts {
-        title
-      }
-    }
-  }
-\`;
-
-const mutation = graphql\`
-  mutation CreatePost($input: PostInput!) {
-    createPost(input: $input) {
-      id
-      title
-    }
-  }
-\`;
-
-// ============================================================================
-// HTML - Tagged template literals with html tag
-// ============================================================================
-
-const template = html\`
-  <div class="container">
-    <h1>Hello World</h1>
-    <p>This is a paragraph with <strong>bold</strong> text.</p>
-  </div>
-\`;
-
-const component = html\`
-  <button type="button" onclick="handleClick()">Click me</button>
-\`;
-
-// ============================================================================
-// Markdown - Tagged template literals with md and markdown tags
-// ============================================================================
-
-const documentation = md\`
-  #Heading
-  This is **bold** and this is _italic_.
-  -Item 1
-  -Item 2
-\`;
-
-const readme = markdown\`
-  ##Installation
-  \\\`\\\`\\\`bash
-  npm install package
-  \\\`\\\`\\\`
-\`;
-
-// ============================================================================
-// Mixed - Multiple embedded languages in one file
-// ============================================================================
-
+// Multiple embedded languages in one file
 const mixedStyles = css\`
   .button {
     color: red;
@@ -324,10 +79,43 @@ const mixedDocs = md\`
   This is **important**.
 \`;
 
-// ============================================================================
-// No Embedded Languages - Regular JavaScript (no tagged templates)
-// ============================================================================
+// Multi-line with blank lines - should preserve blank lines without trailing whitespace
+const multilineCSS = css\`
+  .foo {
+    color: red;
+  }
 
+  .bar {
+    color: blue;
+  }
+\`;
+
+const multilineGQL = gql\`
+  type Foo {
+    name: String!
+  }
+
+  type Bar {
+    value: Int!
+  }
+\`;
+
+// Empty - Regular template literals retain newlines and spaces, but embedded ones are condensed
+const empty = css\`\`;
+const empty2 = styled\`\`;
+const empty3 = styled.div\`\`;
+const empty4 = gql\`\`;
+const empty5 = html\`\`;
+const empty6 = md\`\`;
+
+--------------------"
+`;
+
+exports[`embedded_languages > Misc > should not format regular templates, prettier-ignore, unsupported tags, and invalid syntax 1`] = `
+"--- FILE -----------
+misc.js
+--- BEFORE ---------
+// Regular JavaScript - No embedded languages (should not be affected)
 function greet(name) {
   return \`Hello, \${name}!\`;
 }
@@ -340,12 +128,48 @@ class Formatter {
   }
 }
 
-// ============================================================================
-// prettier-ignore - Skip formatting with prettier-ignore comments
-// ============================================================================
+// prettier-ignore - Should not format
+// prettier-ignore
+const unformattedCss = css\`.button{color:red;background:blue;}\`;
+
+const formattedCss = css\`.container{display:flex;align-items:center;}\`;
 
 // prettier-ignore
-const unformatted = css\`.button{color:red;background:blue;border:1px solid green;}\`;
+const unformattedGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
+
+const formattedGql = gql\`query GetPosts{posts{title author}}\`;
+
+// Unsupported tags - Should not format
+const unknown = customTag\`This won't be formatted\`;
+
+const sqlQuery = sql\`SELECT * FROM users WHERE id = 1\`;
+
+// Invalid syntax in supported tag - Should not format
+const invalidCss = css\`
+  repeating-linear-gradient(
+    0deg,
+var(--color),
+    transparent 3px
+  );
+\`;
+
+--- AFTER ----------
+// Regular JavaScript - No embedded languages (should not be affected)
+function greet(name) {
+  return \`Hello, \${name}!\`;
+}
+
+const message = \`This is a regular template string\`;
+
+class Formatter {
+  format(text) {
+    return text.trim();
+  }
+}
+
+// prettier-ignore - Should not format
+// prettier-ignore
+const unformattedCss = css\`.button{color:red;background:blue;}\`;
 
 const formattedCss = css\`
   .container {
@@ -355,9 +179,9 @@ const formattedCss = css\`
 \`;
 
 // prettier-ignore
-const ignoredGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
+const unformattedGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
 
-const normalGql = gql\`
+const formattedGql = gql\`
   query GetPosts {
     posts {
       title
@@ -366,281 +190,209 @@ const normalGql = gql\`
   }
 \`;
 
-// ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
-// ============================================================================
+// Unsupported tags - Should not format
+const unknown = customTag\`This won't be formatted\`;
 
-const unknown = customTag\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      This is some content that won't be formatted
-                      because customTag is not recognized.
-\`;
+const sqlQuery = sql\`SELECT * FROM users WHERE id = 1\`;
 
-const sql = sql\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      SELECT * FROM users WHERE id = 1
-\`;
-
-// ============================================================================
-// Supported Tags contains invalid syntax - To be left unformatted too
-// ============================================================================
-
-// Value only, key missing
+// Invalid syntax in supported tag - Should not format
 const invalidCss = css\`
   repeating-linear-gradient(
     0deg,
-var(--schemas-lines-color),
-var(--schemas-lines-color) 3px,
-    transparent 3px,
-    transparent 5px,
-    var(--schemas-lines-color) 5px
+var(--color),
+    transparent 3px
   );
 \`;
 
 --------------------"
 `;
 
-exports[`embedded_languages > should format embedded languages when embeddedLanguageFormatting is auto 1`] = `
+exports[`embedded_languages > should format angular.ts (auto) 1`] = `
 "--- FILE -----------
-embedded_languages.js
+angular.ts
 --- BEFORE ---------
-// ============================================================================
-// CSS - Tagged template literals with css and styled tags
-// ============================================================================
+// Angular @Component decorator - direct template and styles
+// Uses Angular-specific syntax: interpolation, directives, bindings
+@Component({
+    selector: 'app-root',
+    template: \`
+        <h1>{{    title    }}</h1>
+        <div *ngIf="isVisible"    [class.active]="isActive"     (click)="onClick()">
+            <span>{{ count     }}</span>
+        </div>
+        <ul><li *ngFor="let item of items">{{item.name}}</li></ul>
+    \`,
+    styles: \`h1 { color: blue }\`
+})
+export class AppComponent1 {}
 
-const styles = css\`.button{color:red;background:blue;padding:10px 20px;}.container{display:flex;justify-content:center;}\`;
+// Array form styles
+@Component({
+       selector: 'app-test',
+  template: \`<ul>   <li>test</li>
+  </ul>
+  \`,
+  styles: [   \`
 
-const styledComponent = styled\`background-color:#ffffff;border-radius:4px;padding:8px;\`;
+ :host {
+   color: red;
+ }
+ div { background: blue
+ }
+\`
 
-// ============================================================================
-// Member Expression Tags - styled.div, styled.button, etc.
-// ============================================================================
+]
+})
+class     TestComponent {}
 
-const cssGlobal = css.global\`.reset{margin:0;padding:0;box-sizing:border-box;}\`;
+// Computed properties - should NOT be formatted
+const styles = "foobar";
+const template = "foobar";
 
-const styledDiv = styled.div\`width:100%;height:100vh;background-color:#f0f0f0;\`;
-
-const styledLink = styled["a"]\`text-decoration:none;color:#007bff;font-weight:bold;\`;
-
-const styledButton = styled(Button)\`font-size:16px;color:#333;padding:12px 24px;\`;
-
-// ============================================================================
-// Plain template strings within css props or styled-jsx
-// ============================================================================
-
-const cssProp = <div css={\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}>Hello World</div>;
-
-const styledJsx = <style jsx>{\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}</style>;
-
-// ============================================================================
-// GraphQL - Tagged template literals with gql and graphql tags
-// ============================================================================
-
-const query = gql\`query GetUser($id:ID!){user(id:$id){name email posts{title}}}\`;
-
-const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
-
-// ============================================================================
-// HTML - Tagged template literals with html tag
-// ============================================================================
-
-const template = html\`<div class="container"><h1>Hello World</h1><p>This is a paragraph with <strong>bold</strong> text.</p></div>\`;
-
-const component = html\`<button type="button" onclick="handleClick()">Click me</button>\`;
-
-// ============================================================================
-// Markdown - Tagged template literals with md and markdown tags
-// ============================================================================
-
-const documentation = md\`#Heading
-This is **bold** and this is _italic_.
--Item 1
--Item 2\`;
-
-const readme = markdown\`##Installation
-\\\`\\\`\\\`bash
-npm install package
-\\\`\\\`\\\`\`;
-
-// ============================================================================
-// Mixed - Multiple embedded languages in one file
-// ============================================================================
-
-const mixedStyles = css\`.button{color:red;}\`;
-
-const mixedStyled = styled.button\`padding:10px;\`;
-
-const mixedQuery = gql\`query{users{name}}\`;
-
-const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
-
-const mixedDocs = md\`#Documentation
-This is **important**.\`;
-
-// ============================================================================
-// No Embedded Languages - Regular JavaScript (no tagged templates)
-// ============================================================================
-
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
-
-const message = \`This is a regular template string\`;
-
-class Formatter {
-  format(text) {
-    return text.trim();
-  }
-}
-
-// ============================================================================
-// prettier-ignore - Skip formatting with prettier-ignore comments
-// ============================================================================
-
-// prettier-ignore
-const unformatted = css\`.button{color:red;background:blue;border:1px solid green;}\`;
-
-const formattedCss = css\`.container{display:flex;align-items:center;}\`;
-
-// prettier-ignore
-const ignoredGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
-
-const normalGql = gql\`query GetPosts{posts{title author}}\`;
-
-// ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
-// ============================================================================
-
-const unknown = customTag\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      This is some content that won't be formatted
-                      because customTag is not recognized.
-\`;
-
-const sql = sql\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      SELECT * FROM users WHERE id = 1
-\`;
-
-// ============================================================================
-// Supported Tags contains invalid syntax - To be left unformatted too
-// ============================================================================
-
-// Value only, key missing
-const invalidCss = css\`
-  repeating-linear-gradient(
-    0deg,
-var(--schemas-lines-color),
-var(--schemas-lines-color) 3px,
-    transparent 3px,
-    transparent 5px,
-    var(--schemas-lines-color) 5px
-  );
-\`;
+@Component({
+    selector: 'app-computed',
+    [template]: \`<h1>{{       hello }}</h1>\`,
+    [styles]: \`h1 { color: blue }\`
+})
+export class AppComponent2 {}
 
 --- AFTER ----------
-// ============================================================================
-// CSS - Tagged template literals with css and styled tags
-// ============================================================================
+// Angular @Component decorator - direct template and styles
+// Uses Angular-specific syntax: interpolation, directives, bindings
+@Component({
+  selector: "app-root",
+  template: \`
+    <h1>{{ title }}</h1>
+    <div *ngIf="isVisible" [class.active]="isActive" (click)="onClick()">
+      <span>{{ count }}</span>
+    </div>
+    <ul>
+      <li *ngFor="let item of items">{{ item.name }}</li>
+    </ul>
+  \`,
+  styles: \`
+    h1 {
+      color: blue;
+    }
+  \`,
+})
+export class AppComponent1 {}
 
+// Array form styles
+@Component({
+  selector: "app-test",
+  template: \`
+    <ul>
+      <li>test</li>
+    </ul>
+  \`,
+  styles: [
+    \`
+      :host {
+        color: red;
+      }
+      div {
+        background: blue;
+      }
+    \`,
+  ],
+})
+class TestComponent {}
+
+// Computed properties - should NOT be formatted
+const styles = "foobar";
+const template = "foobar";
+
+@Component({
+  selector: "app-computed",
+  [template]: \`<h1>{{       hello }}</h1>\`,
+  [styles]: \`h1 { color: blue }\`,
+})
+export class AppComponent2 {}
+
+--------------------"
+`;
+
+exports[`embedded_languages > should format css.js (auto) 1`] = `
+"--- FILE -----------
+css.js
+--- BEFORE ---------
+// Tagged template literals with css and styled tags
+const styles = css\`.button{color:red;background:blue;padding:10px 20px;}\`;
+
+const styledComponent = styled\`background-color:#ffffff;border-radius:4px;\`;
+
+// Member expression tags
+const cssGlobal = css.global\`.reset{margin:0;padding:0;}\`;
+
+const styledDiv = styled.div\`width:100%;height:100vh;\`;
+
+const styledLink = styled["a"]\`text-decoration:none;color:#007bff;\`;
+
+const styledButton = styled(Button)\`font-size:16px;color:#333;\`;
+
+// CSS prop and styled-jsx
+const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
+
+const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
+
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
+
+
+--- AFTER ----------
+// Tagged template literals with css and styled tags
 const styles = css\`
   .button {
     color: red;
     background: blue;
     padding: 10px 20px;
   }
-  .container {
-    display: flex;
-    justify-content: center;
-  }
 \`;
 
 const styledComponent = styled\`
   background-color: #ffffff;
   border-radius: 4px;
-  padding: 8px;
 \`;
 
-// ============================================================================
-// Member Expression Tags - styled.div, styled.button, etc.
-// ============================================================================
-
+// Member expression tags
 const cssGlobal = css.global\`
   .reset {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
   }
 \`;
 
 const styledDiv = styled.div\`
   width: 100%;
   height: 100vh;
-  background-color: #f0f0f0;
 \`;
 
 const styledLink = styled["a"]\`
   text-decoration: none;
   color: #007bff;
-  font-weight: bold;
 \`;
 
 const styledButton = styled(Button)\`
   font-size: 16px;
   color: #333;
-  padding: 12px 24px;
 \`;
 
-// ============================================================================
-// Plain template strings within css props or styled-jsx
-// ============================================================================
-
+// CSS prop and styled-jsx
 const cssProp = (
   <div
     css={\`
       display: flex;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
     \`}
   >
-    Hello World
+    Hello
   </div>
 );
 
@@ -648,23 +400,37 @@ const styledJsx = (
   <style jsx>{\`
     display: flex;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
   \`}</style>
 );
 
-// ============================================================================
-// GraphQL - Tagged template literals with gql and graphql tags
-// ============================================================================
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
 
+--------------------"
+`;
+
+exports[`embedded_languages > should format graphql.js (auto) 1`] = `
+"--- FILE -----------
+graphql.js
+--- BEFORE ---------
+// Tagged template literals with gql and graphql tags
+const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
+
+const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
+
+--- AFTER ----------
+// Tagged template literals with gql and graphql tags
 const query = gql\`
   query GetUser($id: ID!) {
     user(id: $id) {
       name
       email
-      posts {
-        title
-      }
     }
   }
 \`;
@@ -678,28 +444,54 @@ const mutation = graphql\`
   }
 \`;
 
-// ============================================================================
-// HTML - Tagged template literals with html tag
-// ============================================================================
+--------------------"
+`;
 
+exports[`embedded_languages > should format html.js (auto) 1`] = `
+"--- FILE -----------
+html.js
+--- BEFORE ---------
+// Tagged template literals with html tag
+const template = html\`<div class="container"><h1>Hello</h1><p>World</p></div>\`;
+
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
+
+--- AFTER ----------
+// Tagged template literals with html tag
 const template = html\`
   <div class="container">
-    <h1>Hello World</h1>
-    <p>This is a paragraph with <strong>bold</strong> text.</p>
+    <h1>Hello</h1>
+    <p>World</p>
   </div>
 \`;
 
 const component = html\`
-  <button type="button" onclick="handleClick()">Click me</button>
+  <button type="button" onclick="handleClick()">Click</button>
 \`;
 
-// ============================================================================
-// Markdown - Tagged template literals with md and markdown tags
-// ============================================================================
+--------------------"
+`;
 
+exports[`embedded_languages > should format markdown.js (auto) 1`] = `
+"--- FILE -----------
+markdown.js
+--- BEFORE ---------
+// Tagged template literals with md and markdown tags
+const documentation = md\`#Heading
+This is **bold**.
+-Item 1
+-Item 2\`;
+
+const readme = markdown\`##Installation
+\\\`\\\`\\\`bash
+npm install package
+\\\`\\\`\\\`\`;
+
+--- AFTER ----------
+// Tagged template literals with md and markdown tags
 const documentation = md\`
   #Heading
-  This is **bold** and this is _italic_.
+  This is **bold**.
   -Item 1
   -Item 2
 \`;
@@ -711,344 +503,169 @@ const readme = markdown\`
   \\\`\\\`\\\`
 \`;
 
-// ============================================================================
-// Mixed - Multiple embedded languages in one file
-// ============================================================================
-
-const mixedStyles = css\`
-  .button {
-    color: red;
-  }
-\`;
-
-const mixedStyled = styled.button\`
-  padding: 10px;
-\`;
-
-const mixedQuery = gql\`
-  query {
-    users {
-      name
-    }
-  }
-\`;
-
-const mixedTemplate = html\`
-  <div><h1>Title</h1></div>
-\`;
-
-const mixedDocs = md\`
-  #Documentation
-  This is **important**.
-\`;
-
-// ============================================================================
-// No Embedded Languages - Regular JavaScript (no tagged templates)
-// ============================================================================
-
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
-
-const message = \`This is a regular template string\`;
-
-class Formatter {
-  format(text) {
-    return text.trim();
-  }
-}
-
-// ============================================================================
-// prettier-ignore - Skip formatting with prettier-ignore comments
-// ============================================================================
-
-// prettier-ignore
-const unformatted = css\`.button{color:red;background:blue;border:1px solid green;}\`;
-
-const formattedCss = css\`
-  .container {
-    display: flex;
-    align-items: center;
-  }
-\`;
-
-// prettier-ignore
-const ignoredGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
-
-const normalGql = gql\`
-  query GetPosts {
-    posts {
-      title
-      author
-    }
-  }
-\`;
-
-// ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
-// ============================================================================
-
-const unknown = customTag\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      This is some content that won't be formatted
-                      because customTag is not recognized.
-\`;
-
-const sql = sql\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      SELECT * FROM users WHERE id = 1
-\`;
-
-// ============================================================================
-// Supported Tags contains invalid syntax - To be left unformatted too
-// ============================================================================
-
-// Value only, key missing
-const invalidCss = css\`
-  repeating-linear-gradient(
-    0deg,
-var(--schemas-lines-color),
-var(--schemas-lines-color) 3px,
-    transparent 3px,
-    transparent 5px,
-    var(--schemas-lines-color) 5px
-  );
-\`;
-
 --------------------"
 `;
 
-exports[`embedded_languages > should not format embedded languages when embeddedLanguageFormatting is off 1`] = `
+exports[`embedded_languages > should format with CLRF 1`] = `
 "--- FILE -----------
-embedded_languages.js
+css.js
 --- BEFORE ---------
-// ============================================================================
-// CSS - Tagged template literals with css and styled tags
-// ============================================================================
+// Tagged template literals with css and styled tags
+const styles = css\`.button{color:red;background:blue;padding:10px 20px;}\`;
 
-const styles = css\`.button{color:red;background:blue;padding:10px 20px;}.container{display:flex;justify-content:center;}\`;
+const styledComponent = styled\`background-color:#ffffff;border-radius:4px;\`;
 
-const styledComponent = styled\`background-color:#ffffff;border-radius:4px;padding:8px;\`;
+// Member expression tags
+const cssGlobal = css.global\`.reset{margin:0;padding:0;}\`;
 
-// ============================================================================
-// Member Expression Tags - styled.div, styled.button, etc.
-// ============================================================================
+const styledDiv = styled.div\`width:100%;height:100vh;\`;
 
-const cssGlobal = css.global\`.reset{margin:0;padding:0;box-sizing:border-box;}\`;
+const styledLink = styled["a"]\`text-decoration:none;color:#007bff;\`;
 
-const styledDiv = styled.div\`width:100%;height:100vh;background-color:#f0f0f0;\`;
+const styledButton = styled(Button)\`font-size:16px;color:#333;\`;
 
-const styledLink = styled["a"]\`text-decoration:none;color:#007bff;font-weight:bold;\`;
+// CSS prop and styled-jsx
+const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
 
-const styledButton = styled(Button)\`font-size:16px;color:#333;padding:12px 24px;\`;
+const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
 
-// ============================================================================
-// Plain template strings within css props or styled-jsx
-// ============================================================================
-
-const cssProp = <div css={\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}>Hello World</div>;
-
-const styledJsx = <style jsx>{\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}</style>;
-
-// ============================================================================
-// GraphQL - Tagged template literals with gql and graphql tags
-// ============================================================================
-
-const query = gql\`query GetUser($id:ID!){user(id:$id){name email posts{title}}}\`;
-
-const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
-
-// ============================================================================
-// HTML - Tagged template literals with html tag
-// ============================================================================
-
-const template = html\`<div class="container"><h1>Hello World</h1><p>This is a paragraph with <strong>bold</strong> text.</p></div>\`;
-
-const component = html\`<button type="button" onclick="handleClick()">Click me</button>\`;
-
-// ============================================================================
-// Markdown - Tagged template literals with md and markdown tags
-// ============================================================================
-
-const documentation = md\`#Heading
-This is **bold** and this is _italic_.
--Item 1
--Item 2\`;
-
-const readme = markdown\`##Installation
-\\\`\\\`\\\`bash
-npm install package
-\\\`\\\`\\\`\`;
-
-// ============================================================================
-// Mixed - Multiple embedded languages in one file
-// ============================================================================
-
-const mixedStyles = css\`.button{color:red;}\`;
-
-const mixedStyled = styled.button\`padding:10px;\`;
-
-const mixedQuery = gql\`query{users{name}}\`;
-
-const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
-
-const mixedDocs = md\`#Documentation
-This is **important**.\`;
-
-// ============================================================================
-// No Embedded Languages - Regular JavaScript (no tagged templates)
-// ============================================================================
-
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
-
-const message = \`This is a regular template string\`;
-
-class Formatter {
-  format(text) {
-    return text.trim();
-  }
-}
-
-// ============================================================================
-// prettier-ignore - Skip formatting with prettier-ignore comments
-// ============================================================================
-
-// prettier-ignore
-const unformatted = css\`.button{color:red;background:blue;border:1px solid green;}\`;
-
-const formattedCss = css\`.container{display:flex;align-items:center;}\`;
-
-// prettier-ignore
-const ignoredGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
-
-const normalGql = gql\`query GetPosts{posts{title author}}\`;
-
-// ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
-// ============================================================================
-
-const unknown = customTag\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      This is some content that won't be formatted
-                      because customTag is not recognized.
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
 \`;
 
-const sql = sql\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      SELECT * FROM users WHERE id = 1
-\`;
-
-// ============================================================================
-// Supported Tags contains invalid syntax - To be left unformatted too
-// ============================================================================
-
-// Value only, key missing
-const invalidCss = css\`
-  repeating-linear-gradient(
-    0deg,
-var(--schemas-lines-color),
-var(--schemas-lines-color) 3px,
-    transparent 3px,
-    transparent 5px,
-    var(--schemas-lines-color) 5px
-  );
-\`;
 
 --- AFTER ----------
-// ============================================================================
-// CSS - Tagged template literals with css and styled tags
-// ============================================================================
+// Tagged template literals with css and styled tags
+const styles = css\`
+  .button {
+    color: red;
+    background: blue;
+    padding: 10px 20px;
+  }
+\`;
 
-const styles = css\`.button{color:red;background:blue;padding:10px 20px;}.container{display:flex;justify-content:center;}\`;
+const styledComponent = styled\`
+  background-color: #ffffff;
+  border-radius: 4px;
+\`;
 
-const styledComponent = styled\`background-color:#ffffff;border-radius:4px;padding:8px;\`;
+// Member expression tags
+const cssGlobal = css.global\`
+  .reset {
+    margin: 0;
+    padding: 0;
+  }
+\`;
 
-// ============================================================================
-// Member Expression Tags - styled.div, styled.button, etc.
-// ============================================================================
+const styledDiv = styled.div\`
+  width: 100%;
+  height: 100vh;
+\`;
 
-const cssGlobal = css.global\`.reset{margin:0;padding:0;box-sizing:border-box;}\`;
+const styledLink = styled["a"]\`
+  text-decoration: none;
+  color: #007bff;
+\`;
 
-const styledDiv = styled.div\`width:100%;height:100vh;background-color:#f0f0f0;\`;
+const styledButton = styled(Button)\`
+  font-size: 16px;
+  color: #333;
+\`;
 
-const styledLink = styled["a"]\`text-decoration:none;color:#007bff;font-weight:bold;\`;
-
-const styledButton = styled(Button)\`font-size:16px;color:#333;padding:12px 24px;\`;
-
-// ============================================================================
-// Plain template strings within css props or styled-jsx
-// ============================================================================
-
+// CSS prop and styled-jsx
 const cssProp = (
-  <div css={\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}>
-    Hello World
+  <div
+    css={\`
+      display: flex;
+      align-items: center;
+    \`}
+  >
+    Hello
   </div>
 );
 
 const styledJsx = (
-  <style jsx>{\`display: flex; align-items: center; justify-content: center; height: 100vh;\`}</style>
+  <style jsx>{\`
+    display: flex;
+    align-items: center;
+  \`}</style>
 );
 
-// ============================================================================
-// GraphQL - Tagged template literals with gql and graphql tags
-// ============================================================================
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
 
-const query = gql\`query GetUser($id:ID!){user(id:$id){name email posts{title}}}\`;
+--------------------
+
+--- FILE -----------
+graphql.js
+--- BEFORE ---------
+// Tagged template literals with gql and graphql tags
+const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
 
 const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
 
-// ============================================================================
-// HTML - Tagged template literals with html tag
-// ============================================================================
+--- AFTER ----------
+// Tagged template literals with gql and graphql tags
+const query = gql\`
+  query GetUser($id: ID!) {
+    user(id: $id) {
+      name
+      email
+    }
+  }
+\`;
 
-const template = html\`<div class="container"><h1>Hello World</h1><p>This is a paragraph with <strong>bold</strong> text.</p></div>\`;
+const mutation = graphql\`
+  mutation CreatePost($input: PostInput!) {
+    createPost(input: $input) {
+      id
+      title
+    }
+  }
+\`;
 
-const component = html\`<button type="button" onclick="handleClick()">Click me</button>\`;
+--------------------
 
-// ============================================================================
-// Markdown - Tagged template literals with md and markdown tags
-// ============================================================================
+--- FILE -----------
+html.js
+--- BEFORE ---------
+// Tagged template literals with html tag
+const template = html\`<div class="container"><h1>Hello</h1><p>World</p></div>\`;
 
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
+
+--- AFTER ----------
+// Tagged template literals with html tag
+const template = html\`
+  <div class="container">
+    <h1>Hello</h1>
+    <p>World</p>
+  </div>
+\`;
+
+const component = html\`
+  <button type="button" onclick="handleClick()">Click</button>
+\`;
+
+--------------------
+
+--- FILE -----------
+markdown.js
+--- BEFORE ---------
+// Tagged template literals with md and markdown tags
 const documentation = md\`#Heading
-This is **bold** and this is _italic_.
+This is **bold**.
 -Item 1
 -Item 2\`;
 
@@ -1057,99 +674,346 @@ const readme = markdown\`##Installation
 npm install package
 \\\`\\\`\\\`\`;
 
-// ============================================================================
-// Mixed - Multiple embedded languages in one file
-// ============================================================================
-
-const mixedStyles = css\`.button{color:red;}\`;
-
-const mixedStyled = styled.button\`padding:10px;\`;
-
-const mixedQuery = gql\`query{users{name}}\`;
-
-const mixedTemplate = html\`<div><h1>Title</h1></div>\`;
-
-const mixedDocs = md\`#Documentation
-This is **important**.\`;
-
-// ============================================================================
-// No Embedded Languages - Regular JavaScript (no tagged templates)
-// ============================================================================
-
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
-
-const message = \`This is a regular template string\`;
-
-class Formatter {
-  format(text) {
-    return text.trim();
-  }
-}
-
-// ============================================================================
-// prettier-ignore - Skip formatting with prettier-ignore comments
-// ============================================================================
-
-// prettier-ignore
-const unformatted = css\`.button{color:red;background:blue;border:1px solid green;}\`;
-
-const formattedCss = css\`.container{display:flex;align-items:center;}\`;
-
-// prettier-ignore
-const ignoredGql = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
-
-const normalGql = gql\`query GetPosts{posts{title author}}\`;
-
-// ============================================================================
-// Unsupported Tags - Tags not recognized by the formatter, to be left unformatted
-// ============================================================================
-
-const unknown = customTag\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      This is some content that won't be formatted
-                      because customTag is not recognized.
+--- AFTER ----------
+// Tagged template literals with md and markdown tags
+const documentation = md\`
+  #Heading
+  This is **bold**.
+  -Item 1
+  -Item 2
 \`;
 
-const sql = sql\`
-  
-    
-      
-        
-          
-          
-          
-          
-          
-          
-                      SELECT * FROM users WHERE id = 1
+const readme = markdown\`
+  ##Installation
+  \\\`\\\`\\\`bash
+  npm install package
+  \\\`\\\`\\\`
 \`;
 
-// ============================================================================
-// Supported Tags contains invalid syntax - To be left unformatted too
-// ============================================================================
+--------------------
 
-// Value only, key missing
-const invalidCss = css\`
-  repeating-linear-gradient(
-    0deg,
-var(--schemas-lines-color),
-var(--schemas-lines-color) 3px,
-    transparent 3px,
-    transparent 5px,
-    var(--schemas-lines-color) 5px
-  );
+--- FILE -----------
+angular.ts
+--- BEFORE ---------
+// Angular @Component decorator - direct template and styles
+// Uses Angular-specific syntax: interpolation, directives, bindings
+@Component({
+    selector: 'app-root',
+    template: \`
+        <h1>{{    title    }}</h1>
+        <div *ngIf="isVisible"    [class.active]="isActive"     (click)="onClick()">
+            <span>{{ count     }}</span>
+        </div>
+        <ul><li *ngFor="let item of items">{{item.name}}</li></ul>
+    \`,
+    styles: \`h1 { color: blue }\`
+})
+export class AppComponent1 {}
+
+// Array form styles
+@Component({
+       selector: 'app-test',
+  template: \`<ul>   <li>test</li>
+  </ul>
+  \`,
+  styles: [   \`
+
+ :host {
+   color: red;
+ }
+ div { background: blue
+ }
+\`
+
+]
+})
+class     TestComponent {}
+
+// Computed properties - should NOT be formatted
+const styles = "foobar";
+const template = "foobar";
+
+@Component({
+    selector: 'app-computed',
+    [template]: \`<h1>{{       hello }}</h1>\`,
+    [styles]: \`h1 { color: blue }\`
+})
+export class AppComponent2 {}
+
+--- AFTER ----------
+// Angular @Component decorator - direct template and styles
+// Uses Angular-specific syntax: interpolation, directives, bindings
+@Component({
+  selector: "app-root",
+  template: \`
+    <h1>{{ title }}</h1>
+    <div *ngIf="isVisible" [class.active]="isActive" (click)="onClick()">
+      <span>{{ count }}</span>
+    </div>
+    <ul>
+      <li *ngFor="let item of items">{{ item.name }}</li>
+    </ul>
+  \`,
+  styles: \`
+    h1 {
+      color: blue;
+    }
+  \`,
+})
+export class AppComponent1 {}
+
+// Array form styles
+@Component({
+  selector: "app-test",
+  template: \`
+    <ul>
+      <li>test</li>
+    </ul>
+  \`,
+  styles: [
+    \`
+      :host {
+        color: red;
+      }
+      div {
+        background: blue;
+      }
+    \`,
+  ],
+})
+class TestComponent {}
+
+// Computed properties - should NOT be formatted
+const styles = "foobar";
+const template = "foobar";
+
+@Component({
+  selector: "app-computed",
+  [template]: \`<h1>{{       hello }}</h1>\`,
+  [styles]: \`h1 { color: blue }\`,
+})
+export class AppComponent2 {}
+
+--------------------"
+`;
+
+exports[`embedded_languages > should not format any language (off) 1`] = `
+"--- FILE -----------
+css.js
+--- BEFORE ---------
+// Tagged template literals with css and styled tags
+const styles = css\`.button{color:red;background:blue;padding:10px 20px;}\`;
+
+const styledComponent = styled\`background-color:#ffffff;border-radius:4px;\`;
+
+// Member expression tags
+const cssGlobal = css.global\`.reset{margin:0;padding:0;}\`;
+
+const styledDiv = styled.div\`width:100%;height:100vh;\`;
+
+const styledLink = styled["a"]\`text-decoration:none;color:#007bff;\`;
+
+const styledButton = styled(Button)\`font-size:16px;color:#333;\`;
+
+// CSS prop and styled-jsx
+const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
+
+const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
+
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
 \`;
+
+
+--- AFTER ----------
+// Tagged template literals with css and styled tags
+const styles = css\`.button{color:red;background:blue;padding:10px 20px;}\`;
+
+const styledComponent = styled\`background-color:#ffffff;border-radius:4px;\`;
+
+// Member expression tags
+const cssGlobal = css.global\`.reset{margin:0;padding:0;}\`;
+
+const styledDiv = styled.div\`width:100%;height:100vh;\`;
+
+const styledLink = styled["a"]\`text-decoration:none;color:#007bff;\`;
+
+const styledButton = styled(Button)\`font-size:16px;color:#333;\`;
+
+// CSS prop and styled-jsx
+const cssProp = <div css={\`display: flex; align-items: center;\`}>Hello</div>;
+
+const styledJsx = <style jsx>{\`display: flex; align-items: center;\`}</style>;
+
+// Multi-line templates with inherited indentation (dedent before formatting)
+const documented = styled.div\`
+  /**
+   * @description This is a documented section
+   * @param {number} value - Some value
+   */
+  padding: 16px;
+\`;
+
+--------------------
+
+--- FILE -----------
+graphql.js
+--- BEFORE ---------
+// Tagged template literals with gql and graphql tags
+const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
+
+const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
+
+--- AFTER ----------
+// Tagged template literals with gql and graphql tags
+const query = gql\`query GetUser($id:ID!){user(id:$id){name email}}\`;
+
+const mutation = graphql\`mutation CreatePost($input:PostInput!){createPost(input:$input){id title}}\`;
+
+--------------------
+
+--- FILE -----------
+html.js
+--- BEFORE ---------
+// Tagged template literals with html tag
+const template = html\`<div class="container"><h1>Hello</h1><p>World</p></div>\`;
+
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
+
+--- AFTER ----------
+// Tagged template literals with html tag
+const template = html\`<div class="container"><h1>Hello</h1><p>World</p></div>\`;
+
+const component = html\`<button type="button" onclick="handleClick()">Click</button>\`;
+
+--------------------
+
+--- FILE -----------
+markdown.js
+--- BEFORE ---------
+// Tagged template literals with md and markdown tags
+const documentation = md\`#Heading
+This is **bold**.
+-Item 1
+-Item 2\`;
+
+const readme = markdown\`##Installation
+\\\`\\\`\\\`bash
+npm install package
+\\\`\\\`\\\`\`;
+
+--- AFTER ----------
+// Tagged template literals with md and markdown tags
+const documentation = md\`#Heading
+This is **bold**.
+-Item 1
+-Item 2\`;
+
+const readme = markdown\`##Installation
+\\\`\\\`\\\`bash
+npm install package
+\\\`\\\`\\\`\`;
+
+--------------------
+
+--- FILE -----------
+angular.ts
+--- BEFORE ---------
+// Angular @Component decorator - direct template and styles
+// Uses Angular-specific syntax: interpolation, directives, bindings
+@Component({
+    selector: 'app-root',
+    template: \`
+        <h1>{{    title    }}</h1>
+        <div *ngIf="isVisible"    [class.active]="isActive"     (click)="onClick()">
+            <span>{{ count     }}</span>
+        </div>
+        <ul><li *ngFor="let item of items">{{item.name}}</li></ul>
+    \`,
+    styles: \`h1 { color: blue }\`
+})
+export class AppComponent1 {}
+
+// Array form styles
+@Component({
+       selector: 'app-test',
+  template: \`<ul>   <li>test</li>
+  </ul>
+  \`,
+  styles: [   \`
+
+ :host {
+   color: red;
+ }
+ div { background: blue
+ }
+\`
+
+]
+})
+class     TestComponent {}
+
+// Computed properties - should NOT be formatted
+const styles = "foobar";
+const template = "foobar";
+
+@Component({
+    selector: 'app-computed',
+    [template]: \`<h1>{{       hello }}</h1>\`,
+    [styles]: \`h1 { color: blue }\`
+})
+export class AppComponent2 {}
+
+--- AFTER ----------
+// Angular @Component decorator - direct template and styles
+// Uses Angular-specific syntax: interpolation, directives, bindings
+@Component({
+  selector: "app-root",
+  template: \`
+        <h1>{{    title    }}</h1>
+        <div *ngIf="isVisible"    [class.active]="isActive"     (click)="onClick()">
+            <span>{{ count     }}</span>
+        </div>
+        <ul><li *ngFor="let item of items">{{item.name}}</li></ul>
+    \`,
+  styles: \`h1 { color: blue }\`,
+})
+export class AppComponent1 {}
+
+// Array form styles
+@Component({
+  selector: "app-test",
+  template: \`<ul>   <li>test</li>
+  </ul>
+  \`,
+  styles: [
+    \`
+
+ :host {
+   color: red;
+ }
+ div { background: blue
+ }
+\`,
+  ],
+})
+class TestComponent {}
+
+// Computed properties - should NOT be formatted
+const styles = "foobar";
+const template = "foobar";
+
+@Component({
+  selector: "app-computed",
+  [template]: \`<h1>{{       hello }}</h1>\`,
+  [styles]: \`h1 { color: blue }\`,
+})
+export class AppComponent2 {}
 
 --------------------"
 `;

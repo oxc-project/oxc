@@ -1,4 +1,5 @@
 import assert from "node:assert";
+import { join as pathJoin } from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
 import { parse as parseRaw } from "../src-js/package/parse.ts";
 import { setupFileContext, resetFileContext } from "../src-js/plugins/context.ts";
@@ -18,14 +19,16 @@ import type { Program } from "../src-js/generated/types.d.ts";
 /**
  * Parse source text into AST using Oxc parser.
  * Set up global state, as if was linting the provided file.
- * @param path - File path
+ * @param filename - Filename
  * @param sourceText - Source text
  * @param options - Parse options
  * @returns AST
  */
-function parse(path: string, sourceText: string, options?: ParseOptions): Program {
-  // Set file path
-  setupFileContext(path);
+function parse(filename: string, sourceText: string, options?: ParseOptions): Program {
+  // Set file path and CWD
+  const cwd = import.meta.dirname;
+  const path = pathJoin(cwd, filename);
+  setupFileContext(path, cwd);
 
   // Parse source, writing source text and AST into buffer
   parseRaw(path, sourceText, options);
@@ -33,7 +36,7 @@ function parse(path: string, sourceText: string, options?: ParseOptions): Progra
   // Set buffer (`parseRaw` adds buffer containing AST to `buffers` at index 0)
   const buffer = buffers[0];
   debugAssertIsNonNull(buffer);
-  setupSourceForFile(buffer, /* hasBOM */ false, /* parserServices */ {});
+  setupSourceForFile(buffer, /* hasBOM */ false);
 
   // Deserialize AST from buffer
   initAst();

@@ -26,8 +26,6 @@ pub struct DefaultCaseConfig {
     ///
     /// Examples of **incorrect** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
     /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\sdefault" }] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -37,8 +35,6 @@ pub struct DefaultCaseConfig {
     ///
     /// Examples of **correct** code for this rule with the `{ "commentPattern": "^skip\\sdefault" }` option:
     /// ```js
-    /// /* default-case: ["error", { "commentPattern": "^skip\\sdefault" }] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;
@@ -72,16 +68,16 @@ declare_oxc_lint!(
     /// no default case. The comment may be in any desired case, such as `// No Default`.
     ///
     /// Example configuration:
-    ///   ```json
-    ///   {
-    ///       "default-case": ["error", { "commentPattern": "^skip\\sdefault" }]
-    ///   }
-    ///   ```
+    /// ```json
+    /// {
+    ///     "default-case": ["error", { "commentPattern": "^skip\\sdefault" }]
+    /// }
+    /// ```
+    ///
+    /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /* default-case: ["error"] */
-    ///
     /// switch (foo) {
     ///   case 1:
     ///     break;
@@ -90,8 +86,6 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /* default-case: ["error"] */
-    ///
     /// switch (a) {
     ///   case 1:
     ///     break;

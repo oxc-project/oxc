@@ -1,0 +1,16 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=json ok.js
+working directory: fixtures/output_formatter_diagnostic
+----------
+{ "diagnostics": [],
+              "number_of_files": 1,
+              "number_of_rules": 2,
+              "threads_count": 1,
+              "start_time": <variable>
+            }
+            ----------
+CLI result: LintSucceeded
+----------

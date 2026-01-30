@@ -1,680 +1,9 @@
-commit: 6f55d0c2
+commit: fff41f05
 
 parser_test262 Summary:
-AST Parsed     : 46555/46563 (99.98%)
-Positive Passed: 46547/46563 (99.97%)
+AST Parsed     : 46595/46595 (100.00%)
+Positive Passed: 46595/46595 (100.00%)
 Negative Passed: 4581/4581 (100.00%)
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-in-lhs.js:27:8]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   for (f() in [1]) {}
-    ·        ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-as-for-of-lhs.js:27:8]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   for (f() of [1]) {}
-    ·        ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-compound-assignment.js:33:3]
- 32 │ assert.throws(ReferenceError, function() {
- 33 │   f() += g();
-    ·   ───
- 34 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-postfix-update.js:27:3]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   f()++;
-    ·   ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression-in-prefix-update.js:27:5]
- 26 │ assert.throws(ReferenceError, function() {
- 27 │   ++f();
-    ·     ───
- 28 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/callexpression.js:33:3]
- 32 │ assert.throws(ReferenceError, function() {
- 33 │   f() = g();
-    ·   ───
- 34 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js
-
-  × Cannot assign to this expression
-    ╭─[test262/test/annexB/language/expressions/assignmenttargettype/cover-callexpression-and-asyncarrowhead.js:20:3]
- 19 │ assert.throws(ReferenceError, function() {
- 20 │   async() = 1;
-    ·   ───────
- 21 │ });
-    ╰────
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:24:15]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script=Beria_Erfe}+$/u,
-    ·               ──────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:29:15]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script=Berf}+$/u,
-    ·               ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:34:11]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{sc=Beria_Erfe}+$/u,
-    ·           ──────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:39:11]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{sc=Berf}+$/u,
-    ·           ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:55:15]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script=Beria_Erfe}+$/u,
-    ·               ──────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:60:15]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script=Berf}+$/u,
-    ·               ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:65:11]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{sc=Beria_Erfe}+$/u,
-    ·           ──────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Beria_Erfe.js:70:11]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{sc=Berf}+$/u,
-    ·           ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:23:15]
- 22 │ testPropertyEscapes(
- 23 │   /^\p{Script=Sidetic}+$/u,
-    ·               ───────
- 24 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:28:15]
- 27 │ testPropertyEscapes(
- 28 │   /^\p{Script=Sidt}+$/u,
-    ·               ────
- 29 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:33:11]
- 32 │ testPropertyEscapes(
- 33 │   /^\p{sc=Sidetic}+$/u,
-    ·           ───────
- 34 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:38:11]
- 37 │ testPropertyEscapes(
- 38 │   /^\p{sc=Sidt}+$/u,
-    ·           ────
- 39 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:53:15]
- 52 │ testPropertyEscapes(
- 53 │   /^\P{Script=Sidetic}+$/u,
-    ·               ───────
- 54 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:58:15]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script=Sidt}+$/u,
-    ·               ────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:63:11]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{sc=Sidetic}+$/u,
-    ·           ───────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Sidetic.js:68:11]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{sc=Sidt}+$/u,
-    ·           ────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:25:15]
- 24 │ testPropertyEscapes(
- 25 │   /^\p{Script=Tai_Yo}+$/u,
-    ·               ──────
- 26 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:30:15]
- 29 │ testPropertyEscapes(
- 30 │   /^\p{Script=Tayo}+$/u,
-    ·               ────
- 31 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:35:11]
- 34 │ testPropertyEscapes(
- 35 │   /^\p{sc=Tai_Yo}+$/u,
-    ·           ──────
- 36 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:40:11]
- 39 │ testPropertyEscapes(
- 40 │   /^\p{sc=Tayo}+$/u,
-    ·           ────
- 41 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:58:15]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script=Tai_Yo}+$/u,
-    ·               ──────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:63:15]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{Script=Tayo}+$/u,
-    ·               ────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:68:11]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{sc=Tai_Yo}+$/u,
-    ·           ──────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tai_Yo.js:73:11]
- 72 │ testPropertyEscapes(
- 73 │   /^\P{sc=Tayo}+$/u,
-    ·           ────
- 74 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:24:15]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script=Tolong_Siki}+$/u,
-    ·               ───────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:29:15]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script=Tols}+$/u,
-    ·               ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:34:11]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{sc=Tolong_Siki}+$/u,
-    ·           ───────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:39:11]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{sc=Tols}+$/u,
-    ·           ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:55:15]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script=Tolong_Siki}+$/u,
-    ·               ───────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:60:15]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script=Tols}+$/u,
-    ·               ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:65:11]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{sc=Tolong_Siki}+$/u,
-    ·           ───────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_-_Tolong_Siki.js:70:11]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{sc=Tols}+$/u,
-    ·           ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:24:26]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script_Extensions=Beria_Erfe}+$/u,
-    ·                          ──────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:29:26]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script_Extensions=Berf}+$/u,
-    ·                          ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:34:12]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{scx=Beria_Erfe}+$/u,
-    ·            ──────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:39:12]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{scx=Berf}+$/u,
-    ·            ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:55:26]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script_Extensions=Beria_Erfe}+$/u,
-    ·                          ──────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:60:26]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script_Extensions=Berf}+$/u,
-    ·                          ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:65:12]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{scx=Beria_Erfe}+$/u,
-    ·            ──────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Beria_Erfe.js:70:12]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{scx=Berf}+$/u,
-    ·            ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:23:26]
- 22 │ testPropertyEscapes(
- 23 │   /^\p{Script_Extensions=Sidetic}+$/u,
-    ·                          ───────
- 24 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:28:26]
- 27 │ testPropertyEscapes(
- 28 │   /^\p{Script_Extensions=Sidt}+$/u,
-    ·                          ────
- 29 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:33:12]
- 32 │ testPropertyEscapes(
- 33 │   /^\p{scx=Sidetic}+$/u,
-    ·            ───────
- 34 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:38:12]
- 37 │ testPropertyEscapes(
- 38 │   /^\p{scx=Sidt}+$/u,
-    ·            ────
- 39 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:53:26]
- 52 │ testPropertyEscapes(
- 53 │   /^\P{Script_Extensions=Sidetic}+$/u,
-    ·                          ───────
- 54 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:58:26]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script_Extensions=Sidt}+$/u,
-    ·                          ────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:63:12]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{scx=Sidetic}+$/u,
-    ·            ───────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Sidetic.js:68:12]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{scx=Sidt}+$/u,
-    ·            ────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:25:26]
- 24 │ testPropertyEscapes(
- 25 │   /^\p{Script_Extensions=Tai_Yo}+$/u,
-    ·                          ──────
- 26 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:30:26]
- 29 │ testPropertyEscapes(
- 30 │   /^\p{Script_Extensions=Tayo}+$/u,
-    ·                          ────
- 31 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:35:12]
- 34 │ testPropertyEscapes(
- 35 │   /^\p{scx=Tai_Yo}+$/u,
-    ·            ──────
- 36 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:40:12]
- 39 │ testPropertyEscapes(
- 40 │   /^\p{scx=Tayo}+$/u,
-    ·            ────
- 41 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:58:26]
- 57 │ testPropertyEscapes(
- 58 │   /^\P{Script_Extensions=Tai_Yo}+$/u,
-    ·                          ──────
- 59 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:63:26]
- 62 │ testPropertyEscapes(
- 63 │   /^\P{Script_Extensions=Tayo}+$/u,
-    ·                          ────
- 64 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:68:12]
- 67 │ testPropertyEscapes(
- 68 │   /^\P{scx=Tai_Yo}+$/u,
-    ·            ──────
- 69 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tai_Yo.js:73:12]
- 72 │ testPropertyEscapes(
- 73 │   /^\P{scx=Tayo}+$/u,
-    ·            ────
- 74 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:24:26]
- 23 │ testPropertyEscapes(
- 24 │   /^\p{Script_Extensions=Tolong_Siki}+$/u,
-    ·                          ───────────
- 25 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:29:26]
- 28 │ testPropertyEscapes(
- 29 │   /^\p{Script_Extensions=Tols}+$/u,
-    ·                          ────
- 30 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:34:12]
- 33 │ testPropertyEscapes(
- 34 │   /^\p{scx=Tolong_Siki}+$/u,
-    ·            ───────────
- 35 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:39:12]
- 38 │ testPropertyEscapes(
- 39 │   /^\p{scx=Tols}+$/u,
-    ·            ────
- 40 │   matchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:55:26]
- 54 │ testPropertyEscapes(
- 55 │   /^\P{Script_Extensions=Tolong_Siki}+$/u,
-    ·                          ───────────
- 56 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:60:26]
- 59 │ testPropertyEscapes(
- 60 │   /^\P{Script_Extensions=Tols}+$/u,
-    ·                          ────
- 61 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:65:12]
- 64 │ testPropertyEscapes(
- 65 │   /^\P{scx=Tolong_Siki}+$/u,
-    ·            ───────────
- 66 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-  × Invalid regular expression: Invalid unicode property name
-    ╭─[test262/test/built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Tolong_Siki.js:70:12]
- 69 │ testPropertyEscapes(
- 70 │   /^\P{scx=Tols}+$/u,
-    ·            ────
- 71 │   nonMatchSymbols,
-    ╰────
-  help: Check the property name spelling or use a valid Unicode property
-
-Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/using-for-statement.js
-
-  × Unexpected token
-    ╭─[test262/test/language/statements/using/syntax/using-for-statement.js:14:15]
- 13 │ // handled similar to `for (let of = null;;)`:
- 14 │ for (using of = null;;) break;
-    ·               ─
-    ╰────
-
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[test262/test/annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:19:4]
@@ -2265,7 +1594,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: The `v` flag is a superset of `u`. Use only either of them
 
-  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+  × TS(1502): The 'u' and 'v' regular expression flags cannot be enabled at the same time
     ╭─[test262/test/built-ins/RegExp/prototype/unicodeSets/uv-flags.js:18:1]
  17 │ 
  18 │ /./uv;
@@ -7691,7 +7020,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·       ─────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-call.js:16:17]
  15 │ 
  16 │ async(foo) => { super() };
@@ -7730,7 +7059,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·        ╰── `bar` has already been declared here
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-call.js:16:13]
  15 │ 
  16 │ async(foo = super()) => {}
@@ -7873,7 +7202,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                 ────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-body-contains-super-call.js:16:29]
  15 │ 
  16 │ (async function foo (foo) { super() })
@@ -7904,7 +7233,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                       ╰── `bar` has already been declared here
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-function/early-errors-expression-formals-contains-super-call.js:16:28]
  15 │ 
  16 │ (async function foo (foo = super()) { var bar; });
@@ -8423,7 +7752,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                  ────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-body-contains-super-call.js:18:22]
  17 │ 
  18 │ (async function*() { super(); });
@@ -8477,7 +7806,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                  ─────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js:18:22]
  17 │ 
  18 │ (async function*(a = super()) { });
@@ -10869,7 +10198,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/arrow-fnc-init-err-contains-super.js:27:13]
  26 │ var C = class {
  27 │   x = () => super();
@@ -11354,7 +10683,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/comp-name-init-err-contains-super.js:28:9]
  27 │ var C = class {
  28 │   [x] = super();
@@ -11371,7 +10700,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/equality-init-err-contains-super.js:27:13]
  26 │ var C = class {
  27 │   x = {} == super();
@@ -11697,7 +11026,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/literal-name-init-err-contains-super.js:27:7]
  26 │ var C = class {
  27 │   x = super();
@@ -11714,7 +11043,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   x = () => {
  28 │     var t = () => super();
@@ -11731,7 +11060,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-comp-name-init-err-contains-super.js:27:15]
  26 │ var C = class {
  27 │   [x] = () => super();
@@ -11766,7 +11095,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-literal-name-init-err-contains-super.js:26:13]
  25 │ var C = class {
  26 │   x = () => super();
@@ -11783,7 +11112,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   #x = () => {
  28 │     var t = () => super();
@@ -11800,7 +11129,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-literal-name-init-err-contains-super.js:26:14]
  25 │ var C = class {
  26 │   #x = () => super();
@@ -11817,7 +11146,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-ternary-init-err-contains-super.js:26:26]
  25 │ var C = class {
  26 │   #x = () => true ? {} : super();
@@ -11834,7 +11163,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-private-typeof-init-err-contains-super.js:26:21]
  25 │ var C = class {
  26 │   #x = () => typeof super();
@@ -11851,7 +11180,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-comp-name-init-err-contains-super.js:27:22]
  26 │ var C = class {
  27 │   static [x] = () => super();
@@ -11868,7 +11197,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-literal-init-err-contains-super.js:26:20]
  25 │ var C = class {
  26 │   static x = () => super();
@@ -11885,7 +11214,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-private-init-err-contains-super.js:26:21]
  25 │ var C = class {
  26 │   static #x = () => super();
@@ -11902,7 +11231,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-super.js:26:22]
  25 │ var C = class {
  26 │   static 'x' = () => super();
@@ -11919,7 +11248,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-string-literal-name-init-err-contains-super.js:26:15]
  25 │ var C = class {
  26 │   'x' = () => super();
@@ -11936,7 +11265,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-ternary-init-err-contains-super.js:26:25]
  25 │ var C = class {
  26 │   x = () => true ? {} : super();
@@ -11953,7 +11282,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/nested-typeof-init-err-contains-super.js:26:20]
  25 │ var C = class {
  26 │   x = () => typeof super();
@@ -11970,7 +11299,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-arrow-fnc-init-err-contains-super.js:27:14]
  26 │ var C = class {
  27 │   #x = () => super();
@@ -11987,7 +11316,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-literal-name-init-err-contains-super.js:27:8]
  26 │ var C = class {
  27 │   #x = super();
@@ -12004,7 +11333,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-ternary-init-err-contains-super.js:27:20]
  26 │ var C = class {
  27 │   #x = true ? {} : super();
@@ -12021,7 +11350,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/private-typeof-init-err-contains-super.js:27:15]
  26 │ var C = class {
  27 │   #x = typeof super();
@@ -12038,7 +11367,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-comp-name-init-err-contains-super.js:28:16]
  27 │ var C = class {
  28 │   static [x] = super();
@@ -12055,7 +11384,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-literal-init-err-contains-super.js:27:14]
  26 │ var C = class {
  27 │   static x = super();
@@ -12072,7 +11401,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-private-init-err-contains-super.js:27:15]
  26 │ var C = class {
  27 │   static #x = super();
@@ -12089,7 +11418,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js:27:16]
  26 │ var C = class {
  27 │   static 'x' = super();
@@ -12106,7 +11435,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/string-literal-name-init-err-contains-super.js:27:9]
  26 │ var C = class {
  27 │   'x' = super();
@@ -13932,7 +13261,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  37 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]
  25 │   async * method() {
  26 │       super();
@@ -13940,7 +13269,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:26:7]
  25 │   async method() {
  26 │       super();
@@ -13948,7 +13277,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:26:7]
  25 │   * method() {
  26 │       super();
@@ -13956,7 +13285,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:26:7]
  25 │   get method() {
  26 │       super();
@@ -13964,7 +13293,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:26:7]
  25 │   method() {
  26 │       super();
@@ -13972,7 +13301,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:26:7]
  25 │   async * #method() {
  26 │       super();
@@ -13980,7 +13309,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:26:7]
  25 │   async #method() {
  26 │       super();
@@ -13988,7 +13317,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:26:7]
  25 │   * #method() {
  26 │       super();
@@ -13996,7 +13325,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:26:7]
  25 │   #method() {
  26 │       super();
@@ -14004,7 +13333,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:26:7]
  25 │   set method(_) {
  26 │       super();
@@ -14068,7 +13397,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:26:7]
  25 │   static async * method() {
  26 │       super();
@@ -14084,7 +13413,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:26:7]
  25 │   static async method() {
  26 │       super();
@@ -14100,7 +13429,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:26:7]
  25 │   static * method() {
  26 │       super();
@@ -14116,7 +13445,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:26:7]
  25 │   static get method() {
  26 │       super();
@@ -14132,7 +13461,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-meth-super.js:26:7]
  25 │   static method() {
  26 │       super();
@@ -14148,7 +13477,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:26:7]
  25 │   static async * #method() {
  26 │       super();
@@ -14164,7 +13493,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:26:7]
  25 │   static async #method() {
  26 │       super();
@@ -14180,7 +13509,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:26:7]
  25 │   static * #method() {
  26 │       super();
@@ -14196,7 +13525,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:26:7]
  25 │   static #method() {
  26 │       super();
@@ -14220,7 +13549,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:26:7]
  25 │   static set method(_) {
  26 │       super();
@@ -14525,7 +13854,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/ternary-init-err-contains-super.js:27:19]
  26 │ var C = class {
  27 │   x = true ? {} : super();
@@ -14542,7 +13871,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/class/elements/typeof-init-err-contains-super.js:27:14]
  26 │ var C = class {
  27 │   x = typeof super();
@@ -18053,7 +17382,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  55 │   
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/function/early-body-super-call.js:18:3]
  17 │ 0, function() {
  18 │   super();
@@ -18097,7 +17426,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                            ──
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/function/early-params-super-call.js:17:17]
  16 │ 
  17 │ 0, function(x = super()) {};
@@ -18794,11 +18123,11 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     · ───────────
     ╰────
 
-  × Unexpected right-hand side of private-in expression
+  × Unexpected private identifier
     ╭─[test262/test/language/expressions/in/private-field-in-nested.js:26:15]
  25 │   constructor() {
  26 │     #field in #field in this;
-    ·               ──────────────
+    ·               ──────
  27 │   }
     ╰────
 
@@ -19815,7 +19144,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  18 │ })
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-body-contains-super-call.js:17:18]
  16 │ ({
  17 │   async foo () { super() }
@@ -19859,7 +19188,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ })
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/early-errors-object-method-formals-contains-super-call.js:16:19]
  15 │ ({
  16 │   async foo(foo = super()) { }
@@ -20132,7 +19461,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  23 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/generator-super-call-body.js:22:9]
  21 │     *foo(a) {
  22 │         super();
@@ -20140,7 +19469,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  23 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/generator-super-call-param.js:21:14]
  20 │ var obj = {
  21 │     *foo(a = super()) {
@@ -20223,7 +19552,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/name-super-call-body.js:18:5]
  17 │   method() {
  18 │     super();
@@ -20231,7 +19560,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/expressions/object/method-definition/name-super-call-param.js:17:18]
  16 │ ({
  17 │   method(param = super()) {}
@@ -21194,7 +20523,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·   ──────────
  38 │ };
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × Unexpected new.target expression
     ╭─[test262/test/language/global-code/new.target.js:21:1]
@@ -21202,7 +20531,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  21 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[test262/test/language/global-code/return.js:23:1]
@@ -21211,7 +20540,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     · ──────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/global-code/super-call-arrow.js:37:3]
  36 │ () => {
  37 │   super();
@@ -21219,7 +20548,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  38 │ };
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/global-code/super-call.js:21:1]
  20 │ 
  21 │ super();
@@ -25151,11 +24480,11 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·   ─
     ╰────
 
-  × Unexpected token
+  × HTML comments are not allowed in modules
     ╭─[test262/test/language/module-code/comment-single-line-html-open.js:16:1]
  15 │ 
  16 │ <!--
-    · ─
+    · ────
     ╰────
 
   × Duplicated export 'z'
@@ -25401,7 +24730,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  16 │ new.target;
     · ──────────
     ╰────
-  help: new.target is only allowed in constructors and functions invoked using the `new` operator
+  help: new.target is only allowed in constructors, functions, and class field initializers
 
   × The keyword 'public' is reserved
     ╭─[test262/test/language/module-code/early-strict-mode.js:15:5]
@@ -26918,7 +26247,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                ────
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-body-contains-super-call.js:16:28]
  15 │ 
  16 │ async function foo (foo) { super() };
@@ -26957,7 +26286,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                      ╰── `bar` has already been declared here
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/async-function/early-errors-declaration-formals-contains-super-call.js:16:27]
  15 │ 
  16 │ async function foo (foo = super()) { let bar; }
@@ -28649,7 +27978,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  17 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-body-contains-super-call.js:16:18]
  15 │ class Foo {
  16 │   async foo () { super() }
@@ -28684,7 +28013,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  19 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/definition/early-errors-class-method-formals-contains-super-call.js:16:19]
  15 │ class Foo {
  16 │   async foo(foo = super()) { }
@@ -29919,7 +29248,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/arrow-fnc-init-err-contains-super.js:27:13]
  26 │ class C {
  27 │   x = () => super();
@@ -30404,7 +29733,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/comp-name-init-err-contains-super.js:28:9]
  27 │ class C {
  28 │   [x] = super();
@@ -30421,7 +29750,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/equality-init-err-contains-super.js:27:13]
  26 │ class C {
  27 │   x = {} == super();
@@ -30747,7 +30076,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/literal-name-init-err-contains-super.js:27:7]
  26 │ class C {
  27 │   x = super();
@@ -30764,7 +30093,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   x = () => {
  28 │     var t = () => super();
@@ -30781,7 +30110,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-comp-name-init-err-contains-super.js:27:15]
  26 │ class C {
  27 │   [x] = () => super();
@@ -30816,7 +30145,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-literal-name-init-err-contains-super.js:26:13]
  25 │ class C {
  26 │   x = () => super();
@@ -30833,7 +30162,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:28:19]
  27 │   #x = () => {
  28 │     var t = () => super();
@@ -30850,7 +30179,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-literal-name-init-err-contains-super.js:26:14]
  25 │ class C {
  26 │   #x = () => super();
@@ -30867,7 +30196,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-ternary-init-err-contains-super.js:26:27]
  25 │ class C {
  26 │   #x = () => false ? {} : super();
@@ -30884,7 +30213,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-private-typeof-init-err-contains-super.js:26:21]
  25 │ class C {
  26 │   #x = () => typeof super();
@@ -30901,7 +30230,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-comp-name-init-err-contains-super.js:27:22]
  26 │ class C {
  27 │   static [x] = () => super();
@@ -30918,7 +30247,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-literal-init-err-contains-super.js:26:20]
  25 │ class C {
  26 │   static x = () => super();
@@ -30935,7 +30264,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-private-init-err-contains-super.js:26:21]
  25 │ class C {
  26 │   static #x = () => super();
@@ -30952,7 +30281,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-static-string-literal-name-init-err-contains-super.js:26:22]
  25 │ class C {
  26 │   static 'x' = () => super();
@@ -30969,7 +30298,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-string-literal-name-init-err-contains-super.js:26:15]
  25 │ class C {
  26 │   'x' = () => super();
@@ -30986,7 +30315,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-ternary-init-err-contains-super.js:26:26]
  25 │ class C {
  26 │   x = () => false ? {} : super();
@@ -31003,7 +30332,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/nested-typeof-init-err-contains-super.js:26:20]
  25 │ class C {
  26 │   x = () => typeof super();
@@ -31020,7 +30349,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-arrow-fnc-init-err-contains-super.js:27:14]
  26 │ class C {
  27 │   #x = () => super();
@@ -31037,7 +30366,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-literal-name-init-err-contains-super.js:27:8]
  26 │ class C {
  27 │   #x = super();
@@ -31054,7 +30383,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-ternary-init-err-contains-super.js:27:21]
  26 │ class C {
  27 │   #x = false ? {} : super();
@@ -31071,7 +30400,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/private-typeof-init-err-contains-super.js:27:15]
  26 │ class C {
  27 │   #x = typeof super();
@@ -31149,7 +30478,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-comp-name-init-err-contains-super.js:28:16]
  27 │ class C {
  28 │   static [x] = super();
@@ -31166,7 +30495,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-literal-init-err-contains-super.js:27:14]
  26 │ class C {
  27 │   static x = super();
@@ -31183,7 +30512,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-private-init-err-contains-super.js:27:15]
  26 │ class C {
  27 │   static #x = super();
@@ -31200,7 +30529,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/static-string-literal-name-init-err-contains-super.js:27:16]
  26 │ class C {
  27 │   static 'x' = super();
@@ -31217,7 +30546,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/string-literal-name-init-err-contains-super.js:27:9]
  26 │ class C {
  27 │   'x' = super();
@@ -33043,7 +32372,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  37 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:26:7]
  25 │   async * method() {
  26 │       super();
@@ -33051,7 +32380,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:26:7]
  25 │   async method() {
  26 │       super();
@@ -33059,7 +32388,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:26:7]
  25 │   * method() {
  26 │       super();
@@ -33067,7 +32396,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:26:7]
  25 │   get method() {
  26 │       super();
@@ -33075,7 +32404,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:26:7]
  25 │   method() {
  26 │       super();
@@ -33083,7 +32412,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:26:7]
  25 │   async * #method() {
  26 │       super();
@@ -33091,7 +32420,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:26:7]
  25 │   async #method() {
  26 │       super();
@@ -33099,7 +32428,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:26:7]
  25 │   * #method() {
  26 │       super();
@@ -33107,7 +32436,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:26:7]
  25 │   #method() {
  26 │       super();
@@ -33115,7 +32444,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  27 │   }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:26:7]
  25 │   set method(_) {
  26 │       super();
@@ -33179,7 +32508,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:26:7]
  25 │   static async * method() {
  26 │       super();
@@ -33195,7 +32524,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:26:7]
  25 │   static async method() {
  26 │       super();
@@ -33211,7 +32540,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:26:7]
  25 │   static * method() {
  26 │       super();
@@ -33227,7 +32556,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:26:7]
  25 │   static get method() {
  26 │       super();
@@ -33243,7 +32572,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-meth-super.js:26:7]
  25 │   static method() {
  26 │       super();
@@ -33259,7 +32588,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:26:7]
  25 │   static async * #method() {
  26 │       super();
@@ -33275,7 +32604,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:26:7]
  25 │   static async #method() {
  26 │       super();
@@ -33291,7 +32620,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:26:7]
  25 │   static * #method() {
  26 │       super();
@@ -33307,7 +32636,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:26:7]
  25 │   static #method() {
  26 │       super();
@@ -33331,7 +32660,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │ }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:26:7]
  25 │   static set method(_) {
  26 │       super();
@@ -33636,7 +32965,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/ternary-init-err-contains-super.js:27:20]
  26 │ class C {
  27 │   x = false ? {} : super();
@@ -33653,7 +32982,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/elements/typeof-init-err-contains-super.js:27:14]
  26 │ class C {
  27 │   x = typeof super();
@@ -34238,7 +33567,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  26 │     }
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/class/static-init-invalid-super-call.js:21:5]
  20 │   static {
  21 │     super();
@@ -37542,7 +36871,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  55 │   
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/function/early-body-super-call.js:18:3]
  17 │ function f() {
  18 │   super();
@@ -37586,7 +36915,7 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
     ·                      ──
     ╰────
 
-  × Super calls are not permitted outside constructors or in nested functions inside constructors.
+  × TS(2337): Super calls are not permitted outside constructors or in nested functions inside constructors.
     ╭─[test262/test/language/statements/function/early-params-super-call.js:17:16]
  16 │ 
  17 │ function f(x = super()) {}
@@ -39125,17 +38454,17 @@ Expect to Parse: tasks/coverage/test262/test/language/statements/using/syntax/us
  22 │ }
     ╰────
 
-  × Identifier `default` has already been declared
+  × TS(1113): A 'default' clause cannot appear more than once in a 'switch' statement.
     ╭─[test262/test/language/statements/switch/S12.11_A2_T1.js:22:5]
  21 │           result += 2;
  22 │ ╭─▶     default:
  23 │ │         result += 32;
  24 │ ├─▶       break;
-    · ╰──── `default` has already been declared here
+    · ╰──── First 'default' clause is here.
  25 │ ╭─▶     default:
  26 │ │         result += 32;
  27 │ ├─▶       break;
-    · ╰──── It can not be redeclared here
+    · ╰──── Another 'default' clause cannot appear here.
  28 │       }
     ╰────
 

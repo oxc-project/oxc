@@ -74,7 +74,7 @@ declare_oxc_lint!(
     PreferIncludes(tsgolint),
     typescript,
     pedantic,
-    pending,
+    fix,
 );
 
 impl Rule for PreferIncludes {}

@@ -147,26 +147,21 @@ fn test() {
     ];
 
     let fix = vec![
-        ("expect(false).toBe(true);", "expect(false).toBeTruthy();", None),
-        ("expectTypeOf(false).toBe(true);", "expectTypeOf(false).toBeTruthy();", None),
-        ("expect(wasSuccessful).toEqual(true);", "expect(wasSuccessful).toBeTruthy();", None),
+        ("expect(false).toBe(true);", "expect(false).toBeTruthy();"),
+        ("expectTypeOf(false).toBe(true);", "expectTypeOf(false).toBeTruthy();"),
+        ("expect(wasSuccessful).toEqual(true);", "expect(wasSuccessful).toBeTruthy();"),
         (
             "expect(fs.existsSync('/path/to/file')).toStrictEqual(true);",
             "expect(fs.existsSync('/path/to/file')).toBeTruthy();",
-            None,
         ),
-        (r#"expect("a string").not.toBe(true);"#, r#"expect("a string").not.toBeTruthy();"#, None),
-        (
-            r#"expect("a string").not.toEqual(true);"#,
-            r#"expect("a string").not.toBeTruthy();"#,
-            None,
-        ),
+        (r#"expect("a string").not.toBe(true);"#, r#"expect("a string").not.toBeTruthy();"#),
+        (r#"expect("a string").not.toEqual(true);"#, r#"expect("a string").not.toBeTruthy();"#),
         (
             r#"expectTypeOf("a string").not.toStrictEqual(true);"#,
             r#"expectTypeOf("a string").not.toBeTruthy();"#,
-            None,
         ),
     ];
+
     Tester::new(PreferToBeTruthy::NAME, PreferToBeTruthy::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_vitest_plugin(true)

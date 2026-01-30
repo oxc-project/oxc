@@ -2718,11 +2718,12 @@ impl<'a> Dummy<'a> for TSConstructorType<'a> {
 impl<'a> Dummy<'a> for TSMappedType<'a> {
     /// Create a dummy [`TSMappedType`].
     ///
-    /// Has cost of making 1 allocation (80 bytes).
+    /// Has cost of making 1 allocation (8 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
-            type_parameter: Dummy::dummy(allocator),
+            key: Dummy::dummy(allocator),
+            constraint: Dummy::dummy(allocator),
             name_type: Dummy::dummy(allocator),
             type_annotation: Dummy::dummy(allocator),
             optional: Dummy::dummy(allocator),
@@ -2797,7 +2798,7 @@ impl<'a> Dummy<'a> for TSTypeAssertion<'a> {
 impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
     /// Create a dummy [`TSImportEqualsDeclaration`].
     ///
-    /// Has cost of making 1 allocation (8 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
         Self {
             span: Dummy::dummy(allocator),
@@ -2811,9 +2812,9 @@ impl<'a> Dummy<'a> for TSImportEqualsDeclaration<'a> {
 impl<'a> Dummy<'a> for TSModuleReference<'a> {
     /// Create a dummy [`TSModuleReference`].
     ///
-    /// Has cost of making 1 allocation (8 bytes).
+    /// Has cost of making 1 allocation (32 bytes).
     fn dummy(allocator: &'a Allocator) -> Self {
-        Self::ThisExpression(Dummy::dummy(allocator))
+        Self::IdentifierReference(Dummy::dummy(allocator))
     }
 }
 

@@ -224,24 +224,6 @@ fn var_hoisting() {
 }
 
 #[test]
-fn get_child_ids() {
-    let test = SemanticTester::js(
-        "
-            function foo() {
-            }
-        ",
-    )
-    .with_scope_tree_child_ids(true);
-    let semantic = test.build();
-    let scoping = semantic.into_scoping();
-
-    let child_scope_ids = scoping.get_scope_child_ids(scoping.root_scope_id());
-    assert_eq!(child_scope_ids.len(), 1);
-    let child_scope_ids = scoping.get_scope_child_ids(child_scope_ids[0]);
-    assert!(child_scope_ids.is_empty());
-}
-
-#[test]
 fn test_ts_conditional_types() {
     SemanticTester::ts("type A<T> = T extends string ? T : false;")
         .has_some_symbol("T")
@@ -283,55 +265,4 @@ fn test_eval() {
         let semantic = tester.build();
         assert!(!semantic.scoping().root_scope_flags().contains_direct_eval());
     }
-}
-
-#[test]
-fn test_with_statement() {
-    // Test that with statement creates a scope
-    let tester = SemanticTester::js(
-        "
-        const foo = { x: 1 };
-        with (foo) x;
-        ",
-    )
-    .with_module(false)
-    .with_scope_tree_child_ids(true);
-
-    let semantic = tester.build();
-    let scopes = semantic.scoping();
-
-    // Should have root scope + with statement scope
-    assert_eq!(scopes.scopes_len(), 2, "with statement should create a scope");
-
-    // Verify scope tree structure
-    let root_id = semantic.scoping().root_scope_id();
-    let child_ids = semantic.scoping().get_scope_child_ids(root_id);
-    assert_eq!(child_ids.len(), 1, "with statement scope should be a child of root scope");
-
-    // Verify the child scope is for the with statement
-    let with_scope_id = child_ids[0];
-    let with_scope_node_id = scopes.get_node_id(with_scope_id);
-    let with_node = semantic.nodes().get_node(with_scope_node_id);
-    assert!(
-        matches!(with_node.kind(), AstKind::WithStatement(_)),
-        "Child scope should be associated with WithStatement"
-    );
-
-    // Test with block statement as body
-    let tester2 = SemanticTester::js(
-        "
-        const foo = { x: 1 };
-        with (foo) {
-            const y = 2;
-        }
-        ",
-    )
-    .with_module(false)
-    .with_scope_tree_child_ids(true);
-
-    let semantic2 = tester2.build();
-    let scopes2 = semantic2.scoping();
-
-    // Should have root scope + with statement scope + block statement scope
-    assert_eq!(scopes2.scopes_len(), 3, "with statement and its block should create scopes");
 }

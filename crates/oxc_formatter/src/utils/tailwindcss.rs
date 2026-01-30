@@ -212,7 +212,7 @@ pub fn write_tailwind_string_literal<'a>(
         f.source_text().text_for(&string_literal),
         // `className="string"`
         //            ^^^^^^^^
-        matches!(string_literal.parent, AstNodes::JSXAttribute(_)),
+        matches!(string_literal.parent(), AstNodes::JSXAttribute(_)),
         StringLiteralParentKind::Expression,
     )
     .clean_text(f);

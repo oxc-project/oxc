@@ -12,8 +12,10 @@ use crate::{
 };
 
 fn no_direct_mutation_state_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("never mutate this.state directly.")
-        .with_help("calling setState() afterwards may replace the mutation you made.")
+    OxcDiagnostic::warn("Never mutate `this.state` directly.")
+        .with_help(
+            "Calling `setState()` afterwards will replace the mutations you made via `this.state`.",
+        )
         .with_label(span)
 }
 
@@ -27,55 +29,64 @@ pub struct NoDirectMutationState;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// The restriction coder cannot directly change the value of this.state
+    /// This rule forbids the direct mutation of `this.state` in React components.
+    ///
+    /// Note that this rule only applies to class components, it does not apply to function
+    /// components. For modern React codebases, this rule may not be necessary or relevant.
     ///
     /// ### Why is this bad?
     ///
-    /// calling setState() afterwards may replace the mutation you made
+    /// React components should *never* mutate `this.state` directly, as
+    /// calling `setState()` afterwards may replace the mutation you made.
+    ///
+    /// `this.state` should be treated as if it were immutable.
     ///
     /// ### Examples
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    ///  // error
-    ///  var Hello = createReactClass({
-    ///    componentDidMount: function() {
-    ///      this.state.name = this.props.name.toUpperCase();
-    ///    },
-    ///    render: function() {
-    ///      return <div>Hello {this.state.name}</div>;
-    ///    }
-    ///  });
+    /// var Hello = createReactClass({
+    ///   componentDidMount: function() {
+    ///     this.state.name = this.props.name.toUpperCase();
+    ///   },
+    ///   render: function() {
+    ///     return <div>Hello {this.state.name}</div>;
+    ///   }
+    /// });
     ///
-    ///  class Hello extends React.Component {
-    ///    constructor(props) {
-    ///      super(props)
+    /// class Hello extends React.Component {
+    ///   constructor(props) {
+    ///     super(props)
     ///
-    ///      doSomethingAsync(() => {
-    ///        this.state = 'bad';
-    ///      });
-    ///    }
-    ///  }
+    ///     doSomethingAsync(() => {
+    ///       this.state = 'bad';
+    ///     });
+    ///   }
+    /// }
+    /// ```
     ///
-    ///  // success
-    ///  var Hello = createReactClass({
-    ///    componentDidMount: function() {
-    ///      this.setState({
-    ///        name: this.props.name.toUpperCase();
-    ///      });
-    ///    },
-    ///    render: function() {
-    ///      return <div>Hello {this.state.name}</div>;
-    ///    }
-    ///  });
+    /// Examples of **correct** code for this rule:
+    /// ```jsx
+    /// var Hello = createReactClass({
+    ///   componentDidMount: function() {
+    ///     this.setState({
+    ///       name: this.props.name.toUpperCase();
+    ///     });
+    ///   },
+    ///   render: function() {
+    ///     return <div>Hello {this.state.name}</div>;
+    ///   }
+    /// });
     ///
-    ///  class Hello extends React.Component {
-    ///    constructor(props) {
-    ///      super(props)
+    /// class Hello extends React.Component {
+    ///   constructor(props) {
+    ///     super(props)
     ///
-    ///      this.state = {
-    ///        foo: 'bar',
-    ///      }
-    ///    }
-    ///  }
+    ///     this.state = {
+    ///       foo: 'bar',
+    ///     }
+    ///   }
+    /// }
     /// ```
     NoDirectMutationState,
     react,

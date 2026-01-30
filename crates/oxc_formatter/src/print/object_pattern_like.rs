@@ -40,10 +40,10 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     fn is_inline(&self, _f: &Formatter<'_, 'a>) -> bool {
         match self {
-            Self::ObjectPattern(node) => match node.parent {
+            Self::ObjectPattern(node) => match node.parent() {
                 AstNodes::FormalParameter(_) => true,
                 AstNodes::AssignmentPattern(_) => {
-                    matches!(node.parent.parent(), AstNodes::FormalParameter(_))
+                    matches!(node.grand_parent(), AstNodes::FormalParameter(_))
                 }
                 _ => false,
             },
@@ -56,7 +56,7 @@ impl<'a> ObjectPatternLike<'a, '_> {
         match self {
             Self::ObjectPattern(node) => {
                 let parent_is_parameter_or_assignment_pattern = matches!(
-                    node.parent,
+                    node.parent(),
                     AstNodes::CatchParameter(_)
                         | AstNodes::FormalParameter(_)
                         | AstNodes::AssignmentPattern(_)
@@ -90,9 +90,9 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     fn is_in_assignment_like(&self) -> bool {
         match self {
-            Self::ObjectPattern(node) => matches!(node.parent, AstNodes::VariableDeclarator(_)),
+            Self::ObjectPattern(node) => matches!(node.parent(), AstNodes::VariableDeclarator(_)),
             Self::ObjectAssignmentTarget(node) => matches!(
-                node.parent,
+                node.parent(),
                 AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_)
             ),
         }

@@ -2,11 +2,13 @@ import { lint } from "./bindings.js";
 import { debugAssertIsNonNull } from "./utils/asserts.ts";
 
 // Lazy-loaded JS plugin-related functions.
-// Using `typeof wrapper` here makes TS check that the function signatures of `loadPlugin` and `loadPluginWrapper`
-// are identical. Ditto `lintFile` and `lintFileWrapper`.
-let loadPlugin: typeof loadPluginWrapper | null = null;
-let setupRuleConfigs: typeof setupRuleConfigsWrapper | null = null;
-let lintFile: typeof lintFileWrapper | null = null;
+// The type annotations below use `typeof import("./plugins/index.ts").<fn>` so that the lazy-loaded variables
+// always have the exact same function signatures as the implementations exported from the plugins module.
+let loadPlugin: typeof import("./plugins/index.ts").loadPlugin | null = null;
+let setupRuleConfigs: typeof import("./plugins/index.ts").setupRuleConfigs | null = null;
+let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
+let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | null = null;
+let destroyWorkspace: typeof import("./workspace/index.ts").destroyWorkspace | null = null;
 
 /**
  * Load a plugin.
@@ -77,11 +79,55 @@ function lintFileWrapper(
   return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
 }
 
+/**
+ * Create a new workspace.
+ *
+ * Lazy-loads workspace code on first call, so that overhead is skipped if user doesn't use JS plugins.
+ *
+ * @param workspace - Workspace URI
+ * @returns Promise which resolves when workspace is created
+ */
+function createWorkspaceWrapper(workspace: string): Promise<undefined> {
+  if (createWorkspace === null) {
+    // Use promises here instead of making `createWorkspaceWrapper` an async function,
+    // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `createWorkspaceWrapper`
+    return import("./workspace/index.ts").then((mod) => {
+      ({ createWorkspace, destroyWorkspace } = mod);
+      return createWorkspace(workspace);
+    });
+  }
+  debugAssertIsNonNull(createWorkspace);
+  return Promise.resolve(createWorkspace(workspace));
+}
+
+/**
+ * Destroy a workspace.
+ *
+ * Delegates to `destroyWorkspace`, which was lazy-loaded by `createWorkspaceWrapper`.
+ *
+ * @param workspace - Workspace URI
+ * @returns `undefined`
+ */
+function destroyWorkspaceWrapper(workspace: string): undefined {
+  // `destroyWorkspaceWrapper` is never called without `createWorkspaceWrapper` being called first,
+  // so `destroyWorkspace` must be defined here
+  debugAssertIsNonNull(destroyWorkspace);
+  destroyWorkspace(workspace);
+}
+
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
-// Call Rust, passing `loadPlugin`, `setupRuleConfigs`, and `lintFile` as callbacks, and CLI arguments
-const success = await lint(args, loadPluginWrapper, setupRuleConfigsWrapper, lintFileWrapper);
+// Call Rust, passing `loadPlugin`, `setupRuleConfigs`, `lintFile`, `createWorkspace`, and `destroyWorkspace`
+// as callbacks, and CLI arguments
+const success = await lint(
+  args,
+  loadPluginWrapper,
+  setupRuleConfigsWrapper,
+  lintFileWrapper,
+  createWorkspaceWrapper,
+  destroyWorkspaceWrapper,
+);
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.
 // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.

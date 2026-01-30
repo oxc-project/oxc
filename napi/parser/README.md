@@ -1,5 +1,7 @@
 # Oxc Parser
 
+See [usage instructions](https://oxc.rs/docs/guide/usage/parser).
+
 ## Features
 
 ### Supports WASM
@@ -85,13 +87,13 @@ export interface EcmaScriptModule {
    * Dynamic imports `import('foo')` are ignored since they can be used in non-ESM files.
    */
   hasModuleSyntax: boolean;
-  /** Import statements. */
+  /** Import statements */
   staticImports: Array<StaticImport>;
-  /** Export statements. */
+  /** Export statements */
   staticExports: Array<StaticExport>;
-  /** Dynamic import expressions. */
+  /** Dynamic import expressions */
   dynamicImports: Array<DynamicImport>;
-  /** Span positions` of `import.meta` */
+  /** Span positions of `import.meta` */
   importMetas: Array<Span>;
 }
 ```

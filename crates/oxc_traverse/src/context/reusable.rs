@@ -39,6 +39,16 @@ impl<'a, State> ReusableTraverseCtx<'a, State> {
         (self.0.state, self.0.scoping.into_scoping())
     }
 
+    /// Get a reference to the user state.
+    pub fn state(&self) -> &State {
+        &self.0.state
+    }
+
+    /// Get a mutable reference to the user state.
+    pub fn state_mut(&mut self) -> &mut State {
+        &mut self.0.state
+    }
+
     /// Unwrap [`TraverseCtx`] in a [`ReusableTraverseCtx`].
     ///
     /// Only for use in tests. Allows circumventing the safety invariants of [`TraverseAncestry`].

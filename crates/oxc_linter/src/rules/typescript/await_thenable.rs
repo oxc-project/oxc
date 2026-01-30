@@ -17,7 +17,7 @@ declare_oxc_lint!(
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
-    /// ```ts
+    /// ```
     /// await 12;
     /// await (() => {});
     ///
@@ -31,7 +31,7 @@ declare_oxc_lint!(
     /// ```
     ///
     /// Examples of **correct** code for this rule:
-    /// ```ts
+    /// ```
     /// await Promise.resolve('value');
     /// await Promise.reject(new Error());
     ///
@@ -49,7 +49,7 @@ declare_oxc_lint!(
     AwaitThenable(tsgolint),
     typescript,
     correctness,
-    pending,
+    suggestion,
 );
 
 impl Rule for AwaitThenable {}

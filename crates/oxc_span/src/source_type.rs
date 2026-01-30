@@ -211,12 +211,10 @@ impl From<FileExtension> for SourceType {
 }
 
 impl SourceType {
-    /// Creates a [`SourceType`] representing a regular [`JavaScript`] file.
+    /// Creates a [`SourceType`] representing a [`JavaScript`] file using CommonJS
+    /// modules. This is akin to a file with an `.cjs` extension.
     ///
-    /// This file could be a vanilla script (no module system of any kind) or a
-    /// CommonJS file.
-    ///
-    /// The resulting source type is not a [`module`], nor does it support [`JSX`].
+    /// The resulting source type does not support [`JSX`].
     /// Use [`SourceType::jsx`] for [`JSX`] sources.
     ///
     /// ## Example
@@ -225,17 +223,16 @@ impl SourceType {
     ///
     /// let js = SourceType::cjs();
     /// assert!(js.is_javascript());
-    /// assert!(js.is_script()); // not a module
+    /// assert!(js.is_commonjs());
     /// assert!(!js.is_jsx());
     /// ```
     ///
     /// [`JavaScript`]: Language::JavaScript
-    /// [`module`]: ModuleKind::Module
     /// [`JSX`]: LanguageVariant::Jsx
     pub const fn cjs() -> Self {
         Self {
             language: Language::JavaScript,
-            module_kind: ModuleKind::Script,
+            module_kind: ModuleKind::CommonJS,
             variant: LanguageVariant::Standard,
         }
     }
@@ -554,12 +551,12 @@ impl SourceType {
     /// for TypeScript files, only `.tsx` files are treated as JSX.
     ///
     /// Note that this behavior deviates from [`SourceType::cjs`], which produces
-    /// [`scripts`].
+    /// [`commonjs`].
     ///
     /// ### Modules vs. Scripts.
     /// Oxc has partial support for Node's
     /// [CommonJS](https://nodejs.org/api/modules.html#enabling) detection
-    /// strategy. Any file with a `.c[tj]s` extension is treated as a [`script`].
+    /// strategy. Any file with a `.c[tj]s` extension is treated as a [`commonjs`].
     /// All other files are treated as [`modules`].
     ///
     /// # Errors
@@ -569,8 +566,7 @@ impl SourceType {
     ///     "mts", "cts", "tsx". See [`VALID_EXTENSIONS`] for the list of valid
     ///     extensions.
     ///
-    /// [`script`]: ModuleKind::Script
-    /// [`scripts`]: ModuleKind::Script
+    /// [`commonjs`]: ModuleKind::CommonJS
     /// [`modules`]: ModuleKind::Module
     pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, UnknownExtension> {
         let file_name = path

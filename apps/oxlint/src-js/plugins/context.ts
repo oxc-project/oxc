@@ -26,7 +26,7 @@
  * and global variables (`filePath`, `settings`, `cwd`).
  */
 
-import { ast, initAst, SOURCE_CODE } from "./source_code.ts";
+import { ast, initAst, fileIsJsx, SOURCE_CODE } from "./source_code.ts";
 import { report } from "./report.ts";
 import { settings, initSettings } from "./settings.ts";
 import visitorKeys from "../generated/keys.ts";
@@ -41,19 +41,22 @@ import type { Settings } from "./settings.ts";
 import type { SourceCode } from "./source_code.ts";
 import type { ModuleKind, Program } from "../generated/types.d.ts";
 
-// Cached current working directory
-let cwd: string | null = null;
-
 // Absolute path of file being linted.
 // When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
 export let filePath: string | null = null;
 
+// Current working directory for file being linted.
+// When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
+let cwd: string | null = null;
+
 /**
  * Set up context for linting a file.
  * @param filePathInput - Absolute path of file being linted
+ * @param cwdInput - Current working directory for file being linted
  */
-export function setupFileContext(filePathInput: string): void {
+export function setupFileContext(filePathInput: string, cwdInput: string): void {
   filePath = filePathInput;
+  cwd = cwdInput;
 }
 
 /**
@@ -65,6 +68,7 @@ export function setupFileContext(filePathInput: string): void {
  */
 export function resetFileContext(): void {
   filePath = null;
+  cwd = null;
 }
 
 // ECMAScript version. This matches ESLint's default.
@@ -132,8 +136,64 @@ const PARSER = Object.freeze({
   supportedEcmaVersions: SUPPORTED_ECMA_VERSIONS,
 });
 
+// In conformance build, setting properties of this object to `true` or `false` overrides the defaults
+export const ecmaFeaturesOverride: {
+  globalReturn: boolean | null;
+  impliedStrict: boolean | null;
+} = {
+  globalReturn: null,
+  impliedStrict: null,
+};
+
+// Singleton object for ECMA features.
+const ECMA_FEATURES = Object.freeze({
+  /**
+   * `true` if file was parsed as JSX.
+   */
+  get jsx(): boolean {
+    return fileIsJsx();
+  },
+
+  /**
+   * `true` if file was parsed with top-level `return` statements allowed.
+   */
+  get globalReturn(): boolean {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    // In conformance build, allow overriding from `languageOptions.parserOptions.ecmaFeatures.globalReturn` config
+    if (CONFORMANCE) {
+      const { globalReturn } = ecmaFeaturesOverride;
+      if (globalReturn !== null) return globalReturn;
+    }
+
+    return ast.sourceType === "commonjs";
+  },
+
+  /**
+   * `true` if file was parsed as strict mode code.
+   */
+  get impliedStrict(): boolean {
+    // TODO: Would be better to get `sourceType` without deserializing whole AST,
+    // in case it's used in `create` to return an empty visitor if wrong type.
+    if (ast === null) initAst();
+    debugAssertIsNonNull(ast);
+
+    // In conformance build, allow overriding from `languageOptions.parserOptions.ecmaFeatures.impliedStrict` config
+    if (CONFORMANCE) {
+      const { impliedStrict } = ecmaFeaturesOverride;
+      if (impliedStrict !== null) return impliedStrict;
+    }
+
+    return ast.sourceType === "module";
+  },
+});
+
 // Singleton object for parser options.
-// TODO: `sourceType` is the only property ESLint provides. But does TS-ESLint provide any further properties?
+// TODO: `sourceType` and `ecmaFeatures` are the only property ESLint provides.
+// But does TS-ESLint provide any further properties?
 const PARSER_OPTIONS = Object.freeze({
   /**
    * Source type of the file being linted.
@@ -141,12 +201,16 @@ const PARSER_OPTIONS = Object.freeze({
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
     return ast.sourceType;
   },
+
+  /**
+   * ECMA features.
+   */
+  ecmaFeatures: ECMA_FEATURES,
 });
 
 // Singleton object for language options.
@@ -157,7 +221,6 @@ const LANGUAGE_OPTIONS = {
   get sourceType(): ModuleKind {
     // TODO: Would be better to get `sourceType` without deserializing whole AST,
     // in case it's used in `create` to return an empty visitor if wrong type.
-    // TODO: ESLint also has `commonjs` option.
     if (ast === null) initAst();
     debugAssertIsNonNull(ast);
 
@@ -206,7 +269,7 @@ const LANGUAGE_OPTIONS = {
 // In conformance build, replace `LANGUAGE_OPTIONS.ecmaVersion` with a getter which returns value of local var.
 // This is to allow changing the ECMAScript version in conformance tests.
 // Some of ESLint's rules change behavior based on the version, and ESLint's tests rely on this.
-let ecmaVersion = ECMA_VERSION;
+export let ecmaVersion = ECMA_VERSION;
 
 export function setEcmaVersion(version: number): void {
   if (!CONFORMANCE) throw new Error("Should be unreachable in release or debug builds");
@@ -304,8 +367,7 @@ const FILE_CONTEXT = Object.freeze({
    */
   get cwd(): string {
     // Note: If we change this implementation, also change `getCwd` method below
-    if (filePath === null) throw new Error("Cannot access `context.cwd` in `createOnce`");
-    if (cwd === null) cwd = process.cwd();
+    if (cwd === null) throw new Error("Cannot access `context.cwd` in `createOnce`");
     return cwd;
   },
 
@@ -315,8 +377,7 @@ const FILE_CONTEXT = Object.freeze({
    * @deprecated Use `context.cwd` property instead.
    */
   getCwd(): string {
-    if (filePath === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
-    if (cwd === null) cwd = process.cwd();
+    if (cwd === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
     return cwd;
   },
 
@@ -386,9 +447,9 @@ const FILE_CONTEXT = Object.freeze({
    * The path to the parser used to parse this file.
    * @deprecated No longer supported.
    */
-  get parserPath(): string {
-    // TODO: Implement this?
-    throw new Error("`context.parserPath` is unsupported at present (and deprecated)");
+  get parserPath(): string | undefined {
+    if (filePath === null) throw new Error("Cannot access `context.parserPath` in `createOnce`");
+    return undefined;
   },
 });
 

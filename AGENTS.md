@@ -263,6 +263,15 @@ Git submodules managed via `just submodules`:
 
 Run all conformance tests with `cargo coverage` or `just conformance`.
 
+### Searching Test Suites
+
+These test suites are pre-cloned and ready to search:
+
+- **Test262** (`tasks/coverage/test262/`) - ECMAScript spec compliance
+- **Babel** (`tasks/coverage/babel/`) - Parsing and transformation edge cases
+- **TypeScript** (`tasks/coverage/typescript/`) - TypeScript syntax and semantics
+- **Prettier** (`tasks/prettier_conformance/prettier/`) - Formatting expectations
+
 ### Snapshot Testing
 
 - Uses `insta` crate for snapshot testing

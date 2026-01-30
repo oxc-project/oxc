@@ -17,6 +17,8 @@ use oxc_syntax::{
     comment_node::CommentNodeId, reference::ReferenceId, scope::ScopeId, symbol::SymbolId,
 };
 
+use oxc_span::{Atom, Ident};
+
 use crate::{AstBuilder, ast::*};
 
 impl<'a> AstBuilder<'a> {
@@ -249,7 +251,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn expression_identifier<A1>(self, span: Span, name: A1) -> Expression<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Expression::Identifier(self.alloc_identifier_reference(span, name))
     }
@@ -270,7 +272,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> Expression<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Expression::Identifier(self.alloc_identifier_reference_with_reference_id(
             span,
@@ -1228,7 +1230,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn identifier_name<A1>(self, span: Span, name: A1) -> IdentifierName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         IdentifierName { span, name: name.into() }
     }
@@ -1244,7 +1246,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_identifier_name<A1>(self, span: Span, name: A1) -> Box<'a, IdentifierName<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Box::new_in(self.identifier_name(span, name), self.allocator)
     }
@@ -1260,7 +1262,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn identifier_reference<A1>(self, span: Span, name: A1) -> IdentifierReference<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         IdentifierReference { span, name: name.into(), reference_id: Default::default() }
     }
@@ -1280,7 +1282,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> Box<'a, IdentifierReference<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Box::new_in(self.identifier_reference(span, name), self.allocator)
     }
@@ -1302,7 +1304,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> IdentifierReference<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         IdentifierReference { span, name: name.into(), reference_id: Cell::new(Some(reference_id)) }
     }
@@ -1324,7 +1326,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> Box<'a, IdentifierReference<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Box::new_in(
             self.identifier_reference_with_reference_id(span, name, reference_id),
@@ -1343,7 +1345,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn binding_identifier<A1>(self, span: Span, name: A1) -> BindingIdentifier<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         BindingIdentifier { span, name: name.into(), symbol_id: Default::default() }
     }
@@ -1363,7 +1365,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> Box<'a, BindingIdentifier<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Box::new_in(self.binding_identifier(span, name), self.allocator)
     }
@@ -1385,7 +1387,7 @@ impl<'a> AstBuilder<'a> {
         symbol_id: SymbolId,
     ) -> BindingIdentifier<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         BindingIdentifier { span, name: name.into(), symbol_id: Cell::new(Some(symbol_id)) }
     }
@@ -1407,7 +1409,7 @@ impl<'a> AstBuilder<'a> {
         symbol_id: SymbolId,
     ) -> Box<'a, BindingIdentifier<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Box::new_in(self.binding_identifier_with_symbol_id(span, name, symbol_id), self.allocator)
     }
@@ -1420,7 +1422,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn label_identifier<A1>(self, span: Span, name: A1) -> LabelIdentifier<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         LabelIdentifier { span, name: name.into() }
     }
@@ -1662,7 +1664,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn property_key_static_identifier<A1>(self, span: Span, name: A1) -> PropertyKey<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         PropertyKey::StaticIdentifier(self.alloc_identifier_name(span, name))
     }
@@ -1677,7 +1679,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn property_key_private_identifier<A1>(self, span: Span, name: A1) -> PropertyKey<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         PropertyKey::PrivateIdentifier(self.alloc_private_identifier(span, name))
     }
@@ -1788,7 +1790,16 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         value: TemplateElementValue<'a>,
         tail: bool,
+        escape_raw: bool,
     ) -> TemplateElement<'a> {
+        let value = if escape_raw {
+            TemplateElementValue {
+                raw: escape_template_element_raw(value.raw.as_str(), self),
+                cooked: value.cooked,
+            }
+        } else {
+            value
+        };
         TemplateElement { span, value, tail, lone_surrogates: Default::default() }
     }
 
@@ -1806,7 +1817,16 @@ impl<'a> AstBuilder<'a> {
         value: TemplateElementValue<'a>,
         tail: bool,
         lone_surrogates: bool,
+        escape_raw: bool,
     ) -> TemplateElement<'a> {
+        let value = if escape_raw {
+            TemplateElementValue {
+                raw: escape_template_element_raw(value.raw.as_str(), self),
+                cooked: value.cooked,
+            }
+        } else {
+            value
+        };
         TemplateElement { span, value, tail, lone_surrogates }
     }
 
@@ -2628,7 +2648,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> SimpleAssignmentTarget<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc_identifier_reference(span, name),
@@ -2651,7 +2671,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> SimpleAssignmentTarget<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         SimpleAssignmentTarget::AssignmentTargetIdentifier(
             self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
@@ -5549,7 +5569,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn binding_pattern_binding_identifier<A1>(self, span: Span, name: A1) -> BindingPattern<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         BindingPattern::BindingIdentifier(self.alloc_binding_identifier(span, name))
     }
@@ -5570,7 +5590,7 @@ impl<'a> AstBuilder<'a> {
         symbol_id: SymbolId,
     ) -> BindingPattern<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         BindingPattern::BindingIdentifier(
             self.alloc_binding_identifier_with_symbol_id(span, name, symbol_id),
@@ -7168,7 +7188,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn private_identifier<A1>(self, span: Span, name: A1) -> PrivateIdentifier<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         PrivateIdentifier { span, name: name.into() }
     }
@@ -7188,7 +7208,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> Box<'a, PrivateIdentifier<'a>>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         Box::new_in(self.private_identifier(span, name), self.allocator)
     }
@@ -7856,7 +7876,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn import_attribute_key_identifier<A1>(self, span: Span, name: A1) -> ImportAttributeKey<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         ImportAttributeKey::Identifier(self.identifier_name(span, name))
     }
@@ -8407,7 +8427,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> ModuleExportName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         ModuleExportName::IdentifierName(self.identifier_name(span, name))
     }
@@ -8424,7 +8444,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> ModuleExportName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         ModuleExportName::IdentifierReference(self.identifier_reference(span, name))
     }
@@ -8443,7 +8463,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> ModuleExportName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         ModuleExportName::IdentifierReference(self.identifier_reference_with_reference_id(
             span,
@@ -9048,7 +9068,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> JSXElementName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         JSXElementName::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
@@ -9069,7 +9089,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> JSXElementName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         JSXElementName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
             span,
@@ -9215,7 +9235,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> JSXMemberExpressionObject<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         JSXMemberExpressionObject::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
@@ -9236,7 +9256,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> JSXMemberExpressionObject<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         JSXMemberExpressionObject::IdentifierReference(
             self.alloc_identifier_reference_with_reference_id(span, name, reference_id),
@@ -9929,7 +9949,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_enum_member_name_identifier<A1>(self, span: Span, name: A1) -> TSEnumMemberName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         TSEnumMemberName::Identifier(self.alloc_identifier_name(span, name))
     }
@@ -10711,27 +10731,27 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `constraint`: Constraint type, e.g. `keyof T` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     #[inline]
-    pub fn ts_type_mapped_type<T1>(
+    pub fn ts_type_mapped_type(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
-    ) -> TSType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSType<'a> {
         TSType::TSMappedType(self.alloc_ts_mapped_type(
             span,
-            type_parameter,
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -10745,29 +10765,29 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `constraint`: Constraint type, e.g. `keyof T` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
     #[inline]
-    pub fn ts_type_mapped_type_with_scope_id<T1>(
+    pub fn ts_type_mapped_type_with_scope_id(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
-    ) -> TSType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSType<'a> {
         TSType::TSMappedType(self.alloc_ts_mapped_type_with_scope_id(
             span,
-            type_parameter,
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -11906,7 +11926,7 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_type_name_identifier_reference<A1>(self, span: Span, name: A1) -> TSTypeName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         TSTypeName::IdentifierReference(self.alloc_identifier_reference(span, name))
     }
@@ -11927,7 +11947,7 @@ impl<'a> AstBuilder<'a> {
         reference_id: ReferenceId,
     ) -> TSTypeName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         TSTypeName::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
             span,
@@ -13498,7 +13518,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> TSTypePredicateName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         TSTypePredicateName::Identifier(self.alloc_identifier_name(span, name))
     }
@@ -13623,7 +13643,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> TSModuleDeclarationName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         TSModuleDeclarationName::Identifier(self.binding_identifier(span, name))
     }
@@ -13642,7 +13662,7 @@ impl<'a> AstBuilder<'a> {
         symbol_id: SymbolId,
     ) -> TSModuleDeclarationName<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         TSModuleDeclarationName::Identifier(
             self.binding_identifier_with_symbol_id(span, name, symbol_id),
@@ -14116,7 +14136,7 @@ impl<'a> AstBuilder<'a> {
         name: A1,
     ) -> TSImportTypeQualifier<'a>
     where
-        A1: Into<Atom<'a>>,
+        A1: Into<Ident<'a>>,
     {
         TSImportTypeQualifier::Identifier(self.alloc_identifier_name(span, name))
     }
@@ -14476,27 +14496,27 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `constraint`: Constraint type, e.g. `keyof T` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     #[inline]
-    pub fn ts_mapped_type<T1>(
+    pub fn ts_mapped_type(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
-    ) -> TSMappedType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSMappedType<'a> {
         TSMappedType {
             span,
-            type_parameter: type_parameter.into_in(self.allocator),
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -14512,28 +14532,28 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `constraint`: Constraint type, e.g. `keyof T` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     #[inline]
-    pub fn alloc_ts_mapped_type<T1>(
+    pub fn alloc_ts_mapped_type(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
-    ) -> Box<'a, TSMappedType<'a>>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> Box<'a, TSMappedType<'a>> {
         Box::new_in(
             self.ts_mapped_type(
                 span,
-                type_parameter,
+                key,
+                constraint,
                 name_type,
                 type_annotation,
                 optional,
@@ -14550,29 +14570,29 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `constraint`: Constraint type, e.g. `keyof T` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
     #[inline]
-    pub fn ts_mapped_type_with_scope_id<T1>(
+    pub fn ts_mapped_type_with_scope_id(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
-    ) -> TSMappedType<'a>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> TSMappedType<'a> {
         TSMappedType {
             span,
-            type_parameter: type_parameter.into_in(self.allocator),
+            key,
+            constraint,
             name_type,
             type_annotation,
             optional,
@@ -14588,30 +14608,30 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
-    /// * `type_parameter`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `key`: Key type parameter, e.g. `P` in `[P in keyof T]`.
+    /// * `constraint`: Constraint type, e.g. `keyof T` in `[P in keyof T]`.
     /// * `name_type`
     /// * `type_annotation`
     /// * `optional`: Optional modifier on type annotation
     /// * `readonly`: Readonly modifier before keyed index signature
     /// * `scope_id`
     #[inline]
-    pub fn alloc_ts_mapped_type_with_scope_id<T1>(
+    pub fn alloc_ts_mapped_type_with_scope_id(
         self,
         span: Span,
-        type_parameter: T1,
+        key: BindingIdentifier<'a>,
+        constraint: TSType<'a>,
         name_type: Option<TSType<'a>>,
         type_annotation: Option<TSType<'a>>,
         optional: Option<TSMappedTypeModifierOperator>,
         readonly: Option<TSMappedTypeModifierOperator>,
         scope_id: ScopeId,
-    ) -> Box<'a, TSMappedType<'a>>
-    where
-        T1: IntoIn<'a, Box<'a, TSTypeParameter<'a>>>,
-    {
+    ) -> Box<'a, TSMappedType<'a>> {
         Box::new_in(
             self.ts_mapped_type_with_scope_id(
                 span,
-                type_parameter,
+                key,
+                constraint,
                 name_type,
                 type_annotation,
                 optional,
@@ -14835,6 +14855,68 @@ impl<'a> AstBuilder<'a> {
         TSModuleReference::ExternalModuleReference(
             self.alloc_ts_external_module_reference(span, expression),
         )
+    }
+
+    /// Build a [`TSModuleReference::IdentifierReference`].
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    #[inline]
+    pub fn ts_module_reference_identifier_reference<A1>(
+        self,
+        span: Span,
+        name: A1,
+    ) -> TSModuleReference<'a>
+    where
+        A1: Into<Ident<'a>>,
+    {
+        TSModuleReference::IdentifierReference(self.alloc_identifier_reference(span, name))
+    }
+
+    /// Build a [`TSModuleReference::IdentifierReference`] with `reference_id`.
+    ///
+    /// This node contains an [`IdentifierReference`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `name`: The name of the identifier being referenced.
+    /// * `reference_id`: Reference ID
+    #[inline]
+    pub fn ts_module_reference_identifier_reference_with_reference_id<A1>(
+        self,
+        span: Span,
+        name: A1,
+        reference_id: ReferenceId,
+    ) -> TSModuleReference<'a>
+    where
+        A1: Into<Ident<'a>>,
+    {
+        TSModuleReference::IdentifierReference(self.alloc_identifier_reference_with_reference_id(
+            span,
+            name,
+            reference_id,
+        ))
+    }
+
+    /// Build a [`TSModuleReference::QualifiedName`].
+    ///
+    /// This node contains a [`TSQualifiedName`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: The [`Span`] covering this node
+    /// * `left`
+    /// * `right`
+    #[inline]
+    pub fn ts_module_reference_qualified_name(
+        self,
+        span: Span,
+        left: TSTypeName<'a>,
+        right: IdentifierName<'a>,
+    ) -> TSModuleReference<'a> {
+        TSModuleReference::QualifiedName(self.alloc_ts_qualified_name(span, left, right))
     }
 
     /// Build a [`TSExternalModuleReference`].
@@ -15132,5 +15214,60 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn alloc_js_doc_unknown_type(self, span: Span) -> Box<'a, JSDocUnknownType> {
         Box::new_in(self.js_doc_unknown_type(span), self.allocator)
+    }
+}
+
+/// Escape special characters for template element raw value.
+///
+/// Escapes: backticks, `${`, backslashes, and carriage returns.
+fn escape_template_element_raw<'a>(raw: &str, ast: AstBuilder<'a>) -> Atom<'a> {
+    let bytes = raw.as_bytes();
+    let mut extra_bytes = 0usize;
+    for i in 0..bytes.len() {
+        extra_bytes += match bytes[i] {
+            b'\\' | b'`' | b'\r' => 1,
+            b'$' if bytes.get(i + 1) == Some(&b'{') => 1,
+            _ => 0,
+        };
+    }
+    if extra_bytes == 0 {
+        return ast.atom(raw);
+    }
+    let len = bytes.len() + extra_bytes;
+    let layout = std::alloc::Layout::array::<u8>(len).unwrap();
+    let ptr = ast.allocator.alloc_layout(layout);
+    #[expect(clippy::undocumented_unsafe_blocks)]
+    unsafe {
+        let escaped = std::slice::from_raw_parts_mut(ptr.as_ptr(), len);
+        let mut j = 0;
+        for i in 0..bytes.len() {
+            match bytes[i] {
+                b'\\' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'\\';
+                    j += 2;
+                }
+                b'`' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'`';
+                    j += 2;
+                }
+                b'$' if bytes.get(i + 1) == Some(&b'{') => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'$';
+                    j += 2;
+                }
+                b'\r' => {
+                    *escaped.get_unchecked_mut(j) = b'\\';
+                    *escaped.get_unchecked_mut(j + 1) = b'r';
+                    j += 2;
+                }
+                b => {
+                    *escaped.get_unchecked_mut(j) = b;
+                    j += 1;
+                }
+            }
+        }
+        Atom::from(std::str::from_utf8_unchecked(escaped))
     }
 }

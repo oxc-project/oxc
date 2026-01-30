@@ -3167,15 +3167,9 @@ impl Gen for TSMappedType<'_> {
             None => {}
         }
         p.print_ascii_byte(b'[');
-        self.type_parameter.name.print(p, ctx);
-        if let Some(constraint) = &self.type_parameter.constraint {
-            p.print_str(" in ");
-            constraint.print(p, ctx);
-        }
-        if let Some(default) = &self.type_parameter.default {
-            p.print_str(" = ");
-            default.print(p, ctx);
-        }
+        self.key.print(p, ctx);
+        p.print_str(" in ");
+        self.constraint.print(p, ctx);
         if let Some(name_type) = &self.name_type {
             p.print_str(" as ");
             name_type.print(p, ctx);
@@ -3850,7 +3844,8 @@ impl Gen for TSModuleReference<'_> {
                 p.print_string_literal(&decl.expression, false);
                 p.print_ascii_byte(b')');
             }
-            match_ts_type_name!(Self) => self.to_ts_type_name().print(p, ctx),
+            Self::IdentifierReference(ident) => ident.print(p, ctx),
+            Self::QualifiedName(qualified) => qualified.print(p, ctx),
         }
     }
 }

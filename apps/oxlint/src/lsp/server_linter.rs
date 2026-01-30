@@ -1,7 +1,8 @@
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
+use oxc_data_structures::rope::Rope;
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
 use tower_lsp_server::{
@@ -12,11 +13,12 @@ use tower_lsp_server::{
         WorkDoneProgressOptions, WorkspaceEdit,
     },
 };
-use tracing::{debug, warn};
+use tracing::{debug, error, warn};
 
 use oxc_linter::{
     AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    FixKind, LintIgnoreMatcher, LintOptions, Oxlintrc,
+    FixKind, LINTABLE_EXTENSIONS, LintIgnoreMatcher, LintOptions, LintRunner, LintRunnerBuilder,
+    LintServiceOptions, Linter, Oxlintrc, read_to_string,
 };
 
 use oxc_language_server::{
@@ -24,18 +26,24 @@ use oxc_language_server::{
     ToolRestartChanges,
 };
 
-use crate::lsp::{
-    LINT_CONFIG_FILE,
-    code_actions::{
-        CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
-        fix_all_text_edit,
+use crate::{
+    DEFAULT_OXLINTRC_NAME,
+    config_loader::ConfigLoader,
+    config_loader::discover_configs_in_tree,
+    lsp::{
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
+            fix_all_text_edit,
+        },
+        commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
+        error_with_position::{
+            DiagnosticReport, LinterCodeAction, create_unused_directives_messages,
+            generate_inverted_diagnostics, message_to_lsp_diagnostic,
+        },
+        lsp_file_system::LspFileSystem,
+        options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
+        utils::normalize_path,
     },
-    commands::{FIX_ALL_COMMAND_ID, FixAllCommandArgs},
-    config_walker::ConfigWalker,
-    error_with_position::LinterCodeAction,
-    isolated_lint_handler::{IsolatedLintHandler, IsolatedLintHandlerOptions},
-    options::{LintOptions as LSPLintOptions, Run, UnusedDisableDirectives},
-    utils::normalize_path,
 };
 
 #[derive(Default)]
@@ -59,15 +67,30 @@ impl ServerLinterBuilder {
         let root_path = root_uri.to_file_path().unwrap();
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
 
+        // Setup JS workspace. This must be done before loading any configs
+        if let Some(external_linter) = &self.external_linter {
+            let res = (external_linter.create_workspace)(root_path.to_string_lossy().into_owned());
+
+            if let Err(err) = res {
+                error!("Failed to setup JS workspace:\n{err}\n");
+            }
+        }
+
         let mut nested_ignore_patterns = Vec::new();
-        let (nested_configs, mut extended_paths) = self.create_nested_configs(
-            &root_path,
-            &options,
-            &mut external_plugin_store,
-            &mut nested_ignore_patterns,
-        );
+        let mut extended_paths = FxHashSet::default();
+        let nested_configs = if options.use_nested_configs() {
+            Self::create_nested_configs(
+                &root_path,
+                self.external_linter.as_ref(),
+                &mut external_plugin_store,
+                &mut nested_ignore_patterns,
+                &mut extended_paths,
+            )
+        } else {
+            FxHashMap::default()
+        };
         let config_path = match options.config_path.as_deref() {
-            Some("") | None => LINT_CONFIG_FILE,
+            Some("") | None => DEFAULT_OXLINTRC_NAME,
             Some(v) => v,
         };
         let config = normalize_path(root_path.join(config_path));
@@ -102,7 +125,7 @@ impl ServerLinterBuilder {
 
         let use_cross_module = config_builder.plugins().has_import()
             || (use_nested_config
-                && nested_configs.pin().values().any(|config| config.plugins().has_import()));
+                && nested_configs.values().any(|config| config.plugins().has_import()));
 
         extended_paths.extend(config_builder.extended_paths.clone());
         let base_config = config_builder.build(&mut external_plugin_store).unwrap_or_else(|err| {
@@ -119,42 +142,46 @@ impl ServerLinterBuilder {
             },
             ..Default::default()
         };
-        let config_store = ConfigStore::new(
-            base_config,
-            if use_nested_config {
-                let nested_configs = nested_configs.pin();
-                nested_configs
-                    .iter()
-                    .map(|(key, value)| (key.clone(), value.clone()))
-                    .collect::<FxHashMap<_, _>>()
-            } else {
-                FxHashMap::default()
-            },
-            external_plugin_store,
-        );
+        let config_store = ConfigStore::new(base_config, nested_configs, external_plugin_store);
+        let config_store_clone = config_store.clone();
 
-        let isolated_linter = IsolatedLintHandler::new(
-            lint_options,
-            config_store,
-            &IsolatedLintHandlerOptions {
-                use_cross_module,
-                type_aware: options.type_aware,
-                fix_kind,
-                root_path: root_path.to_path_buf(),
-                tsconfig_path: options.ts_config_path.as_ref().map(|path| {
-                    let path = Path::new(path).to_path_buf();
-                    if path.is_relative() { root_path.join(path) } else { path }
-                }),
-            },
-        );
+        let linter = Linter::new(lint_options, config_store, None);
+        let mut lint_service_options =
+            LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
+
+        if let Some(ts_path) = options.ts_config_path.as_ref() {
+            let ts_path = Path::new(ts_path).to_path_buf();
+            let ts_path = if ts_path.is_relative() { root_path.join(ts_path) } else { ts_path };
+            if ts_path.is_file() {
+                lint_service_options = lint_service_options.with_tsconfig(&ts_path);
+            }
+        }
+
+        let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
+            .with_type_aware(options.type_aware)
+            .with_fix_kind(fix_kind)
+            .build()
+        {
+            Ok(runner) => runner,
+            Err(e) => {
+                warn!("Failed to initialize type-aware linting: {e}");
+                let linter = Linter::new(lint_options, config_store_clone, None);
+                LintRunnerBuilder::new(lint_service_options, linter)
+                    .with_type_aware(false)
+                    .with_fix_kind(fix_kind)
+                    .build()
+                    .expect("Failed to build LintRunner without type-aware linting")
+            }
+        };
 
         ServerLinter::new(
             options.run,
             root_path.to_path_buf(),
-            isolated_linter,
             LintIgnoreMatcher::new(&base_patterns, &root_path, nested_ignore_patterns),
             Self::create_ignore_glob(&root_path),
             extended_paths,
+            runner,
+            lint_options.report_unused_directive,
         )
     }
 }
@@ -179,6 +206,9 @@ impl ToolBuilder for ServerLinterBuilder {
         }
         if !code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC) {
             code_action_kinds.push(CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC);
+        }
+        if !code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL) {
+            code_action_kinds.push(CodeActionKind::SOURCE_FIX_ALL);
         }
 
         // override code action kinds if the code action provider is already set
@@ -243,58 +273,44 @@ impl ToolBuilder for ServerLinterBuilder {
     fn build_boxed(&self, root_uri: &Uri, options: serde_json::Value) -> Box<dyn Tool> {
         Box::new(self.build(root_uri, options))
     }
+
+    fn shutdown(&self, root_uri: &Uri) {
+        // Destroy JS workspace
+        if let Some(external_linter) = &self.external_linter {
+            let root_path = root_uri.to_file_path().unwrap();
+            (external_linter.destroy_workspace)(root_path.to_string_lossy().into_owned());
+        }
+    }
 }
 
 impl ServerLinterBuilder {
     /// Searches inside root_uri recursively for the default oxlint config files
     /// and insert them inside the nested configuration
     fn create_nested_configs(
-        &self,
         root_path: &Path,
-        options: &LSPLintOptions,
+        external_linter: Option<&ExternalLinter>,
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
-    ) -> (ConcurrentHashMap<PathBuf, Config>, FxHashSet<PathBuf>) {
-        let mut extended_paths = FxHashSet::default();
-        // nested config is disabled, no need to search for configs
-        if !options.use_nested_configs() {
-            return (ConcurrentHashMap::default(), extended_paths);
+        extended_paths: &mut FxHashSet<PathBuf>,
+    ) -> FxHashMap<PathBuf, Config> {
+        let config_paths = discover_configs_in_tree(root_path);
+
+        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, &[]);
+        let (configs, errors) = loader.load_many(config_paths);
+
+        for error in errors {
+            warn!("Skipping config file {}: {:?}", error.path().display(), error);
         }
 
-        let paths = ConfigWalker::new(root_path).paths();
-        let nested_configs =
-            ConcurrentHashMap::with_capacity_and_hasher(paths.capacity(), FxBuildHasher);
+        let mut nested_configs = FxHashMap::with_capacity_and_hasher(configs.len(), FxBuildHasher);
 
-        for path in paths {
-            let file_path = Path::new(&path);
-            let Some(dir_path) = file_path.parent() else {
-                continue;
-            };
-
-            let Ok(oxlintrc) = Oxlintrc::from_file(file_path) else {
-                warn!("Skipping invalid config file: {}", file_path.display());
-                continue;
-            };
-            // Collect ignore patterns and their root
-            nested_ignore_patterns.push((oxlintrc.ignore_patterns.clone(), dir_path.to_path_buf()));
-            let Ok(config_store_builder) = ConfigStoreBuilder::from_oxlintrc(
-                false,
-                oxlintrc,
-                self.external_linter.as_ref(),
-                external_plugin_store,
-            ) else {
-                warn!("Skipping config (builder failed): {}", file_path.display());
-                continue;
-            };
-            extended_paths.extend(config_store_builder.extended_paths.clone());
-            let config = config_store_builder.build(external_plugin_store).unwrap_or_else(|err| {
-                warn!("Failed to build nested config for {}: {:?}", dir_path.display(), err);
-                ConfigStoreBuilder::empty().build(external_plugin_store).unwrap()
-            });
-            nested_configs.pin().insert(dir_path.to_path_buf(), config);
+        for loaded in configs {
+            nested_ignore_patterns.push((loaded.ignore_patterns, loaded.dir.clone()));
+            extended_paths.extend(loaded.extended_paths);
+            nested_configs.insert(loaded.dir, loaded.config);
         }
 
-        (nested_configs, extended_paths)
+        nested_configs
     }
 
     #[expect(clippy::filetype_is_file)]
@@ -335,11 +351,12 @@ impl ServerLinterBuilder {
 pub struct ServerLinter {
     run: Run,
     cwd: PathBuf,
-    isolated_linter: IsolatedLintHandler,
     ignore_matcher: LintIgnoreMatcher,
     gitignore_glob: Vec<Gitignore>,
     extended_paths: FxHashSet<PathBuf>,
     code_actions: Arc<ConcurrentHashMap<Uri, Option<Vec<LinterCodeAction>>>>,
+    runner: LintRunner,
+    unused_directives_severity: Option<AllowWarnDeny>,
 }
 
 impl Tool for ServerLinter {
@@ -517,10 +534,13 @@ impl Tool for ServerLinter {
 
         let actions =
             actions.into_iter().filter(|r| r.range == *range || range_overlaps(*range, r.range));
-        let is_source_fix_all_oxc = only_code_action_kinds
-            .is_some_and(|only| only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
+        // if `source.fixAll.oxc` or `source.fixAll` is requested, return a single code action that applies all fixes
+        let is_source_fix_all = only_code_action_kinds.is_some_and(|only| {
+            only.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC)
+                || only.contains(&CodeActionKind::SOURCE_FIX_ALL)
+        });
 
-        if is_source_fix_all_oxc {
+        if is_source_fix_all {
             return apply_all_fix_code_action(actions, uri.clone())
                 .map_or(vec![], |code_actions| {
                     vec![CodeActionOrCommand::CodeAction(code_actions)]
@@ -574,19 +594,21 @@ impl ServerLinter {
     pub fn new(
         run: Run,
         cwd: PathBuf,
-        isolated_linter: IsolatedLintHandler,
         ignore_matcher: LintIgnoreMatcher,
         gitignore_glob: Vec<Gitignore>,
         extended_paths: FxHashSet<PathBuf>,
+        runner: LintRunner,
+        unused_directives_severity: Option<AllowWarnDeny>,
     ) -> Self {
         Self {
             run,
             cwd,
-            isolated_linter,
             ignore_matcher,
             gitignore_glob,
             extended_paths,
             code_actions: Arc::new(ConcurrentHashMap::default()),
+            runner,
+            unused_directives_severity,
         }
     }
 
@@ -599,13 +621,24 @@ impl ServerLinter {
         }
     }
 
-    fn is_ignored(&self, uri: &Uri) -> bool {
-        let Some(uri_path) = uri.to_file_path() else {
-            return true;
-        };
+    fn is_lintable_extension(path: &Path) -> bool {
+        static WANTED_EXTENSIONS: OnceLock<FxHashSet<&'static str>> = OnceLock::new();
+        let wanted_exts =
+            WANTED_EXTENSIONS.get_or_init(|| LINTABLE_EXTENSIONS.iter().copied().collect());
 
-        if self.ignore_matcher.should_ignore(&uri_path) {
-            debug!("ignored: {uri:?}");
+        path.extension()
+            .and_then(std::ffi::OsStr::to_str)
+            .is_some_and(|ext| wanted_exts.contains(ext))
+    }
+
+    fn is_ignored(&self, uri_path: &Path) -> bool {
+        if !Self::is_lintable_extension(uri_path) {
+            debug!("ignored (unsupported extension): {uri_path:?}");
+            return true;
+        }
+
+        if self.ignore_matcher.should_ignore(uri_path) {
+            debug!("ignored: {uri_path:?}");
             return true;
         }
 
@@ -613,8 +646,8 @@ impl ServerLinter {
             if !uri_path.starts_with(gitignore.path()) {
                 continue;
             }
-            if gitignore.matched_path_or_any_parents(&uri_path, uri_path.is_dir()).is_ignore() {
-                debug!("ignored: {uri:?}");
+            if gitignore.matched_path_or_any_parents(uri_path, uri_path.is_dir()).is_ignore() {
+                debug!("ignored: {uri_path:?}");
                 return true;
             }
         }
@@ -623,14 +656,22 @@ impl ServerLinter {
 
     /// Lint a single file, returning an empty diagnostics list if the file is ignored.
     fn run_file(&self, uri: &Uri, content: Option<&str>) -> Result<Vec<Diagnostic>, String> {
-        if self.is_ignored(uri) {
+        let Some(uri_path) = uri.to_file_path() else {
+            return Ok(Vec::new());
+        };
+        if self.is_ignored(&uri_path) {
             return Ok(Vec::new());
         }
 
-        let mut diagnostics = vec![];
-        let mut code_actions = vec![];
+        let reports = self.lint_path(&uri_path, uri, content)?;
 
-        let reports = self.isolated_linter.run_single(uri, content)?;
+        let mut diagnostics = Vec::with_capacity(reports.len());
+        // mostly all diagnostics will have code actions (fix + ignoring line/file), only following diagnostics won't:
+        // - inverted diagnostics (related spans for the diagnostics)
+        // - diagnostics with span(0,0) and no fixes
+        // - tsgolint internal diagnostics
+        // - unused directives diagnostics
+        let mut code_actions = vec![];
         for report in reports {
             diagnostics.push(report.diagnostic);
 
@@ -642,6 +683,58 @@ impl ServerLinter {
         self.code_actions.pin().insert(uri.clone(), Some(code_actions));
 
         Ok(diagnostics)
+    }
+
+    fn lint_path(
+        &self,
+        path: &Path,
+        uri: &Uri,
+        content: Option<&str>,
+    ) -> Result<Vec<DiagnosticReport>, String> {
+        debug!("lint {}", path.display());
+
+        let source_text = if let Some(content) = content {
+            content
+        } else {
+            &read_to_string(path).map_err(|e| format!("Failed to read file: {e}"))?
+        };
+
+        let rope = &Rope::from_str(source_text);
+
+        let mut fs = LspFileSystem::default();
+        fs.add_file(path.to_path_buf(), Arc::from(source_text));
+
+        let mut messages: Vec<DiagnosticReport> =
+            match self.runner.run_source(&[Arc::from(path.as_os_str())], &fs) {
+                Ok(results) => results
+                    .into_iter()
+                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope))
+                    .collect(),
+                Err(e) => {
+                    // clear disable directives on error to prevent stale directives
+                    self.runner.directives_coordinator().remove(path);
+                    return Err(e);
+                }
+            };
+
+        messages.append(&mut generate_inverted_diagnostics(&messages, uri));
+
+        // Add unused directives if configured
+        if let Some(severity) = self.unused_directives_severity
+            && let Some(directives) = self.runner.directives_coordinator().get(path)
+        {
+            messages.extend(
+                create_unused_directives_messages(&directives, severity, source_text)
+                    .into_iter()
+                    .map(|message| message_to_lsp_diagnostic(message, uri, source_text, rope)),
+            );
+        }
+
+        // Clear any stale directives because they are no longer needed.
+        // This prevents using outdated directive spans if the new linting run fails.
+        self.runner.directives_coordinator().remove(path);
+
+        Ok(messages)
     }
 
     fn needs_restart(old_options: &LSPLintOptions, new_options: &LSPLintOptions) -> bool {
@@ -697,7 +790,8 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 2);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 3);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -728,7 +822,8 @@ mod tests_builder {
                 assert!(code_action_kinds.contains(&CodeActionKind::REFACTOR));
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 3);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 4);
                 assert_eq!(options.resolve_provider, Some(true));
             }
             _ => panic!("Expected code action provider options"),
@@ -754,7 +849,8 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 2);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 3);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -776,7 +872,8 @@ mod tests_builder {
                 let code_action_kinds = options.code_action_kinds.as_ref().unwrap();
                 assert!(code_action_kinds.contains(&CodeActionKind::QUICKFIX));
                 assert!(code_action_kinds.contains(&CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC));
-                assert_eq!(code_action_kinds.len(), 2);
+                assert!(code_action_kinds.contains(&CodeActionKind::SOURCE_FIX_ALL));
+                assert_eq!(code_action_kinds.len(), 3);
             }
             _ => panic!("Expected code action provider options"),
         }
@@ -1007,42 +1104,29 @@ mod test_watchers {
 
 #[cfg(test)]
 mod test {
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     use oxc_linter::ExternalPluginStore;
+    use rustc_hash::FxHashSet;
     use serde_json::json;
 
     use crate::lsp::{
-        options::LintOptions,
         server_linter::ServerLinterBuilder,
         tester::{Tester, get_file_path},
     };
 
     #[test]
-    fn test_create_nested_configs_with_disabled_nested_configs() {
-        let mut nested_ignore_patterns = Vec::new();
-        let mut external_plugin_store = ExternalPluginStore::new(false);
-        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
-            Path::new("/root/"),
-            &LintOptions { disable_nested_config: true, ..LintOptions::default() },
-            &mut external_plugin_store,
-            &mut nested_ignore_patterns,
-        );
-
-        assert!(configs.is_empty());
-    }
-
-    #[test]
     fn test_create_nested_configs() {
         let mut nested_ignore_patterns = Vec::new();
         let mut external_plugin_store = ExternalPluginStore::new(false);
-        let (configs, _) = ServerLinterBuilder::default().create_nested_configs(
+        let mut extended_paths = FxHashSet::default();
+        let configs = ServerLinterBuilder::create_nested_configs(
             &get_file_path("fixtures/lsp/init_nested_configs"),
-            &LintOptions::default(),
+            None,
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
+            &mut extended_paths,
         );
-        let configs = configs.pin();
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results
         configs_dirs.sort();
