@@ -7,7 +7,7 @@ use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{IsGlobalReference, ScopeFlags};
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, IDENT_AGGREGATE_ERROR, IDENT_ERROR, IDENT_TYPE_ERROR, Span};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -194,13 +194,13 @@ fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
         return false;
     };
 
-    ident.is_global_reference_name("Error", ctx.scoping())
-        || ident.is_global_reference_name("TypeError", ctx.scoping())
+    ident.is_global_reference_name(&IDENT_ERROR, ctx.scoping())
+        || ident.is_global_reference_name(&IDENT_TYPE_ERROR, ctx.scoping())
         || is_aggregate_error(ident, ctx)
 }
 
 fn is_aggregate_error(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    ident.is_global_reference_name("AggregateError", ctx.scoping())
+    ident.is_global_reference_name(&IDENT_AGGREGATE_ERROR, ctx.scoping())
 }
 
 fn has_cause_property(

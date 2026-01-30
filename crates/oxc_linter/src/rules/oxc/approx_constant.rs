@@ -60,7 +60,7 @@ impl Rule for ApproxConstant {
                 ctx.diagnostic_with_suggestion(
                     approx_constant_diagnostic(number_literal.span, name),
                     |fixer| {
-                        if ctx.scoping().find_binding(node.scope_id(), "Math").is_some() {
+                        if ctx.scoping().find_binding_by_name(node.scope_id(), "Math").is_some() {
                             fixer.noop()
                         } else {
                             Self::fix_with_math_constant(fixer, number_literal.span, name)

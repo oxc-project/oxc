@@ -179,15 +179,6 @@ source: crates/oxc_linter/src/tester.rs
   help: `"Works!"`s should begin with lowercase
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
-   ╭─[prefer_lowercase_title.tsx:3:30]
- 2 │                 describe('MyClass', () => {
- 3 │                     describe('MyMethod', () => {
-   ·                              ──────────
- 4 │                         it('Does things', () => {
-   ╰────
-  help: `"MyMethod"`s should begin with lowercase
-
-  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:4:28]
  3 │                     describe('MyMethod', () => {
  4 │                         it('Does things', () => {
@@ -195,6 +186,15 @@ source: crates/oxc_linter/src/tester.rs
  5 │                             //
    ╰────
   help: `"Does things"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:3:30]
+ 2 │                 describe('MyClass', () => {
+ 3 │                     describe('MyMethod', () => {
+   ·                              ──────────
+ 4 │                         it('Does things', () => {
+   ╰────
+  help: `"MyMethod"`s should begin with lowercase
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:4:29]
@@ -215,6 +215,15 @@ source: crates/oxc_linter/src/tester.rs
   help: `"Does things"`s should begin with lowercase
 
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
+   ╭─[prefer_lowercase_title.tsx:4:28]
+ 3 │                     describe('MyMethod', () => {
+ 4 │                         it('Does things', () => {
+   ·                            ─────────────
+ 5 │                             //
+   ╰────
+  help: `"Does things"`s should begin with lowercase
+
+  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:2:26]
  1 │ 
  2 │                 describe('MyClass', () => {
@@ -231,12 +240,3 @@ source: crates/oxc_linter/src/tester.rs
  4 │                         it('Does things', () => {
    ╰────
   help: `"MyMethod"`s should begin with lowercase
-
-  ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
-   ╭─[prefer_lowercase_title.tsx:4:28]
- 3 │                     describe('MyMethod', () => {
- 4 │                         it('Does things', () => {
-   ·                            ─────────────
- 5 │                             //
-   ╰────
-  help: `"Does things"`s should begin with lowercase

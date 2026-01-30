@@ -1,4 +1,5 @@
 use oxc_ast::ast::*;
+use oxc_span::{IDENT_DATE, IDENT_NUMBER};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{GlobalContext, to_numeric::ToNumeric, to_primitive::ToPrimitive};
@@ -270,7 +271,7 @@ impl<'a> DetermineValueType<'a> for LogicalExpression<'a> {
 impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
         if matches!(self.property.name.as_str(), "POSITIVE_INFINITY" | "NEGATIVE_INFINITY")
-            && ctx.is_global_expr("Number", &self.object)
+            && ctx.is_global_expr(&IDENT_NUMBER, &self.object)
         {
             return ValueType::Number;
         }
@@ -280,7 +281,7 @@ impl<'a> DetermineValueType<'a> for StaticMemberExpression<'a> {
 
 impl<'a> DetermineValueType<'a> for NewExpression<'a> {
     fn value_type(&self, ctx: &impl GlobalContext<'a>) -> ValueType {
-        if ctx.is_global_expr("Date", &self.callee) {
+        if ctx.is_global_expr(&IDENT_DATE, &self.callee) {
             return ValueType::Object;
         }
         ValueType::Undetermined

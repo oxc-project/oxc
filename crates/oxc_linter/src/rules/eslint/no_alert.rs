@@ -86,7 +86,7 @@ fn is_global_this_ref_or_global_window<'a>(
 }
 
 fn is_shadowed<'a>(scope_id: ScopeId, name: &'a str, ctx: &LintContext<'a>) -> bool {
-    ctx.scoping().find_binding(scope_id, name).is_some()
+    ctx.scoping().find_binding_by_name(scope_id, name).is_some()
 }
 
 impl Rule for NoAlert {

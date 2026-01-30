@@ -1,8 +1,10 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::{Reference, SymbolFlags};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::reference::ReferenceFlags;
+
+const IDENT_MODULE: Ident<'static> = Ident::new_const("module");
 use oxc_traverse::Traverse;
 
 use super::diagnostics;
@@ -73,7 +75,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         // module.exports
         let module_exports = {
             let reference_id =
-                ctx.create_reference_in_current_scope("module", ReferenceFlags::Read);
+                ctx.create_reference_in_current_scope(IDENT_MODULE, ReferenceFlags::Read);
             let reference =
                 ctx.ast.alloc_identifier_reference_with_reference_id(SPAN, "module", reference_id);
             let object = Expression::Identifier(reference);
@@ -109,7 +111,7 @@ impl<'a> TypeScriptModule<'a, '_> {
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
             let scope_id = ctx.current_scope_id();
-            ctx.scoping_mut().remove_binding(scope_id, &decl.id.name);
+            ctx.scoping_mut().remove_binding(scope_id, decl.id.name);
             return None;
         }
 
@@ -150,7 +152,7 @@ impl<'a> TypeScriptModule<'a, '_> {
                 }
 
                 let require_symbol_id =
-                    ctx.scoping().find_binding(ctx.current_scope_id(), "require");
+                    ctx.scoping().find_binding_by_name(ctx.current_scope_id(), "require");
                 let callee = ctx.create_ident_expr(
                     SPAN,
                     Atom::from("require"),
