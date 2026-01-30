@@ -2056,6 +2056,13 @@ impl RuleRunner for crate::rules::jest::no_test_return_statement::NoTestReturnSt
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
+impl RuleRunner
+    for crate::rules::jest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction
+{
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+}
+
 impl RuleRunner for crate::rules::jest::no_untyped_mock_factory::NoUntypedMockFactory {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
@@ -4052,13 +4059,6 @@ impl RuleRunner for crate::rules::vitest::no_conditional_tests::NoConditionalTes
 impl RuleRunner for crate::rules::vitest::no_import_node_test::NoImportNodeTest {
     const NODE_TYPES: Option<&AstTypesBitset> = None;
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
-}
-
-impl RuleRunner
-    for crate::rules::vitest::no_unneeded_async_expect_function::NoUnneededAsyncExpectFunction
-{
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_called_once::PreferCalledOnce {

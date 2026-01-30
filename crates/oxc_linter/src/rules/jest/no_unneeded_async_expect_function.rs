@@ -47,8 +47,19 @@ declare_oxc_lint!(
     /// ```js
     /// await expect(doSomethingAsync()).rejects.toThrow();
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/main/docs/rules/no-unneeded-async-expect-function.md),
+    /// to use it, add the following configuration to your `.oxlintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-unneeded-async-expect-function": "error"
+    ///   }
+    /// }
+    /// ```
     NoUnneededAsyncExpectFunction,
-    vitest,
+    jest,
     style,
     fix
 );
@@ -154,7 +165,7 @@ fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         "expect.hasAssertions()",
         "
 			    it('pass', async () => {
@@ -177,12 +188,6 @@ fn test() {
 			        await doSomethingAsync();
 			        await doSomethingTwiceAsync(1, 2);
 			      }).rejects.toThrow();
-			    })
-			    ",
-        "
-			    import { expect as pleaseExpect } from 'vitest';
-			    it('pass', async () => {
-			      await pleaseExpect(doSomethingAsync()).rejects.toThrow();
 			    })
 			    ",
         "
@@ -237,6 +242,11 @@ fn test() {
 			      await expect(async() => [await Promise.reject(2)]).rejects.toThrow(2);
 			    })
 			    ",
+        "
+				import { expect as pleaseExpect } from '@jest/globals';
+				it('pass', async () => {
+				await pleaseExpect(doSomethingAsync()).rejects.toThrow();
+				})",
     ];
 
     let fail = vec![
@@ -369,12 +379,25 @@ fn test() {
 			        })
 			      ", None)
     ];
+
+    let pass_vitest = vec![
+        "
+			    import { expect as pleaseExpect } from 'vitest';
+			    it('pass', async () => {
+			      await pleaseExpect(doSomethingAsync()).rejects.toThrow();
+			    })
+			    ",
+    ];
+
+    pass.extend(pass_vitest);
+
     Tester::new(
         NoUnneededAsyncExpectFunction::NAME,
         NoUnneededAsyncExpectFunction::PLUGIN,
         pass,
         fail,
     )
+    .with_jest_plugin(true)
     .with_vitest_plugin(true)
     .expect_fix(fix)
     .test_and_snapshot();
