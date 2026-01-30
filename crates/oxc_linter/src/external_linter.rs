@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, sync::Arc};
 
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 
@@ -9,37 +9,43 @@ use crate::{
     context::ContextHost,
 };
 
-pub type ExternalLinterCreateWorkspaceCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
+pub type ExternalLinterCreateWorkspaceCb =
+    Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
-pub type ExternalLinterDestroyWorkspaceCb = Box<dyn Fn(String) + Send + Sync>;
+pub type ExternalLinterDestroyWorkspaceCb = Arc<Box<dyn Fn(String) + Send + Sync>>;
 
-pub type ExternalLinterLoadPluginCb = Box<
-    dyn Fn(
-            // File URL to load plugin from
-            String,
-            // Plugin name (either alias or package name).
-            // If is package name, it is pre-normalized.
-            Option<String>,
-            // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
-            bool,
-        ) -> Result<LoadPluginResult, String>
-        + Send
-        + Sync,
+pub type ExternalLinterLoadPluginCb = Arc<
+    Box<
+        dyn Fn(
+                // File URL to load plugin from
+                String,
+                // Plugin name (either alias or package name).
+                // If is package name, it is pre-normalized.
+                Option<String>,
+                // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+                bool,
+            ) -> Result<LoadPluginResult, String>
+            + Send
+            + Sync,
+    >,
 >;
 
-pub type ExternalLinterSetupRuleConfigsCb = Box<dyn Fn(String) -> Result<(), String> + Send + Sync>;
+pub type ExternalLinterSetupRuleConfigsCb =
+    Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
-pub type ExternalLinterLintFileCb = Box<
-    dyn Fn(
-            String,
-            Vec<u32>,
-            Vec<u32>,
-            String,
-            String,
-            &Allocator,
-        ) -> Result<Vec<LintFileResult>, String>
-        + Sync
-        + Send,
+pub type ExternalLinterLintFileCb = Arc<
+    Box<
+        dyn Fn(
+                String,
+                Vec<u32>,
+                Vec<u32>,
+                String,
+                String,
+                &Allocator,
+            ) -> Result<Vec<LintFileResult>, String>
+            + Sync
+            + Send,
+    >,
 >;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -67,6 +73,7 @@ pub struct JsFix {
     pub text: String,
 }
 
+#[derive(Clone)]
 pub struct ExternalLinter {
     pub(crate) load_plugin: ExternalLinterLoadPluginCb,
     pub(crate) setup_rule_configs: ExternalLinterSetupRuleConfigsCb,

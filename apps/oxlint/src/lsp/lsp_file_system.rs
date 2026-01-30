@@ -20,12 +20,12 @@ impl LspFileSystem {
 
 impl RuntimeFileSystem for LspFileSystem {
     fn read_to_arena_str<'a>(
-        &'a self,
+        &self,
         path: &Path,
         allocator: &'a Allocator,
     ) -> Result<&'a str, std::io::Error> {
         match self.map.get(path) {
-            Some(s) => Ok(&**s),
+            Some(s) => Ok(allocator.alloc_str(s)),
             None => read_to_arena_str(path, allocator),
         }
     }
