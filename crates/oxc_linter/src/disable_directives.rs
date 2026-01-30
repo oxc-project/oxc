@@ -115,7 +115,7 @@ impl RuleCommentRule {
                 self.name_span.start - comma_before_offset,
                 self.name_span.end,
             ))
-            .with_kind(FixKind::Fix);
+            .with_kind(FixKind::Suggestion);
         }
 
         let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
@@ -138,7 +138,7 @@ impl RuleCommentRule {
                 self.name_span.start,
                 self.name_span.end + comma_after_offset,
             ))
-            .with_kind(FixKind::Fix);
+            .with_kind(FixKind::Suggestion);
         }
 
         unreachable!(
