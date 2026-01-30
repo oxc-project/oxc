@@ -73,7 +73,9 @@ impl ServerLinterBuilder {
 
         // Setup JS workspace. This must be done before loading any configs
         if let Some(external_linter) = &self.external_linter {
-            let res = (external_linter.create_workspace)(root_path.to_string_lossy().into_owned());
+            let res = tokio::task::block_in_place(|| {
+                (external_linter.create_workspace)(root_path.to_string_lossy().into_owned())
+            });
 
             if let Err(err) = res {
                 error!("Failed to setup JS workspace:\n{err}\n");
@@ -295,8 +297,11 @@ impl ToolBuilder for ServerLinterBuilder {
     fn shutdown(&self, root_uri: &Uri) {
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
-            let root_path = root_uri.to_file_path().unwrap();
-            (external_linter.destroy_workspace)(root_path.to_string_lossy().into_owned());
+            // Use `block_in_place()` to avoid nested async runtime access
+            tokio::task::block_in_place(|| {
+                let root_path = root_uri.to_file_path().unwrap();
+                (external_linter.destroy_workspace)(root_path.to_string_lossy().into_owned());
+            });
         }
     }
 }
