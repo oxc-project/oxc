@@ -8,6 +8,7 @@
  */
 
 import { default as assert, AssertionError } from "node:assert";
+import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:path";
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
 import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
@@ -974,9 +975,11 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Get parse options
   const parseOptions = getParseOptions(test);
 
-  // Determine filename.
+  // Determine path.
   // If not provided, use default filename based on `parseOptions.lang`.
-  let { filename } = test;
+  let path: string;
+
+  const { filename } = test;
   if (filename == null) {
     let ext: string | undefined = parseOptions.lang;
     if (ext == null) {
@@ -984,7 +987,13 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     } else if (ext === "dts") {
       ext = "d.ts";
     }
-    filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+    const cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
+    path = pathJoin(cwd, `${DEFAULT_FILENAME_BASE}.${ext}`);
+  } else if (isAbsolutePath(filename)) {
+    path = filename;
+  } else {
+    const cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
+    path = pathJoin(cwd, filename);
   }
 
   try {
@@ -995,7 +1004,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     const optionsId = setupOptions(test);
 
     // Parse file into buffer
-    parse(filename, test.code, parseOptions);
+    parse(path, test.code, parseOptions);
 
     // In conformance tests, set `context.languageOptions.ecmaVersion`.
     // This is not supported outside of conformance tests.
@@ -1007,7 +1016,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
-    lintFileImpl(filename, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
+    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
