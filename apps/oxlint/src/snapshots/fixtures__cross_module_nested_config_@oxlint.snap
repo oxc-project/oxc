@@ -35,7 +35,7 @@ working directory: fixtures/cross_module_nested_config
            ╰─────────╯ imports the current file
 
 Found 0 warnings and 2 errors.
-Finished in <variable>ms on 4 files with 90 rules using 1 threads.
+Finished in <variable>ms on 4 files with 91 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------
