@@ -231,6 +231,16 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove this assignment.
 
   ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
+   ╭─[no_useless_assignment.tsx:6:24]
+ 5 │                                 console.log(v);
+ 6 │                                 v = 'unused';
+   ·                                 ──────┬─────
+   ·                                       ╰── This assigned value is not used in subsequent statements.
+ 7 │                             }
+   ╰────
+  help: Remove this assignment.
+
+  ⚠ eslint(no-useless-assignment): Disallow variable assignments when the value is not used
     ╭─[no_useless_assignment.tsx:9:20]
   8 │                             console.log(v);
   9 │                             v = 'unused';

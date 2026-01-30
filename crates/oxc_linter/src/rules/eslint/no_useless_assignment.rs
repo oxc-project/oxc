@@ -252,9 +252,8 @@ fn analyze(ctx: &LintContext, cfg: &ControlFlowGraph, start_node_id: NodeId, sym
                     }
                 }
 
-                let block_references = match references_by_block.get(basic_block_id) {
-                    Some(references) => references,
-                    None => continue,
+                let Some(block_references) = references_by_block.get(basic_block_id) else {
+                    continue;
                 };
 
                 for reference in block_references {
@@ -445,10 +444,10 @@ fn expr_uses_symbol(
         }
         let ref_span = ctx.nodes().get_node(reference.node_id()).span();
 
-        if let Some(exclude) = exclude_span {
-            if exclude.contains_inclusive(ref_span) {
-                return false;
-            }
+        if let Some(exclude) = exclude_span
+            && exclude.contains_inclusive(ref_span)
+        {
+            return false;
         }
 
         expr_span.contains_inclusive(ref_span)
