@@ -16,36 +16,6 @@ use crate::{
     result::CliRunResult,
 };
 
-/// JS callback to create a workspace.
-#[napi]
-pub type JsCreateWorkspaceCb = ThreadsafeFunction<
-    // Arguments
-    FnArgs<(String,)>, // Workspace URI
-    // Return value
-    Promise<()>,
-    // Arguments (repeated)
-    FnArgs<(String,)>,
-    // Error status
-    Status,
-    // CalleeHandled
-    false,
->;
-
-/// JS callback to destroy a workspace.
-#[napi]
-pub type JsDestroyWorkspaceCb = ThreadsafeFunction<
-    // Arguments
-    FnArgs<(String,)>, // Workspace URI
-    // Return value
-    (),
-    // Arguments (repeated)
-    FnArgs<(String,)>,
-    // Error status
-    Status,
-    // CalleeHandled
-    false,
->;
-
 /// JS callback to load a JS plugin.
 #[napi]
 pub type JsLoadPluginCb = ThreadsafeFunction<
@@ -111,6 +81,36 @@ pub type JsSetupRuleConfigsCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to create a workspace.
+#[napi]
+pub type JsCreateWorkspaceCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(String,)>, // Workspace URI
+    // Return value
+    Promise<()>,
+    // Arguments (repeated)
+    FnArgs<(String,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
+/// JS callback to destroy a workspace.
+#[napi]
+pub type JsDestroyWorkspaceCb = ThreadsafeFunction<
+    // Arguments
+    FnArgs<(String,)>, // Workspace URI
+    // Return value
+    (),
+    // Arguments (repeated)
+    FnArgs<(String,)>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// JS callback to load JavaScript config files.
 #[napi]
 pub type JsLoadJsConfigsCb = ThreadsafeFunction<
@@ -125,7 +125,6 @@ pub type JsLoadJsConfigsCb = ThreadsafeFunction<
     // CalleeHandled
     false,
 >;
-
 /// NAPI entry point.
 ///
 /// JS side passes in:

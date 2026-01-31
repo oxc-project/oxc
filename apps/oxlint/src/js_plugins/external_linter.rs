@@ -45,37 +45,6 @@ pub fn create_external_linter(
     )
 }
 
-/// Wrap `createWorkspace` JS callback as a normal Rust function.
-///
-/// The JS-side function is async. The returned Rust function blocks the current thread
-/// until the `Promise` returned by the JS function resolves.
-///
-/// The returned function will panic if called outside of a Tokio runtime.
-fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspaceCb {
-    Arc::new(Box::new(move |workspace_uri| {
-        let cb = &cb;
-        let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((workspace_uri,))).await?.into_future().await
-            })
-        });
-
-        match res {
-            // `createWorkspace` completed successfully
-            Ok(()) => Ok(()),
-            // `createWorkspace` threw an error
-            Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
-        }
-    }))
-}
-
-/// Wrap `destroyWorkspace` JS callback as a normal Rust function.
-fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
-    Arc::new(Box::new(move |workspace_uri: String| {
-        let _ = cb.call(FnArgs::from((workspace_uri,)), ThreadsafeFunctionCallMode::Blocking);
-    }))
-}
-
 /// Result returned by `loadPlugin` JS callback.
 #[derive(Clone, Debug, Deserialize)]
 pub enum LoadPluginReturnValue {
@@ -331,4 +300,35 @@ unsafe fn get_buffer(
     };
 
     (buffer_id, Some(buffer))
+}
+
+/// Wrap `createWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side function is async. The returned Rust function blocks the current thread
+/// until the `Promise` returned by the JS function resolves.
+///
+/// The returned function will panic if called outside of a Tokio runtime.
+fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri| {
+        let cb = &cb;
+        let res = tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async move {
+                cb.call_async(FnArgs::from((workspace_uri,))).await?.into_future().await
+            })
+        });
+
+        match res {
+            // `createWorkspace` completed successfully
+            Ok(()) => Ok(()),
+            // `createWorkspace` threw an error
+            Err(err) => Err(format!("`createWorkspace` threw an error: {err}")),
+        }
+    }))
+}
+
+/// Wrap `destroyWorkspace` JS callback as a normal Rust function.
+fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
+    Arc::new(Box::new(move |workspace_uri: String| {
+        let _ = cb.call(FnArgs::from((workspace_uri,)), ThreadsafeFunctionCallMode::Blocking);
+    }))
 }
