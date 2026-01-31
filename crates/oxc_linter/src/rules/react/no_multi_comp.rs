@@ -444,7 +444,7 @@ fn get_component_name_from_parent(node: &AstNode, ctx: &LintContext) -> Option<S
                     return Some(id.name.to_string());
                 }
             }
-            _ => continue,
+            _ => return None,
         }
     }
     None
