@@ -164,7 +164,7 @@ pub trait RuntimeFileSystem {
     /// # Errors
     /// When no valid path is provided or the content is not valid UTF-8 Stream
     fn read_to_arena_str<'a>(
-        &'a self,
+        &self,
         path: &Path,
         allocator: &'a Allocator,
     ) -> Result<&'a str, std::io::Error>;
@@ -309,7 +309,7 @@ impl Runtime {
     }
 
     fn get_source_type_and_text<'a>(
-        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
         path: &Path,
         ext: &str,
         allocator: &'a Allocator,
@@ -849,7 +849,7 @@ impl Runtime {
 
     fn process_path<'a>(
         &'a self,
-        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
@@ -863,7 +863,7 @@ impl Runtime {
 
     fn process_path_to_module<'a>(
         &'a self,
-        file_system: &'a (dyn RuntimeFileSystem + Sync + Send),
+        file_system: &(dyn RuntimeFileSystem + Sync + Send),
         paths: &IndexSet<Arc<OsStr>, FxBuildHasher>,
         path: &Arc<OsStr>,
         check_syntax_errors: bool,
