@@ -29,6 +29,7 @@ teardown(async () => {
   const wsConfig = workspace.getConfiguration("oxc", fixturesWorkspaceUri());
   await vsConfig.update("unusedDisableDirectives", undefined);
   await wsConfig.update("fixKind", undefined, ConfigurationTarget.WorkspaceFolder);
+  await wsConfig.update("unusedDisableDirectives", undefined, ConfigurationTarget.WorkspaceFolder);
   await workspace.getConfiguration("editor").update("codeActionsOnSave", undefined);
   await workspace.saveAll();
 });
@@ -195,7 +196,10 @@ suite("code actions", () => {
     assert(Array.isArray(codeActionsNoFix));
     const quickFixesNoFix = codeActionsNoFix.filter((action) => action.kind?.value === "quickfix");
     strictEqual(quickFixesNoFix.length, 0);
-    await workspace.getConfiguration("oxc").update("unusedDisableDirectives", "warn");
+
+    await workspace
+      .getConfiguration("oxc", fixturesWorkspaceUri())
+      .update("unusedDisableDirectives", "warn", ConfigurationTarget.WorkspaceFolder);
     await workspace.saveAll();
     await sleep(500);
 

@@ -1,6 +1,6 @@
 import { strictEqual } from "assert";
-import { DiagnosticSeverity, workspace } from "vscode";
-import { activateExtension, getDiagnosticsWithoutClose, loadFixture, sleep } from "../test-helpers";
+import { DiagnosticSeverity, languages, Uri, window, workspace } from "vscode";
+import { activateExtension, fixturesWorkspaceUri, loadFixture, sleep } from "../test-helpers";
 import assert = require("assert");
 
 suiteSetup(async () => {
@@ -32,9 +32,18 @@ suite("E2E Server Linter", () => {
       return;
     }
     await loadFixture("js_plugins");
-    await sleep(500);
 
-    const diagnostics = await getDiagnosticsWithoutClose("index.js");
+    const fileUri = Uri.joinPath(fixturesWorkspaceUri(), "fixtures", "index.js");
+    await window.showTextDocument(fileUri);
+
+    // Wait for diagnostics to appear with retry logic.
+    // JS plugins may take longer to initialize than native linting.
+    let diagnostics = languages.getDiagnostics(fileUri);
+    for (let i = 0; i < 20 && diagnostics.length === 0; i++) {
+      await sleep(250);
+      diagnostics = languages.getDiagnostics(fileUri);
+    }
+
     strictEqual(diagnostics.length, 1);
 
     assert(typeof diagnostics[0].code == "string");
