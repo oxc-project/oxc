@@ -265,8 +265,8 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_type_operator(&mut self, operator: TSTypeOperatorOperator) -> TSType<'a> {
         let span = self.start_span();
+        let operator_span = self.cur_token().span();
         self.bump_any(); // bump operator
-        let operator_span = self.end_span(span);
         let ty = self.parse_type_operator_or_higher();
         if operator == TSTypeOperatorOperator::Readonly
             && !matches!(ty, TSType::TSArrayType(_))
@@ -402,9 +402,9 @@ impl<'a> ParserImpl<'a> {
                 }
             }
             Kind::Void => {
-                let span = self.start_span();
+                let span = self.cur_token().span();
                 self.bump_any();
-                self.ast.ts_type_void_keyword(self.end_span(span))
+                self.ast.ts_type_void_keyword(span)
             }
             Kind::This => {
                 let span = self.start_span();
@@ -452,51 +452,51 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_keyword_and_no_dot(&mut self) -> TSType<'a> {
-        let span = self.start_span();
+        let span = self.cur_token().span();
         let ty = match self.cur_kind() {
             Kind::Any => {
                 self.bump_any();
-                self.ast.ts_type_any_keyword(self.end_span(span))
+                self.ast.ts_type_any_keyword(span)
             }
             Kind::BigInt => {
                 self.bump_any();
-                self.ast.ts_type_big_int_keyword(self.end_span(span))
+                self.ast.ts_type_big_int_keyword(span)
             }
             Kind::Boolean => {
                 self.bump_any();
-                self.ast.ts_type_boolean_keyword(self.end_span(span))
+                self.ast.ts_type_boolean_keyword(span)
             }
             Kind::Never => {
                 self.bump_any();
-                self.ast.ts_type_never_keyword(self.end_span(span))
+                self.ast.ts_type_never_keyword(span)
             }
             Kind::Number => {
                 self.bump_any();
-                self.ast.ts_type_number_keyword(self.end_span(span))
+                self.ast.ts_type_number_keyword(span)
             }
             Kind::Object => {
                 self.bump_any();
-                self.ast.ts_type_object_keyword(self.end_span(span))
+                self.ast.ts_type_object_keyword(span)
             }
             Kind::String => {
                 self.bump_any();
-                self.ast.ts_type_string_keyword(self.end_span(span))
+                self.ast.ts_type_string_keyword(span)
             }
             Kind::Symbol => {
                 self.bump_any();
-                self.ast.ts_type_symbol_keyword(self.end_span(span))
+                self.ast.ts_type_symbol_keyword(span)
             }
             Kind::Undefined => {
                 self.bump_any();
-                self.ast.ts_type_undefined_keyword(self.end_span(span))
+                self.ast.ts_type_undefined_keyword(span)
             }
             Kind::Unknown => {
                 self.bump_any();
-                self.ast.ts_type_unknown_keyword(self.end_span(span))
+                self.ast.ts_type_unknown_keyword(span)
             }
             Kind::Null => {
                 self.bump_any();
-                self.ast.ts_type_null_keyword(self.end_span(span))
+                self.ast.ts_type_null_keyword(span)
             }
             _ => return self.unexpected(),
         };
@@ -682,9 +682,9 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_this_type_node(&mut self) -> TSThisType {
-        let span = self.start_span();
+        let span = self.cur_token().span();
         self.bump_any(); // bump `this`
-        self.ast.ts_this_type(self.end_span(span))
+        self.ast.ts_this_type(span)
     }
 
     fn parse_ts_type_constraint(&mut self) -> Option<TSType<'a>> {
