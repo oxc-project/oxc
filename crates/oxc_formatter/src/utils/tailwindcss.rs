@@ -23,6 +23,27 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 // Detection Functions
 // ============================================================================
 
+/// Returns the Tailwind context if we should sort classes in the given string literal.
+///
+/// Returns `Some(ctx)` when:
+/// - We're inside a Tailwind function call context
+/// - The context is not disabled (e.g., not inside a nested non-Tailwind call)
+/// - The string contains whitespace (indicating multiple classes to sort)
+pub fn tailwind_context_for_string_literal<'a>(
+    string: &AstNode<'a, StringLiteral<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> Option<TailwindContextEntry> {
+    f.context().tailwind_context().copied().filter(|ctx| {
+        let text = f.source_text().text_for(string);
+
+        if ctx.disabled {
+            return false;
+        }
+
+        text.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
+    })
+}
+
 /// Checks if a JSX attribute is a Tailwind class attribute.
 ///
 /// Returns `true` for:
