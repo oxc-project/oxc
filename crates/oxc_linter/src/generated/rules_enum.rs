@@ -1022,7 +1022,6 @@ pub enum RuleEnum {
     JestValidDescribeCallback(JestValidDescribeCallback),
     JestValidExpect(JestValidExpect),
     JestValidTitle(JestValidTitle),
-    ReactNoMultiComp(ReactNoMultiComp),
     ReactButtonHasType(ReactButtonHasType),
     ReactCheckedRequiresOnchangeOrReadonly(ReactCheckedRequiresOnchangeOrReadonly),
     ReactDisplayName(ReactDisplayName),
@@ -1055,6 +1054,7 @@ pub enum RuleEnum {
     ReactNoDirectMutationState(ReactNoDirectMutationState),
     ReactNoFindDomNode(ReactNoFindDomNode),
     ReactNoIsMounted(ReactNoIsMounted),
+    ReactNoMultiComp(ReactNoMultiComp),
     ReactNoNamespace(ReactNoNamespace),
     ReactNoRedundantShouldComponentUpdate(ReactNoRedundantShouldComponentUpdate),
     ReactNoRenderReturnValue(ReactNoRenderReturnValue),
@@ -1693,39 +1693,39 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => 338usize,
             Self::JestValidExpect(_) => 339usize,
             Self::JestValidTitle(_) => 340usize,
-            Self::ReactNoMultiComp(_) => 341usize,
-            Self::ReactButtonHasType(_) => 342usize,
-            Self::ReactCheckedRequiresOnchangeOrReadonly(_) => 343usize,
-            Self::ReactDisplayName(_) => 344usize,
-            Self::ReactExhaustiveDeps(_) => 345usize,
-            Self::ReactForbidDomProps(_) => 346usize,
-            Self::ReactForbidElements(_) => 347usize,
-            Self::ReactForwardRefUsesRef(_) => 348usize,
-            Self::ReactIframeMissingSandbox(_) => 349usize,
-            Self::ReactJsxBooleanValue(_) => 350usize,
-            Self::ReactJsxCurlyBracePresence(_) => 351usize,
-            Self::ReactJsxFilenameExtension(_) => 352usize,
-            Self::ReactJsxFragments(_) => 353usize,
-            Self::ReactJsxHandlerNames(_) => 354usize,
-            Self::ReactJsxKey(_) => 355usize,
-            Self::ReactJsxMaxDepth(_) => 356usize,
-            Self::ReactJsxNoCommentTextnodes(_) => 357usize,
-            Self::ReactJsxNoDuplicateProps(_) => 358usize,
-            Self::ReactJsxNoScriptUrl(_) => 359usize,
-            Self::ReactJsxNoTargetBlank(_) => 360usize,
-            Self::ReactJsxNoUndef(_) => 361usize,
-            Self::ReactJsxNoUselessFragment(_) => 362usize,
-            Self::ReactJsxPascalCase(_) => 363usize,
-            Self::ReactJsxPropsNoSpreadMulti(_) => 364usize,
-            Self::ReactJsxPropsNoSpreading(_) => 365usize,
-            Self::ReactNoArrayIndexKey(_) => 366usize,
-            Self::ReactNoChildrenProp(_) => 367usize,
-            Self::ReactNoDanger(_) => 368usize,
-            Self::ReactNoDangerWithChildren(_) => 369usize,
-            Self::ReactNoDidMountSetState(_) => 370usize,
-            Self::ReactNoDirectMutationState(_) => 371usize,
-            Self::ReactNoFindDomNode(_) => 372usize,
-            Self::ReactNoIsMounted(_) => 373usize,
+            Self::ReactButtonHasType(_) => 341usize,
+            Self::ReactCheckedRequiresOnchangeOrReadonly(_) => 342usize,
+            Self::ReactDisplayName(_) => 343usize,
+            Self::ReactExhaustiveDeps(_) => 344usize,
+            Self::ReactForbidDomProps(_) => 345usize,
+            Self::ReactForbidElements(_) => 346usize,
+            Self::ReactForwardRefUsesRef(_) => 347usize,
+            Self::ReactIframeMissingSandbox(_) => 348usize,
+            Self::ReactJsxBooleanValue(_) => 349usize,
+            Self::ReactJsxCurlyBracePresence(_) => 350usize,
+            Self::ReactJsxFilenameExtension(_) => 351usize,
+            Self::ReactJsxFragments(_) => 352usize,
+            Self::ReactJsxHandlerNames(_) => 353usize,
+            Self::ReactJsxKey(_) => 354usize,
+            Self::ReactJsxMaxDepth(_) => 355usize,
+            Self::ReactJsxNoCommentTextnodes(_) => 356usize,
+            Self::ReactJsxNoDuplicateProps(_) => 357usize,
+            Self::ReactJsxNoScriptUrl(_) => 358usize,
+            Self::ReactJsxNoTargetBlank(_) => 359usize,
+            Self::ReactJsxNoUndef(_) => 360usize,
+            Self::ReactJsxNoUselessFragment(_) => 361usize,
+            Self::ReactJsxPascalCase(_) => 362usize,
+            Self::ReactJsxPropsNoSpreadMulti(_) => 363usize,
+            Self::ReactJsxPropsNoSpreading(_) => 364usize,
+            Self::ReactNoArrayIndexKey(_) => 365usize,
+            Self::ReactNoChildrenProp(_) => 366usize,
+            Self::ReactNoDanger(_) => 367usize,
+            Self::ReactNoDangerWithChildren(_) => 368usize,
+            Self::ReactNoDidMountSetState(_) => 369usize,
+            Self::ReactNoDirectMutationState(_) => 370usize,
+            Self::ReactNoFindDomNode(_) => 371usize,
+            Self::ReactNoIsMounted(_) => 372usize,
+            Self::ReactNoMultiComp(_) => 373usize,
             Self::ReactNoNamespace(_) => 374usize,
             Self::ReactNoRedundantShouldComponentUpdate(_) => 375usize,
             Self::ReactNoRenderReturnValue(_) => 376usize,
@@ -2414,7 +2414,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::NAME,
             Self::JestValidExpect(_) => JestValidExpect::NAME,
             Self::JestValidTitle(_) => JestValidTitle::NAME,
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::NAME,
             Self::ReactButtonHasType(_) => ReactButtonHasType::NAME,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::NAME
@@ -2449,6 +2448,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::NAME,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::NAME,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::NAME,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::NAME,
             Self::ReactNoNamespace(_) => ReactNoNamespace::NAME,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::NAME
@@ -3189,7 +3189,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::CATEGORY,
             Self::JestValidExpect(_) => JestValidExpect::CATEGORY,
             Self::JestValidTitle(_) => JestValidTitle::CATEGORY,
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::CATEGORY,
             Self::ReactButtonHasType(_) => ReactButtonHasType::CATEGORY,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::CATEGORY
@@ -3224,6 +3223,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::CATEGORY,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::CATEGORY,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::CATEGORY,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::CATEGORY,
             Self::ReactNoNamespace(_) => ReactNoNamespace::CATEGORY,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::CATEGORY
@@ -3963,7 +3963,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::FIX,
             Self::JestValidExpect(_) => JestValidExpect::FIX,
             Self::JestValidTitle(_) => JestValidTitle::FIX,
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::FIX,
             Self::ReactButtonHasType(_) => ReactButtonHasType::FIX,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::FIX
@@ -3998,6 +3997,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FIX,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::FIX,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::FIX,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::FIX,
             Self::ReactNoNamespace(_) => ReactNoNamespace::FIX,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::FIX
@@ -4799,7 +4799,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::documentation(),
             Self::JestValidExpect(_) => JestValidExpect::documentation(),
             Self::JestValidTitle(_) => JestValidTitle::documentation(),
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::documentation(),
             Self::ReactButtonHasType(_) => ReactButtonHasType::documentation(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::documentation()
@@ -4834,6 +4833,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::documentation(),
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::documentation(),
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::documentation(),
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::documentation(),
             Self::ReactNoNamespace(_) => ReactNoNamespace::documentation(),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::documentation()
@@ -6207,8 +6207,6 @@ impl RuleEnum {
                 .or_else(|| JestValidExpect::schema(generator)),
             Self::JestValidTitle(_) => JestValidTitle::config_schema(generator)
                 .or_else(|| JestValidTitle::schema(generator)),
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::config_schema(generator)
-                .or_else(|| ReactNoMultiComp::schema(generator)),
             Self::ReactButtonHasType(_) => ReactButtonHasType::config_schema(generator)
                 .or_else(|| ReactButtonHasType::schema(generator)),
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
@@ -6293,6 +6291,8 @@ impl RuleEnum {
                 .or_else(|| ReactNoFindDomNode::schema(generator)),
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::config_schema(generator)
                 .or_else(|| ReactNoIsMounted::schema(generator)),
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::config_schema(generator)
+                .or_else(|| ReactNoMultiComp::schema(generator)),
             Self::ReactNoNamespace(_) => ReactNoNamespace::config_schema(generator)
                 .or_else(|| ReactNoNamespace::schema(generator)),
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
@@ -7477,7 +7477,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => "jest",
             Self::JestValidExpect(_) => "jest",
             Self::JestValidTitle(_) => "jest",
-            Self::ReactNoMultiComp(_) => "react",
             Self::ReactButtonHasType(_) => "react",
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => "react",
             Self::ReactDisplayName(_) => "react",
@@ -7510,6 +7509,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(_) => "react",
             Self::ReactNoFindDomNode(_) => "react",
             Self::ReactNoIsMounted(_) => "react",
+            Self::ReactNoMultiComp(_) => "react",
             Self::ReactNoNamespace(_) => "react",
             Self::ReactNoRedundantShouldComponentUpdate(_) => "react",
             Self::ReactNoRenderReturnValue(_) => "react",
@@ -8897,9 +8897,6 @@ impl RuleEnum {
             Self::JestValidTitle(_) => {
                 Ok(Self::JestValidTitle(JestValidTitle::from_configuration(value)?))
             }
-            Self::ReactNoMultiComp(_) => {
-                Ok(Self::ReactNoMultiComp(ReactNoMultiComp::from_configuration(value)?))
-            }
             Self::ReactButtonHasType(_) => {
                 Ok(Self::ReactButtonHasType(ReactButtonHasType::from_configuration(value)?))
             }
@@ -8995,6 +8992,9 @@ impl RuleEnum {
             }
             Self::ReactNoIsMounted(_) => {
                 Ok(Self::ReactNoIsMounted(ReactNoIsMounted::from_configuration(value)?))
+            }
+            Self::ReactNoMultiComp(_) => {
+                Ok(Self::ReactNoMultiComp(ReactNoMultiComp::from_configuration(value)?))
             }
             Self::ReactNoNamespace(_) => {
                 Ok(Self::ReactNoNamespace(ReactNoNamespace::from_configuration(value)?))
@@ -10274,7 +10274,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.to_configuration(),
             Self::JestValidExpect(rule) => rule.to_configuration(),
             Self::JestValidTitle(rule) => rule.to_configuration(),
-            Self::ReactNoMultiComp(rule) => rule.to_configuration(),
             Self::ReactButtonHasType(rule) => rule.to_configuration(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.to_configuration(),
             Self::ReactDisplayName(rule) => rule.to_configuration(),
@@ -10307,6 +10306,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(rule) => rule.to_configuration(),
             Self::ReactNoFindDomNode(rule) => rule.to_configuration(),
             Self::ReactNoIsMounted(rule) => rule.to_configuration(),
+            Self::ReactNoMultiComp(rule) => rule.to_configuration(),
             Self::ReactNoNamespace(rule) => rule.to_configuration(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.to_configuration(),
             Self::ReactNoRenderReturnValue(rule) => rule.to_configuration(),
@@ -10945,7 +10945,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run(node, ctx),
             Self::JestValidExpect(rule) => rule.run(node, ctx),
             Self::JestValidTitle(rule) => rule.run(node, ctx),
-            Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
             Self::ReactButtonHasType(rule) => rule.run(node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run(node, ctx),
             Self::ReactDisplayName(rule) => rule.run(node, ctx),
@@ -10978,6 +10977,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(rule) => rule.run(node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run(node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run(node, ctx),
+            Self::ReactNoMultiComp(rule) => rule.run(node, ctx),
             Self::ReactNoNamespace(rule) => rule.run(node, ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run(node, ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.run(node, ctx),
@@ -11614,7 +11614,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run_once(ctx),
             Self::JestValidExpect(rule) => rule.run_once(ctx),
             Self::JestValidTitle(rule) => rule.run_once(ctx),
-            Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
             Self::ReactButtonHasType(rule) => rule.run_once(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_once(ctx),
             Self::ReactDisplayName(rule) => rule.run_once(ctx),
@@ -11647,6 +11646,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(rule) => rule.run_once(ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_once(ctx),
             Self::ReactNoIsMounted(rule) => rule.run_once(ctx),
+            Self::ReactNoMultiComp(rule) => rule.run_once(ctx),
             Self::ReactNoNamespace(rule) => rule.run_once(ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_once(ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.run_once(ctx),
@@ -12339,7 +12339,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidExpect(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::JestValidTitle(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactButtonHasType(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -12374,6 +12373,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoFindDomNode(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoIsMounted(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::ReactNoMultiComp(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoNamespace(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -13040,7 +13040,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.should_run(ctx),
             Self::JestValidExpect(rule) => rule.should_run(ctx),
             Self::JestValidTitle(rule) => rule.should_run(ctx),
-            Self::ReactNoMultiComp(rule) => rule.should_run(ctx),
             Self::ReactButtonHasType(rule) => rule.should_run(ctx),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.should_run(ctx),
             Self::ReactDisplayName(rule) => rule.should_run(ctx),
@@ -13073,6 +13072,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(rule) => rule.should_run(ctx),
             Self::ReactNoFindDomNode(rule) => rule.should_run(ctx),
             Self::ReactNoIsMounted(rule) => rule.should_run(ctx),
+            Self::ReactNoMultiComp(rule) => rule.should_run(ctx),
             Self::ReactNoNamespace(rule) => rule.should_run(ctx),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.should_run(ctx),
             Self::ReactNoRenderReturnValue(rule) => rule.should_run(ctx),
@@ -13843,7 +13843,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::IS_TSGOLINT_RULE,
             Self::JestValidExpect(_) => JestValidExpect::IS_TSGOLINT_RULE,
             Self::JestValidTitle(_) => JestValidTitle::IS_TSGOLINT_RULE,
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::IS_TSGOLINT_RULE,
             Self::ReactButtonHasType(_) => ReactButtonHasType::IS_TSGOLINT_RULE,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
                 ReactCheckedRequiresOnchangeOrReadonly::IS_TSGOLINT_RULE
@@ -13878,6 +13877,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
             Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::IS_TSGOLINT_RULE,
             Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::IS_TSGOLINT_RULE,
             Self::ReactNoNamespace(_) => ReactNoNamespace::IS_TSGOLINT_RULE,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
                 ReactNoRedundantShouldComponentUpdate::IS_TSGOLINT_RULE
@@ -14642,7 +14642,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.types_info(),
             Self::JestValidExpect(rule) => rule.types_info(),
             Self::JestValidTitle(rule) => rule.types_info(),
-            Self::ReactNoMultiComp(rule) => rule.types_info(),
             Self::ReactButtonHasType(rule) => rule.types_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.types_info(),
             Self::ReactDisplayName(rule) => rule.types_info(),
@@ -14675,6 +14674,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(rule) => rule.types_info(),
             Self::ReactNoFindDomNode(rule) => rule.types_info(),
             Self::ReactNoIsMounted(rule) => rule.types_info(),
+            Self::ReactNoMultiComp(rule) => rule.types_info(),
             Self::ReactNoNamespace(rule) => rule.types_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.types_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.types_info(),
@@ -15311,7 +15311,6 @@ impl RuleEnum {
             Self::JestValidDescribeCallback(rule) => rule.run_info(),
             Self::JestValidExpect(rule) => rule.run_info(),
             Self::JestValidTitle(rule) => rule.run_info(),
-            Self::ReactNoMultiComp(rule) => rule.run_info(),
             Self::ReactButtonHasType(rule) => rule.run_info(),
             Self::ReactCheckedRequiresOnchangeOrReadonly(rule) => rule.run_info(),
             Self::ReactDisplayName(rule) => rule.run_info(),
@@ -15344,6 +15343,7 @@ impl RuleEnum {
             Self::ReactNoDirectMutationState(rule) => rule.run_info(),
             Self::ReactNoFindDomNode(rule) => rule.run_info(),
             Self::ReactNoIsMounted(rule) => rule.run_info(),
+            Self::ReactNoMultiComp(rule) => rule.run_info(),
             Self::ReactNoNamespace(rule) => rule.run_info(),
             Self::ReactNoRedundantShouldComponentUpdate(rule) => rule.run_info(),
             Self::ReactNoRenderReturnValue(rule) => rule.run_info(),
@@ -16054,7 +16054,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::JestValidDescribeCallback(JestValidDescribeCallback::default()),
         RuleEnum::JestValidExpect(JestValidExpect::default()),
         RuleEnum::JestValidTitle(JestValidTitle::default()),
-        RuleEnum::ReactNoMultiComp(ReactNoMultiComp::default()),
         RuleEnum::ReactButtonHasType(ReactButtonHasType::default()),
         RuleEnum::ReactCheckedRequiresOnchangeOrReadonly(
             ReactCheckedRequiresOnchangeOrReadonly::default(),
@@ -16089,6 +16088,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::ReactNoDirectMutationState(ReactNoDirectMutationState::default()),
         RuleEnum::ReactNoFindDomNode(ReactNoFindDomNode::default()),
         RuleEnum::ReactNoIsMounted(ReactNoIsMounted::default()),
+        RuleEnum::ReactNoMultiComp(ReactNoMultiComp::default()),
         RuleEnum::ReactNoNamespace(ReactNoNamespace::default()),
         RuleEnum::ReactNoRedundantShouldComponentUpdate(
             ReactNoRedundantShouldComponentUpdate::default(),
