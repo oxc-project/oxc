@@ -30,6 +30,10 @@ export interface Fixture {
     fix: boolean;
     // Run Oxlint single-threaded. Default: `false`.
     singleThread: boolean;
+    // Run Oxlint/ESLint in a specific working directory.
+    // If provided, `cwd` is relative to the fixture's directory.
+    // Default: `null`.
+    cwd: string | null;
   };
 }
 
@@ -38,6 +42,7 @@ const DEFAULT_OPTIONS: Fixture["options"] = {
   eslint: false,
   fix: false,
   singleThread: false,
+  cwd: null,
 };
 
 /**
@@ -78,6 +83,9 @@ export function getFixtures(): Fixture[] {
         "`oxlint`, `eslint`, `fix`, and `singleThread` properties in `options.json` must be booleans",
       );
     }
+    if (options.cwd !== null && typeof options.cwd !== "string") {
+      throw new TypeError("`cwd` property in `options.json` must be a string or null");
+    }
 
     fixtures.push({ name, dirPath, options });
   }
@@ -107,7 +115,7 @@ interface TestFixtureOptions {
  */
 export async function testFixtureWithCommand(options: TestFixtureOptions): Promise<void> {
   const { expect = defaultExpect } = options;
-  const { name: fixtureName, dirPath } = options.fixture,
+  const { name: fixtureName, dirPath, options: fixtureOptions } = options.fixture,
     pathPrefixLen = dirPath.length + 1;
 
   // Read all the files in fixture's directory
@@ -127,8 +135,10 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
   );
 
   // Run command
+  const cwd = fixtureOptions.cwd === null ? dirPath : pathJoin(dirPath, fixtureOptions.cwd);
+
   let { stdout, stderr, exitCode } = await execa(options.command, options.args, {
-    cwd: dirPath,
+    cwd,
     reject: false,
   });
 
