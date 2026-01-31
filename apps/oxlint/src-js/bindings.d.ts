@@ -36,11 +36,11 @@ export declare function getBufferOffset(buffer: Uint8Array): number
 
 /** JS callback to create a workspace. */
 export type JsCreateWorkspaceCb =
-  ((arg0: string) => Promise<undefined>)
+  ((arg: string) => Promise<undefined>)
 
 /** JS callback to destroy a workspace. */
 export type JsDestroyWorkspaceCb =
-  ((arg0: string) => void)
+  ((arg: string) => void)
 
 /** JS callback to lint a file. */
 export type JsLintFileCb =

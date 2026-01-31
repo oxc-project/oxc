@@ -85,11 +85,11 @@ pub type JsSetupRuleConfigsCb = ThreadsafeFunction<
 #[napi]
 pub type JsCreateWorkspaceCb = ThreadsafeFunction<
     // Arguments
-    FnArgs<(String,)>, // Workspace URI
+    String, // Workspace URI
     // Return value
     Promise<()>,
     // Arguments (repeated)
-    FnArgs<(String,)>,
+    String,
     // Error status
     Status,
     // CalleeHandled
@@ -100,11 +100,11 @@ pub type JsCreateWorkspaceCb = ThreadsafeFunction<
 #[napi]
 pub type JsDestroyWorkspaceCb = ThreadsafeFunction<
     // Arguments
-    FnArgs<(String,)>, // Workspace URI
+    String, // Workspace URI
     // Return value
     (),
     // Arguments (repeated)
-    FnArgs<(String,)>,
+    String,
     // Error status
     Status,
     // CalleeHandled

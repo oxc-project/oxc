@@ -312,9 +312,8 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspa
     Arc::new(Box::new(move |workspace_uri| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
-            tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((workspace_uri,))).await?.into_future().await
-            })
+            tokio::runtime::Handle::current()
+                .block_on(async move { cb.call_async(workspace_uri).await?.into_future().await })
         });
 
         match res {
@@ -328,7 +327,7 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspa
 
 /// Wrap `destroyWorkspace` JS callback as a normal Rust function.
 fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
-    Arc::new(Box::new(move |workspace_uri: String| {
-        let _ = cb.call(FnArgs::from((workspace_uri,)), ThreadsafeFunctionCallMode::Blocking);
+    Arc::new(Box::new(move |workspace_uri| {
+        let _ = cb.call(workspace_uri, ThreadsafeFunctionCallMode::Blocking);
     }))
 }
