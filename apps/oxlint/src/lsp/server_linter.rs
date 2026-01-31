@@ -73,7 +73,7 @@ impl ServerLinterBuilder {
 
         // Setup JS workspace. This must be done before loading any configs
         if let Some(external_linter) = &self.external_linter {
-            let res = (external_linter.create_workspace)(root_path.to_string_lossy().into_owned());
+            let res = (external_linter.create_workspace)(root_uri.as_str().to_string());
 
             if let Err(err) = res {
                 error!("Failed to setup JS workspace:\n{err}\n");
@@ -89,6 +89,7 @@ impl ServerLinterBuilder {
                 &mut external_plugin_store,
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
+                Some(root_uri.as_str()),
             )
         } else {
             FxHashMap::default()
@@ -120,6 +121,7 @@ impl ServerLinterBuilder {
             oxlintrc,
             self.external_linter.as_ref(),
             &mut external_plugin_store,
+            Some(root_uri.as_str()),
         )
         .unwrap_or_default();
 
@@ -154,15 +156,18 @@ impl ServerLinterBuilder {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store
-                .external_plugin_store()
-                .setup_rule_configs(root_path.to_string_lossy().into_owned(), external_linter);
+            let res = config_store.external_plugin_store().setup_rule_configs(
+                root_path.to_string_lossy().into_owned(),
+                Some(root_uri.as_str()),
+                external_linter,
+            );
             if let Err(err) = res {
                 error!("Failed to setup JS plugins config:\n{err}\n");
             }
         }
 
-        let linter = Linter::new(lint_options, config_store, external_linter.cloned());
+        let linter = Linter::new(lint_options, config_store, external_linter.cloned())
+            .with_workspace_uri(Some(root_uri.as_str()));
         let mut lint_service_options =
             LintServiceOptions::new(root_path.clone()).with_cross_module(use_cross_module);
 
@@ -183,7 +188,8 @@ impl ServerLinterBuilder {
             Err(e) => {
                 warn!("Failed to initialize type-aware linting: {e}");
                 let linter =
-                    Linter::new(lint_options, config_store_clone, external_linter.cloned());
+                    Linter::new(lint_options, config_store_clone, external_linter.cloned())
+                        .with_workspace_uri(Some(root_uri.as_str()));
                 LintRunnerBuilder::new(lint_service_options, linter)
                     .with_type_aware(false)
                     .with_fix_kind(fix_kind)
@@ -295,8 +301,7 @@ impl ToolBuilder for ServerLinterBuilder {
     fn shutdown(&self, root_uri: &Uri) {
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
-            let root_path = root_uri.to_file_path().unwrap();
-            (external_linter.destroy_workspace)(root_path.to_string_lossy().into_owned());
+            (external_linter.destroy_workspace)(root_uri.as_str().to_string());
         }
     }
 }
@@ -310,10 +315,12 @@ impl ServerLinterBuilder {
         external_plugin_store: &mut ExternalPluginStore,
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
+        workspace_uri: Option<&str>,
     ) -> FxHashMap<PathBuf, Config> {
         let config_paths = discover_configs_in_tree(root_path);
 
-        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, &[]);
+        let mut loader =
+            ConfigLoader::new(external_linter, external_plugin_store, &[], workspace_uri);
         let (configs, errors) = loader.load_many(config_paths);
 
         for error in errors {
@@ -1144,6 +1151,7 @@ mod test {
             &mut external_plugin_store,
             &mut nested_ignore_patterns,
             &mut extended_paths,
+            None,
         );
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results

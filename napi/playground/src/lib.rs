@@ -399,6 +399,7 @@ impl Oxc {
                     oxlintrc,
                     None,
                     &mut external_plugin_store,
+                    None,
                 )
                 .unwrap_or_default();
                 config_builder.build(&mut external_plugin_store)

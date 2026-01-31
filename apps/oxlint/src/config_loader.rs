@@ -161,6 +161,7 @@ pub struct ConfigLoader<'a> {
     external_linter: Option<&'a ExternalLinter>,
     external_plugin_store: &'a mut ExternalPluginStore,
     filters: &'a [LintFilter],
+    workspace_uri: Option<&'a str>,
 }
 
 impl<'a> ConfigLoader<'a> {
@@ -170,12 +171,14 @@ impl<'a> ConfigLoader<'a> {
     /// * `external_linter` - Optional external linter for plugin support
     /// * `external_plugin_store` - Store for external plugins
     /// * `filters` - Lint filters to apply to configs
+    /// * `workspace_uri` - Workspace URI  - only `Some` in LSP, `None` in CLI
     pub fn new(
         external_linter: Option<&'a ExternalLinter>,
         external_plugin_store: &'a mut ExternalPluginStore,
         filters: &'a [LintFilter],
+        workspace_uri: Option<&'a str>,
     ) -> Self {
-        Self { external_linter, external_plugin_store, filters }
+        Self { external_linter, external_plugin_store, filters, workspace_uri }
     }
 
     /// Load a single config from a file path
@@ -191,6 +194,7 @@ impl<'a> ConfigLoader<'a> {
             oxlintrc,
             self.external_linter,
             self.external_plugin_store,
+            self.workspace_uri,
         )
         .map_err(|e| ConfigLoadError::Build { path: path.to_path_buf(), error: e.to_string() })?;
 

@@ -1,7 +1,7 @@
 import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
 import { setupFileContext, resetFileContext } from "./context.ts";
 import { registeredRules } from "./load.ts";
-import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
+import { allOptions, cwds, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
@@ -9,7 +9,7 @@ import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
-import { getResponsibleWorkspace } from "../workspace/index.ts";
+import { getCliWorkspace } from "../workspace/index.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -51,6 +51,7 @@ const afterHooks: AfterHook[] = [];
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns Diagnostics or error serialized to JSON string
  */
 export function lintFile(
@@ -61,9 +62,19 @@ export function lintFile(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  workspaceUri: string | null,
 ): string | null {
   try {
-    lintFileImpl(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
+    lintFileImpl(
+      filePath,
+      bufferId,
+      buffer,
+      ruleIds,
+      optionsIds,
+      settingsJSON,
+      globalsJSON,
+      workspaceUri,
+    );
 
     let ret: string | null = null;
 
@@ -97,6 +108,7 @@ export function lintFile(
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for this file, as JSON string
  * @param globalsJSON - Globals for this file, as JSON string
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @throws {Error} If any parameters are invalid
  * @throws {*} If any rule throws
  */
@@ -108,6 +120,7 @@ export function lintFileImpl(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  workspaceUri: string | null,
 ) {
   // If new buffer, add it to `buffers` array. Otherwise, get existing buffer from array.
   // Do this before checks below, to make sure buffer doesn't get garbage collected when not expected
@@ -141,16 +154,20 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
-  // Get workspace containing file
-  const workspace = getResponsibleWorkspace(filePath);
-  debugAssertIsNonNull(workspace, "No workspace responsible for file being linted");
+  // Get workspace containing file.
+  // In CLI (`workspaceUri` is `null`), use the single workspace (the CWD passed to `setupRuleConfigs`).
+  // In LSP, use the provided workspace URI.
+  if (workspaceUri === null) workspaceUri = getCliWorkspace();
+
+  const cwd = cwds.get(workspaceUri);
+  debugAssertIsNonNull(cwd, `No CWD registered for workspace "${workspaceUri}"`);
 
   // Pass file path and CWD to context module, so `Context`s know what file is being linted
-  setupFileContext(filePath, workspace);
+  setupFileContext(filePath, cwd);
 
   // Load all relevant workspace configurations
-  const rules = registeredRules.get(workspace)!;
-  const workspaceOptions = allOptions.get(workspace);
+  const rules = registeredRules.get(workspaceUri)!;
+  const workspaceOptions = allOptions.get(workspaceUri);
   debugAssertIsNonNull(rules, "No rules registered for workspace");
   debugAssertIsNonNull(workspaceOptions, "No options registered for workspace");
 
@@ -182,7 +199,6 @@ export function lintFileImpl(
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
-    debugAssertIsNonNull(workspaceOptions);
     debugAssert(optionsId < workspaceOptions.length, "Options ID out of bounds");
 
     // If the rule has no user-provided options, use the plugin-provided default

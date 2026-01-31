@@ -1,4 +1,4 @@
-import { getResponsibleWorkspace, isWorkspaceResponsible } from "../workspace/index.ts";
+import { getCliWorkspace } from "../workspace/index.ts";
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
@@ -81,9 +81,6 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
   readonly afterHook: AfterHook | null;
 }
 
-// Absolute paths of plugins which have been loaded
-export const registeredPluginUrls = new Set<string>();
-
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
 export const registeredRules: Map<WorkspaceIdentifier, RuleDetails[]> = new Map();
@@ -109,21 +106,18 @@ interface PluginDetails {
  * @param url - Absolute path of plugin file as a `file://...` URL
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns Plugin details or error serialized to JSON string
  */
 export async function loadPlugin(
   url: string,
   pluginName: string | null,
   pluginNameIsAlias: boolean,
+  workspaceUri: string | null,
 ): Promise<string> {
   try {
-    if (DEBUG) {
-      if (registeredPluginUrls.has(url)) throw new Error("This plugin has already been registered");
-      registeredPluginUrls.add(url);
-    }
-
     const plugin = (await import(url)).default as Plugin;
-    const res = registerPlugin(url, plugin, pluginName, pluginNameIsAlias);
+    const res = registerPlugin(plugin, pluginName, pluginNameIsAlias, workspaceUri);
     return JSON.stringify({ Success: res });
   } catch (err) {
     return JSON.stringify({ Failure: getErrorMessage(err) });
@@ -133,29 +127,31 @@ export async function loadPlugin(
 /**
  * Register a plugin.
  *
- * @param url - Plugin URL
  * @param plugin - Plugin
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param workspaceUri - Workspace URI (`null` in CLI, string in LSP)
  * @returns - Plugin details
  * @throws {Error} If `plugin.meta.name` is `null` / `undefined` and `packageName` not provided
  * @throws {TypeError} If one of plugin's rules is malformed, or its `createOnce` method returns invalid visitor
  * @throws {TypeError} If `plugin.meta.name` is not a string
  */
 export function registerPlugin(
-  url: string,
   plugin: Plugin,
   pluginName: string | null,
   pluginNameIsAlias: boolean,
+  workspaceUri: string | null,
 ): PluginDetails {
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
-  const workspace = getResponsibleWorkspace(url.replace(/^file:\/\//, ""));
-  debugAssertIsNonNull(workspace, "Plugin url must belong to a workspace");
-  debugAssert(registeredRules.has(workspace), "Workspace must have registered rules array");
 
-  const registeredRulesForWorkspace = registeredRules.get(workspace)!;
+  // In CLI mode (`workspaceUri` is `null`), use the CWD from `setupRuleConfigs` (stored as CLI_WORKSPACE).
+  // In LSP mode, use the provided workspace URI.
+  if (workspaceUri === null) workspaceUri = getCliWorkspace();
+
+  const registeredRulesForWorkspace = registeredRules.get(workspaceUri);
+  debugAssertIsNonNull(registeredRulesForWorkspace, "Workspace must have registered rules array");
 
   const offset = registeredRulesForWorkspace.length ?? 0;
   const { rules } = plugin;
@@ -449,10 +445,5 @@ export function setupPluginSystemForWorkspace(workspace: WorkspaceIdentifier) {
  * Remove all plugins and rules associated with a workspace.
  */
 export function removePluginsInWorkspace(workspace: WorkspaceIdentifier) {
-  for (const url of registeredPluginUrls) {
-    if (isWorkspaceResponsible(workspace, url.replace(/^file:\/\//, ""))) {
-      registeredPluginUrls.delete(url);
-    }
-  }
   registeredRules.delete(workspace);
 }

@@ -344,6 +344,11 @@ interface Diagnostic {
 // Default path (without extension) for test cases if not provided
 const DEFAULT_FILENAME_BASE = "file";
 
+// Dummy workspace URI.
+// This just needs to be unique, and we only have a single workspace in existence at any time.
+// It can be anything, so just use empty string.
+const WORKSPACE_URI = "";
+
 // ------------------------------------------------------------------------------
 // `RuleTester` class
 // ------------------------------------------------------------------------------
@@ -999,11 +1004,11 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     path = pathJoin(cwd, filename);
   }
 
-  createWorkspace(cwd);
+  createWorkspace(WORKSPACE_URI);
 
   try {
     // Register plugin. This adds rule to `registeredRules` array.
-    registerPlugin(path, plugin, null, false);
+    registerPlugin(plugin, null, false, null);
 
     // Set up options
     const optionsId = setupOptions(test, cwd);
@@ -1021,7 +1026,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
     // Lint file.
     // Buffer is stored already, at index 0. No need to pass it.
-    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON);
+    lintFileImpl(path, 0, null, [0], [optionsId], settingsJSON, globalsJSON, null);
 
     // Return diagnostics
     const ruleId = `${plugin.meta!.name!}/${Object.keys(plugin.rules)[0]}`;
@@ -1061,7 +1066,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     });
   } finally {
     // Reset state
-    destroyWorkspace(cwd);
+    destroyWorkspace(WORKSPACE_URI);
 
     // Even if there hasn't been an error, do a full reset of state just to be sure.
     // This includes emptying `diagnostics`.
@@ -1237,6 +1242,7 @@ function setupOptions(test: TestCase, cwd: string): number {
       options: allOptions,
       ruleIds: allRuleIds,
       cwd,
+      workspaceUri: null,
     });
   } catch (err) {
     throw new Error(`Failed to serialize options: ${err}`);

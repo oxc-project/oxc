@@ -566,6 +566,7 @@ impl Tester {
                             Oxlintrc::deserialize(v).unwrap(),
                             None,
                             &mut external_plugin_store,
+                            None,
                         )
                         .unwrap()
                     })

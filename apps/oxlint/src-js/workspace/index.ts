@@ -13,19 +13,19 @@ import { removeOptionsInWorkspace, setupOptionsForWorkspace } from "../plugins/o
 import { debugAssert } from "../utils/asserts";
 
 /**
- * Type representing a workspace identifier.
- * Currently, this is just a string representing the workspace root directory.
+ * Type representing a workspace ID.
+ * Currently, this is just a string representing the workspace root directory as `file://` URL.
  */
 export type WorkspaceIdentifier = string;
 
 /**
  * Type representing a workspace.
- * Currently it only contains the identifier.
+ * Currently it only contains the workspace root directory as `file://` URL.
  */
 export type Workspace = WorkspaceIdentifier;
 
 /**
- * Set of workspace root directories.
+ * Set of workspace IDs.
  */
 const workspaces = new Set<Workspace>();
 
@@ -52,31 +52,13 @@ export function destroyWorkspace(workspace: WorkspaceIdentifier): undefined {
 }
 
 /**
- * Get a workspace by its identifier.
+ * Gets the CLI workspace ID.
+ * In CLI mode, there is exactly one workspace (the CWD), so this returns that workspace ID.
  */
-export function getWorkspace(workspace: WorkspaceIdentifier): Workspace | null {
-  return workspaces.has(workspace) ? workspace : null;
-}
-
-/**
- * Checks if a filePath is responsible for a workspace.
- */
-export const isWorkspaceResponsible = (workspace: WorkspaceIdentifier, url: string): boolean => {
-  return getResponsibleWorkspace(url) === workspace;
-};
-
-/**
- * Gets the workspace responsible for a given filePath.
- * Returns `null` if no workspace is responsible.
- *
- * This function is kept in sync with Rust's `WorkspaceWorker::is_responsible_for_file` (`oxc_language_server` crate).
- * Changing this function requires a corresponding change in Rust implementation.
- */
-export const getResponsibleWorkspace = (filePath: string): Workspace | null => {
-  return (
-    [...workspaces.keys()]
-      .filter((ws) => filePath.startsWith(ws))
-      // Get the longest matching workspace path
-      .sort((a, b) => b.length - a.length)[0] ?? null
+export function getCliWorkspace(): Workspace {
+  debugAssert(
+    workspaces.size === 1,
+    "getCliWorkspace should only be used in CLI mode with 1 workspace",
   );
-};
+  return workspaces.values().next().value;
+}

@@ -44,7 +44,7 @@ export type JsDestroyWorkspaceCb =
 
 /** JS callback to lint a file. */
 export type JsLintFileCb =
-  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string) => string | null)
+  ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string, arg7?: string | undefined | null) => string | null)
 
 /** JS callback to load JavaScript config files. */
 export type JsLoadJsConfigsCb =
@@ -52,7 +52,7 @@ export type JsLoadJsConfigsCb =
 
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
-  ((arg0: string, arg1: string | undefined | null, arg2: boolean) => Promise<string>)
+  ((arg0: string, arg1: string | undefined | null, arg2: boolean, arg3?: string | undefined | null) => Promise<string>)
 
 /** JS callback to setup configs. */
 export type JsSetupRuleConfigsCb =

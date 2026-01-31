@@ -20,7 +20,7 @@ use crate::{
 #[napi]
 pub type JsCreateWorkspaceCb = ThreadsafeFunction<
     // Arguments
-    FnArgs<(String,)>, // Workspace directory
+    FnArgs<(String,)>, // Workspace URI
     // Return value
     Promise<()>,
     // Arguments (repeated)
@@ -35,7 +35,7 @@ pub type JsCreateWorkspaceCb = ThreadsafeFunction<
 #[napi]
 pub type JsDestroyWorkspaceCb = ThreadsafeFunction<
     // Arguments
-    FnArgs<(String,)>, // Workspace directory
+    FnArgs<(String,)>, // Workspace URI
     // Return value
     (),
     // Arguments (repeated)
@@ -58,11 +58,14 @@ pub type JsLoadPluginCb = ThreadsafeFunction<
         Option<String>,
         // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
         bool,
+        // Workspace URI (e.g. `file:///path/to/workspace`).
+        // `None` in CLI mode (single workspace), `Some` in LSP mode.
+        Option<String>,
     )>,
     // Return value
     Promise<String>, // `PluginLoadResult`, serialized to JSON
     // Arguments (repeated)
-    FnArgs<(String, Option<String>, bool)>,
+    FnArgs<(String, Option<String>, bool, Option<String>)>,
     // Error status
     Status,
     // CalleeHandled
@@ -81,11 +84,12 @@ pub type JsLintFileCb = ThreadsafeFunction<
         Vec<u32>,           // Array of options IDs
         String,             // Settings for the file, as JSON string
         String,             // Globals for the file, as JSON string
+        Option<String>,     // Workspace URI (`None` in CLI mode, `Some` in LSP mode)
     )>,
     // Return value
     Option<String>, // `Vec<LintFileResult>`, serialized to JSON, or `None` if no diagnostics
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, Vec<u32>, String, String)>,
+    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, Vec<u32>, String, String, Option<String>)>,
     // Error status
     Status,
     // CalleeHandled

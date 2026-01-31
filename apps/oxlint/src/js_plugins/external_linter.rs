@@ -51,11 +51,11 @@ pub fn create_external_linter(
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterCreateWorkspaceCb {
-    Arc::new(Box::new(move |workspace_dir| {
+    Arc::new(Box::new(move |workspace_uri| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((workspace_dir,))).await?.into_future().await
+                cb.call_async(FnArgs::from((workspace_uri,))).await?.into_future().await
             })
         });
 
@@ -72,8 +72,8 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterC
 fn wrap_destroy_workspace(
     cb: JsDestroyWorkspaceCb,
 ) -> oxc_linter::ExternalLinterDestroyWorkspaceCb {
-    Arc::new(Box::new(move |root_dir: String| {
-        let _ = cb.call(FnArgs::from((root_dir,)), ThreadsafeFunctionCallMode::Blocking);
+    Arc::new(Box::new(move |workspace_uri: String| {
+        let _ = cb.call(FnArgs::from((workspace_uri,)), ThreadsafeFunctionCallMode::Blocking);
     }))
 }
 
@@ -91,14 +91,19 @@ pub enum LoadPluginReturnValue {
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
 fn wrap_load_plugin(cb: JsLoadPluginCb) -> ExternalLinterLoadPluginCb {
-    Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias| {
+    Arc::new(Box::new(move |plugin_url, plugin_name, plugin_name_is_alias, workspace_uri| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
-                cb.call_async(FnArgs::from((plugin_url, plugin_name, plugin_name_is_alias)))
-                    .await?
-                    .into_future()
-                    .await
+                cb.call_async(FnArgs::from((
+                    plugin_url,
+                    plugin_name,
+                    plugin_name_is_alias,
+                    workspace_uri,
+                )))
+                .await?
+                .into_future()
+                .await
             })
         });
 
@@ -185,6 +190,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
               options_ids: Vec<u32>,
               settings_json: String,
               globals_json: String,
+              workspace_uri: Option<String>,
               allocator: &Allocator| {
             let (tx, rx) = channel();
 
@@ -206,6 +212,7 @@ fn wrap_lint_file(cb: JsLintFileCb) -> ExternalLinterLintFileCb {
                     options_ids,
                     settings_json,
                     globals_json,
+                    workspace_uri,
                 )),
                 ThreadsafeFunctionCallMode::NonBlocking,
                 move |result, _env| {

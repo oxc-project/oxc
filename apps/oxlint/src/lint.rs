@@ -192,7 +192,10 @@ impl CliRunner {
 
         // Setup JS workspace before loading any configs (config parsing can load JS plugins).
         if let Some(external_linter) = &external_linter {
-            let res = (external_linter.create_workspace)(self.cwd.to_string_lossy().into_owned());
+            // Workspace URI doesn't need to be a valid URI, it just needs to be unique.
+            // In CLI we only have a single workspace in existence at any time, so it can be anything.
+            // So just use empty string.
+            let res = (external_linter.create_workspace)(String::new());
 
             if let Err(err) = res {
                 print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
@@ -205,6 +208,7 @@ impl CliRunner {
             oxlintrc.clone(),
             external_linter,
             &mut external_plugin_store,
+            None,
         ) {
             Ok(builder) => builder,
             Err(e) => {
@@ -294,9 +298,11 @@ impl CliRunner {
 
         // Send JS plugins config to JS side
         if let Some(external_linter) = &external_linter {
-            let res = config_store
-                .external_plugin_store()
-                .setup_rule_configs(self.cwd.to_string_lossy().into_owned(), external_linter);
+            let res = config_store.external_plugin_store().setup_rule_configs(
+                self.cwd.to_string_lossy().into_owned(),
+                None,
+                external_linter,
+            );
             if let Err(err) = res {
                 print_and_flush_stdout(
                     stdout,
@@ -465,7 +471,7 @@ impl CliRunner {
         let discovered_configs = discover_configs_in_ancestors(&config_paths);
 
         // Load all discovered configs
-        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, filters);
+        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, filters, None);
         let (configs, errors) = loader.load_many(discovered_configs);
 
         // Fail on first error (CLI requires all configs to be valid)

@@ -11,6 +11,7 @@ use std::{
     path::Path,
     ptr::{self, NonNull},
     rc::Rc,
+    string::ToString,
 };
 
 use oxc_allocator::{Allocator, AllocatorPool, CloneIn};
@@ -112,6 +113,7 @@ pub struct Linter {
     options: LintOptions,
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
+    workspace_uri: Option<Box<str>>,
 }
 
 impl Linter {
@@ -120,7 +122,13 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter }
+        Self { options, config, external_linter, workspace_uri: None }
+    }
+
+    #[must_use]
+    pub fn with_workspace_uri(mut self, workspace_uri: Option<&str>) -> Self {
+        self.workspace_uri = workspace_uri.map(Box::from);
+        self
     }
 
     /// Set the kind of auto fixes to apply.
@@ -607,6 +615,7 @@ impl Linter {
             external_rules.iter().map(|(_, options_id, _)| options_id.raw()).collect(),
             settings_json,
             globals_json,
+            self.workspace_uri.as_ref().map(ToString::to_string),
             allocator,
         );
         match result {

@@ -20,23 +20,25 @@ let loadJsConfigs: typeof import("./js_config.ts").loadJsConfigs | null = null;
  * @param path - Absolute path of plugin file
  * @param pluginName - Plugin name (either alias or package name)
  * @param pluginNameIsAlias - `true` if plugin name is an alias (takes priority over name that plugin defines itself)
+ * @param workspaceUri - Workspace URI (`null` in CLI mode, `string` in LSP mode)
  * @returns Plugin details or error serialized to JSON string
  */
 function loadPluginWrapper(
   path: string,
   pluginName: string | null,
   pluginNameIsAlias: boolean,
+  workspaceUri: string | null,
 ): Promise<string> {
   if (loadPlugin === null) {
     // Use promises here instead of making `loadPluginWrapper` an async function,
     // to avoid a micro-tick and extra wrapper `Promise` in all later calls to `loadPluginWrapper`
     return import("./plugins/index.ts").then((mod) => {
       ({ loadPlugin, lintFile, setupRuleConfigs } = mod);
-      return loadPlugin(path, pluginName, pluginNameIsAlias);
+      return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
     });
   }
   debugAssertIsNonNull(loadPlugin);
-  return loadPlugin(path, pluginName, pluginNameIsAlias);
+  return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
 }
 
 /**
@@ -64,6 +66,7 @@ function setupRuleConfigsWrapper(optionsJSON: string): string | null {
  * @param optionsIds - IDs of options to use for rules on this file, in same order as `ruleIds`
  * @param settingsJSON - Settings for file, as JSON
  * @param globalsJSON - Globals for file, as JSON
+ * @param workspaceUri - Workspace URI (`null` in CLI mode, `string` in LSP mode)
  * @returns Diagnostics or error serialized to JSON string
  */
 function lintFileWrapper(
@@ -74,11 +77,21 @@ function lintFileWrapper(
   optionsIds: number[],
   settingsJSON: string,
   globalsJSON: string,
+  workspaceUri: string | null,
 ): string | null {
   // `lintFileWrapper` is never called without `loadPluginWrapper` being called first,
   // so `lintFile` must be defined here
   debugAssertIsNonNull(lintFile);
-  return lintFile(filePath, bufferId, buffer, ruleIds, optionsIds, settingsJSON, globalsJSON);
+  return lintFile(
+    filePath,
+    bufferId,
+    buffer,
+    ruleIds,
+    optionsIds,
+    settingsJSON,
+    globalsJSON,
+    workspaceUri,
+  );
 }
 
 /**

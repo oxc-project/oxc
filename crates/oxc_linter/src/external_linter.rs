@@ -24,6 +24,9 @@ pub type ExternalLinterLoadPluginCb = Arc<
                 Option<String>,
                 // `true` if plugin name is an alias (takes priority over name that plugin defines itself)
                 bool,
+                // Workspace URI (e.g. `file:///path/to/workspace`).
+                // `None` in CLI mode (single workspace), `Some` in LSP mode.
+                Option<String>,
             ) -> Result<LoadPluginResult, String>
             + Send
             + Sync,
@@ -46,6 +49,9 @@ pub type ExternalLinterLintFileCb = Arc<
                 String,
                 // Globals JSON
                 String,
+                // Workspace URI (e.g. `file:///path/to/workspace`).
+                // `None` in CLI mode (single workspace), `Some` in LSP mode.
+                Option<String>,
                 // Allocator
                 &Allocator,
             ) -> Result<Vec<LintFileResult>, String>
