@@ -8,6 +8,7 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
+    rules::ContextHost,
 };
 
 fn no_multi_comp_diagnostic(span: Span) -> OxcDiagnostic {
@@ -23,32 +24,42 @@ struct NoMultiCompConfig {
     // When `true`, the rule will ignore stateless components and will allow you to have multiple
     // stateless components in the same file. Or one stateful component and one-or-more stateless
     // components in the same file.
+    //
+    // Stateless components are function components,
     ignore_stateless: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct NoMultiComp(NoMultiCompConfig);
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Briefly describe the rule's purpose.
+    /// Prevent multiple React components for being defined in the same file.
     ///
     /// ### Why is this bad?
     ///
-    /// Explain why violating this rule is problematic.
+    /// TODO: Explain why violating this rule is problematic.
     ///
     /// ### Examples
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// function Foo({ name }) {
+    ///   return <div>Hello {name}</div>;
+    /// }
+    ///
+    /// function Bar({ name }) {
+    ///   return <div>Hello again {name}</div>;
+    /// }
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```jsx
-    /// FIXME: Tests will fail if examples are missing or syntactically incorrect.
+    /// // Only one component defined in this file
+    /// function Foo({ name }) {
+    ///   return <div>Hello {name}</div>;
+    /// }
     /// ```
     NoMultiComp,
     react,
@@ -63,6 +74,10 @@ impl Rule for NoMultiComp {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[test]
