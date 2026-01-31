@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import { getResponsibleWorkspace, isWorkspaceResponsible } from "../workspace/index.ts";
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
@@ -151,7 +152,7 @@ export function registerPlugin(
   // TODO: Use a validation library to assert the shape of the plugin, and of rules
 
   pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
-  const workspace = getResponsibleWorkspace(url.replace(/^file:\/\//, ""));
+  const workspace = getResponsibleWorkspace(fileURLToPath(url));
   debugAssertIsNonNull(workspace, "Plugin url must belong to a workspace");
   debugAssert(registeredRules.has(workspace), "Workspace must have registered rules array");
 
@@ -450,7 +451,7 @@ export function setupPluginSystemForWorkspace(workspace: WorkspaceIdentifier) {
  */
 export function removePluginsInWorkspace(workspace: WorkspaceIdentifier) {
   for (const url of registeredPluginUrls) {
-    if (isWorkspaceResponsible(workspace, url.replace(/^file:\/\//, ""))) {
+    if (isWorkspaceResponsible(workspace, fileURLToPath(url))) {
       registeredPluginUrls.delete(url);
     }
   }

@@ -10,6 +10,7 @@
 import { default as assert, AssertionError } from "node:assert";
 import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:path";
 import util from "node:util";
+import { pathToFileURL } from "node:url";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
 import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
 import { registerPlugin } from "../plugins/load.ts";
@@ -1003,7 +1004,7 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
 
   try {
     // Register plugin. This adds rule to `registeredRules` array.
-    registerPlugin(path, plugin, null, false);
+    registerPlugin(pathToFileURL(path).toString(), plugin, null, false);
 
     // Set up options
     const optionsId = setupOptions(test, cwd);
