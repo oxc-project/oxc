@@ -12,6 +12,6 @@ export const definePlugin = _definePlugin;
 export const defineRule = _defineRule;
 
 /**
- * @deprecated Import from `oxlint/rule-tester` instead
+ * @deprecated Import from `oxlint/plugins-dev` instead
  */
 export const RuleTester = _RuleTester;
