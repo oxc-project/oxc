@@ -24,8 +24,6 @@ struct NoMultiCompConfig {
     // When `true`, the rule will ignore stateless components and will allow you to have multiple
     // stateless components in the same file. Or one stateful component and one-or-more stateless
     // components in the same file.
-    //
-    // Stateless components are function components,
     ignore_stateless: bool,
 }
 
