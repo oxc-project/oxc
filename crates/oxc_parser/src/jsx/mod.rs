@@ -238,8 +238,11 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_child(&mut self) -> Option<JSXChild<'a>> {
         match self.cur_kind() {
             Kind::LAngle => {
+                // </ close tag - don't consume, let caller handle it
+                if self.lexer.peek_token().kind() == Kind::Slash {
+                    return None;
+                }
                 let span = self.start_span();
-                let checkpoint = self.checkpoint();
                 self.bump_any(); // bump `<`
                 let kind = self.cur_kind();
                 // <> open fragment
@@ -249,11 +252,6 @@ impl<'a> ParserImpl<'a> {
                 // <ident open element
                 if kind == Kind::Ident || kind.is_any_keyword() {
                     return Some(JSXChild::Element(self.parse_jsx_element(span, true)));
-                }
-                // </ close fragment
-                if kind == Kind::Slash {
-                    self.rewind(checkpoint);
-                    return None;
                 }
                 self.unexpected()
             }
