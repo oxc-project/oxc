@@ -842,14 +842,16 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
     // Below are our own extensions, just remove them
     obj.remove("ignorePatterns");
     obj.remove("insertFinalNewline");
-    obj.remove("experimentalSortImports");
+    // NOTE: Keep `experimentalSortImports` for oxc plugin in Vue/HTML files
+    // obj.remove("experimentalSortImports");
     obj.remove("experimentalSortPackageJson");
 
     // Map `experimentalTailwindcss` options to Prettier's tailwind plugin format,
     // by adding `tailwind` prefix to each field.
     // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
-    if let Some(tailwind) = obj.remove("experimentalTailwindcss")
-        && let Some(tailwind) = tailwind.as_object()
+    // NOTE: Keep the original `experimentalTailwindcss` for oxc plugin in Vue/HTML files
+    if let Some(tailwind) = obj.get("experimentalTailwindcss")
+        && let Some(tailwind) = tailwind.clone().as_object().cloned()
     {
         // NOTE: Internal flag for JS side to signal that plugin is enabled
         obj.insert("_tailwindPluginEnabled".to_string(), Value::Bool(true));
@@ -1113,9 +1115,9 @@ mod tests_populate_prettier_config {
         let obj = raw_config.as_object().unwrap();
         // User-specified value is preserved via FormatOptions
         assert_eq!(obj.get("printWidth").unwrap(), 80);
-        // oxfmt extensions are removed
+        // oxfmt extensions are removed (except experimentalSortImports which is kept for oxc plugin)
         assert!(!obj.contains_key("ignorePatterns"));
-        assert!(!obj.contains_key("experimentalSortImports"));
+        assert!(obj.contains_key("experimentalSortImports"));
     }
 
     #[test]

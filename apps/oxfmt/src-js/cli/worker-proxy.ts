@@ -15,6 +15,9 @@ export async function initExternalFormatter(numThreads: number): Promise<string[
     filename: new URL("./cli-worker.js", import.meta.url).href,
     minThreads: numThreads,
     maxThreads: numThreads,
+    // Use child_process instead of worker_threads to avoid issues
+    // when loading NAPI modules within Prettier plugin
+    runtime: "child_process",
   });
 
   return resolvePlugins();
