@@ -9,8 +9,6 @@ Finished in Xms on 1 file with 1 rules using X threads.
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```
 
 # File altered: files/index.js

@@ -528,14 +528,6 @@ impl ConfigStoreBuilder {
         external_plugin_store: &mut ExternalPluginStore,
         workspace_uri: Option<&str>,
     ) -> Result<(), ConfigBuilderError> {
-        // Print warning on 1st attempt to load a plugin
-        #[expect(clippy::print_stderr)]
-        if external_plugin_store.is_empty() {
-            eprintln!(
-                "WARNING: JS plugins are experimental and not subject to semver.\nBreaking changes are possible while JS plugins support is under development."
-            );
-        }
-
         // Resolve the specifier relative to the config directory
         let resolved = resolver.resolve(resolve_dir, plugin_specifier).map_err(|e| {
             ConfigBuilderError::PluginLoadFailed {

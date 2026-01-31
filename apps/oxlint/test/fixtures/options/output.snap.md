@@ -281,6 +281,4 @@ Finished in Xms on 2 files with 8 rules using X threads.
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```

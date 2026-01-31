@@ -461,6 +461,4 @@ Finished in Xms on 3 files with 1 rules using X threads.
 
 # stderr
 ```
-WARNING: JS plugins are experimental and not subject to semver.
-Breaking changes are possible while JS plugins support is under development.
 ```
