@@ -152,7 +152,14 @@ impl Rule for PreferConst {
                         ctx.diagnostic_with_fix(
                             prefer_const_diagnostic(ident.name.as_str(), ident.span),
                             |fixer| {
-                                Self::fix_let_to_const(fixer, decl, declarator_index, true, ctx)
+                                Self::fix_let_to_const(
+                                    fixer,
+                                    decl,
+                                    declarator_index,
+                                    true,
+                                    is_for_in_of_init,
+                                    ctx,
+                                )
                             },
                         );
                     }
@@ -170,6 +177,7 @@ impl Rule for PreferConst {
                                     decl,
                                     declarator_index,
                                     all_const,
+                                    is_for_in_of_init,
                                     ctx,
                                 )
                             },
@@ -189,6 +197,7 @@ impl PreferConst {
         decl: &oxc_ast::ast::VariableDeclaration<'a>,
         declarator_index: usize,
         all_const: bool,
+        is_for_in_of_init: bool,
         ctx: &LintContext<'a>,
     ) -> RuleFix {
         // only provide a fix if all variables in the declaration can be const
@@ -197,6 +206,11 @@ impl PreferConst {
         }
         // only provide a fix if this is the last declarator in a declaration
         if declarator_index != decl.declarations.len() - 1 {
+            return fixer.noop();
+        }
+        // Don't fix if any declarator lacks an initializer and we're not in for-in/of.
+        // `const` requires an initializer, but for-in/of loops implicitly provide the value.
+        if !is_for_in_of_init && decl.declarations.iter().any(|d| d.init.is_none()) {
             return fixer.noop();
         }
         // calculate location of `let` keyword
@@ -1352,6 +1366,54 @@ fn test_oxc() {
             }",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": false }])),
         ),
+        // We do not want to fix these automatically, don't try.
+        // For example, you cannot have a const that is defined without a value.
+        ("let x: number; x = 0;", "let x: number; x = 0;", None),
+        ("let x; x = 0;", "let x; x = 0;", None),
+        ("switch (a) { case 0: let x; x = 0; }", "switch (a) { case 0: let x; x = 0; }", None),
+        (
+            "let {a = 0, b} = obj; b = 0; foo(a, b);",
+            "let {a = 0, b} = obj; b = 0; foo(a, b);",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
+        (
+            "let {a: {b, c}} = {a: {b: 1, c: 2}}; b = 3;",
+            "let {a: {b, c}} = {a: {b: 1, c: 2}}; b = 3;",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
+        (
+            "let a, b; ({a = 0, b} = obj); b = 0; foo(a, b);",
+            "let a, b; ({a = 0, b} = obj); b = 0; foo(a, b);",
+            Some(serde_json::json!([{ "destructuring": "any" }])),
+        ),
+        (
+            "let a, b; ({a = 0, b} = obj); foo(a, b);",
+            "let a, b; ({a = 0, b} = obj); foo(a, b);",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
+        (
+            "var foo = function() {
+                for (const b of c) {
+                    let a;
+                    ({a} = 1);
+                }
+            };",
+            "var foo = function() {
+                for (const b of c) {
+                    let a;
+                    ({a} = 1);
+                }
+            };",
+            None,
+        ),
+        (
+            "(function() { let [x = -1, y] = [1,2]; y = 0; })();",
+            "(function() { let [x = -1, y] = [1,2]; y = 0; })();",
+            None,
+        ),
+        ("let [x = -1, y] = [1,2]; y = 0;", "let [x = -1, y] = [1,2]; y = 0;", None),
+        ("let {a, b} = c, d;", "let {a, b} = c, d;", None),
+        ("let {a, b, c} = {}, e, f;", "let {a, b, c} = {}, e, f;", None),
     ];
 
     Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, fail)
