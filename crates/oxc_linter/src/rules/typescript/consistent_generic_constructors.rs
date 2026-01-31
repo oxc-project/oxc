@@ -20,6 +20,7 @@ fn consistent_generic_constructors_diagnostic_prefer_annotation(span: Span) -> O
     .with_help("Move the generic type to the type annotation")
     .with_label(span)
 }
+
 fn consistent_generic_constructors_diagnostic_prefer_constructor(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "The generic type arguments should be specified as part of the constructor type arguments.",
@@ -193,6 +194,7 @@ impl ConsistentGenericConstructors {
                 |fixer| {
                     Self::fix_prefer_constructor(
                         fixer,
+                        node,
                         type_ann,
                         type_ref,
                         type_params,
@@ -209,6 +211,7 @@ impl ConsistentGenericConstructors {
     /// e.g., `const a: Foo<string> = new Foo()` -> `const a = new Foo<string>()`
     fn fix_prefer_constructor<'a>(
         fixer: RuleFixer<'_, 'a>,
+        node: &AstNode<'a>,
         type_ann: &TSTypeAnnotation<'a>,
         type_ref: &TSTypeReference<'a>,
         type_params: &TSTypeParameterInstantiation<'a>,
@@ -222,11 +225,18 @@ impl ConsistentGenericConstructors {
         let type_params_text =
             &source_text[type_params.span.start as usize..type_params.span.end as usize];
 
-        // Extract comments from two regions in the type annotation:
-        // 1. Between the colon and type name: `: /* comment */ Foo`
-        // 2. Between type name and type arguments: `Foo/* another */<string>`
-        let colon_pos =
-            ctx.find_prev_token_from(type_ann.span.start, ":").unwrap_or(type_ann.span.start);
+        // Find the position where the binding pattern ends (before the colon)
+        let binding_end = Self::find_binding_end_position(node);
+
+        // Find the colon position by searching only between the binding end and type annotation.
+        // Use token-aware search to avoid picking up ':' characters inside comments.
+        let colon_pos = if let Some(binding_end) = binding_end {
+            ctx.find_next_token_within(binding_end, type_ann.span.start, ":")
+                .map_or(type_ann.span.start, |offset| binding_end + offset)
+        } else {
+            type_ann.span.start
+        };
+
         let type_name_start = type_ref.type_name.span().start;
         let type_name_end = type_ref.type_name.span().end;
 
@@ -245,9 +255,17 @@ impl ConsistentGenericConstructors {
         // Build the new type arguments string to insert after constructor callee
         let new_type_args = format!("{comments_before}{comments_between}{type_params_text}");
 
-        // Determine where to delete the type annotation (including the colon)
-        let delete_start =
-            ctx.find_prev_token_from(type_ann.span.start, ":").unwrap_or(type_ann.span.start);
+        // Delete from before any whitespace preceding the colon to the end of the type annotation
+        // This ensures we don't leave extra whitespace when removing ` : Type`
+        let delete_start = {
+            let before_colon = &source_text[..colon_pos as usize];
+            let whitespace_len =
+                before_colon.chars().rev().take_while(char::is_ascii_whitespace).count();
+            #[expect(clippy::cast_possible_truncation)]
+            {
+                colon_pos - whitespace_len as u32
+            }
+        };
         let delete_span = Span::new(delete_start, type_ann.span.end);
 
         // Find where to insert type arguments in the new expression
@@ -342,6 +360,19 @@ impl ConsistentGenericConstructors {
         fix.push(fixer.replace(delete_span, replacement));
 
         fix.with_message("Move the generic type to the type annotation")
+    }
+
+    /// Find the position where the binding pattern ends (before the colon in type annotation)
+    fn find_binding_end_position(node: &AstNode<'_>) -> Option<u32> {
+        match node.kind() {
+            AstKind::VariableDeclarator(var_decl) => Some(var_decl.id.span().end),
+            AstKind::FormalParameter(param) => Some(param.pattern.span().end),
+            AstKind::PropertyDefinition(prop_def) => Some(prop_def.key.span().end),
+            _ => {
+                debug_assert!(false, "Unexpected node kind in find_binding_end_position");
+                None
+            }
+        }
     }
 
     /// Find the position to insert a type annotation for the current node
@@ -884,7 +915,20 @@ fn test() {
 			      ",
             Some(serde_json::json!(["type-annotation"])),
         ),
+        (
+            "foo({ bar: 'all' });
+             const baz: Map<number, number> = new Map();",
+            "foo({ bar: 'all' });
+             const baz = new Map<number, number>();",
+            None,
+        ),
+        (
+            "const baz /* note: map */ : Map<number, number> = new Map();",
+            "const baz /* note: map */ = new Map<number, number>();",
+            None,
+        ),
     ];
+
     Tester::new(
         ConsistentGenericConstructors::NAME,
         ConsistentGenericConstructors::PLUGIN,
