@@ -46,17 +46,23 @@ import type { ModuleKind, Program } from "../generated/types.d.ts";
 export let filePath: string | null = null;
 
 // Current working directory for file being linted.
-// When `null`, indicates that no file is currently being linted (in `createOnce`, or between linting files).
-let cwd: string | null = null;
+// Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
+export let cwd: string | null = null;
+
+/**
+ * Set CWD. Used when switching workspaces.
+ * @param cwdInput - CWD
+ */
+export function setCwd(cwdInput: string) {
+  cwd = cwdInput;
+}
 
 /**
  * Set up context for linting a file.
  * @param filePathInput - Absolute path of file being linted
- * @param cwdInput - Current working directory for file being linted
  */
-export function setupFileContext(filePathInput: string, cwdInput: string): void {
+export function setupFileContext(filePathInput: string): void {
   filePath = filePathInput;
-  cwd = cwdInput;
 }
 
 /**
@@ -68,7 +74,6 @@ export function setupFileContext(filePathInput: string, cwdInput: string): void 
  */
 export function resetFileContext(): void {
   filePath = null;
-  cwd = null;
 }
 
 // ECMAScript version. This matches ESLint's default.
@@ -367,7 +372,8 @@ const FILE_CONTEXT = Object.freeze({
    */
   get cwd(): string {
     // Note: If we change this implementation, also change `getCwd` method below
-    if (cwd === null) throw new Error("Cannot access `context.cwd` in `createOnce`");
+    if (filePath === null) throw new Error("Cannot access `context.cwd` in `createOnce`");
+    debugAssertIsNonNull(cwd, "`cwd` should not be null");
     return cwd;
   },
 
@@ -377,7 +383,8 @@ const FILE_CONTEXT = Object.freeze({
    * @deprecated Use `context.cwd` property instead.
    */
   getCwd(): string {
-    if (cwd === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
+    if (filePath === null) throw new Error("Cannot call `context.getCwd` in `createOnce`");
+    debugAssertIsNonNull(cwd, "`cwd` should not be null");
     return cwd;
   },
 

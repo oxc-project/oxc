@@ -190,19 +190,6 @@ impl CliRunner {
 
         let base_ignore_patterns = oxlintrc.ignore_patterns.clone();
 
-        // Setup JS workspace before loading any configs (config parsing can load JS plugins).
-        if let Some(external_linter) = &external_linter {
-            // Workspace URI doesn't need to be a valid URI, it just needs to be unique.
-            // In CLI we only have a single workspace in existence at any time, so it can be anything.
-            // So just use empty string.
-            let res = (external_linter.create_workspace)(String::new());
-
-            if let Err(err) = res {
-                print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
-                return CliRunResult::JsPluginWorkspaceSetupFailed;
-            }
-        }
-
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
             oxlintrc.clone(),

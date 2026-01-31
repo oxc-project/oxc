@@ -12,13 +12,12 @@ import { join as pathJoin, isAbsolute as isAbsolutePath, dirname } from "node:pa
 import util from "node:util";
 import stableJsonStringify from "json-stable-stringify-without-jsonify";
 import { ecmaFeaturesOverride, setEcmaVersion, ECMA_VERSION } from "../plugins/context.ts";
-import { registerPlugin } from "../plugins/load.ts";
+import { registerPlugin, registeredRules } from "../plugins/load.ts";
 import { lintFileImpl, resetStateAfterError } from "../plugins/lint.ts";
 import { getLineColumnFromOffset, getNodeByRangeIndex } from "../plugins/location.ts";
-import { setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
+import { allOptions, setOptions, DEFAULT_OPTIONS_ID } from "../plugins/options.ts";
 import { diagnostics, replacePlaceholders, PLACEHOLDER_REGEX } from "../plugins/report.ts";
 import { parse } from "./parse.ts";
-import { createWorkspace, destroyWorkspace } from "../workspace/index.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
 import type { Plugin, Rule } from "../plugins/load.ts";
@@ -357,11 +356,6 @@ const DEFAULT_FILENAME_BASE = "file";
 // Default CWD for test cases if not provided.
 // Root of `oxlint` package once bundled into `dist`.
 const DEFAULT_CWD = dirname(import.meta.dirname);
-
-// Dummy workspace URI.
-// This just needs to be unique, and we only have a single workspace in existence at any time.
-// It can be anything, so just use empty string.
-const WORKSPACE_URI = "";
 
 // ------------------------------------------------------------------------------
 // `RuleTester` class
@@ -1019,8 +1013,6 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     path = pathJoin(cwd, filename);
   }
 
-  createWorkspace(WORKSPACE_URI);
-
   try {
     // Register plugin. This adds rule to `registeredRules` array.
     registerPlugin(plugin, null, false, null);
@@ -1081,7 +1073,8 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
     });
   } finally {
     // Reset state
-    destroyWorkspace(WORKSPACE_URI);
+    registeredRules.length = 0;
+    if (allOptions !== null) allOptions.length = 1;
 
     // Even if there hasn't been an error, do a full reset of state just to be sure.
     // This includes emptying `diagnostics`.

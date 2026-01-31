@@ -1,9 +1,9 @@
-import { getCliWorkspace } from "../workspace/index.ts";
 import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
+import { switchWorkspace } from "./workspace.ts";
 import { getErrorMessage } from "../utils/utils.ts";
-import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
+import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Writable } from "type-fest";
 import type { Context } from "./context.ts";
@@ -82,7 +82,16 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
-export const registeredRules: Map<string, RuleDetails[]> = new Map();
+// May be changed when switching workspaces.
+export let registeredRules: RuleDetails[] = [];
+
+/**
+ * Set `registeredRules`. Used when switching workspaces.
+ * @param rules - Array of `RuleDetails` objects
+ */
+export function setRegisteredRules(rules: RuleDetails[]) {
+  registeredRules = rules;
+}
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
@@ -145,14 +154,12 @@ export function registerPlugin(
 
   pluginName = getPluginName(plugin, pluginName, pluginNameIsAlias);
 
-  // In CLI mode (`workspaceUri` is `null`), use the CWD from `setupRuleConfigs` (stored as CLI_WORKSPACE).
-  // In LSP mode, use the provided workspace URI.
-  if (workspaceUri === null) workspaceUri = getCliWorkspace();
+  // Switch to requested workspace.
+  // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
+  // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
+  if (workspaceUri !== null) switchWorkspace(workspaceUri);
 
-  const registeredRulesForWorkspace = registeredRules.get(workspaceUri);
-  debugAssertIsNonNull(registeredRulesForWorkspace, "Workspace must have registered rules array");
-
-  const offset = registeredRulesForWorkspace.length ?? 0;
+  const offset = registeredRules.length;
   const { rules } = plugin;
   const ruleNames = Object.keys(rules);
   const ruleNamesLen = ruleNames.length;
@@ -277,7 +284,7 @@ export function registerPlugin(
       (ruleDetails as unknown as Writable<CreateOnceRuleDetails>).afterHook = afterHook;
     }
 
-    registeredRulesForWorkspace.push(ruleDetails);
+    registeredRules.push(ruleDetails);
   }
 
   return { name: pluginName, offset, ruleNames };
@@ -430,19 +437,4 @@ function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | n
     throw new TypeError(`\`${hookName}\` hook must be a function if provided`);
   }
   return hookFn;
-}
-
-export function setupPluginSystemForWorkspace(workspace: string) {
-  debugAssert(
-    !registeredRules.has(workspace),
-    "Workspace must not already have registered rules array",
-  );
-  registeredRules.set(workspace, []);
-}
-
-/**
- * Remove all plugins and rules associated with a workspace.
- */
-export function removePluginsInWorkspace(workspace: string) {
-  registeredRules.delete(workspace);
 }

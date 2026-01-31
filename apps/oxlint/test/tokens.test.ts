@@ -54,11 +54,10 @@ function setup(sourceText: string) {
   resetFileContext();
   resetSourceAndAst();
 
-  // Set file path and CWD
+  // Set file path
   const filename = "dummy.js";
-  const cwd = import.meta.dirname;
-  const path = pathJoin(cwd, filename);
-  setupFileContext(path, cwd);
+  const path = pathJoin(import.meta.dirname, filename);
+  setupFileContext(path);
 
   // Parse source text into buffer
   parseRaw(path, sourceText);

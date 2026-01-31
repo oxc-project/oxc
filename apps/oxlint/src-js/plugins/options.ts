@@ -6,10 +6,11 @@ import assert from "node:assert";
 import Ajv from "ajv";
 import ajvPackageJson from "ajv/package.json" with { type: "json" };
 import metaSchema from "ajv/lib/refs/json-schema-draft-04.json" with { type: "json" };
+import { setCwd } from "./context.ts";
 import { registeredRules } from "./load.ts";
 import { deepCloneJsonValue, deepFreezeJsonArray } from "./json.ts";
+import { currentWorkspace, switchWorkspace } from "./workspace.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
-import { getCliWorkspace } from "../workspace/index.ts";
 
 import type { JSONSchema4 } from "json-schema";
 import type { Writable } from "type-fest";
@@ -50,10 +51,16 @@ export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 // All rule options.
 // `lintFile` is called with an array of options IDs, which are indices into this array.
 // First element is irrelevant - never accessed - because 0 index is a sentinel meaning default options.
-export const allOptions: Map<string, Readonly<Options>[]> = new Map();
+// Set by `setOptions` at end of registering all plugins, and may also be changed when switching workspaces.
+export let allOptions: Readonly<Options>[] | null = null;
 
-// Mapping from workspace URIs to CWD paths
-export const cwds: Map<string, string> = new Map();
+/**
+ * Set `allOptions`. Used when switching workspaces.
+ * @param options - Array of options objects
+ */
+export function setAllOptions(options: Readonly<Options>[]) {
+  allOptions = options;
+}
 
 // Index into `allOptions` for default options
 export const DEFAULT_OPTIONS_ID = 0;
@@ -184,25 +191,24 @@ function wrapSchemaValidator(validate: Ajv.ValidateFunction): SchemaValidator {
  */
 export function setOptions(optionsJson: string): void {
   const details = JSON.parse(optionsJson);
+  allOptions = details.options;
+  debugAssertIsNonNull(allOptions, "`options` included in `optionsJSON` should not be null");
 
-  let { workspaceUri } = details;
-  if (workspaceUri === null) workspaceUri = getCliWorkspace();
-
-  const { ruleIds, cwd, options } = details;
+  const { ruleIds, cwd } = details;
 
   // Validate
   if (DEBUG) {
     assert(typeof cwd === "string", `cwd must be a string, got ${typeof cwd}`);
-    assert(Array.isArray(options), `options must be an array, got ${typeof options}`);
+    assert(Array.isArray(allOptions), `options must be an array, got ${typeof allOptions}`);
     assert(Array.isArray(ruleIds), `ruleIds must be an array, got ${typeof ruleIds}`);
     assert.strictEqual(
-      options.length,
+      allOptions.length,
       ruleIds.length,
       "ruleIds and options arrays must be the same length",
     );
 
-    for (const option of options) {
-      assert(Array.isArray(option), `Elements of options must be arrays, got ${typeof option}`);
+    for (const options of allOptions) {
+      assert(Array.isArray(options), `Elements of options must be arrays, got ${typeof options}`);
     }
 
     for (const ruleId of ruleIds) {
@@ -213,27 +219,32 @@ export function setOptions(optionsJson: string): void {
     }
   }
 
-  allOptions.set(workspaceUri, options);
+  // Switch to requested workspace.
+  // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
+  // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
+  const { workspaceUri } = details;
+  if (workspaceUri !== null) switchWorkspace(workspaceUri);
 
-  debugAssert(!cwds.has(workspaceUri), "Workspace must not already have registered CWD");
-  cwds.set(workspaceUri, cwd);
+  // Set CWD
+  setCwd(cwd);
 
   // Process each options array.
   // For each options array, merge with default options and apply schema defaults for the corresponding rule.
   // Skip the first, as index 0 is a sentinel value meaning default options. First element is never accessed.
   // `processOptions` also deep-freezes the options.
-  const registeredWorkspaceRules = registeredRules.get(workspaceUri);
-  debugAssertIsNonNull(
-    registeredWorkspaceRules,
-    `No registered rules for workspace "${workspaceUri}"`,
-  );
-
-  for (let i = 1, len = options.length; i < len; i++) {
-    options[i] = processOptions(
+  for (let i = 1, len = allOptions.length; i < len; i++) {
+    allOptions[i] = processOptions(
       // `allOptions`' type is `Readonly`, but the array is mutable at present
-      options[i] as Writable<(typeof options)[number]>,
-      registeredWorkspaceRules[ruleIds[i]],
+      allOptions[i] as Writable<(typeof allOptions)[number]>,
+      registeredRules[ruleIds[i]],
     );
+  }
+
+  // Store `cwd` and `allOptions` in workspace
+  if (workspaceUri !== null) {
+    debugAssertIsNonNull(currentWorkspace, "`currentWorkspace` should be initialized");
+    currentWorkspace.cwd = cwd;
+    currentWorkspace.allOptions = allOptions;
   }
 }
 
@@ -384,25 +395,4 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
   }
 
   return configValue;
-}
-
-/**
- * Setups all needed data structures to hold options for a workspace.
- *
- * @param workspace the workspace identifier
- */
-export function setupOptionsForWorkspace(workspace: string) {
-  debugAssert(
-    !allOptions.has(workspace),
-    "Workspace must not already have registered options array",
-  );
-  allOptions.set(workspace, []);
-}
-
-/**
- * Remove all options associated with a workspace.
- */
-export function removeOptionsInWorkspace(workspace: string) {
-  allOptions.delete(workspace);
-  cwds.delete(workspace);
 }

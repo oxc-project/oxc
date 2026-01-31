@@ -1,52 +1,79 @@
 /*
  * Isolated Workspaces.
  *
- * Every Workspace starts with a "workspace root" directory. This directory is
- * used to isolate the plugin's dependencies from other plugins and the main
- * application.
+ * Every workspace starts with a "workspace root" directory.
  *
  * Each workspace can be created, used, and then cleared to free up resources.
  */
 
-import { removePluginsInWorkspace, setupPluginSystemForWorkspace } from "../plugins/load";
-import { removeOptionsInWorkspace, setupOptionsForWorkspace } from "../plugins/options";
-import { debugAssert } from "../utils/asserts";
+import { debugAssert } from "../utils/asserts.ts";
+
+import type { Options } from "../plugins/options.ts";
+import type { RuleDetails } from "../plugins/load.ts";
 
 /**
- * Set of workspace IDs.
+ * Settings for a workspace.
  */
-const workspaces = new Set<string>();
+interface Workspace {
+  cwd: string;
+  rules: RuleDetails[];
+  allOptions: Readonly<Options>[];
+}
+
+/**
+ * Active workspaces.
+ * Keyed by workspace URI.
+ */
+export const workspaces = new Map<string, Workspace>();
+
+/**
+ * Most recent workspace that was used.
+ */
+export let currentWorkspace: Workspace | null = null;
+
+/**
+ * URI of most recent workspace that was used.
+ */
+export let currentWorkspaceUri: string | null = null;
 
 /**
  * Create a new workspace.
  */
-export function createWorkspace(workspace: string): undefined {
-  debugAssert(!workspaces.has(workspace), `Workspace "${workspace.toString()}" already exists`);
-  workspaces.add(workspace);
-  setupPluginSystemForWorkspace(workspace);
-  setupOptionsForWorkspace(workspace);
+export function createWorkspace(workspaceUri: string): undefined {
+  debugAssert(!workspaces.has(workspaceUri), `Workspace "${workspaceUri}" already exists`);
+
+  const workspace = {
+    cwd: "",
+    allOptions: [],
+    rules: [],
+  };
+
+  workspaces.set(workspaceUri, workspace);
+  currentWorkspace = workspace;
+  currentWorkspaceUri = workspaceUri;
 }
 
 /**
  * Destroy a workspace.
  * Unloads all plugin data associated with this workspace.
  */
-export function destroyWorkspace(workspace: string): undefined {
-  debugAssert(workspaces.has(workspace), `Workspace "${workspace.toString()}" does not exist`);
+export function destroyWorkspace(workspaceUri: string): undefined {
+  debugAssert(workspaces.has(workspaceUri), `Workspace "${workspaceUri}" does not exist`);
 
-  workspaces.delete(workspace);
-  removePluginsInWorkspace(workspace);
-  removeOptionsInWorkspace(workspace);
+  workspaces.delete(workspaceUri);
+
+  if (currentWorkspaceUri === workspaceUri) {
+    currentWorkspace = null;
+    currentWorkspaceUri = null;
+  }
 }
 
 /**
- * Gets the CLI workspace ID.
- * In CLI mode, there is exactly one workspace (the CWD), so this returns that workspace ID.
+ * Set the current workspace.
+ * @param workspace - Workspace object
+ * @param workspaceUri - Workspace URI
  */
-export function getCliWorkspace(): string {
-  debugAssert(
-    workspaces.size === 1,
-    "getCliWorkspace should only be used in CLI mode with 1 workspace",
-  );
-  return workspaces.values().next().value;
+export function setCurrentWorkspace(workspace: Workspace, workspaceUri: string): void {
+  currentWorkspace = workspace;
+  currentWorkspaceUri = workspaceUri;
 }

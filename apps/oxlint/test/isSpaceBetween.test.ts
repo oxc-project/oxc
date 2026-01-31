@@ -25,10 +25,9 @@ import type { Program } from "../src-js/generated/types.d.ts";
  * @returns AST
  */
 function parse(filename: string, sourceText: string, options?: ParseOptions): Program {
-  // Set file path and CWD
-  const cwd = import.meta.dirname;
-  const path = pathJoin(cwd, filename);
-  setupFileContext(path, cwd);
+  // Set file path
+  const path = pathJoin(import.meta.dirname, filename);
+  setupFileContext(path);
 
   // Parse source, writing source text and AST into buffer
   parseRaw(path, sourceText, options);

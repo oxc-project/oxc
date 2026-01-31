@@ -1,7 +1,7 @@
 import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
 import { setupFileContext, resetFileContext } from "./context.ts";
 import { registeredRules } from "./load.ts";
-import { allOptions, cwds, DEFAULT_OPTIONS_ID } from "./options.ts";
+import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
@@ -9,7 +9,7 @@ import { HAS_BOM_FLAG_POS } from "../generated/constants.ts";
 import { typeAssertIs, debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
 import { getErrorMessage } from "../utils/utils.ts";
 import { setGlobalsForFile, resetGlobals } from "./globals.ts";
-import { getCliWorkspace } from "../workspace/index.ts";
+import { switchWorkspace } from "./workspace.ts";
 import {
   addVisitorToCompiled,
   compiledVisitor,
@@ -154,22 +154,14 @@ export function lintFileImpl(
     "`ruleIds` and `optionsIds` should be same length",
   );
 
-  // Get workspace containing file.
-  // In CLI (`workspaceUri` is `null`), use the single workspace (the CWD passed to `setupRuleConfigs`).
-  // In LSP, use the provided workspace URI.
-  if (workspaceUri === null) workspaceUri = getCliWorkspace();
+  // Switch to requested workspace.
+  // In CLI, `workspaceUri` is `null`, and there's only 1 workspace, so no need to switch.
+  // In LSP, there can be multiple workspaces, so we need to switch if we're not already in the right one.
+  if (workspaceUri !== null) switchWorkspace(workspaceUri);
+  debugAssertIsNonNull(allOptions, "`allOptions` should be initialized");
 
-  const cwd = cwds.get(workspaceUri);
-  debugAssertIsNonNull(cwd, `No CWD registered for workspace "${workspaceUri}"`);
-
-  // Pass file path and CWD to context module, so `Context`s know what file is being linted
-  setupFileContext(filePath, cwd);
-
-  // Load all relevant workspace configurations
-  const rules = registeredRules.get(workspaceUri)!;
-  const workspaceOptions = allOptions.get(workspaceUri);
-  debugAssertIsNonNull(rules, "No rules registered for workspace");
-  debugAssertIsNonNull(workspaceOptions, "No options registered for workspace");
+  // Pass file path to context module, so `Context`s know what file is being linted
+  setupFileContext(filePath);
 
   // Pass buffer to source code module, so it can decode source text and deserialize AST on demand.
   //
@@ -191,20 +183,20 @@ export function lintFileImpl(
 
   for (let i = 0, len = ruleIds.length; i < len; i++) {
     const ruleId = ruleIds[i];
-    debugAssert(ruleId < rules.length, "Rule ID out of bounds");
-    const ruleDetails = rules[ruleId];
+    debugAssert(ruleId < registeredRules.length, "Rule ID out of bounds");
+    const ruleDetails = registeredRules[ruleId];
 
     // Set `ruleIndex` for rule. It's used when sending diagnostics back to Rust.
     ruleDetails.ruleIndex = i;
 
     // Set `options` for rule
     const optionsId = optionsIds[i];
-    debugAssert(optionsId < workspaceOptions.length, "Options ID out of bounds");
+    debugAssert(optionsId < allOptions.length, "Options ID out of bounds");
 
     // If the rule has no user-provided options, use the plugin-provided default
     // options (which falls back to `DEFAULT_OPTIONS`)
     ruleDetails.options =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : workspaceOptions[optionsId];
+      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
 
     let { visitor } = ruleDetails;
     if (visitor === null) {
