@@ -2,7 +2,7 @@ commit: 7f6a8467
 
 semantic_typescript Summary:
 AST Parsed     : 6126/6126 (100.00%)
-Positive Passed: 3339/6126 (54.51%)
+Positive Passed: 3340/6126 (54.52%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -266,7 +266,7 @@ rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(2)]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInIndexerOfClass.ts
 Symbol reference IDs mismatch for "moduleA":
 after transform: SymbolId(1): [ReferenceId(2), ReferenceId(3)]
-rebuilt        : SymbolId(1): [ReferenceId(2)]
+rebuilt        : SymbolId(1): [ReferenceId(3)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/aliasUsageInObjectLiteral.ts
 Symbol reference IDs mismatch for "moduleA":
@@ -287,6 +287,9 @@ semantic Error: tasks/coverage/typescript/tests/cases/compiler/ambientClassDecla
 Bindings mismatch:
 after transform: ScopeId(0): ["A", "B", "C", "D", "d"]
 rebuilt        : ScopeId(0): ["D", "d"]
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "D":
 after transform: SymbolId(3): SymbolFlags(Class | ValueModule | Ambient)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -1506,8 +1509,8 @@ Reference symbol mismatch for "Err":
 after transform: SymbolId(0) "Err"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: []
-rebuilt        : ["Err"]
+after transform: ["require"]
+rebuilt        : ["Err", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classExtendingQualifiedName2.ts
 Scope flags mismatch:
@@ -4545,7 +4548,7 @@ after transform: ScopeId(0): ["A", "B", "C", "Y", "_defineProperty", "ctor", "f1
 rebuilt        : ScopeId(0): ["A", "B", "C", "Y", "_defineProperty", "f1", "f2", "f3", "f4", "foo", "goo"]
 Symbol reference IDs mismatch for "A":
 after transform: SymbolId(8): [ReferenceId(36), ReferenceId(37), ReferenceId(38)]
-rebuilt        : SymbolId(9): [ReferenceId(29), ReferenceId(32)]
+rebuilt        : SymbolId(9): [ReferenceId(30), ReferenceId(33)]
 Reference symbol mismatch for "x":
 after transform: SymbolId(17) "x"
 rebuilt        : <None>
@@ -4556,11 +4559,11 @@ Reference symbol mismatch for "x":
 after transform: SymbolId(17) "x"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Promise", "Set"]
-rebuilt        : ["Promise", "Set", "ctor", "x"]
+after transform: ["Function", "Promise", "Set", "require"]
+rebuilt        : ["Promise", "Set", "ctor", "require", "x"]
 Unresolved reference IDs mismatch for "Set":
 after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(20), ReferenceId(21), ReferenceId(24), ReferenceId(27), ReferenceId(28), ReferenceId(30), ReferenceId(33)]
-rebuilt        : [ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(18), ReferenceId(22), ReferenceId(25)]
+rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(10), ReferenceId(19), ReferenceId(23), ReferenceId(26)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowInstanceofWithSymbolHasInstance.ts
 Symbol reference IDs mismatch for "A":
@@ -12430,8 +12433,8 @@ rebuilt        : ["expect", "fooFn"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericWithCallSignatures1.ts
 Unresolved references mismatch:
-after transform: ["CallableExtention"]
-rebuilt        : []
+after transform: ["CallableExtention", "require"]
+rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/generics3.ts
 Symbol reference IDs mismatch for "C":
@@ -12686,12 +12689,18 @@ after transform: SymbolId(0): Span { start: 17, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAliasFromNamespace.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Bindings mismatch:
 after transform: ScopeId(4): ["A", "B", "C", "WhichThing"]
 rebuilt        : ScopeId(4): ["WhichThing"]
 Scope flags mismatch:
-after transform: ScopeId(4): ScopeFlags(StrictMode)
-rebuilt        : ScopeId(4): ScopeFlags(StrictMode | Function)
+after transform: ScopeId(4): ScopeFlags(0x0)
+rebuilt        : ScopeId(4): ScopeFlags(Function)
 Symbol flags mismatch for "My":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -23366,6 +23375,9 @@ after transform: ["TemplateStringsArray"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/taggedTemplatesInModuleAndGlobal.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "n":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -28494,8 +28506,8 @@ Reference symbol mismatch for "console":
 after transform: SymbolId(0) "console"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["arguments"]
-rebuilt        : ["arguments", "console"]
+after transform: ["arguments", "require"]
+rebuilt        : ["arguments", "console", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionDeclarationEmit1.ts
 Bindings mismatch:
@@ -28536,8 +28548,8 @@ rebuilt        : ["getPath"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS2.ts
 Unresolved references mismatch:
-after transform: ["Promise", "arguments"]
-rebuilt        : ["arguments"]
+after transform: ["Promise", "arguments", "require"]
+rebuilt        : ["arguments", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInCJS3.ts
 Unresolved references mismatch:
@@ -28569,9 +28581,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: ["arguments"]
 rebuilt        : ["arguments", "console"]
-
-semantic Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
-Cannot assign to 'arguments' in strict mode
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionReturnPromiseOfAny.ts
 Bindings mismatch:
@@ -30976,8 +30985,8 @@ Reference symbol mismatch for "dec":
 after transform: SymbolId(0) "dec"
 rebuilt        : <None>
 Unresolved references mismatch:
-after transform: ["Function", "Number", "Object"]
-rebuilt        : ["Function", "Number", "Object", "dec"]
+after transform: ["Function", "Number", "Object", "require"]
+rebuilt        : ["Function", "Number", "Object", "dec", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-commonjs-classNamespaceMerge.ts
 Bindings mismatch:
@@ -36373,6 +36382,9 @@ after transform: ["Object", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/AmbientModuleAndNonAmbientClassWithSameNameAndCommonRoot.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -36471,6 +36483,9 @@ after transform: SymbolId(0): [Span { start: 5, end: 13 }, Span { start: 43, end
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/FunctionAndModuleWithSameNameAndDifferentCommonRoot.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -36593,6 +36608,15 @@ Namespaces exporting non-const are not supported by Babel. Change to const or se
 Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndDifferentCommonRoot.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(2): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(4): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(3): ScopeFlags(Function)
 Symbol flags mismatch for "Root":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -36613,6 +36637,12 @@ after transform: SymbolId(3): Span { start: 157, end: 162 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndSameCommonRoot.ts
+Scope flags mismatch:
+after transform: ScopeId(1): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(1): ScopeFlags(Function)
+Scope flags mismatch:
+after transform: ScopeId(3): ScopeFlags(StrictMode | Function)
+rebuilt        : ScopeId(2): ScopeFlags(Function)
 Symbol flags mismatch for "A":
 after transform: SymbolId(0): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
@@ -47661,8 +47691,8 @@ rebuilt        : ["f1", "f2", "f3", "s"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/intraExpressionInferencesJsx.tsx
 Unresolved references mismatch:
-after transform: ["Partial", "Record", "require"]
-rebuilt        : ["require"]
+after transform: ["Partial", "Record"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeInference/keyofInferenceIntersectsResults.ts
 Bindings mismatch:

@@ -1,8 +1,8 @@
-commit: fff41f05
+commit: 3c6180f5
 
 semantic_test262 Summary:
-AST Parsed     : 46595/46595 (100.00%)
-Positive Passed: 44959/46595 (96.49%)
+AST Parsed     : 46712/46712 (100.00%)
+Positive Passed: 45032/46712 (96.40%)
 semantic Error: tasks/coverage/test262/test/built-ins/AsyncFromSyncIteratorPrototype/next/for-await-iterator-next-rejected-promise-close.js
 Bindings mismatch:
 after transform: ScopeId(4): []
@@ -6751,6 +6751,278 @@ Scope flags mismatch:
 after transform: ScopeId(4): ScopeFlags(Function)
 rebuilt        : ScopeId(2): ScopeFlags(Function | DirectEval)
 
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/await-using-allows-null-initializer.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/await-using-allows-undefined-initializer.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/block-local-closure-get-before-initialization.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "f", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): ["f", "x"]
+Symbol scope ID mismatch for "f":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/block-local-use-before-initialization-in-declaration-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/block-local-use-before-initialization-in-prior-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/fn-name-arrow.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "arrow"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(3): ["arrow"]
+Symbol scope ID mismatch for "arrow":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/fn-name-class.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "cls", "xCls", "xCls2"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(9): []
+rebuilt        : ScopeId(2): ["cls", "xCls", "xCls2"]
+Symbol scope ID mismatch for "xCls":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+Symbol scope ID mismatch for "cls":
+after transform: SymbolId(2): ScopeId(1)
+rebuilt        : SymbolId(5): ScopeId(2)
+Symbol scope ID mismatch for "xCls2":
+after transform: SymbolId(3): ScopeId(1)
+rebuilt        : SymbolId(6): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/fn-name-cover.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "cover", "xCover"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(3): ["cover", "xCover"]
+Symbol scope ID mismatch for "xCover":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "cover":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/fn-name-fn.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "fn", "xFn"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(3): ["fn", "xFn"]
+Symbol scope ID mismatch for "xFn":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "fn":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/fn-name-gen.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "gen", "xGen"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(3): ["gen", "xGen"]
+Symbol scope ID mismatch for "xGen":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "gen":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/function-local-closure-get-before-initialization.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "f", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): ["f", "x"]
+Symbol scope ID mismatch for "f":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/function-local-use-before-initialization-in-declaration-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/function-local-use-before-initialization-in-prior-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/global-closure-get-before-initialization.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "f", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): ["f", "x"]
+Symbol scope ID mismatch for "f":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(4): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/global-use-before-initialization-in-declaration-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/global-use-before-initialization-in-prior-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/initializer-Symbol.asyncDispose-called-at-end-of-asyncfunctionbody.js
+Bindings mismatch:
+after transform: ScopeId(6): ["_", "_usingCtx"]
+rebuilt        : ScopeId(9): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(8): []
+rebuilt        : ScopeId(10): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(11): ScopeId(6)
+rebuilt        : SymbolId(16): ScopeId(10)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/initializer-Symbol.asyncDispose-called-at-end-of-asyncgeneratorbody.js
+Bindings mismatch:
+after transform: ScopeId(4): ["_", "_usingCtx"]
+rebuilt        : ScopeId(7): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(8): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(5): ScopeId(4)
+rebuilt        : SymbolId(12): ScopeId(8)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/initializer-Symbol.asyncDispose-called-if-subsequent-initializer-throws.js
+Bindings mismatch:
+after transform: ScopeId(4): ["_1", "_2", "_usingCtx"]
+rebuilt        : ScopeId(5): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(6): ["_1", "_2"]
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(6): ScopeId(6)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(3): ScopeId(4)
+rebuilt        : SymbolId(7): ScopeId(6)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/initializer-Symbol.dispose-called-at-end-of-asyncfunctionbody.js
+Bindings mismatch:
+after transform: ScopeId(6): ["_", "_usingCtx"]
+rebuilt        : ScopeId(8): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(9): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(11): ScopeId(6)
+rebuilt        : SymbolId(15): ScopeId(9)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/initializer-Symbol.dispose-called-at-end-of-asyncgeneratorbody.js
+Bindings mismatch:
+after transform: ScopeId(4): ["_", "_usingCtx"]
+rebuilt        : ScopeId(6): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(7): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(5): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/initializer-Symbol.dispose-called-if-subsequent-initializer-throws.js
+Bindings mismatch:
+after transform: ScopeId(4): ["_1", "_2", "_usingCtx"]
+rebuilt        : ScopeId(4): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(5): ["_1", "_2"]
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(5): ScopeId(5)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(3): ScopeId(4)
+rebuilt        : SymbolId(6): ScopeId(5)
+
 semantic Error: tasks/coverage/test262/test/language/statements/await-using/syntax/await-using-allows-bindingidentifier.js
 Bindings mismatch:
 after transform: ScopeId(1): ["_usingCtx", "x"]
@@ -6775,6 +7047,193 @@ rebuilt        : SymbolId(5): ScopeId(4)
 Symbol scope ID mismatch for "y":
 after transform: SymbolId(2): ScopeId(1)
 rebuilt        : SymbolId(6): ScopeId(4)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-error-as-is-if-only-one-error-during-disposal.js
+Bindings mismatch:
+after transform: ScopeId(3): ["_1", "_2", "_usingCtx"]
+rebuilt        : ScopeId(3): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(12): []
+rebuilt        : ScopeId(4): ["_1", "_2"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_1", "_2", "_usingCtx3"]
+rebuilt        : ScopeId(11): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(17): []
+rebuilt        : ScopeId(12): ["_1", "_2"]
+Bindings mismatch:
+after transform: ScopeId(9): ["_1", "_2", "_usingCtx4"]
+rebuilt        : ScopeId(19): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(22): []
+rebuilt        : ScopeId(20): ["_1", "_2"]
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(5): ScopeId(4)
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(3): ScopeId(6)
+rebuilt        : SymbolId(8): ScopeId(12)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(4): ScopeId(6)
+rebuilt        : SymbolId(9): ScopeId(12)
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(5): ScopeId(9)
+rebuilt        : SymbolId(12): ScopeId(20)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(6): ScopeId(9)
+rebuilt        : SymbolId(13): ScopeId(20)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-Symbol.asyncDispose-property-is-null.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-Symbol.asyncDispose-property-is-undefined.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-Symbol.asyncDispose-property-not-callable.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(3): ["x"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx3", "x"]
+rebuilt        : ScopeId(7): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(8): ["x"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_usingCtx4", "x"]
+rebuilt        : ScopeId(12): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(13): ["x"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_usingCtx5", "x"]
+rebuilt        : ScopeId(17): ["_usingCtx5"]
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(18): ["x"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_usingCtx6", "x"]
+rebuilt        : ScopeId(22): ["_usingCtx6"]
+Bindings mismatch:
+after transform: ScopeId(23): []
+rebuilt        : ScopeId(23): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(8)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(9): ScopeId(13)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(18)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(5): ScopeId(6)
+rebuilt        : SymbolId(16): ScopeId(23)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-Symbol.dispose-property-is-null.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-Symbol.dispose-property-is-undefined.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-Symbol.dispose-property-not-callable.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(3): ["x"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx3", "x"]
+rebuilt        : ScopeId(7): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(8): ["x"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_usingCtx4", "x"]
+rebuilt        : ScopeId(12): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(13): ["x"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_usingCtx5", "x"]
+rebuilt        : ScopeId(17): ["_usingCtx5"]
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(18): ["x"]
+Bindings mismatch:
+after transform: ScopeId(6): ["_usingCtx6", "x"]
+rebuilt        : ScopeId(22): ["_usingCtx6"]
+Bindings mismatch:
+after transform: ScopeId(23): []
+rebuilt        : ScopeId(23): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(6): ScopeId(8)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(2): ScopeId(4)
+rebuilt        : SymbolId(9): ScopeId(13)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(5)
+rebuilt        : SymbolId(12): ScopeId(18)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(5): ScopeId(6)
+rebuilt        : SymbolId(16): ScopeId(23)
+
+semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-missing-both-Symbol.asyncDispose-and-Symbol.dispose.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
 
 semantic Error: tasks/coverage/test262/test/language/statements/await-using/throws-if-initializer-not-object.js
 Bindings mismatch:
@@ -13655,6 +14114,229 @@ rebuilt        : SymbolId(4): []
 Reference symbol mismatch for "x":
 after transform: SymbolId(1) "x"
 rebuilt        : SymbolId(1) "x"
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/function-local-closure-get-before-initialization.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "f", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(2): ["f", "x"]
+Symbol scope ID mismatch for "f":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(1)
+rebuilt        : SymbolId(3): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/function-local-use-before-initialization-in-declaration-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/function-local-use-before-initialization-in-prior-statement.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx", "x"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(2)
+rebuilt        : SymbolId(2): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/initializer-disposed-at-end-of-asyncfunctionbody.js
+Bindings mismatch:
+after transform: ScopeId(6): ["_", "_usingCtx"]
+rebuilt        : ScopeId(8): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(7): []
+rebuilt        : ScopeId(9): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(11): ScopeId(6)
+rebuilt        : SymbolId(15): ScopeId(9)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/initializer-disposed-at-end-of-asyncgeneratorbody.js
+Bindings mismatch:
+after transform: ScopeId(4): ["_", "_usingCtx"]
+rebuilt        : ScopeId(6): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(5): []
+rebuilt        : ScopeId(7): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(5): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(7)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/initializer-disposed-at-end-of-functionbody.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_", "_usingCtx"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/initializer-disposed-at-end-of-generatorbody.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_", "_usingCtx"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(3): []
+rebuilt        : ScopeId(3): ["_"]
+Symbol scope ID mismatch for "_":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/initializer-disposed-if-subsequent-initializer-throws.js
+Bindings mismatch:
+after transform: ScopeId(3): ["_1", "_2", "_usingCtx"]
+rebuilt        : ScopeId(3): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(4): ["_1", "_2"]
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(4): ScopeId(4)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(3): ScopeId(3)
+rebuilt        : SymbolId(5): ScopeId(4)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/static-init-await-binding-valid.js
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx", "await"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(4): []
+rebuilt        : ScopeId(3): ["await"]
+Symbol scope ID mismatch for "await":
+after transform: SymbolId(1): ScopeId(3)
+rebuilt        : SymbolId(3): ScopeId(3)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/throws-error-as-is-if-only-one-error-during-disposal.js
+Bindings mismatch:
+after transform: ScopeId(2): ["_1", "_2", "_usingCtx"]
+rebuilt        : ScopeId(2): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(11): []
+rebuilt        : ScopeId(3): ["_1", "_2"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_1", "_2", "_usingCtx3"]
+rebuilt        : ScopeId(9): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(15): []
+rebuilt        : ScopeId(10): ["_1", "_2"]
+Bindings mismatch:
+after transform: ScopeId(8): ["_1", "_2", "_usingCtx4"]
+rebuilt        : ScopeId(16): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(19): []
+rebuilt        : ScopeId(17): ["_1", "_2"]
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(3): ScopeId(3)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(2): ScopeId(2)
+rebuilt        : SymbolId(4): ScopeId(3)
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(3): ScopeId(5)
+rebuilt        : SymbolId(7): ScopeId(10)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(4): ScopeId(5)
+rebuilt        : SymbolId(8): ScopeId(10)
+Symbol scope ID mismatch for "_1":
+after transform: SymbolId(5): ScopeId(8)
+rebuilt        : SymbolId(11): ScopeId(17)
+Symbol scope ID mismatch for "_2":
+after transform: SymbolId(6): ScopeId(8)
+rebuilt        : SymbolId(12): ScopeId(17)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-Symbol.dispose-property-is-null.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-Symbol.dispose-property-is-undefined.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-Symbol.dispose-property-not-callable.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(6): []
+rebuilt        : ScopeId(2): ["x"]
+Bindings mismatch:
+after transform: ScopeId(2): ["_usingCtx3", "x"]
+rebuilt        : ScopeId(6): ["_usingCtx3"]
+Bindings mismatch:
+after transform: ScopeId(10): []
+rebuilt        : ScopeId(7): ["x"]
+Bindings mismatch:
+after transform: ScopeId(3): ["_usingCtx4", "x"]
+rebuilt        : ScopeId(11): ["_usingCtx4"]
+Bindings mismatch:
+after transform: ScopeId(14): []
+rebuilt        : ScopeId(12): ["x"]
+Bindings mismatch:
+after transform: ScopeId(4): ["_usingCtx5", "x"]
+rebuilt        : ScopeId(16): ["_usingCtx5"]
+Bindings mismatch:
+after transform: ScopeId(18): []
+rebuilt        : ScopeId(17): ["x"]
+Bindings mismatch:
+after transform: ScopeId(5): ["_usingCtx6", "x"]
+rebuilt        : ScopeId(21): ["_usingCtx6"]
+Bindings mismatch:
+after transform: ScopeId(22): []
+rebuilt        : ScopeId(22): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(1): ScopeId(2)
+rebuilt        : SymbolId(5): ScopeId(7)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(2): ScopeId(3)
+rebuilt        : SymbolId(8): ScopeId(12)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(3): ScopeId(4)
+rebuilt        : SymbolId(11): ScopeId(17)
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(5): ScopeId(5)
+rebuilt        : SymbolId(15): ScopeId(22)
+
+semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-missing-Symbol.dispose.js
+Bindings mismatch:
+after transform: ScopeId(1): ["_usingCtx", "x"]
+rebuilt        : ScopeId(1): ["_usingCtx"]
+Bindings mismatch:
+after transform: ScopeId(2): []
+rebuilt        : ScopeId(2): ["x"]
+Symbol scope ID mismatch for "x":
+after transform: SymbolId(0): ScopeId(1)
+rebuilt        : SymbolId(2): ScopeId(2)
 
 semantic Error: tasks/coverage/test262/test/language/statements/using/throws-if-initializer-not-object.js
 Bindings mismatch:
