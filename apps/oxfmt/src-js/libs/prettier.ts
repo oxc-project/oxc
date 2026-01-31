@@ -29,6 +29,48 @@ export async function resolvePlugins(): Promise<string[]> {
 }
 
 // ---
+// Svelte plugin support (not bundled, loaded dynamically)
+// ---
+
+let sveltePluginCache: Plugin | null = null;
+let sveltePluginLoadAttempted = false;
+
+/**
+ * Attempt to load the svelte plugin.
+ * Returns null if not installed (graceful degradation).
+ */
+async function loadSveltePlugin(): Promise<Plugin | null> {
+  if (sveltePluginLoadAttempted) return sveltePluginCache;
+  sveltePluginLoadAttempted = true;
+
+  try {
+    // The plugin must be built with aliasing: "prettier" → "oxfmt/prettier"
+    const plugin = await import("oxfmt-prettier-svelte");
+    sveltePluginCache = plugin as unknown as Plugin;
+    return sveltePluginCache;
+  } catch {
+    // Plugin not installed - this is fine, svelte formatting just won't work
+    return null;
+  }
+}
+
+const SVELTE_PARSERS = new Set(["svelte"]);
+
+/**
+ * Set up svelte plugin if needed.
+ * Called before prettier.format() for svelte files.
+ */
+async function setupSveltePlugin(options: Options): Promise<void> {
+  if (!SVELTE_PARSERS.has(options.parser as string)) return;
+
+  const sveltePlugin = await loadSveltePlugin();
+  if (!sveltePlugin) return;
+
+  options.plugins = options.plugins || [];
+  options.plugins.push(sveltePlugin);
+}
+
+// ---
 
 export type FormatEmbeddedCodeParam = {
   code: string;
@@ -55,6 +97,9 @@ export async function formatEmbeddedCode({
 
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   await setupTailwindPlugin(options);
+
+  // Enable Svelte plugin if needed
+  await setupSveltePlugin(options);
 
   // NOTE: This will throw if:
   // - Specified parser is not available
@@ -93,6 +138,9 @@ export async function formatFile({
 
   // Enable Tailwind CSS plugin for non-JS files if needed
   await setupTailwindPlugin(options);
+
+  // Enable Svelte plugin if needed
+  await setupSveltePlugin(options);
 
   return prettier.format(code, options);
 }

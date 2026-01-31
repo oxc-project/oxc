@@ -26,6 +26,8 @@
     "@napi-rs/cli": "catalog:",
     "@types/node": "catalog:",
     "execa": "^9.6.0",
+    "oxfmt-prettier-svelte": "^0.0.1",
+    "svelte": "^5.49.0",
     "tsdown": "catalog:",
     "vitest": "catalog:",
     "vscode-languageserver-protocol": "^3.17.5",
