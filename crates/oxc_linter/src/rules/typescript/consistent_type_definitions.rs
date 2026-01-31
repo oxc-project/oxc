@@ -243,9 +243,7 @@ impl Rule for ConsistentTypeDefinitions {
 }
 
 fn is_within_declare_global_block(ctx: &LintContext, node_id: NodeId) -> bool {
-    ctx.nodes()
-        .ancestors(node_id)
-        .any(|node| matches!(node.kind(), AstKind::TSGlobalDeclaration(_)))
+    ctx.is_inside(node_id, |ancestor| matches!(ancestor.kind(), AstKind::TSGlobalDeclaration(_)))
 }
 
 #[test]
