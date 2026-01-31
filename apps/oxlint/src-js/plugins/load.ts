@@ -181,10 +181,17 @@ export function registerPlugin(
 
       const { fixable } = ruleMeta;
       if (fixable != null) {
-        if (fixable !== "code" && fixable !== "whitespace") {
+        // `true` and `false` aren't valid values for `meta.fixable`, but we accept them for
+        // backward compatibility with some ESLint plugins
+        if (
+          fixable !== "code" &&
+          fixable !== "whitespace" &&
+          fixable !== true &&
+          fixable !== false
+        ) {
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
-        isFixable = true;
+        isFixable = (fixable as "code" | "whitespace" | true | false) !== false;
       }
 
       // If `schema` provided, compile schema to validator for applying schema defaults to options
