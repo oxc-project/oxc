@@ -60,6 +60,20 @@ const allTestSuites = new Map([
     },
   ],
   [
+    "oxlint-js",
+    {
+      ...baseTest,
+      workspaceFolder: multiRootWorkspaceFile,
+      files: "out_test/integration/e2e_server_linter-js.spec.js",
+      env: {
+        SINGLE_FOLDER_WORKSPACE: "true",
+        OXLINT_JS_PLUGIN: "true",
+        SERVER_PATH_DEV: path.resolve(import.meta.dirname, `../../apps/oxlint/dist/cli.js`),
+        SKIP_FORMATTER_TEST: "true",
+      },
+    },
+  ],
+  [
     "oxfmt-lsp",
     {
       ...baseTest,

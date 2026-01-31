@@ -94,6 +94,12 @@ jobs:
         working-directory: editors/vscode
         run: xvfb-run -a pnpm run test:oxlint && xvfb-run -a pnpm run test:oxlint-multi-root
 
+      - name: VSCode oxlint plugin test (flaky)
+        if: steps.oxlint.outputs.src == 'true'
+        working-directory: editors/vscode
+        continue-on-error: true
+        run: xvfb-run -a pnpm run test:oxlint-js
+
       - name: VSCode oxfmt tests
         if: steps.oxfmt.outputs.src == 'true'
         working-directory: editors/vscode

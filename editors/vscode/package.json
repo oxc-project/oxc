@@ -43,6 +43,7 @@
     "test": "cross-env TEST=true pnpm run compile && vscode-test",
     "test:unit": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=unit vscode-test",
     "test:oxlint": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp vscode-test",
+    "test:oxlint-js": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-js vscode-test",
     "test:oxlint-multi-root": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxlint-lsp-multi-root vscode-test",
     "test:oxfmt": "cross-env TEST=true pnpm run compile && cross-env TEST_SUITE=oxfmt-lsp vscode-test"
   },

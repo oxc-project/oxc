@@ -197,6 +197,8 @@ suite("code actions", () => {
     strictEqual(quickFixesNoFix.length, 0);
     await workspace.getConfiguration("oxc").update("unusedDisableDirectives", "warn");
     await workspace.saveAll();
+    await sleep(500);
+
     const codeActionsWithFix: ProviderResult<Array<CodeAction>> = await commands.executeCommand(
       "vscode.executeCodeActionProvider",
       fileUri,
