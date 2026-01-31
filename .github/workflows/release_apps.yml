@@ -463,7 +463,7 @@ jobs:
           - os: windows-latest
           - os: ubuntu-latest
           - os: ubuntu-latest
-            container: node:18-alpine # musl
+            container: node:24-alpine # musl
           - os: macos-latest
     name: Smoke Test ${{ matrix.os }} ${{ matrix.container }}
     runs-on: ${{ matrix.os }}
