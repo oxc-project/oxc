@@ -114,6 +114,8 @@ pub type JsSetupRuleConfigsCb = ThreadsafeFunction<
 /// 2. `load_plugin`: Load a JS plugin from a file path.
 /// 3. `setup_rule_configs`: Setup configuration options.
 /// 4. `lint_file`: Lint a file.
+/// 5. `create_workspace`: Create a workspace.
+/// 6. `destroy_workspace`: Destroy a workspace.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
