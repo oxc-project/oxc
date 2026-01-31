@@ -204,6 +204,10 @@ const GLOBALS = new Set([
   "TextDecoder", "BroadcastChannel", "MessageChannel", "MessagePort", "Blob", "File"
 ]);
 
+// Global properties which cannot be converted to top-level vars, because they're methods which use `this`.
+// e.g. `const r = Promise.resolve; r(1);` throws "TypeError: PromiseResolve called on non-object".
+const SKIP_GLOBALS = new Set(["Promise.resolve"]);
+
 /**
  * Create a plugin to replace usage of properties of globals with global vars defined in `utils/globals.ts`.
  *
@@ -288,15 +292,18 @@ function createReplaceGlobalsPlugin(): Plugin {
 
             const propName = propNames.reverse().join(".");
 
+            const fullName = `${object.name}.${propName}`;
+            if (SKIP_GLOBALS.has(fullName)) return;
+
             const mapping = availableGlobals.get(globalName);
             if (!mapping) {
-              missingGlobalVars.add(`\`${object.name}.${propName}\``);
+              missingGlobalVars.add(`\`${fullName}\``);
               return;
             }
 
             const varName = mapping.get(propName);
             if (!varName) {
-              missingGlobalVars.add(`\`${object.name}.${propName}\``);
+              missingGlobalVars.add(`\`${fullName}\``);
               return;
             }
 
