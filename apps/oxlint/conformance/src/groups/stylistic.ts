@@ -10,7 +10,7 @@ import type {
   ParserOptions,
 } from "../rule_tester.ts";
 import type { RuleTester as RuleTesterType } from "#oxlint/rule-tester";
-import type { Rule } from "#oxlint/plugin";
+import type { Rule } from "#oxlint/plugins";
 
 type Config = RuleTesterType.Config;
 type TSEslintParser = typeof import("@typescript-eslint/parser");

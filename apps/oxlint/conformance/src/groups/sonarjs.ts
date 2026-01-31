@@ -4,7 +4,7 @@ import { currentRule } from "../capture.ts";
 
 import type { TestGroup } from "../index.ts";
 import type { TestCase, TestCases, ValidTestCase, InvalidTestCase } from "../rule_tester.ts";
-import type { Rule } from "#oxlint/plugin";
+import type { Rule } from "#oxlint/plugins";
 
 const SUBMODULE_NAME = "sonarjs";
 const TEST_FILES_RELATIVE_DIR_PATH = "packages/jsts/src/rules";

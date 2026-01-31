@@ -1,4 +1,4 @@
-import type { Plugin, Rule, ESTree } from "#oxlint/plugin";
+import type { Plugin, Rule, ESTree } from "#oxlint/plugins";
 
 type Node = ESTree.Node;
 

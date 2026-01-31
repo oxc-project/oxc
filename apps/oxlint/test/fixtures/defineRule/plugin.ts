@@ -1,4 +1,4 @@
-import { defineRule } from "#oxlint/plugin";
+import { defineRule } from "#oxlint/plugins";
 
 const createRule = defineRule({
   create(context) {
