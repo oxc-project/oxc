@@ -208,8 +208,8 @@ async fn lint_impl(
         (external_linter, js_config_loader)
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    let (external_linter, js_config_loader) = {
-        let (_, _, _, _, _) = (
+    let (external_linter, _) = {
+        let (_, _, _, _, _, _) = (
             load_plugin,
             setup_rule_configs,
             lint_file,
@@ -217,7 +217,7 @@ async fn lint_impl(
             destroy_workspace,
             load_js_configs,
         );
-        (None, None)
+        (None, None::<()>)
     };
 
     // If --lsp flag is set, run the language server
