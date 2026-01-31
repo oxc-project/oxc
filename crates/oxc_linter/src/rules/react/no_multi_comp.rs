@@ -20,6 +20,9 @@ fn no_multi_comp_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 struct NoMultiCompConfig {
+    // When `true`, the rule will ignore stateless components and will allow you to have multiple
+    // stateless components in the same file. Or one stateful component and one-or-more stateless
+    // components in the same file.
     ignore_stateless: bool,
 }
 
