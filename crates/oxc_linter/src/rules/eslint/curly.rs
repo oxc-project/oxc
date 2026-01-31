@@ -1,4 +1,5 @@
 use crate::fixer::{RuleFix, RuleFixer};
+use crate::rule::TupleRuleConfig;
 use crate::{AstNode, context::LintContext, rule::Rule};
 use oxc_ast::{AstKind, ast::IfStatement, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
@@ -17,48 +18,40 @@ fn curly_diagnostic(span: Span, keyword: &str, expected: bool) -> OxcDiagnostic 
     OxcDiagnostic::warn(message).with_label(span)
 }
 
-#[derive(Debug, Default, Clone, PartialEq, JsonSchema, Deserialize, Serialize)]
+/// The enforcement type for the curly rule.
+#[derive(Debug, Default, Clone, PartialEq, Eq, JsonSchema, Deserialize, Serialize)]
 #[serde(rename_all = "kebab-case")]
-enum CurlyType {
+pub enum CurlyType {
+    /// Require braces in all cases (default)
     #[default]
     All,
+    /// Require braces only when there are multiple statements in the block
     Multi,
+    /// Require braces when the block spans multiple lines
     MultiLine,
+    /// Require braces when the block is nested or spans multiple lines
     MultiOrNest,
 }
 
-impl CurlyType {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "multi" => Self::Multi,
-            "multi-line" => Self::MultiLine,
-            "multi-or-nest" => Self::MultiOrNest,
-            _ => Self::All,
-        }
-    }
-}
+/// Configuration for the curly rule, specified as an array of one or two elements.
+///
+/// Examples:
+/// - `["all"]` - Require braces in all cases (default)
+/// - `["multi"]` - Require braces only for multi-statement blocks
+/// - `["multi-line"]` - Require braces for multi-line blocks
+/// - `["multi-or-nest"]` - Require braces for nested or multi-line blocks
+/// - `["multi", "consistent"]` - Multi mode with consistent braces in if-else chains
+#[derive(Debug, Default, Clone, Deserialize, JsonSchema, Serialize)]
+#[serde(default)]
+pub struct Curly(CurlyType, Option<CurlyConsistent>);
 
-#[derive(Debug, Default, Clone)]
-pub struct Curly(CurlyConfig);
-
+/// The optional second element of the curly config array.
+/// When set to `"consistent"`, enforces consistent brace usage within if-else chains.
 #[derive(Debug, Clone, JsonSchema, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase", default)]
-pub struct CurlyConfig {
-    /// Which type of curly brace enforcement to use.
-    ///
-    /// - `"all"`: require braces in all cases
-    /// - `"multi"`: require braces only for multi-statement blocks
-    /// - `"multi-line"`: require braces only for multi-line blocks
-    /// - `"multi-or-nest"`: require braces for multi-line blocks or when nested
-    curly_type: CurlyType,
-    /// Whether to enforce consistent use of curly braces in if-else chains.
-    consistent: bool,
-}
-
-impl Default for CurlyConfig {
-    fn default() -> Self {
-        Self { curly_type: CurlyType::All, consistent: false }
-    }
+#[serde(rename_all = "kebab-case")]
+pub enum CurlyConsistent {
+    /// Enforce consistent brace usage in if-else chains
+    Consistent,
 }
 
 struct IfBranch<'a> {
@@ -262,18 +255,12 @@ declare_oxc_lint!(
     eslint,
     style,
     fix,
-    config = CurlyConfig,
+    config = Curly,
 );
 
 impl Rule for Curly {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        let curly_type =
-            value.get(0).and_then(Value::as_str).map(CurlyType::from).unwrap_or_default();
-
-        let consistent =
-            value.get(1).and_then(Value::as_str).is_some_and(|value| value == "consistent");
-
-        Ok(Self(CurlyConfig { curly_type, consistent }))
+        serde_json::from_value::<TupleRuleConfig<Self>>(value).map(TupleRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -293,12 +280,12 @@ impl Rule for Curly {
 
 impl<'a> Curly {
     fn run_for_if_statement(&self, stmt: &'a IfStatement<'a>, ctx: &LintContext<'a>) {
-        let branches = get_if_branches_from_statement(stmt, &self.0.curly_type, ctx);
+        let branches = get_if_branches_from_statement(stmt, &self.0, ctx);
         let does_any_branch_need_braces =
             branches.iter().any(|b| b.should_have_braces.unwrap_or(b.has_braces));
 
         for branch in &branches {
-            let should_have_braces = if self.0.consistent {
+            let should_have_braces = if self.1.is_some() {
                 Some(does_any_branch_need_braces)
             } else {
                 branch.should_have_braces
@@ -316,7 +303,7 @@ impl<'a> Curly {
 
     fn run_for_loop(&self, keyword: &str, body: &Statement<'a>, ctx: &LintContext<'a>) {
         let has_braces = has_braces(body);
-        let should_have_braces = should_have_braces(&self.0.curly_type, body, ctx);
+        let should_have_braces = should_have_braces(&self.0, body, ctx);
         report_if_needed(ctx, body, keyword, has_braces, should_have_braces);
     }
 }
