@@ -6,6 +6,8 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
+    branches-ignore:
+      - "**/graphite-base/**"
   push:
     branches:
       - main
