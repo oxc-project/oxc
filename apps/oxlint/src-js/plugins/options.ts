@@ -9,7 +9,7 @@ import metaSchema from "ajv/lib/refs/json-schema-draft-04.json" with { type: "js
 import { registeredRules } from "./load.ts";
 import { deepCloneJsonValue, deepFreezeJsonArray } from "./json.ts";
 import { debugAssert, debugAssertIsNonNull } from "../utils/asserts.ts";
-import { getCliWorkspace, WorkspaceIdentifier } from "../workspace/index.ts";
+import { getCliWorkspace } from "../workspace/index.ts";
 
 import type { JSONSchema4 } from "json-schema";
 import type { Writable } from "type-fest";
@@ -50,10 +50,10 @@ export const DEFAULT_OPTIONS: Readonly<Options> = Object.freeze([]);
 // All rule options.
 // `lintFile` is called with an array of options IDs, which are indices into this array.
 // First element is irrelevant - never accessed - because 0 index is a sentinel meaning default options.
-export const allOptions: Map<WorkspaceIdentifier, Readonly<Options>[]> = new Map();
+export const allOptions: Map<string, Readonly<Options>[]> = new Map();
 
 // Mapping from workspace URIs to CWD paths
-export const cwds: Map<WorkspaceIdentifier, string> = new Map();
+export const cwds: Map<string, string> = new Map();
 
 // Index into `allOptions` for default options
 export const DEFAULT_OPTIONS_ID = 0;
@@ -391,7 +391,7 @@ function mergeValues(configValue: JsonValue, defaultValue: JsonValue): JsonValue
  *
  * @param workspace the workspace identifier
  */
-export function setupOptionsForWorkspace(workspace: WorkspaceIdentifier) {
+export function setupOptionsForWorkspace(workspace: string) {
   debugAssert(
     !allOptions.has(workspace),
     "Workspace must not already have registered options array",
@@ -402,7 +402,7 @@ export function setupOptionsForWorkspace(workspace: WorkspaceIdentifier) {
 /**
  * Remove all options associated with a workspace.
  */
-export function removeOptionsInWorkspace(workspace: WorkspaceIdentifier) {
+export function removeOptionsInWorkspace(workspace: string) {
   allOptions.delete(workspace);
   cwds.delete(workspace);
 }

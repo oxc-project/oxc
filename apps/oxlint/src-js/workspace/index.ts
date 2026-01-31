@@ -13,26 +13,14 @@ import { removeOptionsInWorkspace, setupOptionsForWorkspace } from "../plugins/o
 import { debugAssert } from "../utils/asserts";
 
 /**
- * Type representing a workspace ID.
- * Currently, this is just a string representing the workspace root directory as `file://` URL.
- */
-export type WorkspaceIdentifier = string;
-
-/**
- * Type representing a workspace.
- * Currently it only contains the workspace root directory as `file://` URL.
- */
-export type Workspace = WorkspaceIdentifier;
-
-/**
  * Set of workspace IDs.
  */
-const workspaces = new Set<Workspace>();
+const workspaces = new Set<string>();
 
 /**
  * Create a new workspace.
  */
-export function createWorkspace(workspace: WorkspaceIdentifier): undefined {
+export function createWorkspace(workspace: string): undefined {
   debugAssert(!workspaces.has(workspace), `Workspace "${workspace.toString()}" already exists`);
   workspaces.add(workspace);
   setupPluginSystemForWorkspace(workspace);
@@ -43,7 +31,7 @@ export function createWorkspace(workspace: WorkspaceIdentifier): undefined {
  * Destroy a workspace.
  * Unloads all plugin data associated with this workspace.
  */
-export function destroyWorkspace(workspace: WorkspaceIdentifier): undefined {
+export function destroyWorkspace(workspace: string): undefined {
   debugAssert(workspaces.has(workspace), `Workspace "${workspace.toString()}" does not exist`);
 
   workspaces.delete(workspace);
@@ -55,7 +43,7 @@ export function destroyWorkspace(workspace: WorkspaceIdentifier): undefined {
  * Gets the CLI workspace ID.
  * In CLI mode, there is exactly one workspace (the CWD), so this returns that workspace ID.
  */
-export function getCliWorkspace(): Workspace {
+export function getCliWorkspace(): string {
   debugAssert(
     workspaces.size === 1,
     "getCliWorkspace should only be used in CLI mode with 1 workspace",

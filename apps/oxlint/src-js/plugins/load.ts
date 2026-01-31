@@ -10,7 +10,6 @@ import type { Context } from "./context.ts";
 import type { Options, SchemaValidator } from "./options.ts";
 import type { RuleMeta } from "./rule_meta.ts";
 import type { AfterHook, BeforeHook, Visitor, VisitorWithHooks } from "./types.ts";
-import type { WorkspaceIdentifier } from "../workspace/index.ts";
 import type { SetNullable } from "../utils/types.ts";
 
 /**
@@ -83,7 +82,7 @@ interface CreateOnceRuleDetails extends RuleDetailsBase {
 
 // Rule objects for loaded rules.
 // Indexed by `ruleId`, which is passed to `lintFile`.
-export const registeredRules: Map<WorkspaceIdentifier, RuleDetails[]> = new Map();
+export const registeredRules: Map<string, RuleDetails[]> = new Map();
 
 // `before` hook which makes rule never run.
 const neverRunBeforeHook: BeforeHook = () => false;
@@ -433,7 +432,7 @@ function conformHookFn<H>(hookFn: H | null | undefined, hookName: string): H | n
   return hookFn;
 }
 
-export function setupPluginSystemForWorkspace(workspace: WorkspaceIdentifier) {
+export function setupPluginSystemForWorkspace(workspace: string) {
   debugAssert(
     !registeredRules.has(workspace),
     "Workspace must not already have registered rules array",
@@ -444,6 +443,6 @@ export function setupPluginSystemForWorkspace(workspace: WorkspaceIdentifier) {
 /**
  * Remove all plugins and rules associated with a workspace.
  */
-export function removePluginsInWorkspace(workspace: WorkspaceIdentifier) {
+export function removePluginsInWorkspace(workspace: string) {
   registeredRules.delete(workspace);
 }
