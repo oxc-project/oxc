@@ -178,33 +178,29 @@ fn detect_component(node: &AstNode, ctx: &LintContext) -> Option<DetectedCompone
         // Export default HOC: export default React.forwardRef(...)
         AstKind::ExportDefaultDeclaration(export_decl) => {
             // Check if the exported value is a HOC call
-            if let ExportDefaultDeclarationKind::CallExpression(call) = &export_decl.declaration {
-                if is_hoc_component(call, ctx) {
+            if let ExportDefaultDeclarationKind::CallExpression(call) = &export_decl.declaration
+                && is_hoc_component(call, ctx) {
                     return Some(DetectedComponent {
                         name: "UnnamedComponent".into(),
                         span: export_decl.span,
                         is_stateless: true,
                     });
                 }
-            }
             None
         }
 
         // Object property methods: { RenderFoo() { return <div/> } }
         AstKind::ObjectProperty(prop) => {
-            if let PropertyKey::StaticIdentifier(id) = &prop.key {
-                if is_react_component_name(&id.name) {
-                    if let Expression::FunctionExpression(func) = &prop.value {
-                        if function_contains_jsx(func) && !is_inside_component(node, ctx) {
+            if let PropertyKey::StaticIdentifier(id) = &prop.key
+                && is_react_component_name(&id.name)
+                    && let Expression::FunctionExpression(func) = &prop.value
+                        && function_contains_jsx(func) && !is_inside_component(node, ctx) {
                             return Some(DetectedComponent {
                                 name: id.name.to_string(),
                                 span: prop.span,
                                 is_stateless: true,
                             });
                         }
-                    }
-                }
-            }
             None
         }
 
@@ -223,15 +219,14 @@ fn detect_component(node: &AstNode, ctx: &LintContext) -> Option<DetectedCompone
                     }
 
                     // Function that returns a component (factory)
-                    if let Expression::FunctionExpression(func) = &assign.right {
-                        if returns_component(func) && !is_inside_component(node, ctx) {
+                    if let Expression::FunctionExpression(func) = &assign.right
+                        && returns_component(func) && !is_inside_component(node, ctx) {
                             return Some(DetectedComponent {
                                 name: prop_name.to_string(),
                                 span: assign.span,
                                 is_stateless: true,
                             });
                         }
-                    }
                 }
             }
             None
@@ -272,20 +267,17 @@ fn detect_variable_component(
     }
 
     // Sequence expression: const Foo = (0, () => <div/>)
-    if let Expression::SequenceExpression(seq) = init {
-        if let Some(last) = seq.expressions.last() {
-            if expression_contains_jsx(last) {
+    if let Expression::SequenceExpression(seq) = init
+        && let Some(last) = seq.expressions.last()
+            && expression_contains_jsx(last) {
                 return Some(DetectedComponent { name, span: decl.span, is_stateless: true });
             }
-        }
-    }
 
     // HOC: const Foo = memo(() => <div/>)
-    if let Expression::CallExpression(call) = init {
-        if is_hoc_component(call, ctx) {
+    if let Expression::CallExpression(call) = init
+        && is_hoc_component(call, ctx) {
             return Some(DetectedComponent { name, span: decl.span, is_stateless: true });
         }
-    }
 
     None
 }
@@ -342,20 +334,17 @@ fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<Strin
             let decl_id = ctx.scoping().symbol_declaration(symbol_id);
             let decl_node = ctx.nodes().get_node(decl_id);
 
-            if let AstKind::VariableDeclarator(var_decl) = decl_node.kind() {
-                if let Some(init) = &var_decl.init {
+            if let AstKind::VariableDeclarator(var_decl) = decl_node.kind()
+                && let Some(init) = &var_decl.init {
                     // const forwardRef = React.forwardRef
-                    if let Expression::StaticMemberExpression(member) = init {
-                        if let Expression::Identifier(obj) = &member.object {
-                            if obj.name == "React"
+                    if let Expression::StaticMemberExpression(member) = init
+                        && let Expression::Identifier(obj) = &member.object
+                            && obj.name == "React"
                                 && matches!(member.property.name.as_str(), "memo" | "forwardRef")
                             {
                                 return Some(format!("React.{}", member.property.name));
                             }
-                        }
-                    }
                 }
-            }
         }
 
         // Might be an imported or destructured HOC
@@ -377,11 +366,10 @@ fn is_passthrough_function(func: &oxc_ast::ast::Function) -> bool {
         return false;
     }
 
-    if let Statement::ReturnStatement(ret) = &body.statements[0] {
-        if let Some(arg) = &ret.argument {
+    if let Statement::ReturnStatement(ret) = &body.statements[0]
+        && let Some(arg) = &ret.argument {
             return is_simple_jsx_passthrough(arg);
         }
-    }
 
     false
 }
@@ -394,13 +382,11 @@ fn is_passthrough_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> bool {
     }
 
     // Block body with single return: `() => { return <Comp {...props} />; }`
-    if arrow.body.statements.len() == 1 {
-        if let Statement::ReturnStatement(ret) = &arrow.body.statements[0] {
-            if let Some(arg) = &ret.argument {
+    if arrow.body.statements.len() == 1
+        && let Statement::ReturnStatement(ret) = &arrow.body.statements[0]
+            && let Some(arg) = &ret.argument {
                 return is_simple_jsx_passthrough(arg);
             }
-        }
-    }
 
     false
 }
@@ -410,8 +396,8 @@ fn is_passthrough_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> bool {
 fn is_simple_jsx_passthrough(expr: &Expression) -> bool {
     if let Expression::JSXElement(jsx) = expr {
         // Check if it's rendering another component (PascalCase name)
-        if let oxc_ast::ast::JSXElementName::IdentifierReference(id) = &jsx.opening_element.name {
-            if is_react_component_name(&id.name) {
+        if let oxc_ast::ast::JSXElementName::IdentifierReference(id) = &jsx.opening_element.name
+            && is_react_component_name(&id.name) {
                 // Only consider it a passthrough if it spreads props (like {...props})
                 // A component that doesn't pass props isn't a simple wrapper
                 let has_spread =
@@ -420,7 +406,6 @@ fn is_simple_jsx_passthrough(expr: &Expression) -> bool {
                     });
                 return has_spread && jsx.opening_element.attributes.len() <= 2;
             }
-        }
     }
     false
 }
@@ -432,8 +417,8 @@ fn returns_component(func: &oxc_ast::ast::Function) -> bool {
     };
 
     for stmt in &body.statements {
-        if let Statement::ReturnStatement(ret) = stmt {
-            if let Some(arg) = &ret.argument {
+        if let Statement::ReturnStatement(ret) = stmt
+            && let Some(arg) = &ret.argument {
                 match arg {
                     Expression::FunctionExpression(inner) => {
                         return function_contains_jsx(inner);
@@ -444,7 +429,6 @@ fn returns_component(func: &oxc_ast::ast::Function) -> bool {
                     _ => {}
                 }
             }
-        }
     }
 
     false
@@ -477,28 +461,23 @@ fn is_inside_component(node: &AstNode, ctx: &LintContext) -> bool {
         }
 
         // Inside a function component
-        if let AstKind::Function(func) = ancestor.kind() {
-            if let Some(id) = &func.id {
-                if is_react_component_name(&id.name) && function_contains_jsx(func) {
+        if let AstKind::Function(func) = ancestor.kind()
+            && let Some(id) = &func.id
+                && is_react_component_name(&id.name) && function_contains_jsx(func) {
                     return true;
                 }
-            }
-        }
 
         // Inside an arrow function component
-        if let AstKind::ArrowFunctionExpression(arrow) = ancestor.kind() {
-            if function_body_contains_jsx(&arrow.body) {
+        if let AstKind::ArrowFunctionExpression(arrow) = ancestor.kind()
+            && function_body_contains_jsx(&arrow.body) {
                 // Check if this arrow is assigned to a component-named variable
                 let parent = ctx.nodes().parent_node(ancestor.id());
-                if let AstKind::VariableDeclarator(decl) = parent.kind() {
-                    if let Some(name) = decl.id.get_identifier_name() {
-                        if is_react_component_name(name.as_str()) {
+                if let AstKind::VariableDeclarator(decl) = parent.kind()
+                    && let Some(name) = decl.id.get_identifier_name()
+                        && is_react_component_name(name.as_str()) {
                             return true;
                         }
-                    }
-                }
             }
-        }
     }
 
     false
