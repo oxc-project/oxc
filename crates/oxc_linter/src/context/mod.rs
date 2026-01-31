@@ -173,6 +173,21 @@ impl<'a> LintContext<'a> {
             .map(|(a, _)| a as u32)
     }
 
+    /// Finds the previous occurrence of the given token within a bounded span,
+    /// starting from the specified position, skipping over comments.
+    ///
+    /// Returns the offset from `start` if the token is found before `end`,
+    /// otherwise returns `None`.
+    #[expect(clippy::cast_possible_truncation)]
+    pub fn find_prev_token_within(&self, start: u32, end: u32, token: &str) -> Option<u32> {
+        let source = self.source_range(Span::new(start, end));
+
+        source
+            .rmatch_indices(token)
+            .find(|(a, _)| !self.is_inside_comment(start + *a as u32))
+            .map(|(a, _)| a as u32)
+    }
+
     /// Path to the file currently being linted.
     #[inline]
     pub fn file_path(&self) -> &Path {
