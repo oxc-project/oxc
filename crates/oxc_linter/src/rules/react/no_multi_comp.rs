@@ -18,7 +18,7 @@ use crate::{
     rules::ContextHost,
     utils::{
         expression_contains_jsx, function_body_contains_jsx, function_contains_jsx,
-        is_es5_component, is_es6_component, is_react_component_name,
+        is_es5_component, is_es6_component, is_hoc_call, is_react_component_name,
     },
 };
 
@@ -291,12 +291,11 @@ fn detect_variable_component(
 
 /// Check if a call expression is a HOC (memo/forwardRef) wrapping a component
 fn is_hoc_component(call: &CallExpression, ctx: &LintContext) -> bool {
-    let callee_name = get_hoc_callee_name(call, ctx);
+    let Some(callee_name) = get_hoc_callee_name(call, ctx) else {
+        return false;
+    };
 
-    if !matches!(
-        callee_name.as_deref(),
-        Some("memo" | "forwardRef" | "React.memo" | "React.forwardRef")
-    ) {
+    if !is_hoc_call(&callee_name, ctx) {
         return false;
     }
 
