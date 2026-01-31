@@ -316,21 +316,16 @@ fn is_hoc_component(call: &CallExpression, ctx: &LintContext) -> bool {
 
 /// Get the name of a HOC callee, resolving local aliases
 fn get_hoc_callee_name(call: &CallExpression, ctx: &LintContext) -> Option<String> {
-    // Direct name like React.memo or memo
+    // Direct name like React.memo, memo, or forwardRef
     if let Some(name) = call.callee_name() {
         return Some(name.to_string());
     }
 
+    // Check for aliased imports: const myMemo = React.memo
     let Expression::Identifier(ident) = &call.callee else {
         return None;
     };
 
-    // Check for imported or destructured HOC (memo/forwardRef)
-    if matches!(ident.name.as_str(), "memo" | "forwardRef") {
-        return Some(ident.name.to_string());
-    }
-
-    // Check for aliased imports: const myMemo = React.memo
     let scoping = ctx.scoping();
     let symbol_id = scoping.get_binding(scoping.root_scope_id(), &ident.name)?;
     let decl_id = scoping.symbol_declaration(symbol_id);
@@ -421,13 +416,7 @@ fn returns_component(func: &oxc_ast::ast::Function) -> bool {
             return false;
         };
 
-        matches!(
-            ret.argument.as_ref(),
-            Some(Expression::FunctionExpression(f)) if function_contains_jsx(f)
-        ) || matches!(
-            ret.argument.as_ref(),
-            Some(Expression::ArrowFunctionExpression(a)) if function_body_contains_jsx(&a.body)
-        )
+        ret.argument.as_ref().is_some_and(expression_contains_jsx)
     })
 }
 
