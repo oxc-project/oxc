@@ -36,11 +36,17 @@ pub type ExternalLinterSetupRuleConfigsCb =
 pub type ExternalLinterLintFileCb = Arc<
     Box<
         dyn Fn(
+                // File path of file to lint
                 String,
+                // Rule IDs
                 Vec<u32>,
+                // Options IDs
                 Vec<u32>,
+                // Settings JSON
                 String,
+                // Globals JSON
                 String,
+                // Allocator
                 &Allocator,
             ) -> Result<Vec<LintFileResult>, String>
             + Sync
