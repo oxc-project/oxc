@@ -231,10 +231,10 @@ Skip: 0 / 217 (0.0%)
 ```
 
 Error: Overlapping token/comments: last end: 75, next start: 24
-    at debugCheckValidRanges (apps/oxlint/dist/lint.js)
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.isSpaceBetween (apps/oxlint/dist/lint.js)
+    at debugCheckValidRanges (apps/oxlint/dist/load.js)
+    at debugCheckTokensAndComments (apps/oxlint/dist/load.js)
+    at initTokensAndComments (apps/oxlint/dist/load.js)
+    at Object.isSpaceBetween (apps/oxlint/dist/load.js)
 
 
 #### jsx-tag-spacing > valid
@@ -292,10 +292,10 @@ Error: Overlapping token/comments: last end: 75, next start: 24
 ```
 
 Error: Overlapping token/comments: last end: 88, next start: 24
-    at debugCheckValidRanges (apps/oxlint/dist/lint.js)
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.isSpaceBetween (apps/oxlint/dist/lint.js)
+    at debugCheckValidRanges (apps/oxlint/dist/load.js)
+    at debugCheckTokensAndComments (apps/oxlint/dist/load.js)
+    at initTokensAndComments (apps/oxlint/dist/load.js)
+    at Object.isSpaceBetween (apps/oxlint/dist/load.js)
 
 
 #### jsx-tag-spacing > invalid
@@ -332,10 +332,10 @@ Error: Overlapping token/comments: last end: 88, next start: 24
 ```
 
 Error: Overlapping token/comments: last end: 81, next start: 30
-    at debugCheckValidRanges (apps/oxlint/dist/lint.js)
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.isSpaceBetween (apps/oxlint/dist/lint.js)
+    at debugCheckValidRanges (apps/oxlint/dist/load.js)
+    at debugCheckTokensAndComments (apps/oxlint/dist/load.js)
+    at initTokensAndComments (apps/oxlint/dist/load.js)
+    at Object.isSpaceBetween (apps/oxlint/dist/load.js)
 
 
 #### jsx-tag-spacing > invalid
@@ -399,10 +399,10 @@ Error: Overlapping token/comments: last end: 81, next start: 30
 ```
 
 Error: Overlapping token/comments: last end: 94, next start: 30
-    at debugCheckValidRanges (apps/oxlint/dist/lint.js)
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.isSpaceBetween (apps/oxlint/dist/lint.js)
+    at debugCheckValidRanges (apps/oxlint/dist/load.js)
+    at debugCheckTokensAndComments (apps/oxlint/dist/load.js)
+    at initTokensAndComments (apps/oxlint/dist/load.js)
+    at Object.isSpaceBetween (apps/oxlint/dist/load.js)
 
 
 #### jsx-tag-spacing > invalid
@@ -442,10 +442,10 @@ Error: Overlapping token/comments: last end: 94, next start: 30
 ```
 
 Error: Overlapping token/comments: last end: 105, next start: 54
-    at debugCheckValidRanges (apps/oxlint/dist/lint.js)
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.isSpaceBetween (apps/oxlint/dist/lint.js)
+    at debugCheckValidRanges (apps/oxlint/dist/load.js)
+    at debugCheckTokensAndComments (apps/oxlint/dist/load.js)
+    at initTokensAndComments (apps/oxlint/dist/load.js)
+    at Object.isSpaceBetween (apps/oxlint/dist/load.js)
 
 
 #### jsx-tag-spacing > invalid
@@ -512,8 +512,8 @@ Error: Overlapping token/comments: last end: 105, next start: 54
 ```
 
 Error: Overlapping token/comments: last end: 118, next start: 54
-    at debugCheckValidRanges (apps/oxlint/dist/lint.js)
-    at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
-    at initTokensAndComments (apps/oxlint/dist/lint.js)
-    at Object.isSpaceBetween (apps/oxlint/dist/lint.js)
+    at debugCheckValidRanges (apps/oxlint/dist/load.js)
+    at debugCheckTokensAndComments (apps/oxlint/dist/load.js)
+    at initTokensAndComments (apps/oxlint/dist/load.js)
+    at Object.isSpaceBetween (apps/oxlint/dist/load.js)
 

@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   360 | 100.0% |
-| Fully passing     |   359 |  99.7% |
-| Partially passing |     1 |   0.3% |
+| Fully passing     |   358 |  99.4% |
+| Partially passing |     2 |   0.6% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests |  4482 | 100.0% |
-| Passing     |  3937 |  87.8% |
-| Failing     |    14 |   0.3% |
+| Passing     |  3936 |  87.8% |
+| Failing     |    15 |   0.3% |
 | Skipped     |   531 |  11.8% |
 
 ## Fully Passing Rules
@@ -210,7 +210,6 @@
 - `use-type-alias (S4323)` (12 tests)
 - `no-return-type-any (S4324)` (21 tests) (10 skipped)
 - `no-this-alias (S4327)` (1 tests) (1 skipped)
-- `no-implicit-dependencies (S4328)` (43 tests) (2 skipped)
 - `no-useless-intersection (S4335)` (15 tests) (9 skipped)
 - `weak-ssl (S4423)` (1 tests) (1 skipped)
 - `weak-ssl (S4423)` (16 tests)
@@ -387,6 +386,7 @@
 ## Rules with Failures
 
 - `no-commented-code (S125)` - 4 / 18 (22.2%)
+- `no-implicit-dependencies (S4328)` - 42 / 43 (97.7%)
 
 ## Rules with Failures Detail
 
@@ -2008,5 +2008,147 @@ AssertionError [ERR_ASSERTION]: Should have 1 error but had 0: []
     at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
     at assertInvalidTestCasePasses (apps/oxlint/dist/rule_tester.js)
     at runInvalidTestCase (apps/oxlint/dist/rule_tester.js)
+    at apps/oxlint/dist/rule_tester.js
+
+
+### `no-implicit-dependencies (S4328)`
+
+Pass: 40 / 43 (93.0%)
+Fail: 1 / 43 (2.3%)
+Skip: 2 / 43 (4.7%)
+
+#### S4328 > S4328 > Dependencies should be explicit > valid
+
+```js
+
+        import { f as f1 } from 'top-dependency';
+        import { f as f2 } from 'nested-dependency';
+        import { f as f2 } from 'local-dependency';
+      
+```
+
+```json
+{
+  "files": [
+    "**/*.js",
+    "**/*.jsx",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "languageOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module",
+    "globals": {
+      "AggregateError": false,
+      "Array": false,
+      "ArrayBuffer": false,
+      "Atomics": false,
+      "BigInt": false,
+      "BigInt64Array": false,
+      "BigUint64Array": false,
+      "Boolean": false,
+      "DataView": false,
+      "Date": false,
+      "decodeURI": false,
+      "decodeURIComponent": false,
+      "encodeURI": false,
+      "encodeURIComponent": false,
+      "Error": false,
+      "escape": false,
+      "eval": false,
+      "EvalError": false,
+      "FinalizationRegistry": false,
+      "Float16Array": false,
+      "Float32Array": false,
+      "Float64Array": false,
+      "Function": false,
+      "globalThis": false,
+      "Infinity": false,
+      "Int16Array": false,
+      "Int32Array": false,
+      "Int8Array": false,
+      "Intl": false,
+      "isFinite": false,
+      "isNaN": false,
+      "Iterator": false,
+      "JSON": false,
+      "Map": false,
+      "Math": false,
+      "NaN": false,
+      "Number": false,
+      "Object": false,
+      "parseFloat": false,
+      "parseInt": false,
+      "Promise": false,
+      "Proxy": false,
+      "RangeError": false,
+      "ReferenceError": false,
+      "Reflect": false,
+      "RegExp": false,
+      "Set": false,
+      "SharedArrayBuffer": false,
+      "String": false,
+      "Symbol": false,
+      "SyntaxError": false,
+      "TypeError": false,
+      "Uint16Array": false,
+      "Uint32Array": false,
+      "Uint8Array": false,
+      "Uint8ClampedArray": false,
+      "undefined": false,
+      "unescape": false,
+      "URIError": false,
+      "WeakMap": false,
+      "WeakRef": false,
+      "WeakSet": false
+    },
+    "parserOptions": {
+      "disallowAutomaticSingleRunInference": true,
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    }
+  },
+  "filename": "apps/oxlint/conformance/submodules/sonarjs/packages/jsts/src/rules/S4328/fixtures/nested-package-json-project/dir/file.js",
+  "options": [
+    {
+      "whitelist": []
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Should have no errors but had 2: [
+  {
+    ruleId: 'rule-to-test/Dependencies should be explicit',
+    message: 'Either remove this import or add it as a dependency.',
+    messageId: 'removeOrAddDependency',
+    severity: 1,
+    nodeType: 'ImportDeclaration',
+    line: 2,
+    column: 8,
+    endLine: 2,
+    endColumn: 14,
+    suggestions: null
+  },
+  {
+    ruleId: 'rule-to-test/Dependencies should be explicit',
+    message: 'Either remove this import or add it as a dependency.',
+    messageId: 'removeOrAddDependency',
+    severity: 1,
+    nodeType: 'ImportDeclaration',
+    line: 4,
+    column: 8,
+    endLine: 4,
+    endColumn: 14,
+    suggestions: null
+  }
+]
+
+2 !== 0
+
+    at assertErrorCountIsCorrect (apps/oxlint/dist/rule_tester.js)
+    at assertValidTestCasePasses (apps/oxlint/dist/rule_tester.js)
+    at runValidTestCase (apps/oxlint/dist/rule_tester.js)
     at apps/oxlint/dist/rule_tester.js
 
