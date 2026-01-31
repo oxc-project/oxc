@@ -301,7 +301,11 @@ impl ToolBuilder for ServerLinterBuilder {
     fn shutdown(&self, root_uri: &Uri) {
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
-            (external_linter.destroy_workspace)(root_uri.as_str().to_string());
+            let res = (external_linter.destroy_workspace)(root_uri.as_str().to_string());
+
+            if let Err(err) = res {
+                error!("Failed to destroy JS workspace:\n{err}\n");
+            }
         }
     }
 }

@@ -12,7 +12,8 @@ use crate::{
 pub type ExternalLinterCreateWorkspaceCb =
     Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
-pub type ExternalLinterDestroyWorkspaceCb = Arc<Box<dyn Fn(String) + Send + Sync>>;
+pub type ExternalLinterDestroyWorkspaceCb =
+    Arc<Box<dyn Fn(String) -> Result<(), String> + Send + Sync>>;
 
 pub type ExternalLinterLoadPluginCb = Arc<
     Box<

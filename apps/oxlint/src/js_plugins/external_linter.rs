@@ -1,4 +1,7 @@
-use std::sync::{Arc, atomic::Ordering, mpsc::channel};
+use std::{
+    sync::{Arc, atomic::Ordering, mpsc::channel},
+    time::Duration,
+};
 
 use napi::{
     Status,
@@ -326,8 +329,40 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspa
 }
 
 /// Wrap `destroyWorkspace` JS callback as a normal Rust function.
+///
+/// The JS-side `destroyWorkspace` function is synchronous, but it's wrapped in a `ThreadsafeFunction`,
+/// so cannot be called synchronously. Use an `mpsc::channel` to wait for the result from JS side.
+///
+/// Uses a timeout to prevent indefinite blocking during shutdown, which can cause issues
+/// in multi-root workspace scenarios where multiple workspaces are being destroyed concurrently.
 fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri| {
-        let _ = cb.call(workspace_uri, ThreadsafeFunctionCallMode::NonBlocking);
+        let (tx, rx) = channel();
+
+        // Send data to JS
+        let status = cb.call_with_return_value(
+            workspace_uri,
+            ThreadsafeFunctionCallMode::NonBlocking,
+            move |result, _env| {
+                // Ignore send errors - the receiver may have timed out
+                let _ = tx.send(result);
+                Ok(())
+            },
+        );
+
+        if status == Status::Ok {
+            // Use a timeout to prevent blocking indefinitely during shutdown.
+            // If JS side doesn't respond within the timeout, we proceed with shutdown anyway.
+            match rx.recv_timeout(Duration::from_secs(5)) {
+                // Destroying workspace succeeded
+                Ok(Ok(()))
+                // Timeout or sender dropped - proceed with shutdown
+                | Err(_) => Ok(()),
+                // `destroyWorkspace` threw an error
+                Ok(Err(err)) => Err(format!("`destroyWorkspace` threw an error: {err}")),
+            }
+        } else {
+            Err(format!("Failed to schedule `destroyWorkspace` callback: {status:?}"))
+        }
     }))
 }
