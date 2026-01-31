@@ -328,6 +328,6 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspa
 /// Wrap `destroyWorkspace` JS callback as a normal Rust function.
 fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri| {
-        let _ = cb.call(workspace_uri, ThreadsafeFunctionCallMode::Blocking);
+        let _ = cb.call(workspace_uri, ThreadsafeFunctionCallMode::NonBlocking);
     }))
 }
