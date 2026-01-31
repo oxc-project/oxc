@@ -1,0 +1,65 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:22]
+ 1 │ import { User } from './barrel';
+   ·                      ──────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:32]
+ 1 │ import { User, UserRole } from './barrel';
+   ·                                ──────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:31]
+ 1 │ import { User, Product } from './barrel';
+   ·                               ──────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:35]
+ 1 │ import { User as UserModel } from './barrel';
+   ·                                   ──────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:36]
+ 1 │ import { type User, Product } from './barrel';
+   ·                                    ──────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:29]
+ 1 │ import Order, { User } from './barrel';
+   ·                             ──────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:22]
+ 1 │ import { User } from './barrel/index';
+   ·                      ────────────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:25]
+ 1 │ import { Product } from './barrel/index.js';
+   ·                         ───────────────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 5 additional modules.
+
+  ⚠ oxc(prefer-direct-imports): Avoid importing from barrel files.
+   ╭─[index.ts:1:22]
+ 1 │ import { User } from './barrel/deep';
+   ·                      ───────────────
+   ╰────
+  help: Import directly from the specific modules instead of the barrel file; this barrel loads 1 additional module.
