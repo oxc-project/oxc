@@ -12135,10 +12135,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: JSX syntax is disabled and should be enabled via the parser options
 
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:1]
+  × Unexpected token. Did you mean `{'>'}` or `&gt;`?
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:10]
  1 │ <div>() => {}
-   · ─
+   ·          ▲
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:6]
+ 1 │ <div>() => {}
+   ·      ────
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'div'.
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/_no-plugin-type-param/input.js:1:6]
+ 1 │ <div>() => {}
+   ·  ─┬─ ──┬─
+   ·   │    ╰── Expected `</div>`
+   ·   ╰── Opened here
    ╰────
 
   × Unexpected JSX expression
@@ -12162,6 +12176,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:10]
  1 │ <div>() => {}
    ·          ▲
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:6]
+ 1 │ <div>() => {}
+   ·      ────
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'div'.
+   ╭─[babel/packages/babel-parser/test/fixtures/jsx/errors/unclosed-jsx-element/input.js:1:6]
+ 1 │ <div>() => {}
+   ·  ─┬─ ──┬─
+   ·   │    ╰── Expected `</div>`
+   ·   ╰── Opened here
    ╰────
 
   × Unexpected token
@@ -12245,6 +12273,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ // Generics without trailing comma are disallowed in JSX
  2 │ <T>(a: T): T => a;
    ·               ▲
+ 3 │ 
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:2:4]
+ 1 │ // Generics without trailing comma are disallowed in JSX
+ 2 │ <T>(a: T): T => a;
+   ·    ───────────
+ 3 │ 
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'T'.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/arrow-function/generic-tsx/input.ts:2:4]
+ 1 │ // Generics without trailing comma are disallowed in JSX
+ 2 │ <T>(a: T): T => a;
+   ·  ┬ ─────┬─────
+   ·  │      ╰── Expected `</T>`
+   ·  ╰── Opened here
  3 │ 
    ╰────
 
@@ -14035,6 +14081,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·        ▲
    ╰────
 
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts:1:4]
+ 1 │ <T>() => {}</T>;
+   ·    ────
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'T'.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/tsx/invalid-gt-arrow-like/input.ts:1:4]
+ 1 │ <T>() => {}</T>;
+   ·  ┬ ──┬─
+   ·  │   ╰── Expected `</T>`
+   ·  ╰── Opened here
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-alias/declare-new-line/input.ts:1:8]
  1 │ declare type
@@ -14386,6 +14446,24 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ // valid JSX
  2 │ <in T>() => {}</in>;
    ·           ▲
+ 3 │ 
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:2:7]
+ 1 │ // valid JSX
+ 2 │ <in T>() => {}</in>;
+   ·       ────
+ 3 │ 
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'in'.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/variance-annotations-with-jsx/input.tsx:2:7]
+ 1 │ // valid JSX
+ 2 │ <in T>() => {}</in>;
+   ·  ─┬   ──┬─
+   ·   │     ╰── Expected `</in>`
+   ·   ╰── Opened here
  3 │ 
    ╰────
 
