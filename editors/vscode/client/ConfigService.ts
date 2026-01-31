@@ -66,15 +66,15 @@ export class ConfigService implements IDisposable {
   }
 
   public addWorkspaceConfig(workspace: WorkspaceFolder): void {
-    this.workspaceConfigs.set(workspace.uri.path, new WorkspaceConfig(workspace));
+    this.workspaceConfigs.set(workspace.uri.fsPath, new WorkspaceConfig(workspace));
   }
 
   public removeWorkspaceConfig(workspace: WorkspaceFolder): void {
-    this.workspaceConfigs.delete(workspace.uri.path);
+    this.workspaceConfigs.delete(workspace.uri.fsPath);
   }
 
   public getWorkspaceConfig(workspace: Uri): WorkspaceConfig | undefined {
-    return this.workspaceConfigs.get(workspace.path);
+    return this.workspaceConfigs.get(workspace.fsPath);
   }
 
   public effectsWorkspaceConfigChange(event: ConfigurationChangeEvent): boolean {
