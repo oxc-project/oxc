@@ -1,4 +1,4 @@
-import type { Diagnostic, Node, Plugin } from "#oxlint/plugin";
+import type { Diagnostic, Node, Plugin } from "#oxlint/plugins";
 
 const plugin: Plugin = {
   meta: {

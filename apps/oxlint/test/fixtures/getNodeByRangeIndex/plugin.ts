@@ -1,4 +1,4 @@
-import type { Plugin, Rule } from "#oxlint/plugin";
+import type { Plugin, Rule } from "#oxlint/plugins";
 
 const rule: Rule = {
   create(context) {
