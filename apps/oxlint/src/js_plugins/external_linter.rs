@@ -9,8 +9,9 @@ use serde::Deserialize;
 
 use oxc_allocator::{Allocator, free_fixed_size_allocator};
 use oxc_linter::{
-    ExternalLinter, ExternalLinterLintFileCb, ExternalLinterLoadPluginCb,
-    ExternalLinterSetupRuleConfigsCb, LintFileResult, LoadPluginResult,
+    ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
+    ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
+    LintFileResult, LoadPluginResult,
 };
 
 use crate::{
@@ -50,7 +51,7 @@ pub fn create_external_linter(
 /// until the `Promise` returned by the JS function resolves.
 ///
 /// The returned function will panic if called outside of a Tokio runtime.
-fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterCreateWorkspaceCb {
+fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> ExternalLinterCreateWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri| {
         let cb = &cb;
         let res = tokio::task::block_in_place(|| {
@@ -69,9 +70,7 @@ fn wrap_create_workspace(cb: JsCreateWorkspaceCb) -> oxc_linter::ExternalLinterC
 }
 
 /// Wrap `destroyWorkspace` JS callback as a normal Rust function.
-fn wrap_destroy_workspace(
-    cb: JsDestroyWorkspaceCb,
-) -> oxc_linter::ExternalLinterDestroyWorkspaceCb {
+fn wrap_destroy_workspace(cb: JsDestroyWorkspaceCb) -> ExternalLinterDestroyWorkspaceCb {
     Arc::new(Box::new(move |workspace_uri: String| {
         let _ = cb.call(FnArgs::from((workspace_uri,)), ThreadsafeFunctionCallMode::Blocking);
     }))
