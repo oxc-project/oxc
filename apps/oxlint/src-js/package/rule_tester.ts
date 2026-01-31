@@ -113,7 +113,17 @@ interface Config {
    * If `true`, column offsets in diagnostics are incremented by 1, to match ESLint's behavior.
    */
   eslintCompat?: boolean;
+
+  /**
+   * Language options.
+   */
   languageOptions?: LanguageOptions;
+
+  /**
+   * Current working directory for the linter.
+   * If not provided, defaults to the directory containing the test file.
+   */
+  cwd?: string;
 }
 
 /**
@@ -343,6 +353,10 @@ interface Diagnostic {
 
 // Default path (without extension) for test cases if not provided
 const DEFAULT_FILENAME_BASE = "file";
+
+// Default CWD for test cases if not provided.
+// Root of `oxlint` package once bundled into `dist`.
+const DEFAULT_CWD = dirname(import.meta.dirname);
 
 // Dummy workspace URI.
 // This just needs to be unique, and we only have a single workspace in existence at any time.
@@ -984,23 +998,24 @@ function lint(test: TestCase, plugin: Plugin): Diagnostic[] {
   // Determine path and CWD.
   // If not provided, use default filename based on `parseOptions.lang`,
   // and the directory of this file as CWD.
-  let path: string, cwd: string;
-
-  const { filename } = test;
-  if (filename == null) {
-    let ext: string | undefined = parseOptions.lang;
-    if (ext == null) {
-      ext = "js";
-    } else if (ext === "dts") {
-      ext = "d.ts";
-    }
-    cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
-    path = pathJoin(cwd, `${DEFAULT_FILENAME_BASE}.${ext}`);
-  } else if (isAbsolutePath(filename)) {
-    cwd = dirname(filename);
+  // If `filename` is an absolute path, make `cwd` the directory containing `filename`.
+  let path: string;
+  let { filename, cwd } = test;
+  if (filename != null && isAbsolutePath(filename)) {
+    if (cwd == null) cwd = dirname(filename);
     path = filename;
   } else {
-    cwd = dirname(import.meta.dirname); // Root of `oxlint` package once bundled into `dist`
+    if (filename == null) {
+      let ext: string | undefined = parseOptions.lang;
+      if (ext == null) {
+        ext = "js";
+      } else if (ext === "dts") {
+        ext = "d.ts";
+      }
+      filename = `${DEFAULT_FILENAME_BASE}.${ext}`;
+    }
+
+    if (cwd == null) cwd = DEFAULT_CWD;
     path = pathJoin(cwd, filename);
   }
 

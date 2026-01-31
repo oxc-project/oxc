@@ -31,7 +31,7 @@ export interface TestResult {
 const describeStack: string[] = [];
 
 // Current test group
-let currentGroup: TestGroup | null = null;
+export let currentGroup: TestGroup | null = null;
 
 /**
  * Set the current group being tested.

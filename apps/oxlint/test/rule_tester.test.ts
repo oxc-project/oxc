@@ -3210,4 +3210,76 @@ describe("RuleTester", () => {
       expect(runCases()).toEqual([null, null]);
     });
   });
+
+  describe("`cwd` option", () => {
+    const cwdReporterRule: Rule = {
+      create(context) {
+        return {
+          Program(node) {
+            context.report({
+              message: `cwd: ${context.cwd}`,
+              node,
+            });
+          },
+        };
+      },
+    };
+
+    it("set globally", () => {
+      RuleTester.setDefaultConfig({ cwd: "/a/b/c" });
+
+      const tester = new RuleTester();
+      tester.run("cwd", cwdReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            errors: [
+              {
+                message: "cwd: /a/b/c",
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("set in `RuleTester` options", () => {
+      const tester = new RuleTester({ cwd: "/a/b/c" });
+      tester.run("cwd", cwdReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            errors: [
+              {
+                message: "cwd: /a/b/c",
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+
+    it("set in test case", () => {
+      const tester = new RuleTester();
+      tester.run("cwd", cwdReporterRule, {
+        valid: [],
+        invalid: [
+          {
+            code: "",
+            cwd: "/a/b/c",
+            errors: [
+              {
+                message: "cwd: /a/b/c",
+              },
+            ],
+          },
+        ],
+      });
+      expect(runCases()).toEqual([null]);
+    });
+  });
 });

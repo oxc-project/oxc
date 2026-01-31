@@ -2,10 +2,11 @@
  * Shim of `RuleTester` class.
  */
 
+import { dirname, isAbsolute as isAbsolutePath, sep as pathSep } from "node:path";
 // @ts-expect-error - internal module of ESLint with no types
 import eslintGlobals from "../submodules/eslint/conf/globals.js";
 import { RuleTester } from "#oxlint/rule-tester";
-import { describe, it, setCurrentTest } from "./capture.ts";
+import { describe, it, currentGroup, setCurrentTest } from "./capture.ts";
 import { SHOULD_SKIP_CODE } from "./filter.ts";
 
 import type { Rule } from "#oxlint/plugin";
@@ -33,6 +34,10 @@ interface TestCaseExtension {
 export type ValidTestCase = RuleTester.ValidTestCase & TestCaseExtension;
 export type InvalidTestCase = RuleTester.InvalidTestCase & TestCaseExtension;
 export type TestCase = ValidTestCase | InvalidTestCase;
+
+// Replace backslashes with forward slashes on Windows. Do nothing on Mac/Linux.
+const normalizeSlashes =
+  pathSep === "\\" ? (path: string) => path.replaceAll("\\", "/") : (path: string) => path;
 
 // Maps of parser `parseForESLint` functions and parser paths to parser details (language + specifier)
 export const parseForESLintFns: Map<Function, ParserDetails> = new Map();
@@ -151,6 +156,24 @@ function modifyTestCase(test: TestCase): void {
   // Enable ESLint compat mode.
   // This makes `RuleTester` adjust column indexes in diagnostics to match ESLint's behavior.
   test.eslintCompat = true;
+
+  // Set CWD for test case to the test files directory.
+  // If `filename` is provided and is absolute, use the deepest directory which is in common
+  // between `filename` and `testFilesDirPath` as CWD.
+  let cwd = currentGroup!.testFilesDirPath;
+  if (test.filename != null && isAbsolutePath(test.filename)) {
+    const filename = normalizeSlashes(test.filename);
+    while (true) {
+      let normalizedCwd = normalizeSlashes(cwd);
+      if (!normalizedCwd.endsWith("/")) normalizedCwd += "/";
+      if (filename.startsWith(normalizedCwd)) break; // Found common directory
+
+      const nextCwd = dirname(cwd);
+      if (nextCwd === cwd) break; // Reached root of filesystem
+      cwd = nextCwd;
+    }
+  }
+  test.cwd = cwd;
 
   // Ignore parsing errors. ESLint's test cases include invalid code.
   languageOptions = { ...test.languageOptions };
