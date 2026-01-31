@@ -29,7 +29,7 @@ export interface Plugin {
  * If `createOnce` method is present, `create` is ignored.
  *
  * If defining the rule with `createOnce`, and you want the rule to work with ESLint too,
- * you need to wrap the rule with `defineRule`.
+ * you need to wrap the plugin containing the rule with `eslintCompatPlugin`.
  */
 export type Rule = CreateRule | CreateOnceRule;
 

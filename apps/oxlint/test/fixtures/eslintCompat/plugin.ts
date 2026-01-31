@@ -1,6 +1,6 @@
-import { definePlugin, defineRule } from "#oxlint/plugin";
+import { eslintCompatPlugin } from "#oxlint/plugin";
 
-import type { Node } from "#oxlint/plugin";
+import type { Node, Rule } from "#oxlint/plugin";
 
 const SPAN: Node = {
   start: 0,
@@ -12,26 +12,29 @@ const SPAN: Node = {
   },
 };
 
-const createRule = defineRule({
+const createRule: Rule = {
   create(context) {
-    context.report({ message: `create body:\nthis === rule: ${this === createRule}`, node: SPAN });
+    context.report({
+      message: `create body:\n` + `this === rule: ${this === createRule}`,
+      node: SPAN,
+    });
 
     return {
       Identifier(node) {
         context.report({
-          message: `ident visit fn "${node.name}":\nfilename: ${context.filename}`,
+          message: `ident visit fn "${node.name}":\n` + `filename: ${context.filename}`,
           node,
         });
       },
     };
   },
-});
+};
 
 // This aims to test that `createOnce` is called once only, and `before` hook is called once per file.
-// i.e. Oxlint calls `createOnce` directly, and not the `create` method that `defineRule` adds to the rule.
+// i.e. Oxlint calls `createOnce` directly, and not the `create` method that `eslintCompatPlugin` adds to the rule.
 let createOnceCallCount = 0;
 
-const createOnceRule = defineRule({
+const createOnceRule: Rule = {
   createOnce(context) {
     createOnceCallCount++;
 
@@ -43,7 +46,7 @@ const createOnceRule = defineRule({
     // Therefore, collect all visits and check them in `after` hook of the 2nd file.
     const visits: { fileNum: number; identNum: number }[] = [];
 
-    // `this` should be the rule object returned by `defineRule`
+    // `this` should be the rule object
     // oxlint-disable-next-line typescript-eslint/no-this-alias
     const topLevelThis = this;
 
@@ -103,10 +106,10 @@ const createOnceRule = defineRule({
       },
     };
   },
-});
+};
 
 // Tests that `before` hook returning `false` disables visiting AST for the file.
-const createOnceBeforeFalseRule = defineRule({
+const createOnceBeforeFalseRule: Rule = {
   createOnce(context) {
     return {
       before() {
@@ -132,11 +135,11 @@ const createOnceBeforeFalseRule = defineRule({
       },
     };
   },
-});
+};
 
 // These 4 rules test that `createOnce` without `before` and `after` hooks works correctly.
 
-const createOnceBeforeOnlyRule = defineRule({
+const createOnceBeforeOnlyRule: Rule = {
   createOnce(context) {
     return {
       before() {
@@ -153,9 +156,9 @@ const createOnceBeforeOnlyRule = defineRule({
       },
     };
   },
-});
+};
 
-const createOnceAfterOnlyRule = defineRule({
+const createOnceAfterOnlyRule: Rule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -172,9 +175,9 @@ const createOnceAfterOnlyRule = defineRule({
       },
     };
   },
-});
+};
 
-const createOnceHooksOnlyRule = defineRule({
+const createOnceHooksOnlyRule: Rule = {
   createOnce(context) {
     return {
       // Neither hook should be called, because no AST node visitor functions
@@ -192,9 +195,9 @@ const createOnceHooksOnlyRule = defineRule({
       },
     };
   },
-});
+};
 
-const createOnceNoHooksRule = defineRule({
+const createOnceNoHooksRule: Rule = {
   createOnce(context) {
     return {
       Identifier(node) {
@@ -205,11 +208,11 @@ const createOnceNoHooksRule = defineRule({
       },
     };
   },
-});
+};
 
-export default definePlugin({
+export default eslintCompatPlugin({
   meta: {
-    name: "define-plugin-and-rule-plugin",
+    name: "eslint-compat-plugin",
   },
   rules: {
     create: createRule,
