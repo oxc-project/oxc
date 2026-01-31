@@ -107,6 +107,21 @@ pub type JsSetupRuleConfigsCb = ThreadsafeFunction<
     false,
 >;
 
+/// JS callback to load JavaScript config files.
+#[napi]
+pub type JsLoadJsConfigsCb = ThreadsafeFunction<
+    // Arguments: Vec of absolute paths to oxlint.config.ts files
+    Vec<String>,
+    // Return value: JSON string containing success/failure result
+    Promise<String>,
+    // Arguments (repeated)
+    Vec<String>,
+    // Error status
+    Status,
+    // CalleeHandled
+    false,
+>;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -116,6 +131,7 @@ pub type JsSetupRuleConfigsCb = ThreadsafeFunction<
 /// 4. `lint_file`: Lint a file.
 /// 5. `create_workspace`: Create a workspace.
 /// 6. `destroy_workspace`: Destroy a workspace.
+/// 7. `load_js_configs`: Load JavaScript config files.
 ///
 /// Returns `true` if linting succeeded without errors, `false` otherwise.
 #[expect(clippy::allow_attributes)]
@@ -128,10 +144,19 @@ pub async fn lint(
     lint_file: JsLintFileCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
+    load_js_configs: JsLoadJsConfigsCb,
 ) -> bool {
-    lint_impl(args, load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace)
-        .await
-        .report()
+    lint_impl(
+        args,
+        load_plugin,
+        setup_rule_configs,
+        lint_file,
+        create_workspace,
+        destroy_workspace,
+        load_js_configs,
+    )
+    .await
+    .report()
         == ExitCode::SUCCESS
 }
 
@@ -143,6 +168,7 @@ async fn lint_impl(
     lint_file: JsLintFileCb,
     create_workspace: JsCreateWorkspaceCb,
     destroy_workspace: JsDestroyWorkspaceCb,
+    load_js_configs: JsLoadJsConfigsCb,
 ) -> CliRunResult {
     // Convert String args to OsString for compatibility with bpaf
     let args: Vec<std::ffi::OsString> = args.into_iter().map(std::ffi::OsString::from).collect();
@@ -167,18 +193,28 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let external_linter = Some(crate::js_plugins::create_external_linter(
-        load_plugin,
-        setup_rule_configs,
-        lint_file,
-        create_workspace,
-        destroy_workspace,
-    ));
+    let (external_linter, _) = {
+        let js_config_loader = Some(load_js_configs);
+        let external_linter = Some(crate::js_plugins::create_external_linter(
+            load_plugin,
+            setup_rule_configs,
+            lint_file,
+            create_workspace,
+            destroy_workspace,
+        ));
+        (external_linter, js_config_loader)
+    };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    let external_linter = {
-        let (_, _, _, _, _) =
-            (load_plugin, setup_rule_configs, lint_file, create_workspace, destroy_workspace);
-        None
+    let (external_linter, js_config_loader) = {
+        let (_, _, _, _, _) = (
+            load_plugin,
+            setup_rule_configs,
+            lint_file,
+            create_workspace,
+            destroy_workspace,
+            load_js_configs,
+        );
+        (None, None)
     };
 
     // If --lsp flag is set, run the language server

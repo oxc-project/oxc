@@ -9,6 +9,8 @@ let setupRuleConfigs: typeof import("./plugins/index.ts").setupRuleConfigs | nul
 let lintFile: typeof import("./plugins/index.ts").lintFile | null = null;
 let createWorkspace: typeof import("./workspace/index.ts").createWorkspace | null = null;
 let destroyWorkspace: typeof import("./workspace/index.ts").destroyWorkspace | null = null;
+// Lazy-loaded JS/TS config loader (experimental)
+let loadJsConfigs: typeof import("./js_config.ts").loadJsConfigs | null = null;
 
 /**
  * Load a plugin.
@@ -114,12 +116,29 @@ function destroyWorkspaceWrapper(workspace: string): undefined {
   debugAssertIsNonNull(destroyWorkspace);
   destroyWorkspace(workspace);
 }
+/**
+ * Load JavaScript/TypeScript config files (experimental).
+ *
+ * Lazy-loads the js_config module on first call.
+ * Uses native Node.js TypeScript support to import config files.
+ *
+ * @param paths - Array of absolute paths to oxlint.config.ts files
+ * @returns JSON-stringified result with all configs or error
+ */
+function loadJsConfigsWrapper(paths: string[]): Promise<string> {
+  if (loadJsConfigs === null) {
+    return import("./js_config.ts").then((mod) => {
+      loadJsConfigs = mod.loadJsConfigs;
+      return loadJsConfigs(paths);
+    });
+  }
+  return loadJsConfigs(paths);
+}
 
 // Get command line arguments, skipping first 2 (node binary and script path)
 const args = process.argv.slice(2);
 
-// Call Rust, passing `loadPlugin`, `setupRuleConfigs`, `lintFile`, `createWorkspace`, and `destroyWorkspace`
-// as callbacks, and CLI arguments
+// Call Rust, passing callbacks and CLI arguments
 const success = await lint(
   args,
   loadPluginWrapper,
@@ -127,6 +146,7 @@ const success = await lint(
   lintFileWrapper,
   createWorkspaceWrapper,
   destroyWorkspaceWrapper,
+  loadJsConfigsWrapper,
 );
 
 // Note: It's recommended to set `process.exitCode` instead of calling `process.exit()`.

@@ -46,6 +46,10 @@ export type JsDestroyWorkspaceCb =
 export type JsLintFileCb =
   ((arg0: string, arg1: number, arg2: Uint8Array | undefined | null, arg3: Array<number>, arg4: Array<number>, arg5: string, arg6: string) => string | null)
 
+/** JS callback to load JavaScript config files. */
+export type JsLoadJsConfigsCb =
+  ((arg: Array<string>) => Promise<string>)
+
 /** JS callback to load a JS plugin. */
 export type JsLoadPluginCb =
   ((arg0: string, arg1: string | undefined | null, arg2: boolean) => Promise<string>)
@@ -64,10 +68,11 @@ export type JsSetupRuleConfigsCb =
  * 4. `lint_file`: Lint a file.
  * 5. `create_workspace`: Create a workspace.
  * 6. `destroy_workspace`: Destroy a workspace.
+ * 7. `load_js_configs`: Load JavaScript config files.
  *
  * Returns `true` if linting succeeded without errors, `false` otherwise.
  */
-export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb): Promise<boolean>
+export declare function lint(args: Array<string>, loadPlugin: JsLoadPluginCb, setupRuleConfigs: JsSetupRuleConfigsCb, lintFile: JsLintFileCb, createWorkspace: JsCreateWorkspaceCb, destroyWorkspace: JsDestroyWorkspaceCb, loadJsConfigs: JsLoadJsConfigsCb): Promise<boolean>
 
 /**
  * Parse AST into provided `Uint8Array` buffer, synchronously.
