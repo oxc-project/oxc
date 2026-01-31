@@ -37,7 +37,6 @@ function loadPluginWrapper(
       return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
     });
   }
-  debugAssertIsNonNull(loadPlugin);
   return loadPlugin(path, pluginName, pluginNameIsAlias, workspaceUri);
 }
 
@@ -111,7 +110,6 @@ function createWorkspaceWrapper(workspace: string): Promise<undefined> {
       return createWorkspace(workspace);
     });
   }
-  debugAssertIsNonNull(createWorkspace);
   return Promise.resolve(createWorkspace(workspace));
 }
 
