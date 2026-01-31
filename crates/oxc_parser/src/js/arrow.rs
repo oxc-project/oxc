@@ -6,6 +6,17 @@ use oxc_syntax::precedence::Precedence;
 use super::{FunctionKind, Tristate};
 use crate::{Context, ParserImpl, diagnostics, lexer::Kind};
 
+/// Result of scanning ahead to determine if we have an arrow function.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum ArrowScanResult {
+    /// Definitely an arrow function - can parse forward without checkpoint.
+    Arrow,
+    /// Definitely not an arrow function.
+    NotArrow,
+    /// Ambiguous - need speculative parsing with checkpoint/rewind.
+    Ambiguous,
+}
+
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     params: Box<'a, FormalParameters<'a>>,
@@ -90,7 +101,14 @@ impl<'a> ParserImpl<'a> {
                         self.bump_any();
                         let third = self.cur_kind();
                         match third {
-                            Kind::Colon if self.is_ts => Tristate::Maybe,
+                            Kind::Colon if self.is_ts => {
+                                // `(): Type =>` - scan past the type annotation
+                                match self.scan_past_return_type_and_check_arrow() {
+                                    ArrowScanResult::Arrow => Tristate::True,
+                                    ArrowScanResult::NotArrow => Tristate::False,
+                                    ArrowScanResult::Ambiguous => Tristate::Maybe,
+                                }
+                            }
                             Kind::Arrow | Kind::LCurly => Tristate::True,
                             _ => Tristate::False,
                         }
@@ -101,7 +119,20 @@ impl<'a> ParserImpl<'a> {
                     //      ({ x }) => { }
                     //      ([ x ])
                     //      ({ x })
-                    Kind::LBrack | Kind::LCurly => Tristate::Maybe,
+                    // Try to skip the binding pattern and check for `) =>`
+                    Kind::LBrack | Kind::LCurly => {
+                        if self.try_skip_binding_pattern() {
+                            // After pattern, check for optional `?`, `,`, `=`, or `)`
+                            // and scan to end
+                            match self.scan_arrow_function_params_to_end() {
+                                ArrowScanResult::Arrow => Tristate::True,
+                                ArrowScanResult::NotArrow => Tristate::False,
+                                ArrowScanResult::Ambiguous => Tristate::Maybe,
+                            }
+                        } else {
+                            Tristate::Maybe
+                        }
+                    }
                     // Simple case: "(..."
                     // This is an arrow function with a rest parameter.
                     Kind::Dot3 => {
@@ -156,7 +187,14 @@ impl<'a> ParserImpl<'a> {
                                 Tristate::False
                             }
                             // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
-                            Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
+                            // Scan forward to `)` and check for `=>`
+                            Kind::Comma | Kind::Eq | Kind::RParen => {
+                                match self.scan_arrow_function_params_to_end() {
+                                    ArrowScanResult::Arrow => Tristate::True,
+                                    ArrowScanResult::NotArrow => Tristate::False,
+                                    ArrowScanResult::Ambiguous => Tristate::Maybe,
+                                }
+                            }
                             // It is definitely not an arrow function
                             _ => Tristate::False,
                         }
@@ -213,6 +251,170 @@ impl<'a> ParserImpl<'a> {
                 false
             }
         })
+    }
+
+    /// Scans forward through simple parameter patterns to the closing `)` and checks for `=>`.
+    ///
+    /// This is used to convert `Maybe` results to `Arrow` for common patterns like:
+    /// - `(a)` → check if followed by `=>`
+    /// - `(a, b, c)` → scan through identifiers and commas to `)`, check for `=>`
+    /// - `(a = 1)` → scan through identifier, `=`, expression to `)`, check for `=>`
+    ///
+    /// Returns `Arrow` if we can definitively determine this is an arrow function,
+    /// `NotArrow` if definitely not, or `Ambiguous` if we can't determine.
+    fn scan_arrow_function_params_to_end(&mut self) -> ArrowScanResult {
+        // Current position: after `(` and first token(s) have been examined
+        // We need to scan to `)` respecting nesting
+        let mut paren_depth: u32 = 1;
+        let mut bracket_depth: u32 = 0;
+        let mut brace_depth: u32 = 0;
+
+        loop {
+            let kind = self.cur_kind();
+            match kind {
+                Kind::Eof => return ArrowScanResult::NotArrow,
+                Kind::LParen => paren_depth += 1,
+                Kind::RParen => {
+                    paren_depth -= 1;
+                    if paren_depth == 0 && bracket_depth == 0 && brace_depth == 0 {
+                        self.bump_any(); // consume `)`
+                        // Check for optional return type annotation in TypeScript
+                        if self.is_ts && self.at(Kind::Colon) {
+                            // (): Type => ... - need to scan past type
+                            // This is complex, keep as ambiguous for TS
+                            return ArrowScanResult::Ambiguous;
+                        }
+                        return if self.at(Kind::Arrow) {
+                            ArrowScanResult::Arrow
+                        } else {
+                            ArrowScanResult::NotArrow
+                        };
+                    }
+                }
+                Kind::LBrack => bracket_depth += 1,
+                Kind::RBrack => {
+                    if bracket_depth == 0 {
+                        return ArrowScanResult::NotArrow;
+                    }
+                    bracket_depth -= 1;
+                }
+                Kind::LCurly => brace_depth += 1,
+                Kind::RCurly => {
+                    if brace_depth == 0 {
+                        return ArrowScanResult::NotArrow;
+                    }
+                    brace_depth -= 1;
+                }
+                // Type annotations make things complex - bail out to avoid parsing types
+                Kind::Colon
+                    if self.is_ts && paren_depth == 1 && bracket_depth == 0 && brace_depth == 0 =>
+                {
+                    // Could be type annotation on parameter - this is definitely an arrow in TS
+                    // but we already handle this case in the worker, so if we get here something is off
+                    return ArrowScanResult::Ambiguous;
+                }
+                // These tokens inside parameters are fine for arrow functions
+                Kind::Comma | Kind::Eq | Kind::Dot3 | Kind::Question => {}
+                // Identifier-like tokens are fine
+                _ if kind.is_binding_identifier() => {}
+                // Literals as default values
+                _ if kind.is_literal() => {}
+                // Anything else at top level of params - bail to ambiguous
+                _ if paren_depth == 1 && bracket_depth == 0 && brace_depth == 0 => {
+                    // Unknown token at parameter level - could be complex expression
+                    // Be conservative
+                    return ArrowScanResult::Ambiguous;
+                }
+                // Inside nested structures, allow more tokens
+                _ => {}
+            }
+            self.bump_any();
+        }
+    }
+
+    /// Scans past a TypeScript return type annotation (`: Type`) and checks for `=>`.
+    /// Called when we see `():` in TypeScript.
+    /// Returns `Arrow` if followed by `=>`, `NotArrow` if definitely not, `Ambiguous` if complex.
+    fn scan_past_return_type_and_check_arrow(&mut self) -> ArrowScanResult {
+        debug_assert!(self.is_ts);
+        debug_assert!(self.at(Kind::Colon));
+
+        self.bump_any(); // consume `:`
+
+        // Track nesting to find where the type ends
+        let mut angle_depth: u32 = 0;
+        let mut paren_depth: u32 = 0;
+        let mut bracket_depth: u32 = 0;
+        let mut brace_depth: u32 = 0;
+
+        loop {
+            let kind = self.cur_kind();
+
+            // Check for termination conditions at top level (no nesting)
+            let at_top_level =
+                angle_depth == 0 && paren_depth == 0 && bracket_depth == 0 && brace_depth == 0;
+
+            match kind {
+                Kind::Eof => return ArrowScanResult::NotArrow,
+                // Arrow at top level means we found it
+                Kind::Arrow if at_top_level => {
+                    return ArrowScanResult::Arrow;
+                }
+                // These indicate end of type without finding arrow
+                Kind::LCurly | Kind::Semicolon | Kind::Comma if at_top_level => {
+                    return ArrowScanResult::NotArrow;
+                }
+                Kind::LAngle => angle_depth += 1,
+                Kind::RAngle => {
+                    angle_depth = angle_depth.saturating_sub(1);
+                }
+                Kind::ShiftRight => {
+                    // `>>` can close two levels of angle brackets
+                    angle_depth = angle_depth.saturating_sub(2);
+                }
+                Kind::ShiftRight3 => {
+                    // `>>>` can close three levels
+                    angle_depth = angle_depth.saturating_sub(3);
+                }
+                Kind::LParen => paren_depth += 1,
+                Kind::RParen => {
+                    if paren_depth > 0 {
+                        paren_depth -= 1;
+                    } else {
+                        // Unmatched `)` - not an arrow function
+                        return ArrowScanResult::NotArrow;
+                    }
+                }
+                Kind::LBrack => bracket_depth += 1,
+                Kind::RBrack => {
+                    bracket_depth = bracket_depth.saturating_sub(1);
+                }
+                Kind::LCurly => brace_depth += 1,
+                Kind::RCurly => {
+                    brace_depth = brace_depth.saturating_sub(1);
+                }
+                _ => {}
+            }
+            self.bump_any();
+        }
+    }
+
+    /// Attempts to skip a binding pattern (array or object destructuring).
+    /// Returns true if successful, false otherwise.
+    /// This is similar to TypeScript's `skip_parameter_start`.
+    fn try_skip_binding_pattern(&mut self) -> bool {
+        let kind = self.cur_kind();
+        if kind.is_binding_identifier() || kind == Kind::This {
+            self.bump_any();
+            return true;
+        }
+        if matches!(kind, Kind::LBrack | Kind::LCurly) {
+            let errors_count = self.errors_count();
+            self.parse_binding_pattern_kind();
+            // Succeeded if no new errors and no fatal error
+            return !self.has_fatal_error() && errors_count == self.errors_count();
+        }
+        false
     }
 
     pub(crate) fn parse_simple_arrow_function_expression(

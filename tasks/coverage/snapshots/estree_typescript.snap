@@ -1,8 +1,14 @@
 commit: 7f6a8467
 
 estree_typescript Summary:
-AST Parsed     : 9776/9776 (100.00%)
-Positive Passed: 9771/9776 (99.95%)
+AST Parsed     : 9772/9776 (99.96%)
+Positive Passed: 9767/9776 (99.91%)
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterBindingPattern.ts
+Empty parenthesized expression
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterInitializer.ts
+Empty parenthesized expression
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/expressions/typeSatisfaction/typeSatisfaction_errorLocations1.ts
+Empty parenthesized expression
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferComments.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferDeclaration.ts
@@ -13,3 +19,5 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEnti
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
 
+Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression12.ts
+Expected `:` but found `EOF`

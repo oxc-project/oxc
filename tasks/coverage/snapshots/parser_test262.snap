@@ -7005,13 +7005,12 @@ Negative Passed: 4581/4581 (100.00%)
  18 │ 
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:17]
+  × Unexpected token
+    ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:15:16]
  14 │ $DONOTEVALUATE();
  15 │ async(x = await) => {  }
-    ·                 ▲
+    ·                ─
     ╰────
-  help: Try inserting a semicolon here
 
   × Cannot use `await` as an identifier in an async context
     ╭─[test262/test/language/expressions/async-arrow-function/early-errors-arrow-await-in-formals.js:15:7]

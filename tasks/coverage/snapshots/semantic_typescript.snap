@@ -2,7 +2,7 @@ commit: 7f6a8467
 
 semantic_typescript Summary:
 AST Parsed     : 6126/6126 (100.00%)
-Positive Passed: 3339/6126 (54.51%)
+Positive Passed: 3337/6126 (54.47%)
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/2dArrays.ts
 Symbol reference IDs mismatch for "Cell":
 after transform: SymbolId(0): [ReferenceId(1)]
@@ -34584,6 +34584,12 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["o1", "o2", "o3", "o4", "o5", "o6"]
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterBindingPattern.ts
+Empty parenthesized expression
+
+semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInParameterInitializer.ts
+Empty parenthesized expression
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/optionalChaining/optionalChainingInference.ts
 Bindings mismatch:
