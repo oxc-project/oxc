@@ -70,7 +70,7 @@ use crate::{
         object::{format_property_key, should_preserve_quote},
         statement_body::FormatStatementBody,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
-        tailwindcss::write_tailwind_string_literal,
+        tailwindcss::{tailwind_context_for_string_literal, write_tailwind_string_literal},
     },
     write,
 };
@@ -980,20 +980,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StringLiteral<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         // Check if we're in a Tailwind context via stack (O(1) lookup)
         // This handles nested string literals inside JSXAttribute/CallExpression values
-        let tailwind_ctx = f.context().tailwind_context().copied().filter(|ctx| {
-            // Skip:
-            // - if context is disabled (e.g., inside nested non-Tailwind call expressions)
-            // - empty string literals (which have no classes to sort)
-            if ctx.disabled || self.value.is_empty() {
-                return false;
-            }
-
-            // No whitespace means only one class, so no need to sort
-            let content = f.source_text().text_for(self);
-            content.as_bytes().iter().any(|&b| b.is_ascii_whitespace())
-        });
-
-        if let Some(ctx) = tailwind_ctx {
+        if let Some(ctx) = tailwind_context_for_string_literal(self, f) {
             // We're inside a Tailwind context - sort this string literal as Tailwind classes
             write_tailwind_string_literal(self, ctx, f);
         } else {

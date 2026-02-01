@@ -897,6 +897,61 @@ shadow-lg\` : "font-normal"}\`} />;`;
     expect(result.code).toContain("m-2 grid");
     expect(result.errors).toStrictEqual([]);
   });
+
+  // Issue: https://github.com/oxc-project/oxc/issues/18712
+  test("should sort classes in object property keys (string literals)", async () => {
+    // Object keys with class names should be sorted like other strings
+    const input = `const A = <div className={cn({ 'p-[2px] elevation-elevated-selected': true })}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["cn"],
+      },
+    });
+
+    // Classes in object keys should be sorted
+    expect(result.code).toContain("elevation-elevated-selected p-[2px]");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should sort classes in multiple object property keys", async () => {
+    const input = `const A = <div className={clsx({
+      'p-4 flex': condition1,
+      'm-2 grid': condition2,
+      'text-white bg-red-500': condition3
+    })}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+    });
+
+    // All object key class strings should be sorted
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain("m-2 grid");
+    expect(result.code).toContain("bg-red-500 text-white");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  test("should NOT sort strings inside non-Tailwind function calls in object keys", async () => {
+    // Strings in nested function calls should not be sorted
+    const input = `const A = <div className={clsx({
+      'p-4 flex': value.includes(" "),
+      'error-class': true
+    })}>Hello</div>;`;
+
+    const result = await format("test.tsx", input, {
+      experimentalTailwindcss: {
+        functions: ["clsx"],
+      },
+    });
+
+    // Object key classes should be sorted, but the "\n" in includes() should be preserved
+    expect(result.code).toContain("flex p-4");
+    expect(result.code).toContain('includes(" ")');
+    expect(result.errors).toStrictEqual([]);
+  });
 });
 
 describe("Tailwind CSS Sorting (Non-JS Files)", () => {
