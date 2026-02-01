@@ -1,6 +1,7 @@
 use std::{
     env,
     ffi::OsStr,
+    fmt::Debug,
     io::{ErrorKind, Write},
     path::{Path, PathBuf, absolute},
     sync::Arc,
@@ -16,6 +17,8 @@ use oxc_linter::{
     InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
 };
 
+#[cfg(feature = "napi")]
+use crate::js_config::JsConfigLoaderCb;
 use crate::{
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
     config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
@@ -24,11 +27,30 @@ use crate::{
 };
 use oxc_linter::LintIgnoreMatcher;
 
-#[derive(Debug)]
 pub struct CliRunner {
     options: LintCommand,
     cwd: PathBuf,
     external_linter: Option<ExternalLinter>,
+    /// Callback for loading JavaScript/TypeScript config files (experimental).
+    /// This is only available when running via Node.js with NAPI.
+    #[cfg(feature = "napi")]
+    js_config_loader: Option<JsConfigLoaderCb>,
+}
+
+impl Debug for CliRunner {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut s = f.debug_struct("CliRunner");
+        s.field("options", &self.options).field("cwd", &self.cwd).field(
+            "external_linter",
+            if self.external_linter.is_some() { &"Some(ExternalLinter)" } else { &"None" },
+        );
+        #[cfg(feature = "napi")]
+        s.field(
+            "js_config_loader",
+            if self.js_config_loader.is_some() { &"Some(JsConfigLoaderCb)" } else { &"None" },
+        );
+        s.finish()
+    }
 }
 
 impl CliRunner {
@@ -38,6 +60,8 @@ impl CliRunner {
             options,
             cwd: env::current_dir().expect("Failed to get current working directory"),
             external_linter,
+            #[cfg(feature = "napi")]
+            js_config_loader: None,
         }
     }
 
@@ -183,6 +207,10 @@ impl CliRunner {
         let config_result = {
             let mut config_loader =
                 ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
+            #[cfg(feature = "napi")]
+            {
+                config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
+            }
             config_loader.load_root_and_nested(
                 &self.cwd,
                 basic_options.config.as_ref(),
@@ -223,6 +251,15 @@ impl CliRunner {
                                             &OxcDiagnostic::error(error.clone())
                                         )
                                     )
+                                }
+                                ConfigLoadError::TypeScriptConfigFileFoundButJsRuntimeNotAvailable => {
+                                    "Error: TypeScript config files (oxlint.config.ts) found but JS runtime not available.\n\
+                                     This is an experimental feature that requires running oxlint via Node.js.\n\
+                                     Please use JSON config files (.oxlintrc.json) instead, or run oxlint via the npm package.\n".to_string()
+                                }
+                                ConfigLoadError::Diagnostic(error) => {
+                                    let report = render_report(&handler, error);
+                                    format!("Failed to parse oxlint configuration file.\n{report}\n")
                                 }
                             };
                             print_and_flush_stdout(stdout, &message);
@@ -413,6 +450,13 @@ impl CliRunner {
     #[must_use]
     pub fn with_cwd(mut self, cwd: PathBuf) -> Self {
         self.cwd = cwd;
+        self
+    }
+
+    #[cfg(feature = "napi")]
+    #[must_use]
+    pub fn with_config_loader(mut self, config_loader: Option<JsConfigLoaderCb>) -> Self {
+        self.js_config_loader = config_loader;
         self
     }
 

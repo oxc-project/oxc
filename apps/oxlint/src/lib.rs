@@ -23,6 +23,8 @@ pub mod cli {
 // Without this, `tasks/website` will not compile on Linux or Windows.
 // `tasks/website` depends on `oxlint` as a normal library, which causes linker errors if NAPI is enabled.
 #[cfg(feature = "napi")]
+mod js_config;
+#[cfg(feature = "napi")]
 mod run;
 #[cfg(feature = "napi")]
 pub use run::*;
@@ -49,6 +51,7 @@ mod js_plugins;
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;
 
 const DEFAULT_OXLINTRC_NAME: &str = ".oxlintrc.json";
+const DEFAULT_TS_OXLINTRC_NAME: &str = "oxlint.config.ts";
 
 /// Return a JSON blob containing metadata for all available oxlint rules.
 ///

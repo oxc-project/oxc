@@ -125,6 +125,7 @@ pub type JsLoadJsConfigsCb = ThreadsafeFunction<
     // CalleeHandled
     false,
 >;
+
 /// NAPI entry point.
 ///
 /// JS side passes in:
@@ -196,8 +197,8 @@ async fn lint_impl(
 
     // JS plugins are only supported on 64-bit little-endian platforms at present
     #[cfg(all(target_pointer_width = "64", target_endian = "little"))]
-    let (external_linter, _) = {
-        let js_config_loader = Some(load_js_configs);
+    let (external_linter, js_config_loader) = {
+        let js_config_loader = Some(crate::js_config::create_js_config_loader(load_js_configs));
         let external_linter = Some(crate::js_plugins::create_external_linter(
             load_plugin,
             setup_rule_configs,
@@ -208,7 +209,7 @@ async fn lint_impl(
         (external_linter, js_config_loader)
     };
     #[cfg(not(all(target_pointer_width = "64", target_endian = "little")))]
-    let (external_linter, _) = {
+    let (external_linter, js_config_loader) = {
         let (_, _, _, _, _, _) = (
             load_plugin,
             setup_rule_configs,
@@ -217,7 +218,7 @@ async fn lint_impl(
             destroy_workspace,
             load_js_configs,
         );
-        (None, None::<()>)
+        (None, None)
     };
 
     // If --lsp flag is set, run the language server
@@ -238,7 +239,13 @@ async fn lint_impl(
     // See `https://github.com/rust-lang/rust/issues/60673`.
     let mut stdout = BufWriter::new(std::io::stdout());
 
-    CliRunner::new(command, external_linter).run(&mut stdout)
+    let mut cli_runner = CliRunner::new(command, external_linter);
+    #[cfg(feature = "napi")]
+    {
+        cli_runner = cli_runner.with_config_loader(js_config_loader);
+    }
+
+    cli_runner.run(&mut stdout)
 }
 
 #[cfg(all(target_pointer_width = "64", target_endian = "little"))]

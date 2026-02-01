@@ -327,7 +327,11 @@ impl ServerLinterBuilder {
         let (configs, errors) = loader.load_discovered(config_paths);
 
         for error in errors {
-            warn!("Skipping config file {}: {:?}", error.path().display(), error);
+            if let Some(path) = error.path() {
+                warn!("Skipping config file {}: {:?}", path.display(), error);
+            } else {
+                warn!("Skipping config file: {:?}", error);
+            }
         }
 
         build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths))
