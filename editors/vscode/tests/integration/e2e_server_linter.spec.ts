@@ -13,6 +13,7 @@ import {
 import {
   activateExtension,
   createOxlintConfiguration,
+  deleteFixtures,
   fixturesWorkspaceUri,
   getDiagnostics,
   getDiagnosticsWithoutClose,
@@ -41,6 +42,7 @@ teardown(async () => {
   await workspace.getConfiguration("oxc").update("fmt.configPath", undefined);
   await workspace.getConfiguration("editor").update("defaultFormatter", undefined);
   await workspace.saveAll();
+  await deleteFixtures();
 });
 
 suite("E2E Server Linter", () => {

@@ -1,6 +1,12 @@
 import { strictEqual } from "assert";
-import { DiagnosticSeverity, workspace } from "vscode";
-import { activateExtension, getDiagnosticsWithoutClose, loadFixture, sleep } from "../test-helpers";
+import { DiagnosticSeverity } from "vscode";
+import {
+  activateExtension,
+  deleteFixtures,
+  getDiagnosticsWithoutClose,
+  loadFixture,
+  sleep,
+} from "../test-helpers";
 import assert = require("assert");
 
 suiteSetup(async () => {
@@ -8,13 +14,7 @@ suiteSetup(async () => {
 });
 
 teardown(async () => {
-  await workspace.getConfiguration("oxc").update("fixKind", undefined);
-  await workspace.getConfiguration("oxc").update("tsConfigPath", undefined);
-  await workspace.getConfiguration("oxc").update("typeAware", undefined);
-  await workspace.getConfiguration("oxc").update("fmt.experimental", undefined);
-  await workspace.getConfiguration("oxc").update("fmt.configPath", undefined);
-  await workspace.getConfiguration("editor").update("defaultFormatter", undefined);
-  await workspace.saveAll();
+  await deleteFixtures();
 });
 
 suite("E2E Server Linter", () => {
