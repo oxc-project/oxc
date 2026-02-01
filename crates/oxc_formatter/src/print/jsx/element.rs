@@ -229,15 +229,18 @@ impl<'a> Format<'a> for AnyJsxTagWithChildren<'a, '_> {
 
 /// This is a very special situation where we're returning a JsxElement
 /// from an arrow function that's passed as an argument to a function,
-/// which is itself inside a JSX expression child.
+/// which is itself inside a JSX expression container.
 ///
-/// If you're wondering why this is the only other case, it's because
-/// Prettier defines it to be that way.
+/// This matches Prettier's `shouldBreakJsxElement` behavior.
 ///
 /// ```jsx
-///  let bar = <div>
-///    {foo(() => <div> the quick brown fox jumps over the lazy dog </div>)}
-///  </div>;
+/// // As JSX child:
+/// let bar = <div>
+///   {foo(() => <div> the quick brown fox jumps over the lazy dog </div>)}
+/// </div>;
+///
+/// // As JSX attribute:
+/// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
 pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
     if let AstNodes::ExpressionStatement(stmt) = parent {
@@ -245,7 +248,7 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         // to determine if it should expand.
         parent = stmt.grand_parent();
     }
-    let maybe_jsx_expression_child = match parent {
+    let maybe_jsx_expression_container = match parent {
         AstNodes::ArrowFunctionExpression(arrow) if arrow.expression => match arrow.parent() {
             AstNodes::CallExpression(call) => call.parent(),
             _ => return false,
@@ -253,9 +256,8 @@ pub fn should_expand(mut parent: &AstNodes<'_>) -> bool {
         _ => return false,
     };
     matches!(
-        maybe_jsx_expression_child.without_chain_expression(),
-        AstNodes::JSXExpressionContainer(container)
-        if matches!(container.parent(), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_))
+        maybe_jsx_expression_container.without_chain_expression(),
+        AstNodes::JSXExpressionContainer(_)
     )
 }
 
