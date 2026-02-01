@@ -1,5 +1,6 @@
-// Entry point for definePlugin and defineRule
+// Re-export `definePlugin`, `defineRule`, and `eslintCompatPlugin` functions
 export { definePlugin, defineRule } from "./package/define.ts";
+export { eslintCompatPlugin } from "./package/compat.ts";
 
 // ESTree types
 export type * as ESTree from "./generated/types.d.ts";
