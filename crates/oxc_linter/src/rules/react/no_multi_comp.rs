@@ -668,6 +668,32 @@ fn test() {
         //   return <div ref={ref}>{text}</div>;
         // })
         // const Label = memo(() => <Text />);", None, Some(serde_json::json!({ "settings": { "react": { "pragma": "Foo", }, } })))
+
+        // Custom tests not from the original rule.
+
+        // Multiple named exports with HOCs
+        ("import { memo, forwardRef } from 'react';
+          export const Foo = memo(() => <div/>);
+          export const Bar = forwardRef((props, ref) => <span ref={ref}/>);", Some(serde_json::json!([{ "ignoreStateless": false }])), None),
+        // Class components with direct Component/PureComponent imports
+        ("import { Component } from 'react';
+          class Foo extends Component {
+            render() { return <div/>; }
+          }
+          class Bar extends Component {
+            render() { return <span/>; }
+          }", None, None),
+        ("import { PureComponent } from 'react';
+          class Foo extends PureComponent {
+            render() { return <div/>; }
+          }
+          class Bar extends PureComponent {
+            render() { return <span/>; }
+          }", None, None),
+        // Anonymous default export with another component
+        ("import { memo } from 'react';
+          const Foo = () => <div/>;
+          export default memo(() => <span/>);", Some(serde_json::json!([{ "ignoreStateless": false }])), None),
     ];
 
     Tester::new(NoMultiComp::NAME, NoMultiComp::PLUGIN, pass, fail).test_and_snapshot();
