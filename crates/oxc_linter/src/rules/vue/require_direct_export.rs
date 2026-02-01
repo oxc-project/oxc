@@ -286,42 +286,42 @@ export default (props) => {
         ("export default Foo", None, None, Some(PathBuf::from("test.js"))),
         (
             "
-			      import { h } from 'vue'
-			      export default function (props) {
-			        return h('div', `Hello! ${props.name}`)
-			      }
-			      ",
+                  import { h } from 'vue'
+                  export default function (props) {
+                    return h('div', `Hello! ${props.name}`)
+                  }
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      import { h } from 'vue'
-			      export default function Component () {
-			        return h('div')
-			      }
-			      ",
+                  import { h } from 'vue'
+                  export default function Component () {
+                    return h('div')
+                  }
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      import { h } from 'vue'
-			      export default (props) => {
-			        return h('div', `Hello! ${props.name}`)
-			      }
-			      ",
+                  import { h } from 'vue'
+                  export default (props) => {
+                    return h('div', `Hello! ${props.name}`)
+                  }
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      import { h } from 'vue'
-			      export default (props => h('div', props.msg))
-			      ",
+                  import { h } from 'vue'
+                  export default (props => h('div', props.msg))
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -329,18 +329,18 @@ export default (props) => {
         ("export default (() => 2)", None, None, Some(PathBuf::from("test.vue"))),
         (
             "
-			      import Vue from 'vue'
-			      export default (Vue.extend({}))
-			      ",
+                  import Vue from 'vue'
+                  export default (Vue.extend({}))
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      import { defineComponent } from 'vue'
-			      export default defineComponent({})
-			      ",
+                  import { defineComponent } from 'vue'
+                  export default defineComponent({})
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -350,34 +350,34 @@ export default (props) => {
     let fail = vec![
         (
             "
-			      <script>
-			      const A = {};
-			      export default A
-			      </script>
-			      ",
+                  <script>
+                  const A = {};
+                  export default A
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      const A = {};
-			      export default (A)
-			      </script>
-			      ",
+                  <script>
+                  const A = {};
+                  export default (A)
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      function A(props) {
-			        return h('div', props.msg)
-			      };
-			      export default A
-			      </script>
-			      ",
+                  function A(props) {
+                    return h('div', props.msg)
+                  };
+                  export default A
+                  </script>
+                  ",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -397,10 +397,10 @@ export default (props) => {
         ("<script>export default () => {} </script>", None, None, Some(PathBuf::from("test.vue"))),
         (
             "<script>export default () => {
-			        const foo = () => {
-			          return b
-			        }
-			      }</script>",
+                    const foo = () => {
+                      return b
+                    }
+                  }</script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
@@ -408,8 +408,8 @@ export default (props) => {
         (
             "<script>
                 export default () => {
-			        return
-			    }
+                    return
+                }
             </script>",
             None,
             None,
@@ -417,10 +417,10 @@ export default (props) => {
         ),
         (
             "<script>
-			      function A(props) {
-			        return h('div', props.msg)
-			      };
-			      export default A
+                  function A(props) {
+                    return h('div', props.msg)
+                  };
+                  export default A
             </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
             None,
@@ -428,160 +428,160 @@ export default (props) => {
         ),
         (
             "
-			      <script>
-			      import { h } from 'vue'
-			      export default function (props) {
-			        return h('div', `Hello! ${props.name}`)
-			      }
-			      </script>",
+                  <script>
+                  import { h } from 'vue'
+                  export default function (props) {
+                    return h('div', `Hello! ${props.name}`)
+                  }
+                  </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      export default (props) => {
+                  <script>
+                  export default (props) => {
                     if (props.show) {
                         return;
                     }
                     return;
-			      }
-			      </script>",
+                  }
+                  </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": false }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      export default function(props) {
+                  <script>
+                  export default function(props) {
                     if (props.show) {
                         return;
                     }
                     return;
-			      }
-			      </script>",
+                  }
+                  </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": false }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "
-			      <script>
-			      import { h } from 'vue'
-			      export default (props) => {
+                  <script>
+                  import { h } from 'vue'
+                  export default (props) => {
                     if (props.show) {
                         return h('div', `Hello! ${props.name}`)
                     }
-			      }
-			      </script>",
+                  }
+                  </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { h } from 'vue'
-			      export default function Component () {
-			        return h('div')
-			      }
-			      </script>",
+                  import { h } from 'vue'
+                  export default function Component () {
+                    return h('div')
+                  }
+                  </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { h } from 'vue'
-			      export default (props) => {
-			        return h('div', `Hello! ${props.name}`)
-			      }
-			      </script>",
+                  import { h } from 'vue'
+                  export default (props) => {
+                    return h('div', `Hello! ${props.name}`)
+                  }
+                  </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { h } from 'vue'
-			      export default props => h('div', props.msg)
-			      </script>",
+                  import { h } from 'vue'
+                  export default props => h('div', props.msg)
+                  </script>",
             Some(serde_json::json!([{ "disallowFunctionalComponentFunction": true }])),
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import Vue from 'vue'
-			      export default Vue.extend()
-			      </script>",
+                  import Vue from 'vue'
+                  export default Vue.extend()
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import Vue from 'vue'
-			      const A = {}
-			      export default Vue.extend(A)
-			      </script>",
+                  import Vue from 'vue'
+                  const A = {}
+                  export default Vue.extend(A)
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import Vue from 'vue'
-			      export default Vue.extend(2)
-			      </script>",
+                  import Vue from 'vue'
+                  export default Vue.extend(2)
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { defineComponent } from 'vue'
-			      export default defineComponent()
-			      </script>",
+             import { defineComponent } from 'vue'
+             export default defineComponent()
+             </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { defineComponent } from 'vue'
-			      export default defineComponent(2)
-			      </script>",
+                  import { defineComponent } from 'vue'
+                  export default defineComponent(2)
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { defineComponent } from 'vue'
-			      export default (defineComponent())
-			      </script>",
+                  import { defineComponent } from 'vue'
+                  export default (defineComponent())
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { defineComponent } from 'vue'
-			      const A = {}
-			      export default defineComponent(A)
-			      </script>",
+                  import { defineComponent } from 'vue'
+                  const A = {}
+                  export default defineComponent(A)
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
         ),
         (
             "<script>
-			      import { defineComponent } from 'vue'
-			      const A = {}
-			      export default (defineComponent(A))
-			      </script>",
+                  import { defineComponent } from 'vue'
+                  const A = {}
+                  export default (defineComponent(A))
+                  </script>",
             None,
             None,
             Some(PathBuf::from("test.vue")),
