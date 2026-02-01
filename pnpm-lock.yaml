@@ -304,6 +304,18 @@ importers:
 
   npm/oxlint: {}
 
+  npm/oxlint-plugins:
+    dependencies:
+      oxlint:
+        specifier: ^1.42.0
+        version: 1.42.0(oxlint-tsgolint@0.11.4)
+
+  npm/oxlint-plugins-dev:
+    dependencies:
+      oxlint:
+        specifier: ^1.42.0
+        version: 1.42.0(oxlint-tsgolint@0.11.4)
+
   npm/runtime: {}
 
   plugins:

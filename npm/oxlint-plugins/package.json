@@ -1,0 +1,37 @@
+{
+  "name": "@oxlint/plugins",
+  "version": "1.42.0",
+  "description": "Plugin utilities for Oxlint",
+  "keywords": [
+    "eslint",
+    "linter",
+    "oxlint",
+    "plugin"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/linter/plugin-system",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
+    "directory": "npm/oxlint-plugins"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md"
+  ],
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "dependencies": {
+    "oxlint": "^1.42.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
