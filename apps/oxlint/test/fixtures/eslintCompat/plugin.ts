@@ -1,6 +1,6 @@
-import { eslintCompatPlugin } from "#oxlint/plugin";
+import { eslintCompatPlugin } from "#oxlint/plugins";
 
-import type { Node, Rule } from "#oxlint/plugin";
+import type { Node, Rule } from "#oxlint/plugins";
 
 const SPAN: Node = {
   start: 0,

@@ -2,12 +2,12 @@ import { definePlugin as _definePlugin, defineRule as _defineRule } from "./pack
 import { RuleTester as _RuleTester } from "./package/rule_tester.ts";
 
 /**
- * @deprecated Import from `oxlint/plugin` instead
+ * @deprecated Import from `oxlint/plugins` instead
  */
 export const definePlugin = _definePlugin;
 
 /**
- * @deprecated Import from `oxlint/plugin` instead
+ * @deprecated Import from `oxlint/plugins` instead
  */
 export const defineRule = _defineRule;
 

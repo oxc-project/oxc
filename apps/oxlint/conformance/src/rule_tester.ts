@@ -9,7 +9,7 @@ import { RuleTester } from "#oxlint/rule-tester";
 import { describe, it, currentGroup, setCurrentTest } from "./capture.ts";
 import { SHOULD_SKIP_CODE } from "./filter.ts";
 
-import type { Rule } from "#oxlint/plugin";
+import type { Rule } from "#oxlint/plugins";
 import type { ParserDetails } from "./index.ts";
 import type {
   LanguageOptionsInternal,

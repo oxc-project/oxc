@@ -1,4 +1,4 @@
-import type { Plugin } from "#oxlint/plugin";
+import type { Plugin } from "#oxlint/plugins";
 
 // Test backward compatibility for `meta.fixable: true` and `meta.fixable: false`
 // which some ESLint plugins use instead of "code" or "whitespace"

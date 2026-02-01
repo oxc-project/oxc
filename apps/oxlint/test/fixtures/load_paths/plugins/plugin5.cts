@@ -1,6 +1,6 @@
 "use strict";
 
-import type { Plugin } from "#oxlint/plugin";
+import type { Plugin } from "#oxlint/plugins";
 
 const plugin: Plugin = {
   meta: {

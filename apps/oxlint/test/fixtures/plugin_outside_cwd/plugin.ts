@@ -1,4 +1,4 @@
-import type { Plugin } from "#oxlint/plugin";
+import type { Plugin } from "#oxlint/plugins";
 
 // This test checks that a plugin which is outside the current working directory can be loaded.
 // `cwd` is set to `files/subdirectory` in `options.json`, and the plugin is outside that directory.

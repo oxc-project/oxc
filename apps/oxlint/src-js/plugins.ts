@@ -3,7 +3,7 @@ export { definePlugin, defineRule } from "./package/define.ts";
 export { eslintCompatPlugin } from "./package/compat.ts";
 
 // ESTree types
-export type * as ESTree from "./generated/types.d.ts";
+export type * as ESTree from "./generated/types";
 
 // Plugin types
 export type { Context, LanguageOptions } from "./plugins/context.ts";
