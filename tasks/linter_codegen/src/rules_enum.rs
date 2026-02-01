@@ -7,9 +7,6 @@ use crate::rules::RuleEntry;
 /// Generate the RuleEnum and related code that replaces `declare_all_lint_rules!` macro.
 pub fn generate_rules_enum(rule_entries: &[RuleEntry<'_>]) -> String {
     let header = quote! {
-        // Auto-generated code, DO NOT EDIT DIRECTLY!
-        // To regenerate: `cargo run -p oxc_linter_codegen`
-
         #![expect(
             clippy::default_constructed_unit_structs,  // Many rules are unit structs
             clippy::semicolon_if_nothing_returned,     // Match arms in void-returning methods
@@ -42,7 +39,10 @@ pub fn generate_rules_enum(rule_entries: &[RuleEntry<'_>]) -> String {
         #rules_static
     };
 
-    tokens.to_string()
+    // Prepend header comment as a string since `quote!` strips comments
+    let header_comment =
+        "// Auto-generated code, DO NOT EDIT DIRECTLY!\n// To regenerate: `cargo lintgen`\n\n";
+    format!("{header_comment}{tokens}")
 }
 
 /// Create an identifier from a rule entry for the enum variant name.

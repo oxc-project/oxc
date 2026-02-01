@@ -1,3 +1,6 @@
+// Auto-generated code, DO NOT EDIT DIRECTLY!
+// To regenerate: `cargo lintgen`
+
 #![expect(
     clippy::default_constructed_unit_structs,
     clippy::semicolon_if_nothing_returned,

@@ -63,7 +63,7 @@ just fmt          # Format code (run after modifications)
 just test         # Run unit/integration tests
 just conformance  # Run conformance tests
 just ready        # Run all checks (use after commits)
-
+cargo lintgen     # Regenerate linter rules enum and impls after adding/modifying rules
 # Crate-specific updates
 just ast          # Update generated files (oxc_ast changes)
 just minsize      # Update size snapshots (oxc_minifier changes)

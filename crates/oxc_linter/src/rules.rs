@@ -1,7 +1,7 @@
 //! All registered lint rules.
 //!
 //! New rules need to be added to these `mod` statements.
-//! Then run `cargo run -p oxc_linter_codegen` to regenerate the `RuleEnum`.
+//! Then run `cargo lintgen` to regenerate the RuleEnum and RuleRunnerImpls.
 
 /// <https://github.com/import-js/eslint-plugin-import>
 pub(crate) mod import {

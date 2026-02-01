@@ -37,6 +37,7 @@ ready:
   git diff --exit-code --quiet
   pnpm install
   typos
+  cargo lintgen
   just fmt
   just check
   just test
