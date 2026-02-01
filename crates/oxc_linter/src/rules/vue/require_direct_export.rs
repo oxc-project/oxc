@@ -45,7 +45,7 @@ fn missing_function_return_value_diagnostic(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Clone, Default, JsonSchema, Deserialize)]
 #[serde(rename_all = "camelCase", default, deny_unknown_fields)]
 pub struct RequireDirectExport {
-    //  When set `true`, disallow functional component functions.
+    /// When set `true`, disallow functional component functions.
     disallow_functional_component_function: bool,
 }
 
