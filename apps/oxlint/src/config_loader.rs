@@ -1,6 +1,7 @@
 use std::{
+    ffi::OsStr,
     path::{Path, PathBuf},
-    sync::mpsc,
+    sync::{Arc, mpsc},
 };
 
 use ignore::DirEntry;
@@ -8,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
     Config, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore, LintFilter, Oxlintrc,
 };
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::DEFAULT_OXLINTRC_NAME;
 
@@ -157,6 +158,29 @@ impl ConfigLoadError {
     }
 }
 
+/// High-level errors that can occur when loading CLI configurations.
+///
+/// This groups together failures related to the root configuration file
+/// and to any nested configuration files discovered during loading.
+pub enum CliConfigLoadError {
+    /// An error that occurred while loading or parsing the root configuration.
+    RootConfig(OxcDiagnostic),
+    /// One or more errors that occurred while loading nested configuration files.
+    NestedConfigs(Vec<ConfigLoadError>),
+}
+
+/// Collection of the root configuration and all successfully loaded nested configs.
+///
+/// Returned by [`ConfigLoader::load_root_and_nested`].
+pub struct LoadedConfigs {
+    /// The root `oxlintrc` configuration used as the base for all linting.
+    pub root: Oxlintrc,
+    /// Mapping from directory paths to the effective [`Config`] for that directory.
+    pub nested: FxHashMap<PathBuf, Config>,
+    /// Ignore patterns from nested configs, paired with the directory they apply to.
+    pub nested_ignore_patterns: Vec<(Vec<String>, PathBuf)>,
+}
+
 pub struct ConfigLoader<'a> {
     external_linter: Option<&'a ExternalLinter>,
     external_plugin_store: &'a mut ExternalPluginStore,
@@ -211,7 +235,7 @@ impl<'a> ConfigLoader<'a> {
     /// Load multiple configs, returning successes and errors separately
     ///
     /// This allows callers to decide how to handle errors (fail fast vs continue)
-    pub fn load_many(
+    fn load_many(
         &mut self,
         paths: impl IntoIterator<Item = DiscoveredConfig>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
@@ -228,5 +252,141 @@ impl<'a> ConfigLoader<'a> {
         }
 
         (configs, errors)
+    }
+
+    pub(crate) fn load_discovered(
+        &mut self,
+        configs: impl IntoIterator<Item = DiscoveredConfig>,
+    ) -> (Vec<LoadedConfig>, Vec<ConfigLoadError>) {
+        self.load_many(configs)
+    }
+
+    /// Load the root configuration and optionally discover and load nested configs.
+    ///
+    /// This is the main entry point for CLI config loading. It first loads the root
+    /// `oxlintrc` configuration, then optionally discovers and loads nested configs
+    /// by walking up from each file path's directory.
+    ///
+    /// # Arguments
+    /// * `cwd` - Current working directory for resolving relative paths
+    /// * `config_path` - Optional explicit path to the root config file
+    /// * `paths` - File paths to lint (used for discovering nested configs)
+    /// * `search_for_nested_configs` - Whether to discover nested configs in ancestor directories
+    ///
+    /// # Errors
+    /// Returns [`CliConfigLoadError::RootConfig`] if the root config fails to load,
+    /// or [`CliConfigLoadError::NestedConfigs`] if any nested config fails to load.
+    pub fn load_root_and_nested(
+        &mut self,
+        cwd: &Path,
+        config_path: Option<&PathBuf>,
+        paths: &[Arc<OsStr>],
+        search_for_nested_configs: bool,
+    ) -> Result<LoadedConfigs, CliConfigLoadError> {
+        let oxlintrc = match find_oxlint_config(cwd, config_path) {
+            Ok(config) => config,
+            Err(err) => return Err(CliConfigLoadError::RootConfig(err)),
+        };
+
+        if !search_for_nested_configs {
+            return Ok(LoadedConfigs {
+                root: oxlintrc,
+                nested: FxHashMap::default(),
+                nested_ignore_patterns: vec![],
+            });
+        }
+
+        // Discover config files by walking up from each file's directory
+        let config_paths: Vec<_> =
+            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
+        let discovered_configs = discover_configs_in_ancestors(&config_paths);
+
+        let (configs, errors) = self.load_many(discovered_configs);
+
+        // Fail if any config failed (CLI requires all configs to be valid)
+        if !errors.is_empty() {
+            return Err(CliConfigLoadError::NestedConfigs(errors));
+        }
+
+        // Convert loaded configs to nested config format
+        let mut nested_ignore_patterns = Vec::with_capacity(configs.len());
+        let nested_configs = build_nested_configs(configs, &mut nested_ignore_patterns, None);
+
+        Ok(LoadedConfigs { root: oxlintrc, nested: nested_configs, nested_ignore_patterns })
+    }
+}
+
+/// Build a map of directory paths to their effective configurations.
+///
+/// Processes a list of loaded configs and organizes them into a hashmap keyed by
+/// directory path. Also collects ignore patterns and optionally tracks extended paths.
+///
+/// # Arguments
+/// * `configs` - Successfully loaded configurations to process
+/// * `nested_ignore_patterns` - Output: populated with (ignore_patterns, directory) tuples
+/// * `extended_paths` - Optional set to collect paths from `extends` directives.
+///   Pass `Some` when tracking extended configs for file watching (LSP), `None` otherwise (CLI).
+pub fn build_nested_configs(
+    configs: Vec<LoadedConfig>,
+    nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
+    mut extended_paths: Option<&mut FxHashSet<PathBuf>>,
+) -> FxHashMap<PathBuf, Config> {
+    let mut nested_configs =
+        FxHashMap::<PathBuf, Config>::with_capacity_and_hasher(configs.len(), FxBuildHasher);
+
+    for loaded in configs {
+        nested_ignore_patterns.push((loaded.ignore_patterns, loaded.dir.clone()));
+        if let Some(extended_paths) = extended_paths.as_deref_mut() {
+            extended_paths.extend(loaded.extended_paths);
+        }
+        nested_configs.insert(loaded.dir, loaded.config);
+    }
+
+    nested_configs
+}
+
+fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
+    let path: &Path = config.map_or(DEFAULT_OXLINTRC_NAME.as_ref(), PathBuf::as_ref);
+    let full_path = cwd.join(path);
+
+    if config.is_some() || full_path.exists() {
+        return Oxlintrc::from_file(&full_path);
+    }
+    Ok(Oxlintrc::default())
+}
+
+#[cfg(test)]
+mod test {
+    use std::path::PathBuf;
+
+    use super::find_oxlint_config;
+
+    #[test]
+    fn test_config_path_with_parent_references() {
+        let cwd = std::env::current_dir().unwrap();
+
+        // Test case 1: Invalid path that should fail
+        let invalid_config = PathBuf::from("child/../../fixtures/linter/eslintrc.json");
+        let result = find_oxlint_config(&cwd, Some(&invalid_config));
+        assert!(result.is_err(), "Expected config lookup to fail with invalid path");
+
+        // Test case 2: Valid path that should pass
+        let valid_config = PathBuf::from("fixtures/linter/eslintrc.json");
+        let result = find_oxlint_config(&cwd, Some(&valid_config));
+        assert!(result.is_ok(), "Expected config lookup to succeed with valid path");
+
+        // Test case 3: Valid path using parent directory (..) syntax that should pass
+        let valid_parent_config = PathBuf::from("fixtures/linter/../linter/eslintrc.json");
+        let result = find_oxlint_config(&cwd, Some(&valid_parent_config));
+        assert!(result.is_ok(), "Expected config lookup to succeed with parent directory syntax");
+
+        // Verify the resolved path is correct
+        if let Ok(config) = result {
+            assert_eq!(
+                config.path.file_name().unwrap().to_str().unwrap(),
+                "eslintrc.json",
+                "Config file name should be preserved after path resolution"
+            );
+        }
     }
 }

@@ -3,7 +3,7 @@
 
 # stdout
 ```
-Failed to parse oxlint configuration file.
+Failed to build configuration from <fixture>/.oxlintrc.json.
 
   x Plugin name 'jsdoc' is reserved, and cannot be used for JS plugins.
   | 

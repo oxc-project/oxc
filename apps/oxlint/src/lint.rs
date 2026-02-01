@@ -9,18 +9,16 @@ use std::{
 
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
-use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
 use oxc_linter::{
-    AllowWarnDeny, Config, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
-    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter, Oxlintrc,
+    AllowWarnDeny, ConfigStore, ConfigStoreBuilder, ExternalLinter, ExternalPluginStore,
+    InvalidFilterKind, LintFilter, LintOptions, LintRunner, LintServiceOptions, Linter,
 };
 
 use crate::{
-    DEFAULT_OXLINTRC_NAME,
     cli::{CliRunResult, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions},
-    config_loader::{ConfigLoadError, ConfigLoader, discover_configs_in_ancestors},
+    config_loader::{CliConfigLoadError, ConfigLoadError, ConfigLoader},
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
 };
@@ -84,24 +82,6 @@ impl CliRunner {
             GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
-        };
-
-        let config_search_result =
-            Self::find_oxlint_config(&self.cwd, basic_options.config.as_ref());
-
-        let mut oxlintrc = match config_search_result {
-            Ok(config) => config,
-            Err(err) => {
-                print_and_flush_stdout(
-                    stdout,
-                    &format!(
-                        "Failed to parse oxlint configuration file.\n{}\n",
-                        render_report(&handler, &err)
-                    ),
-                );
-
-                return CliRunResult::InvalidOptionConfig;
-            }
         };
 
         let mut override_builder = None;
@@ -182,17 +162,89 @@ impl CliRunner {
         }
 
         let mut external_plugin_store = ExternalPluginStore::new(self.external_linter.is_some());
-        {
-            let mut plugins = oxlintrc.plugins.unwrap_or_default();
-            enable_plugins.apply_overrides(&mut plugins);
-            oxlintrc.plugins = Some(plugins);
+
+        // Setup JS workspace before loading any configs (config parsing can load JS plugins).
+        if let Some(external_linter) = &external_linter {
+            let res = (external_linter.create_workspace)(self.cwd.to_string_lossy().into_owned());
+
+            if let Err(err) = res {
+                print_and_flush_stdout(stdout, &format!("Failed to setup JS workspace:\n{err}\n"));
+                return CliRunResult::JsPluginWorkspaceSetupFailed;
+            }
         }
 
-        let base_ignore_patterns = oxlintrc.ignore_patterns.clone();
+        let search_for_nested_configs = !disable_nested_config &&
+            // If the `--config` option is explicitly passed, we should not search for nested config files
+            // as the passed config file takes absolute precedence.
+            basic_options.config.is_none() &&
+            !misc_options.print_config &&
+            !self.options.list_rules;
+
+        let config_result = {
+            let mut config_loader =
+                ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None);
+            config_loader.load_root_and_nested(
+                &self.cwd,
+                basic_options.config.as_ref(),
+                &paths,
+                search_for_nested_configs,
+            )
+        };
+
+        let (mut root_config, nested_configs, nested_ignore_patterns) = match config_result {
+            Ok(loaded) => (loaded.root, loaded.nested, loaded.nested_ignore_patterns),
+            Err(error) => {
+                match error {
+                    CliConfigLoadError::RootConfig(error) => {
+                        print_and_flush_stdout(
+                            stdout,
+                            &format!(
+                                "Failed to parse oxlint configuration file.\n{}\n",
+                                render_report(&handler, &error)
+                            ),
+                        );
+                    }
+                    CliConfigLoadError::NestedConfigs(errors) => {
+                        if let Some(error) = errors.into_iter().next() {
+                            let message = match &error {
+                                ConfigLoadError::Parse { path, error } => {
+                                    format!(
+                                        "Failed to parse oxlint configuration file at {}.\n{}\n",
+                                        path.to_string_lossy().cow_replace('\\', "/"),
+                                        render_report(&handler, error)
+                                    )
+                                }
+                                ConfigLoadError::Build { path, error } => {
+                                    format!(
+                                        "Failed to build configuration from {}.\n{}\n",
+                                        path.to_string_lossy().cow_replace('\\', "/"),
+                                        render_report(
+                                            &handler,
+                                            &OxcDiagnostic::error(error.clone())
+                                        )
+                                    )
+                                }
+                            };
+                            print_and_flush_stdout(stdout, &message);
+                        }
+                    }
+                }
+
+                return CliRunResult::InvalidOptionConfig;
+            }
+        };
+
+        {
+            let mut plugins = root_config.plugins.unwrap_or_default();
+            enable_plugins.apply_overrides(&mut plugins);
+            root_config.plugins = Some(plugins);
+        }
+
+        let base_ignore_patterns = root_config.ignore_patterns.clone();
 
         let config_builder = match ConfigStoreBuilder::from_oxlintrc(
             false,
-            oxlintrc.clone(),
+            root_config.clone(),
             external_linter,
             &mut external_plugin_store,
             None,
@@ -212,7 +264,7 @@ impl CliRunner {
         .with_filters(&filters);
 
         if misc_options.print_config {
-            return crate::mode::run_print_config(&config_builder, oxlintrc, stdout);
+            return crate::mode::run_print_config(&config_builder, root_config, stdout);
         }
 
         let lint_config = match config_builder.build(&mut external_plugin_store) {
@@ -232,30 +284,6 @@ impl CliRunner {
         if self.options.list_rules {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
-
-        let search_for_nested_configs = !disable_nested_config &&
-            // If the `--config` option is explicitly passed, we should not search for nested config files
-            // as the passed config file takes absolute precedence.
-            basic_options.config.is_none();
-
-        let mut nested_ignore_patterns = Vec::new();
-
-        let nested_configs = if search_for_nested_configs {
-            match Self::get_nested_configs(
-                stdout,
-                &handler,
-                &filters,
-                &paths,
-                external_linter,
-                &mut external_plugin_store,
-                &mut nested_ignore_patterns,
-            ) {
-                Ok(v) => v,
-                Err(v) => return v,
-            }
-        } else {
-            FxHashMap::default()
-        };
 
         let ignore_matcher =
             { LintIgnoreMatcher::new(&base_ignore_patterns, &self.cwd, nested_ignore_patterns) };
@@ -442,71 +470,6 @@ impl CliRunner {
 
         Ok(filters)
     }
-
-    fn get_nested_configs(
-        stdout: &mut dyn Write,
-        handler: &GraphicalReportHandler,
-        filters: &[LintFilter],
-        paths: &[Arc<OsStr>],
-        external_linter: Option<&ExternalLinter>,
-        external_plugin_store: &mut ExternalPluginStore,
-        nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
-    ) -> Result<FxHashMap<PathBuf, Config>, CliRunResult> {
-        // Discover config files by walking up from each file's directory
-        let config_paths: Vec<_> =
-            paths.iter().map(|p| Path::new(p.as_ref()).to_path_buf()).collect();
-        let discovered_configs = discover_configs_in_ancestors(&config_paths);
-
-        // Load all discovered configs
-        let mut loader = ConfigLoader::new(external_linter, external_plugin_store, filters, None);
-        let (configs, errors) = loader.load_many(discovered_configs);
-
-        // Fail on first error (CLI requires all configs to be valid)
-        if let Some(error) = errors.into_iter().next() {
-            let message = match &error {
-                ConfigLoadError::Parse { path, error } => {
-                    format!(
-                        "Failed to parse oxlint configuration file at {}.\n{}\n",
-                        path.to_string_lossy().cow_replace('\\', "/"),
-                        render_report(handler, error)
-                    )
-                }
-                ConfigLoadError::Build { path, error } => {
-                    format!(
-                        "Failed to build configuration from {}.\n{}\n",
-                        path.to_string_lossy().cow_replace('\\', "/"),
-                        render_report(handler, &OxcDiagnostic::error(error.clone()))
-                    )
-                }
-            };
-            print_and_flush_stdout(stdout, &message);
-            return Err(CliRunResult::InvalidOptionConfig);
-        }
-
-        // Convert loaded configs to nested config format
-        let mut nested_configs =
-            FxHashMap::<PathBuf, Config>::with_capacity_and_hasher(configs.len(), FxBuildHasher);
-        for loaded in configs {
-            nested_ignore_patterns.push((loaded.ignore_patterns, loaded.dir.clone()));
-            nested_configs.insert(loaded.dir, loaded.config);
-        }
-
-        Ok(nested_configs)
-    }
-
-    // finds the oxlint config
-    // when config is provided, but not found, an String with the formatted error is returned, else the oxlintrc config file is returned
-    // when no config is provided, it will search for the default file names in the current working directory
-    // when no file is found, the default configuration is returned
-    fn find_oxlint_config(cwd: &Path, config: Option<&PathBuf>) -> Result<Oxlintrc, OxcDiagnostic> {
-        let path: &Path = config.map_or(DEFAULT_OXLINTRC_NAME.as_ref(), PathBuf::as_ref);
-        let full_path = cwd.join(path);
-
-        if config.is_some() || full_path.exists() {
-            return Oxlintrc::from_file(&full_path);
-        }
-        Ok(Oxlintrc::default())
-    }
 }
 
 pub fn print_and_flush_stdout(stdout: &mut dyn Write, message: &str) {
@@ -531,9 +494,8 @@ fn render_report(handler: &GraphicalReportHandler, diagnostic: &OxcDiagnostic) -
 
 #[cfg(test)]
 mod test {
-    use std::{fs, path::PathBuf};
+    use std::fs;
 
-    use super::CliRunner;
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
     use oxc_linter::rules::RULES;
 
@@ -1114,35 +1076,6 @@ mod test {
     fn test_nested_config_multi_file_analysis_imports() {
         let args = &["issue_10054"];
         Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
-    }
-
-    #[test]
-    fn test_config_path_with_parent_references() {
-        let cwd = std::env::current_dir().unwrap();
-
-        // Test case 1: Invalid path that should fail
-        let invalid_config = PathBuf::from("child/../../fixtures/linter/eslintrc.json");
-        let result = CliRunner::find_oxlint_config(&cwd, Some(&invalid_config));
-        assert!(result.is_err(), "Expected config lookup to fail with invalid path");
-
-        // Test case 2: Valid path that should pass
-        let valid_config = PathBuf::from("fixtures/linter/eslintrc.json");
-        let result = CliRunner::find_oxlint_config(&cwd, Some(&valid_config));
-        assert!(result.is_ok(), "Expected config lookup to succeed with valid path");
-
-        // Test case 3: Valid path using parent directory (..) syntax that should pass
-        let valid_parent_config = PathBuf::from("fixtures/linter/../linter/eslintrc.json");
-        let result = CliRunner::find_oxlint_config(&cwd, Some(&valid_parent_config));
-        assert!(result.is_ok(), "Expected config lookup to succeed with parent directory syntax");
-
-        // Verify the resolved path is correct
-        if let Ok(config) = result {
-            assert_eq!(
-                config.path.file_name().unwrap().to_str().unwrap(),
-                "eslintrc.json",
-                "Config file name should be preserved after path resolution"
-            );
-        }
     }
 
     #[test]

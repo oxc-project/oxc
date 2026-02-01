@@ -3,7 +3,7 @@
 
 # stdout
 ```
-Failed to parse oxlint configuration file.
+Failed to build configuration from <fixture>/.oxlintrc.json.
 
   x Failed to load JS plugin: ./plugin.ts
   |   Error: Whoops!

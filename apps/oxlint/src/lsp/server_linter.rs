@@ -3,7 +3,7 @@ use std::sync::{Arc, OnceLock};
 
 use ignore::gitignore::Gitignore;
 use oxc_data_structures::rope::Rope;
-use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::ls_types::{DiagnosticOptions, DiagnosticServerCapabilities};
 use tower_lsp_server::{
     jsonrpc::ErrorCode,
@@ -28,8 +28,7 @@ use oxc_language_server::{
 
 use crate::{
     DEFAULT_OXLINTRC_NAME,
-    config_loader::ConfigLoader,
-    config_loader::discover_configs_in_tree,
+    config_loader::{ConfigLoader, build_nested_configs, discover_configs_in_tree},
     lsp::{
         code_actions::{
             CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC, apply_all_fix_code_action, apply_fix_code_actions,
@@ -325,21 +324,13 @@ impl ServerLinterBuilder {
 
         let mut loader =
             ConfigLoader::new(external_linter, external_plugin_store, &[], workspace_uri);
-        let (configs, errors) = loader.load_many(config_paths);
+        let (configs, errors) = loader.load_discovered(config_paths);
 
         for error in errors {
             warn!("Skipping config file {}: {:?}", error.path().display(), error);
         }
 
-        let mut nested_configs = FxHashMap::with_capacity_and_hasher(configs.len(), FxBuildHasher);
-
-        for loaded in configs {
-            nested_ignore_patterns.push((loaded.ignore_patterns, loaded.dir.clone()));
-            extended_paths.extend(loaded.extended_paths);
-            nested_configs.insert(loaded.dir, loaded.config);
-        }
-
-        nested_configs
+        build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths))
     }
 
     #[expect(clippy::filetype_is_file)]
