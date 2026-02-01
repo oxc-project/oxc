@@ -1,14 +1,16 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, AssignmentTarget, CallExpression, ExportDefaultDeclarationKind, Expression,
-        PropertyKey, Statement, VariableDeclarator,
+        Argument, AssignmentExpression, AssignmentTarget, CallExpression, Class,
+        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
+        ObjectProperty, PropertyKey, Statement, VariableDeclarator,
     },
 };
+use oxc_ast_visit::{Visit, walk};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
 use oxc_span::Span;
+use oxc_syntax::scope::ScopeFlags;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -17,8 +19,8 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
     utils::{
-        expression_contains_jsx, function_body_contains_jsx, function_contains_jsx,
-        is_es5_component, is_es6_component, is_hoc_call, is_react_component_name,
+        expression_contains_jsx, function_body_contains_jsx, function_contains_jsx, is_hoc_call,
+        is_react_component_name,
     },
 };
 
@@ -96,27 +98,16 @@ impl Rule for NoMultiComp {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let mut components: Vec<DetectedComponent> = Vec::new();
+        let mut finder = ComponentFinder::new(ctx);
+        finder.visit_program(ctx.nodes().program());
 
-        // Iterate through all AST nodes to find components
-        // TODO: We should probably avoid iterating over every node like this if we can?
-        // We're hitting is_inside_component *a lot*, which results in a lot of repeated work
-        // and ancestor traversal.
-        for node in ctx.nodes().iter() {
-            if let Some(component) = detect_component(node, ctx) {
-                components.push(component);
-            }
-        }
+        // Filter components based on ignoreStateless option and report all after the first
+        let components = finder
+            .components
+            .iter()
+            .filter(|c| if self.0.ignore_stateless { !c.is_stateless } else { true });
 
-        // Filter components based on ignoreStateless option
-        let relevant_components: Vec<&DetectedComponent> = if self.0.ignore_stateless {
-            components.iter().filter(|c| !c.is_stateless).collect()
-        } else {
-            components.iter().collect()
-        };
-
-        // Report all components after the first one
-        for component in relevant_components.into_iter().skip(1) {
+        for component in components.skip(1) {
             ctx.diagnostic(no_multi_comp_diagnostic(&component.name, component.span));
         }
     }
@@ -126,128 +117,141 @@ impl Rule for NoMultiComp {
     }
 }
 
-/// Detect if an AST node represents a React component
-fn detect_component(node: &AstNode, ctx: &LintContext) -> Option<DetectedComponent> {
-    match node.kind() {
-        // ES6 class components: class Foo extends React.Component
-        AstKind::Class(class) => {
-            if is_es6_component(node) {
-                let name = class
-                    .id
-                    .as_ref()
-                    .map_or_else(|| "UnnamedComponent".into(), |id| id.name.to_string());
-                return Some(DetectedComponent { name, span: class.span, is_stateless: false });
-            }
-            None
+/// Visitor that finds React components while tracking nesting depth.
+/// Components found while inside another component are not recorded.
+struct ComponentFinder<'a, 'ctx> {
+    components: Vec<DetectedComponent>,
+    component_depth: usize,
+    ctx: &'ctx LintContext<'a>,
+    /// Track variable name when visiting VariableDeclarator so we can access it in nested visits
+    current_var_name: Option<String>,
+}
+
+impl<'a, 'ctx> ComponentFinder<'a, 'ctx> {
+    fn new(ctx: &'ctx LintContext<'a>) -> Self {
+        Self { components: Vec::new(), component_depth: 0, ctx, current_var_name: None }
+    }
+
+    fn record_component(&mut self, name: String, span: Span, is_stateless: bool) {
+        if self.component_depth == 0 {
+            self.components.push(DetectedComponent { name, span, is_stateless });
         }
-
-        // ES5 components: createReactClass({...})
-        AstKind::CallExpression(call) => {
-            if is_es5_component(node) {
-                let name =
-                    get_component_name_from_parent(node, ctx).unwrap_or("UnnamedComponent".into());
-                return Some(DetectedComponent { name, span: call.span, is_stateless: false });
-            }
-
-            // Note: We don't detect memo/forwardRef HOC calls here.
-            // They are detected via VariableDeclarator to avoid double-counting
-            // and to properly get the component name.
-
-            None
-        }
-
-        // Function declarations: function Foo() { return <div/> }
-        AstKind::Function(func) => {
-            let Some(func_id) = &func.id else {
-                return None;
-            };
-
-            if is_react_component_name(&func_id.name)
-                && function_contains_jsx(func)
-                && !is_inside_component(node, ctx)
-            {
-                return Some(DetectedComponent {
-                    name: func_id.name.to_string(),
-                    span: func.span,
-                    is_stateless: true,
-                });
-            }
-            None
-        }
-
-        // Variable declarations: const Foo = () => <div/>
-        AstKind::VariableDeclarator(decl) => detect_variable_component(decl, node, ctx),
-
-        // Export default HOC: export default React.forwardRef(...)
-        AstKind::ExportDefaultDeclaration(export_decl) => {
-            // Check if the exported value is a HOC call
-            if let ExportDefaultDeclarationKind::CallExpression(call) = &export_decl.declaration
-                && is_hoc_component(call, ctx)
-            {
-                return Some(DetectedComponent {
-                    name: "UnnamedComponent".into(),
-                    span: export_decl.span,
-                    is_stateless: true,
-                });
-            }
-            None
-        }
-
-        // Object property methods: { RenderFoo() { return <div/> } }
-        AstKind::ObjectProperty(prop) => {
-            if let PropertyKey::StaticIdentifier(id) = &prop.key
-                && is_react_component_name(&id.name)
-                && let Expression::FunctionExpression(func) = &prop.value
-                && function_contains_jsx(func)
-                && !is_inside_component(node, ctx)
-            {
-                return Some(DetectedComponent {
-                    name: id.name.to_string(),
-                    span: prop.span,
-                    is_stateless: true,
-                });
-            }
-            None
-        }
-
-        // Assignment expressions: exports.Foo = function() { return <div/> }
-        AstKind::AssignmentExpression(assign) => {
-            if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
-                let prop_name = member.property.name.as_str();
-                if is_react_component_name(prop_name) {
-                    // Direct function with JSX
-                    if expression_contains_jsx(&assign.right) && !is_inside_component(node, ctx) {
-                        return Some(DetectedComponent {
-                            name: prop_name.to_string(),
-                            span: assign.span,
-                            is_stateless: true,
-                        });
-                    }
-
-                    // Function that returns a component (factory)
-                    if let Expression::FunctionExpression(func) = &assign.right
-                        && returns_component(func)
-                        && !is_inside_component(node, ctx)
-                    {
-                        return Some(DetectedComponent {
-                            name: prop_name.to_string(),
-                            span: assign.span,
-                            is_stateless: true,
-                        });
-                    }
-                }
-            }
-            None
-        }
-
-        _ => None,
     }
 }
 
-/// Detect component from variable declarator
+impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
+    fn visit_class(&mut self, class: &Class<'a>) {
+        if is_es6_component_class(class) {
+            let name = class
+                .id
+                .as_ref()
+                .map_or_else(|| "UnnamedComponent".into(), |id| id.name.to_string());
+            self.record_component(name, class.span, false);
+            self.component_depth += 1;
+            walk::walk_class(self, class);
+            self.component_depth -= 1;
+        } else {
+            walk::walk_class(self, class);
+        }
+    }
+
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+        // Named function that contains JSX: function Foo() { return <div/> }
+        if let Some(func_id) = &func.id
+            && is_react_component_name(&func_id.name)
+            && function_contains_jsx(func)
+        {
+            self.record_component(func_id.name.to_string(), func.span, true);
+            self.component_depth += 1;
+            walk::walk_function(self, func, flags);
+            self.component_depth -= 1;
+        } else {
+            walk::walk_function(self, func, flags);
+        }
+    }
+
+    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
+        if let Some(component) = detect_variable_component(decl, self.ctx) {
+            self.record_component(component.name, component.span, component.is_stateless);
+            // Store var name for potential createReactClass detection in nested call
+            self.current_var_name = decl.id.get_identifier_name().map(|s| s.to_string());
+            self.component_depth += 1;
+            walk::walk_variable_declarator(self, decl);
+            self.component_depth -= 1;
+            self.current_var_name = None;
+        } else {
+            // Check if this might contain a createReactClass call
+            let old_name = self.current_var_name.take();
+            self.current_var_name = decl.id.get_identifier_name().map(|s| s.to_string());
+            walk::walk_variable_declarator(self, decl);
+            self.current_var_name = old_name;
+        }
+    }
+
+    fn visit_call_expression(&mut self, call: &CallExpression<'a>) {
+        // ES5 component: createReactClass({...})
+        if is_es5_component_call(call) && self.component_depth == 0 {
+            let name = self.current_var_name.clone().unwrap_or_else(|| "UnnamedComponent".into());
+            self.record_component(name, call.span, false);
+            self.component_depth += 1;
+            walk::walk_call_expression(self, call);
+            self.component_depth -= 1;
+        } else {
+            walk::walk_call_expression(self, call);
+        }
+    }
+
+    fn visit_export_default_declaration(&mut self, export_decl: &ExportDefaultDeclaration<'a>) {
+        // export default React.forwardRef(...)
+        if let ExportDefaultDeclarationKind::CallExpression(call) = &export_decl.declaration
+            && is_hoc_component(call, self.ctx)
+        {
+            self.record_component("UnnamedComponent".into(), export_decl.span, true);
+            self.component_depth += 1;
+            walk::walk_export_default_declaration(self, export_decl);
+            self.component_depth -= 1;
+        } else {
+            walk::walk_export_default_declaration(self, export_decl);
+        }
+    }
+
+    fn visit_object_property(&mut self, prop: &ObjectProperty<'a>) {
+        // { RenderFoo() { return <div/> } }
+        // Note: Similar to assignment expressions, we don't increment depth here
+        // because the inner function will also be detected separately.
+        if let PropertyKey::StaticIdentifier(id) = &prop.key
+            && is_react_component_name(&id.name)
+            && let Expression::FunctionExpression(func) = &prop.value
+            && function_contains_jsx(func)
+        {
+            self.record_component(id.name.to_string(), prop.span, true);
+        }
+        walk::walk_object_property(self, prop);
+    }
+
+    fn visit_assignment_expression(&mut self, assign: &AssignmentExpression<'a>) {
+        // exports.Foo = function() { return <div/> }
+        // Note: We don't increment depth here because assignment expressions are not
+        // considered "containers" that would prevent inner functions from being detected.
+        // Both `exports.Foo` and `function Foo()` inside it should be detected separately.
+        if let AssignmentTarget::StaticMemberExpression(member) = &assign.left {
+            let prop_name = member.property.name.as_str();
+            if is_react_component_name(prop_name) {
+                let is_component = expression_contains_jsx(&assign.right)
+                    || matches!(&assign.right, Expression::FunctionExpression(func) if returns_component(func));
+
+                if is_component {
+                    self.record_component(prop_name.to_string(), assign.span, true);
+                }
+            }
+        }
+        walk::walk_assignment_expression(self, assign);
+    }
+}
+
+/// Detect component from variable declarator (without ancestor check - handled by visitor depth)
 fn detect_variable_component(
     decl: &VariableDeclarator,
-    node: &AstNode,
     ctx: &LintContext,
 ) -> Option<DetectedComponent> {
     let name = decl.id.get_identifier_name()?.to_string();
@@ -257,10 +261,6 @@ fn detect_variable_component(
     }
 
     let init = decl.init.as_ref()?;
-
-    if is_inside_component(node, ctx) {
-        return None;
-    }
 
     // Unwrap parenthesized expression if needed
     let init = if let Expression::ParenthesizedExpression(paren) = init {
@@ -409,7 +409,7 @@ fn is_simple_jsx_passthrough(expr: &Expression) -> bool {
 }
 
 /// Check if a function returns another function with JSX (component factory)
-fn returns_component(func: &oxc_ast::ast::Function) -> bool {
+fn returns_component(func: &Function) -> bool {
     let Some(body) = &func.body else {
         return false;
     };
@@ -423,54 +423,39 @@ fn returns_component(func: &oxc_ast::ast::Function) -> bool {
         .any(expression_contains_jsx)
 }
 
-/// Get component name from parent node (for anonymous components)
-fn get_component_name_from_parent(node: &AstNode, ctx: &LintContext) -> Option<String> {
-    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
-        match ancestor.kind() {
-            AstKind::VariableDeclarator(decl) => {
-                return decl.id.get_identifier_name().map(|s| s.to_string());
-            }
-            AstKind::AssignmentExpression(assign) => {
-                if let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign.left {
-                    return Some(id.name.to_string());
-                }
-            }
-            _ => return None,
-        }
+/// Check if a class is an ES6 React component (extends React.Component or React.PureComponent)
+fn is_es6_component_class(class: &Class) -> bool {
+    let Some(super_class) = &class.super_class else {
+        return false;
+    };
+
+    if let Some(member_expr) = super_class.as_member_expression()
+        && let Expression::Identifier(ident) = member_expr.object()
+    {
+        return ident.name == "React"
+            && member_expr
+                .static_property_name()
+                .is_some_and(|name| name == "Component" || name == "PureComponent");
     }
-    None
+
+    if let Some(ident_reference) = super_class.get_identifier_reference() {
+        return ident_reference.name == "Component" || ident_reference.name == "PureComponent";
+    }
+
+    false
 }
 
-/// Check if a node is inside another component (nested component)
-fn is_inside_component(node: &AstNode, ctx: &LintContext) -> bool {
-    for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
-        // Inside a class component
-        if is_es6_component(ancestor) || is_es5_component(ancestor) {
-            return true;
-        }
+/// Check if a call expression is createReactClass
+fn is_es5_component_call(call: &CallExpression) -> bool {
+    if let Some(member_expr) = call.callee.as_member_expression()
+        && let Expression::Identifier(ident) = member_expr.object()
+    {
+        return ident.name == "React"
+            && member_expr.static_property_name() == Some("createReactClass");
+    }
 
-        // Inside a function component
-        if let AstKind::Function(func) = ancestor.kind()
-            && let Some(id) = &func.id
-            && is_react_component_name(&id.name)
-            && function_contains_jsx(func)
-        {
-            return true;
-        }
-
-        // Inside an arrow function component
-        if let AstKind::ArrowFunctionExpression(arrow) = ancestor.kind()
-            && function_body_contains_jsx(&arrow.body)
-        {
-            // Check if this arrow is assigned to a component-named variable
-            let parent = ctx.nodes().parent_node(ancestor.id());
-            if let AstKind::VariableDeclarator(decl) = parent.kind()
-                && let Some(name) = decl.id.get_identifier_name()
-                && is_react_component_name(name.as_str())
-            {
-                return true;
-            }
-        }
+    if let Some(ident_reference) = call.callee.get_identifier_reference() {
+        return ident_reference.name == "createReactClass";
     }
 
     false
