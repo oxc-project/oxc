@@ -1,0 +1,15 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: 
+working directory: fixtures/invalid_config_rules_without_config
+----------
+Failed to parse oxlint configuration file.
+
+  x Invalid configuration for rule `no-debugger`:
+  |   This rule does not accept configuration options.
+
+----------
+CLI result: InvalidOptionConfig
+----------

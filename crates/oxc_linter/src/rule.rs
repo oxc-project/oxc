@@ -292,6 +292,12 @@ pub trait RuleMeta {
     fn config_schema(generator: &mut SchemaGenerator) -> Option<Schema> {
         None
     }
+
+    /// Whether this rule declares a configuration struct in `declare_oxc_lint!`.
+    ///
+    /// Defaults to `false`. Rules that accept configuration options will have
+    /// this set to `true` by the macro-generated impl.
+    const HAS_CONFIG: bool = false;
 }
 
 /// Rule categories defined by rust-clippy

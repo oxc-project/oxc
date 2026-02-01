@@ -248,7 +248,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", "disallowed-import"]"*/
+    /// /* no-restricted-imports: ["error", "disallowed-import"] */
     ///
     /// import foo from 'disallowed-import';
     /// export * from 'disallowed-import';
@@ -256,7 +256,7 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", "fs"]*/
+    /// /* no-restricted-imports: ["error", "fs"] */
     ///
     /// import crypto from 'crypto';
     /// export * from "bar";
@@ -270,10 +270,10 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", {
+    /// /* no-restricted-imports: ["error", {
     ///   "name": "disallowed-import",
     ///   "message": "Please use 'allowed-import' instead"
-    /// }]*/
+    /// }] */
     ///
     /// import foo from 'disallowed-import';
     /// ```
@@ -289,7 +289,7 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for `paths`:
     ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { "paths": ["cluster"] }]*/
+    /// /* no-restricted-imports: ["error", { "paths": ["cluster"] }] */
     ///
     /// import cluster from 'cluster';
     /// ```
@@ -318,13 +318,13 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    /// /* no-restricted-imports: ["error", { paths: [{
     ///   "name": "foo",
     ///   "importNames": ["default"]
     /// }, {
     ///   "name": "bar",
     ///   "importNames": ["Baz"]
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import DisallowedObject from "foo";
     /// import {Baz} from "far";
@@ -339,11 +339,11 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    /// /* no-restricted-imports: ["error", { paths: [{
     ///   "name": "foo",
     ///   "allowImportNames": ["AllowedObject"],
     ///   "message": "Please use only 'AllowedObject' from 'foo'."
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import { DisallowedObject } from "foo";
     /// ```
@@ -354,10 +354,10 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for this rule:
     /// ```typescript
-    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    /// /* no-restricted-imports: ["error", { paths: [{
     ///   "name": "foo",
     ///   "allowTypeImports": true
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import foo from 'import-foo';
     /// export { Foo } from 'import-foo';
@@ -365,10 +365,10 @@ declare_oxc_lint!(
     ///
     /// Examples of **correct** code for this rule:
     /// ```typescript
-    /// /*eslint no-restricted-imports: ["error", { paths: [{
+    /// /* no-restricted-imports: ["error", { paths: [{
     ///   "name": "foo",
     ///   "allowTypeImports": true
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import type foo from 'import-foo';
     /// export type { Foo } from 'import-foo';
@@ -411,14 +411,14 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for `patterns` option:
     ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { "patterns": ["lodash/*"] }]*/
+    /// /* no-restricted-imports: ["error", { "patterns": ["lodash/*"] }] */
     ///
     /// import pick from 'lodash/pick';
     /// ```
     ///
     /// Examples of **correct** code for `patterns` option:
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { "patterns": ["crypto/*"] }]*/
+    /// /* no-restricted-imports: ["error", { "patterns": ["crypto/*"] }] */
     ///
     /// import crypto from 'crypto';
     /// ```
@@ -433,10 +433,10 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for `group` option:
     ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    /// /* no-restricted-imports: ["error", { patterns: [{
     ///   group: ["lodash/*"],
     ///   message: "Please use the default import from 'lodash' instead."
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import pick from 'lodash/pick';
     /// ```
@@ -452,9 +452,9 @@ declare_oxc_lint!(
     ///
     /// Examples of **incorrect** code for `regex` option:
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    /// /* no-restricted-imports: ["error", { patterns: [{
     ///   regex: "@app/(api|enums).*",
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import Foo from '@app/api';
     /// import Bar from '@app/api/bar';
@@ -476,11 +476,11 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for `importNames` in `patterns`:
     ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    /// /* no-restricted-imports: ["error", { patterns: [{
     ///   group: ["utils/*"],
     ///   importNames: ['isEmpty'],
     ///   message: "Use 'isEmpty' from lodash instead."
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import { isEmpty } from 'utils/collection-utils';
     /// ```
@@ -499,11 +499,11 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for `importNamePattern` option:
     ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    /// /* no-restricted-imports: ["error", { patterns: [{
     ///   group: ["foo/*"],
     ///   importNamePattern: '^(is|has)',
     ///   message: "Use 'is*' and 'has*' functions from baz/bar instead"
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import { isSomething, hasSomething } from 'foo/bar';
     /// ```
@@ -527,10 +527,10 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for `allowImportNamePattern` option:
     ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    /// /* no-restricted-imports: ["error", { patterns: [{
     ///   group: ["utils/*"],
     ///   allowImportNamePattern: '^has'
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import { isEmpty } from 'utils/collection-utils';
     /// ```
@@ -538,16 +538,19 @@ declare_oxc_lint!(
     /// Examples of **correct** code for `allowImportNamePattern` option:
     ///
     /// ```js
-    /// /*eslint no-restricted-imports: ["error", { patterns: [{
+    /// /* no-restricted-imports: ["error", { patterns: [{
     ///   group: ["utils/*"],
     ///   allowImportNamePattern: '^is'
-    /// }]}]*/
+    /// }]}] */
     ///
     /// import { isEmpty } from 'utils/collection-utils';
     /// ```
     NoRestrictedImports,
     eslint,
     restriction,
+    // TODO: Replace this with an actual config struct. This is a dummy value to
+    // indicate that this rule has configuration and avoid errors.
+    config = Value,
 );
 
 fn add_configuration_path_from_object(

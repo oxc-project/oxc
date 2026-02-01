@@ -218,6 +218,14 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
+    let has_config_arms: Vec<TokenStream> = rule_entries
+        .iter()
+        .map(|rule| {
+            let enum_name = make_enum_ident(rule);
+            quote! { Self::#enum_name(_) => #enum_name::HAS_CONFIG }
+        })
+        .collect();
+
     let types_info_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
@@ -233,6 +241,8 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             quote! { Self::#enum_name(rule) => rule.run_info() }
         })
         .collect();
+
+    // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
 
     quote! {
         impl RuleEnum {
@@ -324,6 +334,13 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             pub fn is_tsgolint_rule(&self) -> bool {
                 match self {
                     #(#is_tsgolint_rule_arms),*
+                }
+            }
+
+            /// Whether this rule declares a configuration type.
+            pub fn has_config(&self) -> bool {
+                match self {
+                    #(#has_config_arms),*
                 }
             }
 

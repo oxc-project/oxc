@@ -26,18 +26,9 @@ fn test_rules_with_custom_configuration_have_schema() {
     // Rules that have from_configuration, but no proper schema documentation yet.
     // These rules are temporarily allowed to not have schema docs.
     //
-    // TODO: Remove rules from this list as they get fixed. Do NOT add new rules to this
-    // list - newly-created rules should always be documented before being merged!
-    let exceptions: &[&str] = &[
-        // eslint
-        "eslint/no-empty-function",
-        "eslint/no-restricted-imports",
-        "eslint/no-warning-comments",
-        // jest
-        "jest/valid-title",
-        // react
-        "react/forbid-dom-props",
-    ];
+    // NOTE: This should NOT ever have any values. All new rules with config options
+    // MUST define a valid config schema.
+    let exceptions: &[&str] = &[];
 
     let exception_set: FxHashSet<&str> = exceptions.iter().copied().collect();
 

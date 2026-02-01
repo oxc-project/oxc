@@ -1363,6 +1363,13 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_rule_without_config_but_options() {
+        Tester::new()
+            .with_cwd("fixtures/invalid_config_rules_without_config".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     // Ensure the config validation works with vitest/no-hooks, which
     // is an alias of jest/no-hooks.
     fn test_invalid_config_invalid_config_with_rule_alias() {
@@ -1410,6 +1417,17 @@ export { redundant };
     #[test]
     fn test_valid_complex_config() {
         Tester::new().with_cwd("fixtures/valid_complex_config".into()).test_and_snapshot(&[]);
+    }
+
+    /// Test that rules with dummy `config = Value` declarations can accept
+    /// configuration options without errors. This test should be removed in
+    /// the future, once these rules have been updated to use proper config
+    /// structs.
+    #[test]
+    fn test_valid_config_rules_with_dummy_config() {
+        Tester::new()
+            .with_cwd("fixtures/valid_config_rules_with_dummy_config".into())
+            .test_and_snapshot(&[]);
     }
 
     #[test]

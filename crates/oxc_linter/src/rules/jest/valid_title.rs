@@ -10,6 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 use rustc_hash::FxHashMap;
+use serde_json::Value;
 
 use crate::{
     context::LintContext,
@@ -139,7 +140,10 @@ declare_oxc_lint!(
     ValidTitle,
     jest,
     correctness,
-    conditional_fix
+    conditional_fix,
+    // TODO: Replace this with an actual config struct. This is a dummy value to
+    // indicate that this rule has configuration and avoid errors.
+    config = Value,
 );
 
 impl Rule for ValidTitle {

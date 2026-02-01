@@ -181,6 +181,9 @@ declare_oxc_lint!(
     NoEmptyFunction,
     eslint,
     restriction,
+    // TODO: Replace this with an actual config struct. This is a dummy value to
+    // indicate that this rule has configuration and avoid errors.
+    config = Value,
 );
 
 impl Rule for NoEmptyFunction {
