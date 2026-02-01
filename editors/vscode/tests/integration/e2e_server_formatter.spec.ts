@@ -1,6 +1,12 @@
 import { strictEqual } from "assert";
 import { commands, Uri, window, workspace } from "vscode";
-import { activateExtension, fixturesWorkspaceUri, loadFixture, sleep } from "../test-helpers";
+import {
+  activateExtension,
+  deleteFixtures,
+  fixturesWorkspaceUri,
+  loadFixture,
+  sleep,
+} from "../test-helpers";
 
 suiteSetup(async () => {
   await activateExtension();
@@ -12,6 +18,7 @@ teardown(async () => {
   await workspace.getConfiguration("oxc").update("fmt.configPath", undefined);
   await workspace.getConfiguration("editor").update("defaultFormatter", undefined);
   await workspace.saveAll();
+  await deleteFixtures();
 });
 
 suite("E2E Server Formatter", () => {
@@ -48,7 +55,7 @@ suite("E2E Server Formatter", () => {
 
     const document = await workspace.openTextDocument(fileUri);
     await window.showTextDocument(document);
-    await sleep(500); // wait for the server to pick up the new config
+    await sleep(500);
     await commands.executeCommand("editor.action.formatDocument");
     await workspace.saveAll();
     const content = await workspace.fs.readFile(fileUri);

@@ -1,6 +1,12 @@
 import { deepStrictEqual, notEqual, strictEqual } from "assert";
 import { commands, Uri, window, workspace, WorkspaceEdit } from "vscode";
-import { activateExtension, sleep, testSingleFolderMode, WORKSPACE_DIR } from "../test-helpers";
+import {
+  activateExtension,
+  deleteFixtures,
+  sleep,
+  testSingleFolderMode,
+  WORKSPACE_DIR,
+} from "../test-helpers";
 
 const fileUri = Uri.joinPath(WORKSPACE_DIR, "debugger.js");
 
@@ -14,6 +20,7 @@ teardown(async () => {
     ignoreIfNotExists: true,
   });
   await workspace.applyEdit(edit);
+  await deleteFixtures();
 });
 
 suite("commands", () => {

@@ -13,6 +13,7 @@ import {
 } from "vscode";
 import {
   activateExtension,
+  deleteFixtures,
   fixturesWorkspaceUri,
   loadFixture,
   sleep,
@@ -31,6 +32,7 @@ teardown(async () => {
   await wsConfig.update("fixKind", undefined, ConfigurationTarget.WorkspaceFolder);
   await workspace.getConfiguration("editor").update("codeActionsOnSave", undefined);
   await workspace.saveAll();
+  await deleteFixtures();
 });
 
 suite("code actions", () => {
