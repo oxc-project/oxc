@@ -213,14 +213,18 @@ impl PreferConst {
         if !is_for_in_of_init && decl.declarations.iter().any(|d| d.init.is_none()) {
             return fixer.noop();
         }
-        // calculate location of `let` keyword
+        // Replace the entire declaration span to prevent conflicts with other rules
+        // (e.g., no-useless-undefined) that might also modify this declaration.
+        // By replacing the full span, overlapping fixes will conflict and only one will be applied.
         let decl_span = decl.span();
         let decl_text = decl_span.source_text(ctx.source_text());
-        #[expect(clippy::cast_possible_truncation)]
-        let let_span = decl_text.find("let").map(|start| {
-            Span::new(decl_span.start + start as u32, decl_span.start + start as u32 + 3)
-        });
-        if let Some(let_span) = let_span { fixer.replace(let_span, "const") } else { fixer.noop() }
+
+        if let Some(let_pos) = decl_text.find("let") {
+            let new_text = format!("{}const{}", &decl_text[..let_pos], &decl_text[let_pos + 3..]);
+            fixer.replace(decl_span, new_text)
+        } else {
+            fixer.noop()
+        }
     }
 
     /// Check if an assignment target contains any member expressions (recursively)
@@ -1022,10 +1026,12 @@ fn test() {
             None,
         ),
         (
-            // The original ESLint rule requires 2 passes to get the correct fix here, while
-            // we compare to the final fixed output directly.
+            // We should also be fixing the inner `let` to `const`.
+            // But to avoid conflicting with other fixers, we replace the entire statement.
+            // This means the user would have to run oxlint --fix multiple times to get all fixes.
+            // But that's better than the alternative (partial fixes causing syntax errors).
             "let someFunc = () => { let a = 1, b = 2; foo(a, b) }",
-            "const someFunc = () => { const a = 1, b = 2; foo(a, b) }",
+            "const someFunc = () => { let a = 1, b = 2; foo(a, b) }",
             None,
         ),
         ("let foo = undefined;", "const foo = undefined;", None),
