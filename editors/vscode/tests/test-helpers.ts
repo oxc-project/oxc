@@ -117,6 +117,11 @@ export async function loadFixture(
   });
 }
 
+export async function deleteFixtures(workspaceDir: Uri = fixturesWorkspaceUri()): Promise<void> {
+  const fixtureUri = Uri.joinPath(workspaceDir, "fixtures");
+  await workspace.fs.delete(fixtureUri, { recursive: true, useTrash: false });
+}
+
 export async function getDiagnostics(
   file: string,
   workspaceDir: Uri = fixturesWorkspaceUri(),
