@@ -1,47 +1,38 @@
 /*
  * `defineConfig` helper and config types.
+ *
+ * Types are generated from npm/oxlint/configuration_schema.json.
  */
 
-import type { JsonObject, JsonValue } from "../plugins/json.ts";
+import type {
+  AllowWarnDeny,
+  DummyRule,
+  DummyRuleMap,
+  ExternalPluginEntry,
+  Oxlintrc as FullOxlintrc,
+  OxlintEnv,
+  OxlintGlobals,
+  OxlintOverride,
+  RuleCategories,
+} from "./config.generated.ts";
 
-export type AllowWarnDeny = "off" | "warn" | "error" | 0 | 1 | 2;
+type Oxlintrc = Omit<FullOxlintrc, "$schema" | "extends">;
 
-export type DummyRule = AllowWarnDeny | [AllowWarnDeny, ...JsonValue[]];
+export type {
+  AllowWarnDeny,
+  DummyRule,
+  DummyRuleMap,
+  RuleCategories,
+  OxlintGlobals,
+  OxlintEnv,
+  ExternalPluginEntry,
+};
 
-export type DummyRuleMap = Record<string, DummyRule>;
+export type ExternalPluginsConfig = Exclude<Oxlintrc["jsPlugins"], undefined | null>;
 
-export type RuleCategories = Record<string, AllowWarnDeny>;
-export type OxlintGlobals = Record<
-  string,
-  "readonly" | "writable" | "off" | "readable" | "writeable" | boolean
->;
+export type OxlintConfig = Oxlintrc;
 
-export type OxlintEnv = Record<string, boolean>;
-
-export type ExternalPluginEntry = string | { name: string; specifier: string };
-
-export type ExternalPluginsConfig = ExternalPluginEntry[] | null;
-
-export interface OxlintOverride {
-  files: string[];
-  env?: OxlintEnv;
-  globals?: OxlintGlobals;
-  plugins?: string[];
-  jsPlugins?: ExternalPluginsConfig;
-  rules?: DummyRuleMap;
-}
-
-export interface OxlintConfig {
-  plugins?: string[];
-  jsPlugins?: ExternalPluginsConfig;
-  categories?: RuleCategories;
-  rules?: DummyRuleMap;
-  settings?: JsonObject;
-  env?: OxlintEnv;
-  globals?: OxlintGlobals;
-  overrides?: OxlintOverride[];
-  ignorePatterns?: string[];
-}
+export type { OxlintOverride };
 
 /**
  * Define an Oxlint configuration with type inference.

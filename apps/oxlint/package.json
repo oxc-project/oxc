@@ -34,6 +34,7 @@
     "build-napi-test": "pnpm run build-napi --features testing",
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.ts",
+    "generate-config-types": "node scripts/generate-config-types.ts",
     "test": "vitest --dir ./test run",
     "init-conformance": "cd conformance; ./init.sh",
     "conformance": "cross-env NODE_DISABLE_COLORS=1 tsx ./conformance/src/index.ts"
@@ -54,6 +55,7 @@
     "eslint-vitest-rule-tester": "^3.0.1",
     "esquery": "^1.6.0",
     "execa": "^9.6.0",
+    "json-schema-to-typescript": "^15.0.4",
     "json-stable-stringify-without-jsonify": "^1.0.1",
     "oxc-parser": "^0.111.0",
     "rolldown": "catalog:",
