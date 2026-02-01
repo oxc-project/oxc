@@ -12,6 +12,8 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
+    branches-ignore:
+      - "**/graphite-base/**"
     paths: &paths
       - "crates/**/*.rs"
       - "tasks/benchmark/**/*.rs"

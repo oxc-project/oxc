@@ -6,6 +6,8 @@ on:
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize]
+    branches-ignore:
+      - "**/graphite-base/**"
     paths:
       - "pnpm-lock.yaml"
       - "crates/oxc_language_server/**"

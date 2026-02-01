@@ -5,6 +5,8 @@ permissions: {}
 on:
   pull_request:
     types: [opened, synchronize]
+    branches-ignore:
+      - "**/graphite-base/**"
     paths-ignore:
       - "!.github/workflows/ci.yml"
       - "!.github/actions/clone-submodules/action.yml"
