@@ -185,7 +185,7 @@ export declare function isolatedDeclarationSync(filename: string, sourceText: st
 /**
  * Configure how TSX and JSX are transformed.
  *
- * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx#options}
+ * @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
  */
 export interface JsxOptions {
   /**
@@ -201,8 +201,6 @@ export interface JsxOptions {
    * Emit development-specific information, such as `__source` and `__self`.
    *
    * @default false
-   *
-   * @see {@link https://babeljs.io/docs/babel-plugin-transform-react-jsx-development}
    */
   development?: boolean
   /**
@@ -216,11 +214,7 @@ export interface JsxOptions {
    */
   throwIfNamespace?: boolean
   /**
-   * Enables `@babel/plugin-transform-react-pure-annotations`.
-   *
-   * It will mark JSX elements and top-level React method calls as pure for tree shaking.
-   *
-   * @see {@link https://babeljs.io/docs/en/babel-plugin-transform-react-pure-annotations}
+   * Mark JSX elements and top-level React method calls as pure for tree shaking.
    *
    * @default true
    */
@@ -342,7 +336,7 @@ export interface ReactRefreshOptions {
 /**
  * Configure how styled-components are transformed.
  *
- * @see {@link https://styled-components.com/docs/tooling#babel-plugin}
+ * @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins#styled-components}
  */
 export interface StyledComponentsOptions {
   /**
@@ -461,9 +455,15 @@ export interface TransformOptions {
   sourcemap?: boolean
   /** Set assumptions in order to produce smaller output. */
   assumptions?: CompilerAssumptions
-  /** Configure how TypeScript is transformed. */
+  /**
+   * Configure how TypeScript is transformed.
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/typescript}
+   */
   typescript?: TypeScriptOptions
-  /** Configure how TSX and JSX are transformed. */
+  /**
+   * Configure how TSX and JSX are transformed.
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/jsx}
+   */
   jsx?: 'preserve' | JsxOptions
   /**
    * Sets the target environment for the generated JavaScript.
@@ -477,18 +477,27 @@ export interface TransformOptions {
    *
    * @default `esnext` (No transformation)
    *
-   * @see [esbuild#target](https://esbuild.github.io/api/#target)
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/lowering#target}
    */
   target?: string | Array<string>
   /** Behaviour for runtime helpers. */
   helpers?: Helpers
-  /** Define Plugin */
+  /**
+   * Define Plugin
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#define}
+   */
   define?: Record<string, string>
-  /** Inject Plugin */
+  /**
+   * Inject Plugin
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/global-variable-replacement#inject}
+   */
   inject?: Record<string, string | [string, string]>
   /** Decorator plugin */
   decorator?: DecoratorOptions
-  /** Third-party plugins to use. */
+  /**
+   * Third-party plugins to use.
+   * @see {@link https://oxc.rs/docs/guide/usage/transformer/plugins}
+   */
   plugins?: PluginsOptions
 }
 

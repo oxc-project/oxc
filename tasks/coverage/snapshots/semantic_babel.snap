@@ -823,7 +823,7 @@ after transform: ScopeId(0): ["foo"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/namespace-declaration-var-2/input.js
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/scope/redeclaration-class-interface/input.ts
 Bindings mismatch:

@@ -685,53 +685,53 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability10.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability36.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability4.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability5.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability6.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability7.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability8.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentCompatability9.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/assignmentNonObjectTypeConstraints.ts
 Bindings mismatch:
@@ -840,10 +840,10 @@ after transform: ["AsyncGenerator", "Generator", "Promise", "Symbol", "arguments
 rebuilt        : ["arguments", "authorPromise", "g", "mapper", "require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals4.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals5.ts
 Unresolved references mismatch:
@@ -851,19 +851,19 @@ after transform: ["Error", "Function", "RegExp"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentExportEquals6.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesClass3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules3b.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/augmentedTypesModules4.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/autonumberingInEnums.ts
 Bindings mismatch:
@@ -1469,7 +1469,7 @@ after transform: ["Exclude", "Extract", "Partial", "Pick"]
 rebuilt        : ["connect"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classDeclarationMergedInModuleWithContinuation.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/classExpressionWithResolutionOfNamespaceOfSameName01.ts
 Bindings mismatch:
@@ -1766,7 +1766,7 @@ after transform: SymbolId(6): [Span { start: 164, end: 167 }, Span { start: 200,
 rebuilt        : SymbolId(6): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleAcrossModuleDefinitions.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleAndTypeParameters.ts
 Scope flags mismatch:
@@ -1828,7 +1828,7 @@ after transform: SymbolId(0): [Span { start: 50, end: 59 }, Span { start: 135, e
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/cloduleWithRecursiveReference.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/coAndContraVariantInferences.ts
 Bindings mismatch:
@@ -2149,10 +2149,10 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithAccessorChildren.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithConstructorChildren.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithEnumMemberConflict.ts
 Scope flags mismatch:
@@ -2175,7 +2175,7 @@ after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithFunctionChildren.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMemberClassConflict.ts
 Scope flags mismatch:
@@ -2209,16 +2209,16 @@ after transform: SymbolId(0): Span { start: 10, end: 12 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMemberVariable.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithMethodChildren.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithModuleChildren.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithModuleReopening.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionCodeGenModuleWithPrivateMember.ts
 Scope flags mismatch:
@@ -2439,7 +2439,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(4)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndAliasInGlobal.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/collisionThisExpressionAndAmbientClassInGlobal.ts
 Bindings mismatch:
@@ -2695,10 +2695,10 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentsExternalModules3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentsFormatting.ts
 Scope flags mismatch:
@@ -2712,8 +2712,8 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentsModules.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/commentsMultiModuleSingleFile.ts
 Scope flags mismatch:
@@ -2835,7 +2835,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(11)]
 rebuilt        : SymbolId(0): [ReferenceId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/complexNarrowingWithAny.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/complicatedIndexesOfIntersectionsAreInferencable.ts
 Bindings mismatch:
@@ -3181,7 +3181,7 @@ after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumOnlyModuleMerging.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/constEnumPreserveEmitNamedExport1.ts
 Bindings mismatch:
@@ -4778,7 +4778,7 @@ after transform: SymbolId(18): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(8): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileExportAssignmentImportInternalModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileForClassWithMultipleBaseClasses.ts
 Symbol reference IDs mismatch for "A":
@@ -4952,8 +4952,8 @@ after transform: SymbolId(0): [ReferenceId(0)]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileInternalAliases.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleAssignmentInObjectLiteralProperty.ts
 Scope flags mismatch:
@@ -5002,7 +5002,7 @@ after transform: SymbolId(4): Span { start: 64, end: 65 }
 rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileModuleWithPropertyOfTypeModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFilePrivateMethodOverloads.ts
 Bindings mismatch:
@@ -5061,8 +5061,8 @@ after transform: SymbolId(5): [ReferenceId(5), ReferenceId(8)]
 rebuilt        : SymbolId(5): [ReferenceId(9)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationTypeAlias.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationTypeLiteral.ts
 Scope flags mismatch:
@@ -5232,25 +5232,25 @@ after transform: SymbolId(11): [ReferenceId(8), ReferenceId(9), ReferenceId(10),
 rebuilt        : SymbolId(12): [ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(21)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorTypeAlias.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorTypeLiteral.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeAnnotationVisibilityErrorVariableDeclaration.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofClass.ts
 Symbol reference IDs mismatch for "c":
@@ -5321,8 +5321,8 @@ after transform: SymbolId(2): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileTypeofModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declFileWithClassNameConflictingWithClassReferredByExtendsClause.ts
 Bindings mismatch:
@@ -5785,10 +5785,10 @@ after transform: ["Number"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringArrayPattern3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringObjectLiteralPattern2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringOptionalBindingParametersInOverloads.ts
 Symbol span mismatch for "foo":
@@ -5805,7 +5805,7 @@ after transform: SymbolId(5): [Span { start: 97, end: 101 }, Span { start: 165, 
 rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDestructuringPrivacyError.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitDistributiveConditionalWithInfer.ts
 Unresolved references mismatch:
@@ -6042,7 +6042,7 @@ after transform: ["Array", "IArguments", "Iterable", "Parameters"]
 rebuilt        : ["dual"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitImportInExportAssignmentModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitInlinedDistributiveConditional.ts
 Bindings mismatch:
@@ -6149,20 +6149,20 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflicts3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNameConflictsWithAlias.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitNamespaceMergedWithInterfaceNestedFunction.ts
 Bindings mismatch:
@@ -7480,9 +7480,9 @@ after transform: ["Array", "AsyncIterator", "Iterator", "Map", "Math", "Number",
 rebuilt        : ["Array", "Math", "Number", "Object", "Promise", "Reflect", "String", "Symbol"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/dottedModuleName2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/dottedSymbolResolution1.ts
 Symbol reference IDs mismatch for "Base":
@@ -7543,9 +7543,9 @@ after transform: ["React"]
 rebuilt        : ["React", "__foot"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/downlevelLetConst13.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/downlevelLetConst14.ts
 Bindings mismatch:
@@ -7733,7 +7733,7 @@ after transform: ["NodeJS", "Promise", "arguments"]
 rebuilt        : ["arguments"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousInners1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/duplicateAnonymousModuleClasses.ts
 Scope flags mismatch:
@@ -8074,8 +8074,8 @@ after transform: ScopeId(0): ["C1", "fn1", "fn2", "fn3", "fn4", "val1", "val2"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumAssignmentCompat4.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/enumCodeGenNewLines1.ts
 Bindings mismatch:
@@ -10220,7 +10220,7 @@ after transform: SymbolId(5): [ReferenceId(5), ReferenceId(6), ReferenceId(7), R
 rebuilt        : SymbolId(6): [ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(20), ReferenceId(22), ReferenceId(24), ReferenceId(25)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportAllInEs5.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportAssignment4.ts
 Bindings mismatch:
@@ -10228,16 +10228,16 @@ after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportClause.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportClauseInEs5.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportClauseWithoutModuleSpecifier.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ExportClauseWithoutModuleSpecifierInEs5.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ImportDefaultBinding.ts
 Bindings mismatch:
@@ -10569,31 +10569,31 @@ after transform: SymbolId(5): Span { start: 206, end: 208 }
 rebuilt        : SymbolId(6): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleInternalImport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleLet.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleModuleDeclaration.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/es6ModuleVariableStatement.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/esDecoratorsClassFieldsCrash.ts
 Symbol reference IDs mismatch for "_decorateMetadata":
@@ -10825,7 +10825,7 @@ after transform: SymbolId(0): [Span { start: 78, end: 79 }, Span { start: 116, e
 rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportAndClodule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportImportNonInstantiatedModule.ts
 Bindings mismatch:
@@ -10859,10 +10859,10 @@ after transform: ["module"]
 rebuilt        : ["X", "module"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportPrivateType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/exportRedeclarationTypeAliases.ts
 Bindings mismatch:
@@ -10958,10 +10958,10 @@ after transform: SymbolId(6): [ReferenceId(0)]
 rebuilt        : SymbolId(4): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleResolution2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/externalModuleWithoutCompilerFlag1.ts
 Bindings mismatch:
@@ -11727,7 +11727,7 @@ after transform: []
 rebuilt        : ["B"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/funduleOfFunctionWithoutReturnTypeAnnotation.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/funduleUsedAcrossFileBoundary.ts
 Bindings mismatch:
@@ -12041,7 +12041,7 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(6), R
 rebuilt        : SymbolId(0): [ReferenceId(4), ReferenceId(5), ReferenceId(6)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCloduleInModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericConstraintDeclaration.ts
 Symbol reference IDs mismatch for "List":
@@ -12709,11 +12709,11 @@ after transform: SymbolId(3): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAliasWithDottedName.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importAndVariableDeclarationConflict2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importDecl.ts
 Symbol reference IDs mismatch for "d":
@@ -12813,7 +12813,7 @@ after transform: []
 rebuilt        : ["React", "o"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importInTypePosition.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importNonExportedMember12.ts
 Bindings mismatch:
@@ -12821,7 +12821,7 @@ after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importOnAliasedIdentifiers.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/importPropertyFromMappedType.ts
 Bindings mismatch:
@@ -14201,13 +14201,13 @@ after transform: ["ReturnType"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasClass.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasClassInsideLocalModuleWithExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasClassInsideLocalModuleWithoutExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasClassInsideTopLevelModuleWithExport.ts
 Symbol flags mismatch for "x":
@@ -14226,24 +14226,24 @@ after transform: SymbolId(0): Span { start: 17, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasEnum.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasEnumInsideLocalModuleWithExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasEnumInsideLocalModuleWithoutExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasFunction.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasFunctionInsideLocalModuleWithExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasFunctionInsideLocalModuleWithoutExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasFunctionInsideTopLevelModuleWithoutExport.ts
 Symbol flags mismatch for "a":
@@ -14254,10 +14254,10 @@ after transform: SymbolId(0): Span { start: 17, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModuleInsideLocalModuleWithoutExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInitializedModuleInsideTopLevelModuleWithExport.ts
 Symbol flags mismatch for "a":
@@ -14277,7 +14277,7 @@ after transform: SymbolId(3): [ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(5): [ReferenceId(9)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInterface.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasInterfaceInsideTopLevelModuleWithExport.ts
 Bindings mismatch:
@@ -14288,13 +14288,13 @@ after transform: SymbolId(2): [ReferenceId(1)]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideLocalModuleWithExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideLocalModuleWithoutExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasUninitializedModuleInsideTopLevelModuleWithoutExport.ts
 Bindings mismatch:
@@ -14305,17 +14305,17 @@ after transform: ["a"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasVar.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasVarInsideTopLevelModuleWithoutExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalAliasWithDottedNameEmit.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalImportInstantiatedModuleMergedWithClassNotReferencingInstanceNoConflict.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/internalImportUnInstantiatedModuleMergedWithClassNotReferencingInstanceNoConflict.ts
 Bindings mismatch:
@@ -15066,7 +15066,7 @@ after transform: []
 rebuilt        : ["use"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/letDeclarations2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/letKeepNamesOfTopLevelItems.ts
 Scope flags mismatch:
@@ -15416,10 +15416,10 @@ after transform: []
 rebuilt        : ["p012"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedDeclarations4.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedEnumDeclarationCodeGen.ts
 Bindings mismatch:
@@ -15643,13 +15643,13 @@ after transform: SymbolId(7): Span { start: 255, end: 259 }
 rebuilt        : SymbolId(14): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationCodeGen5.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/mergedModuleDeclarationWithSharedExportedVar.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/metadataOfClassFromAlias.ts
 Symbol reference IDs mismatch for "SomeClass":
@@ -16054,7 +16054,7 @@ after transform: []
 rebuilt        : ["Observable"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDeclarationEmit2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationDoesInterfaceMergeOfReexport.ts
 Bindings mismatch:
@@ -16116,7 +16116,7 @@ after transform: []
 rebuilt        : ["Observable"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationExtendFileModule2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleAugmentationGlobal1.ts
 Bindings mismatch:
@@ -16193,7 +16193,7 @@ after transform: ScopeId(0): ["I", "f"]
 rebuilt        : ScopeId(0): ["f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodeGenTest5.ts
 Bindings mismatch:
@@ -16216,7 +16216,7 @@ after transform: SymbolId(9): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(10): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleCodegenTest4.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleDeclarationExportStarShadowingGlobalIsNameable.ts
 Bindings mismatch:
@@ -16224,7 +16224,7 @@ after transform: ScopeId(0): ["func", "model"]
 rebuilt        : ScopeId(0): ["func"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleIdentifiers.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleLocalImportNotIncorrectlyRedirected.ts
 Bindings mismatch:
@@ -16282,7 +16282,7 @@ after transform: [ReferenceId(5), ReferenceId(9)]
 rebuilt        : [ReferenceId(20)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleMemberWithoutTypeAnnotation2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleMerge.ts
 Scope flags mismatch:
@@ -16696,16 +16696,16 @@ after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleUnassignedVariable.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleVariables.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleVisibilityTest1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduleWithTryStatement1.ts
 Scope flags mismatch:
@@ -16724,16 +16724,16 @@ after transform: ScopeId(0): ["ng"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/moduledecl.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/multiModuleClodule1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/multiModuleFundule1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/multiSignatureTypeInference.ts
 Bindings mismatch:
@@ -18568,12 +18568,12 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfInvisibleModuleError.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyCheckTypeOfInvisibleModuleNoError.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyClass.ts
 Symbol flags mismatch for "m1":
@@ -18762,20 +18762,20 @@ after transform: SymbolId(13): [ReferenceId(18), ReferenceId(19), ReferenceId(20
 rebuilt        : SymbolId(14): [ReferenceId(14), ReferenceId(15)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloImport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloInterface.ts
 Bindings mismatch:
@@ -18801,42 +18801,42 @@ after transform: SymbolId(21): [ReferenceId(36), ReferenceId(37), ReferenceId(38
 rebuilt        : SymbolId(4): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyGloVar.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyImport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyInterface.ts
 Bindings mismatch:
@@ -18879,36 +18879,36 @@ after transform: ScopeId(0): ["privateModule", "publicModule"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyLocalInternalReferenceImportWithExport.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyTypeParameterOfFunction.ts
 Symbol reference IDs mismatch for "privateClass":
@@ -19064,26 +19064,26 @@ after transform: SymbolId(62): [ReferenceId(127), ReferenceId(133), ReferenceId(
 rebuilt        : SymbolId(15): [ReferenceId(9)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyVar.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privacyVarDeclFile.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/privateInstanceVisibility.ts
 Scope flags mismatch:
@@ -20104,10 +20104,10 @@ after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/propertyNamesWithStringLiteral.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/qualifiedName_ImportDeclarations-entity-names-referencing-a-var.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/ramdaToolsNoInfinite.ts
 Bindings mismatch:
@@ -20353,7 +20353,7 @@ after transform: SymbolId(0): Span { start: 10, end: 21 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveCloduleReference.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveConditionalCrash3.ts
 Unresolved references mismatch:
@@ -22604,7 +22604,7 @@ after transform: SymbolId(0): Span { start: 17, end: 18 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourcemapValidationDuplicateNames.ts
 Scope flags mismatch:
@@ -23140,7 +23140,7 @@ after transform: ["Readonly", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/stringLiteralObjectLiteralDeclaration1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/stripMembersOptionality.ts
 Bindings mismatch:
@@ -23168,7 +23168,7 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/structuralTypeInDeclareFileForModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/styledComponentsInstantiaionLimitNotReached.ts
 Bindings mismatch:
@@ -23520,7 +23520,7 @@ after transform: SymbolId(0): Span { start: 10, end: 23 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/topLevel.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/trackedSymbolsNoCrash.ts
 Bindings mismatch:
@@ -24823,7 +24823,7 @@ after transform: []
 rebuilt        : ["f"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedClassesinNamespace3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedImportDeclaration.ts
 Bindings mismatch:
@@ -24848,7 +24848,7 @@ after transform: SymbolId(0): Span { start: 10, end: 20 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedInterfaceinNamespace5.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/unusedLocalProperty.ts
 Bindings mismatch:
@@ -24930,7 +24930,7 @@ after transform: []
 rebuilt        : ["a", "b"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/usingModuleWithExportImportInValuePosition.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/validUseOfThisInSuper.ts
 Symbol reference IDs mismatch for "Base":
@@ -24970,11 +24970,11 @@ after transform: [ReferenceId(10), ReferenceId(11)]
 rebuilt        : [ReferenceId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/vardecl.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/varianceCallbacksAndIndexedAccesses.ts
 Unresolved references mismatch:
@@ -25096,7 +25096,7 @@ after transform: ["Worker"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/visSyntax.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/voidReturnIndexUnionInference.ts
 Unresolved references mismatch:
@@ -29576,7 +29576,7 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty49.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty50.ts
 Scope flags mismatch:
@@ -30165,16 +30165,16 @@ after transform: SymbolId(0): [Span { start: 24, end: 25 }, Span { start: 53, en
 rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1-es6.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3-es6.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports3.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/modules/exportsAndImports5.ts
 Bindings mismatch:
@@ -30216,10 +30216,10 @@ after transform: []
 rebuilt        : ["console"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesWithModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/shorthandPropertyAssignment/objectLiteralShorthandPropertiesWithModuleES6.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/spread/iteratorSpreadInArray11.ts
 Unresolved references mismatch:
@@ -32380,7 +32380,7 @@ after transform: ["RegExp"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithAnyAndEveryType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/additionOperator/additionOperatorWithConstrainedTypeParameter.ts
 Unresolved references mismatch:
@@ -33421,7 +33421,7 @@ after transform: []
 rebuilt        : ["g", "o"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/identifiers/scopeResolutionIdentifiers.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/newOperator/newOperatorConformance.ts
 Bindings mismatch:
@@ -35247,10 +35247,10 @@ after transform: SymbolId(29): Span { start: 2085, end: 2087 }
 rebuilt        : SymbolId(33): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/typeGuards/typeGuardsInProperties.ts
 Symbol reference IDs mismatch for "C1":
@@ -35307,7 +35307,7 @@ after transform: ["console"]
 rebuilt        : ["checkM", "checkTruths", "console"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithBooleanType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithEnumType.ts
 Bindings mismatch:
@@ -35321,25 +35321,25 @@ after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithNumberType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/bitwiseNotOperator/bitwiseNotOperatorWithStringType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithAnyOtherType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/decrementOperator/decrementOperatorWithNumberType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/incrementOperator/incrementOperatorWithAnyOtherType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/incrementOperator/incrementOperatorWithNumberType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithBooleanType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithEnumType.ts
 Scope flags mismatch:
@@ -35359,10 +35359,10 @@ after transform: SymbolId(1): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(2): SymbolFlags(FunctionScopedVariable)
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithNumberType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/unaryOperators/voidOperator/voidOperatorWithStringType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/asiPreventsParsingAsAmbientExternalModule02.ts
 Scope flags mismatch:
@@ -35652,8 +35652,8 @@ after transform: ["Array", "Object", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportAssignmentMergedModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/exportDeclaredModule.ts
 Bindings mismatch:
@@ -35677,7 +35677,7 @@ after transform: ScopeId(0): ["a"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/nameWithRelativePaths.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/nodeModulesTsFiles.ts
 Bindings mismatch:
@@ -36357,7 +36357,7 @@ after transform: ["Object"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithPropertyOfEveryType.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/interfaces/interfaceDeclarations/interfaceWithSpecializedCallAndConstructSignatures.ts
 Unresolved references mismatch:
@@ -36581,7 +36581,7 @@ after transform: ScopeId(0): ["A", "X", "l", "p"]
 rebuilt        : ScopeId(0): ["l", "p"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedLocalVarsOfTheSameName.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedInterfacesOfTheSameName.ts
 Bindings mismatch:
@@ -36589,8 +36589,8 @@ after transform: ScopeId(0): ["A", "X", "l", "p"]
 rebuilt        : ScopeId(0): ["l", "p"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedModulesOfTheSameName.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/DeclarationMerging/TwoInternalModulesWithTheSameNameAndDifferentCommonRoot.ts
 Symbol flags mismatch for "Root":
@@ -36627,14 +36627,14 @@ after transform: SymbolId(2): Span { start: 109, end: 114 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/exportCodeGen.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/importStatements.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/codeGeneration/nameCollision.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWhichExtendsInterfaceWithInaccessibleType.ts
 Scope flags mismatch:
@@ -36648,8 +36648,8 @@ after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(0): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWithAccessibleTypesInTypeParameterConstraintsClassHeritageListMemberTypeAnnotations.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWithInaccessibleTypeInIndexerTypeAnnotations.ts
 Scope flags mismatch:
@@ -36666,8 +36666,8 @@ after transform: SymbolId(1): [ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportClassWithInaccessibleTypeInTypeParameterConstraint.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportFunctionWithAccessibleTypesInParameterAndReturnTypeAnnotation.ts
 Scope flags mismatch:
@@ -36721,8 +36721,8 @@ after transform: SymbolId(2): [ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(4): [ReferenceId(7)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithAccessibleTypesInTypeParameterConstraintsClassHeritageListMemberTypeAnnotations.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInIndexerTypeAnnotations.ts
 Bindings mismatch:
@@ -36730,33 +36730,33 @@ after transform: ScopeId(0): ["A"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportInterfaceWithInaccessibleTypeInTypeParameterConstraint.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportModuleWithAccessibleTypesOnItsExportedMembers.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportObjectLiteralAndObjectTypeLiteralWithAccessibleTypesInMemberTypeAnnotations.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportObjectLiteralAndObjectTypeLiteralWithAccessibleTypesInNestedMemberTypeAnnotations.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableOfGenericTypeWithInaccessibleTypeAsTypeArgument.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithAccessibleTypeInTypeAnnotation.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/exportDeclarations/ExportVariableWithInaccessibleTypeInTypeAnnotation.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/exportImportAlias.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/importDeclarations/importAliasIdentifiers.ts
 Scope flags mismatch:
@@ -36827,10 +36827,10 @@ after transform: SymbolId(10): [Span { start: 579, end: 584 }, Span { start: 631
 rebuilt        : SymbolId(12): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleBody/moduleWithStatementsOfEveryKind.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace03.ts
 Scope flags mismatch:
@@ -36844,16 +36844,16 @@ after transform: SymbolId(2): Span { start: 49, end: 58 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/asiPreventsParsingAsNamespace05.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/instantiatedModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nestedModules.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/nonInstantiatedModule.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/internalModules/moduleDeclarations/reExportAliasMakesInstantiated.ts
 Bindings mismatch:
@@ -37959,9 +37959,9 @@ after transform: ScopeId(0): ["M"]
 rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModule1.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration11.ts
 Bindings mismatch:
@@ -39785,10 +39785,10 @@ after transform: []
 rebuilt        : ["foo"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignatureWithoutReturnTypeAnnotationInference.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/objectTypeLiteral/callSignatures/callSignaturesThatDifferOnlyByReturnType.ts
 Unresolved references mismatch:
@@ -39927,7 +39927,7 @@ after transform: SymbolId(1): [Span { start: 23, end: 24 }, Span { start: 44, en
 rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/primitives/undefined/invalidUndefinedValues.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/primitives/undefined/validUndefinedAssignments.ts
 Symbol reference IDs mismatch for "C":
@@ -41359,8 +41359,8 @@ after transform: ["Date"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignabilityInInheritance.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignableToEveryType.ts
 Bindings mismatch:
@@ -41383,8 +41383,8 @@ after transform: ["Date", "Function", "Number", "Object", "String", "require"]
 rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/anyAssignableToEveryType2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/assignmentCompatWithObjectMembers.ts
 Scope flags mismatch:
@@ -41772,16 +41772,16 @@ after transform: SymbolId(31): [Span { start: 655, end: 659 }, Span { start: 691
 rebuilt        : SymbolId(12): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/nullIsSubtypeOfEverythingButUndefined.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfAny.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints2.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithCallSignatures.ts
 Bindings mismatch:
@@ -42265,8 +42265,8 @@ after transform: SymbolId(12): Span { start: 1160, end: 1169 }
 rebuilt        : SymbolId(3): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/undefinedIsSubtypeOfEverything.ts
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
-Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
+Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/typeAndMemberIdentity/objectTypesIdentity.ts
 Symbol reference IDs mismatch for "A":
