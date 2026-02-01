@@ -99,6 +99,9 @@ impl Rule for NoMultiComp {
         let mut components: Vec<DetectedComponent> = Vec::new();
 
         // Iterate through all AST nodes to find components
+        // TODO: We should probably avoid iterating over every node like this if we can?
+        // We're hitting is_inside_component *a lot*, which results in a lot of repeated work
+        // and ancestor traversal.
         for node in ctx.nodes().iter() {
             if let Some(component) = detect_component(node, ctx) {
                 components.push(component);
@@ -411,13 +414,13 @@ fn returns_component(func: &oxc_ast::ast::Function) -> bool {
         return false;
     };
 
-    body.statements.iter().any(|stmt| {
-        let Statement::ReturnStatement(ret) = stmt else {
-            return false;
-        };
-
-        ret.argument.as_ref().is_some_and(expression_contains_jsx)
-    })
+    body.statements
+        .iter()
+        .filter_map(|stmt| match stmt {
+            Statement::ReturnStatement(ret) => ret.argument.as_ref(),
+            _ => None,
+        })
+        .any(expression_contains_jsx)
 }
 
 /// Get component name from parent node (for anonymous components)
