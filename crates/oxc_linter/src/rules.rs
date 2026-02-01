@@ -390,6 +390,7 @@ pub(crate) mod react {
     pub mod no_direct_mutation_state;
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
+    pub mod no_multi_comp;
     pub mod no_namespace;
     pub mod no_redundant_should_component_update;
     pub mod no_render_return_value;
