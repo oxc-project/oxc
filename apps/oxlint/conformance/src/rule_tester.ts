@@ -5,7 +5,7 @@
 import { dirname, isAbsolute as isAbsolutePath, sep as pathSep } from "node:path";
 // @ts-expect-error - internal module of ESLint with no types
 import eslintGlobals from "../submodules/eslint/conf/globals.js";
-import { RuleTester } from "#oxlint/rule-tester";
+import { RuleTester } from "#oxlint/plugins-dev";
 import { describe, it, currentGroup, setCurrentTest } from "./capture.ts";
 import { SHOULD_SKIP_CODE } from "./filter.ts";
 

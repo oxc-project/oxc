@@ -9,7 +9,7 @@
   "imports": {
     "#oxlint": "./dist/index.js",
     "#oxlint/plugins": "./dist/plugins.js",
-    "#oxlint/rule-tester": "./dist/rule-tester.js"
+    "#oxlint/plugins-dev": "./dist/plugins-dev.js"
   },
   "exports": {
     ".": {
@@ -20,9 +20,9 @@
       "types": "./dist/plugins.d.ts",
       "default": "./dist/plugins.js"
     },
-    "./rule-tester": {
-      "types": "./dist/rule-tester.d.ts",
-      "default": "./dist/rule-tester.js"
+    "./plugins-dev": {
+      "types": "./dist/plugins-dev.d.ts",
+      "default": "./dist/plugins-dev.js"
     }
   },
   "scripts": {
