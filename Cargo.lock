@@ -4195,6 +4195,6 @@ dependencies = [
 
 [[package]]
 name = "zmij_ecma"
-version = "1.0.17"
+version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93d30f2f2fceafcfa33f60d37ce25bd1b05a50d29be522edefdce8a37666b687"
+checksum = "78ab9d0173e21fc3167569e5706193c53bf7cbd7c0a65a35ab4d82a969e6d35d"
