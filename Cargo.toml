@@ -176,7 +176,7 @@ bpaf = "0.9.20" # CLI parser
 compact_str = "0.9.0" # Compact string type
 console = "0.16.2" # Terminal utilities
 constcat = "0.6.1" # Const string concatenation
-convert_case = "0.10.0" # Case conversion
+convert_case = "0.11.0" # Case conversion
 cow-utils = "0.1.3" # Copy-on-write utilities
 criterion2 = { version = "3.0.2", default-features = false } # Benchmarking
 dragonbox_ecma = "0.1.0" # Fast float formatting
