@@ -305,7 +305,11 @@ importers:
         specifier: 2.1.0
         version: 2.1.0
 
-  npm/oxlint: {}
+  npm/oxlint:
+    dependencies:
+      oxlint-tsgolint:
+        specifier: '>=0.11.2'
+        version: 0.11.4
 
   npm/runtime: {}
 
