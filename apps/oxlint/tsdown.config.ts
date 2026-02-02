@@ -206,7 +206,7 @@ const GLOBALS = new Set([
 
 // Global properties which cannot be converted to top-level vars, because they're methods which use `this`.
 // e.g. `const r = Promise.resolve; r(1);` throws "TypeError: PromiseResolve called on non-object".
-const SKIP_GLOBALS = new Set(["Promise.resolve"]);
+const SKIP_GLOBALS = new Set(["Promise.resolve", "Promise.allSettled"]);
 
 /**
  * Create a plugin to replace usage of properties of globals with global vars defined in `utils/globals.ts`.
