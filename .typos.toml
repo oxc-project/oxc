@@ -49,6 +49,7 @@ seeked = "seeked"
 labeledby = "labeledby"
 hashi = "hashi"
 inferrable = "inferrable"
+consts = "consts"
 
 [default.extend-identifiers]
 IIFEs = "IIFEs"
