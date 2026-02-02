@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.43.0] - 2026-02-02
+
+### 🚀 Features
+
+- 1753209 linter/vscode: Run extension when JS configs are detected (#18832) (camc314)
+- 7a5c268 oxlint/lsp: Support `jsPlugins` (#17840) (Sysix)
+- 0da45ef vscode: Fallback to globally installed oxlint/oxfmt packages (#18007) (Sysix)
+
+### 🐛 Bug Fixes
+
+- fd92711 vscode: Use `fsPath` for workspace mapping (#18728) (Sysix)
+- 14fabec vscode: Use built-in `getWorkspaceFolder` for detecting the right workspace of a given uri (#18583) (Sysix)
+
 ## [1.42.0] - 2026-01-26
 
 ### 🐛 Bug Fixes

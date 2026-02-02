@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.28.0] - 2026-02-02
+
+### 🚀 Features
+
+- ee30de9 oxfmt: Add config migration from biome (#18638) (Luca Fischer)
+
+### 🐛 Bug Fixes
+
+- e754b18 oxfmt/migrate-prettier: Set `experimentalSortPackagejson: false` by default (#18831) (leaysgur)
+- 34ee194 formatter: Tailwindcss sorting doesn't work for object property keys (#18773) (Dunqing)
+- 48f1e35 oxfmt: Prevent ThreadsafeFunction crash on Node.js exit (#18723) (Boshen)
+- c3d05c1 formatter,oxfmt: Handle CRLF with embedded formatting (#18686) (leaysgur)
+- ac1ff4e oxfmt: Use `empty_line` IR for empty xxx-in-js line (#18623) (leaysgur)
+- 8f76900 oxfmt: Dedent xxx-in-js templates before calling prettier (#18622) (leaysgur)
+- 6b726ef oxfmt: Trim whitespace only xxx-in-js templates (#18621) (leaysgur)
+
 ## [0.27.0] - 2026-01-26
 
 ### 🚀 Features
