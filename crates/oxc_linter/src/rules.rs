@@ -218,6 +218,7 @@ pub(crate) mod typescript {
     pub mod ban_types;
     pub mod consistent_generic_constructors;
     pub mod consistent_indexed_object_style;
+    pub mod consistent_type_assertions;
     pub mod consistent_type_definitions;
     pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
