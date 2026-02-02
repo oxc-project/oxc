@@ -8,7 +8,7 @@ use oxc::{
     diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource, OxcDiagnostic},
     minifier::CompressOptions,
     parser::{ParseOptions, Parser, ParserReturn},
-    span::{SourceType, Span},
+    span::{ModuleKind, SourceType, Span},
     transformer::{JsxOptions, JsxRuntime, TransformOptions},
 };
 use oxc_formatter::{
@@ -292,7 +292,7 @@ pub fn run_semantic_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         })
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
-            let source_type = SourceType::default().with_module(is_module);
+            let source_type = SourceType::script().with_module(is_module);
             let result = run_semantic(&f.code, source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
@@ -375,7 +375,7 @@ pub fn run_codegen_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         })
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
-            let source_type = SourceType::default().with_module(is_module);
+            let source_type = SourceType::script().with_module(is_module);
             let result = run_codegen(&f.code, source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
@@ -500,7 +500,7 @@ pub fn run_formatter_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         })
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
-            let source_type = SourceType::default().with_module(is_module);
+            let source_type = SourceType::script().with_module(is_module);
             let result = run_formatter(&f.code, source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
@@ -568,7 +568,13 @@ fn run_transformer(
     let transformed1 = driver.printed.clone();
 
     // Second pass with only JavaScript syntax
-    driver.run(&transformed1, SourceType::default().with_module(source_type.is_module()));
+    let second_pass_source_type = match source_type.module_kind() {
+        ModuleKind::Module => SourceType::mjs(),
+        ModuleKind::Script => SourceType::script(),
+        ModuleKind::Unambiguous => SourceType::unambiguous(),
+        ModuleKind::CommonJS => SourceType::cjs(),
+    };
+    driver.run(&transformed1, second_pass_source_type);
     let transformed2 = driver.printed.clone();
 
     if transformed1 == transformed2 {
@@ -588,7 +594,7 @@ pub fn run_transformer_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         })
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
-            let source_type = SourceType::default().with_module(is_module);
+            let source_type = SourceType::script().with_module(is_module);
             let result = run_transformer(&f.code, source_type, &f.path, None);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
@@ -661,7 +667,7 @@ pub fn run_minifier_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         })
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
-            let source_type = SourceType::default().with_module(is_module);
+            let source_type = SourceType::script().with_module(is_module);
             let result = run_minifier(&f.code, source_type);
             CoverageResult { path: f.path.clone(), should_fail: false, result }
         })
@@ -707,7 +713,7 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
         })
         .map(|f| {
             let is_module = f.meta.flags.contains(&TestFlag::Module);
-            let source_type = SourceType::default().with_module(is_module);
+            let source_type = SourceType::script().with_module(is_module);
             let allocator = Allocator::new();
             let ret = Parser::new(&allocator, &f.code, source_type).parse();
 

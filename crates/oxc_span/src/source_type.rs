@@ -255,6 +255,25 @@ impl SourceType {
         }
     }
 
+    /// Creates a [`SourceType`] representing a [`JavaScript`] script (non-module).
+    ///
+    /// ## Example
+    /// ```
+    /// # use oxc_span::SourceType;
+    ///
+    /// let script = SourceType::script();
+    /// assert!(script.is_script());
+    /// assert!(script.is_javascript());
+    /// ```
+    /// [`JavaScript`]: Language::JavaScript
+    pub const fn script() -> Self {
+        Self {
+            language: Language::JavaScript,
+            module_kind: ModuleKind::Script,
+            variant: LanguageVariant::Standard,
+        }
+    }
+
     /// A [`SourceType`] that will be treated as a module if it contains ESM syntax.
     ///
     /// After a file is parsed with an `unambiguous` source type, it will have a final
@@ -437,8 +456,6 @@ impl SourceType {
     pub const fn with_module(mut self, yes: bool) -> Self {
         if yes {
             self.module_kind = ModuleKind::Module;
-        } else {
-            self.module_kind = ModuleKind::Script;
         }
         self
     }

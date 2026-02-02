@@ -95,6 +95,12 @@ impl<'a> SemanticTester<'a> {
         self
     }
 
+    /// Mark the [`SourceType`] as a script.
+    pub fn with_script(mut self, yes: bool) -> Self {
+        self.source_type = self.source_type.with_script(yes);
+        self
+    }
+
     /// Enable or disable building a [`ControlFlowGraph`].
     ///
     /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
