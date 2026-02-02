@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.28.0] - 2026-02-02
+
+### 🐛 Bug Fixes
+
+- a83c266 formatter: Keep decorated function pattern hugged when params break (#18830) (Dunqing)
+- 0c8efe1 formatter: Quote numeric property keys with `quoteProps: consistent` (#18803) (Dunqing)
+- 9c14c3e formatter: Ignore comment does not work for sequence expressions in arrow function body (#18799) (Dunqing)
+- 54984ae formatter: Handle leading comments in arrow function sequence expressions (#18798) (Dunqing)
+- 61bb2b5 formatter: Correctly expand JSX returned from arrow callbacks in JSX expression containers (#18797) (Dunqing)
+- 34ee194 formatter: Tailwindcss sorting doesn't work for object property keys (#18773) (Dunqing)
+- e96adca formatter: Follow Prettier's approach for for-in initializer parentheses (#18695) (Dunqing)
+- 1215a6f formatter: Preserve quote for class property key in TypeScript (#18692) (Dunqing)
+- 059acae formatter: Incorrect comments placement for union type in `TSTypeIntersection` (#18690) (Dunqing)
+- c3d05c1 formatter,oxfmt: Handle CRLF with embedded formatting (#18686) (leaysgur)
+- 7cb3085 formatter: Preserve comments on rest elements (#18649) (Dunqing)
+- 21984dd formatter: Preserve type cast comments on rest parameters (#18648) (Dunqing)
+- 2f70254 formatter: Don't add extra semicolon on suppressed class properties (#18631) (Dunqing)
+- ac1ff4e oxfmt: Use `empty_line` IR for empty xxx-in-js line (#18623) (leaysgur)
+- 8f76900 oxfmt: Dedent xxx-in-js templates before calling prettier (#18622) (leaysgur)
+- 6b726ef oxfmt: Trim whitespace only xxx-in-js templates (#18621) (leaysgur)
+
 ## [0.27.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.43.0] - 2026-02-02
+
+### 💥 BREAKING CHANGES
+
+- b34a155 linter/plugins: [**BREAKING**] `RuleTester` set `context.filename` to absolute path (#18702) (overlookmotel)
+
+### 🚀 Features
+
+- c962dd2 linter/lsp: Implement support for oxlint.config.ts (#18826) (camc314)
+- da32203 linter: Auto generate oxlint.config.ts types (#18597) (camc314)
+- 19b4df7 oxlint: Introduce `defineConfig` helper (#18596) (camc314)
+- ea97231 linter: Implement `oxlint.config.ts` support (#17563) (camc314)
+- 88f30e0 linter/plugins: Move eslint compatible plugin conversion to `eslintCompatPlugin` function (#18791) (overlookmotel)
+- 2a72794 linter/plugins: `RuleTester` take `cwd` property (#18756) (overlookmotel)
+- 772ea70 linter: Introduce `load_js_configs` napi callback (#18767) (camc314)
+- e9690c1 linter: Introduce `DiscoveredConfig` in preparation for JS configs (#18674) (camc314)
+- 558b588 linter/prefer-namespace-keyword: Move to correctness (#18733) (camc314)
+- 7a5c268 oxlint/lsp: Support `jsPlugins` (#17840) (Sysix)
+
+### 🐛 Bug Fixes
+
+- a3417b1 linter/plugins: Clear state when reloading workspace (#18837) (overlookmotel)
+- c879992 linter: Error on arrays passed in as config (#18822) (camc314)
+- 5c80422 linter/tsdown: Ensure relative path for globals import starts with `./` (#18820) (camc314)
+- 7419dfb linter: Remove invalid debug assersion, add test (#18819) (camc314)
+- 0ca6269 ci: Fix the repo path normalization logic for tests on Windows. (#18815) (connorshea)
+- 41f92d1 linter: Error when given config options for a lint rule that has no config options defined. (#18809) (connorshea)
+- 1d34b42 linter: Fix 32 bit build (#18783) (camc314)
+- 95df577 linter/plugins: Handle error from `destroyWorkspace` (#18763) (overlookmotel)
+- d981978 linter/plugins: Use non-blocking mode when calling `destroyWorkspace` (#18762) (overlookmotel)
+- 3f43d4c linter: Accept bools as valid values for `fixable` (#18772) (camc314)
+- 005910a linter/plugins: Support plugins outside of workspace (#18755) (overlookmotel)
+- f82011b oxlint/lsp: Disable JS plugins support in LSP except in tests (#18727) (overlookmotel)
+- e440b78 linter/plugins: Pass all args to CFG event handlers when 2 rules use same handler (#18683) (overlookmotel)
+- 2e1fbc2 linter/plugins: Implement `context.parserPath` (#18644) (overlookmotel)
+- 34951ed linter/plugins: `filename` option takes precedence over `parserOptions.lang` in `RuleTester` (#18643) (overlookmotel)
+- 28df160 linter/plugins: Allow line number passed to `report` to be 0 (#18642) (overlookmotel)
+- 0ff4cea oxlint/cli: Report error when nested config could not be parsed (#18504) (Sysix)
+
+### ⚡ Performance
+
+- 9862224 linter/plugins: Reduce cost of workspaces (#18758) (overlookmotel)
+- 3a6b41e linter/plugins: Replace ESLint Traverser with lightweight traverseNode (#18529) (Rintaro Itokawa)
+
+### 📚 Documentation
+
+- ffe53a3 linter: Update lint function docs (#18766) (camc314)
+
 ## [1.42.0] - 2026-01-26
 
 ### 🚀 Features

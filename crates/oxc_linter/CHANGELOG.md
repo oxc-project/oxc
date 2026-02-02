@@ -4,6 +4,55 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.43.0] - 2026-02-02
+
+### 🚀 Features
+
+- 17ca42d linter: Implement `react/no-multi-comp` rule. (#18794) (connorshea)
+- 9f533db linter: Add `find_prev_token_within` method for token search (#18769) (camc314)
+- 558b588 linter/prefer-namespace-keyword: Move to correctness (#18733) (camc314)
+- 7a5c268 oxlint/lsp: Support `jsPlugins` (#17840) (Sysix)
+- c07497c linter/prefer-modern-dom-apis: Implement suggestion (#17965) (Mikhail Baev)
+- 8531bc9 linter: Implement `prefer-const` (#18687) (camchenry)
+- 8670b18 parser: Error on ambient class accessor implementations (#18592) (camc314)
+- 6b8a5ae linter: Add `eslint-plugin-import/no-nodejs-modules` rule (#18006) (Mikhail Baev)
+- 04f400d linter/no-duplicates: Add support for `considerQueryString` option (#18657) (camc314)
+- 3b7f260 linter/consistent-generic-constructor: Implement fixer (#18616) (camc314)
+- 794f9e4 linter/prefer-exponentation-operator: Implement suggestion (#18602) (camc314)
+- 773d916 linter: `eslint/sort_keys` ignore leading and trailing spreads in auto-fix (#18485) (Lonami)
+- 20d4ede linter: Implement `import/no-relative-parent-imports` rule (#18513) (Valentin Maerten)
+
+### 🐛 Bug Fixes
+
+- c7b0a65 linter: Fix config option docs for `react/jsx-boolean-value` rule. (#18811) (connorshea)
+- cce374e linter/prefer-const: Replace entire declaration over just the `let` kw (#18814) (camc314)
+- 41f92d1 linter: Error when given config options for a lint rule that has no config options defined. (#18809) (connorshea)
+- 0867a36 linter/consistent-index-object-style: False positive with mapped + generic types (#18801) (camc314)
+- 95df577 linter/plugins: Handle error from `destroyWorkspace` (#18763) (overlookmotel)
+- b3261dc linter: Fix the curly rule config to enforce the shape of the config and emit correct docs (#18743) (connorshea)
+- 005910a linter/plugins: Support plugins outside of workspace (#18755) (overlookmotel)
+- 358b2c1 linter/consistent-generic-constructors: Check bounds when searching for `:` token (#18745) (connorshea)
+- abd0c28 linter/capitalized-comments: Fix generated rule option docs (#18748) (connorshea)
+- d90a9f6 linter: Add more tests for `prefer-const`'s fixer and fix its invalid behavior. (#18747) (connorshea)
+- 94505c8 linter/jest: Change `prefer-spy-on` autofix to suggestion (#18152) (Ben Lowery)
+- 6ec1112 linter: Mark unused disable directive fix as suggestion (#18703) (ddmoney420)
+- 49609ec linter/no-useless-constructor: Consider argument transformation as used (#18706) (ddmoney420)
+- 40218de linter: Fix behavior of jsx-a11y/no-static-element-interactions rule. (#17817) (connorshea)
+- db9751d linter/no-html-link-for-pages: Handle `target=_blank` correctly (#18693) (camc314)
+- b393430 linter/curly: Fix multi-or-nest and consistent conflict (#18660) (camc314)
+
+### ⚡ Performance
+
+- 6bc0bde linter: Remove string allocation (#18725) (overlookmotel)
+
+### 📚 Documentation
+
+- dd1a653 linter: Fix doc comment for ignoreStateless config option. (#18808) (connorshea)
+- 5909085 linter/plugins: Add doc comments (#18753) (overlookmotel)
+- b82faec linter: Glob for any css module for no-unassigned-import (#18713) (Ben Stickley)
+- cd86347 linter: Mark some react rules as unsupported, misc docs improvements  (#18617) (connorshea)
+- 23401d8 linter: Update fixes and suggestions status for tsgolint rules (#18619) (camchenry)
+
 ## [1.42.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES
