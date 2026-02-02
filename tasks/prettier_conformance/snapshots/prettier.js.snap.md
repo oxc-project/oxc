@@ -1,4 +1,4 @@
-js compatibility: 743/753 (98.67%)
+js compatibility: 744/753 (98.80%)
 
 # Failed
 
@@ -13,4 +13,3 @@ js compatibility: 743/753 (98.67%)
 | js/last-argument-expansion/dangling-comment-in-arrow-function.js | 💥 | 22.22% |
 | js/quote-props/objects.js | 💥💥✨✨ | 48.04% |
 | js/quote-props/with_numbers.js | 💥💥✨✨ | 46.43% |
-| js/sequence-expression/ignored.js | 💥 | 66.67% |
