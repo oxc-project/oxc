@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.112.0] - 2026-02-02
+
+### 💥 BREAKING CHANGES
+
+- 445cb1a oxc_allocator: [**BREAKING**] Remove dangerous `Allocator` methods (#18715) (overlookmotel)
+
 ## [0.111.0] - 2026-01-26
 
 ### ⚡ Performance
