@@ -13,7 +13,7 @@ export const PACKAGE_ROOT_PATH = pathJoin(import.meta.dirname, ".."); // `/path/
 const FIXTURES_DIR_PATH = pathJoin(import.meta.dirname, "fixtures"); // `/path/to/oxc/apps/oxlint/test/fixtures`
 
 const REPO_ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, "../.."); // `/path/to/oxc`
-const FIXTURES_SUBPATH = normalizeSlashes(FIXTURES_DIR_PATH.slice(REPO_ROOT_PATH.length)); // `/apps/oxlint/test/fixtures`
+export const FIXTURES_SUBPATH = normalizeSlashes(FIXTURES_DIR_PATH.slice(REPO_ROOT_PATH.length)); // `/apps/oxlint/test/fixtures`
 
 const FIXTURES_URL = new URL("./fixtures/", import.meta.url).href; // `file:///path/to/oxc/apps/oxlint/test/fixtures/`
 
@@ -176,12 +176,13 @@ export async function testFixtureWithCommand(options: TestFixtureOptions): Promi
   await expect(snapshot).toMatchFileSnapshot(snapshotPath);
 }
 
+export const NORMALIZED_REPO_ROOT = normalizeSlashes(REPO_ROOT_PATH);
 // Regexp to match paths in output.
 // Matches `/path/to/oxc`, `/path/to/oxc/`, `/path/to/oxc/whatever`,
 // when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
-const PATH_REGEXP = new RegExp(
+export const PATH_REGEXP = new RegExp(
   // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
-  `(?<=^|[\\s\\('"\`])${RegExp.escape(REPO_ROOT_PATH)}(${RegExp.escape(pathSep)}[^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
+  `(?<=^|[\\s\\('"\`])${RegExp.escape(NORMALIZED_REPO_ROOT).replace(/\\\//g, "[\\\\/]")}([\\/][^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
   "g",
 );
 
@@ -205,7 +206,7 @@ const ESLINT_SPACES_MIN = 4;
  * @param isESLint - `true` if the output is from ESLint
  * @returns Normalized output
  */
-function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean): string {
+export function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean): string {
   // Normalize line breaks, and trim line breaks from start and end
   stdout = stdout.replace(/\r\n?/g, "\n").replace(/^\n+/, "").replace(/\n+$/, "");
   if (stdout === "") return "";
@@ -278,7 +279,7 @@ function normalizeStdout(stdout: string, fixtureName: string, isESLint: boolean)
  * - `/apps/oxlint/test/fixtures/foo` => `<fixtures>/foo`
  * - `/apps/oxlint/something/else` => `<root>/apps/oxlint/something/else`
  */
-function convertSubPath(subPath: string, fixtureName: string): string {
+export function convertSubPath(subPath: string, fixtureName: string): string {
   if (subPath.startsWith(FIXTURES_SUBPATH)) {
     const relPath = subPath.slice(FIXTURES_SUBPATH.length);
     if (relPath === "") return "<fixtures>";
@@ -299,7 +300,7 @@ function convertSubPath(subPath: string, fixtureName: string): string {
  * - `/foo/bar.js` => `<fixture>/bar.js`
  * - `/foo` => `<fixtures>/foo`
  */
-function convertFixturesSubPath(subPath: string, fixtureName: string): string {
+export function convertFixturesSubPath(subPath: string, fixtureName: string): string {
   subPath = subPath.slice(1);
   if (subPath.startsWith(fixtureName)) {
     const relPath = subPath.slice(fixtureName.length);
