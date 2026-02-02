@@ -303,7 +303,12 @@ impl ToolBuilder for ServerLinterBuilder {
         Box::new(self.build(root_uri, options))
     }
 
+    #[expect(unused)]
     fn shutdown(&self, root_uri: &Uri) {
+        // We don't currently destroy workspaces.
+        // See comment in `destroyWorkspace` in `src-js/workspace/index.ts` for explanation.
+        return;
+
         // Destroy JS workspace
         if let Some(external_linter) = &self.external_linter {
             let res = (external_linter.destroy_workspace)(root_uri.as_str().to_string());

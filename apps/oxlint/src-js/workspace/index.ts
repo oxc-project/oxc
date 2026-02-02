@@ -40,7 +40,9 @@ export let currentWorkspaceUri: string | null = null;
  * Create a new workspace.
  */
 export function createWorkspace(workspaceUri: string): undefined {
-  debugAssert(!workspaces.has(workspaceUri), `Workspace "${workspaceUri}" already exists`);
+  // This assertion is commented out because we currently don't destroy workspaces.
+  // See comment in `destroyWorkspace` below.
+  // debugAssert(!workspaces.has(workspaceUri), `Workspace "${workspaceUri}" already exists`);
 
   workspaces.set(workspaceUri, {
     cwd: "",
@@ -62,6 +64,21 @@ export function createWorkspace(workspaceUri: string): undefined {
  * Unloads all plugin data associated with this workspace.
  */
 export function destroyWorkspace(workspaceUri: string): undefined {
+  // We currently don't destroy workspaces.
+  //
+  // There is a race condition where sometimes LSP receives the signal to destroy a workspace *after* the signal
+  // to create the new one when reloading a workspace.
+  // Because both the old and the new workspaces have the same URI, the 2nd incarnation of the workspace would
+  // be added to `workspaces`, but then it'd be removed again straight away when `destroyWorkspace` is called.
+  //
+  // It'd be ideal if we did remove `Workspace` objects to free up memory, but it's not *so* important for 2 reasons:
+  //
+  // 1. Usually workspace destruction only happens when you reload workspace, so it'll get discarded within seconds
+  //    when `createWorkspace` over-writes it anyway.
+  // 2. Most of the data in the workspace is persisted anyway in NodeJS module cache, so destroying workspace
+  //    doesn't free that much memory.
+  return;
+
   debugAssert(workspaces.has(workspaceUri), `Workspace "${workspaceUri}" does not exist`);
 
   workspaces.delete(workspaceUri);
