@@ -765,20 +765,30 @@ fn write_grouped_arguments<'a>(
                 );
             };
 
+            // For decorated function patterns like `decorator("name")((props: {...}) => {...})`,
+            // the arrow function should be kept hugged even if its signature breaks.
+            // <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L241-L292>
+            let is_decorated = is_decorated_function(argument);
+
             // Remove soft lines from the cached parameters and check if they would break.
             // If they break even without soft lines, we need to use the expanded layout.
+            // However, decorated functions are allowed to break while staying hugged.
             let interned = f.intern(&format_once(|f| {
                 RemoveSoftLinesBuffer::new(f).write_element(cached_element);
             }));
 
             if let Some(interned) = interned {
-                if interned.will_break() {
+                if interned.will_break() && !is_decorated {
                     return format_all_elements_broken_out(node, grouped.into_iter(), true, f);
                 }
 
                 // No break; it should print the element without soft lines.
                 // It would be used in the `FormatFunction` or `FormatJsArrowFunctionExpression`.
-                f.context_mut().cache_element(params.as_ref(), interned);
+                // For decorated functions, we keep the original cached element (with soft lines)
+                // so the parameters can break while staying hugged.
+                if !is_decorated {
+                    f.context_mut().cache_element(params.as_ref(), interned);
+                }
             }
         }
 
@@ -1124,6 +1134,78 @@ fn is_react_hook_with_deps_array(
                 !callback.span.contains_inclusive(comment.span)
                     && !deps.span.contains_inclusive(comment.span)
             })
+        }
+        _ => false,
+    }
+}
+
+/// The "decorated function" pattern.
+/// The arrow function should be kept hugged even if its signature breaks.
+///
+/// ```js
+/// const decoratedFn = decorator(param1, param2)((
+///   ...
+/// ) => {
+///   ...
+/// });
+/// ```
+///
+/// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L240-L291>
+fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
+    // Check if the argument is an arrow function with a block body
+    let AstNodes::ArrowFunctionExpression(arrow) = argument.as_ast_nodes() else {
+        return false;
+    };
+
+    if arrow.expression {
+        return false;
+    }
+
+    // Check if the parent is a call expression where:
+    // - The arrow is the only argument
+    // - The callee is also a CallExpression
+    let AstNodes::CallExpression(parent_call) = argument.parent() else {
+        return false;
+    };
+
+    if parent_call.arguments.len() != 1 {
+        return false;
+    }
+
+    let Expression::CallExpression(callee_call) = &parent_call.callee else {
+        return false;
+    };
+
+    // Check if the decorator (callee.callee) is a simple identifier or member expression
+    let decorator = &callee_call.callee;
+    let is_valid_decorator = matches!(decorator, Expression::Identifier(_))
+        || matches!(
+            decorator,
+            Expression::StaticMemberExpression(member)
+            if matches!(&member.object, Expression::Identifier(_))
+        );
+
+    if !is_valid_decorator {
+        return false;
+    }
+
+    // Check grandparent context
+    let grandparent = argument.grand_parent();
+    match grandparent {
+        AstNodes::VariableDeclarator(_) => {
+            // Check if the great-grandparent is a const declaration with only one declarator
+            let great_grandparent = grandparent.parent();
+            !matches!(great_grandparent, AstNodes::VariableDeclaration(decl) if decl.kind != VariableDeclarationKind::Const || decl.declarations.len() != 1)
+        }
+        AstNodes::ExportDefaultDeclaration(_) | AstNodes::TSExportAssignment(_) => true,
+        AstNodes::AssignmentExpression(assign) => {
+            // Check if it's `module.exports = ...`
+            matches!(
+                &assign.left,
+                AssignmentTarget::StaticMemberExpression(member)
+                if matches!(&member.object, Expression::Identifier(ident) if ident.name == "module")
+                    && member.property.name == "exports"
+            )
         }
         _ => false,
     }

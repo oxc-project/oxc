@@ -1,4 +1,4 @@
-ts compatibility: 589/601 (98.00%)
+ts compatibility: 590/601 (98.17%)
 
 # Failed
 
@@ -10,7 +10,6 @@ ts compatibility: 589/601 (98.00%)
 | typescript/class/empty-method-body.ts | 💥 | 80.00% |
 | typescript/comments/mapped_types.ts | 💥 | 96.77% |
 | typescript/comments/method_types.ts | 💥 | 82.05% |
-| typescript/last-argument-expansion/decorated-function.tsx | 💥 | 29.06% |
 | typescript/mapped-type/issue-11098.ts | 💥 | 97.03% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |
 | typescript/union/comments/18106.ts | 💥 | 92.68% |
