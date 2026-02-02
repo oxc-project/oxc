@@ -299,7 +299,7 @@ pub fn extract_regex_flags<'a>(
     args: &'a oxc_allocator::Vec<'a, Argument<'a>>,
 ) -> Option<RegExpFlags> {
     if args.len() <= 1 {
-        return None;
+        return Some(RegExpFlags::empty());
     }
     let flag_arg = match &args[1] {
         Argument::StringLiteral(flag_arg) => flag_arg.value,
