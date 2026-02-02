@@ -31,7 +31,7 @@ export function runExecutable(
 
   return isNode
     ? {
-        command: "node",
+        command: process.execPath,
         args: [binaryPath, "--lsp"],
         options: {
           env: serverEnv,

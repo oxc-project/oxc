@@ -14,7 +14,7 @@ suite("runExecutable", () => {
   test("should create Node.js executable for .js files", () => {
     const result = runExecutable("/path/to/server.js", tool);
 
-    strictEqual(result.command, "node");
+    strictEqual(result.command.includes(".vscode-test"), true);
     strictEqual(result.args?.[0], "/path/to/server.js");
     strictEqual(result.args?.[1], "--lsp");
   });
@@ -22,7 +22,7 @@ suite("runExecutable", () => {
   test("should create Node.js executable for .cjs files", () => {
     const result = runExecutable("/path/to/server.cjs", tool);
 
-    strictEqual(result.command, "node");
+    strictEqual(result.command.includes(".vscode-test"), true);
     strictEqual(result.args?.[0], "/path/to/server.cjs");
     strictEqual(result.args?.[1], "--lsp");
   });
@@ -30,7 +30,7 @@ suite("runExecutable", () => {
   test("should create Node.js executable for .mjs files", () => {
     const result = runExecutable("/path/to/server.mjs", tool);
 
-    strictEqual(result.command, "node");
+    strictEqual(result.command.includes(".vscode-test"), true);
     strictEqual(result.args?.[0], "/path/to/server.mjs");
     strictEqual(result.args?.[1], "--lsp");
   });
