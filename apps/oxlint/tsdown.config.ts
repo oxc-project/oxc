@@ -330,7 +330,9 @@ function createReplaceGlobalsPlugin(): Plugin {
         if (varNames.size === 0) return;
 
         // Some globals were found. Import them from `utils/globals.ts`.
-        const relativePath = pathRelative(dirname(path), GLOBALS_PATH);
+        let relativePath = pathRelative(dirname(path), GLOBALS_PATH);
+        relativePath = relativePath.replace(/\\/g, "/");
+        relativePath = relativePath.startsWith(".") ? relativePath : `./${relativePath}`;
         const importStmt = `import { ${[...varNames].join(", ")} } from ${JSON.stringify(relativePath)};\n`;
 
         magicString.prepend(importStmt);
