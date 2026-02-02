@@ -171,28 +171,9 @@ impl Oxlintrc {
         config.path = path.to_path_buf();
 
         #[expect(clippy::missing_panics_doc)]
-        let config_dir = config.path.parent().unwrap();
-        if let Some(external_plugins) = &mut config.external_plugins {
-            *external_plugins = std::mem::take(external_plugins)
-                .into_iter()
-                .map(|mut entry| {
-                    entry.config_dir = config_dir.to_path_buf();
-                    entry
-                })
-                .collect();
-        }
-
-        for override_config in config.overrides.iter_mut() {
-            if let Some(external_plugins) = &mut override_config.external_plugins {
-                *external_plugins = std::mem::take(external_plugins)
-                    .into_iter()
-                    .map(|mut entry| {
-                        entry.config_dir = config_dir.to_path_buf();
-                        entry
-                    })
-                    .collect();
-            }
-        }
+        let config_dir =
+            config.path.parent().expect("config path should have a parent directory").to_path_buf();
+        config.set_config_dir(&config_dir);
 
         Ok(config)
     }
@@ -276,6 +257,34 @@ impl Oxlintrc {
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
+        }
+    }
+
+    /// Update the configuration directory for all external plugin entries in this config
+    /// and in its overrides. The underlying `HashSet` is rebuilt because `config_dir`
+    /// participates in the `Hash`/`Eq` implementation of each entry, so changing it
+    /// requires rehashing the set.
+    pub fn set_config_dir(&mut self, config_dir: &Path) {
+        if let Some(external_plugins) = &mut self.external_plugins {
+            *external_plugins = std::mem::take(external_plugins)
+                .into_iter()
+                .map(|mut entry| {
+                    entry.config_dir = config_dir.to_path_buf();
+                    entry
+                })
+                .collect();
+        }
+
+        for override_config in self.overrides.iter_mut() {
+            if let Some(external_plugins) = &mut override_config.external_plugins {
+                *external_plugins = std::mem::take(external_plugins)
+                    .into_iter()
+                    .map(|mut entry| {
+                        entry.config_dir = config_dir.to_path_buf();
+                        entry
+                    })
+                    .collect();
+            }
         }
     }
 }
@@ -455,5 +464,49 @@ mod test {
         let config2: Oxlintrc = serde_json::from_str(r#"{"$schema": "schema2.json"}"#).unwrap();
         let merged = config1.merge(config2);
         assert_eq!(merged.schema, Some("schema2.json".to_string()));
+    }
+
+    #[test]
+    fn test_set_config_dir() {
+        let mut config: Oxlintrc = serde_json::from_str(
+            r#"{
+                "jsPlugins": ["./plugin1.ts", { "name": "custom", "specifier": "./plugin2.ts" }],
+                "overrides": [{ "files": ["*.test.ts"], "jsPlugins": ["./override-plugin.ts"] }]
+            }"#,
+        )
+        .unwrap();
+
+        // Verify initial state - config_dir should be empty PathBuf
+        let top_level_plugins = config.external_plugins.as_ref().unwrap();
+        assert_eq!(top_level_plugins.len(), 2);
+        for entry in top_level_plugins {
+            assert_eq!(entry.config_dir, PathBuf::new());
+        }
+
+        let override_plugins =
+            config.overrides.iter().next().unwrap().external_plugins.as_ref().unwrap();
+        assert_eq!(override_plugins.len(), 1);
+        for entry in override_plugins {
+            assert_eq!(entry.config_dir, PathBuf::new());
+        }
+
+        // Call set_config_dir
+        let new_config_dir = PathBuf::from("/project/config");
+        config.set_config_dir(&new_config_dir);
+
+        // Assert that all top-level plugins have the new config_dir
+        let top_level_plugins = config.external_plugins.as_ref().unwrap();
+        assert_eq!(top_level_plugins.len(), 2);
+        for entry in top_level_plugins {
+            assert_eq!(entry.config_dir, new_config_dir);
+        }
+
+        // Assert that all override plugins have the new config_dir
+        let override_plugins =
+            config.overrides.iter().next().unwrap().external_plugins.as_ref().unwrap();
+        assert_eq!(override_plugins.len(), 1);
+        for entry in override_plugins {
+            assert_eq!(entry.config_dir, new_config_dir);
+        }
     }
 }
