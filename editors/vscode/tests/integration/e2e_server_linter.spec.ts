@@ -236,6 +236,60 @@ suite("E2E Server Linter", () => {
     strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
   });
 
+  test("oxlint.config.ts TypeScript configuration", async () => {
+    await loadFixture("ts_config");
+    await sleep(500);
+    const diagnostics = await getDiagnostics("debugger.js", undefined, 500);
+
+    strictEqual(diagnostics.length, 1);
+    assert(typeof diagnostics[0].code == "object");
+    strictEqual(diagnostics[0].code.target.authority, "oxc.rs");
+    strictEqual(
+      diagnostics[0].message,
+      "`debugger` statement is not allowed\nhelp: Remove the debugger statement",
+    );
+    strictEqual(diagnostics[0].severity, DiagnosticSeverity.Error);
+    strictEqual(diagnostics[0].range.start.line, 0);
+    strictEqual(diagnostics[0].range.start.character, 8);
+    strictEqual(diagnostics[0].range.end.line, 0);
+    strictEqual(diagnostics[0].range.end.character, 17);
+  });
+
+  test("nested oxlint.config.ts configs severity", async () => {
+    await loadFixture("nested_ts_config");
+    await sleep(500);
+    const rootDiagnostics = await getDiagnostics("index.ts", undefined, 500);
+    const nestedDiagnostics = await getDiagnostics("folder/index.ts", undefined, 500);
+
+    strictEqual(rootDiagnostics.length, 1);
+    assert(typeof rootDiagnostics[0].code == "object");
+    strictEqual(rootDiagnostics[0].code.target.authority, "oxc.rs");
+    strictEqual(rootDiagnostics[0].severity, DiagnosticSeverity.Warning);
+
+    strictEqual(nestedDiagnostics.length, 1);
+    assert(typeof nestedDiagnostics[0].code == "object");
+    strictEqual(nestedDiagnostics[0].code.target.authority, "oxc.rs");
+    strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
+
+  test("nested mixed JSON and TypeScript configs severity", async () => {
+    await loadFixture("nested_mixed_config");
+    const rootDiagnostics = await getDiagnostics("index.ts", undefined, 500);
+    const nestedDiagnostics = await getDiagnostics("folder/index.ts", undefined, 500);
+
+    // Root uses .oxlintrc.json with warn
+    strictEqual(rootDiagnostics.length, 1);
+    assert(typeof rootDiagnostics[0].code == "object");
+    strictEqual(rootDiagnostics[0].code.target.authority, "oxc.rs");
+    strictEqual(rootDiagnostics[0].severity, DiagnosticSeverity.Warning);
+
+    // Nested folder uses oxlint.config.ts with error
+    strictEqual(nestedDiagnostics.length, 1);
+    assert(typeof nestedDiagnostics[0].code == "object");
+    strictEqual(nestedDiagnostics[0].code.target.authority, "oxc.rs");
+    strictEqual(nestedDiagnostics[0].severity, DiagnosticSeverity.Error);
+  });
+
   testMultiFolderMode("different diagnostic severity", async () => {
     await loadFixture("debugger", WORKSPACE_DIR);
     await loadFixture("debugger_error", WORKSPACE_SECOND_DIR);
