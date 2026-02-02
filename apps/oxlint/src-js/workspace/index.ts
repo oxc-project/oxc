@@ -42,15 +42,19 @@ export let currentWorkspaceUri: string | null = null;
 export function createWorkspace(workspaceUri: string): undefined {
   debugAssert(!workspaces.has(workspaceUri), `Workspace "${workspaceUri}" already exists`);
 
-  const workspace = {
+  workspaces.set(workspaceUri, {
     cwd: "",
     allOptions: [],
     rules: [],
-  };
+  });
 
-  workspaces.set(workspaceUri, workspace);
-  currentWorkspace = workspace;
-  currentWorkspaceUri = workspaceUri;
+  // Set current workspace to `null` to force switching workspace in the next call to `loadPlugin`.
+  // Otherwise, if the new workspace has same URI as a previous workspace (which it does when reloading a workspace),
+  // `cwd`, `registeredRules` and `allOptions` will still contain the state from the old version of the workspace.
+  // This means `registeredRules` does not get replaced with an empty array before loading plugins again.
+  // Forcing a switch to the new workspace overwrites the stale state.
+  currentWorkspace = null;
+  currentWorkspaceUri = null;
 }
 
 /**
