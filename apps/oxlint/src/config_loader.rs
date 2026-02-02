@@ -398,7 +398,7 @@ impl<'a> ConfigLoader<'a> {
         self.load_many(configs)
     }
 
-    fn load_root_config(
+    pub(crate) fn load_root_config(
         &self,
         cwd: &Path,
         config_path: Option<&PathBuf>,
