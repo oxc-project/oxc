@@ -28,9 +28,9 @@ fn always_diagnostic(span: Span) -> OxcDiagnostic {
 #[serde(rename_all = "kebab-case")]
 pub enum RelativeUrlStyleConfig {
     #[default]
-    /// Never use a ./ prefix.
+    /// Never use a `./` prefix.
     Never,
-    /// Always add a ./ prefix to the relative URL when possible.
+    /// Always add a `./` prefix to the relative URL when possible.
     Always,
 }
 
@@ -44,7 +44,7 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// When using a relative URL in `new URL()`, the URL should either never or always use the ./ prefix consistently.
+    /// When using a relative URL in `new URL()`, the URL should either never or always use the `./` prefix consistently.
     ///
     /// ### Examples
     ///
@@ -69,7 +69,7 @@ declare_oxc_lint!(
     /// ```
     RelativeUrlStyle,
     unicorn,
-    correctness,
+    style,
     pending,
     config = RelativeUrlStyleConfig,
 );
@@ -141,7 +141,7 @@ impl Rule for RelativeUrlStyle {
 }
 
 fn can_add_dot_slash(url: &str, new_expr: &NewExpression) -> bool {
-    // dont add if already starts with ./ or . or /
+    // don't add if already starts with ./ or . or /
     if url.starts_with(DOT_SLASH) || url.starts_with('.') || url.starts_with('/') {
         return false;
     }
