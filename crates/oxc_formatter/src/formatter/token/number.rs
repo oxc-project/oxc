@@ -41,6 +41,58 @@ impl<'a> Format<'a> for CleanedNumberLiteralText<'a> {
     }
 }
 
+/// Checks if a number string is "simple" - only digits, or digits.digits.
+/// Matches Prettier's `isSimpleNumber`: `/^(?:\d+|\d+\.\d+)$/u`
+///
+/// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/property.js#L11-L14>
+///
+/// Examples of simple numbers: "1", "123", "1.5", "0.1"
+/// Examples of non-simple numbers: "1e10", "0x10", "1_000", ".1", "1."
+pub fn is_simple_number(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+
+    let bytes = s.as_bytes();
+    let mut i = 0;
+
+    // Must start with a digit
+    if !bytes[i].is_ascii_digit() {
+        return false;
+    }
+
+    // Consume integer part (at least one digit required)
+    while i < bytes.len() && bytes[i].is_ascii_digit() {
+        i += 1;
+    }
+
+    // If we've consumed everything, it's a simple integer
+    if i == bytes.len() {
+        return true;
+    }
+
+    // If there's more, it must be a dot followed by at least one digit
+    if bytes[i] != b'.' {
+        return false;
+    }
+    i += 1;
+
+    // Must have at least one digit after the dot
+    if i >= bytes.len() || !bytes[i].is_ascii_digit() {
+        return false;
+    }
+
+    // Consume the rest - must all be digits
+    while i < bytes.len() {
+        if !bytes[i].is_ascii_digit() {
+            return false;
+        }
+        i += 1;
+    }
+
+    true
+}
+
 enum FormatNumberLiteralState {
     IntegerPart,
     DecimalPart(FormatNumberLiteralDecimalPart),
@@ -61,7 +113,7 @@ struct FormatNumberLiteralExponent {
 
 // Regex-free version of https://github.com/prettier/prettier/blob/ca246afacee8e6d5db508dae01730c9523bbff1d/src/common/util.js#L341-L356
 // TODO: Use arena String to construct the cleaned text.
-fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, str> {
+pub fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, str> {
     use FormatNumberLiteralState::{DecimalPart, Exponent, IntegerPart};
 
     let text = text.cow_to_ascii_lowercase();
