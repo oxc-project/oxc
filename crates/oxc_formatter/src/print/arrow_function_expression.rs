@@ -150,8 +150,9 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                                 formatted_signature,
                                 group(&format_args!(indent(&format_args!(
                                     hard_line_break(),
+                                    format_leading_comments(sequence.span()),
                                     token("("),
-                                    soft_block_indent(&format_body),
+                                    format_body,
                                     token(")")
                                 ))))
                             ))]
@@ -568,8 +569,9 @@ impl<'a> Format<'a> for ArrowChain<'a, '_> {
                         f,
                         [group(&format_args!(indent(&format_args!(
                             hard_line_break(),
+                            format_leading_comments(sequence.span()),
                             token("("),
-                            soft_block_indent(&format_tail_body),
+                            format_tail_body,
                             token(")")
                         ))))]
                     );
