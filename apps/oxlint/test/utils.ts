@@ -1,19 +1,18 @@
 import fs from "node:fs/promises";
 import { readdirSync, readFileSync } from "node:fs";
-import { join as pathJoin, sep as pathSep } from "node:path";
+import { join as pathJoin, relative as pathRelative, sep as pathSep } from "node:path";
 
 import { execa } from "execa";
 import { expect as defaultExpect, type ExpectStatic } from "vitest";
 
-// Replace backslashes with forward slashes on Windows. Do nothing on Mac/Linux.
-const normalizeSlashes =
-  pathSep === "\\" ? (path: string) => path.replaceAll("\\", "/") : (path: string) => path;
+const isWindows = pathSep === "\\";
+const normalizeSlashes = (path: string) => path.replaceAll("\\", "/");
 
 export const PACKAGE_ROOT_PATH = pathJoin(import.meta.dirname, ".."); // `/path/to/oxc/apps/oxlint`
 const FIXTURES_DIR_PATH = pathJoin(import.meta.dirname, "fixtures"); // `/path/to/oxc/apps/oxlint/test/fixtures`
 
 const REPO_ROOT_PATH = pathJoin(PACKAGE_ROOT_PATH, "../.."); // `/path/to/oxc`
-export const FIXTURES_SUBPATH = normalizeSlashes(FIXTURES_DIR_PATH.slice(REPO_ROOT_PATH.length)); // `/apps/oxlint/test/fixtures`
+export const FIXTURES_SUBPATH = `/${normalizeSlashes(pathRelative(REPO_ROOT_PATH, FIXTURES_DIR_PATH))}`; // `/apps/oxlint/test/fixtures`
 
 const FIXTURES_URL = new URL("./fixtures/", import.meta.url).href; // `file:///path/to/oxc/apps/oxlint/test/fixtures/`
 
@@ -182,8 +181,8 @@ export const NORMALIZED_REPO_ROOT = normalizeSlashes(REPO_ROOT_PATH);
 // when preceded by whitespace, `(`, or a quote, and followed by whitespace, `)`, or a quote.
 export const PATH_REGEXP = new RegExp(
   // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
-  `(?<=^|[\\s\\('"\`])${RegExp.escape(NORMALIZED_REPO_ROOT).replace(/\\\//g, "[\\\\/]")}([\\/][^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
-  "g",
+  `(?<=^|[\\s\\('"\`])${RegExp.escape(NORMALIZED_REPO_ROOT).replace(/\\\//g, "[\\\\/]")}([\\\\\\\\/][^\\s\\)'"\`]*)?(?=$|[\\s\\)'"\`])`,
+  isWindows ? "gi" : "g",
 );
 
 // Regexp to match lines of form `whatever      plugin/rule` in ESLint output.
@@ -228,6 +227,12 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
   // Remove lines from stack traces which are outside `fixtures` directory.
   // Shorten paths in output with `<root>`, `<fixtures>`, or `<fixture>`.
   lines = lines.flatMap((line) => {
+    // Normalize Windows backslashes in codeframe headers.
+    // e.g. `,-[files\\foo\\bar.js:1:1]` -> `,-[files/foo/bar.js:1:1]`
+    line = line.replace(/(,-\[)([^\]]+)(\])/g, (_match, prefix, content, suffix) => {
+      return `${prefix}${content.replaceAll("\\", "/")}${suffix}`;
+    });
+
     // Handle stack trace lines.
     // e.g. ` at file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1`
     // e.g. ` at whatever (file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1)`
@@ -236,12 +241,40 @@ export function normalizeStdout(stdout: string, fixtureName: string, isESLint: b
     const match = line.match(/^(\s*\|?\s+at (?:.+?\()?)(.+)$/);
     if (match) {
       let [, preamble, at] = match;
-      if (!at.startsWith(FIXTURES_URL)) return [];
-      at = convertFixturesSubPath(at.slice(FIXTURES_URL.length - 1), fixtureName);
-      return [`${preamble}${at}`];
+
+      const fixturesUrl = isWindows ? FIXTURES_URL.toLowerCase() : FIXTURES_URL;
+      const atCmp = isWindows ? at.toLowerCase() : at;
+      if (atCmp.startsWith(fixturesUrl)) {
+        at = convertFixturesSubPath(at.slice(FIXTURES_URL.length - 1), fixtureName);
+        return [`${preamble}${at}`];
+      }
+
+      // Some stack traces can use file paths instead of file URLs on Windows.
+      // Keep frames in fixtures, drop everything else.
+      // oxlint-disable-next-line oxc/bad-replace-all-arg
+      const normalizedAt = at.replaceAll(PATH_REGEXP, (_, subPath) => {
+        if (subPath === undefined) return "<root>";
+        return convertSubPath(normalizeSlashes(subPath), fixtureName);
+      });
+
+      if (normalizedAt.includes("<fixture>") || normalizedAt.includes("<fixtures>")) {
+        return [`${preamble}${normalizedAt}`];
+      }
+
+      return [];
     }
 
+    // Handle fixture file URLs anywhere else in the line.
+    // e.g. `... file:///path/to/oxc/apps/oxlint/test/fixtures/foo/bar.js:1:1 ...`
+    // oxlint-disable-next-line oxc/bad-replace-all-arg
+    line = line.replaceAll(
+      // @ts-expect-error - `RegExp.escape` is new in NodeJS v24
+      new RegExp(`${RegExp.escape(FIXTURES_URL)}([^\\s\\)'"\`]+)`, isWindows ? "gi" : "g"),
+      (_match, subPath) => convertFixturesSubPath(`/${subPath}`, fixtureName),
+    );
+
     // Handle paths anywhere else in the line
+    // oxlint-disable-next-line oxc/bad-replace-all-arg
     line = line.replaceAll(PATH_REGEXP, (_, subPath) => {
       if (subPath === undefined) return "<root>";
       return convertSubPath(normalizeSlashes(subPath), fixtureName);
