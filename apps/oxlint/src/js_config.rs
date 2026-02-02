@@ -105,6 +105,30 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                     }
 
                     oxlintrc.path.clone_from(&path);
+
+                    if let Some(config_dir) = oxlintrc.path.parent() {
+                        if let Some(external_plugins) = &mut oxlintrc.external_plugins {
+                            *external_plugins = std::mem::take(external_plugins)
+                                .into_iter()
+                                .map(|mut entry| {
+                                    entry.config_dir = config_dir.to_path_buf();
+                                    entry
+                                })
+                                .collect();
+                        }
+
+                        for override_config in oxlintrc.overrides.iter_mut() {
+                            if let Some(external_plugins) = &mut override_config.external_plugins {
+                                *external_plugins = std::mem::take(external_plugins)
+                                    .into_iter()
+                                    .map(|mut entry| {
+                                        entry.config_dir = config_dir.to_path_buf();
+                                        entry
+                                    })
+                                    .collect();
+                            }
+                        }
+                    }
                     configs.push(JsConfigResult { path, config: oxlintrc });
 
                     (configs, errors)
