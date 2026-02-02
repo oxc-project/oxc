@@ -76,7 +76,8 @@ export default class LinterTool implements ToolInterface {
     }
 
     this.allowedToStartServer = configService.vsCodeConfig.requireConfig
-      ? (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0
+      ? (await workspace.findFiles(`**/{.oxlintrc.json,oxlint.config.ts}`, "**/node_modules/**", 1))
+          .length > 0
       : true;
 
     const restartCommand = commands.registerCommand(OxcCommands.RestartServerLint, async () => {
@@ -307,7 +308,7 @@ export default class LinterTool implements ToolInterface {
     if (!this.allowedToStartServer) {
       return {
         isEnabled: false,
-        tooltipText: "no .oxlintrc.json found",
+        tooltipText: "no oxlint config found",
       };
     } else if (!enable) {
       return {
@@ -352,7 +353,7 @@ export default class LinterTool implements ToolInterface {
     statusBarItemHandler: StatusBarItemHandler,
   ): void {
     const watcher = workspace.createFileSystemWatcher(
-      "**/.oxlintrc.json",
+      "**/{.oxlintrc.json,oxlint.config.ts}",
       false,
       true,
       !config.requireConfig,
@@ -368,7 +369,8 @@ export default class LinterTool implements ToolInterface {
     watcher.onDidDelete(async () => {
       // only can be called when config.requireConfig
       this.allowedToStartServer =
-        (await workspace.findFiles(`**/.oxlintrc.json`, "**/node_modules/**", 1)).length > 0;
+        (await workspace.findFiles(`**/{.oxlintrc.json,oxlint.config.ts}`, "**/node_modules/**", 1))
+          .length > 0;
       if (!this.allowedToStartServer) {
         this.updateStatusBar(statusBarItemHandler, false);
         if (this.client && this.client.isRunning()) {
