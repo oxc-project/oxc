@@ -213,4 +213,53 @@ node_modules
       await fs.rm(tempDir, { recursive: true, force: true });
     }
   });
+
+  it("should disable experimentalSortPackageJson by default", async () => {
+    const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
+
+    try {
+      // Create prettier config without package.json sorting plugin
+      await fs.writeFile(
+        join(tempDir, ".prettierrc"),
+        JSON.stringify({
+          semi: false,
+        }),
+      );
+
+      const result = await runCli(tempDir, ["--migrate", "prettier"]);
+      expect(result.exitCode).toBe(0);
+
+      const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
+      const oxfmtrc = JSON.parse(content);
+
+      // Prettier does not have package.json sorting by default
+      expect(oxfmtrc.experimentalSortPackageJson).toBe(false);
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("should enable experimentalSortPackageJson when prettier-plugin-packagejson is used", async () => {
+    const tempDir = await fs.mkdtemp(join(tmpdir(), "oxfmt-migrate-test"));
+
+    try {
+      // Create prettier config with package.json sorting plugin
+      await fs.writeFile(
+        join(tempDir, ".prettierrc"),
+        JSON.stringify({
+          plugins: ["prettier-plugin-packagejson"],
+        }),
+      );
+
+      const result = await runCli(tempDir, ["--migrate", "prettier"]);
+      expect(result.exitCode).toBe(0);
+
+      const content = await fs.readFile(join(tempDir, ".oxfmtrc.json"), "utf8");
+      const oxfmtrc = JSON.parse(content);
+
+      expect(oxfmtrc.experimentalSortPackageJson).toBeTruthy();
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+  });
 });
