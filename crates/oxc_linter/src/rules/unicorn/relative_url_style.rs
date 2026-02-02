@@ -69,7 +69,7 @@ declare_oxc_lint!(
     /// ```
     RelativeUrlStyle,
     unicorn,
-    style,
+    correctness,
     pending,
     config = RelativeUrlStyleConfig,
 );
