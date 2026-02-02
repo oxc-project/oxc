@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.112.0] - 2026-02-02
+
+### 🚀 Features
+
+- 8670b18 parser: Error on ambient class accessor implementations (#18592) (camc314)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES

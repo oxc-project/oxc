@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.112.0] - 2026-02-02
+
+### 🐛 Bug Fixes
+
+- 2e34461 minifier: Prevent expression inlining into block-scoped for-in declarations (#18651) (copilot-swe-agent)
+
 ## [0.111.0] - 2026-01-26
 
 ### 💥 BREAKING CHANGES
