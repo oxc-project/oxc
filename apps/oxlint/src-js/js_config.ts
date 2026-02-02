@@ -1,4 +1,5 @@
 import { getErrorMessage } from "./utils/utils.ts";
+import { isDefineConfig } from "./package/config.ts";
 import { JSONStringify } from "./utils/globals.ts";
 
 interface JsConfigResult {
@@ -34,6 +35,12 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
 
         if (typeof config !== "object" || config === null || Array.isArray(config)) {
           throw new Error(`Configuration file must have a default export that is an object.`);
+        }
+
+        if (!isDefineConfig(config)) {
+          throw new Error(
+            `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
+          );
         }
 
         return { path, config };

@@ -1,1 +1,3 @@
-export default { rules: {} };
+import { defineConfig } from "#oxlint";
+
+export default defineConfig({ rules: {} });

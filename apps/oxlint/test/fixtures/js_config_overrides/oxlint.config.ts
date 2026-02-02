@@ -1,5 +1,7 @@
 // Test that overrides work in oxlint.config.ts
-export default {
+import { defineConfig } from "#oxlint";
+
+export default defineConfig({
   rules: {
     "no-debugger": "off",
   },
@@ -11,4 +13,4 @@ export default {
       },
     },
   ],
-};
+});
