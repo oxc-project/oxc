@@ -32,7 +32,7 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
           throw new Error(`Configuration file has no default export.`);
         }
 
-        if (typeof config !== "object") {
+        if (typeof config !== "object" || config === null || Array.isArray(config)) {
           throw new Error(`Configuration file must have a default export that is an object.`);
         }
 
