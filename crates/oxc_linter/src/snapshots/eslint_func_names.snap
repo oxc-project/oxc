@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(func-names): Unexpected unnamed function.
    ╭─[func_names.tsx:1:21]
  1 │ Foo.prototype.bar = function() {};

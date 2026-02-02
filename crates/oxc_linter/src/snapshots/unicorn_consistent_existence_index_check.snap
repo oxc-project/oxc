@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(consistent-existence-index-check): Prefer `=== -1` over `< 0` to check non-existence.
    ╭─[consistent_existence_index_check.tsx:1:39]
  1 │ const index = foo.indexOf('bar'); if (index < 0) {}

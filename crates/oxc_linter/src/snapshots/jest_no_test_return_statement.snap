@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value
    ╭─[no_test_return_statement.tsx:3:20]
  2 │                 test('one', () => {

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-pascal-case): JSX component Test_component must be in PascalCase
    ╭─[jsx_pascal_case.tsx:1:1]
  1 │ <Test_component />

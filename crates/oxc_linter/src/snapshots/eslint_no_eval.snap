@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-eval): eval can be harmful.
    ╭─[no_eval.tsx:1:1]
  1 │ eval(foo)

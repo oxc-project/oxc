@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-empty-function): Unexpected empty function `foo`
    ╭─[no_empty_function.tsx:1:16]
  1 │ function foo() {}

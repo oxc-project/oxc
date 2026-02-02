@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-global-this): Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.
    ╭─[prefer_global_this.tsx:1:1]
  1 │ global

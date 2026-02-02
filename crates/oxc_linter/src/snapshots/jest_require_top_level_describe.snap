@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
    ╭─[require_top_level_describe.tsx:1:1]
  1 │ beforeEach("my test", () => {})

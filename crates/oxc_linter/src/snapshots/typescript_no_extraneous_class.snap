@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
    ╭─[no_extraneous_class.tsx:1:1]
  1 │ class Foo {}

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]
  1 │ class A { } A = 0;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(operator-assignment): Assignment (=) can be replaced with operator assignment (+=).
    ╭─[operator_assignment.tsx:1:1]
  1 │ x = x + y

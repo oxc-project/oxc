@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(exports-last): Export statements should appear at the end of the file
    ╭─[exports_last.tsx:3:13]
  2 │             const bool = true

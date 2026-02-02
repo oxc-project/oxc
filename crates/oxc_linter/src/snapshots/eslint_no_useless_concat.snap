@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:1:1]
  1 │ 'a' + 'b'

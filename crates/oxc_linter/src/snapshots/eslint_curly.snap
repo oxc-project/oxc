@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(curly): Expected { after 'if' condition.
    ╭─[curly.tsx:1:10]
  1 │ if (foo) bar()

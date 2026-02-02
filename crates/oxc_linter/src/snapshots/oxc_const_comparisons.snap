@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(const-comparisons): Unexpected constant comparison
    ╭─[const_comparisons.tsx:1:1]
  1 │ status_code <= 400 && status_code > 500;

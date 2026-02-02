@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(vars-on-top): All 'var' declarations must be at the top of the function scope.
    ╭─[vars_on_top.tsx:6:4]
  5 │             }

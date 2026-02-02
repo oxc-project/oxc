@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.
    ╭─[no_negation_in_equality_check.tsx:1:1]
  1 │ !foo === bar

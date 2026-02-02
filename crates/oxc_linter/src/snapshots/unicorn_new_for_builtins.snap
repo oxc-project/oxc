@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(new-for-builtins): Use `new Object()` instead of `Object()`
    ╭─[new_for_builtins.tsx:1:16]
  1 │ const object = (Object)();

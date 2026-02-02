@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-warning-comments): Unexpected 'fixme' comment: fixme
    ╭─[no_warning_comments.tsx:1:1]
  1 │ // fixme

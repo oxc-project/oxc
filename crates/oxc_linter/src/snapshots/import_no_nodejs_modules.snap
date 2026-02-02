@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-nodejs-modules): Do not import Node.js builtin module `path`
    ╭─[no_nodejs_modules.tsx:1:1]
  1 │ import path from "path"

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.
    ╭─[no_thenable.tsx:1:14]
  1 │ const foo = {then: 1}

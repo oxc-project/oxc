@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-inferrable-types): Type can be trivially inferred from the initializer
    ╭─[no_inferrable_types.tsx:1:8]
  1 │ const a: bigint = 10n

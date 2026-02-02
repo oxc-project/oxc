@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-each): Enforce using `each` rather than manual loops
    ╭─[prefer_each.tsx:1:1]
  1 │ for (const [input, expected] of data) {

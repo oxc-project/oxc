@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(sort-vars): Variable declarations should be sorted
    ╭─[sort_vars.tsx:1:8]
  1 │ var b, a

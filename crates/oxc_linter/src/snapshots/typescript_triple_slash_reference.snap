@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(triple-slash-reference): Do not use a triple slash reference for foo, use `import` style instead.
    ╭─[triple_slash_reference.tsx:2:4]
  1 │ 

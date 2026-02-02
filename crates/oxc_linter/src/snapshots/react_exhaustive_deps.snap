@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react-hooks(exhaustive-deps): React Hook useCallback has a missing dependency: 'props.foo'
    ╭─[exhaustive_deps.tsx:4:14]
  2 │           useCallback(() => {

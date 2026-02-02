@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(bad-array-method-on-arguments): Bad array method on `arguments`.
    ╭─[bad_array_method_on_arguments.tsx:1:16]
  1 │ function fn() {arguments['map'](() => {})}

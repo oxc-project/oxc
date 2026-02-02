@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
    ╭─[no_dynamic_delete.tsx:3:10]
  2 │             const container: { [i: string]: 0 } = {};

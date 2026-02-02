@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-empty-interface): an empty interface is equivalent to `{}`
    ╭─[no_empty_interface.tsx:1:1]
  1 │ interface Foo {}

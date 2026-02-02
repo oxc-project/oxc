@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
  1 │ element.setAttribute('data-unicorn', '🦄');

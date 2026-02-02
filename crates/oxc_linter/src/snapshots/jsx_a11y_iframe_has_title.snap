@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.
    ╭─[iframe_has_title.tsx:1:2]
  1 │ <iframe />

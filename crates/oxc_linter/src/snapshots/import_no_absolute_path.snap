@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:15]
  1 │ import _ from '/lodash'

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-array-find): Prefer `find` over filtering and accessing the first result.
    ╭─[prefer_array_find.tsx:1:7]
  1 │ array.filter(foo)[0]

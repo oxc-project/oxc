@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(define-emits-declaration): Use type based declaration instead of runtime declaration
    ╭─[define_emits_declaration.tsx:3:24]
  2 │                    <script setup lang="ts">

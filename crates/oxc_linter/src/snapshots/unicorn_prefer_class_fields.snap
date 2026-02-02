@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-class-fields): Prefer class field declaration over `this` assignment in constructor for static values.
    ╭─[prefer_class_fields.tsx:3:6]
  2 │                 constructor() {

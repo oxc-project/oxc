@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-prototype-builtins): do not access Object.prototype method "hasOwnProperty" from target object
    ╭─[no_prototype_builtins.tsx:1:1]
  1 │ foo.hasOwnProperty('bar')

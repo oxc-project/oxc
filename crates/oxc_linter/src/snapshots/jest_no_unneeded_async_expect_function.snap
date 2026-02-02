@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-unneeded-async-expect-function): Unnecessary async function wrapper
    ╭─[no_unneeded_async_expect_function.tsx:3:25]
  2 │                       it('should be fixed', async () => {

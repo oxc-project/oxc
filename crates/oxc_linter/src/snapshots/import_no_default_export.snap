@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-default-export): Prefer named exports
    ╭─[index.ts:1:8]
  1 │ export default function bar() {};

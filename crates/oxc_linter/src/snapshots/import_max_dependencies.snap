@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(max-dependencies): File has too many dependencies (3). Maximum allowed is 1.
    ╭─[index.ts:3:31]
  2 │             import { x } from './foo';

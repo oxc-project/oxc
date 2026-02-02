@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces
    ╭─[jsx_no_comment_textnodes.tsx:4:29]
  3 │                       render() {

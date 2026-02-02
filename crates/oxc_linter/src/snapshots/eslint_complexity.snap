@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(complexity): function `a` has a complexity of 1. Maximum allowed is 0.
    ╭─[complexity.tsx:1:1]
  1 │ function a(x) {}

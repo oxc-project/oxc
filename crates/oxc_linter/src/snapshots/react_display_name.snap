@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(display-name): Component definition is missing display name.
    ╭─[display_name.tsx:2:22]
  1 │ 

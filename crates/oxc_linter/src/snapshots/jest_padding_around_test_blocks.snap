@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(padding-around-test-blocks): Missing padding before test block
    ╭─[padding_around_test_blocks.tsx:1:23]
  1 │ test('foo', () => {});test('bar', () => {});

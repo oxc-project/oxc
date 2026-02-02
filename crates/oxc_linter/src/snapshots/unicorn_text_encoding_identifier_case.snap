@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(text-encoding-identifier-case): Prefer `utf8` over `UTF-8`.
    ╭─[text_encoding_identifier_case.jsx:1:1]
  1 │ "UTF-8"

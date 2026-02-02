@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-props-no-spreading): Prop spreading is forbidden
    ╭─[jsx_props_no_spreading.tsx:2:17]
  1 │ 

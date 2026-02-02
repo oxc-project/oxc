@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react-hooks(rules-of-hooks): React Hook "useConditionalHook" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:4:18]
  3 │                if (cond) {

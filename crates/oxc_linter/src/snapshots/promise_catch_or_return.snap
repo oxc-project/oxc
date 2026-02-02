@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-promise(catch-or-return): Expected `catch` or `return`.
    ╭─[catch_or_return.mjs:1:37]
  1 │ function callPromise(promise, cb) { promise.then(cb) }

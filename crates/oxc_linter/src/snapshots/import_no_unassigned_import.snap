@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-unassigned-import): A `require()` style import is forbidden.
    ╭─[no-unassigned-import.js:1:1]
  1 │ require('should')

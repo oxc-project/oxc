@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-label-var): Found identifier 'x' with the same name as a label.
    ╭─[no_label_var.tsx:1:5]
  1 │ var x = foo; function bar() { x: for(;;) { break x; } }

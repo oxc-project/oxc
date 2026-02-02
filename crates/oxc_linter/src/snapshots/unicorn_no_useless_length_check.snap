@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-length-check): Found a useless array length check
    ╭─[no_useless_length_check.tsx:1:1]
  1 │ array.length === 0 || array.every(Boolean)

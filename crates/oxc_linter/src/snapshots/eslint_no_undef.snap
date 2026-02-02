@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-undef): 'a' is not defined.
    ╭─[no_undef.tsx:1:1]
  1 │ a = 1;

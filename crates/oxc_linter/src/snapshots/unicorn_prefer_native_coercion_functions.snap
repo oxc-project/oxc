@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
    ╭─[prefer_native_coercion_functions.tsx:1:13]
  1 │ const foo = v => String(v)

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-invalid-fetch-options): "body" is not allowed when method is "GET"
    ╭─[no_invalid_fetch_options.mts:1:13]
  1 │ fetch(url, {body})

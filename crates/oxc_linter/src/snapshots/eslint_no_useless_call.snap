@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-useless-call): Avoid unnecessary use of .call()
    ╭─[no_useless_call.tsx:1:1]
  1 │ foo.call(undefined, 1, 2);

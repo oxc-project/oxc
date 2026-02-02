@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-throw-literal): Expected an error object to be thrown
    ╭─[no_throw_literal.tsx:1:7]
  1 │ throw 'error';

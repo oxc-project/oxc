@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.
    ╭─[prefer_regexp_test.tsx:1:34]
  1 │ const re = /a/; const bar = !foo.match(re)

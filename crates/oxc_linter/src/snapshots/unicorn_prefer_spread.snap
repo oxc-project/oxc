@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over Array.from()
    ╭─[prefer_spread.tsx:1:11]
  1 │ const x = Array.from(set);

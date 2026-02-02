@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-reduce): Don't use `Array#reduce()` and `Array#reduceRight()`, use `for` loops instead.
    ╭─[no_array_reduce.tsx:1:7]
  1 │ array.reduce((str, item) => str += item, "")

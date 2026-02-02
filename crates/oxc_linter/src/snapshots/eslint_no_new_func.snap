@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-new-func): The Function constructor is eval.
    ╭─[no_new_func.tsx:1:9]
  1 │ var a = new Function("b", "c", "return b+c");

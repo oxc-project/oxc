@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-export-in-script-setup): <script setup>` cannot contain ES module exports.
    ╭─[no_export_in_script_setup.tsx:4:25]
  3 │                   export * from 'foo'

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-unsafe): Unsafe lifecycle method `componentWillMount` is not allowed
    ╭─[no_unsafe.tsx:3:14]
  2 │                     class Foo extends React.Component {

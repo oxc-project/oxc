@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(init-declarations): Variable 'foo' should be initialized on declaration.
    ╭─[init_declarations.tsx:1:5]
  1 │ var foo;

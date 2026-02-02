@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-reverse): Use `Array#toReversed()` instead of `Array#reverse()`.
    ╭─[no_array_reverse.tsx:1:23]
  1 │ reversed = [...array].reverse()

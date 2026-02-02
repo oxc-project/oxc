@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(switch-case-braces): Missing braces in case clause.
    ╭─[switch_case_braces.tsx:1:11]
  1 │ switch(s){case'':/]/}

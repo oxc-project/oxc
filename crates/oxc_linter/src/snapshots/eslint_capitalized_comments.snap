@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(capitalized-comments): Comments should not begin with a lowercase letter
    ╭─[capitalized_comments.tsx:1:1]
  1 │ //lowercase

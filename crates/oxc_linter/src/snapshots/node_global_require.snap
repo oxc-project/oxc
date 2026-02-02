@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-node(global-require): Unexpected require().
    ╭─[global_require.tsx:2:5]
  1 │ if (process.env.NODE_ENV === 'DEVELOPMENT') {

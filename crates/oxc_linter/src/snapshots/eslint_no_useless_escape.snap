@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = /\#/;

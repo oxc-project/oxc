@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-lone-blocks): Block is unnecessary.
    ╭─[no_lone_blocks.tsx:1:1]
  1 │ {}

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-confusing-set-timeout): `jest.setTimeout` should be placed before any other jest methods.
     ╭─[no_confusing_set_timeout.tsx:10:17]
   9 │                 });

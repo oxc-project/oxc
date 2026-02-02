@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 413
 ---
+
   ⚠ eslint-plugin-promise(no-multiple-resolved): Promise should not be resolved multiple times. Promise is potentially resolved on line 4.
    ╭─[no_multiple_resolved.tsx:7:9]
  6 │ 

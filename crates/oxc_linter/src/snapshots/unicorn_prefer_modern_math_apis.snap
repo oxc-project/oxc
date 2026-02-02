@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives
    ╭─[prefer_modern_math_apis.tsx:1:1]
  1 │ Math.sqrt(a * a + b * b)

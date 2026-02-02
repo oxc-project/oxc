@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import "fs"

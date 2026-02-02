@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-alert): `alert`, `confirm` and `prompt` functions are not allowed
    ╭─[no_alert.tsx:1:1]
  1 │ alert(foo)

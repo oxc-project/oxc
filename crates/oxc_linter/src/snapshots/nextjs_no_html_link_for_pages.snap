@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-html-link-for-pages): Do not use `<a>` elements to navigate between Next.js pages.
    ╭─[no_html_link_for_pages.tsx:1:1]
  1 │ <a href='/about'>About</a>

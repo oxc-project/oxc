@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`.
    ╭─[consistent_type_imports.tsx:2:15]
  1 │ 

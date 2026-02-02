@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-large-snapshots): Snapshot is too long.
    ╭─[no_large_snapshots.tsx:1:19]
  1 │ expect(something).toMatchInlineSnapshot(`

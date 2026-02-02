@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-const-assign): Unexpected re-assignment of `const` variable x.
    ╭─[no_const_assign.tsx:1:7]
  1 │ const x = 0; x = 1;

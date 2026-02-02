@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-blob-reading-methods): Prefer `Blob#arrayBuffer()` over `FileReader#readAsArrayBuffer(blob)`.
    ╭─[prefer_blob_reading_methods.tsx:1:12]
  1 │ fileReader.readAsArrayBuffer(blob)

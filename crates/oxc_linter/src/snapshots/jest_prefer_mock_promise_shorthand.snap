@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises.
    ╭─[prefer_mock_promise_shorthand.tsx:1:11]
  1 │ aVariable.mockImplementation(() => Promise.reject(42, 25))

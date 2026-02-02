@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(named): named import "somethingElse" not found
    ╭─[index.js:1:10]
  1 │ import { somethingElse } from './test-module'

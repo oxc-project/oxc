@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-response-static-json): Prefer using `Response.json(…)` over `JSON.stringify()`.
    ╭─[prefer_response_static_json.tsx:1:14]
  1 │ new Response(JSON.stringify(data))

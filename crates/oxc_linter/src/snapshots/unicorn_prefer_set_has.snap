@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
    ╭─[prefer_set_has.tsx:2:10]
  1 │ 

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(array-type): Array type using 'factories.User[]' is forbidden. Use 'Array<factories.User>' instead.
    ╭─[array_type.ts:1:8]
  1 │ let a: factories.User[] = [];

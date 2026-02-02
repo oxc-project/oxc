@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-unsafe-function-type): The `Function` type accepts any function-like value.
    ╭─[no_unsafe_function_type.tsx:1:12]
  1 │ let value: Function;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(forbid-dom-props): Prop "id" is forbidden on DOM Nodes
    ╭─[forbid_dom_props.tsx:5:37]
  4 │                       render: function() {

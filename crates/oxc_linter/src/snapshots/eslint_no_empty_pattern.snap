@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-empty-pattern): Empty object binding pattern
    ╭─[no_empty_pattern.tsx:1:5]
  1 │ var {} = foo

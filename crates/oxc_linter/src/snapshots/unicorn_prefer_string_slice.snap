@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#substr()
    ╭─[prefer_string_slice.tsx:1:5]
  1 │ foo.substr()

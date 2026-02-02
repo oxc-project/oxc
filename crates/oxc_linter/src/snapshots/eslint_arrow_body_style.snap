@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(arrow-body-style): Unexpected block statement surrounding arrow body.
    ╭─[arrow_body_style.tsx:1:22]
  1 │ for (var foo = () => { return a in b ? bar : () => {} } ;;);

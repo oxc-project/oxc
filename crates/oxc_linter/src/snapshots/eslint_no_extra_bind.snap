@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-extra-bind): The function binding is unnecessary.
    ╭─[no_extra_bind.tsx:1:34]
  1 │ var a = function() { return 1; }.bind(b)

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:6]
  2 │             enum Direction {

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-immediate-mutation): Do not call `push()` immediately after initializing an array.
    ╭─[no_immediate_mutation.tsx:2:4]
  1 │ const array = [1, 2];

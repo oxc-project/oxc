@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(require-render-return): Your `render` method should have a `return` statement.
    ╭─[require_render_return.tsx:4:20]
  3 │                       displayName: 'Hello',

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-useless-backreference): Backreference '\2' will be ignored. It references group '(\2a)' from within that group.
    ╭─[no_useless_backreference.tsx:1:6]
  1 │ /(b)(\2a)/

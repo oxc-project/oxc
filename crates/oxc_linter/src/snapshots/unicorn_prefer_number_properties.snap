@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-number-properties): Use `Number.parseInt` instead of the global `parseInt`
    ╭─[prefer_number_properties.tsx:1:1]
  1 │ parseInt("10", 2);

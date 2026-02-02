@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-await-in-loop): Unexpected `await` inside a loop.
    ╭─[no_await_in_loop.tsx:1:38]
  1 │ async function foo() { while (baz) { await bar; } }

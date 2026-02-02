@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-import-compiler-macros): 'defineProps' is a compiler macro and doesn't need to be imported.
    ╭─[no_import_compiler_macros.tsx:3:19]
  2 │                   <script setup>

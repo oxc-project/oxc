@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
    ╭─[require_yields.tsx:5:20]
  4 │                            */

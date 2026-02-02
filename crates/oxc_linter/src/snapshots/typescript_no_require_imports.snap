@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-require-imports): Expected "import" statement instead of "require" call
    ╭─[no_require_imports.ts:1:11]
  1 │ var lib = require('lib');

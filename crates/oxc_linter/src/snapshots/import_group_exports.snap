@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(group-exports): Multiple named export declarations; consolidate all named exports into a single export declaration
    ╭─[group_exports.tsx:2:13]
  1 │ 

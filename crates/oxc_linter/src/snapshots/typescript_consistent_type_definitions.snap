@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(consistent-type-definitions): Use `interface` instead of `type`.
    ╭─[consistent_type_definitions.tsx:1:1]
  1 │ type T = { x: number; };

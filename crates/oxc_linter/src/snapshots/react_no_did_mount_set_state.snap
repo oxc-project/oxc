@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-did-mount-set-state): Do not use `setState` in `componentDidMount`.
    ╭─[no_did_mount_set_state.tsx:4:13]
  3 │           componentDidMount: function() {

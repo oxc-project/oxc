@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-restricted-matchers): Use of `toBe` is disallowed
    ╭─[no_restricted_matchers.tsx:1:11]
  1 │ expect(a).toBe(b)

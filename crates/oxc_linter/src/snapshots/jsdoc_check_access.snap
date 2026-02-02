@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(check-access): Invalid access level is specified or missing.
    ╭─[check_access.tsx:3:25]
  2 │                       /**

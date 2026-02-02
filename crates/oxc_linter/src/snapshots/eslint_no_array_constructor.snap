@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-array-constructor): Avoid calls to the `Array` constructor
    ╭─[no_array_constructor.tsx:1:1]
  1 │ new Array()

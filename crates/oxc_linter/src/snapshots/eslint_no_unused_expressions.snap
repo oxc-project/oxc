@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unused-expressions): Expected expression to be used
    ╭─[no_unused_expressions.tsx:1:1]
  1 │ 0

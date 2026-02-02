@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:8]
  1 │ let a: String;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(require-post-message-target-origin): Missing the `targetOrigin` argument.
    ╭─[require_post_message_target_origin.tsx:1:27]
  1 │ window.postMessage(message)

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.
    ╭─[no_invalid_remove_event_listener.tsx:1:8]
  1 │ window.removeEventListener("scroll", handler.bind(abc))

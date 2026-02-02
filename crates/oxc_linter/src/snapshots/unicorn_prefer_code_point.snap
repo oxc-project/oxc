@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-code-point): Prefer `codePointAt` over `charCodeAt`
    ╭─[prefer_code_point.tsx:1:8]
  1 │ string.charCodeAt(index)

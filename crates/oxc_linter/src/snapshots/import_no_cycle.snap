@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-cycle): Dependency cycle detected
    ╭─[cycles/depth-zero.js:1:21]
  1 │ import { foo } from "./es6/depth-one"

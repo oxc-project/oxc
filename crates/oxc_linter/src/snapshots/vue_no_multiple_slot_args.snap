@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-multiple-slot-args): Unexpected multiple arguments.
    ╭─[no_multiple_slot_args.tsx:5:45]
  4 │                     render (h) {

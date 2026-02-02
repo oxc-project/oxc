@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-sort): Use `Array#toSorted()` instead of `Array#sort()`.
    ╭─[no_array_sort.tsx:1:21]
  1 │ sorted = [...array].sort()

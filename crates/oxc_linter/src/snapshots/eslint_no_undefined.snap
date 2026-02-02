@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-undefined): Unexpected use of `undefined`
    ╭─[no_undefined.tsx:1:1]
  1 │ undefined

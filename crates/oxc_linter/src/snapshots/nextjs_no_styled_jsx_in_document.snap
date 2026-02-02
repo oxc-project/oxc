@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-styled-jsx-in-document): `styled-jsx` should not be used in `pages/_document.js`
     ╭─[no_styled_jsx_in_document.tsx:14:24]
  13 │                                 <Head />

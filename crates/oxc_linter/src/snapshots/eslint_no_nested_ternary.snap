@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-nested-ternary): Do not nest ternary expressions.
    ╭─[no_nested_ternary.tsx:1:1]
  1 │ foo ? bar : baz === qux ? quxx : foobar;

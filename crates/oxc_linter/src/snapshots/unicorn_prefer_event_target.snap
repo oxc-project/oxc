@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`
    ╭─[prefer_event_target.tsx:1:19]
  1 │ class Foo extends EventEmitter {}

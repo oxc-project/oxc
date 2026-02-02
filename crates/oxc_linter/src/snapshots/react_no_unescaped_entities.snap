@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?
    ╭─[no_unescaped_entities.tsx:3:24]
  2 │             render: function() {

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-new-native-nonconstructor): `Symbol` cannot be called as a constructor.
    ╭─[no_new_native_nonconstructor.tsx:1:11]
  1 │ var foo = new Symbol('foo');

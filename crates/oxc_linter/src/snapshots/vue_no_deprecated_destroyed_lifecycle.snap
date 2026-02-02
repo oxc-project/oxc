@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-deprecated-destroyed-lifecycle): The `beforeDestroy` lifecycle hook is deprecated. Use `beforeUnmount` instead.
    ╭─[no_deprecated_destroyed_lifecycle.tsx:4:12]
  3 │                   export default {

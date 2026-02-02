@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
    ╭─[no_async_endpoint_handlers.tsx:1:14]
  1 │ app.get('/', async function (req, res) {})

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-multi-str): Unexpected multi string.
    ╭─[no_multi_str.tsx:1:17]
  1 │ var x = 'Line 1 \

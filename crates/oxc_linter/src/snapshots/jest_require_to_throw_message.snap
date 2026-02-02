@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(require-to-throw-message): Require a message for "toThrow".
    ╭─[require_to_throw_message.tsx:1:41]
  1 │ expect(() => { throw new Error('a'); }).toThrow();

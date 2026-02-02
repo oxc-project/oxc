@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.all()` should not be awaited.
    ╭─[no_await_in_promise_methods.mjs:1:14]
  1 │ Promise.all([await promise])

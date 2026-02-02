@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unreachable): Unreachable code.
    ╭─[no_unreachable.tsx:1:28]
  1 │ function foo() { return x; var x = 1; }

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-extend-native): Object prototype is read-only, properties should not be added.
    ╭─[no_extend_native.tsx:1:1]
  1 │ Object.prototype.p = 0

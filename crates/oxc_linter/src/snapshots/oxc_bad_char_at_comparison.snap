@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === 'aa'

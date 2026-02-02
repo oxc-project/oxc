@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-error-capture-stack-trace): Do not use `Error.captureStackTrace(…)` in the constructor of an Error subclass
    ╭─[no_useless_error_capture_stack_trace.tsx:4:7]
  3 │                     const foo = () => {

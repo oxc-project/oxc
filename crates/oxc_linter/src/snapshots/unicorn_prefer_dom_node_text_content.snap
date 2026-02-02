@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.
    ╭─[prefer_dom_node_text_content.tsx:1:6]
  1 │ node.innerText;

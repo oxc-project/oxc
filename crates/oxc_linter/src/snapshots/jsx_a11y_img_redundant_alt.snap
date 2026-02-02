@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(img-redundant-alt): Redundant `alt` attribute.
    ╭─[img_redundant_alt.tsx:1:6]
  1 │ <img alt='Photo of friend.' />;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(default-case-last): Enforce default clauses in switch statements to be last
    ╭─[default_case_last.tsx:1:16]
  1 │ switch (foo) { default: bar(); break; case 1: baz(); break; }

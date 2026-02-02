@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-conditional-in-test): Avoid having conditionals in tests.
    ╭─[no_conditional_in_test.tsx:3:30]
  2 │                     it('foo', () => {

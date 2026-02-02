@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-destructuring): Use Array destructuring.
    ╭─[prefer_destructuring.tsx:1:11]
  1 │ var foo = array[0];

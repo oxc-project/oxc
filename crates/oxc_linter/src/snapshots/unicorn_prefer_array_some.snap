@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)` or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]
  1 │ if (foo.find(fn)) {}

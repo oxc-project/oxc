@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-accessor-recursion): Disallow recursive access to `this` within getters.
    ╭─[no_accessor_recursion.tsx:4:21]
  3 │                 get bar() {

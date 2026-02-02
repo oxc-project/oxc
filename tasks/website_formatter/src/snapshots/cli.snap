@@ -1,6 +1,5 @@
 ---
 source: tasks/website_formatter/src/cli.rs
-assertion_line: 8
 expression: snapshot
 ---
 ---

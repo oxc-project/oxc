@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(new-cap): A constructor name should not start with a lowercase letter.
    ╭─[new_cap.tsx:1:13]
  1 │ var x = new c();

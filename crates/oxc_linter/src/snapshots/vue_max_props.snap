@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(max-props): Component has too many props (2). Maximum allowed is 1.
    ╭─[max_props.tsx:3:10]
  2 │                   <script setup>

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-title-in-document-head): Prevent usage of `<title>` with `Head` component from `next/document`.
    ╭─[no_title_in_document_head.tsx:7:17]
  6 │                       return (

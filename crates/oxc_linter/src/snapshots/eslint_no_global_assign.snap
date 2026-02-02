@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-global-assign): Read-only global 'String' should not be modified.
    ╭─[no_global_assign.tsx:1:1]
  1 │ String = 'hello world';

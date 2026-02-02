@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 394
 ---
+
   ⚠ eslint-plugin-jest(prefer-to-have-been-called): Prefer `toHaveBeenCalled()` over `toHaveBeenCalledTimes(0)`
    ╭─[prefer_to_have_been_called.tsx:1:1]
  1 │ expect(method).toBeCalledTimes(0);

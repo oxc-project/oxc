@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
  1 │ { }

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.
    ╭─[no_unsafe_declaration_merging.tsx:2:14]
  1 │ 

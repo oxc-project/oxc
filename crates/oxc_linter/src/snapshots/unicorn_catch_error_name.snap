@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "foo" should be named "error"
    ╭─[catch_error_name.tsx:4:26]
  3 │                     doSomething();

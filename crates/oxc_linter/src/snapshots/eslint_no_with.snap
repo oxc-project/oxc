@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-with): Unexpected use of `with` statement.
    ╭─[no_with.tsx:1:1]
  1 │ with(foo) { bar() }

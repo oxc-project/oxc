@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 413
 ---
+
   ⚠ eslint-plugin-promise(always-return): Each then() should return a value or throw
    ╭─[always_return.tsx:1:10]
  1 │ hey.then(x => {})

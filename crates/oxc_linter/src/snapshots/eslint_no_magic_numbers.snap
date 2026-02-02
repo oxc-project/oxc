@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-magic-numbers): Number constants declarations must use 'const'.
    ╭─[no_magic_numbers.tsx:1:11]
  1 │ var foo = 42

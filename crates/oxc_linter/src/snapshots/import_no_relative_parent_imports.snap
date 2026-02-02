@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-relative-parent-imports): Relative imports from parent directories are not allowed
    ╭─[index.js:1:17]
  1 │ import foo from "../plugin.js"

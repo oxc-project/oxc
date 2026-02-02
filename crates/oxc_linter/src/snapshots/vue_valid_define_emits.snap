@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(valid-define-emits): `defineEmits` is referencing locally declared variables.
    ╭─[valid_define_emits.tsx:5:12]
  4 │                     const def = { notify: null }

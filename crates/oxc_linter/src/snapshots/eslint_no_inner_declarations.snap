@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.mjs:1:13]
  1 │ if (test) { function doSomething() { } }

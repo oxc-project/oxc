@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-setter-return): Setter cannot return a value
    ╭─[no_setter_return.js:1:16]
  1 │ ({ set a(val){ return val + 1; } })

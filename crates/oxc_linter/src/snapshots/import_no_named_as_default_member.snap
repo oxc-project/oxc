@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-named-as-default-member): "baz" also has a named export "a"
    ╭─[index.js:1:46]
  1 │ import baz from "./named-exports"; const a = baz.a;

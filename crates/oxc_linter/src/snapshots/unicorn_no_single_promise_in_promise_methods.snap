@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
    ╭─[no_single_promise_in_promise_methods.mts:1:15]
  1 │ await Promise.all([x])

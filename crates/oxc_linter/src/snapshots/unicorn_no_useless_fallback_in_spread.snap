@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
    ╭─[no_useless_fallback_in_spread.tsx:1:17]
  1 │ const object = {...(foo || {})}

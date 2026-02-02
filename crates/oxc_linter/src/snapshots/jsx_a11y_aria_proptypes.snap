@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(aria-proptypes): This is not a valid ARIA state and property value for 'aria-hidden'.
    ╭─[aria_proptypes.tsx:1:6]
  1 │ <div aria-hidden="yes" />

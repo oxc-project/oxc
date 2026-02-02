@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
    ╭─[no_restricted_globals.tsx:1:1]
  1 │ foo

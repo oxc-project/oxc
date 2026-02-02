@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-max-depth): JSX nesting depth of 1 exceeds the configured maximum of 0
    ╭─[jsx_max_depth.tsx:3:14]
  2 │                     <App>

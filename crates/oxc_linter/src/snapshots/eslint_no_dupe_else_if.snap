@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-dupe-else-if): Duplicate conditions in if-else-if chain
    ╭─[no_dupe_else_if.tsx:1:5]
  1 │ if (a) {} else if (a) {}

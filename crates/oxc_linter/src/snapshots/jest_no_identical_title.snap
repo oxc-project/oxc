@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.
    ╭─[no_identical_title.tsx:4:20]
  3 │                 it('works', () => {});

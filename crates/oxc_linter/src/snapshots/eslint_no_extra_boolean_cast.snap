@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-extra-boolean-cast): Redundant double negation
    ╭─[no_extra_boolean_cast.tsx:1:5]
  1 │ if (!!foo) {}

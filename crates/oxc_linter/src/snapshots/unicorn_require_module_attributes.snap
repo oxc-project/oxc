@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(require-module-attributes): import statement with empty attribute list is not allowed.
    ╭─[require_module_attributes.tsx:1:19]
  1 │ import "foo" with {}

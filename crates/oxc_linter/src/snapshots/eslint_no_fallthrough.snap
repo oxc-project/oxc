@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-fallthrough): Expected a `break` statement before `case`.
    ╭─[no_fallthrough.tsx:2:1]
  1 │ switch(foo) { case 0: a();

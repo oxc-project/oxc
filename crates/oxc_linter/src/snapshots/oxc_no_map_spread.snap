@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
  1 │ let a = b.map(x => ({ ...x }))

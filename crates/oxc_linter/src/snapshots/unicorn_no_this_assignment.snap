@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `foo`
    ╭─[no_this_assignment.tsx:1:7]
  1 │ const foo = this;

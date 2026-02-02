@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-will-update-set-state): Do not use `setState` in `componentWillUpdate`.
    ╭─[no_will_update_set_state.tsx:4:16]
  3 │                       componentWillUpdate: function() {

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]
  1 │ x == y || x < y

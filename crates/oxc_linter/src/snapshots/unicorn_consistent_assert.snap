@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(consistent-assert): Inconsistent assert usage
    ╭─[consistent_assert.tsx:2:10]
  1 │ import assert from 'assert';

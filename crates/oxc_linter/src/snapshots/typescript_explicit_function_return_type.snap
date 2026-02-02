@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(explicit-function-return-type): Missing return type on function.
    ╭─[explicit_function_return_type.tsx:2:10]
  1 │ 

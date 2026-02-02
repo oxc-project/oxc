@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-namespace): React component ns:testcomponent must not be in a namespace, as React does not support them.
    ╭─[no_namespace.tsx:1:2]
  1 │ <ns:testcomponent />

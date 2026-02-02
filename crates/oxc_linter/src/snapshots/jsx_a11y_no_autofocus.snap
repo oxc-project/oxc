@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(no-autofocus): The `autoFocus` attribute is found here, which can cause usability issues for sighted and non-sighted users.
    ╭─[no_autofocus.tsx:1:6]
  1 │ <div autoFocus />

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-top-level-await): Prefer top-level await over using an async IIFE.
    ╭─[prefer_top_level_await.mjs:1:1]
  1 │ (async () => {})()

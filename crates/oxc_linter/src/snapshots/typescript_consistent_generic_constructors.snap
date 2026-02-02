@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(consistent-generic-constructors): The generic type arguments should be specified as part of the constructor type arguments.
    ╭─[consistent_generic_constructors.tsx:1:8]
  1 │ const a: Foo<string> = new Foo();

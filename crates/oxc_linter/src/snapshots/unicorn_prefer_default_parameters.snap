@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-default-parameters): Prefer default parameters over reassignment for 'foo'.
    ╭─[prefer_default_parameters.tsx:2:2]
  1 │ function abc(foo) {

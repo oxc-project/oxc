@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-required-prop-with-default): Prop "name" should be optional.
    ╭─[no_required_prop_with_default.tsx:4:25]
  3 │                         props: {

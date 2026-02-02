@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(consistent-type-specifier-style): Prefer using a top-level type-only import instead of inline type specifiers.
    ╭─[consistent_type_specifier_style.tsx:1:10]
  1 │ import { type Foo, type Bar } from 'Foo'

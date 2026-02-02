@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.
    ╭─[require_hook.tsx:1:1]
  1 │ setup();

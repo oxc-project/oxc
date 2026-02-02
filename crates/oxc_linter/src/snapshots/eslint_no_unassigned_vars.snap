@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-unassigned-vars): 'x' is always 'undefined' because it's never assigned.
    ╭─[no_unassigned_vars.tsx:1:5]
  1 │ let x; let a = x, b; log(x, a, b);

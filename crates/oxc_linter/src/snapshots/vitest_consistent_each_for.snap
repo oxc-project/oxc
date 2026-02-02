@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(consistent-each-for): `test` can not be used with `.for` to create parameterized test.
    ╭─[consistent_each_for.tsx:3:6]
  2 │ 

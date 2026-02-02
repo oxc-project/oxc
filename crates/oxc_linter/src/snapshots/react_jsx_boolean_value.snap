@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-boolean-value): Value must be omitted for boolean attribute "foo"
    ╭─[jsx_boolean_value.tsx:1:9]
  1 │ <App foo={true} />;

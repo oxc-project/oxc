@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.
    ╭─[no_non_null_assertion.tsx:1:1]
  1 │ x!;

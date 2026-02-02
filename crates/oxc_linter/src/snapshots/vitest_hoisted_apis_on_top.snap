@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(hoisted-apis-on-top): Hoisted API cannot be used in a runtime location in this file.
    ╭─[hoisted_apis_on_top.mjs:3:6]
  2 │             if (foo) {

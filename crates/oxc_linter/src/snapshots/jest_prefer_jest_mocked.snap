@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.
    ╭─[prefer_jest_mocked.tsx:1:2]
  1 │ (foo as jest.Mock).mockReturnValue(1);

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(default-param-last): Default parameters should be last
    ╭─[default_param_last.tsx:1:12]
  1 │ function f(a = 5, b) {}

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
    ╭─[no_irregular_whitespace.tsx:1:9]
  1 │ var any  = 'thing';

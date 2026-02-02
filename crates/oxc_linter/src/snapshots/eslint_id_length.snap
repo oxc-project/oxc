@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(id-length): Identifier name is too short (< 2).
    ╭─[id_length.tsx:1:5]
  1 │ var x = 1;

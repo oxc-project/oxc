@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(max-classes-per-file): File has too many classes (2). Maximum allowed is 1
    ╭─[max_classes_per_file.tsx:2:13]
  1 │ class Foo {}

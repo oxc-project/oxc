@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBe` when expecting primitive literals.
    ╭─[prefer_to_be.tsx:1:15]
  1 │ expect(value).toEqual("my string");

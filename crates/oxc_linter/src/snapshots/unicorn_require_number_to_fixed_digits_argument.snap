@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument
    ╭─[require_number_to_fixed_digits_argument.tsx:1:30]
  1 │ const string = number.toFixed();

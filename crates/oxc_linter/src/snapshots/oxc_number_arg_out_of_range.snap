@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit
    ╭─[number_arg_out_of_range.tsx:1:20]
  1 │ var x = 42;var s = x.toString(1);

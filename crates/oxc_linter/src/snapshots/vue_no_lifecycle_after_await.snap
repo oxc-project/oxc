@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-lifecycle-after-await): Lifecycle hook `onMounted` is called after `await` in `setup()`.
    ╭─[no_lifecycle_after_await.tsx:8:14]
  7 │ 

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): This function default export is missing a name
    ╭─[no_anonymous_default_export.tsx:1:16]
  1 │ export default function () {}

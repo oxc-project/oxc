@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
     ╭─[max_nested_describe.tsx:7:37]
   6 │                                     describe('quxx', function () {

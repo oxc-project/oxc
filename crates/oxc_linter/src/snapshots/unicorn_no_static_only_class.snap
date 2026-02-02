@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-static-only-class): Use an object instead of a class with only static members.
    ╭─[no_static_only_class.tsx:1:1]
  1 │ class A { static a() {}; }

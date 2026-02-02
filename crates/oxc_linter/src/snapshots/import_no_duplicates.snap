@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-import(no-duplicates): Module './foo' is imported more than once in this file
    ╭─[index.ts:1:19]
  1 │ import { x } from './foo'; import { y } from './foo'

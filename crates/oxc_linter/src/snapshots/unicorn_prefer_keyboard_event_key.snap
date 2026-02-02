@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-keyboard-event-key): Use `.key` instead of `.keyCode`
    ╭─[prefer_keyboard_event_key.tsx:2:19]
  1 │ window.addEventListener('click', e => {

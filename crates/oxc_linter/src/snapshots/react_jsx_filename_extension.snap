@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(jsx-filename-extension): JSX not allowed in files with extension '.js'
    ╭─[jsx_filename_extension.tsx:1:50]
  1 │ ╭─▶ module.exports = function MyComponent() { return <div>

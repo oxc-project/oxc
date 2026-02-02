@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.
    ╭─[no_lonely_if.tsx:2:9]
  1 │ 

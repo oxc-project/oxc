@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-direct-mutation-state): Never mutate `this.state` directly.
    ╭─[no_direct_mutation_state.tsx:5:23]
  4 │                     componentWillMount() {

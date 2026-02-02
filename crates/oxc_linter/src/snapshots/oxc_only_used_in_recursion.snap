@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(only-used-in-recursion): Parameter `arg0` is only used in recursive calls
    ╭─[only_used_in_recursion.tsx:2:27]
  1 │ 

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-duplicate-imports): 'fs' import is duplicated
    ╭─[no_duplicate_imports.tsx:1:8]
  1 │ import "fs";

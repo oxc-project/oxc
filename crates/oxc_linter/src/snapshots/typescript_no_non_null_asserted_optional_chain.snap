@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-non-null-asserted-optional-chain): Optional chain expressions can return undefined by design: using a non-null assertion is unsafe and wrong.
    ╭─[no_non_null_asserted_optional_chain.tsx:1:9]
  1 │ foo?.bar!;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.
    ╭─[prefer_array_flat_map.tsx:1:13]
  1 │ const bar = [[1],[2],[3]].map(i => [i]).flat()

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-multi-assign): Do not use chained assignment
    ╭─[no_multi_assign.tsx:1:9]
  1 │ var a = b = c;

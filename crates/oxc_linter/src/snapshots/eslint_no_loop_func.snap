@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-loop-func): Function declared in a loop contains unsafe references to variable(s)
    ╭─[no_loop_func.tsx:1:28]
  1 │ for (var i=0; i<l; i++) { (function() { i; }) }

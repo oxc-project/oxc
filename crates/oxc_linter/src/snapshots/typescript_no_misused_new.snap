@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.
    ╭─[no_misused_new.tsx:1:15]
  1 │ interface I { new (): I; constructor(): void;}

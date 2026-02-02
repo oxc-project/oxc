@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused
    ╭─[prefer_optional_catch_binding.tsx:1:15]
  1 │ try {} catch (_) {}

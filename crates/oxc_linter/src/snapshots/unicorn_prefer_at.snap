@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-at): Prefer `.at()` over `[index]`
    ╭─[prefer_at.tsx:1:1]
  1 │ array[array.length - 1];

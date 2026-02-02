@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(no-this-in-before-route-enter): `beforeRouteEnter` does NOT have access to `this` component instance.
     ╭─[no_this_in_before_route_enter.tsx:10:17]
   9 │               beforeRouteEnter() {

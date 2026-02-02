@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-this-in-sfc): Stateless functional components should not use `this`
    ╭─[no_this_in_sfc.tsx:3:30]
  2 │                     function Foo(props) {

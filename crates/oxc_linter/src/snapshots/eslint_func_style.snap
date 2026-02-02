@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(func-style): Expected a function declaration.
    ╭─[func_style.tsx:1:5]
  1 │ var foo = function(){};

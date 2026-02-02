@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.
    ╭─[no_unreadable_iife.tsx:1:20]
  1 │ const foo = (() => (a ? b : c))();

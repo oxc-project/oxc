@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-control-regex): Unexpected control character
    ╭─[no_control_regex.tsx:1:12]
  1 │ const r = /\0/;

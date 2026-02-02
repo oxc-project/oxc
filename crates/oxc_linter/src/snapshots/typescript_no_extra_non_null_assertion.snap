@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-extra-non-null-assertion): extra non-null assertion
    ╭─[no_extra_non_null_assertion.tsx:1:59]
  1 │ const foo: { bar: number } | null = null; const bar = foo!!!.bar;

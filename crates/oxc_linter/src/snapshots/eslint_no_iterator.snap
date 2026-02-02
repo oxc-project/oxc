@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-iterator): Reserved name `__iterator__`
    ╭─[no_iterator.tsx:1:9]
  1 │ var a = test.__iterator__;

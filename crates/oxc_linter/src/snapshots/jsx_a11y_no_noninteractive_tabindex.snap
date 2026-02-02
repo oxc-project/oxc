@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(no-noninteractive-tabindex): `tabIndex` should only be declared on interactive elements.
    ╭─[no_noninteractive_tabindex.tsx:1:6]
  1 │ <div tabIndex="0" />

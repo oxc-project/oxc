@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-wrapper-object-types): Do not use wrapper object types.
    ╭─[no_wrapper_object_types.tsx:1:12]
  1 │ let value: BigInt;

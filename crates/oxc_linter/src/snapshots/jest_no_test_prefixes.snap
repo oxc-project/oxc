@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jest(no-test-prefixes): Use `describe.only` instead.
    ╭─[no_test_prefixes.tsx:1:1]
  1 │ fdescribe('foo', function () {})

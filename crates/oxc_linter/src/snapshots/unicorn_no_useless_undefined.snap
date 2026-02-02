@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:5:13]
  4 │             bar,

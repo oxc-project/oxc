@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-object-from-entries): Prefer `Object.fromEntries` over manual object construction from entries.
    ╭─[prefer_object_from_entries.tsx:1:7]
  1 │ pairs.reduce(object => ({...object, key}), {});

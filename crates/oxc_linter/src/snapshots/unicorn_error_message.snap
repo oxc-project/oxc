@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(error-message): Pass a message to the Error constructor.
    ╭─[error_message.tsx:1:7]
  1 │ throw new Error()

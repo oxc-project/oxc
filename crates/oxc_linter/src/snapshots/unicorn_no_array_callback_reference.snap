@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-array-callback-reference): Avoid passing a function reference directly to iterator methods
    ╭─[no_array_callback_reference.tsx:1:9]
  1 │ bar.map(fn)

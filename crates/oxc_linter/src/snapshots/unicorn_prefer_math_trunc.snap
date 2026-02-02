@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
    ╭─[prefer_math_trunc.tsx:1:13]
  1 │ const foo = 1.1 | 0;

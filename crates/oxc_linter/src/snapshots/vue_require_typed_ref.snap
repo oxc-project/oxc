@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vue(require-typed-ref): Specify type parameter for `ref` function, otherwise created variable will not be typechecked.
    ╭─[require_typed_ref.tsx:3:26]
  2 │                     import { ref } from 'vue'

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero.
    ╭─[erasing_op.tsx:1:1]
  1 │ x * 0;

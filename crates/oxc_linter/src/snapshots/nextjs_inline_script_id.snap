@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.
    ╭─[inline_script_id.tsx:5:17]
  4 │                       return (

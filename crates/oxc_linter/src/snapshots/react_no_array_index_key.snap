@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
    ╭─[no_array_index_key.tsx:2:20]
  1 │ things.map((thing, index) => (

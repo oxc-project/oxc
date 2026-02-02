@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-return-assign): Return statements should not contain an assignment.
    ╭─[no_return_assign.tsx:1:23]
  1 │ function x() { return result = a * b; };

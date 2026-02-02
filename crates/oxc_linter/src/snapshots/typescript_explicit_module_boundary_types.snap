@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(explicit-module-boundary-types): Missing return type on function
    ╭─[explicit_module_boundary_types.tsx:1:17]
  1 │ export function test(a: number, b: number) { return; }

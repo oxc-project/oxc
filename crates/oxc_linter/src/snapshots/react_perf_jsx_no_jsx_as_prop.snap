@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
    ╭─[jsx_no_jsx_as_prop.tsx:1:31]
  1 │ const Foo = () => (<Item jsx={<SubItem />} />)

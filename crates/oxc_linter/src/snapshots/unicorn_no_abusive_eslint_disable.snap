@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.
    ╭─[no_abusive_eslint_disable.tsx:2:11]
  1 │ 

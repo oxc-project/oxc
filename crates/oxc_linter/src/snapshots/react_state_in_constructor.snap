@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(state-in-constructor): State initialization should be in a class property
    ╭─[state_in_constructor.tsx:5:16]
  4 │                         super(props)

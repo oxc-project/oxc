@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.
    ╭─[no_aria_hidden_on_focusable.tsx:1:6]
  1 │ <div aria-hidden="true" tabIndex="0" />;

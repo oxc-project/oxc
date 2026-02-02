@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(unicode-bom): Expected Unicode BOM (Byte Order Mark)
    ╭─[unicode_bom.tsx:1:1]
  1 │ var a = 123;

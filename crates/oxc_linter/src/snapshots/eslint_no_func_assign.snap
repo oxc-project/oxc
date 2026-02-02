@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-func-assign): 'foo' is a function.
    ╭─[no_func_assign.tsx:1:20]
  1 │ function foo() {}; foo = bar;

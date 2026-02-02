@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-dupe-keys): Duplicate key 'a'
    ╭─[no_dupe_keys.tsx:1:11]
  1 │ var x = { a: b, ['a']: b };

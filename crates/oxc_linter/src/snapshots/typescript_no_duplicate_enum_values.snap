@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-duplicate-enum-values): Duplicate enum value `1`
    ╭─[no_duplicate_enum_values.tsx:3:10]
  2 │             enum E {

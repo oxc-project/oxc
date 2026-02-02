@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-self-assign): this expression is assigned to itself
    ╭─[no_self_assign.tsx:1:5]
  1 │ a = a

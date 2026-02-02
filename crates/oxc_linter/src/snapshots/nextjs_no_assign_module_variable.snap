@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-next(no-assign-module-variable): Do not assign to the variable `module`.
    ╭─[no_assign_module_variable.tsx:2:14]
  1 │ 

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-obj-calls): `JSON` is not a function and cannot be called
    ╭─[no_obj_calls.tsx:1:14]
  1 │ let newObj = new JSON();

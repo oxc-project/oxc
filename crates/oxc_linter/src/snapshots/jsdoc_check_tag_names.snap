@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.
    ╭─[check_tag_names.tsx:2:24]
  1 │ 

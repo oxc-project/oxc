@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-nonoctal-decimal-escape): Don't use '\8' escape sequence.
    ╭─[no_nonoctal_decimal_escape.tsx:1:2]
  1 │ '\8'

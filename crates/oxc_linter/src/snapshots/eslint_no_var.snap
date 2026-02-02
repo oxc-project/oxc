@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:1]
  1 │ var foo = bar;

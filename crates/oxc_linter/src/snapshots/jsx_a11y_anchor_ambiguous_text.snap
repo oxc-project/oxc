@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(anchor-ambiguous-text): Ambiguous text within anchor, screen reader users rely on link text for context.
    ╭─[anchor_ambiguous_text.tsx:1:1]
  1 │ <a>here</a>;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states, or properties.
    ╭─[aria_unsupported_elements.tsx:1:7]
  1 │ <base role {...props} />

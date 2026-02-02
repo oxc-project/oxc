@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-classlist-toggle): Prefer `classList.toggle()` over `classList.add()` and `classList.remove()`
    ╭─[prefer_classlist_toggle.tsx:1:1]
  1 │ ╭─▶ if (condition) {

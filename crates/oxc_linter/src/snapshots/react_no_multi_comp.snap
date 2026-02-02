@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-multi-comp): Declare only one React component per file. Found: HelloAgain
    ╭─[no_multi_comp.tsx:4:11]
  3 │               }

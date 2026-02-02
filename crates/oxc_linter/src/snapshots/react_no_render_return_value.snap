@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(no-render-return-value): Do not depend on the return value from `ReactDOM.render`.
    ╭─[no_render_return_value.tsx:1:13]
  1 │ var Hello = ReactDOM.render(<div />, document.body);

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(constructor-super): Unexpected `super()` because `super` is not a constructor.
    ╭─[constructor_super.tsx:1:40]
  1 │ class A extends null { constructor() { super(); } }

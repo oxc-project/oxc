@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-react(style-prop-object): `style` prop value must be an object.
    ╭─[style_prop_object.tsx:1:12]
  1 │ <div style="color: 'red'" />

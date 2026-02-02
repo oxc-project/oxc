@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(grouped-accessor-pairs): Accessor pair getter 'a' and setter 'a' should be grouped.
    ╭─[grouped_accessor_pairs.tsx:1:4]
  1 │ ({ get a(){}, b:1, set a(foo){} })

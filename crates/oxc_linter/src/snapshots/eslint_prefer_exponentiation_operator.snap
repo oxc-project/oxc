@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(prefer-exponentiation-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]
  1 │ globalThis.Math.pow(a, b)

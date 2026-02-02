@@ -1,7 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 427
 ---
+
   ⚠ eslint-plugin-vitest(prefer-called-times): Use `toBeCalledTimes(1)` or `toHaveBeenCalledTimes(1)` instead of `toBeCalledOnce()` or `toHaveBeenCalledOnce()`
    ╭─[prefer_called_times.tsx:1:1]
  1 │ expect(fn).toBeCalledOnce();

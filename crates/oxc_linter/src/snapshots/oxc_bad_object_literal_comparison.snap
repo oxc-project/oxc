@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ oxc(bad-object-literal-comparison): Unexpected object literal comparison.
    ╭─[bad_object_literal_comparison.tsx:1:5]
  1 │ if (y === {}) { }

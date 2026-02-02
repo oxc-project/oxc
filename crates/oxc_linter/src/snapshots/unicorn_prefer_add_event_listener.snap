@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.
    ╭─[prefer_add_event_listener.tsx:1:5]
  1 │ foo.onclick = () => {}

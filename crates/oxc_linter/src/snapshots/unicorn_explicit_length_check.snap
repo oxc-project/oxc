@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
    ╭─[explicit_length_check.tsx:1:11]
  1 │ const x = foo.length || bar()

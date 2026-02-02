@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.
    ╭─[prefer_dom_node_remove.tsx:1:12]
  1 │ parentNode.removeChild(foo)

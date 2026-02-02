@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint(no-redeclare): 'b' is already defined.
    ╭─[no_redeclare..cts:1:27]
  1 │ switch(foo) { case a: var b = 3;

@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator
    ╭─[no_non_null_asserted_nullish_coalescing.tsx:1:1]
  1 │ foo! ?? bar;
