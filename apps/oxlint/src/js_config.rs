@@ -84,7 +84,6 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                     let mut oxlintrc: Oxlintrc = match serde_json::from_value(entry.config) {
                         Ok(config) => config,
                         Err(err) => {
-                            debug_assert!(false, "All JS configs should be valid JSON");
                             errors.push(
                                 OxcDiagnostic::error(format!(
                                     "Failed to parse config from {}",
