@@ -88,10 +88,18 @@ function createContextAndVisitor(rule) {
 	else if (beforeHook !== null && typeof beforeHook != "function") throw Error("`before` property of visitor must be a function if defined");
 	if (afterHook != null) {
 		if (typeof afterHook != "function") throw Error("`after` property of visitor must be a function if defined");
-		let programExit = visitor["Program:exit"];
-		visitor["Program:exit"] = programExit == null ? (_node) => afterHook() : (node) => {
-			programExit(node), afterHook();
-		};
+		let maxAttrs = -1;
+		for (let key in visitor) {
+			if (!Object.hasOwn(visitor, key) || !key.endsWith(":exit")) continue;
+			let end = key.length - 5, count = 0;
+			for (let i = 0; i < end; i++) {
+				let c = key.charCodeAt(i);
+				(c === 91 || c === 46 || c === 58) && count++;
+			}
+			count > maxAttrs && (maxAttrs = count);
+		}
+		let key = `Program${"[type]".repeat(maxAttrs + 1)}:exit`;
+		visitor[key] = (_node) => afterHook();
 	}
 	return {
 		context,

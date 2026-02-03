@@ -23,6 +23,16 @@ filename: <fixture>/files/1.js                              eslint-compat-plugin
 filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-after-only
   0:1  error  after hook:
 filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-hooks-only
+  0:1  error  after hook:
+filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  *:exit visit fn:
+filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  Program:exit visit fn:
+filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  [body]:exit visit fn:
+filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  [body][body][body]:exit visit fn:
+filename: <fixture>/files/1.js                              eslint-compat-plugin/create-once-selector
   1:5  error  ident visit fn "a":
 filename: <fixture>/files/1.js                              eslint-compat-plugin/create
   1:5  error  ident visit fn "a":
@@ -68,6 +78,16 @@ filename: <fixture>/files/2.js                              eslint-compat-plugin
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-after-only
   0:1  error  after hook:
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-hooks-only
+  0:1  error  after hook:
+filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  *:exit visit fn:
+filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  Program:exit visit fn:
+filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  [body]:exit visit fn:
+filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
+  1:1  error  [body][body][body]:exit visit fn:
+filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-selector
   1:5  error  ident visit fn "c":
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create
   1:5  error  ident visit fn "c":
@@ -95,7 +115,7 @@ filename: <fixture>/files/2.js                              eslint-compat-plugin
   1:8  error  ident visit fn "d":
 filename: <fixture>/files/2.js                              eslint-compat-plugin/create-once-no-hooks
 
-✖ 39 problems (39 errors, 0 warnings)
+✖ 49 problems (49 errors, 0 warnings)
 ```
 
 # stderr

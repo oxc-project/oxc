@@ -203,14 +203,59 @@ function createContextAndVisitor(rule: CreateOnceRule): {
       throw new Error("`after` property of visitor must be a function if defined");
     }
 
-    const programExit = visitor["Program:exit"];
-    visitor["Program:exit"] =
-      programExit == null
-        ? (_node) => afterHook()
-        : (node) => {
-            programExit(node);
-            afterHook();
-          };
+    // We need to make sure that `after` hook is called after all visit fns have been called.
+    // Usually this is done by adding a `Program:exit` visit fn, but there's an odd edge case:
+    // Other visit fns could be called after `Program:exit` if they're selectors with a higher specificity.
+    // e.g. `[body]:exit` would match `Program`, but has higher specificity than `Program:exit`, so would run last.
+    //
+    // We don't want to parse every visitor key here to calculate their specificity, so we take a shortcut.
+    // Selectors which have highest specificity are of types `attribute`, `field`, `nth-child`, and `nth-last-child`.
+    //
+    // Examples of selectors of these types:
+    // * `[id]` (attribute)
+    // * `.id` (field)
+    // * `:first-child` (nth-child)
+    // * `:nth-child(2)` (nth-child)
+    // * `:last-child` (nth-last-child)
+    // * `:nth-last-child(2)` (nth-last-child)
+    //
+    // All these contain the characters `[`, `.`, or `:`. So just count these characters in all visitor keys, and create
+    // a selector which always matches `Program`, but with a higher specificity than the most specific exit selector.
+    //
+    // e.g. If visitor has key `[id]:first-child:exit`, that contains 2 special characters (not including `:exit`).
+    // So we use a selector `Program[type][type][type]:exit` (3 attributes = more specific than 2).
+    //
+    // ESLint will recognise that this `Program[type][type][type]` selector can only match `Program` nodes,
+    // and will only execute it only on `Program` node. So the additional cost of checking if the selector matches
+    // is only paid once per file - insignificant impact on performance.
+    // `nodeTypes` for this selector is `["Program"]`, so it only gets added to `exitSelectorsByNodeType` for `Program`.
+    // https://github.com/eslint/eslint/blob/4cecf8393ae9af18c4cfd50621115eb23b3d0cb6/lib/linter/esquery.js#L143-L231
+    // https://github.com/eslint/eslint/blob/4cecf8393ae9af18c4cfd50621115eb23b3d0cb6/lib/linter/source-code-traverser.js#L93-L125
+    //
+    // This is blunt tool. We may well create a selector which has a higher specificity than we need.
+    // But that doesn't really matter - as long as it's specific *enough*, it'll work correctly.
+    const CHAR_CODE_BRACKET = "[".charCodeAt(0);
+    const CHAR_CODE_DOT = ".".charCodeAt(0);
+    const CHAR_CODE_COLON = ":".charCodeAt(0);
+
+    let maxAttrs = -1;
+    for (const key in visitor) {
+      if (!Object.hasOwn(visitor, key)) continue;
+
+      // Only `:exit` visit functions matter here
+      if (!key.endsWith(":exit")) continue;
+
+      const end = key.length - ":exit".length;
+      let count = 0;
+      for (let i = 0; i < end; i++) {
+        const c = key.charCodeAt(i);
+        if (c === CHAR_CODE_BRACKET || c === CHAR_CODE_DOT || c === CHAR_CODE_COLON) count++;
+      }
+      if (count > maxAttrs) maxAttrs = count;
+    }
+
+    const key = `Program${"[type]".repeat(maxAttrs + 1)}:exit`;
+    visitor[key] = (_node) => afterHook();
   }
 
   return { context, visitor, beforeHook };

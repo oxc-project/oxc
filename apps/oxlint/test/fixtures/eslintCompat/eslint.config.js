@@ -9,6 +9,7 @@ export default [
     rules: {
       "eslint-compat-plugin/create": "error",
       "eslint-compat-plugin/create-once": "error",
+      "eslint-compat-plugin/create-once-selector": "error",
       "eslint-compat-plugin/create-once-before-false": "error",
       "eslint-compat-plugin/create-once-before-only": "error",
       "eslint-compat-plugin/create-once-after-only": "error",

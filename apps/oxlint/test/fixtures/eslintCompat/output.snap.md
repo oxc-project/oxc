@@ -48,6 +48,41 @@
    : ^
    `----
 
+  x eslint-compat-plugin(create-once-selector): after hook:
+  | filename: <fixture>/files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let a, b;
+   : ^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): *:exit visit fn:
+  | filename: <fixture>/files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let a, b;
+   : ^^^^^^^^^^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): Program:exit visit fn:
+  | filename: <fixture>/files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let a, b;
+   : ^^^^^^^^^^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): [body]:exit visit fn:
+  | filename: <fixture>/files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let a, b;
+   : ^^^^^^^^^^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): [body][body][body]:exit visit fn:
+  | filename: <fixture>/files/1.js
+   ,-[files/1.js:1:1]
+ 1 | let a, b;
+   : ^^^^^^^^^^
+   `----
+
   x eslint-compat-plugin(create): ident visit fn "a":
   | filename: <fixture>/files/1.js
    ,-[files/1.js:1:5]
@@ -172,6 +207,41 @@
    : ^
    `----
 
+  x eslint-compat-plugin(create-once-selector): after hook:
+  | filename: <fixture>/files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let c, d;
+   : ^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): *:exit visit fn:
+  | filename: <fixture>/files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let c, d;
+   : ^^^^^^^^^^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): Program:exit visit fn:
+  | filename: <fixture>/files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let c, d;
+   : ^^^^^^^^^^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): [body]:exit visit fn:
+  | filename: <fixture>/files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let c, d;
+   : ^^^^^^^^^^
+   `----
+
+  x eslint-compat-plugin(create-once-selector): [body][body][body]:exit visit fn:
+  | filename: <fixture>/files/2.js
+   ,-[files/2.js:1:1]
+ 1 | let c, d;
+   : ^^^^^^^^^^
+   `----
+
   x eslint-compat-plugin(create): ident visit fn "c":
   | filename: <fixture>/files/2.js
    ,-[files/2.js:1:5]
@@ -258,8 +328,8 @@
    :        ^
    `----
 
-Found 0 warnings and 35 errors.
-Finished in Xms on 2 files with 7 rules using X threads.
+Found 0 warnings and 45 errors.
+Finished in Xms on 2 files with 8 rules using X threads.
 ```
 
 # stderr

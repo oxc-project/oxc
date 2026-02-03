@@ -108,6 +108,96 @@ const createOnceRule: Rule = {
   },
 };
 
+// This tests that `after` hook runs after all visit functions, even high-specificity ones matching `Program`.
+const createOnceSelectorRule: Rule = {
+  createOnce(context) {
+    // `fileNum` should be different for each file
+    let fileNum = 0;
+    // Note: Files are processed in unpredictable order, so `files/1.js` may be `fileNum` 1 or 2.
+    // Therefore, collect all visits and check them in `after` hook of the 2nd file.
+    const visits: { fileNum: number; selector: string }[] = [];
+
+    return {
+      before() {
+        fileNum++;
+      },
+      "*:exit"(node) {
+        if (node.type !== "Program") return;
+
+        visits.push({ fileNum, selector: "*" });
+
+        context.report({
+          message: `*:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      "Program:exit"(node) {
+        visits.push({ fileNum, selector: "Program" });
+
+        context.report({
+          message: `Program:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      "[body]:exit"(node) {
+        visits.push({ fileNum, selector: "[body]" });
+
+        context.report({
+          message: `[body]:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      "[body][body][body]:exit"(node) {
+        visits.push({ fileNum, selector: "[body][body][body]" });
+
+        context.report({
+          message: `[body][body][body]:exit visit fn:\n` + `filename: ${context.filename}`,
+          node,
+        });
+      },
+      after() {
+        context.report({
+          message: "after hook:\n" + `filename: ${context.filename}`,
+          node: SPAN,
+        });
+
+        visits.push({ fileNum, selector: "after" });
+
+        if (fileNum === 2) {
+          visits.sort((v1, v2) => v1.fileNum - v2.fileNum);
+
+          const expectedVisits = [
+            { fileNum: 1, selector: "*" },
+            { fileNum: 1, selector: "Program" },
+            { fileNum: 1, selector: "[body]" },
+            { fileNum: 1, selector: "[body][body][body]" },
+            { fileNum: 1, selector: "after" },
+            { fileNum: 2, selector: "*" },
+            { fileNum: 2, selector: "Program" },
+            { fileNum: 2, selector: "[body]" },
+            { fileNum: 2, selector: "[body][body][body]" },
+            { fileNum: 2, selector: "after" },
+          ];
+
+          if (
+            visits.length !== expectedVisits.length ||
+            visits.some(
+              (v, i) =>
+                v.fileNum !== expectedVisits[i].fileNum ||
+                v.selector !== expectedVisits[i].selector,
+            )
+          ) {
+            context.report({
+              message: `Unexpected visits: ${JSON.stringify(visits)}`,
+              node: SPAN,
+            });
+          }
+        }
+      },
+    };
+  },
+};
+
 // Tests that `before` hook returning `false` disables visiting AST for the file.
 const createOnceBeforeFalseRule: Rule = {
   createOnce(context) {
@@ -217,6 +307,7 @@ export default eslintCompatPlugin({
   rules: {
     create: createRule,
     "create-once": createOnceRule,
+    "create-once-selector": createOnceSelectorRule,
     "create-once-before-false": createOnceBeforeFalseRule,
     "create-once-before-only": createOnceBeforeOnlyRule,
     "create-once-after-only": createOnceAfterOnlyRule,
