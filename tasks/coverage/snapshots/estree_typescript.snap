@@ -2,7 +2,7 @@ commit: 95e3aaa9
 
 estree_typescript Summary:
 AST Parsed     : 9776/9776 (100.00%)
-Positive Passed: 8976/9776 (91.82%)
+Positive Passed: 8974/9776 (91.80%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APILibCheck.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/APISample_Watch.ts
@@ -1076,6 +1076,10 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/expo
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/importImportOnlyModule.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/importNonExternalModule.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension5.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleScoping.ts
 
