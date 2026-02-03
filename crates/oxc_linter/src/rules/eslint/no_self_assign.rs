@@ -417,8 +417,7 @@ fn test() {
         ("a['b'] = a['b']", Some(serde_json::json!([{ "props": true }]))),
         ("a[\n    'b'\n] = a[\n    'b'\n]", Some(serde_json::json!([{ "props": true }]))),
         ("this.x = this.x", Some(serde_json::json!([{ "props": true }]))),
-        // TODO: <https://github.com/eslint/eslint/blob/eb3d7946e1e9f70254008744dba2397aaa730114/lib/rules/utils/ast-utils.js#L362>
-        // ("a['/(?<zero>0)/'] = a[/(?<zero>0)/]", Some(serde_json::json!([{ "props": true }]))),
+        ("a['/(?<zero>0)/'] = a[/(?<zero>0)/]", Some(serde_json::json!([{ "props": true }]))),
         ("(a?.b).c = (a?.b).c", None),
         ("a.b = a?.b", None),
         ("class C { #field; foo() { this.#field = this.#field; } }", None),
