@@ -3534,6 +3534,38 @@ Negative Passed: 134/134 (100.00%)
    ·     ─────────
    ╰────
 
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:20:22]
+ 19 │ export type LocalInterface =
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+    ·                      ─────────────────
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:21:22]
+ 20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+ 21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+    ·                      ─────────────────
+ 22 │ 
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:23:49]
+ 22 │ 
+ 23 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+    ·                                                 ─────────────────
+ 24 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+    ╰────
+
+  × Expected 'with' in import type options
+    ╭─[misc/fail/oxc-2394.ts:24:49]
+ 23 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+ 24 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+    ·                                                 ─────────────────
+ 25 │ 
+    ╰────
+
   × Expected `{` but found `[`
     ╭─[misc/fail/oxc-2394.ts:38:21]
  37 │ export type LocalInterface =

@@ -3,7 +3,7 @@ commit: 92c052dc
 parser_babel Summary:
 AST Parsed     : 2224/2224 (100.00%)
 Positive Passed: 2211/2224 (99.42%)
-Negative Passed: 1656/1689 (98.05%)
+Negative Passed: 1660/1689 (98.28%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
@@ -61,14 +61,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-escaped-with/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-string-with/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
@@ -14204,11 +14196,41 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                                  ╰── `{` expected
    ╰────
 
+  × Expected 'with' in import type options
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-escaped-with/input.ts:1:36]
+ 1 │ let x: typeof import("foo.json", { w\u0069th: { type: "json" } });
+   ·                                    ─────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-escaped-with/input.ts:1:36]
+ 1 │ let x: typeof import("foo.json", { w\u0069th: { type: "json" } });
+   ·                                    ─────────
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-string-with/input.ts:1:36]
+ 1 │ let x: typeof import("foo.json", { "with": { type: "json" } });
+   ·                                    ──────
+   ╰────
+
   × Expected `)` but found `,`
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-trailing-comma/input.ts:1:60]
  1 │ let x: typeof import("foo.json", { with: { type: "json" } }, )
    ·                                                            ┬
    ·                                                            ╰── `)` expected
+   ╰────
+
+  × Import attributes keys must be identifier or string literal.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-computed-properties/input.ts:1:44]
+ 1 │ let x: typeof import("foo.json", { with: { ["type"]: "json" } });
+   ·                                            ─
+   ╰────
+
+  × Spread elements are not allowed in import type options.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/types/invalid-import-type-options-with-spread-element/input.ts:1:58]
+ 1 │ let x: typeof import("foo.json", { with: { type: "json", ...attributes } });
+   ·                                                          ───
    ╰────
 
   × Expected `{` but found `)`

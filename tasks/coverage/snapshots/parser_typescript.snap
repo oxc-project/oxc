@@ -9189,12 +9189,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    · ─
    ╰────
 
-  × Expected `:` but found `,`
-   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:36]
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/parseAssertEntriesError.ts:2:32]
  1 │ export type LocalInterface =
  2 │     & import("pkg", { assert: {1234, "resolution-mode": "require"} }).RequireInterface
-   ·                                    ┬
-   ·                                    ╰── `:` expected
+   ·                                ────
  3 │     & import("pkg", { assert: {1234, "resolution-mode": "import"} }).ImportInterface;
    ╰────
 
@@ -9236,12 +9235,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × Expected `:` but found `,`
-   ╭─[typescript/tests/cases/compiler/parseImportAttributesError.ts:2:34]
+  × Unexpected token
+   ╭─[typescript/tests/cases/compiler/parseImportAttributesError.ts:2:30]
  1 │ export type LocalInterface =
  2 │     & import("pkg", { with: {1234, "resolution-mode": "require"} }).RequireInterface
-   ·                                  ┬
-   ·                                  ╰── `:` expected
+   ·                              ────
  3 │     & import("pkg", { with: {1234, "resolution-mode": "import"} }).ImportInterface;
    ╰────
 
@@ -20199,11 +20197,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  9 │ const g = import('./0', {}, {})
    ╰────
 
-  × Unexpected token
+  × Expected `}` but found `,`
     ╭─[typescript/tests/cases/conformance/importAttributes/importAttributes10.ts:22:5]
  21 │     type: "json"
  22 │   },,
-    ·     ─
+    ·     ┬
+    ·     ╰── `}` expected
  23 │ });
     ╰────
 
@@ -21116,22 +21115,66 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
 
-  × Expected `{` but found `[`
-   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:3:21]
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:3:22]
  2 │ export type LocalInterface =
- 3 │     & import("pkg", [ {"resolution-mode": "require"} ]).RequireInterface
-   ·                     ┬
-   ·                     ╰── `{` expected
- 4 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
+ 3 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+   ·                      ─────────────────
+ 4 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
    ╰────
 
-  × Expected `{` but found `[`
-   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmitErrors1.ts:3:21]
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:4:22]
+ 3 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+ 4 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+   ·                      ─────────────────
+ 5 │ 
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:6:49]
+ 5 │ 
+ 6 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+   ·                                                 ─────────────────
+ 7 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:7:49]
+ 6 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+ 7 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+   ·                                                 ─────────────────
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmitErrors1.ts:3:22]
  2 │ export type LocalInterface =
- 3 │     & import("pkg", [ {"resolution-mode": "require"} ]).RequireInterface
-   ·                     ┬
-   ·                     ╰── `{` expected
- 4 │     & import("pkg", [ {"resolution-mode": "import"} ]).ImportInterface;
+ 3 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+   ·                      ─────────────────
+ 4 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmitErrors1.ts:4:22]
+ 3 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
+ 4 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
+   ·                      ─────────────────
+ 5 │ 
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmitErrors1.ts:6:49]
+ 5 │ 
+ 6 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+   ·                                                 ─────────────────
+ 7 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+   ╰────
+
+  × Expected 'with' in import type options
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesImportTypeModeDeclarationEmitErrors1.ts:7:49]
+ 6 │ export const a = (null as any as import("pkg", {"resolution-mode": "require"}).RequireInterface);
+ 7 │ export const b = (null as any as import("pkg", {"resolution-mode": "import"}).ImportInterface);
+   ·                                                 ─────────────────
    ╰────
 
   × TS(1030): 'override' modifier already seen.

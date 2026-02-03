@@ -1268,3 +1268,19 @@ pub fn only_default_import_allowed_in_source_phase(span: Span) -> OxcDiagnostic 
     OxcDiagnostic::error("Only a single default import is allowed in a source phase import.")
         .with_label(span)
 }
+
+#[cold]
+pub fn ts_import_type_options_expected_with(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected 'with' in import type options").with_label(span)
+}
+
+#[cold]
+pub fn ts_import_type_options_invalid_key(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Import attributes keys must be identifier or string literal.")
+        .with_label(span)
+}
+
+#[cold]
+pub fn ts_import_type_options_no_spread(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Spread elements are not allowed in import type options.").with_label(span)
+}

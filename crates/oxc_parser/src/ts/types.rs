@@ -1075,7 +1075,7 @@ impl<'a> ParserImpl<'a> {
         };
 
         let options =
-            if self.eat(Kind::Comma) { Some(self.parse_object_expression()) } else { None };
+            if self.eat(Kind::Comma) { Some(self.parse_ts_import_type_options()) } else { None };
         self.expect(Kind::RParen);
         let qualifier =
             if self.eat(Kind::Dot) { Some(self.parse_ts_import_type_qualifier()) } else { None };
@@ -1101,6 +1101,146 @@ impl<'a> ParserImpl<'a> {
         }
 
         left
+    }
+
+    /// Parse TypeScript import type options: `{ with: { type: "json" } }` or `{ assert: { ... } }`
+    ///
+    /// The options must have a property with key `with` or `assert` (as identifier, not string).
+    /// If the value is an object literal, it must have only static key-value pairs
+    /// (no computed keys, no spread elements).
+    fn parse_ts_import_type_options(&mut self) -> Box<'a, ObjectExpression<'a>> {
+        let span = self.start_span();
+        self.expect(Kind::LCurly);
+
+        // Expect `with` or `assert` as identifier (not string, not escaped)
+        // TypeScript supports both: `with` is the current standard, `assert` is the older syntax
+        let key_span = self.cur_token().span();
+        let is_with = self.at(Kind::With);
+        let is_assert = self.at(Kind::Assert);
+        if (!is_with && !is_assert) || self.cur_token().escaped() {
+            self.error(diagnostics::ts_import_type_options_expected_with(key_span));
+        }
+        // Use the actual string from the source (not a static string) to ensure it's in the arena
+        let key_name = self.cur_string();
+        let with_key_span = self.start_span();
+        self.bump_any();
+        let with_key = self.ast.identifier_name(self.end_span(with_key_span), key_name);
+
+        self.expect(Kind::Colon);
+
+        // Parse the value - if it's an object literal, validate it
+        let value = if self.at(Kind::LCurly) {
+            let inner_object = self.parse_ts_import_type_attributes();
+            Expression::ObjectExpression(self.alloc(inner_object))
+        } else {
+            // Allow any expression (e.g., super.foo)
+            self.parse_assignment_expression_or_higher()
+        };
+
+        // Create the outer `with: { ... }` property
+        let with_property = self.ast.alloc_object_property(
+            self.end_span(with_key_span),
+            PropertyKind::Init,
+            PropertyKey::StaticIdentifier(self.alloc(with_key)),
+            value,
+            false,
+            false,
+            false,
+        );
+
+        let outer_properties = self.ast.vec1(ObjectPropertyKind::ObjectProperty(with_property));
+
+        // Allow optional trailing comma: `{ with: { type: "json" }, }`
+        let _ = self.eat(Kind::Comma);
+
+        self.expect(Kind::RCurly);
+        self.ast.alloc_object_expression(self.end_span(span), outer_properties)
+    }
+
+    /// Parse TypeScript import type attributes object: `{ type: "json" }`
+    /// Only allows static key-value pairs (no computed keys, no spread elements).
+    fn parse_ts_import_type_attributes(&mut self) -> ObjectExpression<'a> {
+        let span = self.start_span();
+        self.expect(Kind::LCurly);
+
+        let mut properties = self.ast.vec();
+        let mut first = true;
+        while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
+            if first {
+                first = false;
+            } else {
+                self.expect(Kind::Comma);
+                if self.at(Kind::RCurly) {
+                    break;
+                }
+            }
+
+            // Check for spread element
+            if self.at(Kind::Dot3) {
+                let spread_span = self.cur_token().span();
+                self.error(diagnostics::ts_import_type_options_no_spread(spread_span));
+                // Skip the spread and parse the expression to recover
+                self.bump_any();
+                self.parse_assignment_expression_or_higher();
+                continue;
+            }
+
+            let prop_span = self.start_span();
+
+            // Check for computed property
+            if self.at(Kind::LBrack) {
+                let bracket_span = self.cur_token().span();
+                self.error(diagnostics::ts_import_type_options_invalid_key(bracket_span));
+                // Parse as computed to recover
+                self.bump_any();
+                self.parse_assignment_expression_or_higher();
+                self.expect(Kind::RBrack);
+                self.expect(Kind::Colon);
+                let value = self.parse_assignment_expression_or_higher();
+                let key = PropertyKey::StringLiteral(self.alloc(self.ast.string_literal(
+                    bracket_span,
+                    "",
+                    None,
+                )));
+                properties.push(ObjectPropertyKind::ObjectProperty(
+                    self.ast.alloc_object_property(
+                        self.end_span(prop_span),
+                        PropertyKind::Init,
+                        key,
+                        value,
+                        false,
+                        false,
+                        true, // computed
+                    ),
+                ));
+                continue;
+            }
+
+            // Parse identifier or string key
+            let key = if self.at(Kind::Str) {
+                let string_literal = self.parse_literal_string();
+                PropertyKey::StringLiteral(self.alloc(string_literal))
+            } else {
+                let ident = self.parse_identifier_name();
+                PropertyKey::StaticIdentifier(self.alloc(ident))
+            };
+
+            self.expect(Kind::Colon);
+            let value = self.parse_assignment_expression_or_higher();
+
+            properties.push(ObjectPropertyKind::ObjectProperty(self.ast.alloc_object_property(
+                self.end_span(prop_span),
+                PropertyKind::Init,
+                key,
+                value,
+                false,
+                false,
+                false,
+            )));
+        }
+
+        self.expect(Kind::RCurly);
+        self.ast.object_expression(self.end_span(span), properties)
     }
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Option<TSType<'a>> {
