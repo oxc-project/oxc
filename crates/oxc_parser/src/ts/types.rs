@@ -803,7 +803,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn try_parse_type_arguments(
         &mut self,
     ) -> Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        if self.at(Kind::LAngle) {
+        if self.re_lex_ts_l_angle() {
             let span = self.start_span();
             let opening_span = self.cur_token().span();
             self.expect(Kind::LAngle);

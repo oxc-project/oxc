@@ -2,7 +2,7 @@ commit: 92c052dc
 
 semantic_babel Summary:
 AST Parsed     : 2224/2224 (100.00%)
-Positive Passed: 2022/2224 (90.92%)
+Positive Passed: 2024/2224 (91.01%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol span mismatch for "C":
 after transform: SymbolId(0): Span { start: 65, end: 66 }
@@ -1311,14 +1311,10 @@ Unresolved references mismatch:
 after transform: ["T", "f", "x"]
 rebuilt        : ["f", "x"]
 
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts
-Expected `{` but found `<<`
-
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/interface-heritage/input.ts
-Expected `{` but found `<<`
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx
-Unexpected token
+Unresolved references mismatch:
+after transform: ["f"]
+rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-only-import-export-specifiers/export-type-only-as-as-keyword/input.ts
 Unresolved references mismatch:
