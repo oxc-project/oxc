@@ -11,7 +11,7 @@ use crate::codegen;
 
 #[track_caller]
 pub fn test(source_text: &str, expected: &str, config: &ReplaceGlobalDefinesConfig) {
-    let source_type = SourceType::ts();
+    let source_type = SourceType::ts().with_module(true);
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     assert!(ret.errors.is_empty());
