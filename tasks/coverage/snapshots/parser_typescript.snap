@@ -2,8 +2,8 @@ commit: 95e3aaa9
 
 parser_typescript Summary:
 AST Parsed     : 9842/9843 (99.99%)
-Positive Passed: 9837/9843 (99.94%)
-Negative Passed: 1512/2557 (59.13%)
+Positive Passed: 9838/9843 (99.95%)
+Negative Passed: 1511/2557 (59.09%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1466,6 +1466,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalM
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emit.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelAwaitNonModule.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/externalModules/topLevelModuleDeclarationAndFile.ts
@@ -2117,15 +2119,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asy
      ·             ╰── It can not be redeclared here
  132 │     }
      ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts
-
-  × Cannot assign to 'arguments' in strict mode
-   ╭─[typescript/tests/cases/conformance/dynamicImport/importCallExpressionInScriptContext1.ts:2:10]
- 1 │ var p1 = import("./0");
- 2 │ function arguments() { } // this is allow as the file doesn't have implicit "use strict"
-   ·          ─────────
-   ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
 
@@ -19890,20 +19883,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
 
   × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
- 2 │ declare var require: any;
- 3 │ import await = require("./other");
-   ·        ─────
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.11.ts:3:8]
- 2 │ declare var require: any;
- 3 │ import await = require("./other");
-   ·        ─────
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.12.ts:5:8]
  4 │ // await disallowed in import=namespace when in a module
  5 │ import await = foo.await;
@@ -19975,25 +19954,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │ }
    ╰────
 
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
- 1 │ // await disallowed in namespace import
- 2 │ import * as await from "./other";
-   ·             ─────
-   ╰────
-
   × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.7.ts:2:13]
  1 │ // await disallowed in namespace import
  2 │ import * as await from "./other";
    ·             ─────
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/externalModules/topLevelAwaitErrors.8.ts:2:8]
- 1 │ // await disallowed in default import
- 2 │ import await from "./other";
-   ·        ─────
    ╰────
 
   × The keyword 'await' is reserved
@@ -21213,36 +21178,14 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     }
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:2:15]
- 1 │ class C4 {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
-
   × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:18]
- 1 │ async function * await() {
-   ·                  ─────
- 2 │ }
-   ╰────
-
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:18]
- 1 │ async function * await() {
-   ·                  ─────
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionDeclarations.es2018.ts:1:21]
+ 1 │ async function * f4(await) {
+   ·                     ─────
  2 │ }
    ╰────
 
   × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
- 1 │ const f2 = async function * await() {
-   ·                             ─────
- 2 │ };
-   ╰────
-
-  × The keyword 'await' is reserved
    ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.functionExpressions.es2018.ts:1:29]
  1 │ const f2 = async function * await() {
    ·                             ─────
@@ -21257,21 +21200,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  3 │     }
    ╰────
 
-  × The keyword 'await' is reserved
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.objectLiteralMethods.es2018.ts:2:15]
- 1 │ const o4 = {
- 2 │     async * f(await) {
-   ·               ─────
- 3 │     }
-   ╰────
-
-  × await can only be used in conjunction with `for...of` statements
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:1]
- 1 │ for await (const x in y) {
-   · ────────────────────────
+  × `await` is only allowed within async functions and at the top levels of modules
+   ╭─[typescript/tests/cases/conformance/parser/ecmascript2018/forAwait/parser.forAwait.es2018.ts:1:5]
+ 1 │ for await (const x of y) {
+   ·     ─────
  2 │ }
    ╰────
-  help: Did you mean to use a for...of statement?
+  help: Either remove this `await` or add the `async` keyword to the enclosing function
 
   × Invalid Character `
   │ `
@@ -24544,13 +24479,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword1.ts:1:1]
  1 │ \u0076ar x = "hello";
    · ────────
-   ╰────
-
-  × Cannot use `await` as an identifier in an async context
-   ╭─[typescript/tests/cases/conformance/scanner/ecmascript5/scannerUnicodeEscapeInKeyword2.ts:1:5]
- 1 │ var \u0061wait = 12; // ok
-   ·     ──────────
- 2 │ async function main() {
    ╰────
 
   × Keywords cannot contain escape characters
