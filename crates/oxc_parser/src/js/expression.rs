@@ -830,11 +830,25 @@ impl<'a> ParserImpl<'a> {
             };
 
             if is_property_access {
+                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                    self.error(
+                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                            self.end_span(lhs_span),
+                        ),
+                    );
+                }
                 lhs = self.parse_static_member_expression(lhs_span, lhs, question_dot);
                 continue;
             }
 
             if (question_dot || !self.ctx.has_decorator()) && self.at(Kind::LBrack) {
+                if matches!(lhs, Expression::TSInstantiationExpression(_)) {
+                    self.error(
+                        diagnostics::ts_instantiation_expression_cannot_be_followed_by_property_access(
+                            self.end_span(lhs_span),
+                        ),
+                    );
+                }
                 lhs = self.parse_computed_member_expression(lhs_span, lhs, question_dot);
                 continue;
             }
