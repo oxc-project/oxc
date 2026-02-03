@@ -1,0 +1,43 @@
+{
+  "name": "@oxlint/plugins",
+  "version": "1.43.0",
+  "description": "Plugin utilities for Oxlint",
+  "keywords": [
+    "eslint",
+    "linter",
+    "oxlint",
+    "plugin"
+  ],
+  "homepage": "https://oxc.rs/docs/guide/usage/linter/js-plugins",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "license": "MIT",
+  "author": "Boshen and oxc contributors",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oxc-project/oxc.git",
+    "directory": "npm/oxlint-plugins"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "files": [
+    "index.js",
+    "index.cjs",
+    "index.d.ts",
+    "README.md"
+  ],
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "import": "./index.js",
+      "require": "./index.cjs",
+      "default": "./index.js"
+    }
+  },
+  "engines": {
+    "node": "^12.22.0 || ^14.17.0 || >=16.0.0"
+  }
+}

@@ -6,7 +6,9 @@ import { join } from "node:path";
 
 const oxlintDirPath = join(import.meta.dirname, ".."),
   srcDirPath = join(oxlintDirPath, "src-js"),
-  distDirPath = join(oxlintDirPath, "dist");
+  distDirPath = join(oxlintDirPath, "dist"),
+  distPkgPluginsDirPath = join(oxlintDirPath, "dist-pkg-plugins"),
+  pkgPluginsDirPath = join(oxlintDirPath, "../../npm/oxlint-plugins");
 
 // Build with tsdown
 console.log("Building with tsdown...");
@@ -23,5 +25,20 @@ for (const filename of readdirSync(srcDirPath)) {
   const srcPath = join(srcDirPath, filename);
   copyFileSync(srcPath, join(distDirPath, filename));
 }
+
+// Copy files to `@oxlint/plugins` package
+console.log("Moving files to `@oxlint/plugins` package...");
+
+const files = [
+  { src: "esm/index.js", dest: "index.js" },
+  { src: "esm/index.d.ts", dest: "index.d.ts" },
+  { src: "cjs/index.cjs", dest: "index.cjs" },
+];
+
+for (const { src, dest } of files) {
+  copyFileSync(join(distPkgPluginsDirPath, src), join(pkgPluginsDirPath, dest));
+}
+
+rmSync(distPkgPluginsDirPath, { recursive: true });
 
 console.log("Build complete!");

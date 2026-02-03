@@ -311,6 +311,8 @@ importers:
         specifier: '>=0.11.2'
         version: 0.11.4
 
+  npm/oxlint-plugins: {}
+
   npm/runtime: {}
 
   plugins:

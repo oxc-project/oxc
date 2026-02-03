@@ -17,6 +17,7 @@ const CONFORMANCE = isEnabled(env.CONFORMANCE);
 // This is the build used in tests.
 const DEBUG = CONFORMANCE || isEnabled(env.DEBUG);
 
+// Base config
 const commonConfig = defineConfig({
   platform: "node",
   target: "node20",
@@ -30,9 +31,36 @@ const commonConfig = defineConfig({
   inlineOnly: false,
 });
 
+// Minification options.
+// At present only compress syntax.
+// Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
+const minifyConfig = {
+  compress: { keepNames: { function: true, class: true } },
+  mangle: false,
+  codegen: { removeWhitespace: false },
+};
+
+// Base config for `@oxlint/plugins` package.
+// "node12" target to match `engines` field of last ESLint 8 release (8.57.1).
+const pluginsPkgConfig = defineConfig({
+  ...commonConfig,
+  entry: {
+    index: "src-js/plugins.ts",
+  },
+  target: "node12",
+  minify: minifyConfig,
+  define: {
+    DEBUG: "false",
+    CONFORMANCE: "false",
+  },
+});
+
+// Plugins.
+// Only remove debug assertions in release build.
 const plugins = [createReplaceGlobalsPlugin()];
 if (!DEBUG) plugins.push(createReplaceAssertsPlugin());
 
+// All build configs
 export default defineConfig([
   // Main build
   {
@@ -44,13 +72,7 @@ export default defineConfig([
       "./oxlint.*.node",
       "@oxlint/*",
     ],
-    // At present only compress syntax.
-    // Don't mangle identifiers or remove whitespace, so `dist` code remains somewhat readable.
-    minify: {
-      compress: { keepNames: { function: true, class: true } },
-      mangle: false,
-      codegen: { removeWhitespace: false },
-    },
+    minify: minifyConfig,
     dts: true,
     attw: { profile: "esm-only" },
     define: {
@@ -63,6 +85,7 @@ export default defineConfig([
       experimental: { nativeMagicString: true },
     },
   },
+
   // TypeScript.
   // Bundled separately and lazy-loaded, as it's a lot of code.
   // Only used for tokens APIs.
@@ -73,6 +96,22 @@ export default defineConfig([
     // Minify as this bundle is just dependencies. We don't need to be able to debug it.
     // Minification halves the size of the bundle.
     minify: true,
+  },
+
+  // `@oxlint/plugins` package.
+  // Dual package - both ESM and CommonJS.
+  // `scripts/build.ts` moves built files in `dist-pkg-plugins` to `npm/oxlint-plugins`.
+  {
+    ...pluginsPkgConfig,
+    outDir: "dist-pkg-plugins/esm",
+    format: "esm",
+    dts: true,
+  },
+  {
+    ...pluginsPkgConfig,
+    outDir: "dist-pkg-plugins/cjs",
+    format: "commonjs",
+    dts: false,
   },
 ]);
 
