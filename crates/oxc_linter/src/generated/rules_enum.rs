@@ -670,6 +670,7 @@ pub use crate::rules::vue::no_required_prop_with_default::NoRequiredPropWithDefa
 pub use crate::rules::vue::no_this_in_before_route_enter::NoThisInBeforeRouteEnter as VueNoThisInBeforeRouteEnter;
 pub use crate::rules::vue::prefer_import_from_vue::PreferImportFromVue as VuePreferImportFromVue;
 pub use crate::rules::vue::require_default_export::RequireDefaultExport as VueRequireDefaultExport;
+pub use crate::rules::vue::require_direct_export::RequireDirectExport as VueRequireDirectExport;
 pub use crate::rules::vue::require_typed_ref::RequireTypedRef as VueRequireTypedRef;
 pub use crate::rules::vue::valid_define_emits::ValidDefineEmits as VueValidDefineEmits;
 pub use crate::rules::vue::valid_define_props::ValidDefineProps as VueValidDefineProps;
@@ -1348,6 +1349,7 @@ pub enum RuleEnum {
     VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter),
     VuePreferImportFromVue(VuePreferImportFromVue),
     VueRequireDefaultExport(VueRequireDefaultExport),
+    VueRequireDirectExport(VueRequireDirectExport),
     VueRequireTypedRef(VueRequireTypedRef),
     VueValidDefineEmits(VueValidDefineEmits),
     VueValidDefineProps(VueValidDefineProps),
@@ -2017,9 +2019,10 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => 659usize,
             Self::VuePreferImportFromVue(_) => 660usize,
             Self::VueRequireDefaultExport(_) => 661usize,
-            Self::VueRequireTypedRef(_) => 662usize,
-            Self::VueValidDefineEmits(_) => 663usize,
-            Self::VueValidDefineProps(_) => 664usize,
+            Self::VueRequireDirectExport(_) => 662usize,
+            Self::VueRequireTypedRef(_) => 663usize,
+            Self::VueValidDefineEmits(_) => 664usize,
+            Self::VueValidDefineProps(_) => 665usize,
         }
     }
     pub fn name(&self) -> &'static str {
@@ -2770,6 +2773,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::NAME,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::NAME,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::NAME,
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::NAME,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::NAME,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::NAME,
             Self::VueValidDefineProps(_) => VueValidDefineProps::NAME,
@@ -3565,6 +3569,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::CATEGORY,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::CATEGORY,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::CATEGORY,
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::CATEGORY,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::CATEGORY,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::CATEGORY,
             Self::VueValidDefineProps(_) => VueValidDefineProps::CATEGORY,
@@ -4319,6 +4324,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::FIX,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FIX,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FIX,
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::FIX,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::FIX,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::FIX,
             Self::VueValidDefineProps(_) => VueValidDefineProps::FIX,
@@ -5253,6 +5259,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::documentation(),
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::documentation(),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::documentation(),
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::documentation(),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::documentation(),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::documentation(),
             Self::VueValidDefineProps(_) => VueValidDefineProps::documentation(),
@@ -7129,6 +7136,8 @@ impl RuleEnum {
                 .or_else(|| VuePreferImportFromVue::schema(generator)),
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::config_schema(generator)
                 .or_else(|| VueRequireDefaultExport::schema(generator)),
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::config_schema(generator)
+                .or_else(|| VueRequireDirectExport::schema(generator)),
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::config_schema(generator)
                 .or_else(|| VueRequireTypedRef::schema(generator)),
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::config_schema(generator)
@@ -7801,6 +7810,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => "vue",
             Self::VuePreferImportFromVue(_) => "vue",
             Self::VueRequireDefaultExport(_) => "vue",
+            Self::VueRequireDirectExport(_) => "vue",
             Self::VueRequireTypedRef(_) => "vue",
             Self::VueValidDefineEmits(_) => "vue",
             Self::VueValidDefineProps(_) => "vue",
@@ -9921,6 +9931,9 @@ impl RuleEnum {
             Self::VueRequireDefaultExport(_) => Ok(Self::VueRequireDefaultExport(
                 VueRequireDefaultExport::from_configuration(value)?,
             )),
+            Self::VueRequireDirectExport(_) => {
+                Ok(Self::VueRequireDirectExport(VueRequireDirectExport::from_configuration(value)?))
+            }
             Self::VueRequireTypedRef(_) => {
                 Ok(Self::VueRequireTypedRef(VueRequireTypedRef::from_configuration(value)?))
             }
@@ -10600,6 +10613,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.to_configuration(),
             Self::VuePreferImportFromVue(rule) => rule.to_configuration(),
             Self::VueRequireDefaultExport(rule) => rule.to_configuration(),
+            Self::VueRequireDirectExport(rule) => rule.to_configuration(),
             Self::VueRequireTypedRef(rule) => rule.to_configuration(),
             Self::VueValidDefineEmits(rule) => rule.to_configuration(),
             Self::VueValidDefineProps(rule) => rule.to_configuration(),
@@ -11269,6 +11283,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run(node, ctx),
             Self::VuePreferImportFromVue(rule) => rule.run(node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run(node, ctx),
+            Self::VueRequireDirectExport(rule) => rule.run(node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run(node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run(node, ctx),
             Self::VueValidDefineProps(rule) => rule.run(node, ctx),
@@ -11938,6 +11953,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_once(ctx),
             Self::VuePreferImportFromVue(rule) => rule.run_once(ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_once(ctx),
+            Self::VueRequireDirectExport(rule) => rule.run_once(ctx),
             Self::VueRequireTypedRef(rule) => rule.run_once(ctx),
             Self::VueValidDefineEmits(rule) => rule.run_once(ctx),
             Self::VueValidDefineProps(rule) => rule.run_once(ctx),
@@ -12695,6 +12711,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VuePreferImportFromVue(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireDefaultExport(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::VueRequireDirectExport(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueRequireTypedRef(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineEmits(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::VueValidDefineProps(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -13364,6 +13381,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.should_run(ctx),
             Self::VuePreferImportFromVue(rule) => rule.should_run(ctx),
             Self::VueRequireDefaultExport(rule) => rule.should_run(ctx),
+            Self::VueRequireDirectExport(rule) => rule.should_run(ctx),
             Self::VueRequireTypedRef(rule) => rule.should_run(ctx),
             Self::VueValidDefineEmits(rule) => rule.should_run(ctx),
             Self::VueValidDefineProps(rule) => rule.should_run(ctx),
@@ -14297,6 +14315,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::IS_TSGOLINT_RULE,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::IS_TSGOLINT_RULE,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
             Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
@@ -15115,6 +15134,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::HAS_CONFIG,
             Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
             Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::HAS_CONFIG,
             Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
             Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
             Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
@@ -15784,6 +15804,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.types_info(),
             Self::VuePreferImportFromVue(rule) => rule.types_info(),
             Self::VueRequireDefaultExport(rule) => rule.types_info(),
+            Self::VueRequireDirectExport(rule) => rule.types_info(),
             Self::VueRequireTypedRef(rule) => rule.types_info(),
             Self::VueValidDefineEmits(rule) => rule.types_info(),
             Self::VueValidDefineProps(rule) => rule.types_info(),
@@ -16453,6 +16474,7 @@ impl RuleEnum {
             Self::VueNoThisInBeforeRouteEnter(rule) => rule.run_info(),
             Self::VuePreferImportFromVue(rule) => rule.run_info(),
             Self::VueRequireDefaultExport(rule) => rule.run_info(),
+            Self::VueRequireDirectExport(rule) => rule.run_info(),
             Self::VueRequireTypedRef(rule) => rule.run_info(),
             Self::VueValidDefineEmits(rule) => rule.run_info(),
             Self::VueValidDefineProps(rule) => rule.run_info(),
@@ -17228,6 +17250,7 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::VueNoThisInBeforeRouteEnter(VueNoThisInBeforeRouteEnter::default()),
         RuleEnum::VuePreferImportFromVue(VuePreferImportFromVue::default()),
         RuleEnum::VueRequireDefaultExport(VueRequireDefaultExport::default()),
+        RuleEnum::VueRequireDirectExport(VueRequireDirectExport::default()),
         RuleEnum::VueRequireTypedRef(VueRequireTypedRef::default()),
         RuleEnum::VueValidDefineEmits(VueValidDefineEmits::default()),
         RuleEnum::VueValidDefineProps(VueValidDefineProps::default()),
