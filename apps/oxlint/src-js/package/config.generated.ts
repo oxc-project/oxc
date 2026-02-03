@@ -113,6 +113,10 @@ export type CustomComponent =
  * "foo": "readonly"
  * },
  * "settings": {
+ * "react": {
+ * "version": "18.2.0"
+ * },
+ * "custom": { "option": true }
  * },
  * "rules": {
  * "eqeqeq": "warn",
@@ -163,6 +167,35 @@ export interface Oxlintrc {
    *
    * Note: JS plugins are experimental and not subject to semver.
    * They are not supported in the language server (and thus editor integrations) at present.
+   *
+   * Examples:
+   *
+   * Basic usage with a local plugin path.
+   *
+   * ```json
+   * {
+   * "jsPlugins": ["./eslint-plugin-custom.js"],
+   * "rules": {
+   * "custom/rule-name": "warn"
+   * }
+   * }
+   * ```
+   *
+   * Using a built-in Rust plugin alongside a JS plugin with the same name
+   * by giving the JS plugin an alias.
+   *
+   * ```json
+   * {
+   * "plugins": ["import"],
+   * "jsPlugins": [
+   * { "name": "import-js", "specifier": "eslint-plugin-import" }
+   * ],
+   * "rules": {
+   * "import/no-cycle": "error",
+   * "import-js/no-unresolved": "warn"
+   * }
+   * }
+   * ```
    */
   jsPlugins?: null | ExternalPluginEntry[];
   /**
@@ -198,6 +231,11 @@ export interface Oxlintrc {
    * rules.
    */
   rules?: DummyRuleMap;
+  /**
+   * Plugin-specific configuration for both built-in and custom plugins.
+   * This includes settings for built-in plugins such as  `react` and `jsdoc`
+   * as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
+   */
   settings?: OxlintPluginSettings;
 }
 /**
@@ -234,7 +272,9 @@ export interface RuleCategories {
  * See [ESLint's list of environments](https://eslint.org/docs/v8.x/use/configure/language-options#specifying-environments)
  * for what environments are available and what each one provides.
  */
-export type OxlintEnv = Record<string, boolean>;
+export interface OxlintEnv {
+  [k: string]: boolean;
+}
 /**
  * Add or remove global variables.
  *
@@ -262,7 +302,9 @@ export type OxlintEnv = Record<string, boolean>;
  * You may also use `"readable"` or `false` to represent `"readonly"`, and
  * `"writeable"` or `true` to represent `"writable"`.
  */
-export type OxlintGlobals = Record<string, GlobalValue>;
+export interface OxlintGlobals {
+  [k: string]: GlobalValue;
+}
 export interface OxlintOverride {
   /**
    * Environments enable and disable collections of global variables.
@@ -299,7 +341,9 @@ export interface OxlintOverride {
 /**
  * See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html)
  */
-export type DummyRuleMap = Record<string, DummyRule>;
+export interface DummyRuleMap {
+  [k: string]: DummyRule;
+}
 /**
  * Configure the behavior of linter plugins.
  *
@@ -363,7 +407,9 @@ export interface JSDocPluginSettings {
    * Only for `require-(yields|returns|description|example|param|throws)` rule
    */
   overrideReplacesDocs?: boolean;
-  tagNamePreference?: Record<string, TagNamePreference>;
+  tagNamePreference?: {
+    [k: string]: TagNamePreference;
+  };
   [k: string]: unknown;
 }
 /**
@@ -392,7 +438,9 @@ export interface JSXA11YPluginSettings {
    * }
    * ```
    */
-  attributes?: Record<string, string[]>;
+  attributes?: {
+    [k: string]: string[];
+  };
   /**
    * To have your custom components be checked as DOM elements, you can
    * provide a mapping of your component names to the DOM element name.
@@ -412,7 +460,9 @@ export interface JSXA11YPluginSettings {
    * }
    * ```
    */
-  components?: Record<string, string>;
+  components?: {
+    [k: string]: string;
+  };
   /**
    * An optional setting that define the prop your code uses to create polymorphic components.
    * This setting will be used to determine the element type in rules that
