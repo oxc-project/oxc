@@ -44,11 +44,6 @@ jobs:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
       - uses: oxc-project/setup-node@8958a8e040102244b619c4a94fccb657a44b1c21 # v1.0.6
 
-      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
-        with:
-          save-cache: ${{ github.ref_name == 'main' }}
-          cache-key: vscode
-
       - name: Check VSCode README is up-to-date
         run: |
           cargo run -p vscode_docs update
@@ -78,6 +73,12 @@ jobs:
               - "apps/oxfmt/src-js/**"
               - "editors/vscode/**"
               - ".github/workflows/ci_vscode.yml"
+
+      - uses: oxc-project/setup-rust@c8224157c0bf235aabc633e8cd50d344f087a7de # v1.0.12
+        if: steps.oxlint.outputs.src == 'true' || steps.oxfmt.outputs.src == 'true'
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: vscode
 
       - name: Build oxlint (with napi)
         if: steps.oxlint.outputs.src == 'true'
