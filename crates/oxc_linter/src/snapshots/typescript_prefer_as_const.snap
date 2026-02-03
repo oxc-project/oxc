@@ -3,6 +3,20 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:27]
+ 1 │ let foo = { bar: 'baz' as 'baz' };
+   ·                           ─────
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:23]
+ 1 │ let foo = { bar: 1 as 1 };
+   ·                       ─
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
    ╭─[prefer_as_const.tsx:1:9]
  1 │ let []: 'bar' = 'bar';
    ·         ─────
@@ -24,15 +38,78 @@ source: crates/oxc_linter/src/tester.rs
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:18]
- 1 │ class foo { bar: 'baz' = 'baz';}
-   ·                  ─────
+   ╭─[prefer_as_const.tsx:1:27]
+ 1 │ let foo: 'bar' = 'bar' as 'bar';
+   ·                           ─────
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  × Unexpected token
+   ╭─[prefer_as_const.tsx:1:12]
+ 1 │ let foo = <'bar'>'bar';
+   ·            ─────
+   ╰────
+
+  × Unexpected token
+   ╭─[prefer_as_const.tsx:1:12]
+ 1 │ let foo = <4>4;
+   ·            ─
+   ╰────
+
+  ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:1:20]
+ 1 │ let foo = 'bar' as 'bar';
+   ·                    ─────
    ╰────
   help: You should use `as const` instead of type annotation.
 
   ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
-   ╭─[prefer_as_const.tsx:1:18]
- 1 │ class foo { bar: 2 = 2;}
-   ·                  ─
+   ╭─[prefer_as_const.tsx:1:16]
+ 1 │ let foo = 5 as 5;
+   ·                ─
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:3:20]
+ 2 │             class foo {
+ 3 │               bar: 'baz' = 'baz';
+   ·                    ─────
+ 4 │             }
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:3:20]
+ 2 │             class foo {
+ 3 │               bar: 2 = 2;
+   ·                    ─
+ 4 │             }
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  × Unexpected token
+   ╭─[prefer_as_const.tsx:3:22]
+ 2 │             class foo {
+ 3 │               foo = <'bar'>'bar';
+   ·                      ─────
+ 4 │             }
+   ╰────
+
+  ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:3:30]
+ 2 │             class foo {
+ 3 │               foo = 'bar' as 'bar';
+   ·                              ─────
+ 4 │             }
+   ╰────
+  help: You should use `as const` instead of type annotation.
+
+  ⚠ typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.
+   ╭─[prefer_as_const.tsx:3:26]
+ 2 │             class foo {
+ 3 │               foo = 5 as 5;
+   ·                          ─
+ 4 │             }
    ╰────
   help: You should use `as const` instead of type annotation.
