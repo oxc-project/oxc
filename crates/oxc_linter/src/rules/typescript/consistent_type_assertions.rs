@@ -446,17 +446,32 @@ fn needs_parens_for_object_literal_replacement<'a>(
     }
 }
 
+#[derive(Debug, Clone, Copy)]
+enum LiteralKind {
+    Object,
+    Array,
+}
+
+impl LiteralKind {
+    fn example(self) -> &'static str {
+        match self {
+            Self::Object => "{ ... }",
+            Self::Array => "[ ... ]",
+        }
+    }
+}
+
 fn get_suggestions<'a>(
     node: &AstNode<'a>,
     expression: &Expression<'a>,
     type_annotation: &TSType<'a>,
     ctx: &LintContext<'a>,
-    annotation_message: &str,
-    satisfies_message: &str,
+    literal_kind: LiteralKind,
 ) -> Vec<RuleFix> {
     let type_text = ctx.source_range(type_annotation.span());
     let expression_text = expression_text_for_replacement(node, expression, ctx);
     let mut suggestions = Vec::new();
+    let literal = literal_kind.example();
 
     if let Some(parent) = outermost_paren_parent(node, ctx.semantic())
         && let AstKind::VariableDeclarator(var_decl) = parent.kind()
@@ -466,14 +481,16 @@ fn get_suggestions<'a>(
         let mut fix = fixer.new_fix_with_capacity(2);
         fix.push(fixer.insert_text_after(&var_decl.id, format!(": {type_text}")));
         fix.push(fixer.replace(node.kind().span(), expression_text.clone()));
-        suggestions.push(fix.with_message(annotation_message.replace("{cast}", type_text)));
+        suggestions
+            .push(fix.with_message(format!("Use const x: {type_text} = {literal} instead.")));
     }
 
     let fixer = RuleFixer::new(FixKind::Suggestion, ctx).for_multifix();
     let mut fix = fixer.new_fix_with_capacity(2);
     fix.push(fixer.replace(node.kind().span(), expression_text));
     fix.push(fixer.insert_text_after_range(node.kind().span(), format!(" satisfies {type_text}")));
-    suggestions.push(fix.with_message(satisfies_message.replace("{cast}", type_text)));
+    suggestions
+        .push(fix.with_message(format!("Use const x = {literal} satisfies {type_text} instead.")));
 
     suggestions
 }
@@ -502,14 +519,8 @@ fn check_expression_for_object_assertion<'a>(
     }
 
     if check_type(type_annotation) {
-        let suggestions = get_suggestions(
-            node,
-            expression,
-            type_annotation,
-            ctx,
-            "Use const x: {cast} = { ... } instead.",
-            "Use const x = { ... } satisfies {cast} instead.",
-        );
+        let suggestions =
+            get_suggestions(node, expression, type_annotation, ctx, LiteralKind::Object);
         ctx.diagnostic_with_suggestions(
             unexpected_object_type_assertion_diagnostic(node.kind().span()),
             suggestions,
@@ -541,14 +552,8 @@ fn check_expression_for_array_assertion<'a>(
     }
 
     if check_type(type_annotation) {
-        let suggestions = get_suggestions(
-            node,
-            expression,
-            type_annotation,
-            ctx,
-            "Use const x: {cast} = [ ... ] instead.",
-            "Use const x = [ ... ] satisfies {cast} instead.",
-        );
+        let suggestions =
+            get_suggestions(node, expression, type_annotation, ctx, LiteralKind::Array);
         ctx.diagnostic_with_suggestions(
             unexpected_array_type_assertion_diagnostic(node.kind().span()),
             suggestions,
