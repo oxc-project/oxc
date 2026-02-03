@@ -257,8 +257,9 @@ pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]
     for r in &failed_positives {
         let path = normalize_path(Path::new("tasks/coverage").join(&r.path));
         match &r.result {
-            TestResult::ParseError(error, _) => {
-                writeln!(out, "Expect to Parse: {path}").unwrap();
+            TestResult::ParseError(error, panicked) => {
+                let label = if *panicked { "Panicked" } else { "Expect to Parse" };
+                writeln!(out, "{label}: {path}").unwrap();
                 out.push_str(error);
                 out.push('\n'); // Blank line after error content
             }
