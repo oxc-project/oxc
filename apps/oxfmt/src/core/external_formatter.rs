@@ -1,6 +1,6 @@
 use std::{
     path::Path,
-    sync::{Arc, Mutex},
+    sync::{Arc, RwLock},
 };
 
 use napi::{
@@ -73,21 +73,24 @@ pub type JsSortTailwindClassesCb = ThreadsafeFunction<
 /// Holds raw ThreadsafeFunctions wrapped in Option for cleanup.
 /// The TSFNs can be explicitly dropped via `cleanup()` to prevent
 /// use-after-free during V8 cleanup on Node.js exit.
+///
+/// Uses `RwLock` instead of `Mutex` for better performance: the wrapper functions
+/// only read from the Option (common path), while only `cleanup()` needs write access.
 #[derive(Clone)]
 struct TsfnHandles {
-    init: Arc<Mutex<Option<JsInitExternalFormatterCb>>>,
-    format_embedded: Arc<Mutex<Option<JsFormatEmbeddedCb>>>,
-    format_file: Arc<Mutex<Option<JsFormatFileCb>>>,
-    sort_tailwind: Arc<Mutex<Option<JsSortTailwindClassesCb>>>,
+    init: Arc<RwLock<Option<JsInitExternalFormatterCb>>>,
+    format_embedded: Arc<RwLock<Option<JsFormatEmbeddedCb>>>,
+    format_file: Arc<RwLock<Option<JsFormatFileCb>>>,
+    sort_tailwind: Arc<RwLock<Option<JsSortTailwindClassesCb>>>,
 }
 
 impl TsfnHandles {
     /// Drop all ThreadsafeFunctions to prevent use-after-free during V8 cleanup.
     fn cleanup(&self) {
-        let _ = self.init.lock().unwrap().take();
-        let _ = self.format_embedded.lock().unwrap().take();
-        let _ = self.format_file.lock().unwrap().take();
-        let _ = self.sort_tailwind.lock().unwrap().take();
+        let _ = self.init.write().unwrap().take();
+        let _ = self.format_embedded.write().unwrap().take();
+        let _ = self.format_file.write().unwrap().take();
+        let _ = self.sort_tailwind.write().unwrap().take();
     }
 }
 
@@ -145,11 +148,11 @@ impl ExternalFormatter {
         format_file_cb: JsFormatFileCb,
         sort_tailwindcss_classes_cb: JsSortTailwindClassesCb,
     ) -> Self {
-        // Wrap TSFNs in Arc<Mutex<Option<...>>> so they can be explicitly dropped
-        let init_handle = Arc::new(Mutex::new(Some(init_cb)));
-        let format_embedded_handle = Arc::new(Mutex::new(Some(format_embedded_cb)));
-        let format_file_handle = Arc::new(Mutex::new(Some(format_file_cb)));
-        let sort_tailwind_handle = Arc::new(Mutex::new(Some(sort_tailwindcss_classes_cb)));
+        // Wrap TSFNs in Arc<RwLock<Option<...>>> so they can be explicitly dropped
+        let init_handle = Arc::new(RwLock::new(Some(init_cb)));
+        let format_embedded_handle = Arc::new(RwLock::new(Some(format_embedded_cb)));
+        let format_file_handle = Arc::new(RwLock::new(Some(format_file_cb)));
+        let sort_tailwind_handle = Arc::new(RwLock::new(Some(sort_tailwindcss_classes_cb)));
 
         // Create handles struct for cleanup
         let handles = TsfnHandles {
@@ -243,10 +246,10 @@ impl ExternalFormatter {
         // Therefore, just provides a dummy external formatter that consistently returns errors.
         Self {
             handles: TsfnHandles {
-                init: Arc::new(Mutex::new(None)),
-                format_embedded: Arc::new(Mutex::new(None)),
-                format_file: Arc::new(Mutex::new(None)),
-                sort_tailwind: Arc::new(Mutex::new(None)),
+                init: Arc::new(RwLock::new(None)),
+                format_embedded: Arc::new(RwLock::new(None)),
+                format_file: Arc::new(RwLock::new(None)),
+                sort_tailwind: Arc::new(RwLock::new(None)),
             },
             init: Arc::new(|_| Err("Dummy init called".to_string())),
             format_embedded: Arc::new(|_, _, _| Err("Dummy format_embedded called".to_string())),
@@ -289,11 +292,11 @@ fn language_to_prettier_parser(language: &str) -> Option<&'static str> {
 
 /// Wrap JS `initExternalFormatter` callback as a normal Rust function.
 fn wrap_init_external_formatter(
-    cb_handle: Arc<Mutex<Option<JsInitExternalFormatterCb>>>,
+    cb_handle: Arc<RwLock<Option<JsInitExternalFormatterCb>>>,
 ) -> InitExternalFormatterCallback {
     Arc::new(move |num_threads: usize| {
         debug_span!("oxfmt::external::init", num_threads = num_threads).in_scope(|| {
-            let guard = cb_handle.lock().unwrap();
+            let guard = cb_handle.read().unwrap();
             let Some(cb) = guard.as_ref() else {
                 return Err("JS callback unavailable (environment shutting down)".to_string());
             };
@@ -320,11 +323,11 @@ fn wrap_init_external_formatter(
 
 /// Wrap JS `formatEmbeddedCode` callback as a normal Rust function.
 fn wrap_format_embedded(
-    cb_handle: Arc<Mutex<Option<JsFormatEmbeddedCb>>>,
+    cb_handle: Arc<RwLock<Option<JsFormatEmbeddedCb>>>,
 ) -> FormatEmbeddedWithConfigCallback {
     Arc::new(move |options: &Value, parser_name: &str, code: &str| {
         debug_span!("oxfmt::external::format_embedded", parser = %parser_name).in_scope(|| {
-            let guard = cb_handle.lock().unwrap();
+            let guard = cb_handle.read().unwrap();
             let Some(cb) = guard.as_ref() else {
                 return Err("JS callback unavailable (environment shutting down)".to_string());
             };
@@ -360,10 +363,12 @@ fn wrap_format_embedded(
 }
 
 /// Wrap JS `formatFile` callback as a normal Rust function.
-fn wrap_format_file(cb_handle: Arc<Mutex<Option<JsFormatFileCb>>>) -> FormatFileWithConfigCallback {
+fn wrap_format_file(
+    cb_handle: Arc<RwLock<Option<JsFormatFileCb>>>,
+) -> FormatFileWithConfigCallback {
     Arc::new(move |options: &Value, parser_name: &str, file_name: &str, code: &str| {
         debug_span!("oxfmt::external::format_file", parser = %parser_name, file = %file_name).in_scope(|| {
-            let guard = cb_handle.lock().unwrap();
+            let guard = cb_handle.read().unwrap();
             let Some(cb) = guard.as_ref() else {
                 return Err("JS callback unavailable (environment shutting down)".to_string());
             };
@@ -396,12 +401,12 @@ fn wrap_format_file(cb_handle: Arc<Mutex<Option<JsFormatFileCb>>>) -> FormatFile
 
 /// Wrap JS `sortTailwindClasses` callback as a normal Rust function.
 fn wrap_sort_tailwind_classes(
-    cb_handle: Arc<Mutex<Option<JsSortTailwindClassesCb>>>,
+    cb_handle: Arc<RwLock<Option<JsSortTailwindClassesCb>>>,
 ) -> TailwindWithConfigCallback {
     Arc::new(move |filepath: &str, options: &Value, classes: Vec<String>| {
         debug_span!("oxfmt::external::sort_tailwind", classes_count = classes.len()).in_scope(
             || {
-                let guard = cb_handle.lock().unwrap();
+                let guard = cb_handle.read().unwrap();
                 let Some(cb) = guard.as_ref() else {
                     // Return original classes if callback unavailable
                     return classes;
