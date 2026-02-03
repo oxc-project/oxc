@@ -7,8 +7,7 @@ import { join } from "node:path";
 const oxlintDirPath = join(import.meta.dirname, ".."),
   srcDirPath = join(oxlintDirPath, "src-js"),
   distDirPath = join(oxlintDirPath, "dist"),
-  distPkgPluginsDirPath = join(oxlintDirPath, "dist-pkg-plugins"),
-  pkgPluginsDirPath = join(oxlintDirPath, "../../npm/oxlint-plugins");
+  distPkgPluginsDirPath = join(oxlintDirPath, "dist-pkg-plugins");
 
 // Delete `dist-pkg-plugins` directory
 console.log("Deleting `dist-pkg-plugins` directory...");
@@ -29,12 +28,5 @@ for (const filename of readdirSync(srcDirPath)) {
   const srcPath = join(srcDirPath, filename);
   copyFileSync(srcPath, join(distDirPath, filename));
 }
-
-// Copy files to `@oxlint/plugins` package
-console.log("Moving files to `@oxlint/plugins` package...");
-for (const filename of readdirSync(distPkgPluginsDirPath)) {
-  copyFileSync(join(distPkgPluginsDirPath, filename), join(pkgPluginsDirPath, filename));
-}
-rmSync(distPkgPluginsDirPath, { recursive: true });
 
 console.log("Build complete!");

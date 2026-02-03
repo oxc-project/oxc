@@ -274,6 +274,10 @@ jobs:
       - name: Copy dist files to npm package
         run: cp -r apps/oxlint/dist npm/oxlint/dist
 
+      - name: Copy dist files to @oxlint/plugins npm package
+        run: |
+          cp apps/oxlint/dist-pkg-plugins/* npm/oxlint-plugins/
+
       - run: npm install -g npm@latest # For trusted publishing support
 
       - name: Check Publish
