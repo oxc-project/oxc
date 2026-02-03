@@ -49,3 +49,10 @@ source: crates/oxc_linter/src/tester.rs
    · ───────────────────────────────────────
    ╰────
   help: Substitute the assertion with `expectTypeOf(value).not.toBeString()`.
+
+  ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
+   ╭─[prefer_expect_type_of.tsx:1:1]
+ 1 │ expect(typeof value)["not"].toBe("string")
+   · ──────────────────────────────────────────
+   ╰────
+  help: Substitute the assertion with `expectTypeOf(value)["not"].toBeString()`.

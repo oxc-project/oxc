@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{PossibleJestNode, parse_expect_jest_fn_call},
+    utils::{MemberExpressionElement, PossibleJestNode, parse_expect_jest_fn_call},
 };
 
 fn prefer_expect_type_of_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
@@ -129,7 +129,16 @@ impl PreferExpectTypeOf {
         let modifier_text =
             expect_call.modifiers().iter().fold(String::new(), |mut acc, modifier| {
                 use std::fmt::Write;
-                write!(&mut acc, ".{}", ctx.source_range(modifier.span)).unwrap();
+                match modifier.element {
+                    // `.not`
+                    MemberExpressionElement::IdentName(_) => {
+                        write!(&mut acc, ".{}", ctx.source_range(modifier.span)).unwrap();
+                    }
+                    // `["not"]`, `[not]`, `[`not`]`, etc.
+                    MemberExpressionElement::Expression(_) => {
+                        write!(&mut acc, "[{}]", ctx.source_range(modifier.span)).unwrap();
+                    }
+                }
                 acc
             });
 
@@ -171,6 +180,7 @@ fn test() {
         r#"expect(typeof fn).toBe("function")"#,
         r#"expect(typeof value).toEqual("string")"#,
         r#"expect(typeof value).not.toBe("string")"#,
+        r#"expect(typeof value)["not"].toBe("string")"#,
     ];
 
     let fix = vec![
@@ -181,6 +191,10 @@ fn test() {
         (r#"expect(typeof fn).toBe("function")"#, "expectTypeOf(fn).toBeFunction()"),
         (r#"expect(typeof value).toEqual("string")"#, "expectTypeOf(value).toBeString()"),
         (r#"expect(typeof value).not.toBe("string")"#, "expectTypeOf(value).not.toBeString()"),
+        (
+            r#"expect(typeof value)["not"].toBe("string")"#,
+            r#"expectTypeOf(value)["not"].toBeString()"#,
+        ),
     ];
 
     Tester::new(PreferExpectTypeOf::NAME, PreferExpectTypeOf::PLUGIN, pass, fail)
