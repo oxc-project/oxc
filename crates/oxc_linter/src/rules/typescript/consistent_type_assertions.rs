@@ -168,7 +168,6 @@ impl Deref for ConsistentTypeAssertions {
     }
 }
 
-// See <https://github.com/oxc-project/oxc/issues/6050> for documentation details.
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -182,14 +181,45 @@ declare_oxc_lint!(
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for this rule (default: `assertionStyle: "as"`):
     /// ```ts
     /// const value = <Foo>bar;
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// Examples of **correct** code for this rule (default: `assertionStyle: "as"`):
     /// ```ts
     /// const value = bar as Foo;
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with `assertionStyle: "angle-bracket"`:
+    /// ```ts
+    /// const value = bar as Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `assertionStyle: "angle-bracket"`:
+    /// ```ts
+    /// const value = <Foo>bar;
+    /// ```
+    ///
+    /// Examples of **incorrect** code for this rule with `assertionStyle: "never"`:
+    /// ```ts
+    /// const value = bar as Foo;
+    /// ```
+    ///
+    /// Examples of **correct** code for this rule with `assertionStyle: "never"`:
+    /// ```ts
+    /// const value: Foo = bar;
+    /// const value = bar satisfies Foo;
+    /// ```
+    ///
+    /// When object/array literal assertions are disallowed, prefer annotations or `satisfies`:
+    /// ```ts
+    /// // incorrect (when `objectLiteralTypeAssertions: "never"`)
+    /// const obj = { a: 1 } as Foo;
+    ///
+    /// // correct
+    /// const obj: Foo = { a: 1 };
+    /// const obj = { a: 1 } satisfies Foo;
     /// ```
     ConsistentTypeAssertions,
     typescript,
