@@ -1,9 +1,9 @@
-commit: 7f6a8467
+commit: 95e3aaa9
 
 parser_typescript Summary:
 AST Parsed     : 9842/9843 (99.99%)
 Positive Passed: 9837/9843 (99.94%)
-Negative Passed: 1510/2555 (59.10%)
+Negative Passed: 1512/2557 (59.13%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -193,8 +193,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTy
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/contextualTypingWithFixedTypeParameters1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/continueNotInIterationStatement4.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/corrupted.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/crashDeclareGlobalTypeofExport.ts
 
@@ -1967,6 +1965,8 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statement
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of31.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/for-ofStatements/ES5For-of35.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/statements/labeledStatements/labeledStatementDeclarationListInLoopNoCrash2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/any/narrowFromAnyWithTypePredicate.ts
 
@@ -4682,6 +4682,12 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  293 │     class interface { }
      ╰────
 
+  × Invalid Character `�`
+   ╭─[typescript/tests/cases/compiler/corrupted.ts:1:1]
+ 1 │ ���
+   · ─
+   ╰────
+
   × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/crashOnMethodSignatures.ts:2:5]
  1 │ class A {
@@ -4745,6 +4751,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
 
   × TS(1187): A parameter property may not be declared using a binding pattern.
     ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties.ts:14:17]
+ 13 │ class C3 {
+ 14 │     constructor(public { x, y, z }: ObjType1) {
+    ·                 ────────────────────────────
+ 15 │     }
+    ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties2.ts:2:17]
+ 1 │ class C1 {
+ 2 │     constructor(public [x, y, z]: string[]) {
+   ·                 ──────────────────────────
+ 3 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+   ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties2.ts:8:17]
+ 7 │ class C2 {
+ 8 │     constructor(public [x, y, z]: TupleType1) {
+   ·                 ────────────────────────────
+ 9 │     }
+   ╰────
+
+  × TS(1187): A parameter property may not be declared using a binding pattern.
+    ╭─[typescript/tests/cases/compiler/declarationEmitDestructuringParameterProperties2.ts:14:17]
  13 │ class C3 {
  14 │     constructor(public { x, y, z }: ObjType1) {
     ·                 ────────────────────────────
@@ -20751,9 +20781,9 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
 
   × Expected `>` but found `<`
-   ╭─[typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx:4:16]
- 3 │ 
- 4 │ let x = <MyComp<Prop> a={10} b="hi" />; // error, no type arguments in js
+   ╭─[typescript/tests/cases/conformance/jsx/jsxCheckJsxNoTypeArgumentsAllowed.tsx:5:16]
+ 4 │ 
+ 5 │ let x = <MyComp<Prop> a={10} b="hi" />; // error, no type arguments in js
    ·                ┬
    ·                ╰── `>` expected
    ╰────
@@ -20884,91 +20914,91 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ╰────
 
   × Expected `,` or `}` but found `;`
-    ╭─[typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents1.tsx:41:16]
- 39 │ 
- 40 │ let o = {
+    ╭─[typescript/tests/cases/conformance/jsx/tsxStatelessFunctionComponents1.tsx:43:16]
+ 41 │ 
+ 42 │ let o = {
     ·         ┬
     ·         ╰── Opened here
- 41 │     prop1: true;
+ 43 │     prop1: true;
     ·                ┬
     ·                ╰── `,` or `}` expected
- 42 │ }
-    ╰────
-
-  × TS(1099): Type argument list cannot be empty.
-    ╭─[typescript/tests/cases/conformance/jsx/tsxTypeArgumentResolution.tsx:24:12]
- 23 │ 
- 24 │ x = <MyComp<> a={10} b="hi" />; // error
-    ·            ──
- 25 │ 
+ 44 │ }
     ╰────
 
   × TS(1099): Type argument list cannot be empty.
     ╭─[typescript/tests/cases/conformance/jsx/tsxTypeArgumentResolution.tsx:26:12]
  25 │ 
- 26 │ x = <MyComp<> a={10} b="hi"></MyComp>; // error
+ 26 │ x = <MyComp<> a={10} b="hi" />; // error
     ·            ──
  27 │ 
     ╰────
 
+  × TS(1099): Type argument list cannot be empty.
+    ╭─[typescript/tests/cases/conformance/jsx/tsxTypeArgumentResolution.tsx:28:12]
+ 27 │ 
+ 28 │ x = <MyComp<> a={10} b="hi"></MyComp>; // error
+    ·            ──
+ 29 │ 
+    ╰────
+
   × Expected corresponding JSX closing tag for '\u0061'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:15:13]
- 14 │ // tag name:
- 15 │ ; <\u0061></a>
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:16:13]
+ 15 │ // tag name:
+ 16 │ ; <\u0061></a>
     ·    ───┬──   ┬
     ·       │     ╰── Expected `</\u0061>`
     ·       ╰── Opened here
- 16 │ ; <\u0061-b></a-b>
+ 17 │ ; <\u0061-b></a-b>
     ╰────
 
   × Expected corresponding JSX closing tag for '\u0061-b'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:16:15]
- 15 │ ; <\u0061></a>
- 16 │ ; <\u0061-b></a-b>
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:17:15]
+ 16 │ ; <\u0061></a>
+ 17 │ ; <\u0061-b></a-b>
     ·    ────┬───   ─┬─
     ·        │       ╰── Expected `</\u0061-b>`
     ·        ╰── Opened here
- 17 │ ; <a-\u0063></a-c>
+ 18 │ ; <a-\u0063></a-c>
     ╰────
 
   × Expected corresponding JSX closing tag for 'a-'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:17:15]
- 16 │ ; <\u0061-b></a-b>
- 17 │ ; <a-\u0063></a-c>
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:18:15]
+ 17 │ ; <\u0061-b></a-b>
+ 18 │ ; <a-\u0063></a-c>
     ·    ─┬         ─┬─
     ·     │          ╰── Expected `</a->`
     ·     ╰── Opened here
- 18 │ ; <Comp\u0061 x={12} />
+ 19 │ ; <Comp\u0061 x={12} />
     ╰────
 
   × Expected corresponding JSX closing tag for '\u{0061}'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:20:15]
- 19 │ ; <x.\u0076ideo />
- 20 │ ; <\u{0061}></a>
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:21:15]
+ 20 │ ; <x.\u0076ideo />
+ 21 │ ; <\u{0061}></a>
     ·    ────┬───   ┬
     ·        │      ╰── Expected `</\u{0061}>`
     ·        ╰── Opened here
- 21 │ ; <\u{0061}-b></a-b>
+ 22 │ ; <\u{0061}-b></a-b>
     ╰────
 
   × Expected corresponding JSX closing tag for '\u{0061}-b'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:21:17]
- 20 │ ; <\u{0061}></a>
- 21 │ ; <\u{0061}-b></a-b>
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:22:17]
+ 21 │ ; <\u{0061}></a>
+ 22 │ ; <\u{0061}-b></a-b>
     ·    ─────┬────   ─┬─
     ·         │        ╰── Expected `</\u{0061}-b>`
     ·         ╰── Opened here
- 22 │ ; <a-\u{0063}></a-c>
+ 23 │ ; <a-\u{0063}></a-c>
     ╰────
 
   × Expected corresponding JSX closing tag for 'a-'.
-    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:22:17]
- 21 │ ; <\u{0061}-b></a-b>
- 22 │ ; <a-\u{0063}></a-c>
+    ╭─[typescript/tests/cases/conformance/jsx/unicodeEscapesInJsxtags.tsx:23:17]
+ 22 │ ; <\u{0061}-b></a-b>
+ 23 │ ; <a-\u{0063}></a-c>
     ·    ─┬           ─┬─
     ·     │            ╰── Expected `</a->`
     ·     ╰── Opened here
- 23 │ ; <Comp\u{0061} x={12} />
+ 24 │ ; <Comp\u{0061} x={12} />
     ╰────
 
   × TS(8002): 'import ... =' can only be used in TypeScript files.

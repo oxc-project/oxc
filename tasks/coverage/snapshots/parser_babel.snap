@@ -1,8 +1,8 @@
-commit: 6ef16ca4
+commit: 92c052dc
 
 parser_babel Summary:
-AST Parsed     : 2217/2221 (99.82%)
-Positive Passed: 2204/2221 (99.23%)
+AST Parsed     : 2220/2224 (99.82%)
+Positive Passed: 2207/2224 (99.24%)
 Negative Passed: 1655/1689 (97.99%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
