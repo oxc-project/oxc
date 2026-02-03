@@ -74,6 +74,7 @@
     "tasks/coverage/**",
     "crates/oxc_semantic/tests/**",
     "napi/minify/**", // TODO
+    "apps/oxlint/src-js/package/config.generated.ts",
     "!apps/oxlint/test/fixtures/**",
     "apps/oxlint/test/fixtures/*/files/**",
     "apps/oxlint/conformance/submodules/**",
