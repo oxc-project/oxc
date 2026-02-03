@@ -19,11 +19,11 @@ use crate::{
 };
 
 fn use_angle_bracket_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use '<{cast}>' instead of 'as {cast}'.")).with_label(span)
+    OxcDiagnostic::warn(format!("Use `<{cast}>` instead of `as {cast}`.")).with_label(span)
 }
 
 fn use_as_diagnostic(cast: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Use 'as {cast}' instead of '<{cast}>'.")).with_label(span)
+    OxcDiagnostic::warn(format!("Use `as {cast}` instead of `<{cast}>`.")).with_label(span)
 }
 
 fn never_diagnostic(span: Span) -> OxcDiagnostic {
@@ -31,11 +31,11 @@ fn never_diagnostic(span: Span) -> OxcDiagnostic {
 }
 
 fn unexpected_object_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer const x: T = { ... }.").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T = { ... }`.").with_label(span)
 }
 
 fn unexpected_array_type_assertion_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Always prefer const x: T[] = [ ... ].").with_label(span)
+    OxcDiagnostic::warn("Always prefer `const x: T[] = [ ... ]`.").with_label(span)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
