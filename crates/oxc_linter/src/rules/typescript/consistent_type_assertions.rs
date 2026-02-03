@@ -46,17 +46,12 @@ enum AssertionStyle {
     Never,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum AssertionStyleNonNever {
+    #[default]
     As,
     AngleBracket,
-}
-
-impl Default for AssertionStyleNonNever {
-    fn default() -> Self {
-        Self::As
-    }
 }
 
 impl From<AssertionStyleNonNever> for AssertionStyle {
