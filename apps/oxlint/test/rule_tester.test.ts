@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { RuleTester } from "../src-js/index.ts";
+import { RuleTester } from "../src-js/package/rule_tester.ts";
 
 import type { Rule } from "../src-js/plugins.ts";
 
