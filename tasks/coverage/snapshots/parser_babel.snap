@@ -1,8 +1,8 @@
 commit: 92c052dc
 
 parser_babel Summary:
-AST Parsed     : 2223/2224 (99.96%)
-Positive Passed: 2210/2224 (99.37%)
+AST Parsed     : 2224/2224 (100.00%)
+Positive Passed: 2211/2224 (99.42%)
 Negative Passed: 1656/1689 (98.05%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
@@ -302,16 +302,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts:1:25]
  1 │ declare function f([]?, {})
    ·                         ──
-   ╰────
-
-Panicked: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts
-
-  × Expected `,` or `)` but found `extends`
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/regression/nested-extends-in-arrow-type-param/input.ts:1:31]
- 1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
-   ·                         ┬     ───┬───
-   ·                         │        ╰── `,` or `)` expected
-   ·                         ╰── Opened here
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters/input.ts
