@@ -48,6 +48,10 @@ use super::{
 ///     "foo": "readonly"
 ///   },
 ///   "settings": {
+///     "react": {
+///       "version": "18.2.0"
+///     },
+///     "custom": { "option": true }
 ///   },
 ///   "rules": {
 ///     "eqeqeq": "warn",
@@ -107,6 +111,9 @@ pub struct Oxlintrc {
     /// See [Oxlint Rules](https://oxc.rs/docs/guide/usage/linter/rules.html) for the list of
     /// rules.
     pub rules: OxlintRules,
+    /// Plugin-specific configuration for both built-in and custom plugins.
+    /// This includes settings for built-in plugins such as  `react` and `jsdoc`
+    /// as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.
     pub env: OxlintEnv,
