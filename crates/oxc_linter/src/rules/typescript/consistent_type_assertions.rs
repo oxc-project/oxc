@@ -69,18 +69,13 @@ enum AssertionStyleNever {
     Never,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case")]
 enum LiteralAssertionOption {
+    #[default]
     Allow,
     AllowAsParameter,
     Never,
-}
-
-impl Default for LiteralAssertionOption {
-    fn default() -> Self {
-        Self::Allow
-    }
 }
 
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
