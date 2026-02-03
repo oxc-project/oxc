@@ -13,10 +13,8 @@ use crate::{
 };
 
 fn prefer_expect_type_of_diagnostic(span: Span, help: &str) -> OxcDiagnostic {
-    let help_message = format!("Substitute the assertion with `{help}`.");
-
     OxcDiagnostic::warn("Type assertions should be done using `expectTypeOf`.")
-        .with_help(help_message)
+        .with_help(format!("Substitute the assertion with `{help}`."))
         .with_label(span)
 }
 
