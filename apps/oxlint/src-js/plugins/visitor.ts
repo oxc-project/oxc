@@ -133,7 +133,7 @@ interface CompilingNonLeafVisitorEntry {
 // Visitor state.
 // Returned by `finalizeCompiledVisitor`.
 // This a "poor man's enum", which compiles down better than TS enums.
-export type VisitorState = 0 | 1 | 2;
+export type VisitorState = typeof VISITOR_EMPTY | typeof VISITOR_NOT_EMPTY | typeof VISITOR_CFG;
 
 export const VISITOR_EMPTY = 0; // Empty visitor (no need to walk AST)
 export const VISITOR_NOT_EMPTY = 1; // Not empty visitor (need to walk AST)
