@@ -12,7 +12,10 @@ use oxc_ast_macros::ast;
 use oxc_estree::ESTree;
 use oxc_regular_expression::ast::Pattern;
 use oxc_span::{Atom, ContentEq, GetSpan, GetSpanMut, Span};
-use oxc_syntax::number::{BigintBase, NumberBase};
+use oxc_syntax::{
+    node::NodeId,
+    number::{BigintBase, NumberBase},
+};
 
 /// Boolean literal
 ///
@@ -22,7 +25,9 @@ use oxc_syntax::number::{BigintBase, NumberBase};
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(raw = BooleanLiteralRaw))]
 pub struct BooleanLiteral {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: NodeId,
+    /// Node location in source code.
     pub span: Span,
     /// The boolean value itself
     pub value: bool,
@@ -36,7 +41,9 @@ pub struct BooleanLiteral {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, ESTree, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(value = Null, raw = NullLiteralRaw))]
 pub struct NullLiteral {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: NodeId,
+    /// Node location in source code.
     pub span: Span,
 }
 
@@ -48,7 +55,9 @@ pub struct NullLiteral {
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct NumericLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: NodeId,
+    /// Node location in source code.
     pub span: Span,
     /// The value of the number, converted into base 10
     pub value: f64,
@@ -72,7 +81,9 @@ pub struct NumericLiteral<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
 #[estree(rename = "Literal")]
 pub struct StringLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: NodeId,
+    /// Node location in source code.
     pub span: Span,
     /// The value of the string.
     ///
@@ -102,7 +113,9 @@ pub struct StringLiteral<'a> {
 #[generate_derive(CloneIn, Dummy, TakeIn, ContentEq, GetSpan, GetSpanMut, ESTree, UnstableAddress)]
 #[estree(rename = "Literal", add_fields(bigint = BigIntLiteralBigint))]
 pub struct BigIntLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: NodeId,
+    /// Node location in source code.
     pub span: Span,
     /// Bigint value in base 10 with no underscores
     #[estree(via = BigIntLiteralValue)]
@@ -129,7 +142,9 @@ pub struct BigIntLiteral<'a> {
     field_order(value, raw, regex, span),
 )]
 pub struct RegExpLiteral<'a> {
-    /// Node location in source code
+    /// Unique identifier for this AST node.
+    pub node_id: NodeId,
+    /// Node location in source code.
     pub span: Span,
     /// The parsed regular expression. See [`oxc_regular_expression`] for more
     /// details.

@@ -117,6 +117,7 @@ impl Generator for FormatterAstNodesGenerator {
             use oxc_allocator::Vec;
             use oxc_ast::ast::*;
             use oxc_span::{GetSpan, Ident};
+            use oxc_syntax::node::NodeId;
             ///@@line_break
             use crate::ast_nodes::AstNode;
             use crate::formatter::{

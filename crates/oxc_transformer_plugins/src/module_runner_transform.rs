@@ -549,7 +549,7 @@ impl<'a> ModuleRunnerTransform<'a> {
         export: ArenaBox<'a, ExportDefaultDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let ExportDefaultDeclaration { span, declaration } = export.unbox();
+        let ExportDefaultDeclaration { span, declaration, .. } = export.unbox();
         let expr = match declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(mut func) => {
                 if let Some(id) = &func.id {
@@ -602,7 +602,7 @@ impl<'a> ModuleRunnerTransform<'a> {
                     self.insert_import_binding(span, binding, local, imported.name(), ctx)
                 }
                 ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                    let ImportDefaultSpecifier { span, local } = specifier.unbox();
+                    let ImportDefaultSpecifier { span, local, .. } = specifier.unbox();
                     self.insert_import_binding(span, binding, local, DEFAULT, ctx)
                 }
                 ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
