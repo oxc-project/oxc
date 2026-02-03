@@ -647,6 +647,14 @@ pub fn ts_empty_type_argument_list(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn ts_instantiation_expression_cannot_be_followed_by_property_access(
+    span: Span,
+) -> OxcDiagnostic {
+    ts_error("1477", "An instantiation expression cannot be followed by a property access.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn ts_string_literal_expected(span: Span) -> OxcDiagnostic {
     ts_error("1141", "String literal expected.").with_label(span)
 }

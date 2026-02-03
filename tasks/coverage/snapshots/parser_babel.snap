@@ -3,7 +3,7 @@ commit: 92c052dc
 parser_babel Summary:
 AST Parsed     : 2223/2224 (99.96%)
 Positive Passed: 2210/2224 (99.37%)
-Negative Passed: 1655/1689 (97.99%)
+Negative Passed: 1656/1689 (98.05%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-no-initializer/input.js
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
@@ -59,8 +59,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/regression/keyword-qualified-type-2/input.ts
-
-Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/types/const-type-parameters-invalid/input.ts
 
@@ -14071,6 +14069,37 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ let a: Foo<>;
    ·           ──
    ╰────
+
+  × TS(1477): An instantiation expression cannot be followed by a property access.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts:2:1]
+ 1 │ // invalid
+ 2 │ a<b>.c;
+   · ─────
+ 3 │ a<b>?.c;
+   ╰────
+
+  × TS(1477): An instantiation expression cannot be followed by a property access.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts:3:1]
+ 2 │ a<b>.c;
+ 3 │ a<b>?.c;
+   · ──────
+ 4 │ a<b>?.[c];
+   ╰────
+
+  × TS(1477): An instantiation expression cannot be followed by a property access.
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts:4:1]
+ 3 │ a<b>?.c;
+ 4 │ a<b>?.[c];
+   · ──────
+ 5 │ 
+   ╰────
+
+  × TS(1477): An instantiation expression cannot be followed by a property access.
+    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/instantiation-expression-property-access/input.ts:13:1]
+ 12 │ // longer, invalid
+ 13 │ a?.b<c>.d
+    · ────────
+    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:9]
