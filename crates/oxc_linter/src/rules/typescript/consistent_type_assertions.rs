@@ -287,11 +287,12 @@ impl Rule for ConsistentTypeAssertions {
 }
 
 fn is_const(type_annotation: &TSType) -> bool {
-    if let TSType::TSTypeReference(type_reference) = type_annotation {
-        if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name {
-            return ident.name.as_str() == "const";
-        }
+    if let TSType::TSTypeReference(type_reference) = type_annotation
+        && let TSTypeName::IdentifierReference(ident) = &type_reference.type_name
+    {
+        return ident.name.as_str() == "const";
     }
+
     false
 }
 
@@ -317,18 +318,18 @@ fn expression_text_for_as(expression: &Expression, source_text: &str) -> String 
 }
 
 fn expression_needs_parens_for_as(expression: &Expression) -> bool {
-    match expression.without_parentheses() {
+    matches!(
+        expression.without_parentheses(),
         Expression::SequenceExpression(_)
-        | Expression::AssignmentExpression(_)
-        | Expression::ConditionalExpression(_)
-        | Expression::YieldExpression(_)
-        | Expression::ArrowFunctionExpression(_)
-        | Expression::TSAsExpression(_)
-        | Expression::TSSatisfiesExpression(_)
-        | Expression::TSTypeAssertion(_)
-        | Expression::TSInstantiationExpression(_) => true,
-        _ => false,
-    }
+            | Expression::AssignmentExpression(_)
+            | Expression::ConditionalExpression(_)
+            | Expression::YieldExpression(_)
+            | Expression::ArrowFunctionExpression(_)
+            | Expression::TSAsExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::TSInstantiationExpression(_)
+    )
 }
 
 fn is_parenthesized(node: &AstNode, ctx: &LintContext) -> bool {
