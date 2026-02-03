@@ -80,14 +80,22 @@ jobs:
       - uses: taiki-e/checkout-action@3ab630d442e198ebb0ca30872832406ca01c46eb # v1.4.0
 
       - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
-        id: comment
+        id: comment-oxlint
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           issue-number: ${{ needs.prepare.outputs.pull-request-number }}
           body: |
-            Triggering Ecosystem CI
-            oxlint https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxlint-ci.yml
-            oxfmt https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
+            Triggering Oxlint Ecosystem CI
+            https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxlint-ci.yml
+
+      - uses: peter-evans/create-or-update-comment@e8674b075228eee787fea43ef493e45ece1004c9 # v5.0.0
+        id: comment-oxfmt
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ needs.prepare.outputs.pull-request-number }}
+          body: |
+            Triggering Oxfmt Ecosystem CI
+            https://github.com/oxc-project/oxc-ecosystem-ci/actions/workflows/oxfmt-ci.yml
 
       - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
@@ -95,7 +103,7 @@ jobs:
           workflow: oxlint-ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxlint.outputs.comment-id }}" }'
 
       - uses: benc-uk/workflow-dispatch@e2e5e9a103e331dad343f381a29e654aea3cf8fc # v1.2.4
         with:
@@ -103,7 +111,7 @@ jobs:
           workflow: oxfmt-ci.yml
           token: ${{ secrets.OXC_BOT_PAT }}
           ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment.outputs.comment-id }}" }'
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "comment-id": "${{ steps.comment-oxfmt.outputs.comment-id }}" }'
 
   website:
     needs: prepare
