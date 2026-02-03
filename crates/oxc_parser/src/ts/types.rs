@@ -47,8 +47,9 @@ impl<'a> ParserImpl<'a> {
         let r#abstract = self.eat(Kind::Abstract);
         let is_constructor_type = self.eat(Kind::New);
         let type_parameters = self.parse_ts_type_parameters();
-        let (this_param, params) =
-            self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
+        let (this_param, params) = self.context_remove(Context::DisallowConditionalTypes, |p| {
+            p.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature)
+        });
         let return_type = {
             let return_type_span = self.start_span();
             let return_type = self.parse_return_type();
