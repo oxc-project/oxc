@@ -230,7 +230,7 @@ Basic usage with a local plugin path.
 
 ```json
 {
-"jsPlugins": ["./eslint-plugin-custom.js"],
+"jsPlugins": ["./custom-plugin.js"],
 "rules": {
 "custom/rule-name": "warn"
 }

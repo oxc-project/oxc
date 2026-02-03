@@ -96,7 +96,7 @@ pub struct Oxlintrc {
     ///
     /// ```json
     /// {
-    ///   "jsPlugins": ["./eslint-plugin-custom.js"],
+    ///   "jsPlugins": ["./custom-plugin.js"],
     ///   "rules": {
     ///     "custom/rule-name": "warn"
     ///   }
@@ -141,7 +141,7 @@ pub struct Oxlintrc {
     /// rules.
     pub rules: OxlintRules,
     /// Plugin-specific configuration for both built-in and custom plugins.
-    /// This includes settings for built-in plugins such as  `react` and `jsdoc`
+    /// This includes settings for built-in plugins such as `react` and `jsdoc`
     /// as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
     pub settings: OxlintSettings,
     /// Environments enable and disable collections of global variables.

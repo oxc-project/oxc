@@ -174,7 +174,7 @@ export interface Oxlintrc {
    *
    * ```json
    * {
-   * "jsPlugins": ["./eslint-plugin-custom.js"],
+   * "jsPlugins": ["./custom-plugin.js"],
    * "rules": {
    * "custom/rule-name": "warn"
    * }
@@ -233,7 +233,7 @@ export interface Oxlintrc {
   rules?: DummyRuleMap;
   /**
    * Plugin-specific configuration for both built-in and custom plugins.
-   * This includes settings for built-in plugins such as  `react` and `jsdoc`
+   * This includes settings for built-in plugins such as `react` and `jsdoc`
    * as well as configuring settings for JS custom plugins loaded via `jsPlugins`.
    */
   settings?: OxlintPluginSettings;
