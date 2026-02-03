@@ -1933,11 +1933,11 @@ function deserializeFormalParameters(pos) {
       rest = (parent = {
         type: "RestElement",
         argument: null,
-        start: deserializeU32(pos + 8),
-        end: deserializeU32(pos + 12),
+        start: deserializeU32(pos + 32),
+        end: deserializeU32(pos + 36),
         parent: previousParent,
       });
-    rest.argument = deserializeBindingPattern(pos + 16);
+    rest.argument = deserializeBindingPattern(pos + 40);
     params.push(rest);
     parent = previousParent;
   }

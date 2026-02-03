@@ -1919,6 +1919,7 @@ pub enum FormalParameterKind {
 #[generate_derive(CloneIn, Dummy, TakeIn, GetSpan, GetSpanMut, ContentEq, UnstableAddress)]
 pub struct FormalParameterRest<'a> {
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub rest: BindingRestElement<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
 }

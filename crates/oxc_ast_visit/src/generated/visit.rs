@@ -2500,6 +2500,7 @@ pub mod walk {
         let kind = AstKind::FormalParameterRest(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_span(&it.span);
+        visitor.visit_decorators(&it.decorators);
         visitor.visit_binding_rest_element(&it.rest);
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);

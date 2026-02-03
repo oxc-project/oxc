@@ -2359,21 +2359,28 @@ function deserializeFormalParameters(pos) {
     let start,
       end,
       previousParent = parent,
+      decorators = deserializeVecDecorator(pos + 8),
       rest = (parent = {
         __proto__: NodeProto,
         type: "RestElement",
-        decorators: [],
+        decorators,
         argument: null,
         optional: false,
         typeAnnotation: null,
         value: null,
-        start: (start = deserializeU32(pos + 8)),
-        end: (end = deserializeU32(pos + 12)),
+        start: (start = deserializeU32(pos + 32)),
+        end: (end = deserializeU32(pos + 36)),
         range: [start, end],
         parent: previousParent,
       });
-    rest.argument = deserializeBindingPattern(pos + 16);
-    rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
+    // Update start to include decorators if present
+    if (decorators && decorators.length > 0) {
+      start = decorators[0].start;
+      rest.start = start;
+      rest.range[0] = start;
+    }
+    rest.argument = deserializeBindingPattern(pos + 40);
+    rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 56);
     if (rest.typeAnnotation !== null) {
       end = rest.typeAnnotation.end;
       rest.end = end;

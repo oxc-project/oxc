@@ -118,27 +118,37 @@ impl<'a> ParserImpl<'a> {
                 break;
             }
 
+            // Parse decorators at loop level to handle decorated rest parameters
+            let decorators = self.parse_decorators();
+
             if self.at(Kind::Dot3) {
                 let rest_element = self.parse_rest_element_for_formal_parameter();
-                let rest_span = rest_element.span;
                 let type_annotation =
                     if self.is_ts { self.parse_ts_type_annotation() } else { None };
+                // Calculate span: start from first decorator (if any), end at type annotation or rest element
+                let start = decorators.first().map_or(rest_element.span.start, |d| d.span.start);
+                let end = type_annotation.as_ref().map_or(rest_element.span.end, |ta| ta.span.end);
+                let span = Span::new(start, end);
                 rest = Some(self.ast.alloc_formal_parameter_rest(
-                    rest_span,
+                    span,
+                    decorators,
                     rest_element,
                     type_annotation,
                 ));
             } else {
-                list.push(self.parse_formal_parameter(func_kind));
+                list.push(self.parse_formal_parameter(func_kind, decorators));
             }
         }
 
         (list, rest)
     }
 
-    fn parse_formal_parameter(&mut self, func_kind: FunctionKind) -> FormalParameter<'a> {
+    fn parse_formal_parameter(
+        &mut self,
+        func_kind: FunctionKind,
+        decorators: oxc_allocator::Vec<'a, Decorator<'a>>,
+    ) -> FormalParameter<'a> {
         let span = self.start_span();
-        let decorators = self.parse_decorators();
         let modifiers = self.parse_modifiers(false, false);
         if self.is_ts {
             let allowed_modifiers = if func_kind == FunctionKind::Constructor {

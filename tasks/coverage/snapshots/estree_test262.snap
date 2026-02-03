@@ -2,10 +2,134 @@ commit: dd6138f9
 
 estree_test262 Summary:
 AST Parsed     : 46490/46490 (100.00%)
-Positive Passed: 46481/46490 (99.98%)
+Positive Passed: 46405/46490 (99.82%)
+Mismatch: tasks/coverage/test262/test/annexB/language/function-code/block-decl-func-skip-arguments.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/this-constructor-operations.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/fromAsync/this-constructor.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/copyWithin/resizable-buffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Array/prototype/toLocaleString/invoke-element-tolocalestring.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Function/prototype/apply/resizable-buffer.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Map/prototype/getOrInsertComputed/check-callback-fn-args.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Object/keys/proxy-keys.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/all/invoke-resolve-on-promises-every-iteration-of-custom.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/all/invoke-resolve-on-promises-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/all/invoke-resolve-on-values-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/allSettled/invoke-resolve-on-promises-every-iteration-of-custom.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/allSettled/invoke-resolve-on-promises-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/allSettled/invoke-resolve-on-values-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/capability-resolve-throws-no-close.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/capability-resolve-throws-reject.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-resolve-get-once-multiple-calls.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-resolve-get-once-no-calls.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-resolve-on-promises-every-iteration-of-custom.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-resolve-on-promises-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-resolve-on-values-every-iteration-of-custom.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-resolve-on-values-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-resolve.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/any/invoke-then-on-promises-every-iteration.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/race/invoke-resolve-on-promises-every-iteration-of-custom.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/race/invoke-resolve-on-promises-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Promise/race/invoke-resolve-on-values-every-iteration-of-promise.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Reflect/apply/arguments-list-is-not-array-like-but-still-valid.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/difference/add-not-called.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/difference/subclass-receiver-methods.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/intersection/add-not-called.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/intersection/subclass-receiver-methods.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/isDisjointFrom/subclass-receiver-methods.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/isSubsetOf/subclass-receiver-methods.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/isSupersetOf/subclass-receiver-methods.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/symmetricDifference/add-not-called.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/symmetricDifference/subclass-receiver-methods.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/union/add-not-called.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/Set/prototype/union/subclass-receiver-methods.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/replaceAll/replaceValue-call-each-match-position.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/replaceAll/replaceValue-call-matching-empty.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/replaceAll/searchValue-replacer-RegExp-call-fn.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/String/prototype/replaceAll/searchValue-replacer-RegExp-call.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/map/speciesctor-resizable-buffer-grow.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/map/speciesctor-resizable-buffer-shrink.js
+
+Mismatch: tasks/coverage/test262/test/built-ins/TypedArray/prototype/slice/speciesctor-resize.js
+
+Mismatch: tasks/coverage/test262/test/intl402/Array/prototype/toLocaleString/invoke-element-tolocalestring.js
+
+Mismatch: tasks/coverage/test262/test/language/arguments-object/unmapped/via-params-rest.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/scope-param-rest-elem-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/scope-param-rest-elem-var-open.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/syntax/arrowparameters-cover-includes-rest-concisebody-functionbody.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/syntax/arrowparameters-cover-rest-concisebody-functionbody.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/arrow-function/syntax/arrowparameters-cover-rest-lineterminator-concisebody-functionbody.js
+
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/fn-name-lhs-cover.js
 
 Mismatch: tasks/coverage/test262/test/language/expressions/assignment/target-cover-id.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/await/await-monkey-patched-promise.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-param-rest-elem-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/function/scope-param-rest-elem-var-open.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-param-rest-elem-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/generators/scope-param-rest-elem-var-open.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/scope-gen-meth-param-rest-elem-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/scope-gen-meth-param-rest-elem-var-open.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/scope-meth-param-rest-elem-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/expressions/object/scope-meth-param-rest-elem-var-open.js
 
 Mismatch: tasks/coverage/test262/test/language/expressions/postfix-decrement/target-cover-id.js
 
@@ -15,9 +139,37 @@ Mismatch: tasks/coverage/test262/test/language/expressions/prefix-decrement/targ
 
 Mismatch: tasks/coverage/test262/test/language/expressions/prefix-increment/target-cover-id.js
 
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/array-pattern.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/arrow-function.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/expected-argument-count.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/no-alias-arguments.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/object-pattern.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/rest-index.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/rest-parameters-apply.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/rest-parameters-call.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/rest-parameters-produce-an-array.js
+
+Mismatch: tasks/coverage/test262/test/language/rest-parameters/with-new-target.js
+
 Mismatch: tasks/coverage/test262/test/language/statements/for-in/head-lhs-cover.js
 
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-async-parens.js
 
 Mismatch: tasks/coverage/test262/test/language/statements/for-of/head-lhs-cover.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/function/scope-param-rest-elem-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/function/scope-param-rest-elem-var-open.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/generators/scope-param-rest-elem-var-close.js
+
+Mismatch: tasks/coverage/test262/test/language/statements/generators/scope-param-rest-elem-var-open.js
 
