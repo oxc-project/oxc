@@ -16,6 +16,7 @@ impl<'a> Dummy<'a> for SourceType {
             language: Dummy::dummy(allocator),
             module_kind: Dummy::dummy(allocator),
             variant: Dummy::dummy(allocator),
+            extension: Dummy::dummy(allocator),
         }
     }
 }
@@ -47,5 +48,15 @@ impl<'a> Dummy<'a> for LanguageVariant {
     #[inline(always)]
     fn dummy(allocator: &'a Allocator) -> Self {
         Self::Standard
+    }
+}
+
+impl<'a> Dummy<'a> for FileExtension {
+    /// Create a dummy [`FileExtension`].
+    ///
+    /// Does not allocate any data into arena.
+    #[inline(always)]
+    fn dummy(allocator: &'a Allocator) -> Self {
+        Self::Js
     }
 }
