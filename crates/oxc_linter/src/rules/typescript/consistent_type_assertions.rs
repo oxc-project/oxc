@@ -87,10 +87,24 @@ pub struct ConsistentTypeAssertionsNeverConfig {
 #[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ConsistentTypeAssertionsStyleConfig {
+    /// Which assertion syntax is enforced when type assertions are allowed.
+    ///
+    /// - `"as"` (default)
+    /// - `"angle-bracket"`
     #[serde(default)]
     assertion_style: AssertionStyleNonNever,
+    /// Whether object literal type assertions are allowed, allowed only as parameters, or disallowed.
+    ///
+    /// - `"allow"` (default)
+    /// - `"allow-as-parameter"`
+    /// - `"never"`
     #[serde(default)]
     object_literal_type_assertions: LiteralAssertionOption,
+    /// Whether array literal type assertions are allowed, allowed only as parameters, or disallowed.
+    ///
+    /// - `"allow"` (default)
+    /// - `"allow-as-parameter"`
+    /// - `"never"`
     #[serde(default)]
     array_literal_type_assertions: LiteralAssertionOption,
 }
