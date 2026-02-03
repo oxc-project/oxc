@@ -38,9 +38,14 @@ suite("runExecutable", () => {
   test("should create binary executable for non-Node files", () => {
     const result = runExecutable("/path/to/oxc-language-server", tool);
 
-    strictEqual(result.command, "/path/to/oxc-language-server");
+    let expectedCommand = "/path/to/oxc-language-server";
+    if (process.platform === "win32") {
+      expectedCommand = `"${expectedCommand}"`;
+    }
+
+    strictEqual(result.command, expectedCommand);
     strictEqual(result.args?.[0], "--lsp");
-    strictEqual(result.options?.shell, false);
+    strictEqual(result.options?.shell, process.platform === "win32");
   });
 
   test("should use shell on Windows for binary executables", () => {
