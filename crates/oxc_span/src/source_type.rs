@@ -307,8 +307,9 @@ impl SourceType {
 
     /// Creates a [`SourceType`] representing a [`TypeScript`] file.
     ///
-    /// Unlike [`SourceType::cjs`], this method creates [`modules`]. Use
-    /// [`SourceType::tsx`] for TypeScript files with [`JSX`] support.
+    /// This method creates an [`unambiguous`] source type, which will be
+    /// treated as a module if it contains ESM syntax. Use [`SourceType::tsx`]
+    /// for TypeScript files with [`JSX`] support.
     ///
     /// ## Example
     /// ```
@@ -317,17 +318,17 @@ impl SourceType {
     /// let ts = SourceType::ts();
     /// assert!(ts.is_typescript());
     /// assert!(!ts.is_typescript_definition());
-    /// assert!(ts.is_module());
+    /// assert!(ts.is_unambiguous());
     /// assert!(!ts.is_jsx());
     /// ```
     ///
     /// [`TypeScript`]: Language::TypeScript
-    /// [`modules`]: ModuleKind::Module
+    /// [`unambiguous`]: ModuleKind::Unambiguous
     /// [`JSX`]: LanguageVariant::Jsx
     pub const fn ts() -> Self {
         Self {
             language: Language::TypeScript,
-            module_kind: ModuleKind::Module,
+            module_kind: ModuleKind::Unambiguous,
             variant: LanguageVariant::Standard,
         }
     }
@@ -341,7 +342,7 @@ impl SourceType {
     /// let tsx = SourceType::tsx();
     /// assert!(tsx.is_typescript());
     /// assert!(!tsx.is_typescript_definition());
-    /// assert!(tsx.is_module());
+    /// assert!(tsx.is_unambiguous());
     /// assert!(tsx.is_jsx());
     /// ```
     ///
