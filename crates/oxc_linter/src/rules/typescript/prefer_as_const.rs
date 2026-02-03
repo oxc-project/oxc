@@ -160,6 +160,8 @@ fn test() {
         "let foo = { bar: 1 as const };",
         "let foo = { bar: 'baz' };",
         "let foo = { bar: 2 };",
+        // "let foo = <bar>'bar';",
+        // "let foo = <string>'bar';",
         "let foo = 'bar' as string;",
         "let foo = `bar` as `bar`;",
         "let foo = `bar` as `foo`;",
@@ -171,43 +173,152 @@ fn test() {
         "let foo: 'bar';",
         "let foo = { bar };",
         "let foo: 'baz' = 'baz' as const;",
-        "class foo { bar = 'baz'; }",
-        "class foo { bar: 'baz'; }",
-        "class foo { bar; }",
-        "class foo { bar: string = 'baz'; }",
-        "class foo { bar: number = 1; }",
-        "class foo { bar = 'baz' as const; }",
-        "class foo { bar = 2 as const; }",
-        "class foo { get bar(): 'bar' {} set bar(bar: 'bar') {} }",
-        "class foo { bar = () => 'bar' as const; }",
-        "type BazFunction = () => 'baz'; class foo { bar: BazFunction = () => 'bar'; }",
-        "class foo { bar(): void {} }",
-        // NOTE: OXC does not parse these format yet.
-        // "let foo = <bar>'bar';",
-        // "let foo = <string>'bar';",
-        // "class foo { bar = <baz>'baz'; }",
+        "
+                  class foo {
+                    bar = 'baz';
+                  }
+                ",
+        "
+                  class foo {
+                    bar: 'baz';
+                  }
+                ",
+        "
+                  class foo {
+                    bar;
+                  }
+                ",
+        // "
+        //           class foo {
+        //             bar = <baz>'baz';
+        //           }
+        //         ",
+        "
+                  class foo {
+                    bar: string = 'baz';
+                  }
+                ",
+        "
+                  class foo {
+                    bar: number = 1;
+                  }
+                ",
+        "
+                  class foo {
+                    bar = 'baz' as const;
+                  }
+                ",
+        "
+                  class foo {
+                    bar = 2 as const;
+                  }
+                ",
+        "
+                  class foo {
+                    get bar(): 'bar' {}
+                    set bar(bar: 'bar') {}
+                  }
+                ",
+        "
+                  class foo {
+                    bar = () => 'bar' as const;
+                  }
+                ",
+        "
+                  type BazFunction = () => 'baz';
+                  class foo {
+                    bar: BazFunction = () => 'bar';
+                  }
+                ",
+        "
+                  class foo {
+                    bar(): void {}
+                  }
+                ",
     ];
 
     let fail = vec![
+        "let foo = { bar: 'baz' as 'baz' };",
+        "let foo = { bar: 1 as 1 };",
         "let []: 'bar' = 'bar';",
         "let foo: 'bar' = 'bar';",
         "let foo: 2 = 2;",
-        "class foo { bar: 'baz' = 'baz';}",
-        "class foo { bar: 2 = 2;}",
+        "let foo: 'bar' = 'bar' as 'bar';",
+        "let foo = <'bar'>'bar';",
+        "let foo = <4>4;",
+        "let foo = 'bar' as 'bar';",
+        "let foo = 5 as 5;",
+        "
+            class foo {
+              bar: 'baz' = 'baz';
+            }
+                  ",
+        "
+            class foo {
+              bar: 2 = 2;
+            }
+                  ",
+        "
+            class foo {
+              foo = <'bar'>'bar';
+            }
+                  ",
+        "
+            class foo {
+              foo = 'bar' as 'bar';
+            }
+                  ",
+        "
+            class foo {
+              foo = 5 as 5;
+            }
+                  ",
     ];
 
     let fix = vec![
-        ("let foo = { bar: 'baz' as 'baz' };", "let foo = { bar: 'baz' as const };", None),
-        ("let foo = { bar: 1 as 1 };", "let foo = { bar: 1 as const };", None),
-        ("let foo: 'bar' = 'bar' as 'bar';", "let foo: 'bar' = 'bar' as const;", None),
-        ("let foo = 'bar' as 'bar';", "let foo = 'bar' as const;", None),
-        ("let foo = 5 as 5;", "let foo = 5 as const;", None),
-        ("class foo { foo = 'bar' as 'bar'; }", "class foo { foo = 'bar' as const; }", None),
-        ("class foo { foo = 5 as 5; }", "class foo { foo = 5 as const; }", None),
-        // NOTE: OXC does not parse these format yet.
-        // ("let foo = <4>4;", "let foo = <const>4;", None),
-        // ("let foo = <'bar'>'bar';", "let foo = <const>'bar';", None),
-        // ("class foo { foo = <'bar'>'bar'; }", "class foo { foo = <const>'bar'; }", None),
+        ("let foo = { bar: 'baz' as 'baz' };", "let foo = { bar: 'baz' as const };"),
+        ("let foo = { bar: 1 as 1 };", "let foo = { bar: 1 as const };"),
+        ("let foo: 'bar' = 'bar' as 'bar';", "let foo: 'bar' = 'bar' as const;"),
+        // ("let foo = <'bar'>'bar';", "let foo = <const>'bar';"),
+        // ("let foo = <4>4;", "let foo = <const>4;"),
+        ("let foo = 'bar' as 'bar';", "let foo = 'bar' as const;"),
+        ("let foo = 5 as 5;", "let foo = 5 as const;"),
+        // (
+        //     "
+        //     class foo {
+        //       foo = <'bar'>'bar';
+        //     }
+        //           ",
+        //     "
+        //     class foo {
+        //       foo = <const>'bar';
+        //     }
+        //           ",
+        // ),
+        (
+            "
+            class foo {
+              foo = 'bar' as 'bar';
+            }
+                  ",
+            "
+            class foo {
+              foo = 'bar' as const;
+            }
+                  ",
+        ),
+        (
+            "
+            class foo {
+              foo = 5 as 5;
+            }
+                  ",
+            "
+            class foo {
+              foo = 5 as const;
+            }
+                  ",
+        ),
     ];
 
     Tester::new(PreferAsConst::NAME, PreferAsConst::PLUGIN, pass, fail)
