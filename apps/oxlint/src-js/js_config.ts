@@ -13,18 +13,35 @@ type LoadJsConfigsResult =
   | { Error: string };
 
 function validateConfigExtends(root: object): void {
-  const visited = new Set<object>();
-  const stack = new Set<object>();
+  const visited = new WeakSet<object>();
+  const inStack = new WeakSet<object>();
+  const stackObjects: object[] = [];
+  const stackPaths: string[] = [];
 
-  const visit = (config: object): void => {
+  const formatCycleError = (refPath: string, cycleStart: string, idx: number): string => {
+    const cycle =
+      idx === -1
+        ? `${cycleStart} -> ${cycleStart}`
+        : [...stackPaths.slice(idx), cycleStart].join(" -> ");
+
+    return (
+      "`extends` contains a circular reference.\n\n" +
+      `${refPath} points back to ${cycleStart}\n` +
+      `Cycle: ${cycle}`
+    );
+  };
+
+  const visit = (config: object, path: string): void => {
     if (visited.has(config)) return;
-    visited.add(config);
-
-    if (stack.has(config)) {
-      // Defensive: this should never happen because we check before recursing.
-      throw new Error("`extends` contains a circular reference.");
+    if (inStack.has(config)) {
+      const idx = stackObjects.indexOf(config);
+      const cycleStart = idx === -1 ? "<unknown>" : stackPaths[idx];
+      throw new Error(formatCycleError(path, cycleStart, idx));
     }
-    stack.add(config);
+
+    inStack.add(config);
+    stackObjects.push(config);
+    stackPaths.push(path);
 
     const maybeExtends = (config as Record<string, unknown>).extends;
     if (maybeExtends !== undefined) {
@@ -40,17 +57,25 @@ function validateConfigExtends(root: object): void {
             `\`extends[${i}]\` must be a config object (strings/paths are not supported).`,
           );
         }
-        if (stack.has(item)) {
-          throw new Error("`extends` contains a circular reference.");
+
+        const itemPath = `${path}.extends[${i}]`;
+        if (inStack.has(item)) {
+          const idx = stackObjects.indexOf(item);
+          const cycleStart = idx === -1 ? "<unknown>" : stackPaths[idx];
+          throw new Error(formatCycleError(itemPath, cycleStart, idx));
         }
-        visit(item);
+
+        visit(item, itemPath);
       }
     }
 
-    stack.delete(config);
+    inStack.delete(config);
+    stackObjects.pop();
+    stackPaths.pop();
+    visited.add(config);
   };
 
-  visit(root);
+  visit(root, "<root>");
 }
 
 /**
