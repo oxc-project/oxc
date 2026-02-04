@@ -42,7 +42,7 @@ declare_oxc_lint!(
     /// expect(a).toReturnWith()
     /// expect(a).lastReturnedWith()
     /// expect(a).nthReturnedWith()
-    /// expect(a).toThrowError()
+    /// expect(a).toThrow()
     /// ```
     ///
     /// Examples of **correct** code for this rule:
@@ -57,7 +57,7 @@ declare_oxc_lint!(
     /// expect(a).toHaveReturnedWith()
     /// expect(a).toHaveLastReturnedWith()
     /// expect(a).toHaveNthReturnedWith()
-    /// expect(a).toThrow()
+    /// expect(a).toThrowError()
     /// ```
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/no-alias-methods.md),
@@ -75,7 +75,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// expect(a).toBeCalled()
     /// expect(a).toBeCalledTimes()
-    /// expect(a).not["toThrowError"]()
+    /// expect(a).not["toThrow"]()
     /// ```
     ///
     /// Examples of **correct** code for this rule with vitest:
@@ -90,7 +90,7 @@ declare_oxc_lint!(
     /// expect(a).toHaveReturnedWith()
     /// expect(a).toHaveLastReturnedWith()
     /// expect(a).toHaveNthReturnedWith()
-    /// expect(a).toThrow()
+    /// expect(a).toThrowError()
     /// expect(a).rejects
     /// expect(a)
     /// ```
@@ -126,8 +126,8 @@ impl Rule for NoAliasMethods {
         let (name, canonical_name) = method_name.name_with_canonical();
 
         let mut span = matcher.span;
-        // expect(a).not['toThrowError']()
-        // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
+        // expect(a).not['toThrow']()
+        // matcher is the node of `toThrow`, we only want to replace the content in the quotes.
         if matcher.element.is_string_literal() {
             span.start += 1;
             span.end -= 1;
@@ -152,7 +152,7 @@ enum BadAliasMethodName {
     ToReturnWith,
     LastReturnedWith,
     NthReturnedWith,
-    ToThrowError,
+    ToThrow,
 }
 
 impl BadAliasMethodName {
@@ -168,7 +168,7 @@ impl BadAliasMethodName {
             "toReturnWith" => Some(Self::ToReturnWith),
             "lastReturnedWith" => Some(Self::LastReturnedWith),
             "nthReturnedWith" => Some(Self::NthReturnedWith),
-            "toThrowError" => Some(Self::ToThrowError),
+            "toThrow" => Some(Self::ToThrow),
             _ => None,
         }
     }
@@ -185,7 +185,7 @@ impl BadAliasMethodName {
             Self::ToReturnWith => ("toReturnWith", "toHaveReturnedWith"),
             Self::LastReturnedWith => ("lastReturnedWith", "toHaveLastReturnedWith"),
             Self::NthReturnedWith => ("nthReturnedWith", "toHaveNthReturnedWith"),
-            Self::ToThrowError => ("toThrowError", "toThrow"),
+            Self::ToThrow => ("toThrow", "toThrowError"),
         }
     }
 }
@@ -205,7 +205,7 @@ fn test() {
         ("expect(a).toHaveReturnedWith()", None),
         ("expect(a).toHaveLastReturnedWith()", None),
         ("expect(a).toHaveNthReturnedWith()", None),
-        ("expect(a).toThrow()", None),
+        ("expect(a).toThrowError()", None),
         ("expect(a).rejects;", None),
         ("expect(a);", None),
     ];
@@ -221,17 +221,17 @@ fn test() {
         ("expect(a).toReturnWith()", None),
         ("expect(a).lastReturnedWith()", None),
         ("expect(a).nthReturnedWith()", None),
-        ("expect(a).toThrowError()", None),
-        ("expect(a).resolves.toThrowError()", None),
-        ("expect(a).rejects.toThrowError()", None),
-        ("expect(a).not.toThrowError()", None),
-        ("expect(a).not['toThrowError']()", None),
+        ("expect(a).toThrow()", None),
+        ("expect(a).resolves.toThrow()", None),
+        ("expect(a).rejects.toThrow()", None),
+        ("expect(a).not.toThrow()", None),
+        ("expect(a).not['toThrow']()", None),
     ];
 
     let mut fix = vec![
         ("expect(a).toBeCalled()", "expect(a).toHaveBeenCalled()", None),
-        ("expect(a).not['toThrowError']()", "expect(a).not['toThrow']()", None),
-        ("expect(a).not[`toThrowError`]()", "expect(a).not[`toThrow`]()", None),
+        ("expect(a).not['toThrow']()", "expect(a).not['toThrowError']()", None),
+        ("expect(a).not[`toThrow`]()", "expect(a).not[`toThrowError`]()", None),
     ];
 
     let pass_vitest = vec![
@@ -245,7 +245,7 @@ fn test() {
         "expect(a).toHaveReturnedWith()",
         "expect(a).toHaveLastReturnedWith()",
         "expect(a).toHaveNthReturnedWith()",
-        "expect(a).toThrow()",
+        "expect(a).toThrowError()",
         "expect(a).rejects;",
         "expect(a);",
     ];
@@ -253,13 +253,13 @@ fn test() {
     let fail_vitest = vec![
         "expect(a).toBeCalled()",
         "expect(a).toBeCalledTimes()",
-        r#"expect(a).not["toThrowError"]()"#,
+        r#"expect(a).not["toThrow"]()"#,
     ];
 
     let fix_vitest = vec![
         ("expect(a).toBeCalled()", "expect(a).toHaveBeenCalled()", None),
         ("expect(a).toBeCalledTimes()", "expect(a).toHaveBeenCalledTimes()", None),
-        ("expect(a).not['toThrowError']()", "expect(a).not['toThrow']()", None),
+        ("expect(a).not['toThrow']()", "expect(a).not['toThrowError']()", None),
     ];
 
     pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
