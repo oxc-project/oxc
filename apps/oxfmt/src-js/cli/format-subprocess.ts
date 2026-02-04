@@ -9,11 +9,7 @@
  *
  * See: https://github.com/nodejs/node/issues/55706
  */
-import {
-  formatEmbeddedCode,
-  formatFile,
-  sortTailwindClasses,
-} from "../libs/prettier";
+import { formatEmbeddedCode, formatFile, sortTailwindClasses } from "../libs/prettier";
 
 interface Request {
   id: number;
@@ -42,9 +38,7 @@ async function handleMessage(request: Request): Promise<void> {
         );
         break;
       case "formatFile":
-        response.result = await formatFile(
-          request.args as Parameters<typeof formatFile>[0],
-        );
+        response.result = await formatFile(request.args as Parameters<typeof formatFile>[0]);
         break;
       case "sortTailwindClasses":
         response.result = await sortTailwindClasses(

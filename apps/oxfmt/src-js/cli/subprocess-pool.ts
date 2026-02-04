@@ -42,9 +42,7 @@ export class SubprocessPool {
   constructor(numWorkers: number) {
     // Resolve path to compiled subprocess script
     // Note: This file gets inlined into cli.js, so path is relative to dist/cli.js
-    this.workerPath = fileURLToPath(
-      new URL("./cli/format-subprocess.js", import.meta.url),
-    );
+    this.workerPath = fileURLToPath(new URL("./cli/format-subprocess.js", import.meta.url));
 
     // Spawn workers
     for (let i = 0; i < numWorkers; i++) {
