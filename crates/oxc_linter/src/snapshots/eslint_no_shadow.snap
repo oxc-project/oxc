@@ -1,0 +1,103 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 444
+---
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:5]
+ 1 │ var x = 1; function foo() { var x = 2; }
+   ·     ┬                           ┬
+   ·     │                           ╰── 'x' is declared here
+   ·     ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const x = 1; { const x = 2; }
+   ·       ┬              ┬
+   ·       │              ╰── 'x' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:5]
+ 1 │ var x = 1; function foo(x) { }
+   ·     ┬                   ┬
+   ·     │                   ╰── 'x' is declared here
+   ·     ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:22]
+ 1 │ function foo() { var x = 1; function bar() { var x = 2; } }
+   ·                      ┬                           ┬
+   ·                      │                           ╰── 'x' is declared here
+   ·                      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const x = 1; const foo = () => { const x = 2; };
+   ·       ┬                                ┬
+   ·       │                                ╰── 'x' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const x = 1; class Foo { method() { const x = 2; } }
+   ·       ┬                                   ┬
+   ·       │                                   ╰── 'x' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:5]
+ 1 │ let x = 1; { let x = 2; }
+   ·     ┬            ┬
+   ·     │            ╰── 'x' is declared here
+   ·     ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'e' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const e = 1; try { } catch (e) { }
+   ·       ┬                     ┬
+   ·       │                     ╰── 'e' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'e' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'i' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const i = 1; for (let i = 0; i < 10; i++) { }
+   ·       ┬               ┬
+   ·       │               ╰── 'i' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'i' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const x = 1; { const { x } = { x: 2 }; }
+   ·       ┬                ┬
+   ·       │                ╰── 'x' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const x = 1; { const [x] = [2]; }
+   ·       ┬               ┬
+   ·       │               ╰── 'x' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
