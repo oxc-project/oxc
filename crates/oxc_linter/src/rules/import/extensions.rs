@@ -1229,12 +1229,6 @@ fn test() {
             r#"import data from "./data.json" with { type: "json" };"#,
             Some(json!(["ignorePackages"])),
         ),
-        // NOTE: Files with multiple extensions (e.g., Component.stories.tsx imported as ./Component.stories)
-        // require module resolution to work correctly. Without module resolution, the linter cannot
-        // distinguish between:
-        // - A file named "Component.stories.tsx" imported as "./Component.stories" (should pass with tsx: "never")
-        // - A file named "Component.stories" imported as "./Component.stories" (may fail depending on config)
-        // This scenario is validated via the reproduction repo test in issue #18918.
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
