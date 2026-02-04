@@ -1231,18 +1231,9 @@ fn test() {
         ),
         // Files with multiple extensions (e.g., Component.stories.tsx)
         // These test cases use actual fixture files for proper module resolution
-        (
-            r"import { Component } from './Component.stories';",
-            Some(json!([{ "tsx": "never" }])),
-        ),
-        (
-            r"import { testUtil } from './utils.test';",
-            Some(json!([{ "ts": "never" }])),
-        ),
-        (
-            r"import { helper } from './helper.spec';",
-            Some(json!([{ "js": "never" }])),
-        ),
+        (r"import { Component } from './Component.stories';", Some(json!([{ "tsx": "never" }]))),
+        (r"import { testUtil } from './utils.test';", Some(json!([{ "ts": "never" }]))),
+        (r"import { helper } from './helper.spec';", Some(json!([{ "js": "never" }]))),
         // Subpath imports
         // https://nodejs.org/api/packages.html#subpath-imports
         // (
