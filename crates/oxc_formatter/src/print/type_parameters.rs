@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::FileExtension;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -68,17 +69,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
 impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut Formatter<'_, 'a>) {
         // Type parameter lists of arrow function expressions have to include at least one comma
-        // to avoid any ambiguity with JSX elements.
+        // to avoid any ambiguity with JSX elements, and in `.mts`/`.cts` sources.
         // Thus, we have to add a trailing comma when there is a single type parameter.
         // The comma can be omitted in the case where the single parameter has a constraint,
         // i.i. an `extends` clause.
-        let trailing_separator = if self.len() == 1
-        // This only concern sources that allow JSX or a restricted standard variant.
-        && f.context().source_type().is_jsx()
-        && matches!(self.grand_parent(), AstNodes::ArrowFunctionExpression(_))
-        // Ignore Type parameter with an `extends` clause or a default type.
-        && !self.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some())
-        {
+        let trailing_separator = if should_force_trailing_comma_for_arrow_function(self, f) {
             TrailingSeparator::Mandatory
         } else {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
@@ -90,6 +85,33 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
             trailing_separator,
         );
     }
+}
+
+/// Matches Prettier's `shouldForceTrailingComma` behavior for arrow functions.
+///
+/// <https://github.com/prettier/prettier/blob/070c89bba46235f4948560ed612a11e89ccd2da9/src/language-js/print/type-parameters.js#L33-L42>
+fn should_force_trailing_comma_for_arrow_function(
+    params: &AstNode<'_, Vec<'_, TSTypeParameter<'_>>>,
+    f: &Formatter<'_, '_>,
+) -> bool {
+    if params.len() != 1 {
+        return false;
+    }
+
+    if !matches!(params.grand_parent(), AstNodes::ArrowFunctionExpression(_)) {
+        return false;
+    }
+
+    // Ignore type parameters with a constraint or default type.
+    if params.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some()) {
+        return false;
+    }
+
+    let source_type = f.context().source_type();
+    let is_ts_extension = matches!(source_type.extension(), Some(FileExtension::Ts));
+
+    // Force trailing comma for non-.ts sources (e.g. .tsx, .mts, .cts) or when extension is unknown.
+    !is_ts_extension
 }
 
 #[derive(Default)]
