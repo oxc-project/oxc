@@ -47,6 +47,10 @@ const pluginsPkgConfig = defineConfig({
   entry: {
     index: "src-js/plugins.ts",
   },
+  outDir: "dist-pkg-plugins",
+  // `build.ts` deletes the directory before TSDown runs.
+  // This allows generating the ESM and CommonJS builds in the same directory.
+  clean: false,
   target: "node12",
   minify: minifyConfig,
   define: {
@@ -103,13 +107,11 @@ export default defineConfig([
   // `scripts/build.ts` moves built files in `dist-pkg-plugins` to `npm/oxlint-plugins`.
   {
     ...pluginsPkgConfig,
-    outDir: "dist-pkg-plugins/esm",
     format: "esm",
     dts: true,
   },
   {
     ...pluginsPkgConfig,
-    outDir: "dist-pkg-plugins/cjs",
     format: "commonjs",
     dts: false,
   },

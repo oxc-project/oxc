@@ -10,6 +10,10 @@ const oxlintDirPath = join(import.meta.dirname, ".."),
   distPkgPluginsDirPath = join(oxlintDirPath, "dist-pkg-plugins"),
   pkgPluginsDirPath = join(oxlintDirPath, "../../npm/oxlint-plugins");
 
+// Delete `dist-pkg-plugins` directory
+console.log("Deleting `dist-pkg-plugins` directory...");
+rmSync(distPkgPluginsDirPath, { recursive: true, force: true });
+
 // Build with tsdown
 console.log("Building with tsdown...");
 execSync("pnpm tsdown", { stdio: "inherit", cwd: oxlintDirPath });
@@ -28,17 +32,9 @@ for (const filename of readdirSync(srcDirPath)) {
 
 // Copy files to `@oxlint/plugins` package
 console.log("Moving files to `@oxlint/plugins` package...");
-
-const files = [
-  { src: "esm/index.js", dest: "index.js" },
-  { src: "esm/index.d.ts", dest: "index.d.ts" },
-  { src: "cjs/index.cjs", dest: "index.cjs" },
-];
-
-for (const { src, dest } of files) {
-  copyFileSync(join(distPkgPluginsDirPath, src), join(pkgPluginsDirPath, dest));
+for (const filename of readdirSync(distPkgPluginsDirPath)) {
+  copyFileSync(join(distPkgPluginsDirPath, filename), join(pkgPluginsDirPath, filename));
 }
-
 rmSync(distPkgPluginsDirPath, { recursive: true });
 
 console.log("Build complete!");
