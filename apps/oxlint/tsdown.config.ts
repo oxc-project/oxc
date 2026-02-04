@@ -104,7 +104,6 @@ export default defineConfig([
 
   // `@oxlint/plugins` package.
   // Dual package - both ESM and CommonJS.
-  // `scripts/build.ts` moves built files in `dist-pkg-plugins` to `npm/oxlint-plugins`.
   {
     ...pluginsPkgConfig,
     format: "esm",
