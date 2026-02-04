@@ -1,0 +1,101 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Disable js-in-xxx formatting > should be disabled by \`embeddedLanguageFormatting: 'off'\` 1`] = `
+"\`\`\`js
+const x=1;
+const y=2;
+console.log(x+y);
+\`\`\`
+"
+`;
+
+exports[`Disable js-in-xxx formatting > should be disabled by prettier-ignore 1`] = `
+"# Markdown
+
+## Disabled
+
+<!-- prettier-ignore -->
+\`\`\`ts
+const x=1;
+const y=2;
+console.log(x+y);
+\`\`\`
+
+## Enabled
+
+\`\`\`jsx
+const X = () => (
+  <>
+    <div>JSX</div>
+    <hr />
+  </>
+);
+\`\`\`
+"
+`;
+
+exports[`Format js-in-xxx with prettier-plugin-oxfmt > should format .md w/o duplicating TS lines 1`] = `
+"# Markdown
+
+In Prettier, using \`typescript\` parser inside \`markdown\` parser duplicates lines after \`await { then }\`.
+
+\`\`\`ts
+await Promise.resolve("value");
+await {
+  then() {},
+};
+// This comment and below will be duplicated
+await getPromise();
+\`\`\`
+
+But we are not!
+"
+`;
+
+exports[`Format js-in-xxx with prettier-plugin-oxfmt > should format .vue w/ sort-imports 1`] = `
+"<script lang="ts">
+  import a from "a";
+  import m from "m";
+  import z from "z";
+</script>
+<script lang="ts" setup>
+  import a from "a";
+  import m from "m";
+  import z from "z";
+</script>
+<template>
+  <div>{{ a + m + z }}</div>
+</template>
+"
+`;
+
+exports[`Format js-in-xxx with prettier-plugin-oxfmt > should format .vue w/ sort-tailwindcss 1`] = `
+"<script setup>
+  import { ref } from "vue";
+  import clsx from "clsx";
+
+  const count = ref(0);
+  const cls = clsx("flex p-4");
+</script>
+<template>
+  <div class="flex p-4">{{ count }}</div>
+  <div class="flex p-4">{{ count }}</div>
+</template>
+"
+`;
+
+exports[`Format js-in-xxx with prettier-plugin-oxfmt > should oxfmt-ignore work 1`] = `
+"<!doctype html>
+<html>
+  <head>
+    <script>
+      // oxfmt-ignore
+      const    a=  1;
+
+      window.foo(a);
+    </script>
+  </head>
+  <body></body>
+</html>
+"
+`;

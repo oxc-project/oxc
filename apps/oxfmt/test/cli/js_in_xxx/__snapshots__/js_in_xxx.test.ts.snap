@@ -1,0 +1,73 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`js-in-xxx > should format .vue with sort-imports and sort-tailwindcss 1`] = `
+"--- FILE -----------
+app.vue
+--- BEFORE ---------
+<script setup lang="ts">
+import z from "z";
+import a from "a";
+import m from "m";
+
+const count = ref(0);
+</script>
+<template>
+  <div class="p-4 flex m-0">{{ count }}</div>
+  <button class="m-2 p-1 flex">Click</button>
+</template>
+
+--- AFTER ----------
+<script setup lang="ts">
+  import a from "a";
+  import m from "m";
+  import z from "z";
+
+  const count = ref(0);
+</script>
+<template>
+  <div class="m-0 flex p-4">{{ count }}</div>
+  <button class="m-2 flex p-1">Click</button>
+</template>
+
+--------------------"
+`;
+
+exports[`js-in-xxx > should format multiple <script> tags with semi: false 1`] = `
+"--- FILE -----------
+multi-script.vue
+--- BEFORE ---------
+<script lang="ts">
+import z from "z";
+import a from "a";
+
+export default { name: "App" };
+</script>
+<script setup lang="ts">
+import m from "m";
+import b from "b";
+
+const count = ref(0);
+</script>
+<template>
+  <div>{{ count }}</div>
+</template>
+
+--- AFTER ----------
+<script lang="ts">
+  import a from "a"
+  import z from "z"
+
+  export default { name: "App" }
+</script>
+<script setup lang="ts">
+  import b from "b"
+  import m from "m"
+
+  const count = ref(0)
+</script>
+<template>
+  <div>{{ count }}</div>
+</template>
+
+--------------------"
+`;
