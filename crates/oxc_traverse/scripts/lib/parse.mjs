@@ -5,7 +5,7 @@ import { join as pathJoin } from "path";
 import { fileURLToPath } from "url";
 import { typeAndWrappers } from "./utils.mjs";
 
-const FILENAMES = ["js.rs", "jsx.rs", "literal.rs", "ts.rs"];
+const FILENAMES = ["astro.rs", "js.rs", "jsx.rs", "literal.rs", "ts.rs"];
 
 /**
  * @typedef {Record<string, StructType | EnumType>} Types

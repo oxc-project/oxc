@@ -161,6 +161,10 @@ impl Codegen<'_> {
                     }
                 }
             }
+            CommentKind::Html => {
+                // HTML comments: print as-is
+                self.print_str(comment_source);
+            }
         }
     }
 

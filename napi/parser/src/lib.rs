@@ -9,6 +9,7 @@ use oxc::{
     semantic::SemanticBuilder,
     span::SourceType,
 };
+use oxc_estree::{CompactTSSerializer, ESTree};
 use oxc_napi::{Comment, OxcError, convert_utf8_to_utf16, get_source_type};
 
 mod convert;
@@ -194,4 +195,108 @@ pub fn parse(
 ) -> AsyncTask<ResolveTask> {
     let options = options.unwrap_or_default();
     AsyncTask::new(ResolveTask { filename, source_text, options })
+}
+
+// ==================== Astro Parsing ====================
+
+fn parse_astro_with_return(source_text: &str, options: &AstroParserOptions) -> AstroParseResult {
+    let allocator = Allocator::default();
+    let source_type = SourceType::astro();
+    let ranges = options.range.unwrap_or(false);
+
+    let ret = Parser::new(&allocator, source_text, source_type)
+        .with_options(ParseOptions {
+            preserve_parens: options.preserve_parens.unwrap_or(true),
+            ..ParseOptions::default()
+        })
+        .parse_astro();
+
+    let errors = OxcError::from_diagnostics("", source_text, ret.errors);
+
+    // Serialize the AstroRoot to JSON
+    // Use TypeScript serializer since Astro frontmatter and scripts contain TypeScript
+    let capacity = source_text.len() * 16; // Same ratio as regular JSON serialization
+    let mut serializer = CompactTSSerializer::with_capacity(capacity, ranges);
+    ret.root.serialize(&mut serializer);
+    let root = serializer.into_string();
+
+    AstroParseResult { root, errors }
+}
+
+/// Parse Astro file synchronously on current thread.
+///
+/// Astro files have a unique structure with:
+/// - A frontmatter section (TypeScript) delimited by `---`
+/// - An HTML body containing JSX expressions and `<script>` tags
+///
+/// Returns an `AstroParseResult` containing the parsed AST root and any errors.
+///
+/// @example
+/// ```javascript
+/// import { parseAstroSync } from '@aspect-build/oxc-parser';
+///
+/// const result = parseAstroSync(`---
+/// const name = "World";
+/// ---
+/// <h1>Hello {name}!</h1>`);
+///
+/// console.log(result.root); // AstroRoot AST
+/// ```
+#[napi]
+#[allow(clippy::needless_pass_by_value, clippy::allow_attributes)]
+pub fn parse_astro_sync(
+    source_text: String,
+    options: Option<AstroParserOptions>,
+) -> AstroParseResult {
+    let options = options.unwrap_or_default();
+    parse_astro_with_return(&source_text, &options)
+}
+
+pub struct AstroResolveTask {
+    source_text: String,
+    options: AstroParserOptions,
+}
+
+#[napi]
+impl Task for AstroResolveTask {
+    type JsValue = AstroParseResult;
+    type Output = AstroParseResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        let source_text = mem::take(&mut self.source_text);
+        Ok(parse_astro_with_return(&source_text, &self.options))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// Parse Astro file asynchronously on a separate thread.
+///
+/// Note that not all of the workload can happen on a separate thread.
+/// Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
+/// has to happen on current thread.
+///
+/// Generally `parseAstroSync` is preferable to use as it does not have the overhead of spawning a thread.
+/// If you need to parallelize parsing multiple files, it is recommended to use worker threads.
+///
+/// @example
+/// ```javascript
+/// import { parseAstro } from '@aspect-build/oxc-parser';
+///
+/// const result = await parseAstro(`---
+/// const name = "World";
+/// ---
+/// <h1>Hello {name}!</h1>`);
+///
+/// console.log(result.root); // AstroRoot AST
+/// ```
+#[napi]
+pub fn parse_astro(
+    source_text: String,
+    options: Option<AstroParserOptions>,
+) -> AsyncTask<AstroResolveTask> {
+    let options = options.unwrap_or_default();
+    AsyncTask::new(AstroResolveTask { source_text, options })
 }

@@ -587,14 +587,17 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { Severity, ParseResult, ExportExportNameKind, ExportImportNameKind, ExportLocalNameKind, ImportNameKind, parse, parseSync, rawTransferSupported } = nativeBinding
+const { Severity, AstroParseResult, ParseResult, ExportExportNameKind, ExportImportNameKind, ExportLocalNameKind, ImportNameKind, parse, parseAstro, parseAstroSync, parseSync, rawTransferSupported } = nativeBinding
 export { Severity }
+export { AstroParseResult }
 export { ParseResult }
 export { ExportExportNameKind }
 export { ExportImportNameKind }
 export { ExportLocalNameKind }
 export { ImportNameKind }
 export { parse }
+export { parseAstro }
+export { parseAstroSync }
 export { parseSync }
 export { rawTransferSupported }
 const { getBufferOffset, parseRaw, parseRawSync } = nativeBinding

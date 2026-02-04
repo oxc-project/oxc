@@ -109,11 +109,14 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
 })
 module.exports = __napiModule.exports
 module.exports.Severity = __napiModule.exports.Severity
+module.exports.AstroParseResult = __napiModule.exports.AstroParseResult
 module.exports.ParseResult = __napiModule.exports.ParseResult
 module.exports.ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 module.exports.ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 module.exports.ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 module.exports.ImportNameKind = __napiModule.exports.ImportNameKind
 module.exports.parse = __napiModule.exports.parse
+module.exports.parseAstro = __napiModule.exports.parseAstro
+module.exports.parseAstroSync = __napiModule.exports.parseAstroSync
 module.exports.parseSync = __napiModule.exports.parseSync
 module.exports.rawTransferSupported = __napiModule.exports.rawTransferSupported

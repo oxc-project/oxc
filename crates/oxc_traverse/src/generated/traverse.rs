@@ -10,6 +10,47 @@ use crate::TraverseCtx;
 #[expect(unused_variables)]
 pub trait Traverse<'a, State> {
     #[inline]
+    fn enter_astro_root(&mut self, node: &mut AstroRoot<'a>, ctx: &mut TraverseCtx<'a, State>) {}
+    #[inline]
+    fn exit_astro_root(&mut self, node: &mut AstroRoot<'a>, ctx: &mut TraverseCtx<'a, State>) {}
+
+    #[inline]
+    fn enter_astro_frontmatter(
+        &mut self,
+        node: &mut AstroFrontmatter<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_astro_frontmatter(
+        &mut self,
+        node: &mut AstroFrontmatter<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_astro_script(&mut self, node: &mut AstroScript<'a>, ctx: &mut TraverseCtx<'a, State>) {
+    }
+    #[inline]
+    fn exit_astro_script(&mut self, node: &mut AstroScript<'a>, ctx: &mut TraverseCtx<'a, State>) {}
+
+    #[inline]
+    fn enter_astro_doctype(
+        &mut self,
+        node: &mut AstroDoctype<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+    #[inline]
+    fn exit_astro_doctype(
+        &mut self,
+        node: &mut AstroDoctype<'a>,
+        ctx: &mut TraverseCtx<'a, State>,
+    ) {
+    }
+
+    #[inline]
     fn enter_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a, State>) {}
     #[inline]
     fn exit_program(&mut self, node: &mut Program<'a>, ctx: &mut TraverseCtx<'a, State>) {}

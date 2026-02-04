@@ -13,6 +13,13 @@ use super::{
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
 
+/// Astro/HTML attribute names end at these characters.
+/// Everything else is valid in an attribute name.
+static ASTRO_ATTR_NAME_END_TABLE: SafeByteMatchTable = safe_byte_match_table!(|b| matches!(
+    b,
+    b'=' | b'>' | b'/' | b'{' | b'}' | b' ' | b'\t' | b'\n' | b'\r' | b'"' | b'\'' | b'<'
+));
+
 static JSX_CHILD_END_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| b == b'{' || b == b'}' || b == b'>' || b == b'<');
 
@@ -142,5 +149,27 @@ impl Lexer<'_> {
         }
 
         Some(self.finish_next(Kind::Ident))
+    }
+
+    /// Lex an Astro/HTML attribute name starting from the current position.
+    ///
+    /// HTML attribute names are very permissive - they can contain almost any character
+    /// except whitespace, `=`, `>`, `/`, quotes, and a few others.
+    ///
+    /// This method reads from the current position until an attribute-name-ending character.
+    pub(crate) fn read_astro_attribute_name(&mut self) -> Token {
+        self.token.set_start(self.offset());
+
+        // Consume all valid attribute name characters (everything except terminators)
+        let _next_byte = byte_search! {
+            lexer: self,
+            table: ASTRO_ATTR_NAME_END_TABLE,
+            handle_eof: {
+                return self.finish_next(Kind::Ident);
+            },
+        };
+
+        // We found an ending character, stop here
+        self.finish_next(Kind::Ident)
     }
 }

@@ -374,7 +374,7 @@ impl FormatJsxChildList {
                     meta.meaningful_text =
                         meta.meaningful_text || is_meaningful_jsx_text(&text.value);
                 }
-                JSXChild::Spread(_) => {}
+                JSXChild::Spread(_) | JSXChild::AstroScript(_) | JSXChild::AstroDoctype(_) => {}
             }
         }
 

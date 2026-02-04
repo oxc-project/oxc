@@ -9,6 +9,200 @@ const textDecoder = new TextDecoder("utf-8", { ignoreBOM: true }),
   { fromCodePoint } = String,
   inspectSymbol = Symbol.for("nodejs.util.inspect.custom");
 
+export class AstroRoot {
+  type = "AstroRoot";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $body: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get frontmatter() {
+    const internal = this.#internal;
+    return constructOptionBoxAstroFrontmatter(internal.pos + 8, internal.ast);
+  }
+
+  get body() {
+    const internal = this.#internal,
+      cached = internal.$body;
+    if (cached !== void 0) return cached;
+    return (internal.$body = constructVecJSXChild(internal.pos + 16, internal.ast));
+  }
+
+  toJSON() {
+    return {
+      type: "AstroRoot",
+      start: this.start,
+      end: this.end,
+      frontmatter: this.frontmatter,
+      body: this.body,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAstroRoot.prototype);
+  }
+}
+
+const DebugAstroRoot = class AstroRoot {};
+
+export class AstroFrontmatter {
+  type = "AstroFrontmatter";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get program() {
+    const internal = this.#internal;
+    return new Program(internal.pos + 8, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "AstroFrontmatter",
+      start: this.start,
+      end: this.end,
+      program: this.program,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAstroFrontmatter.prototype);
+  }
+}
+
+const DebugAstroFrontmatter = class AstroFrontmatter {};
+
+export class AstroScript {
+  type = "AstroScript";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get program() {
+    const internal = this.#internal;
+    return new Program(internal.pos + 8, internal.ast);
+  }
+
+  toJSON() {
+    return {
+      type: "AstroScript",
+      start: this.start,
+      end: this.end,
+      program: this.program,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAstroScript.prototype);
+  }
+}
+
+const DebugAstroScript = class AstroScript {};
+
+export class AstroDoctype {
+  type = "AstroDoctype";
+  #internal;
+
+  constructor(pos, ast) {
+    if (ast?.token !== TOKEN) constructorError();
+
+    const { nodes } = ast;
+    const cached = nodes.get(pos);
+    if (cached !== void 0) return cached;
+
+    this.#internal = { pos, ast, $value: void 0 };
+    nodes.set(pos, this);
+  }
+
+  get start() {
+    const internal = this.#internal;
+    return constructU32(internal.pos, internal.ast);
+  }
+
+  get end() {
+    const internal = this.#internal;
+    return constructU32(internal.pos + 4, internal.ast);
+  }
+
+  get value() {
+    const internal = this.#internal,
+      cached = internal.$value;
+    if (cached !== void 0) return cached;
+    return (internal.$value = constructStr(internal.pos + 8, internal.ast));
+  }
+
+  toJSON() {
+    return {
+      type: "AstroDoctype",
+      start: this.start,
+      end: this.end,
+      value: this.value,
+    };
+  }
+
+  [inspectSymbol]() {
+    return Object.setPrototypeOf(this.toJSON(), DebugAstroDoctype.prototype);
+  }
+}
+
+const DebugAstroDoctype = class AstroDoctype {};
+
 export class Program {
   type = "Program";
   #internal;
@@ -7487,6 +7681,10 @@ function constructJSXChild(pos, ast) {
       return constructBoxJSXExpressionContainer(pos + 8, ast);
     case 4:
       return constructBoxJSXSpreadChild(pos + 8, ast);
+    case 5:
+      return constructBoxAstroScript(pos + 8, ast);
+    case 6:
+      return constructBoxAstroDoctype(pos + 8, ast);
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for JSXChild`);
   }
@@ -11729,6 +11927,8 @@ function constructCommentKind(pos, ast) {
       return "Block";
     case 2:
       return "Block";
+    case 3:
+      return "Html";
     default:
       throw new Error(`Unexpected discriminant ${ast.buffer[pos]} for CommentKind`);
   }
@@ -12614,6 +12814,21 @@ function constructU8(pos, ast) {
   return ast.buffer[pos];
 }
 
+function constructBoxAstroFrontmatter(pos, ast) {
+  return new AstroFrontmatter(ast.buffer.uint32[pos >> 2], ast);
+}
+
+function constructOptionBoxAstroFrontmatter(pos, ast) {
+  if (ast.buffer.uint32[pos >> 2] === 0 && ast.buffer.uint32[(pos + 4) >> 2] === 0) return null;
+  return constructBoxAstroFrontmatter(pos, ast);
+}
+
+function constructVecJSXChild(pos, ast) {
+  const { uint32 } = ast.buffer,
+    pos32 = pos >> 2;
+  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructJSXChild, ast);
+}
+
 function constructStr(pos, ast) {
   const pos32 = pos >> 2,
     { buffer } = ast,
@@ -13411,12 +13626,6 @@ function constructBoxJSXOpeningElement(pos, ast) {
   return new JSXOpeningElement(ast.buffer.uint32[pos >> 2], ast);
 }
 
-function constructVecJSXChild(pos, ast) {
-  const { uint32 } = ast.buffer,
-    pos32 = pos >> 2;
-  return new NodeArray(uint32[pos32], uint32[pos32 + 2], 16, constructJSXChild, ast);
-}
-
 function constructBoxJSXClosingElement(pos, ast) {
   return new JSXClosingElement(ast.buffer.uint32[pos >> 2], ast);
 }
@@ -13467,6 +13676,14 @@ function constructBoxJSXText(pos, ast) {
 
 function constructBoxJSXSpreadChild(pos, ast) {
   return new JSXSpreadChild(ast.buffer.uint32[pos >> 2], ast);
+}
+
+function constructBoxAstroScript(pos, ast) {
+  return new AstroScript(ast.buffer.uint32[pos >> 2], ast);
+}
+
+function constructBoxAstroDoctype(pos, ast) {
+  return new AstroDoctype(ast.buffer.uint32[pos >> 2], ast);
 }
 
 function constructVecTSEnumMember(pos, ast) {

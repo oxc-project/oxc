@@ -75,6 +75,7 @@
     "bench": "vitest bench --run ./bench.bench.js"
   },
   "dependencies": {
+    "@astrojs/compiler": "^2.13.0",
     "@oxc-project/types": "workspace:^"
   },
   "devDependencies": {

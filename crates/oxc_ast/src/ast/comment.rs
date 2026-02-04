@@ -21,6 +21,10 @@ pub enum CommentKind {
     /// Multi-line block comment (contains line breaks)
     #[estree(rename = "Block")]
     MultiLineBlock = 2,
+    /// HTML comment `<!-- ... -->`
+    /// Used in Astro files
+    #[estree(rename = "Html")]
+    Html = 3,
 }
 
 /// Information about a comment's position relative to a token.
@@ -179,6 +183,8 @@ impl Comment {
             CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
                 Span::new(self.span.start + 2, self.span.end - 2)
             }
+            // HTML comments: `<!-- content -->` - skip 4 chars at start, 3 at end
+            CommentKind::Html => Span::new(self.span.start + 4, self.span.end - 3),
         }
     }
 
@@ -198,6 +204,12 @@ impl Comment {
     #[inline]
     pub fn is_multiline_block(self) -> bool {
         self.kind == CommentKind::MultiLineBlock
+    }
+
+    /// Returns `true` if this is an HTML comment (`<!-- -->`).
+    #[inline]
+    pub fn is_html(self) -> bool {
+        self.kind == CommentKind::Html
     }
 
     /// Returns `true` if this comment is before a token.

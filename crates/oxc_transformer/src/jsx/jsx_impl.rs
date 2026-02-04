@@ -950,7 +950,7 @@ impl<'a> JsxImpl<'a, '_> {
             JSXChild::Fragment(e) => {
                 Some(self.transform_jsx(e.span, None, e.unbox().children, ctx))
             }
-            JSXChild::Spread(_) => unreachable!(),
+            JSXChild::Spread(_) | JSXChild::AstroScript(_) | JSXChild::AstroDoctype(_) => unreachable!(),
         }
     }
 

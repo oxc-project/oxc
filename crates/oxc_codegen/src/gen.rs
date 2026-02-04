@@ -2607,6 +2607,12 @@ impl Gen for JSXChild<'_> {
             Self::Spread(spread) => spread.print(p, ctx),
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
             Self::Text(text) => text.print(p, ctx),
+            Self::AstroScript(script) => script.program.print(p, ctx),
+            Self::AstroDoctype(doctype) => {
+                p.print_str("<!doctype ");
+                p.print_str(doctype.value.as_str());
+                p.print_str(">");
+            }
         }
     }
 }

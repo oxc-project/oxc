@@ -40,11 +40,38 @@ export declare const enum Severity {
   Warning = 'Warning',
   Advice = 'Advice'
 }
+export declare class AstroParseResult {
+  /** The parsed Astro AST root containing frontmatter and body. */
+  get root(): AstroRoot
+  get errors(): Array<OxcError>
+}
+
 export declare class ParseResult {
   get program(): import("@oxc-project/types").Program
   get module(): EcmaScriptModule
   get comments(): Array<Comment>
   get errors(): Array<OxcError>
+}
+
+export interface AstroParserOptions {
+  /**
+   * Controls whether the `range` property is included on AST nodes.
+   * The `range` property is a `[number, number]` which indicates the start/end offsets
+   * of the node in the file contents.
+   *
+   * @default false
+   */
+  range?: boolean
+  /**
+   * Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
+   *
+   * If this option is true, parenthesized expressions are represented by
+   * (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` nodes that
+   * have a single `expression` property containing the expression inside parentheses.
+   *
+   * @default true
+   */
+  preserveParens?: boolean
 }
 
 export interface DynamicImport {
@@ -155,6 +182,53 @@ export declare const enum ImportNameKind {
  * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
  */
 export declare function parse(filename: string, sourceText: string, options?: ParserOptions | undefined | null): Promise<ParseResult>
+
+/**
+ * Parse Astro file asynchronously on a separate thread.
+ *
+ * Note that not all of the workload can happen on a separate thread.
+ * Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
+ * has to happen on current thread.
+ *
+ * Generally `parseAstroSync` is preferable to use as it does not have the overhead of spawning a thread.
+ * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
+ *
+ * @example
+ * ```javascript
+ * import { parseAstro } from '@aspect-build/oxc-parser';
+ *
+ * const result = await parseAstro(`---
+ * const name = "World";
+ * ---
+ * <h1>Hello {name}!</h1>`);
+ *
+ * console.log(result.root); // AstroRoot AST
+ * ```
+ */
+export declare function parseAstro(sourceText: string, options?: AstroParserOptions | undefined | null): Promise<AstroParseResult>
+
+/**
+ * Parse Astro file synchronously on current thread.
+ *
+ * Astro files have a unique structure with:
+ * - A frontmatter section (TypeScript) delimited by `---`
+ * - An HTML body containing JSX expressions and `<script>` tags
+ *
+ * Returns an `AstroParseResult` containing the parsed AST root and any errors.
+ *
+ * @example
+ * ```javascript
+ * import { parseAstroSync } from '@aspect-build/oxc-parser';
+ *
+ * const result = parseAstroSync(`---
+ * const name = "World";
+ * ---
+ * <h1>Hello {name}!</h1>`);
+ *
+ * console.log(result.root); // AstroRoot AST
+ * ```
+ */
+export declare function parseAstroSync(sourceText: string, options?: AstroParserOptions | undefined | null): AstroParseResult
 
 export interface ParserOptions {
   /** Treat the source text as `js`, `jsx`, `ts`, `tsx` or `dts`. */

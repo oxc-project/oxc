@@ -75,6 +75,10 @@ impl TriviaBuilder {
         self.add_comment(Comment::new(start, end, kind), source_text);
     }
 
+    pub fn add_html_comment(&mut self, start: u32, end: u32, source_text: &str) {
+        self.add_comment(Comment::new(start, end, CommentKind::Html), source_text);
+    }
+
     // For block comments only. This function is not called after line comments because the lexer skips
     // newline after line comments.
     pub fn handle_newline(&mut self) {

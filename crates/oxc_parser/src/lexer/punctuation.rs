@@ -1,6 +1,6 @@
 use oxc_span::Span;
 
-use super::{Kind, Lexer, Token};
+use super::{Kind, Lexer, Token, cold_branch};
 use crate::diagnostics;
 
 impl Lexer<'_> {
@@ -34,6 +34,12 @@ impl Lexer<'_> {
             }
             // `<!--` HTML comment (Annex B.1.1)
             Some(b'!') if self.remaining().starts_with("!--") => {
+                // In Astro mode, HTML comments are allowed inside expressions
+                // They should be added to trivia and skipped
+                if self.source_type.is_astro() {
+                    return cold_branch(|| Some(self.skip_astro_html_comment()));
+                }
+
                 if self.source_type.is_module() {
                     if self.token.is_on_new_line() {
                         let span = Span::new(self.token.start(), self.token.start() + 4);
@@ -49,6 +55,41 @@ impl Lexer<'_> {
                 }
             }
             _ => Some(Kind::LAngle),
+        }
+    }
+
+    /// Skip an HTML comment `<!-- ... -->` in Astro mode and add it to trivia.
+    /// Returns `Kind::Skip` or `Kind::Eof` so the lexer continues to the next token.
+    #[expect(clippy::cast_possible_truncation)]
+    fn skip_astro_html_comment(&mut self) -> Kind {
+        // We're at `!` after `<`, so comment starts at current token start (the `<`)
+        let comment_start = self.token.start();
+
+        // Skip `!--`
+        self.consume_char(); // `!`
+        self.consume_char(); // `-`
+        self.consume_char(); // `-`
+
+        // Find the closing `-->`
+        let remaining = self.remaining();
+        if let Some(end_offset) = remaining.find("-->") {
+            // Calculate comment end position (after `-->`)
+            let content_end = self.offset() + end_offset as u32;
+            let comment_end = content_end + 3;
+
+            // Add HTML comment to trivia
+            self.trivia_builder.add_html_comment(comment_start, comment_end, self.source.whole());
+
+            // Move lexer position past the comment
+            // SAFETY: We verified the `-->` exists in the remaining source
+            self.source.set_position(unsafe { self.source.position().add(end_offset + 3) });
+
+            Kind::Skip
+        } else {
+            // Unterminated HTML comment - consume to end of file
+            self.source.advance_to_end();
+            self.error(diagnostics::unterminated_multi_line_comment(self.unterminated_range()));
+            Kind::Eof
         }
     }
 

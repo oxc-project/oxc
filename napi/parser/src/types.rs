@@ -273,3 +273,46 @@ pub struct DynamicImport {
     pub end: u32,
     pub module_request: Span,
 }
+
+// ==================== Astro Types ====================
+
+#[napi(object)]
+#[derive(Default)]
+pub struct AstroParserOptions {
+    /// Controls whether the `range` property is included on AST nodes.
+    /// The `range` property is a `[number, number]` which indicates the start/end offsets
+    /// of the node in the file contents.
+    ///
+    /// @default false
+    #[napi(ts_type = "boolean")]
+    pub range: Option<bool>,
+
+    /// Emit `ParenthesizedExpression` and `TSParenthesizedType` in AST.
+    ///
+    /// If this option is true, parenthesized expressions are represented by
+    /// (non-standard) `ParenthesizedExpression` and `TSParenthesizedType` nodes that
+    /// have a single `expression` property containing the expression inside parentheses.
+    ///
+    /// @default true
+    pub preserve_parens: Option<bool>,
+}
+
+#[napi]
+pub struct AstroParseResult {
+    pub(crate) root: String,
+    pub(crate) errors: Vec<OxcError>,
+}
+
+#[napi]
+impl AstroParseResult {
+    /// The parsed Astro AST root containing frontmatter and body.
+    #[napi(getter, ts_return_type = "AstroRoot")]
+    pub fn get_root(&mut self) -> String {
+        mem::take(&mut self.root)
+    }
+
+    #[napi(getter)]
+    pub fn errors(&mut self) -> Vec<OxcError> {
+        mem::take(&mut self.errors)
+    }
+}

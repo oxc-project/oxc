@@ -1,6 +1,31 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/typescript.rs`.
 
+export interface AstroRoot extends Span {
+  type: "AstroRoot";
+  frontmatter: AstroFrontmatter | null;
+  body: Array<JSXChild>;
+  parent?: Node;
+}
+
+export interface AstroFrontmatter extends Span {
+  type: "AstroFrontmatter";
+  program: Program;
+  parent?: Node;
+}
+
+export interface AstroScript extends Span {
+  type: "AstroScript";
+  program: Program;
+  parent?: Node;
+}
+
+export interface AstroDoctype extends Span {
+  type: "AstroDoctype";
+  value: string;
+  parent?: Node;
+}
+
 export interface Program extends Span {
   type: "Program";
   body: Array<Directive | Statement>;
@@ -1061,7 +1086,14 @@ export interface JSXIdentifier extends Span {
   parent?: Node;
 }
 
-export type JSXChild = JSXText | JSXElement | JSXFragment | JSXExpressionContainer | JSXSpreadChild;
+export type JSXChild =
+  | JSXText
+  | JSXElement
+  | JSXFragment
+  | JSXExpressionContainer
+  | JSXSpreadChild
+  | AstroScript
+  | AstroDoctype;
 
 export interface JSXSpreadChild extends Span {
   type: "JSXSpreadChild";
@@ -1727,6 +1759,10 @@ export interface Span {
 export type ModuleKind = "script" | "module" | "commonjs";
 
 export type Node =
+  | AstroRoot
+  | AstroFrontmatter
+  | AstroScript
+  | AstroDoctype
   | Program
   | IdentifierName
   | IdentifierReference

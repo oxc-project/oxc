@@ -95,6 +95,31 @@ pub trait FormatWrite<'ast, T = ()> {
     }
 }
 
+// Astro support is not yet implemented - these are placeholder implementations
+impl<'a> FormatWrite<'a> for AstNode<'a, AstroRoot<'a>> {
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {
+        // TODO: Implement Astro formatting
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, AstroFrontmatter<'a>> {
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {
+        // TODO: Implement Astro formatting
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, AstroScript<'a>> {
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {
+        // TODO: Implement Astro formatting
+    }
+}
+
+impl<'a> FormatWrite<'a> for AstNode<'a, AstroDoctype<'a>> {
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {
+        // TODO: Implement Astro formatting
+    }
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
     fn write(&self, f: &mut Formatter<'_, 'a>) {
         let text = text_without_whitespace(self.name().as_str());

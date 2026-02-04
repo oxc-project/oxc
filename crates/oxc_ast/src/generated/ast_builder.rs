@@ -22,6 +22,113 @@ use oxc_span::{Atom, Ident};
 use crate::{AstBuilder, ast::*};
 
 impl<'a> AstBuilder<'a> {
+    /// Build an [`AstroRoot`].
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code
+    /// * `frontmatter`: The frontmatter section between `---` delimiters, containing TypeScript code.
+    /// * `body`: The HTML body of the Astro file, which can contain JSX expressions.
+    #[inline]
+    pub fn astro_root<T1>(
+        self,
+        span: Span,
+        frontmatter: T1,
+        body: Vec<'a, JSXChild<'a>>,
+    ) -> AstroRoot<'a>
+    where
+        T1: IntoIn<'a, Option<Box<'a, AstroFrontmatter<'a>>>>,
+    {
+        AstroRoot { span, frontmatter: frontmatter.into_in(self.allocator), body }
+    }
+
+    /// Build an [`AstroFrontmatter`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_astro_frontmatter`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes the `---` delimiters)
+    /// * `program`: The parsed TypeScript program from the frontmatter content
+    #[inline]
+    pub fn astro_frontmatter(self, span: Span, program: Program<'a>) -> AstroFrontmatter<'a> {
+        AstroFrontmatter { span, program }
+    }
+
+    /// Build an [`AstroFrontmatter`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::astro_frontmatter`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes the `---` delimiters)
+    /// * `program`: The parsed TypeScript program from the frontmatter content
+    #[inline]
+    pub fn alloc_astro_frontmatter(
+        self,
+        span: Span,
+        program: Program<'a>,
+    ) -> Box<'a, AstroFrontmatter<'a>> {
+        Box::new_in(self.astro_frontmatter(span, program), self.allocator)
+    }
+
+    /// Build an [`AstroScript`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_astro_script`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes the `<script>` tags)
+    /// * `program`: The parsed TypeScript/JavaScript program from the script content
+    #[inline]
+    pub fn astro_script(self, span: Span, program: Program<'a>) -> AstroScript<'a> {
+        AstroScript { span, program }
+    }
+
+    /// Build an [`AstroScript`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::astro_script`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes the `<script>` tags)
+    /// * `program`: The parsed TypeScript/JavaScript program from the script content
+    #[inline]
+    pub fn alloc_astro_script(self, span: Span, program: Program<'a>) -> Box<'a, AstroScript<'a>> {
+        Box::new_in(self.astro_script(span, program), self.allocator)
+    }
+
+    /// Build an [`AstroDoctype`].
+    ///
+    /// If you want the built node to be allocated in the memory arena,
+    /// use [`AstBuilder::alloc_astro_doctype`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes `<!` and `>`)
+    /// * `value`: The document type value, e.g., "html" from `<!doctype html>` or `<!DOCTYPE html>`
+    #[inline]
+    pub fn astro_doctype<A1>(self, span: Span, value: A1) -> AstroDoctype<'a>
+    where
+        A1: Into<Atom<'a>>,
+    {
+        AstroDoctype { span, value: value.into() }
+    }
+
+    /// Build an [`AstroDoctype`], and store it in the memory arena.
+    ///
+    /// Returns a [`Box`] containing the newly-allocated node.
+    /// If you want a stack-allocated node, use [`AstBuilder::astro_doctype`] instead.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes `<!` and `>`)
+    /// * `value`: The document type value, e.g., "html" from `<!doctype html>` or `<!DOCTYPE html>`
+    #[inline]
+    pub fn alloc_astro_doctype<A1>(self, span: Span, value: A1) -> Box<'a, AstroDoctype<'a>>
+    where
+        A1: Into<Atom<'a>>,
+    {
+        Box::new_in(self.astro_doctype(span, value), self.allocator)
+    }
+
     /// Build a [`Program`].
     ///
     /// ## Parameters
@@ -9732,6 +9839,33 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn jsx_child_spread(self, span: Span, expression: Expression<'a>) -> JSXChild<'a> {
         JSXChild::Spread(self.alloc_jsx_spread_child(span, expression))
+    }
+
+    /// Build a [`JSXChild::AstroScript`].
+    ///
+    /// This node contains an [`AstroScript`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes the `<script>` tags)
+    /// * `program`: The parsed TypeScript/JavaScript program from the script content
+    #[inline]
+    pub fn jsx_child_astro_script(self, span: Span, program: Program<'a>) -> JSXChild<'a> {
+        JSXChild::AstroScript(self.alloc_astro_script(span, program))
+    }
+
+    /// Build a [`JSXChild::AstroDoctype`].
+    ///
+    /// This node contains an [`AstroDoctype`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// * `span`: Node location in source code (includes `<!` and `>`)
+    /// * `value`: The document type value, e.g., "html" from `<!doctype html>` or `<!DOCTYPE html>`
+    #[inline]
+    pub fn jsx_child_astro_doctype<A1>(self, span: Span, value: A1) -> JSXChild<'a>
+    where
+        A1: Into<Atom<'a>>,
+    {
+        JSXChild::AstroDoctype(self.alloc_astro_doctype(span, value))
     }
 
     /// Build a [`JSXSpreadChild`].

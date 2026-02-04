@@ -73,6 +73,7 @@ mod modifiers;
 mod module_record;
 mod state;
 
+mod astro;
 mod js;
 mod jsx;
 mod ts;
@@ -180,6 +181,27 @@ pub struct ParserReturn<'a> {
 
     /// Whether the file is [flow](https://flow.org).
     pub is_flow_language: bool,
+}
+
+/// Return value of [`Parser::parse_astro`] for Astro files.
+///
+/// ## AST Validity
+///
+/// [`root`] will always contain a structurally valid AST, even if there are syntax errors.
+///
+/// [`root`]: AstroParserReturn::root
+#[non_exhaustive]
+pub struct AstroParserReturn<'a> {
+    /// The parsed Astro AST.
+    ///
+    /// Contains the frontmatter (TypeScript code) and HTML body.
+    pub root: oxc_ast::ast::AstroRoot<'a>,
+
+    /// Syntax errors encountered while parsing.
+    pub errors: Vec<OxcDiagnostic>,
+
+    /// Whether the parser panicked and terminated early.
+    pub panicked: bool,
 }
 
 /// Parse options
@@ -348,6 +370,242 @@ mod parser_parse {
             );
             parser.parse_expression()
         }
+
+        /// Parse an [Astro](https://astro.build) file.
+        ///
+        /// Astro files have a frontmatter section (TypeScript) delimited by `---` and
+        /// an HTML body that can contain JSX expressions.
+        ///
+        /// # Example
+        ///
+        /// ```rust
+        /// use oxc_allocator::Allocator;
+        /// use oxc_parser::Parser;
+        /// use oxc_span::SourceType;
+        ///
+        /// let src = r#"---
+        /// const name = "World";
+        /// ---
+        /// <h1>Hello {name}!</h1>
+        /// "#;
+        /// let allocator = Allocator::new();
+        /// let source_type = SourceType::astro();
+        ///
+        /// let result = Parser::new(&allocator, src, source_type).parse_astro();
+        /// ```
+        pub fn parse_astro(self) -> AstroParserReturn<'a> {
+            // First, scan for frontmatter boundaries
+            let frontmatter_info = scan_astro_frontmatter(self.source_text);
+
+            // Parse the body JSX
+            let unique = UniquePromise::new();
+            let parser = ParserImpl::new(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                unique,
+            );
+            let (mut body, body_errors, body_panicked) =
+                parser.parse_astro_body_only(frontmatter_info.as_ref().map(|f| f.body_start));
+
+            // Parse the frontmatter TypeScript if present
+            let (frontmatter, frontmatter_errors) = if let Some(info) = frontmatter_info {
+                let frontmatter_source = &self.source_text[info.content_start..info.content_end];
+                let ts_source_type =
+                    SourceType::ts().with_module(true).with_jsx(self.source_type.is_jsx());
+
+                // Create a new parser for the frontmatter content
+                // Enable allow_return_outside_function for Astro frontmatter per spec §2.1
+                let frontmatter_options =
+                    ParseOptions { allow_return_outside_function: true, ..self.options };
+                let unique = UniquePromise::new();
+                let parser = ParserImpl::new(
+                    self.allocator,
+                    frontmatter_source,
+                    ts_source_type,
+                    frontmatter_options,
+                    unique,
+                );
+                let result = parser.parse();
+
+                let ast = AstBuilder::new(self.allocator);
+                #[expect(clippy::cast_possible_truncation)]
+                let frontmatter = ast.alloc_astro_frontmatter(
+                    Span::new(0, info.frontmatter_end as u32),
+                    result.program,
+                );
+                (Some(frontmatter), result.errors)
+            } else {
+                (None, vec![])
+            };
+
+            // Parse script content in the body
+            // Traverse all JSXChild::AstroScript nodes and parse their content
+            let mut script_errors = Vec::new();
+            parse_astro_scripts(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                &mut body,
+                &mut script_errors,
+            );
+
+            // Combine errors
+            let mut errors = Vec::with_capacity(
+                frontmatter_errors.len() + body_errors.len() + script_errors.len(),
+            );
+            errors.extend(frontmatter_errors);
+            errors.extend(body_errors);
+            errors.extend(script_errors);
+
+            // Build the root
+            let ast = AstBuilder::new(self.allocator);
+            #[expect(clippy::cast_possible_truncation)]
+            let span = Span::new(0, self.source_text.len() as u32);
+            let root = ast.astro_root(span, frontmatter, body);
+
+            AstroParserReturn { root, errors, panicked: body_panicked }
+        }
+    }
+
+    /// Parse script content in AstroScript nodes.
+    /// This traverses the body and replaces placeholder programs with parsed TypeScript.
+    fn parse_astro_scripts<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        body: &mut oxc_allocator::Vec<'a, oxc_ast::ast::JSXChild<'a>>,
+        errors: &mut Vec<OxcDiagnostic>,
+    ) {
+        for child in body.iter_mut() {
+            parse_scripts_in_child(allocator, source_text, source_type, options, child, errors);
+        }
+    }
+
+    /// Recursively parse scripts in a JSX child and its descendants.
+    fn parse_scripts_in_child<'a>(
+        allocator: &'a Allocator,
+        source_text: &'a str,
+        source_type: SourceType,
+        options: ParseOptions,
+        child: &mut oxc_ast::ast::JSXChild<'a>,
+        errors: &mut Vec<OxcDiagnostic>,
+    ) {
+        use oxc_ast::ast::JSXChild;
+
+        match child {
+            JSXChild::AstroScript(script) => {
+                // The script's program span contains the script content span
+                let content_span = script.program.span;
+                if content_span.start < content_span.end {
+                    let script_source =
+                        &source_text[content_span.start as usize..content_span.end as usize];
+                    let ts_source_type =
+                        SourceType::ts().with_module(true).with_jsx(source_type.is_jsx());
+
+                    // Create a new parser for the script content
+                    let unique = UniquePromise::new();
+                    let parser =
+                        ParserImpl::new(allocator, script_source, ts_source_type, options, unique);
+                    let result = parser.parse();
+
+                    // Replace the placeholder program with the parsed one
+                    script.program = result.program;
+                    errors.extend(result.errors);
+                }
+            }
+            JSXChild::Element(element) => {
+                // Recurse into element children
+                for child in &mut element.children {
+                    parse_scripts_in_child(
+                        allocator,
+                        source_text,
+                        source_type,
+                        options,
+                        child,
+                        errors,
+                    );
+                }
+            }
+            JSXChild::Fragment(fragment) => {
+                // Recurse into fragment children
+                for child in &mut fragment.children {
+                    parse_scripts_in_child(
+                        allocator,
+                        source_text,
+                        source_type,
+                        options,
+                        child,
+                        errors,
+                    );
+                }
+            }
+            JSXChild::Text(_)
+            | JSXChild::ExpressionContainer(_)
+            | JSXChild::Spread(_)
+            | JSXChild::AstroDoctype(_) => {
+                // No scripts to parse in these
+            }
+        }
+    }
+
+    /// Information about frontmatter boundaries
+    struct AstroFrontmatterInfo {
+        /// Start of frontmatter content (after opening `---`)
+        content_start: usize,
+        /// End of frontmatter content (before closing `---`)
+        content_end: usize,
+        /// End of entire frontmatter section (after closing `---`)
+        frontmatter_end: usize,
+        /// Start of body (after frontmatter, skipping optional newline)
+        body_start: usize,
+    }
+
+    /// Scan the source text to find frontmatter boundaries without parsing.
+    ///
+    /// According to the Astro spec:
+    /// - Content may appear before the opening fence (customarily ignored)
+    /// - Whitespace may appear before the opening fence
+    /// - Opening/closing fences don't need to be on their own line
+    /// - Code can appear on the same line as fences
+    fn scan_astro_frontmatter(source_text: &str) -> Option<AstroFrontmatterInfo> {
+        // Find the opening `---` fence
+        // According to spec: any content may appear before the fence (ignored),
+        // and whitespace may appear before it
+        let opening_fence_start = source_text.find("---")?;
+
+        // Content starts immediately after the opening `---`
+        let content_start = opening_fence_start + 3;
+
+        // Find the closing `---` fence
+        // It can appear anywhere after the opening fence - doesn't need to be on its own line
+        // We need to find `---` that is NOT the opening fence
+        let search_area = &source_text[content_start..];
+
+        // Find the closing `---` - it can be:
+        // 1. On its own line (most common)
+        // 2. Immediately after content on same line
+        // 3. At the start of a line with content after it
+        //
+        // We look for `---` that marks the end of frontmatter
+        let closing_fence_pos = search_area.find("---")?;
+
+        let content_end = content_start + closing_fence_pos;
+        let frontmatter_end = content_end + 3;
+
+        // Calculate where the body starts (after closing `---`)
+        // Skip optional newline after closing fence
+        let mut body_start = frontmatter_end;
+        if source_text.get(body_start..).is_some_and(|s| s.starts_with('\n')) {
+            body_start += 1;
+        } else if source_text.get(body_start..).is_some_and(|s| s.starts_with("\r\n")) {
+            body_start += 2;
+        }
+
+        Some(AstroFrontmatterInfo { content_start, content_end, frontmatter_end, body_start })
     }
 }
 use parser_parse::UniquePromise;
@@ -521,6 +779,48 @@ impl<'a> ParserImpl<'a> {
             return Err(errors);
         }
         Ok(expr)
+    }
+
+    /// Parse only the body (JSX) part of an Astro file.
+    ///
+    /// If `body_start` is provided, the lexer will start parsing from that position.
+    /// Otherwise, it will start from the beginning of the source.
+    ///
+    /// Returns the body children, errors, and whether the parser panicked.
+    pub fn parse_astro_body_only(
+        mut self,
+        body_start: Option<usize>,
+    ) -> (oxc_allocator::Vec<'a, oxc_ast::ast::JSXChild<'a>>, Vec<OxcDiagnostic>, bool) {
+        // If body_start is provided, skip to that position
+        if let Some(start) = body_start {
+            #[expect(clippy::cast_possible_truncation)]
+            self.lexer.set_position_for_astro(start as u32);
+        }
+
+        // Initialize by reading the first token as a JSX child
+        // This ensures we're in JSX child mode from the start, which correctly
+        // handles HTML entities like &#8458; that would otherwise be misinterpreted
+        // as private identifiers in regular JS mode.
+        self.token = self.lexer.next_jsx_child();
+
+        // Parse the body
+        let body = self.parse_astro_body();
+        let mut panicked = false;
+
+        if let Some(fatal_error) = self.fatal_error.take() {
+            panicked = true;
+            self.errors.truncate(fatal_error.errors_len);
+            self.error(fatal_error.error);
+        }
+
+        self.check_unfinished_errors();
+
+        let mut errors: Vec<OxcDiagnostic> =
+            Vec::with_capacity(self.lexer.errors.len() + self.errors.len());
+        errors.extend(self.lexer.errors);
+        errors.extend(self.errors);
+
+        (body, errors, panicked)
     }
 
     #[expect(clippy::cast_possible_truncation)]

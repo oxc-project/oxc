@@ -314,7 +314,10 @@ impl LabelHasAssociatedControl {
 
                 false
             }
-            JSXChild::Text(_) | JSXChild::Spread(_) => false,
+            JSXChild::Text(_)
+            | JSXChild::Spread(_)
+            | JSXChild::AstroScript(_)
+            | JSXChild::AstroDoctype(_) => false,
         }
     }
 
@@ -380,7 +383,7 @@ impl LabelHasAssociatedControl {
 
                 false
             }
-            JSXChild::Spread(_) => false,
+            JSXChild::Spread(_) | JSXChild::AstroScript(_) | JSXChild::AstroDoctype(_) => false,
         }
     }
 }

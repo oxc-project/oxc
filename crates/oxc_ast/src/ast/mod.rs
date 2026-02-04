@@ -182,6 +182,7 @@ pub use oxc_syntax::{
     },
 };
 
+pub(crate) mod astro;
 pub(crate) mod comment;
 pub(crate) mod js;
 pub(crate) mod jsx;
@@ -189,6 +190,7 @@ pub(crate) mod literal;
 pub(crate) mod macros;
 pub(crate) mod ts;
 
+pub use astro::*;
 pub use comment::*;
 pub use js::*;
 pub use jsx::*;

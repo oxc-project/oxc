@@ -38,6 +38,75 @@ pub unsafe fn walk_ast<'a, State, Tr: Traverse<'a, State>>(
     walk_program(traverser, program, ctx);
 }
 
+unsafe fn walk_astro_root<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut AstroRoot<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_astro_root(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AstroRootFrontmatter(
+        ancestor::AstroRootWithoutFrontmatter(node, PhantomData),
+    ));
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_ASTRO_ROOT_FRONTMATTER)
+        as *mut Option<Box<AstroFrontmatter>>)
+    {
+        walk_astro_frontmatter(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::AstroRootBody);
+    for item in
+        &mut *((node as *mut u8).add(ancestor::OFFSET_ASTRO_ROOT_BODY) as *mut Vec<JSXChild>)
+    {
+        walk_jsx_child(traverser, item as *mut _, ctx);
+    }
+    ctx.pop_stack(pop_token);
+    traverser.exit_astro_root(&mut *node, ctx);
+}
+
+unsafe fn walk_astro_frontmatter<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut AstroFrontmatter<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_astro_frontmatter(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AstroFrontmatterProgram(
+        ancestor::AstroFrontmatterWithoutProgram(node, PhantomData),
+    ));
+    walk_program(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASTRO_FRONTMATTER_PROGRAM) as *mut Program,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_astro_frontmatter(&mut *node, ctx);
+}
+
+unsafe fn walk_astro_script<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut AstroScript<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_astro_script(&mut *node, ctx);
+    let pop_token = ctx.push_stack(Ancestor::AstroScriptProgram(
+        ancestor::AstroScriptWithoutProgram(node, PhantomData),
+    ));
+    walk_program(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_ASTRO_SCRIPT_PROGRAM) as *mut Program,
+        ctx,
+    );
+    ctx.pop_stack(pop_token);
+    traverser.exit_astro_script(&mut *node, ctx);
+}
+
+unsafe fn walk_astro_doctype<'a, State, Tr: Traverse<'a, State>>(
+    traverser: &mut Tr,
+    node: *mut AstroDoctype<'a>,
+    ctx: &mut TraverseCtx<'a, State>,
+) {
+    traverser.enter_astro_doctype(&mut *node, ctx);
+    traverser.exit_astro_doctype(&mut *node, ctx);
+}
+
 unsafe fn walk_program<'a, State, Tr: Traverse<'a, State>>(
     traverser: &mut Tr,
     node: *mut Program<'a>,
@@ -3640,6 +3709,8 @@ unsafe fn walk_jsx_child<'a, State, Tr: Traverse<'a, State>>(
             walk_jsx_expression_container(traverser, (&mut **node) as *mut _, ctx)
         }
         JSXChild::Spread(node) => walk_jsx_spread_child(traverser, (&mut **node) as *mut _, ctx),
+        JSXChild::AstroScript(node) => walk_astro_script(traverser, (&mut **node) as *mut _, ctx),
+        JSXChild::AstroDoctype(node) => walk_astro_doctype(traverser, (&mut **node) as *mut _, ctx),
     }
     traverser.exit_jsx_child(&mut *node, ctx);
 }

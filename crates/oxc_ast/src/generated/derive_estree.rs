@@ -7,11 +7,53 @@ use oxc_estree::{
     Concat2, Concat3, ESTree, FlatStructSerializer, JsonSafeString, Serializer, StructSerializer,
 };
 
+use crate::ast::astro::*;
 use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
 use crate::ast::ts::*;
+
+impl ESTree for AstroRoot<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AstroRoot"));
+        state.serialize_field("frontmatter", &self.frontmatter);
+        state.serialize_field("body", &self.body);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for AstroFrontmatter<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AstroFrontmatter"));
+        state.serialize_field("program", &self.program);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for AstroScript<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AstroScript"));
+        state.serialize_field("program", &self.program);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
+
+impl ESTree for AstroDoctype<'_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("type", &JsonSafeString("AstroDoctype"));
+        state.serialize_field("value", &self.value);
+        state.serialize_span(self.span);
+        state.end();
+    }
+}
 
 impl ESTree for Program<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
@@ -2140,6 +2182,8 @@ impl ESTree for JSXChild<'_> {
             Self::Fragment(it) => it.serialize(serializer),
             Self::ExpressionContainer(it) => it.serialize(serializer),
             Self::Spread(it) => it.serialize(serializer),
+            Self::AstroScript(it) => it.serialize(serializer),
+            Self::AstroDoctype(it) => it.serialize(serializer),
         }
     }
 }
@@ -3222,6 +3266,7 @@ impl ESTree for CommentKind {
             Self::Line => JsonSafeString("Line").serialize(serializer),
             Self::SingleLineBlock => JsonSafeString("Block").serialize(serializer),
             Self::MultiLineBlock => JsonSafeString("Block").serialize(serializer),
+            Self::Html => JsonSafeString("Html").serialize(serializer),
         }
     }
 }

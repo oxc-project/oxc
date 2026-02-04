@@ -5,11 +5,37 @@
 
 use oxc_span::ContentEq;
 
+use crate::ast::astro::*;
 use crate::ast::comment::*;
 use crate::ast::js::*;
 use crate::ast::jsx::*;
 use crate::ast::literal::*;
 use crate::ast::ts::*;
+
+impl ContentEq for AstroRoot<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.frontmatter, &other.frontmatter)
+            && ContentEq::content_eq(&self.body, &other.body)
+    }
+}
+
+impl ContentEq for AstroFrontmatter<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.program, &other.program)
+    }
+}
+
+impl ContentEq for AstroScript<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.program, &other.program)
+    }
+}
+
+impl ContentEq for AstroDoctype<'_> {
+    fn content_eq(&self, other: &Self) -> bool {
+        ContentEq::content_eq(&self.value, &other.value)
+    }
+}
 
 impl ContentEq for Program<'_> {
     fn content_eq(&self, other: &Self) -> bool {
@@ -1722,6 +1748,8 @@ impl ContentEq for JSXChild<'_> {
             (Self::Fragment(a), Self::Fragment(b)) => a.content_eq(b),
             (Self::ExpressionContainer(a), Self::ExpressionContainer(b)) => a.content_eq(b),
             (Self::Spread(a), Self::Spread(b)) => a.content_eq(b),
+            (Self::AstroScript(a), Self::AstroScript(b)) => a.content_eq(b),
+            (Self::AstroDoctype(a), Self::AstroDoctype(b)) => a.content_eq(b),
             _ => false,
         }
     }

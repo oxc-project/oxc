@@ -1,6 +1,11 @@
 import { createRequire } from "node:module";
-import { parse as parseBinding, parseSync as parseSyncBinding } from "./bindings.js";
-import { wrap } from "./wrap.js";
+import {
+  parse as parseBinding,
+  parseSync as parseSyncBinding,
+  parseAstro as parseAstroBinding,
+  parseAstroSync as parseAstroSyncBinding,
+} from "./bindings.js";
+import { wrap, wrapAstro } from "./wrap.js";
 
 export { default as visitorKeys } from "./generated/visit/keys.js";
 export { Visitor } from "./visit/index.js";
@@ -11,6 +16,7 @@ export {
   ExportLocalNameKind,
   ImportNameKind,
   ParseResult,
+  AstroParseResult,
   Severity,
 } from "./bindings.js";
 export { rawTransferSupported } from "./raw-transfer/supported.js";
@@ -105,4 +111,39 @@ export async function parse(filename, sourceText, options) {
 export function experimentalGetLazyVisitor() {
   loadRawTransferLazy();
   return LazyVisitor;
+}
+
+// ==================== Astro Parsing ====================
+
+/**
+ * Parse Astro file synchronously on current thread.
+ *
+ * Astro files have a unique structure with:
+ * - A frontmatter section (TypeScript) delimited by `---`
+ * - An HTML body containing JSX expressions and `<script>` tags
+ *
+ * @param {string} sourceText - Source text of Astro file
+ * @param {Object|undefined} options - Parsing options
+ * @returns {Object} - Object with property getters for `root` and `errors`
+ */
+export function parseAstroSync(sourceText, options) {
+  return wrapAstro(parseAstroSyncBinding(sourceText, options));
+}
+
+/**
+ * Parse Astro file asynchronously on a separate thread.
+ *
+ * Note that not all of the workload can happen on a separate thread.
+ * Parsing on Rust side does happen in a separate thread, but deserialization of the AST to JS objects
+ * has to happen on current thread.
+ *
+ * Generally `parseAstroSync` is preferable to use as it does not have the overhead of spawning a thread.
+ * If you need to parallelize parsing multiple files, it is recommended to use worker threads.
+ *
+ * @param {string} sourceText - Source text of Astro file
+ * @param {Object|undefined} options - Parsing options
+ * @returns {Promise<Object>} - Object with property getters for `root` and `errors`
+ */
+export async function parseAstro(sourceText, options) {
+  return wrapAstro(await parseAstroBinding(sourceText, options));
 }

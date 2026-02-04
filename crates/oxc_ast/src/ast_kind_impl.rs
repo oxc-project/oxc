@@ -604,6 +604,11 @@ impl AstKind<'_> {
             }
             Self::AssignmentTargetPropertyProperty(_) => "AssignmentTargetPropertyProperty".into(),
             Self::TSImportTypeQualifiedName(_) => "TSImportTypeQualifiedName".into(),
+
+            Self::AstroRoot(_) => "AstroRoot".into(),
+            Self::AstroFrontmatter(_) => "AstroFrontmatter".into(),
+            Self::AstroScript(_) => "AstroScript".into(),
+            Self::AstroDoctype(_) => "AstroDoctype".into(),
         }
     }
 }

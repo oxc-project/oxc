@@ -14,6 +14,7 @@ use oxc_span::{SourceType, Span};
 
 use crate::{UniquePromise, diagnostics};
 
+mod astro;
 mod byte_handlers;
 mod comment;
 mod identifier;

@@ -20,6 +20,20 @@ export function wrap(result) {
   };
 }
 
+export function wrapAstro(result) {
+  let root, errors;
+  return {
+    get root() {
+      if (!root) root = JSON.parse(result.root);
+      return root;
+    },
+    get errors() {
+      if (!errors) errors = result.errors;
+      return errors;
+    },
+  };
+}
+
 // Used by `napi/playground/scripts/patch.js`.
 //
 // Set `value` field of `Literal`s which are `BigInt`s or `RegExp`s.

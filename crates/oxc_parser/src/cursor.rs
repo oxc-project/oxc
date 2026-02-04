@@ -254,6 +254,12 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
+    /// Read an Astro attribute name from the current position.
+    /// Astro attribute names can contain `@`, `.`, and `-` characters.
+    pub(crate) fn read_astro_attribute_name(&mut self) {
+        self.token = self.lexer.read_astro_attribute_name();
+    }
+
     #[inline]
     pub(crate) fn re_lex_right_angle(&mut self) -> Kind {
         if self.fatal_error.is_some() {

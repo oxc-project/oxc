@@ -9,6 +9,31 @@ use crate::ast::*;
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
+    // Padding: 0 bytes
+    assert!(size_of::<AstroRoot>() == 40);
+    assert!(align_of::<AstroRoot>() == 8);
+    assert!(offset_of!(AstroRoot, span) == 0);
+    assert!(offset_of!(AstroRoot, frontmatter) == 8);
+    assert!(offset_of!(AstroRoot, body) == 16);
+
+    // Padding: 0 bytes
+    assert!(size_of::<AstroFrontmatter>() == 136);
+    assert!(align_of::<AstroFrontmatter>() == 8);
+    assert!(offset_of!(AstroFrontmatter, span) == 0);
+    assert!(offset_of!(AstroFrontmatter, program) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<AstroScript>() == 136);
+    assert!(align_of::<AstroScript>() == 8);
+    assert!(offset_of!(AstroScript, span) == 0);
+    assert!(offset_of!(AstroScript, program) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<AstroDoctype>() == 24);
+    assert!(align_of::<AstroDoctype>() == 8);
+    assert!(offset_of!(AstroDoctype, span) == 0);
+    assert!(offset_of!(AstroDoctype, value) == 8);
+
     // Padding: 1 bytes
     assert!(size_of::<Program>() == 128);
     assert!(align_of::<Program>() == 8);
@@ -1631,6 +1656,31 @@ const _: () = {
 
 #[cfg(target_pointer_width = "32")]
 const _: () = if cfg!(target_family = "wasm") || align_of::<u64>() == 8 {
+    // Padding: 0 bytes
+    assert!(size_of::<AstroRoot>() == 28);
+    assert!(align_of::<AstroRoot>() == 4);
+    assert!(offset_of!(AstroRoot, span) == 0);
+    assert!(offset_of!(AstroRoot, frontmatter) == 8);
+    assert!(offset_of!(AstroRoot, body) == 12);
+
+    // Padding: 0 bytes
+    assert!(size_of::<AstroFrontmatter>() == 96);
+    assert!(align_of::<AstroFrontmatter>() == 4);
+    assert!(offset_of!(AstroFrontmatter, span) == 0);
+    assert!(offset_of!(AstroFrontmatter, program) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<AstroScript>() == 96);
+    assert!(align_of::<AstroScript>() == 4);
+    assert!(offset_of!(AstroScript, span) == 0);
+    assert!(offset_of!(AstroScript, program) == 8);
+
+    // Padding: 0 bytes
+    assert!(size_of::<AstroDoctype>() == 16);
+    assert!(align_of::<AstroDoctype>() == 4);
+    assert!(offset_of!(AstroDoctype, span) == 0);
+    assert!(offset_of!(AstroDoctype, value) == 8);
+
     // Padding: 1 bytes
     assert!(size_of::<Program>() == 88);
     assert!(align_of::<Program>() == 4);

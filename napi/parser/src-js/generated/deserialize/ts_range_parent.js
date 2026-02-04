@@ -34,6 +34,35 @@ export function resetBuffer() {
   uint8 = uint32 = float64 = sourceText = void 0;
 }
 
+function deserializeAstroScript(pos) {
+  let start,
+    end,
+    previousParent = parent,
+    node = (parent = {
+      type: "AstroScript",
+      program: null,
+      start: (start = deserializeU32(pos)),
+      end: (end = deserializeU32(pos + 4)),
+      range: [start, end],
+      parent,
+    });
+  node.program = deserializeProgram(pos + 8);
+  parent = previousParent;
+  return node;
+}
+
+function deserializeAstroDoctype(pos) {
+  let start, end;
+  return {
+    type: "AstroDoctype",
+    value: deserializeStr(pos + 8),
+    start: (start = deserializeU32(pos)),
+    end: (end = deserializeU32(pos + 4)),
+    range: [start, end],
+    parent,
+  };
+}
+
 function deserializeProgram(pos) {
   let end = deserializeU32(pos + 4),
     program = (parent = {
@@ -3673,6 +3702,10 @@ function deserializeJSXChild(pos) {
       return deserializeBoxJSXExpressionContainer(pos + 8);
     case 4:
       return deserializeBoxJSXSpreadChild(pos + 8);
+    case 5:
+      return deserializeBoxAstroScript(pos + 8);
+    case 6:
+      return deserializeBoxAstroDoctype(pos + 8);
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for JSXChild`);
   }
@@ -5532,6 +5565,8 @@ function deserializeCommentKind(pos) {
       return "Block";
     case 2:
       return "Block";
+    case 3:
+      return "Html";
     default:
       throw Error(`Unexpected discriminant ${uint8[pos]} for CommentKind`);
   }
@@ -5965,6 +6000,18 @@ function deserializeU32(pos) {
 
 function deserializeU8(pos) {
   return uint8[pos];
+}
+
+function deserializeVecJSXChild(pos) {
+  let arr = [],
+    pos32 = pos >> 2;
+  pos = uint32[pos32];
+  let endPos = pos + uint32[pos32 + 2] * 16;
+  for (; pos !== endPos; ) {
+    arr.push(deserializeJSXChild(pos));
+    pos += 16;
+  }
+  return arr;
 }
 
 function deserializeStr(pos) {
@@ -6818,18 +6865,6 @@ function deserializeBoxJSXOpeningElement(pos) {
   return deserializeJSXOpeningElement(uint32[pos >> 2]);
 }
 
-function deserializeVecJSXChild(pos) {
-  let arr = [],
-    pos32 = pos >> 2;
-  pos = uint32[pos32];
-  let endPos = pos + uint32[pos32 + 2] * 16;
-  for (; pos !== endPos; ) {
-    arr.push(deserializeJSXChild(pos));
-    pos += 16;
-  }
-  return arr;
-}
-
 function deserializeBoxJSXClosingElement(pos) {
   return deserializeJSXClosingElement(uint32[pos >> 2]);
 }
@@ -6886,6 +6921,14 @@ function deserializeBoxJSXText(pos) {
 
 function deserializeBoxJSXSpreadChild(pos) {
   return deserializeJSXSpreadChild(uint32[pos >> 2]);
+}
+
+function deserializeBoxAstroScript(pos) {
+  return deserializeAstroScript(uint32[pos >> 2]);
+}
+
+function deserializeBoxAstroDoctype(pos) {
+  return deserializeAstroDoctype(uint32[pos >> 2]);
 }
 
 function deserializeVecTSEnumMember(pos) {

@@ -57,11 +57,14 @@ const {
 })
 export default __napiModule.exports
 export const Severity = __napiModule.exports.Severity
+export const AstroParseResult = __napiModule.exports.AstroParseResult
 export const ParseResult = __napiModule.exports.ParseResult
 export const ExportExportNameKind = __napiModule.exports.ExportExportNameKind
 export const ExportImportNameKind = __napiModule.exports.ExportImportNameKind
 export const ExportLocalNameKind = __napiModule.exports.ExportLocalNameKind
 export const ImportNameKind = __napiModule.exports.ImportNameKind
 export const parse = __napiModule.exports.parse
+export const parseAstro = __napiModule.exports.parseAstro
+export const parseAstroSync = __napiModule.exports.parseAstroSync
 export const parseSync = __napiModule.exports.parseSync
 export const rawTransferSupported = __napiModule.exports.rawTransferSupported
