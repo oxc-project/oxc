@@ -5,16 +5,18 @@
 The `oxfmt` implemented under this directory serves several purposes.
 
 - Pure Rust CLI
-  - Minimum feature set, CLI usage only
-  - Build with `cargo build --no-default-features`
+  - Minimum feature set, CLI usage only, no LSP, no Stdin support
+  - Formats JS/TS and TOML files, no xxx-in-js support
   - Entry point: `main()` in `src/main.rs`
+  - Build with `cargo build --no-default-features`
 - JS/Rust hybrid CLI using `napi-rs`
   - Full feature set like CLI, Stdin, LSP, and more
-  - Build with `pnpm build`
+  - Format many file types with embedded language formatting support
   - Entry point: `src-js/cli.ts` which uses `run_cli()` from `src/main_napi.rs`
-- Node.js API using napi-rs
   - Build with `pnpm build`
+- Node.js API using napi-rs
   - Entry point: `src-js/index.ts` which uses `format()` from `src/main_napi.rs`
+  - Build with `pnpm build`
 
 When making changes, consider the impact on all paths.
 
@@ -42,9 +44,8 @@ Also run `clippy` for the same configurations and resolve all warnings.
 Run tests with:
 
 ```sh
-# Run E2E
+# Run E2E test
 pnpm build-test && pnpm t
-
 # Run unit test in Rust
 cargo t
 ```
@@ -53,10 +54,14 @@ To manually verify the CLI behavior after building:
 
 ```sh
 pnpm build-test
-node ./dist/cli.js <args>
+
+# Show help
+node ./dist/cli.js --help
+# Stdin
+cat <file> | node ./dist/cli.js --stdin-filepath=<file>
 ```
 
-Note: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
+NOTE: `pnpm build-test` combines `pnpm build-js` and `pnpm build-napi`, so you don't need to run them separately.
 
 ## Test Organization (`test/` directory)
 
@@ -76,7 +81,6 @@ When adding new tests:
 - Place test in the appropriate domain directory
 - If the test needs fixtures, create a `fixtures/` subdirectory
 - If multiple test cases share a fixture structure, use subdirectories within `fixtures/` (e.g., `fixtures/basic/`, `fixtures/nested/`)
-- When adding fixtures for `--check` tests, save the expected formatted result so that the CLI execution reports no diff
 
 ## After updating `Oxfmtrc` (`src/core/oxfmtrc.rs`)
 
