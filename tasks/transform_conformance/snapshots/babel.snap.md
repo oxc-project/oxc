@@ -1,6 +1,6 @@
 commit: 92c052dc
 
-Passed: 700/1167
+Passed: 699/1164
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -167,7 +167,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-explicit-resource-management (20/29)
+# babel-plugin-transform-explicit-resource-management (20/28)
 * integration/commonjs-transform/input.js
 x Output mismatch
 
@@ -184,28 +184,6 @@ rebuilt        : ScopeId(2): ["x"]
 Symbol scope ID mismatch for "x":
 after transform: SymbolId(1): ScopeId(1)
 rebuilt        : SymbolId(2): ScopeId(2)
-
-* transform-sync/invalid-switch-bare-case/input.js
-
-  x Using declaration cannot appear in the bare case statement.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-sync/invalid-switch-bare-case/input.js:4:7]
- 3 |     case 0:
- 4 |       using x = 0;
-   :       ^^^^^^^^^^^^
- 5 |       break;
-   `----
-  help: Wrap this declaration in a block statement
-
-
-  x Using declaration cannot appear in the bare case statement.
-   ,-[tasks/coverage/babel/packages/babel-plugin-transform-explicit-resource-management/test/fixtures/transform-sync/invalid-switch-bare-case/input.js:7:7]
- 6 |     default:
- 7 |       using y = 1;
-   :       ^^^^^^^^^^^^
- 8 |       break;
-   `----
-  help: Wrap this declaration in a block statement
-
 
 * transform-sync/multiple-nested/input.js
 Bindings mismatch:
@@ -1333,17 +1311,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (11/17)
-* jsx-compat/ts-invalid/input.ts
-
-  x Expected `>` but found `/`
-   ,-[tasks/coverage/babel/packages/babel-preset-typescript/test/fixtures/jsx-compat/ts-invalid/input.ts:1:7]
- 1 | (<div />);
-   :       |
-   :       `-- `>` expected
-   `----
-
-
+# babel-preset-typescript (11/16)
 * node-extensions/import-in-cts/input.cts
 x Output mismatch
 
@@ -2607,7 +2575,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-react-jsx (138/150)
+# babel-plugin-transform-react-jsx (137/149)
 * autoImport/after-polyfills-compiled-to-cjs/input.mjs
 x Output mismatch
 
