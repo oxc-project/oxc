@@ -16,8 +16,100 @@ import type { Parser, Printer, SupportOptions, Options, Doc } from "prettier";
 const { hardline, join } = doc.builders;
 const LINE_BREAK_RE = /\r?\n/;
 
+/**
+ * Unwrap helpers for special Prettier cases.
+ *
+ * Prettier wraps certain Vue/HTML embedded expressions before parsing:
+ * - v-for left side: `function _(params) {}`
+ * - v-slot bindings: `function _(params) {}`
+ * - script generic: `type T<params> = any`
+ *
+ * After formatting, we need to unwrap them back.
+ */
+const FUNCTION_WRAPPER_RE = /^function _\(([\s\S]*)\) \{\}\n?$/;
+const TYPE_WRAPPER_RE = /^type T<([\s\S]*)> = any;?\n?$/;
+
+/**
+ * Check if params string has multiple parameters (top-level comma).
+ * Need to handle destructuring like `{ id, name }` which has comma but is single param.
+ */
+function hasMultipleParams(params: string): boolean {
+  let depth = 0;
+  for (const char of params) {
+    if (char === "{" || char === "[" || char === "(") {
+      depth++;
+    } else if (char === "}" || char === "]" || char === ")") {
+      depth--;
+    } else if (char === "," && depth === 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function unwrapVueForBindingLeft(code: string): string | null {
+  const match = code.match(FUNCTION_WRAPPER_RE);
+  if (!match) return null;
+  const params = match[1].trim();
+  // Prettier wraps multiple params with (), single param without
+  return hasMultipleParams(params) ? `(${params})` : params;
+}
+
+function unwrapVueBindings(code: string): string | null {
+  const match = code.match(FUNCTION_WRAPPER_RE);
+  if (!match) return null;
+  return match[1].trim();
+}
+
+function unwrapTypescriptGenericParameters(code: string): string | null {
+  const match = code.match(TYPE_WRAPPER_RE);
+  if (!match) return null;
+  return match[1].trim();
+}
+
 const oxfmtParser: Parser<Doc> = {
   parse: async (embeddedSourceText: string, textToDocOptions: Options) => {
+    // Handle special Prettier wrapper cases for Vue/HTML attributes
+    // These need to be formatted and then unwrapped
+    const isVueForBindingLeft = textToDocOptions.__isVueForBindingLeft as boolean;
+    const isVueBindings = textToDocOptions.__isVueBindings as boolean;
+    const isTypescriptGenericParams =
+      textToDocOptions.__isEmbeddedTypescriptGenericParameters as boolean;
+
+    if (isVueForBindingLeft || isVueBindings) {
+      // Force singleQuote in HTML attributes to avoid HTML entity escaping
+      const pluginOptions = JSON.parse(textToDocOptions._oxfmtPluginOptionsJson as string);
+      if (textToDocOptions.__isInHtmlAttribute) {
+        pluginOptions.singleQuote = true;
+      }
+      const { code, errors } = await format("dummy.js", embeddedSourceText, pluginOptions);
+      if (0 < errors.length) throw new Error(errors[0].message);
+
+      const unwrapped = isVueForBindingLeft
+        ? unwrapVueForBindingLeft(code)
+        : unwrapVueBindings(code);
+      if (unwrapped !== null) {
+        return join(hardline, unwrapped.split(LINE_BREAK_RE));
+      }
+      // Fallback: return as-is if unwrap failed
+    }
+
+    if (isTypescriptGenericParams) {
+      // Force singleQuote in HTML attributes to avoid HTML entity escaping
+      const pluginOptions = JSON.parse(textToDocOptions._oxfmtPluginOptionsJson as string);
+      if (textToDocOptions.__isInHtmlAttribute) {
+        pluginOptions.singleQuote = true;
+      }
+      const { code, errors } = await format("dummy.ts", embeddedSourceText, pluginOptions);
+      if (0 < errors.length) throw new Error(errors[0].message);
+
+      const unwrapped = unwrapTypescriptGenericParameters(code);
+      if (unwrapped !== null) {
+        return join(hardline, unwrapped.split(LINE_BREAK_RE));
+      }
+      // Fallback: return as-is if unwrap failed
+    }
+
     // NOTE: For (j|t)s-in-xxx, default `parser` is either `babel` or `typescript`
     const parser = textToDocOptions.parser as string;
     // In case of ts-in-md, `filepath` is overridden to distinguish TSX or TS

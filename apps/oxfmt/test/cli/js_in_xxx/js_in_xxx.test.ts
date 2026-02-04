@@ -22,4 +22,13 @@ describe("js-in-xxx", () => {
     );
     expect(snapshot).toMatchSnapshot();
   });
+
+  it("should handle v-for, v-slot, generic attributes correctly", async () => {
+    const snapshot = await runWriteModeAndSnapshot(
+      fixturesDir,
+      ["vue-directives.vue"],
+      ["--config", "vue-full.json"],
+    );
+    expect(snapshot).toMatchSnapshot();
+  });
 });
