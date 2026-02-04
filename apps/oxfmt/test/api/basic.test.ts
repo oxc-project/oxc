@@ -1,13 +1,20 @@
+import { describe, expect, it } from "vitest";
 import { format } from "../../dist/index.js";
-import { describe, expect, test } from "vitest";
 import type { FormatOptions } from "../../dist/index.js";
 
-describe("API Tests", () => {
-  test("`format()` function exists", () => {
+describe("Basic", () => {
+  it("`format()` function exists", () => {
     expect(typeof format).toBe("function");
   });
 
-  test("should `format()` multiple times", async () => {
+  it("dynamic import also works", async () => {
+    const { format } = await import("../../dist/index.js");
+    const result = await format("a.ts", "const x:number=42");
+    expect(result.code).toBe("const x: number = 42;\n");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should `format()` multiple times w/o panic", async () => {
     const result1 = await format("a.ts", "const x:number=42");
     expect(result1.code).toBe("const x: number = 42;\n");
     expect(result1.errors).toStrictEqual([]);
@@ -17,7 +24,7 @@ describe("API Tests", () => {
     expect(result2.errors).toStrictEqual([]);
   });
 
-  test("should TS types and options work", async () => {
+  it("should TS types and options work", async () => {
     const options: FormatOptions = {
       quoteProps: "as-needed", // Can be string literal
       printWidth: 120,
@@ -40,18 +47,20 @@ describe("API Tests", () => {
     expect(errors.length).toBe(1);
   });
 
-  test("should `format()` with options work", async () => {
-    const pkgJSON = JSON.stringify({
-      version: "1.0.0",
-      name: "my-package",
+  it("should format non-js files with options", async () => {
+    const jsoncCode = `
+{
+  // Package name
+  "foo": "my",
+  // Trailing comma test
+  "bar": "1",
+}
+`.trim();
+    const result1 = await format("foo.jsonc", jsoncCode, {
+      insertFinalNewline: false,
     });
-    const result1 = await format("package.json", pkgJSON);
-    expect(result1.code).toBe(`{\n  "name": "my-package",\n  "version": "1.0.0"\n}\n`);
+    expect(result1.code).toBe(`${jsoncCode}`);
     expect(result1.errors).toStrictEqual([]);
-
-    const result2 = await format("package.json", pkgJSON, { experimentalSortPackageJson: false });
-    expect(result2.code).toBe(`{\n  "version": "1.0.0",\n  "name": "my-package"\n}\n`);
-    expect(result2.errors).toStrictEqual([]);
 
     const vueCode = `
 <template><div>Vue</div></template>
@@ -71,29 +80,5 @@ describe("API Tests", () => {
 `.trimStart(),
     );
     expect(result3.errors).toStrictEqual([]);
-  });
-
-  test("should sort imports with customGroups", async () => {
-    const input = `import { foo } from "./foo";
-import { util } from "~/utils/util";
-import { store } from "~/stores/store";
-`;
-    const result = await format("a.ts", input, {
-      experimentalSortImports: {
-        customGroups: [
-          { elementNamePattern: ["~/stores/"], groupName: "stores" },
-          { elementNamePattern: ["~/utils/"], groupName: "utils" },
-        ],
-        groups: ["stores", "utils", "sibling"],
-      },
-    });
-
-    expect(result.code).toBe(`import { store } from "~/stores/store";
-
-import { util } from "~/utils/util";
-
-import { foo } from "./foo";
-`);
-    expect(result.errors).toStrictEqual([]);
   });
 });
