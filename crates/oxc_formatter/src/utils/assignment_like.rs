@@ -1,5 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
+use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -957,10 +958,9 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
             return false;
         }
 
-        let is_breakable_type_arguments = match &call_expression.type_arguments {
-            Some(type_arguments) => is_complex_type_arguments(type_arguments),
-            None => false,
-        };
+        let is_breakable_type_arguments = call_expression
+            .type_arguments()
+            .is_some_and(|type_arguments| is_complex_type_arguments(type_arguments, f));
 
         if is_breakable_type_arguments {
             return false;
@@ -1018,43 +1018,60 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &Formatter) -> bo
 ///
 /// NOTE: This function does not follow Prettier exactly.
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432>
-fn is_complex_type_arguments(type_arguments: &TSTypeParameterInstantiation) -> bool {
+/// Approximation of Prettier's `isCallExpressionWithComplexTypeArguments` without `willBreak`.
+///
+/// Prettier uses `willBreak(print("typeArguments"))`, but running `inspect` here
+/// mutates comment state and is costly. We instead use a conservative heuristic
+/// based on complexity, comments, newlines, and raw span width.
+///
+/// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
+fn is_complex_type_arguments<'a>(
+    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    f: &Formatter<'_, 'a>,
+) -> bool {
     let is_complex_ts_type = |ts_type: &TSType| {
         matches!(
             ts_type,
-            TSType::TSUnionType(_)
-                | TSType::TSIntersectionType(_)
-                | TSType::TSTypeLiteral(_)
-                // NOTE: Prettier does not contain `TSMappedType` in its check.
-                // But it makes sense to consider mapped types as complex,
-                // because it is the same as type literals in terms of structure.
-                | TSType::TSMappedType(_)
+            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
         )
     };
 
-    if type_arguments.params.len() > 1 {
+    let params = type_arguments.params();
+    if params.len() > 1 {
         return true;
     }
 
-    type_arguments.params.first().is_some_and(|first_argument| {
-        if is_complex_ts_type(first_argument) {
+    if params.first().is_some_and(|param| is_complex_ts_type(param.as_ref()))
+        && type_arguments_may_break(type_arguments, f)
+    {
+        return true;
+    }
+
+    type_arguments_may_break(type_arguments, f)
+}
+
+fn type_arguments_may_break(
+    type_arguments: &AstNode<'_, TSTypeParameterInstantiation<'_>>,
+    f: &Formatter<'_, '_>,
+) -> bool {
+    let span = type_arguments.span();
+    let source_text = f.source_text();
+
+    if source_text.contains_newline(span) || f.comments().has_comment_in_span(span) {
+        return true;
+    }
+
+    // Width check for long type arguments using a simple character count.
+    let limit = f.options().line_width.value() as usize;
+    let mut count = 0;
+    for ch in source_text.text_for(&span).chars() {
+        count += ch.width().unwrap_or(0);
+        if count > limit {
             return true;
         }
+    }
 
-        // NOTE: Prettier checks `willBreak(print(typeArgs))` here.
-        // Our equivalent is `type_arguments.memoized().inspect(f).will_break()`,
-        // but we avoid using it because:
-        // - `inspect(f)` (= `f.intern()`) will update the comment counting state in `f`
-        // - And resulted IRs are discarded after this check
-        // So we approximate it by checking if the type arguments contain complex types.
-        if let TSType::TSTypeReference(type_ref) = first_argument
-            && let Some(type_args) = &type_ref.type_arguments
-        {
-            return type_args.params.iter().any(is_complex_ts_type);
-        }
-
-        false
-    })
+    false
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>
