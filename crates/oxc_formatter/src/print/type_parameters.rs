@@ -1,5 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_span::FileExtension;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -71,10 +72,17 @@ impl<'a> Format<'a> for AstNode<'a, Vec<'a, TSTypeParameter<'a>>> {
         // to avoid any ambiguity with JSX elements.
         // Thus, we have to add a trailing comma when there is a single type parameter.
         // The comma can be omitted in the case where the single parameter has a constraint,
-        // i.i. an `extends` clause.
+        // i.e. an `extends` clause.
+        //
+        // This applies to:
+        // - JSX files (`.jsx`, `.tsx`) where `<T>` could be parsed as a JSX element
+        // - `.mts` and `.cts` files which disallow JSX-like syntax without disambiguation
         let trailing_separator = if self.len() == 1
-        // This only concern sources that allow JSX or a restricted standard variant.
-        && f.context().source_type().is_jsx()
+        && (f.context().source_type().is_jsx()
+            || matches!(
+                f.context().source_type().extension(),
+                Some(FileExtension::Mts | FileExtension::Cts)
+            ))
         && matches!(self.grand_parent(), AstNodes::ArrowFunctionExpression(_))
         // Ignore Type parameter with an `extends` clause or a default type.
         && !self.first().is_some_and(|t| t.constraint().is_some() || t.default().is_some())
