@@ -1853,6 +1853,7 @@ name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
  "console 0.16.2",
+ "cow-utils",
  "encoding_rs",
  "encoding_rs_io",
  "itertools",

@@ -5,6 +5,8 @@ use std::{
     process::{Command, Stdio},
 };
 
+use cow_utils::CowUtils;
+
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use oxc::{span::SourceType, transformer::BabelOptions};
@@ -85,7 +87,7 @@ fn walk_and_read(
 fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
     let skip_path = |path: &Path| {
         let s = path.to_string_lossy();
-        let s = s.replace('\\', "/");
+        let s = s.cow_replace('\\', "/");
         s.contains("test262/test/staging")
             || path.extension().is_some_and(|e| e.eq_ignore_ascii_case("md"))
             || s.contains("_FIXTURE")
@@ -104,7 +106,7 @@ fn load_test262(filter: Option<&str>) -> Vec<Test262File> {
 fn load_babel(filter: Option<&str>) -> Vec<BabelFile> {
     let skip_path = |path: &Path| {
         let s = path.to_string_lossy();
-        let s = s.replace('\\', "/");
+        let s = s.cow_replace('\\', "/");
         let not_supported = [
             "experimental",
             "record-and-tuple",
@@ -136,7 +138,7 @@ fn load_babel(filter: Option<&str>) -> Vec<BabelFile> {
             "core/sourcetype-commonjs/invalid-allowReturnOutsideFunction-true",
         ]
         .iter()
-        .any(|p| s.ends_with(&format!("{p}/input.js")));
+        .any(|p| s.strip_suffix("/input.js").is_some_and(|s| s.ends_with(p)));
         let bad_ext = path.extension().is_none_or(|ext| ext == "json" || ext == "md");
         not_supported || not_interesting || bad_ext
     };

@@ -359,16 +359,15 @@ pub struct BaselineFile {
 
 impl BaselineFile {
     pub fn print(&self) -> String {
-        self.files.iter().map(|f| f.oxc_printed.clone()).collect::<Vec<_>>().join("\n")
+        self.files.iter().map(|f| f.oxc_printed.as_str()).collect::<Vec<_>>().join("\n")
     }
 
     pub fn snapshot(&self) -> String {
         self.files
             .iter()
             .map(|f| {
-                let printed = f.oxc_printed.clone();
                 let diagnostics = f.get_oxc_diagnostic();
-                format!("//// [{}] ////\n{}{}", f.name, printed, diagnostics)
+                format!("//// [{}] ////\n{}{}", f.name, f.oxc_printed, diagnostics)
             })
             .collect::<Vec<_>>()
             .join("\n")

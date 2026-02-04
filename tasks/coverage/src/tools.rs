@@ -51,11 +51,12 @@ fn run_parser(
         let mut output = String::new();
         // Create Arc once and share across all errors to avoid cloning source for each error
         let source_arc: Arc<String> = Arc::new(source_text.into_owned());
+        // Extract path string before loop to avoid repeated conversions
+        let path_str = path.to_string_lossy();
         for error in &errors {
-            let error = error.clone().with_source_code(NamedSource::new(
-                path.to_string_lossy(),
-                Arc::clone(&source_arc),
-            ));
+            let error = error
+                .clone()
+                .with_source_code(NamedSource::new(path_str.clone(), Arc::clone(&source_arc)));
             handler.render_report(&mut output, error.as_ref()).unwrap();
         }
         TestResult::ParseError(output, driver.panicked)
@@ -206,10 +207,12 @@ fn run_parser_typescript_unit(
     let mut output = String::new();
     // Create Arc once and share across all errors to avoid cloning source for each error
     let source_arc: Arc<String> = Arc::new(source_text.into_owned());
+    // Extract path string before loop to avoid repeated conversions
+    let path_str = path.to_string_lossy();
     for error in &errors {
         let error = error
             .clone()
-            .with_source_code(NamedSource::new(path.to_string_lossy(), Arc::clone(&source_arc)));
+            .with_source_code(NamedSource::new(path_str.clone(), Arc::clone(&source_arc)));
         handler.render_report(&mut output, error.as_ref()).unwrap();
     }
     TestResult::ParseError(output, driver.panicked)
@@ -725,10 +728,8 @@ pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
             let ret = Parser::new(&allocator, &f.code, source_type).parse();
 
             if ret.panicked || !ret.errors.is_empty() {
-                let error = ret
-                    .errors
-                    .first()
-                    .map_or("Panicked".to_string(), std::string::ToString::to_string);
+                let error =
+                    ret.errors.first().map_or_else(|| "Panicked".to_string(), ToString::to_string);
                 return CoverageResult {
                     path: f.path.clone(),
                     should_fail: false,
@@ -834,7 +835,7 @@ pub fn run_estree_typescript(files: &[TypeScriptFile]) -> Vec<CoverageResult> {
                     let error = ret
                         .errors
                         .first()
-                        .map_or("Panicked".to_string(), std::string::ToString::to_string);
+                        .map_or_else(|| "Panicked".to_string(), ToString::to_string);
                     return CoverageResult {
                         path: f.path.clone(),
                         should_fail: false,

@@ -22,6 +22,7 @@ test = false
 doctest = false
 
 [dependencies]
+cow-utils = { workspace = true }
 oxc = { workspace = true, features = ["full", "isolated_declarations", "serialize", "conformance"] }
 oxc_formatter = { workspace = true }
 oxc_tasks_common = { workspace = true }
