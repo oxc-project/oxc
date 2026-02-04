@@ -112,9 +112,16 @@ impl ConfigStoreBuilder {
             let path = config.path.clone();
             let root_path = path.parent();
             let extends = config.extends.clone();
+            let extends_configs = config.extends_configs.clone();
             let mut extended_paths = Vec::new();
 
             let mut oxlintrc = config;
+
+            for config in extends_configs.into_iter().rev() {
+                let (extends, extends_paths) = resolve_oxlintrc_config(config)?;
+                oxlintrc = oxlintrc.merge(extends);
+                extended_paths.extend(extends_paths);
+            }
 
             for path in extends.iter().rev() {
                 if path.starts_with("eslint:") || path.starts_with("plugin:") {
