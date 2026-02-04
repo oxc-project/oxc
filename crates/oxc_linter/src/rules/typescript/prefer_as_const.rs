@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSLiteral, TSType},
+    ast::{BindingPattern, Expression, TSLiteral, TSType, TSTypeAnnotation},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -69,11 +69,12 @@ impl Rule for PreferAsConst {
                 let Some(initial_value_expression) = &variable_declarator.init else {
                     return;
                 };
-                check_and_report(
+                check_and_report_type_annotation(
+                    matches!(&variable_declarator.id, BindingPattern::BindingIdentifier(_)),
+                    type_annotation,
                     &type_annotation.type_annotation,
                     initial_value_expression,
                     ctx,
-                    false,
                 );
             }
             AstKind::PropertyDefinition(property_definition) => {
@@ -83,19 +84,19 @@ impl Rule for PreferAsConst {
                 let Some(initial_value_expression) = &property_definition.value else {
                     return;
                 };
-                check_and_report(
+                check_and_report_type_annotation(
+                    true,
+                    type_annotation,
                     &type_annotation.type_annotation,
                     initial_value_expression,
                     ctx,
-                    false,
                 );
             }
             AstKind::TSAsExpression(as_expression) => {
-                check_and_report(
+                check_and_report_as_expression(
                     &as_expression.type_annotation,
                     &as_expression.expression,
                     ctx,
-                    true,
                 );
             }
             _ => {}
@@ -107,45 +108,61 @@ impl Rule for PreferAsConst {
     }
 }
 
-fn check_and_report(
+fn literal_type_span_if_matches(
+    ts_type: &TSType,
+    initial_value_expression: &Expression,
+) -> Option<Span> {
+    let TSType::TSLiteralType(literal_type) = &ts_type else { return None };
+    match &literal_type.literal {
+        TSLiteral::StringLiteral(string_literal) => match initial_value_expression {
+            Expression::StringLiteral(initial_string) => {
+                string_literal.value.eq(&initial_string.value).then_some(string_literal.span)
+            }
+            _ => None,
+        },
+        TSLiteral::NumericLiteral(number_literal) => match initial_value_expression {
+            Expression::NumericLiteral(initial_number) => {
+                ((number_literal.value - initial_number.value).abs() < f64::EPSILON)
+                    .then_some(number_literal.span)
+            }
+            _ => None,
+        },
+        _ => None,
+    }
+}
+
+fn check_and_report_as_expression(
     ts_type: &TSType,
     initial_value_expression: &Expression,
     ctx: &LintContext,
-    can_fix: bool,
 ) {
-    if let TSType::TSLiteralType(literal_type) = &ts_type {
-        let error_span = match &literal_type.literal {
-            TSLiteral::StringLiteral(string_literal) => match initial_value_expression {
-                Expression::StringLiteral(initial_string) => {
-                    if string_literal.value.eq(&initial_string.value) {
-                        Some(string_literal.span)
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            TSLiteral::NumericLiteral(number_literal) => match initial_value_expression {
-                Expression::NumericLiteral(initial_number) => {
-                    if (number_literal.value - initial_number.value).abs() < f64::EPSILON {
-                        Some(number_literal.span)
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            _ => None,
-        };
-        if let Some(span) = error_span {
-            if can_fix {
-                ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), |fixer| {
-                    fixer.replace(span, "const")
-                });
-            } else {
-                ctx.diagnostic(prefer_as_const_diagnostic(span));
-            }
-        }
+    let Some(span) = literal_type_span_if_matches(ts_type, initial_value_expression) else {
+        return;
+    };
+    ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), |fixer| fixer.replace(span, "const"));
+}
+
+fn check_and_report_type_annotation(
+    can_fix: bool,
+    type_annotation: &TSTypeAnnotation<'_>,
+    ts_type: &TSType,
+    initial_value_expression: &Expression,
+    ctx: &LintContext,
+) {
+    let Some(span) = literal_type_span_if_matches(ts_type, initial_value_expression) else {
+        return;
+    };
+
+    if can_fix {
+        ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), |fixer| {
+            let fixer = fixer.for_multifix();
+            let mut fix = fixer.new_fix_with_capacity(2);
+            fix.push(fixer.delete(type_annotation));
+            fix.push(fixer.insert_text_after(initial_value_expression, " as const"));
+            fix.with_message("Use `as const` instead of a literal type annotation.")
+        });
+    } else {
+        ctx.diagnostic(prefer_as_const_diagnostic(span));
     }
 }
 
@@ -169,6 +186,8 @@ fn test() {
         "let foo: string = 'bar';",
         "let foo: number = 1;",
         "let foo: 'bar' = baz;",
+        "let foo: 'bar' = 'baz';",
+        "let foo: 2 = 3;",
         "let foo = 'bar';",
         "let foo: 'bar';",
         "let foo = { bar };",
@@ -243,6 +262,19 @@ fn test() {
         "let []: 'bar' = 'bar';",
         "let foo: 'bar' = 'bar';",
         "let foo: 2 = 2;",
+        "const example: 'hello' = 'hello';",
+        r#"let foo: 'bar' = "bar";"#,
+        "const foo: 2 = 2;",
+        "
+            class foo {
+              readonly bar: 'baz' = 'baz';
+            }
+                  ",
+        "
+            class foo {
+              static bar: 2 = 2;
+            }
+                  ",
         "let foo: 'bar' = 'bar' as 'bar';",
         "let foo = <'bar'>'bar';",
         "let foo = <4>4;",
@@ -279,10 +311,39 @@ fn test() {
         ("let foo = { bar: 'baz' as 'baz' };", "let foo = { bar: 'baz' as const };"),
         ("let foo = { bar: 1 as 1 };", "let foo = { bar: 1 as const };"),
         ("let foo: 'bar' = 'bar' as 'bar';", "let foo: 'bar' = 'bar' as const;"),
+        ("let foo: 'bar' = 'bar';", "let foo = 'bar' as const;"),
+        ("let foo: 2 = 2;", "let foo = 2 as const;"),
+        ("const example: 'hello' = 'hello';", "const example = 'hello' as const;"),
+        (r#"let foo: 'bar' = "bar";"#, r#"let foo = "bar" as const;"#),
+        ("const foo: 2 = 2;", "const foo = 2 as const;"),
         // ("let foo = <'bar'>'bar';", "let foo = <const>'bar';"),
         // ("let foo = <4>4;", "let foo = <const>4;"),
         ("let foo = 'bar' as 'bar';", "let foo = 'bar' as const;"),
         ("let foo = 5 as 5;", "let foo = 5 as const;"),
+        (
+            "
+            class foo {
+              readonly bar: 'baz' = 'baz';
+            }
+                  ",
+            "
+            class foo {
+              readonly bar = 'baz' as const;
+            }
+                  ",
+        ),
+        (
+            "
+            class foo {
+              static bar: 2 = 2;
+            }
+                  ",
+            "
+            class foo {
+              static bar = 2 as const;
+            }
+                  ",
+        ),
         // (
         //     "
         //     class foo {
