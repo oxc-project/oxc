@@ -1,6 +1,6 @@
 //! Tool runner functions for coverage testing
 
-use std::path::Path;
+use std::{borrow::Cow, path::Path, sync::Arc};
 
 use oxc::{
     allocator::Allocator,
@@ -34,8 +34,11 @@ fn run_parser(
     always_strict: bool,
     allow_return_outside_function: bool,
 ) -> TestResult {
-    let source_text =
-        if always_strict { format!("'use strict';\n{code}") } else { code.to_string() };
+    let source_text: Cow<str> = if always_strict {
+        Cow::Owned(format!("'use strict';\n{code}"))
+    } else {
+        Cow::Borrowed(code)
+    };
 
     let mut driver = Driver { allow_return_outside_function, ..Driver::default() };
     driver.run(&source_text, source_type);
@@ -46,10 +49,13 @@ fn run_parser(
     } else {
         let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
         let mut output = String::new();
+        // Create Arc once and share across all errors to avoid cloning source for each error
+        let source_arc: Arc<String> = Arc::new(source_text.into_owned());
         for error in &errors {
-            let error = error
-                .clone()
-                .with_source_code(NamedSource::new(path.to_string_lossy(), source_text.clone()));
+            let error = error.clone().with_source_code(NamedSource::new(
+                path.to_string_lossy(),
+                Arc::clone(&source_arc),
+            ));
             handler.render_report(&mut output, error.as_ref()).unwrap();
         }
         TestResult::ParseError(output, driver.panicked)
@@ -175,8 +181,11 @@ fn run_parser_typescript_unit(
     always_strict: bool,
     ts_ignore_spans: &[Span],
 ) -> TestResult {
-    let source_text =
-        if always_strict { format!("'use strict';\n{code}") } else { code.to_string() };
+    let source_text: Cow<str> = if always_strict {
+        Cow::Owned(format!("'use strict';\n{code}"))
+    } else {
+        Cow::Borrowed(code)
+    };
 
     let mut driver = Driver { allow_return_outside_function: false, ..Driver::default() };
     driver.run(&source_text, source_type);
@@ -198,10 +207,12 @@ fn run_parser_typescript_unit(
     // Format errors for output
     let handler = GraphicalReportHandler::new().with_theme(GraphicalTheme::unicode_nocolor());
     let mut output = String::new();
+    // Create Arc once and share across all errors to avoid cloning source for each error
+    let source_arc: Arc<String> = Arc::new(source_text.into_owned());
     for error in &errors {
         let error = error
             .clone()
-            .with_source_code(NamedSource::new(path.to_string_lossy(), source_text.clone()));
+            .with_source_code(NamedSource::new(path.to_string_lossy(), Arc::clone(&source_arc)));
         handler.render_report(&mut output, error.as_ref()).unwrap();
     }
     TestResult::ParseError(output, driver.panicked)
