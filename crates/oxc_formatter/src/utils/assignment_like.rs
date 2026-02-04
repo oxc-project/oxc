@@ -1032,7 +1032,10 @@ fn is_complex_type_arguments<'a>(
     let is_complex_ts_type = |ts_type: &TSType| {
         matches!(
             ts_type,
-            TSType::TSUnionType(_) | TSType::TSIntersectionType(_) | TSType::TSTypeLiteral(_)
+            TSType::TSUnionType(_)
+                | TSType::TSIntersectionType(_)
+                | TSType::TSTypeLiteral(_)
+                | TSType::TSMappedType(_)
         )
     };
 
@@ -1041,9 +1044,9 @@ fn is_complex_type_arguments<'a>(
         return true;
     }
 
-    if params.first().is_some_and(|param| is_complex_ts_type(param.as_ref()))
-        && type_arguments_may_break(type_arguments, f)
-    {
+    if params.first().is_some_and(|param| {
+        is_complex_ts_type(param.as_ref()) || type_reference_has_complex_args(param.as_ref())
+    }) {
         return true;
     }
 
@@ -1057,14 +1060,17 @@ fn type_arguments_may_break(
     let span = type_arguments.span();
     let source_text = f.source_text();
 
-    if source_text.contains_newline(span) || f.comments().has_comment_in_span(span) {
+    if f.comments().has_comment_in_span(span) {
         return true;
     }
 
-    // Width check for long type arguments using a simple character count.
+    // Width check for long type arguments using a whitespace-agnostic character count.
     let limit = f.options().line_width.value() as usize;
     let mut count = 0;
     for ch in source_text.text_for(&span).chars() {
+        if ch.is_whitespace() {
+            continue;
+        }
         count += ch.width().unwrap_or(0);
         if count > limit {
             return true;
@@ -1072,6 +1078,35 @@ fn type_arguments_may_break(
     }
 
     false
+}
+
+fn type_reference_has_complex_args(ty: &TSType<'_>) -> bool {
+    let TSType::TSTypeReference(reference) = ty else {
+        return false;
+    };
+
+    let Some(type_arguments) = &reference.type_arguments else {
+        return false;
+    };
+
+    type_arguments
+        .params
+        .iter()
+        .any(|arg| is_complex_type_argument(arg))
+}
+
+fn is_complex_type_argument(arg: &TSType<'_>) -> bool {
+    match arg {
+        TSType::TSUnionType(_)
+        | TSType::TSIntersectionType(_)
+        | TSType::TSTypeLiteral(_)
+        | TSType::TSMappedType(_) => true,
+        TSType::TSTypeReference(reference) => reference
+            .type_arguments
+            .as_ref()
+            .is_some_and(|inner| inner.params.iter().any(is_complex_type_argument)),
+        _ => false,
+    }
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>
