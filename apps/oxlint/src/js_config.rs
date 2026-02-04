@@ -68,6 +68,43 @@ pub fn create_js_config_loader(cb: JsLoadJsConfigsCb) -> JsConfigLoaderCb {
     })
 }
 
+fn parse_js_oxlintrc(mut value: serde_json::Value) -> Result<Oxlintrc, OxcDiagnostic> {
+    let Some(map) = value.as_object_mut() else {
+        return Err(OxcDiagnostic::error(
+            "Configuration file must have a default export that is an object.",
+        ));
+    };
+
+    let extends_value = map.remove("extends");
+    let extends_configs = if let Some(extends_value) = extends_value {
+        let serde_json::Value::Array(items) = extends_value else {
+            return Err(OxcDiagnostic::error(
+                "`extends` must be an array of config objects (strings/paths are not supported).",
+            ));
+        };
+
+        items
+            .into_iter()
+            .enumerate()
+            .map(|(idx, item)| {
+                if !item.is_object() {
+                    return Err(OxcDiagnostic::error(format!(
+                        "`extends[{idx}]` must be a config object (strings/paths are not supported).",
+                    )));
+                }
+                parse_js_oxlintrc(item)
+            })
+            .collect::<Result<Vec<_>, _>>()?
+    } else {
+        Vec::new()
+    };
+
+    let mut oxlintrc: Oxlintrc =
+        serde_json::from_value(value).map_err(|err| OxcDiagnostic::error(err.to_string()))?;
+    oxlintrc.extends_configs = extends_configs;
+    Ok(oxlintrc)
+}
+
 /// Parse the JSON response from JS side into `JsConfigResult` structs.
 fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDiagnostic>> {
     let response: LoadJsConfigsResponse = serde_json::from_str(json).map_err(|e| {
@@ -81,7 +118,7 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                 (Vec::with_capacity(count), Vec::new()),
                 |(mut configs, mut errors), entry| {
                     let path = PathBuf::from(&entry.path);
-                    let mut oxlintrc: Oxlintrc = match serde_json::from_value(entry.config) {
+                    let mut oxlintrc = match parse_js_oxlintrc(entry.config) {
                         Ok(config) => config,
                         Err(err) => {
                             errors.push(
@@ -94,16 +131,6 @@ fn parse_js_config_response(json: &str) -> Result<Vec<JsConfigResult>, Vec<OxcDi
                             return (configs, errors);
                         }
                     };
-
-                    // Check if extends is used - not yet supported
-                    if !oxlintrc.extends.is_empty() {
-                        errors.push(OxcDiagnostic::error(format!(
-                            "`extends` in JavaScript configs is not yet supported (found in {})",
-                            entry.path
-                        )));
-                        return (configs, errors);
-                    }
-
                     oxlintrc.path.clone_from(&path);
 
                     let Some(config_dir_parent) = oxlintrc.path.parent() else {
