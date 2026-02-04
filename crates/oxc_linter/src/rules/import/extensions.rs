@@ -546,7 +546,7 @@ impl Extensions {
             // If resolved is "tsx" but written is "stories", then tsx is NOT written.
             let extension_is_written = if let Some(resolved) = resolved_extension {
                 // If we have a resolved extension, check if it matches the written extension
-                written_extension.as_deref() == Some(resolved)
+                written_extension == Some(resolved)
             } else {
                 // Otherwise, just check if there's any written extension
                 written_extension.is_some()
