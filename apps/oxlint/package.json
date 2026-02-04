@@ -8,17 +8,13 @@
   "main": "dist/index.js",
   "imports": {
     "#oxlint": "./dist/index.js",
-    "#oxlint/plugins": "./dist/plugins.js",
+    "#oxlint/plugins": "./dist-pkg-plugins/index.js",
     "#oxlint/plugins-dev": "./dist/plugins-dev.js"
   },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    },
-    "./plugins": {
-      "types": "./dist/plugins.d.ts",
-      "default": "./dist/plugins.js"
     },
     "./plugins-dev": {
       "types": "./dist/plugins-dev.d.ts",

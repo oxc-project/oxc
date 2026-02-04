@@ -40,6 +40,13 @@ const minifyConfig = {
   codegen: { removeWhitespace: false },
 };
 
+// Defined globals.
+// `DEBUG: false` allows minifier to remove debug assertions and debug-only code in release build.
+const definedGlobals = {
+  DEBUG: DEBUG ? "true" : "false",
+  CONFORMANCE: CONFORMANCE ? "true" : "false",
+};
+
 // Base config for `@oxlint/plugins` package.
 // "node12" target to match `engines` field of last ESLint 8 release (8.57.1).
 const pluginsPkgConfig = defineConfig({
@@ -53,10 +60,7 @@ const pluginsPkgConfig = defineConfig({
   clean: false,
   target: "node12",
   minify: minifyConfig,
-  define: {
-    DEBUG: "false",
-    CONFORMANCE: "false",
-  },
+  define: definedGlobals,
 });
 
 // Plugins.
@@ -69,7 +73,7 @@ export default defineConfig([
   // Main build
   {
     ...commonConfig,
-    entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugins.ts", "src-js/plugins-dev.ts"],
+    entry: ["src-js/cli.ts", "src-js/index.ts", "src-js/plugins-dev.ts"],
     format: "esm",
     external: [
       // External native bindings
@@ -79,10 +83,7 @@ export default defineConfig([
     minify: minifyConfig,
     dts: true,
     attw: { profile: "esm-only" },
-    define: {
-      DEBUG: DEBUG ? "true" : "false",
-      CONFORMANCE: CONFORMANCE ? "true" : "false",
-    },
+    define: definedGlobals,
     plugins,
     inputOptions: {
       // For `replaceAssertsPlugin` and `replaceGlobalsPlugin`
