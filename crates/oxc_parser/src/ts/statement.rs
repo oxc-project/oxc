@@ -1,6 +1,6 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{FileExtension, GetSpan};
 
 use crate::{
     Context, ParserImpl, diagnostics,
@@ -552,7 +552,13 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::RAngle);
         let lhs_span = self.start_span();
         let expression = self.parse_simple_unary_expression(lhs_span);
-        self.ast.expression_ts_type_assertion(self.end_span(span), type_annotation, expression)
+        let span = self.end_span(span);
+
+        if matches!(self.source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts)) {
+            self.error(diagnostics::jsx_type_assertion_in_mts_cts(span));
+        }
+
+        self.ast.expression_ts_type_assertion(span, type_annotation, expression)
     }
 
     pub(crate) fn parse_ts_import_equals_declaration(

@@ -3,7 +3,7 @@ commit: 95e3aaa9
 parser_typescript Summary:
 AST Parsed     : 9842/9843 (99.99%)
 Positive Passed: 9838/9843 (99.95%)
-Negative Passed: 1514/2557 (59.21%)
+Negative Passed: 1515/2557 (59.25%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -1689,8 +1689,6 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/node
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesDeclarationEmitWithPackageExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesExportsBlocksTypesVersions.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesForbidenSyntax.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/node/nodeModulesGeneratedNameCollisions.ts
 
@@ -21114,6 +21112,30 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
  6 │ export async function f() {
    ╰────
   help: TypeScript transforms 'import ... =' to 'const ... ='
+
+  × TS(7060): This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesForbidenSyntax.ts:2:12]
+ 1 │ // cjs format file
+ 2 │ const x = <T>() => <T><any>(void 0);
+   ·            ─
+ 3 │ export {x};
+   ╰────
+
+  × TS(7059): This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead.
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesForbidenSyntax.ts:2:23]
+ 1 │ // cjs format file
+ 2 │ const x = <T>() => <T><any>(void 0);
+   ·                       ─────────────
+ 3 │ export {x};
+   ╰────
+
+  × TS(7059): This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead.
+   ╭─[typescript/tests/cases/conformance/node/nodeModulesForbidenSyntax.ts:2:20]
+ 1 │ // cjs format file
+ 2 │ const x = <T>() => <T><any>(void 0);
+   ·                    ────────────────
+ 3 │ export {x};
+   ╰────
 
   × Expected 'with' in import type options
    ╭─[typescript/tests/cases/conformance/node/nodeModulesImportAttributesTypeModeDeclarationEmitErrors.ts:3:22]

@@ -1,6 +1,6 @@
 commit: 92c052dc
 
-Passed: 699/1164
+Passed: 695/1160
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1311,7 +1311,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-typescript (11/16)
+# babel-preset-typescript (7/12)
 * node-extensions/import-in-cts/input.cts
 x Output mismatch
 

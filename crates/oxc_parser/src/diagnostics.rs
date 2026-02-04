@@ -1284,3 +1284,23 @@ pub fn ts_import_type_options_invalid_key(span: Span) -> OxcDiagnostic {
 pub fn ts_import_type_options_no_spread(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Spread elements are not allowed in import type options.").with_label(span)
 }
+
+// This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead. ts(7059)
+#[cold]
+pub fn jsx_type_assertion_in_mts_cts(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "7059",
+        "This syntax is reserved in files with the .mts or .cts extension. Use an `as` expression instead.",
+    )
+    .with_label(span)
+}
+
+// This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint. ts(7060)
+#[cold]
+pub fn jsx_type_parameter_in_mts_cts(span: Span) -> OxcDiagnostic {
+    ts_error(
+        "7060",
+        "This syntax is reserved in files with the .mts or .cts extension. Add a trailing comma or explicit constraint.",
+    )
+    .with_label(span)
+}

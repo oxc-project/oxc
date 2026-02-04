@@ -1,6 +1,6 @@
 use oxc_allocator::Box;
 use oxc_ast::{NONE, ast::*};
-use oxc_span::GetSpan;
+use oxc_span::{FileExtension, GetSpan};
 use oxc_syntax::precedence::Precedence;
 
 use super::{FunctionKind, Tristate};
@@ -252,7 +252,17 @@ impl<'a> ParserImpl<'a> {
         let has_await = self.ctx.has_await();
         self.ctx = self.ctx.union_await_if(r#async);
 
-        let type_parameters = self.parse_ts_type_parameters();
+        let (type_parameters, has_trailing_comma) =
+            self.parse_ts_type_parameters_with_trailing_comma();
+
+        if let Some(type_params) = &type_parameters
+            && matches!(self.source_type.extension(), Some(FileExtension::Mts | FileExtension::Cts))
+            && type_params.params.len() == 1
+            && type_params.params[0].constraint.is_none()
+            && !has_trailing_comma
+        {
+            self.error(diagnostics::jsx_type_parameter_in_mts_cts(type_params.params[0].name.span));
+        }
 
         let (this_param, params) = self.parse_formal_parameters(
             FunctionKind::Expression,
