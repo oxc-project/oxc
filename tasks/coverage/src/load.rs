@@ -71,11 +71,11 @@ fn walk_and_read(
                     .ok()?;
                 Some(content)
             })?;
-            // Remove BOM
-            let code = match code.strip_prefix('\u{feff}') {
-                Some(stripped) => stripped.to_string(),
-                None => code,
-            };
+            // Remove BOM without reallocating
+            let mut code = code;
+            if code.starts_with('\u{feff}') {
+                code.drain(..'\u{feff}'.len_utf8());
+            }
             let rel_path = path.strip_prefix(&base).unwrap().to_owned();
             Some((rel_path, code))
         })
