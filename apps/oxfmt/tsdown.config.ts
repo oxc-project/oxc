@@ -2,7 +2,12 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   // Build all entry points together to share Prettier chunks
-  entry: ["src-js/index.ts", "src-js/cli.ts", "src-js/cli-worker.ts"],
+  entry: [
+    "src-js/index.ts",
+    "src-js/cli.ts",
+    "src-js/cli-worker.ts",
+    "src-js/cli/format-subprocess.ts",
+  ],
   format: "esm",
   platform: "node",
   target: "node20",

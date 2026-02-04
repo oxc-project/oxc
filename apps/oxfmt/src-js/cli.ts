@@ -13,6 +13,16 @@ import {
 void (async () => {
   const args = process.argv.slice(2);
 
+  // Node.js v24 has a race condition bug with ThreadsafeFunction that causes crashes.
+  // Fixed in Node.js v25.4.0+. See: https://github.com/nodejs/node/issues/55706
+  // Workaround: Use child_process pool instead of worker_threads on v24.
+  // Each child process has its own V8 isolate, avoiding the TSFN race condition.
+  // LSP mode is already sequential, so no workaround needed.
+  const nodeMajor = Number(process.versions.node.split(".")[0]);
+  if (nodeMajor === 24 && !args.includes("--lsp")) {
+    process.env.OXFMT_USE_SUBPROCESSES = "1";
+  }
+
   // Node.js sets non-TTY `stdio` to non-blocking mode,
   // which causes `WouldBlock` errors in Rust when writing large output with `--stdin-filepath`.
   // https://github.com/oxc-project/oxc/issues/17939 (issue was on macOS)
