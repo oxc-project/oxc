@@ -12,6 +12,47 @@ type LoadJsConfigsResult =
   | { Failures: { path: string; error: string }[] }
   | { Error: string };
 
+function validateConfigExtends(root: object): void {
+  const visited = new Set<object>();
+  const stack = new Set<object>();
+
+  const visit = (config: object): void => {
+    if (visited.has(config)) return;
+    visited.add(config);
+
+    if (stack.has(config)) {
+      // Defensive: this should never happen because we check before recursing.
+      throw new Error("`extends` contains a circular reference.");
+    }
+    stack.add(config);
+
+    const maybeExtends = (config as Record<string, unknown>).extends;
+    if (maybeExtends !== undefined) {
+      if (!Array.isArray(maybeExtends)) {
+        throw new Error(
+          "`extends` must be an array of config objects (strings/paths are not supported).",
+        );
+      }
+      for (let i = 0; i < maybeExtends.length; i++) {
+        const item = maybeExtends[i];
+        if (typeof item !== "object" || item === null || Array.isArray(item)) {
+          throw new Error(
+            `\`extends[${i}]\` must be a config object (strings/paths are not supported).`,
+          );
+        }
+        if (stack.has(item)) {
+          throw new Error("`extends` contains a circular reference.");
+        }
+        visit(item);
+      }
+    }
+
+    stack.delete(config);
+  };
+
+  visit(root);
+}
+
 /**
  * Load JavaScript config files in parallel.
  *
@@ -42,6 +83,8 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
             `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
           );
         }
+
+        validateConfigExtends(config as object);
 
         return { path, config };
       }),
