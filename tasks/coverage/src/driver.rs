@@ -131,15 +131,14 @@ impl Driver {
         source_type: SourceType,
     ) -> TestResult {
         self.run(source_text, source_type);
-        let printed1 = self.printed.clone();
+        let printed1 = std::mem::take(&mut self.printed);
         // Use the resolved source type from the first parse for the second parse
         let source_type = self.source_type.unwrap_or(source_type);
         self.run(&printed1, source_type);
-        let printed2 = self.printed.clone();
-        if printed1 == printed2 {
+        if printed1 == self.printed {
             TestResult::Passed
         } else {
-            TestResult::Mismatch(case, printed1, printed2)
+            TestResult::Mismatch(case, printed1, std::mem::take(&mut self.printed))
         }
     }
 
