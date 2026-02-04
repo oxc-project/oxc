@@ -63,13 +63,10 @@ fn run_parser(
 }
 
 fn evaluate_result(result: TestResult, should_fail: bool) -> TestResult {
-    match (&result, should_fail) {
-        (TestResult::ParseError(err, panicked), true) => {
-            TestResult::CorrectError(err.clone(), *panicked)
-        }
+    match (result, should_fail) {
+        (TestResult::ParseError(err, panicked), true) => TestResult::CorrectError(err, panicked),
         (TestResult::Passed, true) => TestResult::IncorrectlyPassed,
-        (TestResult::Passed, false) => TestResult::Passed,
-        _ => result,
+        (result, _) => result,
     }
 }
 
@@ -576,7 +573,7 @@ fn run_transformer(
     };
 
     driver.run(code, source_type);
-    let transformed1 = driver.printed.clone();
+    let transformed1 = std::mem::take(&mut driver.printed);
 
     // Second pass with only JavaScript syntax
     let second_pass_source_type = match source_type.module_kind() {
@@ -586,12 +583,11 @@ fn run_transformer(
         ModuleKind::CommonJS => SourceType::cjs(),
     };
     driver.run(&transformed1, second_pass_source_type);
-    let transformed2 = driver.printed.clone();
 
-    if transformed1 == transformed2 {
+    if transformed1 == driver.printed {
         TestResult::Passed
     } else {
-        TestResult::Mismatch("Mismatch", transformed1, transformed2)
+        TestResult::Mismatch("Mismatch", transformed1, std::mem::take(&mut driver.printed))
     }
 }
 
