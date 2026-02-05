@@ -1917,11 +1917,11 @@ function deserializeFormalParameters(pos) {
       rest = {
         type: "RestElement",
         argument: null,
-        start: (start = deserializeU32(pos + 8)),
-        end: (end = deserializeU32(pos + 12)),
+        start: (start = deserializeU32(pos + 32)),
+        end: (end = deserializeU32(pos + 36)),
         range: [start, end],
       };
-    rest.argument = deserializeBindingPattern(pos + 16);
+    rest.argument = deserializeBindingPattern(pos + 40);
     params.push(rest);
   }
   return params;
