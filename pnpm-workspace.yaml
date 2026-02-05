@@ -19,7 +19,7 @@ catalog:
   eslint: 9.39.2
   publint: 0.3.17
   rolldown: 1.0.0-rc.3
-  tsdown: 0.20.1
+  tsdown: 0.20.2
   typescript: 5.9.3
   vitest: 4.0.18
 
