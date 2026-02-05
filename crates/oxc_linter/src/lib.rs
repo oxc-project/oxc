@@ -7,7 +7,7 @@
 #![expect(clippy::missing_errors_doc)]
 
 use std::{
-    mem,
+    iter, mem,
     path::Path,
     ptr::{self, NonNull},
     rc::Rc,
@@ -672,29 +672,20 @@ impl Linter {
                     let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
                         && ctx_host.fix.can_apply(FixKind::Suggestion)
                     {
-                        let mut fixes =
-                            Vec::with_capacity(usize::from(fix.is_some()) + suggestions.len());
-                        if let Some(fix) = fix {
-                            fixes.push(fix);
-                        }
+                        debug_assert!(
+                            !suggestions.is_empty(),
+                            "`diagnostic.suggestions` should be `None` if there are no suggestions"
+                        );
 
-                        for suggestion in suggestions {
-                            if let Some(fix) = create_fix(suggestion.fixes, FixKind::Suggestion) {
-                                fixes.push(fix.with_message(suggestion.message));
-                            }
-                        }
+                        let suggestions = suggestions.into_iter().filter_map(|suggestion| {
+                            create_fix(suggestion.fixes, FixKind::Suggestion)
+                                .map(|fix| fix.with_message(suggestion.message))
+                        });
 
-                        if fixes.is_empty() {
-                            PossibleFixes::None
-                        } else if fixes.len() == 1 {
-                            PossibleFixes::Single(fixes.into_iter().next().unwrap())
-                        } else {
-                            PossibleFixes::Multiple(fixes)
-                        }
-                    } else if let Some(fix) = fix {
-                        PossibleFixes::Single(fix)
+                        #[expect(clippy::from_iter_instead_of_collect)]
+                        PossibleFixes::from_iter(iter::chain(fix, suggestions))
                     } else {
-                        PossibleFixes::None
+                        PossibleFixes::from(fix)
                     };
 
                     ctx_host.push_diagnostic(Message::new(
