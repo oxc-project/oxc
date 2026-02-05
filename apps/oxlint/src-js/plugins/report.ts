@@ -92,14 +92,18 @@ export const PLACEHOLDER_REGEX = /\{\{([^{}]+)\}\}/gu;
 export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
   if (filePath === null) throw new Error("Cannot report errors in `createOnce`");
 
-  // Get message, resolving message from `messageId` if present
-  let { message, messageId } = getMessage(diagnostic, ruleDetails);
-
-  // Interpolate placeholders {{key}} with data values
-  if (Object.hasOwn(diagnostic, "data")) {
-    const { data } = diagnostic;
-    if (data != null) message = replacePlaceholders(message, data);
+  let messageId: string | null = null;
+  if (Object.hasOwn(diagnostic, "messageId")) {
+    (messageId as string | null | undefined) = diagnostic.messageId;
+    if (messageId === undefined) messageId = null;
   }
+
+  const message = getMessage(
+    Object.hasOwn(diagnostic, "message") ? diagnostic.message : null,
+    messageId,
+    diagnostic,
+    ruleDetails,
+  );
 
   // TODO: Validate `diagnostic`
   let start: number, end: number, loc: LocationWithOptionalEnd | LineColumn | undefined;
@@ -186,33 +190,40 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 }
 
 /**
- * Get message from diagnostic.
- * @param diagnostic - Diagnostic object
+ * Get message from a diagnostic.
+ *
+ * Resolve message from `messageId` if present, and interpolate placeholders {{key}} with data values.
+ *
+ * @param message - Provided message string
+ * @param messageId - Provided message ID
+ * @param descriptor - Diagnostic object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
- * @returns Message string and `messageId`
+ * @returns Message string
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
 function getMessage(
-  diagnostic: Diagnostic,
+  message: string | null | undefined,
+  messageId: string | null,
+  descriptor: Diagnostic,
   ruleDetails: RuleDetails,
-): { message: string; messageId: string | null } {
-  if (Object.hasOwn(diagnostic, "messageId")) {
-    const { messageId } = diagnostic;
-    if (messageId != null) {
-      return {
-        message: resolveMessageFromMessageId(messageId, ruleDetails),
-        messageId,
-      };
-    }
+): string {
+  // Resolve from `messageId` if present, otherwise use `message`
+  if (messageId !== null) {
+    if (typeof messageId !== "string") throw new TypeError("`messageId` must be a string");
+    message = resolveMessageFromMessageId(messageId, ruleDetails);
+  } else if (message == null) {
+    throw new Error("Either `message` or `messageId` is required");
+  } else if (typeof message !== "string") {
+    throw new TypeError("`message` must be a string");
   }
 
-  if (Object.hasOwn(diagnostic, "message")) {
-    const { message } = diagnostic;
-    if (typeof message === "string") return { message, messageId: null };
-    if (message != null) throw new TypeError("`message` must be a string");
+  // Interpolate data placeholders
+  if (Object.hasOwn(descriptor, "data")) {
+    const { data } = descriptor;
+    if (data != null) message = replacePlaceholders(message, data);
   }
 
-  throw new Error("Either `message` or `messageId` is required");
+  return message;
 }
 
 /**
