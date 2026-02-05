@@ -1,5 +1,11 @@
-use oxc_ast::ast::{BlockStatement, FunctionBody, Statement, SwitchCase};
+use oxc_ast::ast::{
+    ArrowFunctionExpression, BlockStatement, Function, FunctionBody, ReturnStatement, Statement,
+    SwitchCase,
+};
+use oxc_ast_visit::Visit;
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
+use oxc_semantic::ScopeFlags;
+use oxc_span::{GetSpan, Span};
 
 /// `StatementReturnStatus` describes whether the CFG corresponding to
 /// the statement is termitated by return statement in all/some/nome of
@@ -114,6 +120,33 @@ pub fn check_function_body(function: &FunctionBody) -> StatementReturnStatus {
     }
 
     status
+}
+
+/// Collect spans of **explicit** return values (`return <expr>`) in the given function body.
+///
+/// This is used by `array-callback-return` when `checkForEach` is enabled to highlight the
+/// returned value(s) which are ignored by `forEach`.
+pub fn get_explicit_return_spans(function: &FunctionBody) -> Vec<Span> {
+    let mut finder = ReturnStatementFinder::default();
+    finder.visit_function_body(function);
+    finder.spans
+}
+
+#[derive(Default)]
+struct ReturnStatementFinder {
+    spans: Vec<Span>,
+}
+
+impl Visit<'_> for ReturnStatementFinder {
+    fn visit_return_statement(&mut self, return_statement: &ReturnStatement) {
+        if let Some(argument) = &return_statement.argument {
+            self.spans.push(argument.span());
+        }
+    }
+
+    fn visit_function(&mut self, _func: &Function<'_>, _flags: ScopeFlags) {}
+
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {}
 }
 
 /// Return checkers runs a Control Flow-like Analysis on a statement to see if it

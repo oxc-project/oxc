@@ -26,12 +26,15 @@ fn expect_return(method_name: &str, span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-fn expect_no_return(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Unexpected return for array method {method_name:?}"))
+fn expect_no_return(method_name: &str, call_span: Span, return_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected return value in callback for {method_name:?}"))
         .with_help(format!(
-            "Array method {method_name:?} expects no useless return from the function"
+            "{method_name:?} ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array."
         ))
-        .with_label(span)
+        .with_labels([
+            call_span.label(format!("{method_name:?} is called here.")),
+            return_span.label("This returned value is ignored."),
+        ])
 }
 
 #[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
@@ -103,7 +106,7 @@ impl Rule for ArrayCallbackReturn {
         };
 
         // Filter on target methods on Arrays
-        if let Some(array_method) = get_array_method_name(node, ctx) {
+        if let Some((array_method_span, array_method)) = get_array_method_info(node, ctx) {
             let return_status = if always_explicit_return {
                 StatementReturnStatus::AlwaysExplicit
             } else {
@@ -114,9 +117,14 @@ impl Rule for ArrayCallbackReturn {
                 ("forEach", false, _) => (),
                 ("forEach", true, _) => {
                     if return_status.may_return_explicit() {
+                        let return_span = return_checker::get_explicit_return_spans(function_body)
+                            .into_iter()
+                            .next()
+                            .unwrap_or_else(|| function_body.span());
                         ctx.diagnostic(expect_no_return(
                             &full_array_method_name(array_method),
-                            function_body.span,
+                            array_method_span,
+                            return_span,
                         ));
                     }
                 }
@@ -144,7 +152,10 @@ impl Rule for ArrayCallbackReturn {
 /// Code ported from [eslint](https://github.com/eslint/eslint/blob/v9.9.1/lib/rules/array-callback-return.js)
 /// We're currently on a `Function` or `ArrowFunctionExpression`, findout if it is an argument
 /// to the target array methods we're interested in.
-pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
+pub fn get_array_method_info<'a>(
+    node: &AstNode<'a>,
+    ctx: &LintContext<'a>,
+) -> Option<(Span, &'a str)> {
     let mut current_node = node;
     loop {
         let parent = ctx.nodes().parent_node(current_node.id());
@@ -197,12 +208,12 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                         && let Some(call_arg) = call.arguments[1].as_expression()
                         && call_arg.span() == current_node.kind().span()
                     {
-                        return Some("from");
+                        return Some((callee.span(), "from"));
                     }
                 }
 
                 // "methods",
-                let array_method = callee.static_property_name()?;
+                let (array_method_span, array_method) = callee.static_property_info()?;
 
                 if TARGET_METHODS.contains(&array_method)
                     // Check that current node is parent's first argument
@@ -212,7 +223,7 @@ pub fn get_array_method_name<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> O
                             .as_expression()
                             .is_some_and(|arg| arg.span() == current_node.kind().span())
                 {
-                    return Some(array_method);
+                    return Some((array_method_span, array_method));
                 }
 
                 return None;
