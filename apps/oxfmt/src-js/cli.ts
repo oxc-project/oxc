@@ -55,4 +55,13 @@ void (async () => {
   // `process.exit()` kills the process immediately and `stdout` may not be flushed before process dies.
   // https://nodejs.org/api/process.html#processexitcode
   process.exitCode = exitCode!;
+
+  // Node.js < 25.4.0 has a race condition with ThreadsafeFunction cleanup that causes
+  // crashes on large codebases. Add a small delay to allow pending NAPI operations
+  // to complete before exit. Fixed in Node.js 25.4.0+.
+  // See: https://github.com/nodejs/node/issues/55706
+  const [major, minor] = process.versions.node.split(".").map(Number);
+  if (major < 25 || (major === 25 && minor < 4)) {
+    setTimeout(() => process.exit(), 50);
+  }
 })();
