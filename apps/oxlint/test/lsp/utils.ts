@@ -27,6 +27,17 @@ import { codeFrameColumns } from "@babel/code-frame";
 
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
+const PULL_DIAGNOSTICS_CAPABILITY = {
+  textDocument: {
+    diagnostic: {},
+  },
+  workspace: {
+    diagnostics: {
+      refreshSupport: true,
+    },
+  },
+};
+
 export function createLspConnection() {
   const proc = spawn(process.execPath, [CLI_PATH, "--lsp"], {
     env: {
@@ -110,32 +121,64 @@ export async function lintFixture(
   languageId: string,
   initializationOptions?: OxlintLSPConfig,
 ): Promise<string> {
-  const filePath = join(fixturesDir, fixturePath);
-  const dirPath = dirname(filePath);
-  const fileUri = pathToFileURL(filePath).href;
-  const content = await fs.readFile(filePath, "utf-8");
+  return lintMultiWorkspaceFixture(
+    fixturesDir,
+    [{ path: fixturePath, languageId }],
+    initializationOptions ? [initializationOptions] : undefined,
+  );
+}
 
+export async function lintMultiWorkspaceFixture(
+  fixturesDir: string,
+  fixturePaths: {
+    path: string;
+    languageId: string;
+  }[],
+  initializationOptions?: OxlintLSPConfig[],
+): Promise<string> {
+  const workspaceUris = fixturePaths.map(
+    ({ path }) => pathToFileURL(dirname(join(fixturesDir, path))).href,
+  );
   await using client = createLspConnection();
 
   await client.initialize(
-    [{ uri: pathToFileURL(dirPath).href, name: "test" }],
-    {
-      textDocument: {
-        diagnostic: {},
-      },
-      workspace: {
-        diagnostics: {
-          refreshSupport: true,
-        },
-      },
-    },
-    [
-      {
-        workspaceUri: pathToFileURL(dirPath).href,
-        options: initializationOptions,
-      },
-    ],
+    workspaceUris.map((uri, index) => ({ uri, name: `workspace-${index}` })),
+    PULL_DIAGNOSTICS_CAPABILITY,
+    workspaceUris.map((workspaceUri, index) => ({
+      workspaceUri,
+      options: initializationOptions?.[index] ?? null,
+    })),
   );
+
+  const snapshots = [];
+  for (const fixturePath of fixturePaths) {
+    snapshots.push(
+      // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency
+      await getDiagnosticSnapshot(
+        fixturePath.path,
+        join(fixturesDir, fixturePath.path),
+        fixturePath.languageId,
+        client,
+      ),
+    );
+  }
+
+  return snapshots.join("\n\n");
+}
+
+// ---
+
+type OxlintLSPConfig = {};
+
+async function getDiagnosticSnapshot(
+  fixturePath: string,
+  filePath: string,
+  languageId: string,
+  client: ReturnType<typeof createLspConnection>,
+): Promise<string> {
+  const fileUri = pathToFileURL(filePath).href;
+  const content = await fs.readFile(filePath, "utf-8");
+
   await client.didOpen(fileUri, languageId, content);
 
   const diagnostics = await client.diagnostic(fileUri);
@@ -148,10 +191,6 @@ ${applyDiagnostics(content, diagnostics).join("\n--------------------")}
 --------------------
 `.trim();
 }
-
-// ---
-
-type OxlintLSPConfig = {};
 
 function getSeverityLabel(severity: number | undefined): string {
   if (!severity) return "Unknown";
