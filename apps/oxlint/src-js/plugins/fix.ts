@@ -59,23 +59,8 @@ export type Fixer = typeof FIXER;
 /**
  * Get fixes from a `Diagnostic`.
  *
- * Returns `null` if any of:
- *
- * 1. No `fix` function was provided in `diagnostic`.
- * 2. `fix` function returns a falsy value.
- * 3. `fix` function returns an empty array/iterator.
- * 4. `fix` function returns an array/iterator containing only falsy values.
- *
- * Otherwise, returns a non-empty array of `Fix` objects.
- *
- * `Fix` objects are validated and conformed to expected shape.
- * Does not mutate the `fixes` array returned by `fix` function, but avoids cloning if possible.
- *
- * This function aims to replicate ESLint's behavior as closely as possible.
- *
- * TODO: Are prototype checks, and checks for `toJSON` methods excessive?
- * We're not handling all possible edge cases e.g. `fixes` or individual `Fix` objects being `Proxy`s or objects
- * with getters. As we're not managing to be 100% bulletproof anyway, maybe we don't need to be quite so defensive.
+ * Returns `null` if no `fix` function, or if it produces no fixes.
+ * Throws if rule is not marked as fixable but produces fixes.
  *
  * @param diagnostic - Diagnostic object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `isFixable` value
@@ -88,9 +73,47 @@ export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[
   const { fix } = diagnostic;
   if (typeof fix !== "function") return null;
 
+  const fixes = getFixesFromFixFn(fix, diagnostic);
+
+  // ESLint does not throw an error if `fix` function returns only falsy values
+  if (fixes !== null && ruleDetails.isFixable === false) {
+    throw new Error(
+      'Fixable rules must set the `meta.fixable` property to "code" or "whitespace".',
+    );
+  }
+
+  return fixes;
+}
+
+/**
+ * Call a `FixFn` and process its return value into an array of `Fix` objects.
+ *
+ * Returns `null` if any of:
+ *
+ * 1. `fixFn` returns a falsy value.
+ * 2. `fixFn` returns an empty array/iterator.
+ * 3. `fixFn` returns an array/iterator containing only falsy values.
+ *
+ * Otherwise, returns a non-empty array of `Fix` objects.
+ *
+ * `Fix` objects are validated and conformed to expected shape.
+ * Does not mutate the `fixes` array returned by `fixFn`, but avoids cloning if possible.
+ *
+ * This function aims to replicate ESLint's behavior as closely as possible.
+ *
+ * TODO: Are prototype checks, and checks for `toJSON` methods excessive?
+ * We're not handling all possible edge cases e.g. `fixes` or individual `Fix` objects being `Proxy`s or objects
+ * with getters. As we're not managing to be 100% bulletproof anyway, maybe we don't need to be quite so defensive.
+ *
+ * @param fixFn - Fix function to call
+ * @param thisArg - `this` value for the fix function call
+ * @returns Non-empty array of `Fix` objects, or `null` if none
+ * @throws {Error} If `fixFn` returns any invalid `Fix` objects
+ */
+function getFixesFromFixFn(fixFn: FixFn, thisArg: Diagnostic): Fix[] | null {
   // In ESLint, `fix` is called with `this` as a clone of the `diagnostic` object.
   // We just use the original `diagnostic` object - that should be close enough.
-  let fixes = fix.call(diagnostic, FIXER);
+  let fixes = fixFn.call(thisArg, FIXER);
 
   // ESLint ignores falsy values
   if (!fixes) return null;
@@ -132,19 +155,11 @@ export function getFixes(diagnostic: Diagnostic, ruleDetails: RuleDetails): Fix[
         fixes[i] = conformedFix;
       }
     }
-  } else {
-    fixes = [validateAndConformFix(fixes)];
+
+    return fixes;
   }
 
-  // ESLint does not throw this error if `fix` function returns only falsy values.
-  // We've already exited if that is the case, so we're reproducing that behavior.
-  if (ruleDetails.isFixable === false) {
-    throw new Error(
-      'Fixable rules must set the `meta.fixable` property to "code" or "whitespace".',
-    );
-  }
-
-  return fixes;
+  return [validateAndConformFix(fixes)];
 }
 
 /**
