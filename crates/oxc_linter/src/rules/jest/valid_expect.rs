@@ -74,14 +74,12 @@ declare_oxc_lint!(
     /// expect();
     /// expect('something');
     /// expect(true).toBeDefined;
-    /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
     /// expect('something').toEqual('something');
     /// expect(true).toBeDefined();
-    /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ///
     /// This rule is compatible with [eslint-plugin-vitest](https://github.com/vitest-dev/eslint-plugin-vitest/blob/v1.1.9/docs/rules/valid-expect.md),

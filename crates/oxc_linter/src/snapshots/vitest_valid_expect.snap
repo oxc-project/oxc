@@ -24,13 +24,6 @@ assertion_line: 444
    ╰────
   help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
-   ╭─[valid_expect.tsx:1:1]
- 1 │ expect("something", "else").toEqual("something");
-   · ───────────────────────────
-   ╰────
-  help: Remove the extra arguments.
-
   ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 2 arguments
    ╭─[valid_expect.tsx:1:1]
  1 │ expect("something", "else", "entirely").toEqual("something");
@@ -59,10 +52,17 @@ assertion_line: 444
    ╰────
   help: Add the missing arguments.
 
-  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+  ⚠ eslint-plugin-vitest(valid-expect): Expect requires at least 3 arguments
    ╭─[valid_expect.tsx:1:1]
  1 │ expect("something", "else").toEqual("something");
    · ───────────────────────────
+   ╰────
+  help: Add the missing arguments.
+
+  ⚠ eslint-plugin-vitest(valid-expect): Expect takes at most 1 argument
+   ╭─[valid_expect.tsx:1:1]
+ 1 │ expect(1, message).toBe(1);
+   · ──────────────────
    ╰────
   help: Remove the extra arguments.
 
