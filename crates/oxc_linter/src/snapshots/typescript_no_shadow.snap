@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 444
 ---
 
   ⚠ typescript-eslint(no-shadow): 'x' is already declared in the upper scope.
@@ -126,5 +125,68 @@ assertion_line: 444
    ·       ┬               ┬
    ·       │               ╰── 'x' is declared here
    ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ typescript-eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type Foo = string; { const Foo = 'bar'; }
+   ·      ─┬─                   ─┬─
+   ·       │                     ╰── 'Foo' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ typescript-eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:11]
+ 1 │ interface Foo { x: number }; { const Foo = { x: 1 } };
+   ·           ─┬─                        ─┬─
+   ·            │                          ╰── 'Foo' is declared here
+   ·            ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ typescript-eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const T = 1; function foo<T>() { }
+   ·       ┬                   ┬
+   ·       │                   ╰── 'T' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ typescript-eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:45]
+ 1 │ function outer() { function inner() { const x = 1; } var x = 2; }
+   ·                                             ┬            ┬
+   ·                                             │            ╰── shadowed declaration is here
+   ·                                             ╰── 'x' is declared here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ typescript-eslint(no-shadow): 'foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:45]
+ 1 │ function outer() { function inner() { const foo = 1; } function foo() {} }
+   ·                                             ─┬─                 ─┬─
+   ·                                              │                   ╰── shadowed declaration is here
+   ·                                              ╰── 'foo' is declared here
+   ╰────
+  help: Consider renaming 'foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ typescript-eslint(no-shadow): 'foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:45]
+ 1 │ function outer() { function inner() { const foo = 1; } function foo() {} }
+   ·                                             ─┬─                 ─┬─
+   ·                                              │                   ╰── shadowed declaration is here
+   ·                                              ╰── 'foo' is declared here
+   ╰────
+  help: Consider renaming 'foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ typescript-eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:24]
+ 1 │ function outer() { var x = 2; function inner() { const x = 1; } }
+   ·                        ┬                               ┬
+   ·                        │                               ╰── 'x' is declared here
+   ·                        ╰── shadowed declaration is here
    ╰────
   help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.

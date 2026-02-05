@@ -312,6 +312,66 @@ fn test() {
             "#,
             None,
         ),
+        // -------------------------
+        // allow
+        // -------------------------
+        // `allow` should win even when it would normally be a failure.
+        (
+            "const x = 1; function foo() { const x = 2; }",
+            Some(serde_json::json!([{ "allow": ["x"] }])),
+        ),
+        // `allow` should also override type/value behavior even when ignoreTypeValueShadow=false.
+        (
+            "type Foo = string; const Foo = 'bar';",
+            Some(serde_json::json!([{
+                "ignoreTypeValueShadow": false,
+                "allow": ["Foo"]
+            }])),
+        ),
+        // -------------------------
+        // ignoreTypeValueShadow
+        // -------------------------
+        // Default (true): type vs value with the same name should be ignored.
+        ("type Foo = string; const Foo = 'bar';", None),
+        // Same idea for interface vs value (declaration merging is common in TS).
+        ("interface Foo { x: number } const Foo = { x: 1 };", None),
+        // -------------------------
+        // ignoreFunctionTypeParameterNameValueShadow
+        // (interaction with ignoreTypeValueShadow)
+        // -------------------------
+        // If ignoreTypeValueShadow=false, this would normally be reportable...
+        // ...but with ignoreFunctionTypeParameterNameValueShadow=true it must be ignored (pass).
+        (
+            "const T = 1; function foo<T>() { }",
+            Some(serde_json::json!([{
+                "ignoreTypeValueShadow": false,
+                "ignoreFunctionTypeParameterNameValueShadow": true
+            }])),
+        ),
+        // -------------------------
+        // hoist
+        // -------------------------
+        // Outer symbol is `var` (hoisted like var), but declared *after* the inner declaration.
+        // With hoist=functions or hoist=never, do NOT report shadowing before the outer declaration.
+        (
+            "function outer() { function inner() { const x = 1; } var x = 2; }",
+            Some(serde_json::json!([{ "hoist": "functions" }])), // default, explicit
+        ),
+        (
+            "function outer() { function inner() { const x = 1; } var x = 2; }",
+            Some(serde_json::json!([{ "hoist": "never" }])),
+        ),
+        // hoist=never: even if the outer symbol is a function declaration declared later,
+        // do NOT report it (because we are not considering hoisting).
+        (
+            "function outer() { function inner() { const foo = 1; } function foo() {} }",
+            Some(serde_json::json!([{ "hoist": "never" }])),
+        ),
+        // allow + hoist: even if hoist=all would normally fail, `allow` should still allow it.
+        (
+            "function outer() { function inner() { const x = 1; } var x = 2; }",
+            Some(serde_json::json!([{ "hoist": "all", "allow": ["x"] }])),
+        ),
     ];
 
     let fail = vec![
@@ -343,6 +403,53 @@ fn test() {
         ("const x = 1; { const { x } = { x: 2 }; }", None),
         // Array destructuring shadowing in nested scope
         ("const x = 1; { const [x] = [2]; }", None),
+        // -------------------------
+        // ignoreTypeValueShadow = false => type/value with the same name is now reportable
+        // -------------------------
+        (
+            "type Foo = string; { const Foo = 'bar'; }",
+            Some(serde_json::json!([{ "ignoreTypeValueShadow": false }])),
+        ),
+        (
+            "interface Foo { x: number }; { const Foo = { x: 1 } };",
+            Some(serde_json::json!([{ "ignoreTypeValueShadow": false }])),
+        ),
+        // -------------------------
+        // ignoreFunctionTypeParameterNameValueShadow = false
+        // (and ignoreTypeValueShadow=false to ensure this option is the one deciding)
+        // -------------------------
+        // Now the function type parameter shadowing a value should be reported.
+        (
+            "const T = 1; function foo<T>() { }",
+            Some(serde_json::json!([{
+                "ignoreTypeValueShadow": false,
+                "ignoreFunctionTypeParameterNameValueShadow": false
+            }])),
+        ),
+        // -------------------------
+        // hoist
+        // -------------------------
+        // Outer `var` declared after: with hoist=all it SHOULD be reported
+        // (because we consider hoisting for all declarations).
+        (
+            "function outer() { function inner() { const x = 1; } var x = 2; }",
+            Some(serde_json::json!([{ "hoist": "all" }])),
+        ),
+        // Outer `function` declared after: with hoist=functions it SHOULD be reported.
+        (
+            "function outer() { function inner() { const foo = 1; } function foo() {} }",
+            Some(serde_json::json!([{ "hoist": "functions" }])),
+        ),
+        // And with hoist=all it should also be reported.
+        (
+            "function outer() { function inner() { const foo = 1; } function foo() {} }",
+            Some(serde_json::json!([{ "hoist": "all" }])),
+        ),
+        // Sanity check: a "normal" shadow (outer declared before) should fail regardless of hoist.
+        (
+            "function outer() { var x = 2; function inner() { const x = 1; } }",
+            Some(serde_json::json!([{ "hoist": "never" }])),
+        ),
     ];
 
     Tester::new(NoShadow::NAME, NoShadow::PLUGIN, pass, fail).test_and_snapshot();
