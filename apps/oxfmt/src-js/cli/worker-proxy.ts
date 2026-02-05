@@ -15,6 +15,17 @@ export async function initExternalFormatter(numThreads: number): Promise<string[
     filename: new URL("./cli-worker.js", import.meta.url).href,
     minThreads: numThreads,
     maxThreads: numThreads,
+    // NOTE: Node.js has a race condition bug with `ThreadsafeFunction`
+    // that causes V8 crashes when using `worker_threads`.
+    // See also https://github.com/nodejs/node/issues/55706
+    //
+    // This is fixed in v25.4.0+,
+    // so we can switch back to `worker_threads` by checking Node.js version later.
+    // However,
+    // - to make behavior consistent across different versions
+    // - and performance impact is negligible
+    // we continue to use `child_process` for now.
+    runtime: "child_process",
   });
 
   return resolvePlugins();
