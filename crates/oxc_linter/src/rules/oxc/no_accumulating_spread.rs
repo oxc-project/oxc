@@ -56,9 +56,9 @@ fn loop_spread_likely_object_diagnostic(
         .with_help("Consider using `Object.assign()` to mutate the accumulator instead.")
         .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
+            loop_span.label("For this loop"),
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop"),
         ])
 }
 fn loop_spread_likely_array_diagnostic(
@@ -70,9 +70,9 @@ fn loop_spread_likely_array_diagnostic(
         .with_help("Consider using `Array.prototype.push()` to mutate the accumulator instead.")
         .with_note("Using spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
+            loop_span.label("For this loop"),
             accumulator_decl_span.label("From this accumulator"),
             spread_span.label("From this spread"),
-            loop_span.label("For this loop"),
         ])
 }
 
