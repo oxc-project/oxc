@@ -20867,13 +20867,21 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·       ─
    ╰────
 
-  × Expected `>` but found `Identifier`
+  × Expected corresponding closing tag for JSX fragment.
     ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:9:7]
   8 │ 
   9 │ <>hi</div> // Error
-    ·       ─┬─
-    ·        ╰── `>` expected
+    · ─┬    ─┬─
+    ·  │     ╰── Expected `</>`
+    ·  ╰── Opened here
  10 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[typescript/tests/cases/conformance/jsx/tsxFragmentErrors.tsx:11:2]
+ 10 │ 
+ 11 │ <>eof   // Error
+    ·  ─
     ╰────
 
   × Unexpected token. Did you mean `{'>'}` or `&gt;`?

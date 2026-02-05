@@ -751,6 +751,14 @@ pub fn jsx_element_no_match(span: Span, span1: Span, name: &str) -> OxcDiagnosti
 }
 
 #[cold]
+pub fn jsx_fragment_no_match(opening_span: Span, closing_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Expected corresponding closing tag for JSX fragment.").with_labels([
+        closing_span.primary_label("Expected `</>`"),
+        opening_span.label("Opened here"),
+    ])
+}
+
+#[cold]
 pub fn cover_initialized_name(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid assignment in object literal")
 .with_help("Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.")
