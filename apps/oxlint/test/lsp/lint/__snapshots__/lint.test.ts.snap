@@ -62,6 +62,17 @@ help: Remove the debugger statement
 --------------------"
 `;
 
+exports[`LSP linting > config options > should apply config from config-ts-config/test.js 1`] = `
+"--- FILE -----------
+config-ts-config/test.js
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
 exports[`LSP linting > initializationOptions > should use custom config path from configPath 1`] = `
 "--- FILE -----------
 custom-config-path/test.ts

@@ -20,6 +20,7 @@ describe("LSP linting", () => {
       ["config-disabled/test.ts", "typescript"],
       ["config-severity/test.ts", "typescript"],
       ["config-js-plugin/test.js", "javascript"],
+      ["config-ts-config/test.js", "javascript"],
     ])("should apply config from %s", async (path, languageId) => {
       expect(await lintFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
