@@ -32,6 +32,9 @@ pub struct ValidExpectConfig {
     /// Minimum number of arguments `expect` should be called with.
     min_args: usize,
     /// Maximum number of arguments `expect` should be called with.
+    ///
+    /// Note: In Vitest, a second argument is always allowed when it is a string or template
+    /// literal (for custom failure messages), regardless of the configured `max_args` value.
     max_args: usize,
     /// When `true`, async assertions must be awaited in all contexts (not just return statements).
     always_await: bool,
@@ -74,11 +77,11 @@ declare_oxc_lint!(
     /// expect();
     /// expect('something');
     /// expect(true).toBeDefined;
-    /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
     /// ```
     ///
     /// Examples of **correct** code for this rule:
     /// ```javascript
+    /// expect('value', 'custom message').toEqual('value');
     /// expect('something').toEqual('something');
     /// expect(true).toBeDefined();
     /// expect(Promise.resolve('Hi!')).resolves.toBe('Hi!');
@@ -178,7 +181,16 @@ impl ValidExpect {
             return;
         };
 
-        if call_expr.arguments.len() > self.max_args {
+        let allow_message_arg = call_expr.arguments.len() == 2
+            && call_expr
+                .arguments
+                .get(1)
+                .and_then(|arg| arg.as_expression())
+                .is_some_and(|expr| {
+                    matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+                });
+
+        if call_expr.arguments.len() > self.max_args && !allow_message_arg {
             let error = format!(
                 "Expect takes at most {} argument{} ",
                 self.max_args,
@@ -445,6 +457,7 @@ fn test() {
         ("expect.hasAssertions", None),
         ("expect.hasAssertions()", None),
         ("expect(\"something\").toEqual(\"else\");", None),
+        ("expect(\"something\", \"else\").toEqual(\"something\");", None),
         ("expect(true).toBeDefined();", None),
         ("expect([1, 2, 3]).toEqual([1, 2, 3]);", None),
         ("expect(undefined).not.toBeDefined();", None),
@@ -548,6 +561,9 @@ fn test() {
         ),
         ("expect(1).toBe(2);", Some(serde_json::json!([{ "maxArgs": 2 }]))),
         ("expect(1, \"1 !== 2\").toBe(2);", Some(serde_json::json!([{ "maxArgs": 2 }]))),
+        ("expect(1, \"sum is incorrect\").toBe(1);", None),
+        ("test(\"valid-expect\", () => { expect(1 + 2, \"sum is incorrect\").toBe(3); });", None),
+        ("test(\"valid-expect\", () => { expect(1 + 2, `sum is ${label}`).toBe(3); });", None),
         (
             "test(\"valid-expect\", () => { expect(2).not.toBe(2); });",
             Some(serde_json::json!([{ "asyncMatchers": ["toRejectWith"] }])),
@@ -570,12 +586,12 @@ fn test() {
         ("expect().toBe(2);", Some(serde_json::json!([{ "minArgs": "undefined", "maxArgs": "undefined" }]))),
         ("expect().toBe(true);", None),
         ("expect().toEqual(\"something\");", None),
-        ("expect(\"something\", \"else\").toEqual(\"something\");", None),
         ("expect(\"something\", \"else\", \"entirely\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 2 }]))),
         ("expect(\"something\", \"else\", \"entirely\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 2, "minArgs": 2 }]))),
         ("expect(\"something\", \"else\", \"entirely\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 2, "minArgs": 1 }]))),
         ("expect(\"something\").toEqual(\"something\");", Some(serde_json::json!([{ "minArgs": 2 }]))),
         ("expect(\"something\", \"else\").toEqual(\"something\");", Some(serde_json::json!([{ "maxArgs": 1, "minArgs": 3 }]))),
+        ("expect(1, message).toBe(1);", None),
         ("expect(\"something\");", None),
         ("expect();", None),
         ("expect(true).toBeDefined;", None),
@@ -769,4 +785,3 @@ fn test() {
         .with_vitest_plugin(true)
         .test_and_snapshot();
 }
-
