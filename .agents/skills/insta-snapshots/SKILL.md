@@ -10,7 +10,7 @@ This skill guides you through working with [insta](https://insta.rs) snapshot te
 Insta is a snapshot testing library for Rust. Oxc uses it extensively for:
 
 - Linter rule tests (`crates/oxc_linter/src/snapshots/`)
-- Semantic analysis tests (`crates/oxc_semantic/tests/snapshots/`)
+- Semantic analysis tests (`crates/oxc_semantic/tests/integration/snapshots/`)
 - Other crate-specific snapshot tests
 
 Snapshots track **expected test outputs** (often failures or errors). When code changes, new snapshots are generated as `.snap.new` files for review.
