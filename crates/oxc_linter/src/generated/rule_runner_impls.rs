@@ -1667,11 +1667,6 @@ impl RuleRunner for crate::rules::typescript::no_restricted_types::NoRestrictedT
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
-impl RuleRunner for crate::rules::typescript::no_shadow::NoShadow {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
-}
-
 impl RuleRunner for crate::rules::typescript::no_this_alias::NoThisAlias {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::AssignmentExpression,

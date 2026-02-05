@@ -119,6 +119,24 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
 
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type Foo = string; { type Foo = number; }
+   ·      ─┬─                  ─┬─
+   ·       │                    ╰── 'Foo' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:11]
+ 1 │ interface Foo { x: number } { interface Foo { y: string } }
+   ·           ─┬─                           ─┬─
+   ·            │                             ╰── 'Foo' is declared here
+   ·            ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
   ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
    ╭─[no_shadow.tsx:1:22]
  1 │ function f() { { let x = 1; } let x = 2; }
@@ -172,3 +190,71 @@ source: crates/oxc_linter/src/tester.rs
    ·     ╰── shadowed declaration is here
    ╰────
   help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type Foo = string; { const Foo = 'bar'; }
+   ·      ─┬─                   ─┬─
+   ·       │                     ╰── 'Foo' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:11]
+ 1 │ interface Foo { x: number }; { const Foo = { x: 1 } };
+   ·           ─┬─                        ─┬─
+   ·            │                          ╰── 'Foo' is declared here
+   ·            ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const T = 1; function foo<T>() { }
+   ·       ┬                   ┬
+   ·       │                   ╰── 'T' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'E' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ enum E { A } function foo() { enum E { B } }
+   ·      ┬                             ┬
+   ·      │                             ╰── 'E' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'E' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'C' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ class C { } function foo() { class C { } }
+   ·       ┬                            ┬
+   ·       │                            ╰── 'C' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'C' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:2:22]
+ 1 │ 
+ 2 │             import { Foo } from './foo';
+   ·                      ─┬─
+   ·                       ╰── shadowed declaration is here
+ 3 │             const x = Foo;
+ 4 │             function bar() { const Foo = 1; }
+   ·                                    ─┬─
+   ·                                     ╰── 'Foo' is declared here
+ 5 │             
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:14]
+ 1 │ function foo<T>() { function bar<T>() { } }
+   ·              ┬                   ┬
+   ·              │                   ╰── 'T' is declared here
+   ·              ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.

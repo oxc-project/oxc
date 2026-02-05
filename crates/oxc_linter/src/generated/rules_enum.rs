@@ -480,7 +480,6 @@ pub use crate::rules::typescript::no_non_null_assertion::NoNonNullAssertion as T
 pub use crate::rules::typescript::no_redundant_type_constituents::NoRedundantTypeConstituents as TypescriptNoRedundantTypeConstituents;
 pub use crate::rules::typescript::no_require_imports::NoRequireImports as TypescriptNoRequireImports;
 pub use crate::rules::typescript::no_restricted_types::NoRestrictedTypes as TypescriptNoRestrictedTypes;
-pub use crate::rules::typescript::no_shadow::NoShadow as TypescriptNoShadow;
 pub use crate::rules::typescript::no_this_alias::NoThisAlias as TypescriptNoThisAlias;
 pub use crate::rules::typescript::no_unnecessary_boolean_literal_compare::NoUnnecessaryBooleanLiteralCompare as TypescriptNoUnnecessaryBooleanLiteralCompare;
 pub use crate::rules::typescript::no_unnecessary_condition::NoUnnecessaryCondition as TypescriptNoUnnecessaryCondition;
@@ -941,7 +940,6 @@ pub enum RuleEnum {
     TypescriptNoRedundantTypeConstituents(TypescriptNoRedundantTypeConstituents),
     TypescriptNoRequireImports(TypescriptNoRequireImports),
     TypescriptNoRestrictedTypes(TypescriptNoRestrictedTypes),
-    TypescriptNoShadow(TypescriptNoShadow),
     TypescriptNoThisAlias(TypescriptNoThisAlias),
     TypescriptNoUnnecessaryBooleanLiteralCompare(TypescriptNoUnnecessaryBooleanLiteralCompare),
     TypescriptNoUnnecessaryCondition(TypescriptNoUnnecessaryCondition),
@@ -1641,8 +1639,7 @@ const TYPESCRIPT_NO_REDUNDANT_TYPE_CONSTITUENTS_ID: usize =
 const TYPESCRIPT_NO_REQUIRE_IMPORTS_ID: usize =
     TYPESCRIPT_NO_REDUNDANT_TYPE_CONSTITUENTS_ID + 1usize;
 const TYPESCRIPT_NO_RESTRICTED_TYPES_ID: usize = TYPESCRIPT_NO_REQUIRE_IMPORTS_ID + 1usize;
-const TYPESCRIPT_NO_SHADOW_ID: usize = TYPESCRIPT_NO_RESTRICTED_TYPES_ID + 1usize;
-const TYPESCRIPT_NO_THIS_ALIAS_ID: usize = TYPESCRIPT_NO_SHADOW_ID + 1usize;
+const TYPESCRIPT_NO_THIS_ALIAS_ID: usize = TYPESCRIPT_NO_RESTRICTED_TYPES_ID + 1usize;
 const TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID: usize =
     TYPESCRIPT_NO_THIS_ALIAS_ID + 1usize;
 const TYPESCRIPT_NO_UNNECESSARY_CONDITION_ID: usize =
@@ -2415,7 +2412,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(_) => TYPESCRIPT_NO_REQUIRE_IMPORTS_ID,
             Self::TypescriptNoRestrictedTypes(_) => TYPESCRIPT_NO_RESTRICTED_TYPES_ID,
-            Self::TypescriptNoShadow(_) => TYPESCRIPT_NO_SHADOW_ID,
             Self::TypescriptNoThisAlias(_) => TYPESCRIPT_NO_THIS_ALIAS_ID,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TYPESCRIPT_NO_UNNECESSARY_BOOLEAN_LITERAL_COMPARE_ID
@@ -3193,7 +3189,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::NAME,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::NAME,
-            Self::TypescriptNoShadow(_) => TypescriptNoShadow::NAME,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::NAME,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::NAME
@@ -3973,7 +3968,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::CATEGORY,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::CATEGORY,
-            Self::TypescriptNoShadow(_) => TypescriptNoShadow::CATEGORY,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::CATEGORY,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::CATEGORY
@@ -4776,7 +4770,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::FIX,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::FIX,
-            Self::TypescriptNoShadow(_) => TypescriptNoShadow::FIX,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::FIX,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::FIX
@@ -5585,7 +5578,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::documentation(),
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::documentation(),
-            Self::TypescriptNoShadow(_) => TypescriptNoShadow::documentation(),
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::documentation(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::documentation()
@@ -6891,8 +6883,6 @@ impl RuleEnum {
                 TypescriptNoRestrictedTypes::config_schema(generator)
                     .or_else(|| TypescriptNoRestrictedTypes::schema(generator))
             }
-            Self::TypescriptNoShadow(_) => TypescriptNoShadow::config_schema(generator)
-                .or_else(|| TypescriptNoShadow::schema(generator)),
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::config_schema(generator)
                 .or_else(|| TypescriptNoThisAlias::schema(generator)),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
@@ -8398,7 +8388,6 @@ impl RuleEnum {
             Self::TypescriptNoRedundantTypeConstituents(_) => "typescript",
             Self::TypescriptNoRequireImports(_) => "typescript",
             Self::TypescriptNoRestrictedTypes(_) => "typescript",
-            Self::TypescriptNoShadow(_) => "typescript",
             Self::TypescriptNoThisAlias(_) => "typescript",
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => "typescript",
             Self::TypescriptNoUnnecessaryCondition(_) => "typescript",
@@ -9603,9 +9592,6 @@ impl RuleEnum {
             Self::TypescriptNoRestrictedTypes(_) => Ok(Self::TypescriptNoRestrictedTypes(
                 TypescriptNoRestrictedTypes::from_configuration(value)?,
             )),
-            Self::TypescriptNoShadow(_) => {
-                Ok(Self::TypescriptNoShadow(TypescriptNoShadow::from_configuration(value)?))
-            }
             Self::TypescriptNoThisAlias(_) => {
                 Ok(Self::TypescriptNoThisAlias(TypescriptNoThisAlias::from_configuration(value)?))
             }
@@ -11253,7 +11239,6 @@ impl RuleEnum {
             Self::TypescriptNoRedundantTypeConstituents(rule) => rule.to_configuration(),
             Self::TypescriptNoRequireImports(rule) => rule.to_configuration(),
             Self::TypescriptNoRestrictedTypes(rule) => rule.to_configuration(),
-            Self::TypescriptNoShadow(rule) => rule.to_configuration(),
             Self::TypescriptNoThisAlias(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.to_configuration(),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.to_configuration(),
@@ -11939,7 +11924,6 @@ impl RuleEnum {
             Self::TypescriptNoRedundantTypeConstituents(rule) => rule.run(node, ctx),
             Self::TypescriptNoRequireImports(rule) => rule.run(node, ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run(node, ctx),
-            Self::TypescriptNoShadow(rule) => rule.run(node, ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run(node, ctx),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.run(node, ctx),
@@ -12621,7 +12605,6 @@ impl RuleEnum {
             Self::TypescriptNoRedundantTypeConstituents(rule) => rule.run_once(ctx),
             Self::TypescriptNoRequireImports(rule) => rule.run_once(ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_once(ctx),
-            Self::TypescriptNoShadow(rule) => rule.run_once(ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run_once(ctx),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_once(ctx),
@@ -13335,7 +13318,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_on_jest_node(jest_node, ctx),
-            Self::TypescriptNoShadow(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoThisAlias(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => {
                 rule.run_on_jest_node(jest_node, ctx)
@@ -14075,7 +14057,6 @@ impl RuleEnum {
             Self::TypescriptNoRedundantTypeConstituents(rule) => rule.should_run(ctx),
             Self::TypescriptNoRequireImports(rule) => rule.should_run(ctx),
             Self::TypescriptNoRestrictedTypes(rule) => rule.should_run(ctx),
-            Self::TypescriptNoShadow(rule) => rule.should_run(ctx),
             Self::TypescriptNoThisAlias(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.should_run(ctx),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.should_run(ctx),
@@ -14825,7 +14806,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::IS_TSGOLINT_RULE,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::IS_TSGOLINT_RULE,
-            Self::TypescriptNoShadow(_) => TypescriptNoShadow::IS_TSGOLINT_RULE,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::IS_TSGOLINT_RULE,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::IS_TSGOLINT_RULE
@@ -15760,7 +15740,6 @@ impl RuleEnum {
             }
             Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::HAS_CONFIG,
             Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::HAS_CONFIG,
-            Self::TypescriptNoShadow(_) => TypescriptNoShadow::HAS_CONFIG,
             Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::HAS_CONFIG,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
                 TypescriptNoUnnecessaryBooleanLiteralCompare::HAS_CONFIG
@@ -16554,7 +16533,6 @@ impl RuleEnum {
             Self::TypescriptNoRedundantTypeConstituents(rule) => rule.types_info(),
             Self::TypescriptNoRequireImports(rule) => rule.types_info(),
             Self::TypescriptNoRestrictedTypes(rule) => rule.types_info(),
-            Self::TypescriptNoShadow(rule) => rule.types_info(),
             Self::TypescriptNoThisAlias(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.types_info(),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.types_info(),
@@ -17236,7 +17214,6 @@ impl RuleEnum {
             Self::TypescriptNoRedundantTypeConstituents(rule) => rule.run_info(),
             Self::TypescriptNoRequireImports(rule) => rule.run_info(),
             Self::TypescriptNoRestrictedTypes(rule) => rule.run_info(),
-            Self::TypescriptNoShadow(rule) => rule.run_info(),
             Self::TypescriptNoThisAlias(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(rule) => rule.run_info(),
             Self::TypescriptNoUnnecessaryCondition(rule) => rule.run_info(),
@@ -17968,7 +17945,6 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         ),
         RuleEnum::TypescriptNoRequireImports(TypescriptNoRequireImports::default()),
         RuleEnum::TypescriptNoRestrictedTypes(TypescriptNoRestrictedTypes::default()),
-        RuleEnum::TypescriptNoShadow(TypescriptNoShadow::default()),
         RuleEnum::TypescriptNoThisAlias(TypescriptNoThisAlias::default()),
         RuleEnum::TypescriptNoUnnecessaryBooleanLiteralCompare(
             TypescriptNoUnnecessaryBooleanLiteralCompare::default(),
