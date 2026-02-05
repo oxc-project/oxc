@@ -27,6 +27,8 @@ export interface Fixture {
     eslint: boolean;
     // Run Oxlint with fixes. Default: `false`.
     fix: boolean;
+    // Run Oxlint with fix-suggestions. Default: `false`.
+    fixSuggestions: boolean;
     // Run Oxlint single-threaded. Default: `false`.
     singleThread: boolean;
     // Run Oxlint/ESLint in a specific working directory.
@@ -40,6 +42,7 @@ const DEFAULT_OPTIONS: Fixture["options"] = {
   oxlint: true,
   eslint: false,
   fix: false,
+  fixSuggestions: false,
   singleThread: false,
   cwd: null,
 };
@@ -76,10 +79,11 @@ export function getFixtures(): Fixture[] {
       typeof options.oxlint !== "boolean" ||
       typeof options.eslint !== "boolean" ||
       typeof options.fix !== "boolean" ||
+      typeof options.fixSuggestions !== "boolean" ||
       typeof options.singleThread !== "boolean"
     ) {
       throw new TypeError(
-        "`oxlint`, `eslint`, `fix`, and `singleThread` properties in `options.json` must be booleans",
+        "`oxlint`, `eslint`, `fix`, `fixSuggestions`, and `singleThread` properties in `options.json` must be booleans",
       );
     }
     if (options.cwd !== null && typeof options.cwd !== "string") {

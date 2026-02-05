@@ -19,6 +19,7 @@ const NODE_BIN_PATH = process.execPath;
  * - `files` as the only argument (so only lints the files in the fixture's `files` directory).
  *
  * Fixtures with an `options.json` file containing `"fix": true` are also run with `--fix` CLI option.
+ * Fixtures with an `options.json` file containing `"fixSuggestions": true` are also run with `--fix-suggestions` CLI option.
  * The files' contents after fixes are recorded in the snapshot.
  *
  * Fixtures with an `options.json` file containing `"oxlint": false` are skipped.
@@ -61,5 +62,15 @@ async function runFixture(fixture: Fixture, expect: ExpectStatic): Promise<void>
   if (options.fix) {
     const fixArgs = [args[0], "--fix", ...args.slice(1)];
     await testFixtureWithCommand({ ...testOptions, args: fixArgs, snapshotName: "fix" });
+  }
+
+  // Run Oxlint with `--fix-suggestions` option
+  if (options.fixSuggestions) {
+    const fixArgs = [args[0], "--fix-suggestions", ...args.slice(1)];
+    await testFixtureWithCommand({
+      ...testOptions,
+      args: fixArgs,
+      snapshotName: "fix-suggestions",
+    });
   }
 }
