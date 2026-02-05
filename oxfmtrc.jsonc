@@ -1,9 +1,7 @@
 {
   "$schema": "./npm/oxfmt/configuration_schema.json",
   "ignorePatterns": [
-    // ignore `tests` directories except for `editors/vscode/tests`
     "**/tests/**",
-    "!editors/vscode/tests/**",
     // Ignore `fixtures` directories except for `apps/oxlint/test/fixtures`
     "**/fixtures/**",
     "!apps/oxlint/test/fixtures/**",
