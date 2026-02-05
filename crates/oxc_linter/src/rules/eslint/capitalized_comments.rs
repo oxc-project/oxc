@@ -23,6 +23,8 @@ const DIRECTIVES: &[&str] = &[
     "global ",
     "globals ",
     "exported",
+    "prettier-ignore",
+    "oxfmt-ignore",
 ];
 
 fn capitalized_comments_diagnostic(
@@ -455,6 +457,13 @@ fn test() {
         ("/* globals var1, var2 */", None),
         ("/* globals var1:true, var2 */", None),
         ("/* exported myVar */", None),
+        // Formatter directives should be ignored
+        ("// prettier-ignore", None),
+        ("/* prettier-ignore */", None),
+        ("// prettier-ignore-start", None),
+        ("// prettier-ignore-end", None),
+        ("// oxfmt-ignore", None),
+        ("/* oxfmt-ignore */", None),
         ("#!foo", None),
         ("#!foo", Some(serde_json::json!(["always"]))),
         ("#!Foo", Some(serde_json::json!(["never"]))),
@@ -533,6 +542,11 @@ fn test() {
         ("/* globals var1, var2 */", Some(serde_json::json!(["always"]))),
         ("/* globals var1:true, var2 */", Some(serde_json::json!(["always"]))),
         ("/* exported myVar */", Some(serde_json::json!(["always"]))),
+        // Formatter directives with "always"
+        ("// prettier-ignore", Some(serde_json::json!(["always"]))),
+        ("/* prettier-ignore */", Some(serde_json::json!(["always"]))),
+        ("// oxfmt-ignore", Some(serde_json::json!(["always"]))),
+        ("/* oxfmt-ignore */", Some(serde_json::json!(["always"]))),
         ("//lowercase", Some(serde_json::json!(["never"]))),
         ("// lowercase", Some(serde_json::json!(["never"]))),
         ("/*lowercase */", Some(serde_json::json!(["never"]))),
