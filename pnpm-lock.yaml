@@ -31,8 +31,8 @@ catalogs:
       specifier: 1.0.0-rc.3
       version: 1.0.0-rc.3
     tsdown:
-      specifier: 0.20.2
-      version: 0.20.2
+      specifier: 0.20.3
+      version: 0.20.3
     typescript:
       specifier: 5.9.3
       version: 5.9.3
@@ -88,7 +88,7 @@ importers:
         version: 9.6.1
       tsdown:
         specifier: 'catalog:'
-        version: 0.20.2(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3)
+        version: 0.20.3(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3)
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@types/node@24.1.0)(@vitest/browser-playwright@4.0.18)(happy-dom@20.0.11)(jiti@2.6.1)(terser@5.44.1)(tsx@4.21.0)
@@ -160,7 +160,7 @@ importers:
         version: 1.0.0-rc.3
       tsdown:
         specifier: 'catalog:'
-        version: 0.20.2(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3)
+        version: 0.20.3(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3)
       tsx:
         specifier: ^4.21.0
         version: 4.21.0
@@ -5336,8 +5336,8 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  tsdown@0.20.2:
-    resolution: {integrity: sha512-CBoA7rDtyuNkRcFsf8OgFQqBZjCC/ffbNHuS8aUE3HvTJDysWiW7REsQ/nqCYPqsCzy/MqA0tleJj8r+gfy97Q==}
+  tsdown@0.20.3:
+    resolution: {integrity: sha512-qWOUXSbe4jN8JZEgrkc/uhJpC8VN2QpNu3eZkBWwNuTEjc/Ik1kcc54ycfcQ5QPRHeu9OQXaLfCI3o7pEJgB2w==}
     engines: {node: '>=20.19.0'}
     hasBin: true
     peerDependencies:
@@ -10808,7 +10808,7 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  tsdown@0.20.2(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3):
+  tsdown@0.20.3(@arethetypeswrong/core@0.18.2)(publint@0.3.17)(typescript@5.9.3):
     dependencies:
       ansis: 4.2.0
       cac: 6.7.14
