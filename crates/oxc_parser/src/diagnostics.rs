@@ -950,6 +950,12 @@ pub fn cannot_appear_on_a_parameter(
 }
 
 #[cold]
+pub fn parameter_property_only_allowed_in_constructor(span: Span) -> OxcDiagnostic {
+    ts_error("2369", "A parameter property is only allowed in a constructor implementation.")
+        .with_label(span)
+}
+
+#[cold]
 pub fn parameter_property_cannot_be_binding_pattern(span: Span) -> OxcDiagnostic {
     ts_error("1187", "A parameter property may not be declared using a binding pattern.")
         .with_label(span)

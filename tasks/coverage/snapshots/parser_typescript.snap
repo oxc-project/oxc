@@ -2450,12 +2450,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
 
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/compiler/ArrowFunctionExpression1.ts:1:10]
  1 │ var v = (public x: string) => { };
    ·          ──────
    ╰────
-  help: No modifiers are allowed here.
 
   × TS(2390): Constructor implementation is missing.
    ╭─[typescript/tests/cases/compiler/ClassDeclaration10.ts:2:4]
@@ -22532,12 +22531,11 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmasc
    ╰────
   help: Remove parameters except the first one here
 
-  × TS(1090): 'public' modifier cannot appear on a parameter.
+  × TS(2369): A parameter property is only allowed in a constructor implementation.
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression1.ts:1:10]
  1 │ var v = (public x: string) => { };
    ·          ──────
    ╰────
-  help: No modifiers are allowed here.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression10.ts:1:19]
