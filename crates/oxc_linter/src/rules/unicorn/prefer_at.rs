@@ -142,6 +142,9 @@ impl PreferAt {
                 ctx.diagnostic_with_fix(
                     prefer_at_diagnostic(computed.span(), "[index]"),
                     |fixer| {
+                        if is_arguments_object(&computed.object) {
+                            return fixer.noop();
+                        }
                         create_at_fix(
                             &fixer,
                             computed.object.span(),
@@ -156,6 +159,10 @@ impl PreferAt {
             && index != 0
         {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "[index]"), |fixer| {
+                if is_arguments_object(&computed.object) {
+                    return fixer.noop();
+                }
+
                 create_at_fix(&fixer, computed.object.span(), computed.span(), index)
             });
         }
@@ -318,6 +325,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -347,6 +357,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -359,6 +372,9 @@ impl PreferAt {
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, "slice().pop/shift"),
                 |fixer| {
+                    if is_arguments_object(&slice_static.object) {
+                        return fixer.noop();
+                    }
                     create_at_fix(
                         &fixer,
                         slice_static.object.span(),
@@ -433,6 +449,9 @@ impl PreferAt {
 
         if let Some(value) = negative_value {
             ctx.diagnostic_with_fix(prefer_at_diagnostic(computed.span(), "slice()[0]"), |fixer| {
+                if is_arguments_object(&static_member.object) {
+                    return fixer.noop();
+                }
                 create_at_fix(
                     &fixer,
                     static_member.object.span(),
@@ -445,6 +464,10 @@ impl PreferAt {
 }
 
 // Helper functions
+
+fn is_arguments_object(expr: &Expression) -> bool {
+    expr.get_identifier_reference().is_some_and(|ident| ident.name == "arguments")
+}
 
 fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let parent_kind = ctx.nodes().parent_kind(node.id());
@@ -581,6 +604,10 @@ fn check_lodash_last<'a>(
             ctx.diagnostic_with_fix(
                 prefer_at_diagnostic(call_expr.span, &format!("{name}.last()")),
                 |fixer| {
+                    if is_arguments_object(arg) {
+                        return fixer.noop();
+                    }
+
                     let arg_text = fixer.source_range(arg.span());
                     let new_code = if get_precedence(arg)
                         .is_some_and(|precedence| precedence < Precedence::Member)
@@ -803,6 +830,17 @@ fn test() {
         ("array[array.length - 9007199254740992]", "array.at(-9007199254740992)", None),
         ("_.last([] as [])", "([] as []).at(-1)", None),
         ("_.last([1, 2, 3] as const)", "([1, 2, 3] as const).at(-1)", None),
+        // `arguments` is not an Array, so `.at()` is not guaranteed to exist.
+        ("arguments[arguments.length - 1]", "arguments[arguments.length - 1]", None),
+        (
+            "arguments[1]",
+            "arguments[1]",
+            Some(serde_json::json!([{ "checkAllIndexAccess": true }])),
+        ),
+        ("_.last(arguments)", "_.last(arguments)", None),
+        ("arguments.slice(-1)[0]", "arguments.slice(-1)[0]", None),
+        ("arguments.slice(-1).pop()", "arguments.slice(-1).pop()", None),
+        ("arguments.slice(-1).shift()", "arguments.slice(-1).shift()", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

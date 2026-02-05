@@ -187,6 +187,10 @@ impl<'a> Visit<'a> for ThrowFinder<'a, '_> {
 
     // Do not traverse into nested functions/closures within the catch block
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
+
+    // Do not traverse into nested catch clauses. They have their own caught error and will be
+    // analyzed separately when visiting their associated `TryStatement`.
+    fn visit_catch_clause(&mut self, _catch_clause: &CatchClause<'a>) {}
 }
 
 fn is_builtin_error_constructor(expr: &Expression, ctx: &LintContext) -> bool {
@@ -406,6 +410,10 @@ fn test() {
 					throw new Error("Something went wrong");
 				}"#,
             Some(serde_json::json!([{ "requireCatchParameter": false }])),
+        ),
+        (
+            r#"try { doSomething(); } catch (errorA) { try { doSomethingElse(); } catch (errorB) { throw new Error( `The certificate key "${chalk.yellow(keyFile)}" is invalid.\n${errorA.message}`, { cause: errorB }); } }"#,
+            None,
         ),
     ];
 

@@ -4376,6 +4376,17 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
 
 impl<'a> AstNode<'a, FormalParameterRest<'a>> {
     #[inline]
+    pub fn decorators(&self) -> &AstNode<'a, Vec<'a, Decorator<'a>>> {
+        let following_span_start = self.inner.rest.span().start;
+        self.allocator.alloc(AstNode {
+            inner: &self.inner.decorators,
+            allocator: self.allocator,
+            parent: AstNodes::FormalParameterRest(transmute_self(self)),
+            following_span_start,
+        })
+    }
+
+    #[inline]
     pub fn rest(&self) -> &AstNode<'a, BindingRestElement<'a>> {
         let following_span_start = self
             .inner

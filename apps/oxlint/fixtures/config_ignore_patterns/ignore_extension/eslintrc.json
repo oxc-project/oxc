@@ -1,5 +1,11 @@
 {
   "ignorePatterns": [
     "*.js"
-  ]
+  ],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "unicorn/no-empty-file": "error"
+  }
 }

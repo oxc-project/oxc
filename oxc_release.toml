@@ -20,7 +20,6 @@ versioned_files = [
   "apps/oxlint/Cargo.toml",
   "apps/oxlint/package.json",
   "crates/oxc_linter/Cargo.toml",
-  "editors/vscode/package.json",
   "npm/oxlint/package.json",
 ]
 

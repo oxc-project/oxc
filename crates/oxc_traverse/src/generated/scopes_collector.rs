@@ -967,6 +967,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_formal_parameter_rest(&mut self, it: &FormalParameterRest<'a>) {
+        self.visit_decorators(&it.decorators);
         self.visit_binding_rest_element(&it.rest);
         if let Some(type_annotation) = &it.type_annotation {
             self.visit_ts_type_annotation(type_annotation);

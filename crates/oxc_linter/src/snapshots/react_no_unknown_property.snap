@@ -254,6 +254,20 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Property 'imageSizes' is only allowed on: link
 
+  ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div popoverTarget="locale-switcher" />
+   ·      ─────────────
+   ╰────
+  help: Property 'popoverTarget' is only allowed on: input, button
+
+  ⚠ eslint-plugin-react(no-unknown-property): Invalid property found
+   ╭─[no_unknown_property.tsx:1:6]
+ 1 │ <div popoverTargetAction="show" />
+   ·      ───────────────────
+   ╰────
+  help: Property 'popoverTargetAction' is only allowed on: input, button
+
   ⚠ eslint-plugin-react(no-unknown-property): Unknown property found
    ╭─[no_unknown_property.tsx:1:6]
  1 │ <div data-xml-anything="invalid" />

@@ -1,10 +1,24 @@
 //! [JSX](https://facebook.github.io/jsx)
 
-use oxc_allocator::{Box, Dummy, Vec};
+use oxc_allocator::{Allocator, Box, Dummy, Vec};
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{ParserImpl, diagnostics, lexer::Kind};
+
+/// Represents either a closing JSX element or fragment.
+enum JSXClosing<'a> {
+    /// [`JSXClosingElement`]
+    Element(Box<'a, JSXClosingElement<'a>>),
+    /// [`JSXClosingFragment`]
+    Fragment(JSXClosingFragment),
+}
+
+impl<'a> Dummy<'a> for JSXClosing<'a> {
+    fn dummy(allocator: &'a Allocator) -> Self {
+        JSXClosing::Fragment(Dummy::dummy(allocator))
+    }
+}
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_jsx_expression(&mut self) -> Expression<'a> {
@@ -25,27 +39,24 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_fragment(&mut self, span: u32, in_jsx_child: bool) -> Box<'a, JSXFragment<'a>> {
         self.expect_jsx_child(Kind::RAngle);
         let opening_fragment = self.ast.jsx_opening_fragment(self.end_span(span));
-        let children = self.parse_jsx_children();
-        let closing_fragment = self.parse_jsx_closing_fragment(in_jsx_child);
+        let (children, closing) = self.parse_jsx_children_and_closing(in_jsx_child);
+        let closing_fragment = match closing {
+            JSXClosing::Fragment(f) => f,
+            JSXClosing::Element(e) => {
+                // Got a closing element when expecting a closing fragment
+                self.error(diagnostics::jsx_fragment_no_match(
+                    opening_fragment.span,
+                    e.name.span(),
+                ));
+                self.ast.jsx_closing_fragment(e.span)
+            }
+        };
         self.ast.alloc_jsx_fragment(
             self.end_span(span),
             opening_fragment,
             children,
             closing_fragment,
         )
-    }
-
-    /// </>
-    fn parse_jsx_closing_fragment(&mut self, in_jsx_child: bool) -> JSXClosingFragment {
-        let span = self.start_span();
-        self.expect(Kind::LAngle);
-        self.expect(Kind::Slash);
-        if in_jsx_child {
-            self.expect_jsx_child(Kind::RAngle);
-        } else {
-            self.expect(Kind::RAngle);
-        }
-        self.ast.jsx_closing_fragment(self.end_span(span))
     }
 
     /// `JSXElement` :
@@ -59,15 +70,27 @@ impl<'a> ParserImpl<'a> {
         let (children, closing_element) = if self_closing {
             (self.ast.vec(), None)
         } else {
-            let children = self.parse_jsx_children();
-            let closing_element = self.parse_jsx_closing_element(in_jsx_child);
-            if !Self::jsx_element_name_eq(&opening_element.name, &closing_element.name) {
-                self.error(diagnostics::jsx_element_no_match(
-                    opening_element.name.span(),
-                    closing_element.name.span(),
-                    opening_element.name.span().source_text(self.source_text),
-                ));
-            }
+            let (children, closing) = self.parse_jsx_children_and_closing(in_jsx_child);
+            let closing_element = match closing {
+                JSXClosing::Element(e) => {
+                    if !Self::jsx_element_name_eq(&opening_element.name, &e.name) {
+                        self.error(diagnostics::jsx_element_no_match(
+                            opening_element.name.span(),
+                            e.name.span(),
+                            opening_element.name.span().source_text(self.source_text),
+                        ));
+                    }
+                    e
+                }
+                JSXClosing::Fragment(f) => {
+                    // Got a closing fragment when expecting a closing element
+                    return self.fatal_error(diagnostics::jsx_element_no_match(
+                        opening_element.name.span(),
+                        f.span,
+                        opening_element.name.span().source_text(self.source_text),
+                    ));
+                }
+            };
             (children, Some(closing_element))
         };
         self.ast.alloc_jsx_element(self.end_span(span), opening_element, children, closing_element)
@@ -100,19 +123,6 @@ impl<'a> ParserImpl<'a> {
             attributes,
         );
         (elem, self_closing)
-    }
-
-    fn parse_jsx_closing_element(&mut self, in_jsx_child: bool) -> Box<'a, JSXClosingElement<'a>> {
-        let span = self.start_span();
-        self.expect(Kind::LAngle);
-        self.expect(Kind::Slash);
-        let name = self.parse_jsx_element_name();
-        if in_jsx_child {
-            self.expect_jsx_child(Kind::RAngle);
-        } else {
-            self.expect(Kind::RAngle);
-        }
-        self.ast.alloc_jsx_closing_element(self.end_span(span), name)
     }
 
     /// `JSXElementName` :
@@ -218,61 +228,101 @@ impl<'a> ParserImpl<'a> {
 
     /// `JSXChildren` :
     ///   `JSXChild` `JSXChildren_opt`
-    fn parse_jsx_children(&mut self) -> Vec<'a, JSXChild<'a>> {
+    /// Parses children and the closing element/fragment in one pass.
+    /// Returns `(children, closing)` where closing is either a `JSXClosingElement` or `JSXClosingFragment`.
+    fn parse_jsx_children_and_closing(
+        &mut self,
+        in_jsx_child: bool,
+    ) -> (Vec<'a, JSXChild<'a>>, JSXClosing<'a>) {
         let mut children = self.ast.vec();
-        while self.fatal_error.is_none() {
-            if let Some(child) = self.parse_jsx_child() {
-                children.push(child);
-            } else {
-                break;
+        loop {
+            if self.fatal_error.is_some() {
+                // Return dummy closing fragment on fatal error
+                let closing = self.ast.jsx_closing_fragment(self.cur_token().span());
+                return (children, JSXClosing::Fragment(closing));
+            }
+
+            match self.cur_kind() {
+                Kind::LAngle => {
+                    let span = self.start_span();
+                    self.bump_any(); // bump `<`
+                    let kind = self.cur_kind();
+
+                    // <> open nested fragment
+                    if kind == Kind::RAngle {
+                        children.push(JSXChild::Fragment(self.parse_jsx_fragment(span, true)));
+                        continue;
+                    }
+
+                    // <ident open nested element
+                    if kind == Kind::Ident || kind.is_any_keyword() {
+                        children.push(JSXChild::Element(self.parse_jsx_element(span, true)));
+                        continue;
+                    }
+
+                    // </ closing tag - parse it inline and return
+                    if kind == Kind::Slash {
+                        self.bump_any(); // bump `/`
+                        let closing = self.parse_jsx_closing_inline(span, in_jsx_child);
+                        return (children, closing);
+                    }
+
+                    // Unexpected token after `<`
+                    return (children, self.unexpected());
+                }
+                Kind::LCurly => {
+                    let span_start = self.start_span();
+                    self.bump_any(); // bump `{`
+
+                    // {...expr}
+                    if self.eat(Kind::Dot3) {
+                        children.push(JSXChild::Spread(self.parse_jsx_spread_child(span_start)));
+                        continue;
+                    }
+                    // {expr}
+                    children.push(JSXChild::ExpressionContainer(
+                        self.parse_jsx_expression_container(
+                            span_start, /* in_jsx_child */ true,
+                        ),
+                    ));
+                }
+                // text
+                Kind::JSXText => {
+                    children.push(JSXChild::Text(self.parse_jsx_text()));
+                }
+                _ => {
+                    // Unexpected token in JSX children
+                    return (children, self.unexpected());
+                }
             }
         }
-        children
     }
 
-    /// `JSXChild` :
-    ///   `JSXText`
-    ///   `JSXElement`
-    ///   `JSXFragment`
-    ///   { `JSXChildExpression_opt` }
-    fn parse_jsx_child(&mut self) -> Option<JSXChild<'a>> {
-        match self.cur_kind() {
-            Kind::LAngle => {
-                let span = self.start_span();
-                let checkpoint = self.checkpoint();
-                self.bump_any(); // bump `<`
-                let kind = self.cur_kind();
-                // <> open fragment
-                if kind == Kind::RAngle {
-                    return Some(JSXChild::Fragment(self.parse_jsx_fragment(span, true)));
-                }
-                // <ident open element
-                if kind == Kind::Ident || kind.is_any_keyword() {
-                    return Some(JSXChild::Element(self.parse_jsx_element(span, true)));
-                }
-                // </ close fragment
-                if kind == Kind::Slash {
-                    self.rewind(checkpoint);
-                    return None;
-                }
-                self.unexpected()
+    /// Parses the closing element or fragment after `</` has been consumed.
+    fn parse_jsx_closing_inline(
+        &mut self,
+        open_angle_span: u32,
+        in_jsx_child: bool,
+    ) -> JSXClosing<'a> {
+        if self.at(Kind::RAngle) {
+            // Closing fragment: </>
+            if in_jsx_child {
+                self.expect_jsx_child(Kind::RAngle);
+            } else {
+                self.expect(Kind::RAngle);
             }
-            Kind::LCurly => {
-                let span_start = self.start_span();
-                self.bump_any(); // bump `{`
-
-                // {...expr}
-                if self.eat(Kind::Dot3) {
-                    return Some(JSXChild::Spread(self.parse_jsx_spread_child(span_start)));
-                }
-                // {expr}
-                Some(JSXChild::ExpressionContainer(
-                    self.parse_jsx_expression_container(span_start, /* in_jsx_child */ true),
-                ))
+            JSXClosing::Fragment(self.ast.jsx_closing_fragment(self.end_span(open_angle_span)))
+        } else {
+            // Closing element: </name>
+            let name = self.parse_jsx_element_name();
+            if in_jsx_child {
+                self.expect_jsx_child(Kind::RAngle);
+            } else {
+                self.expect(Kind::RAngle);
             }
-            // text
-            Kind::JSXText => Some(JSXChild::Text(self.parse_jsx_text())),
-            _ => self.unexpected(),
+            JSXClosing::Element(
+                self.ast.alloc_jsx_closing_element(self.end_span(open_angle_span), name),
+            )
         }
     }
 

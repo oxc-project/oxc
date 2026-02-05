@@ -45,7 +45,6 @@ export interface RuleMeta {
    * Default options for the rule.
    * If present, any user-provided options in their config will be merged on top of them recursively.
    */
-  // TODO: Use this to alter options passed to rules.
   defaultOptions?: Options;
   /**
    * Indicates whether the rule has been deprecated, and info about the deprecation and possible replacements.

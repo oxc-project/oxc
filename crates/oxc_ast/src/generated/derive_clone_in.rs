@@ -3655,6 +3655,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for FormalParameterRest<'_> {
     fn clone_in(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         FormalParameterRest {
             span: CloneIn::clone_in(&self.span, allocator),
+            decorators: CloneIn::clone_in(&self.decorators, allocator),
             rest: CloneIn::clone_in(&self.rest, allocator),
             type_annotation: CloneIn::clone_in(&self.type_annotation, allocator),
         }
@@ -3663,6 +3664,7 @@ impl<'new_alloc> CloneIn<'new_alloc> for FormalParameterRest<'_> {
     fn clone_in_with_semantic_ids(&self, allocator: &'new_alloc Allocator) -> Self::Cloned {
         FormalParameterRest {
             span: CloneIn::clone_in_with_semantic_ids(&self.span, allocator),
+            decorators: CloneIn::clone_in_with_semantic_ids(&self.decorators, allocator),
             rest: CloneIn::clone_in_with_semantic_ids(&self.rest, allocator),
             type_annotation: CloneIn::clone_in_with_semantic_ids(&self.type_annotation, allocator),
         }

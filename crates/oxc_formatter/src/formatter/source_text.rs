@@ -113,6 +113,43 @@ impl<'a> SourceText<'a> {
         false
     }
 
+    /// Check for a newline after an opening brace `{`.
+    /// Unlike `has_newline_after`, this method scans through comments to find newlines.
+    /// This matches Prettier's behavior for detecting newlines in `{ /* comment */\n`.
+    pub fn has_newline_after_opening_brace(&self, position: u32) -> bool {
+        let mut iter = self.bytes_from(position + 1).peekable();
+
+        while let Some(byte) = iter.next() {
+            match byte {
+                b'\n' | b'\r' => return true,
+                b' ' | b'\t' => {}
+                b'/' => match iter.peek() {
+                    Some(&b'/') => {
+                        iter.next();
+                        // Line comment: scan until newline or EOF
+                        return iter.any(|b| b == b'\n' || b == b'\r');
+                    }
+                    Some(&b'*') => {
+                        iter.next();
+                        // Block comment: scan for */ and check for newlines
+                        while let Some(b) = iter.next() {
+                            if matches!(b, b'\n' | b'\r') {
+                                return true;
+                            }
+                            if b == b'*' && matches!(iter.peek(), Some(&b'/')) {
+                                iter.next();
+                                break;
+                            }
+                        }
+                    }
+                    _ => return false,
+                },
+                _ => return false,
+            }
+        }
+        false
+    }
+
     // Byte range operations
     /// Check if byte range contains specific byte
     pub fn bytes_contain(&self, start: u32, end: u32, byte: u8) -> bool {

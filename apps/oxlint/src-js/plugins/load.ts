@@ -55,6 +55,7 @@ interface RuleDetailsBase {
   readonly fullName: string;
   readonly context: Readonly<Context>;
   readonly isFixable: boolean;
+  readonly hasSuggestions: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
   readonly defaultOptions: Readonly<Options>;
   // Function to validate options against schema.
@@ -172,6 +173,7 @@ export function registerPlugin(
 
     // Validate `rule.meta` and convert to vars with standardized shape
     let isFixable = false,
+      hasSuggestions = false,
       messages: Record<string, string> | null = null,
       defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
       schemaValidator: SchemaValidator | false | null = null;
@@ -192,6 +194,13 @@ export function registerPlugin(
           throw new TypeError("Invalid `rule.meta.fixable`");
         }
         isFixable = (fixable as "code" | "whitespace" | true | false) !== false;
+      }
+
+      const inputHasSuggestions = ruleMeta.hasSuggestions;
+      if (inputHasSuggestions === true) {
+        hasSuggestions = true;
+      } else if (inputHasSuggestions != null && inputHasSuggestions !== false) {
+        throw new TypeError("Invalid `rule.meta.hasSuggestions`");
       }
 
       // If `schema` provided, compile schema to validator for applying schema defaults to options
@@ -245,6 +254,7 @@ export function registerPlugin(
       rule: rule as CreateRule, // Could also be `CreateOnceRule`, but just to satisfy type checker
       context: null!, // Filled in below
       isFixable,
+      hasSuggestions,
       messages,
       defaultOptions,
       optionsSchemaValidator: schemaValidator,

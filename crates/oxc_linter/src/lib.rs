@@ -640,8 +640,8 @@ impl Linter {
                         continue;
                     }
 
-                    // Convert `JSFix`s fixes to `PossibleFixes`, including converting spans back to UTF-8
-                    let fix = if let Some(fixes) = diagnostic.fixes {
+                    // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
+                    let create_fix = |fixes: Vec<JsFix>| {
                         debug_assert!(!fixes.is_empty()); // JS should send `None` instead of `Some([])`
 
                         let is_single = fixes.len() == 1;
@@ -656,11 +656,11 @@ impl Linter {
                         });
 
                         if is_single {
-                            PossibleFixes::Single(fixes.into_iter().next().unwrap())
+                            Some(fixes.into_iter().next().unwrap())
                         } else {
                             let fixes = fixes.collect::<Vec<_>>();
                             match CompositeFix::merge_fixes_fallible(fixes, source_text) {
-                                Ok(fix) => PossibleFixes::Single(fix),
+                                Ok(fix) => Some(fix),
                                 Err(err) => {
                                     let message = format!(
                                         "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
@@ -669,10 +669,43 @@ impl Linter {
                                         OxcDiagnostic::error(message),
                                         PossibleFixes::None,
                                     ));
-                                    PossibleFixes::None
+                                    None
                                 }
                             }
                         }
+                    };
+
+                    // Convert fix
+                    let fix = diagnostic.fixes.and_then(create_fix);
+
+                    // Convert suggestions (only if fix kind allows suggestions), and combine with fix
+                    let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
+                        && ctx_host.fix.can_apply(FixKind::Suggestion)
+                    {
+                        let mut fixes =
+                            Vec::with_capacity(usize::from(fix.is_some()) + suggestions.len());
+                        if let Some(fix) = fix {
+                            fixes.push(fix);
+                        }
+
+                        for suggestion in suggestions {
+                            if let Some(fix) = create_fix(suggestion.fixes) {
+                                fixes.push(
+                                    fix.with_message(suggestion.message)
+                                        .with_kind(FixKind::Suggestion),
+                                );
+                            }
+                        }
+
+                        if fixes.is_empty() {
+                            PossibleFixes::None
+                        } else if fixes.len() == 1 {
+                            PossibleFixes::Single(fixes.into_iter().next().unwrap())
+                        } else {
+                            PossibleFixes::Multiple(fixes)
+                        }
+                    } else if let Some(fix) = fix {
+                        PossibleFixes::Single(fix)
                     } else {
                         PossibleFixes::None
                     };
@@ -682,7 +715,7 @@ impl Linter {
                             .with_label(span)
                             .with_error_code(plugin_name.to_string(), rule_name.to_string())
                             .with_severity(severity.into()),
-                        fix,
+                        possible_fixes,
                     ));
                 }
             }

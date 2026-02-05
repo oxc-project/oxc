@@ -2,7 +2,7 @@ use oxc_ast::ast::{TSMappedType, TSMappedTypeModifierOperator};
 
 use crate::{
     ast_nodes::AstNode,
-    formatter::{Formatter, SourceText, prelude::*, trivia::FormatLeadingComments},
+    formatter::{Formatter, prelude::*, trivia::FormatLeadingComments},
     print::semicolon::OptionalSemicolon,
     utils::suppressed::FormatSuppressedNode,
     write,
@@ -19,7 +19,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
         let key = self.key();
         let constraint = self.constraint();
         let name_type = self.name_type();
-        let should_expand = has_line_break_after_opening_brace(self, f.source_text());
+        // Check if the user introduced a new line immediately after the opening brace.
+        // For example, this would break:
+        //   {
+        //     readonly [A in B]: T}
+        // Because the line break occurs right after `{`. But this would _not_ break:
+        //   { readonly
+        //     [A in B]: T}
+        // Because the break is not immediately after `{`.
+        let should_expand = f.source_text().has_newline_after_opening_brace(self.span.start);
 
         let format_inner = format_with(|f| {
             if should_expand {
@@ -82,17 +90,4 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSMappedType<'a>> {
             ]
         );
     }
-}
-
-/// Check if the user introduced a new line immediately after the opening brace.
-/// For example, this would break:
-///   {
-///     readonly [A in B]: T}
-/// Because the line break occurs right after `{`. But this would _not_ break:
-///   { readonly
-///     [A in B]: T}
-/// Because the break is not immediately after `{`.
-fn has_line_break_after_opening_brace(node: &TSMappedType, f: SourceText) -> bool {
-    // Check if there's a newline immediately after `{` (before any non-whitespace)
-    f.has_newline_after(node.span.start + 1)
 }

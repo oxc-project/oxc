@@ -236,7 +236,8 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             let rest_element =
                 ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-            params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
+            params_rest =
+                Some(ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE));
             stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
@@ -311,7 +312,8 @@ impl<'a> ClassProperties<'a, '_> {
             {
                 let rest_element =
                     ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-                let rest = ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE);
+                let rest =
+                    ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE);
                 ctx.ast.alloc_formal_parameters(
                     SPAN,
                     FormalParameterKind::ArrowFormalParameters,

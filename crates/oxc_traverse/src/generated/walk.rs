@@ -2389,9 +2389,15 @@ unsafe fn walk_formal_parameter_rest<'a, State, Tr: Traverse<'a, State>>(
     ctx: &mut TraverseCtx<'a, State>,
 ) {
     traverser.enter_formal_parameter_rest(&mut *node, ctx);
-    let pop_token = ctx.push_stack(Ancestor::FormalParameterRestRest(
-        ancestor::FormalParameterRestWithoutRest(node, PhantomData),
+    let pop_token = ctx.push_stack(Ancestor::FormalParameterRestDecorators(
+        ancestor::FormalParameterRestWithoutDecorators(node, PhantomData),
     ));
+    for item in &mut *((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_REST_DECORATORS)
+        as *mut Vec<Decorator>)
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::FormalParameterRestRest);
     walk_binding_rest_element(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_REST_REST)

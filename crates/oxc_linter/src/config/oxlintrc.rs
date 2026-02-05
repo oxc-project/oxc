@@ -163,6 +163,14 @@ pub struct Oxlintrc {
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,
+    /// Extended configuration objects provided via `oxlint.config.ts`.
+    ///
+    /// This field is not deserialized from JSON config files and is not part of the public
+    /// configuration schema. It is populated by the JS config loader when `extends` contains
+    /// objects (imported configs).
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub extends_configs: Vec<Oxlintrc>,
 }
 
 impl Oxlintrc {
@@ -293,6 +301,7 @@ impl Oxlintrc {
             path: self.path.clone(),
             ignore_patterns: self.ignore_patterns.clone(),
             extends: self.extends.clone(),
+            extends_configs: self.extends_configs.clone(),
         }
     }
 
@@ -321,6 +330,10 @@ impl Oxlintrc {
                     })
                     .collect();
             }
+        }
+
+        for config in &mut self.extends_configs {
+            config.set_config_dir(config_dir);
         }
     }
 }

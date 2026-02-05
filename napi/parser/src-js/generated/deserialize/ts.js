@@ -1860,11 +1860,11 @@ function deserializeFormalParameters(pos) {
         optional: false,
         typeAnnotation: null,
         value: null,
-        start: deserializeU32(pos + 8),
-        end: (end = deserializeU32(pos + 12)),
+        start: deserializeU32(pos + 32),
+        end: (end = deserializeU32(pos + 36)),
       };
-    rest.argument = deserializeBindingPattern(pos + 16);
-    rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 32);
+    rest.argument = deserializeBindingPattern(pos + 40);
+    rest.typeAnnotation = deserializeOptionBoxTSTypeAnnotation(pos + 56);
     if (rest.typeAnnotation !== null) {
       end = rest.typeAnnotation.end;
       rest.end = end;

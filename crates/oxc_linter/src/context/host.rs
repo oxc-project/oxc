@@ -139,7 +139,7 @@ pub struct ContextHost<'a> {
     ///
     /// Set via the `--fix`, `--fix-suggestions`, and `--fix-dangerously` CLI
     /// flags.
-    pub(super) fix: FixKind,
+    pub(crate) fix: FixKind,
     /// Path to the file being linted.
     pub(super) file_path: Box<Path>,
     /// Extension of the file being linted.

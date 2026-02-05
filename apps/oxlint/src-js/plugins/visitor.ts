@@ -352,6 +352,10 @@ export function addVisitorToCompiled(visitor: Visitor): void {
     }
 
     // `*` selector or some other selector that matches all node types
+    // TODO: Add 2 arrays for "enter all" and "exit all" selectors.
+    // Where visitor contains multiple selectors which match all node types, this would avoid merging them
+    // into a single visit function 100+ times for each node type. Could just merge them once and assign the same
+    // merged function to all node types (except those which have other visit functions).
     for (typeId = 0; typeId < LEAF_NODE_TYPES_COUNT; typeId++) {
       addLeafVisitFn(typeId, visitProp);
     }

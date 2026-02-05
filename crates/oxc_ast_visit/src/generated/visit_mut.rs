@@ -2583,6 +2583,7 @@ pub mod walk_mut {
         let kind = AstType::FormalParameterRest;
         visitor.enter_node(kind);
         visitor.visit_span(&mut it.span);
+        visitor.visit_decorators(&mut it.decorators);
         visitor.visit_binding_rest_element(&mut it.rest);
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type_annotation(type_annotation);

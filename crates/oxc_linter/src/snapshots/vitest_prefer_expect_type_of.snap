@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-vitest(prefer-expect-type-of): Type assertions should be done using `expectTypeOf`.
    ╭─[prefer_expect_type_of.tsx:1:1]
  1 │ expect(typeof 12).toBe("number")

@@ -106,15 +106,66 @@ impl ConfigStoreBuilder {
         workspace_uri: Option<&str>,
     ) -> Result<Self, ConfigBuilderError> {
         // TODO: this can be cached to avoid re-computing the same oxlintrc
+        fn is_relative_plugin_specifier(specifier: &str) -> bool {
+            specifier == "."
+                || specifier == ".."
+                || specifier.starts_with("./")
+                || specifier.starts_with("../")
+                || specifier.starts_with(".\\")
+                || specifier.starts_with("..\\")
+        }
+
+        fn check_no_relative_js_plugins_in_extends(
+            config: &Oxlintrc,
+        ) -> Result<(), ConfigBuilderError> {
+            if let Some(external_plugins) = &config.external_plugins {
+                for entry in external_plugins {
+                    if is_relative_plugin_specifier(&entry.specifier) {
+                        return Err(ConfigBuilderError::RelativeExternalPluginSpecifierInExtends {
+                            plugin_specifier: entry.specifier.clone(),
+                        });
+                    }
+                }
+            }
+
+            for r#override in &config.overrides {
+                if let Some(external_plugins) = &r#override.external_plugins {
+                    for entry in external_plugins {
+                        if is_relative_plugin_specifier(&entry.specifier) {
+                            return Err(
+                                ConfigBuilderError::RelativeExternalPluginSpecifierInExtends {
+                                    plugin_specifier: entry.specifier.clone(),
+                                },
+                            );
+                        }
+                    }
+                }
+            }
+
+            Ok(())
+        }
+
         fn resolve_oxlintrc_config(
             config: Oxlintrc,
+            in_object_extends: bool,
         ) -> Result<(Oxlintrc, Vec<PathBuf>), ConfigBuilderError> {
+            if in_object_extends {
+                check_no_relative_js_plugins_in_extends(&config)?;
+            }
+
             let path = config.path.clone();
             let root_path = path.parent();
             let extends = config.extends.clone();
+            let extends_configs = config.extends_configs.clone();
             let mut extended_paths = Vec::new();
 
             let mut oxlintrc = config;
+
+            for config in extends_configs.into_iter().rev() {
+                let (extends, extends_paths) = resolve_oxlintrc_config(config, true)?;
+                oxlintrc = oxlintrc.merge(extends);
+                extended_paths.extend(extends_paths);
+            }
 
             for path in extends.iter().rev() {
                 if path.starts_with("eslint:") || path.starts_with("plugin:") {
@@ -141,7 +192,7 @@ impl ConfigStoreBuilder {
 
                 extended_paths.push(path.clone());
 
-                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc)?;
+                let (extends, extends_paths) = resolve_oxlintrc_config(extends_oxlintrc, false)?;
 
                 oxlintrc = oxlintrc.merge(extends);
                 extended_paths.extend(extends_paths);
@@ -150,7 +201,7 @@ impl ConfigStoreBuilder {
             Ok((oxlintrc, extended_paths))
         }
 
-        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc)?;
+        let (oxlintrc, extended_paths) = resolve_oxlintrc_config(oxlintrc, false)?;
 
         // Collect external plugins from both base config and overrides
         let mut external_plugins: FxHashSet<&ExternalPluginEntry> = FxHashSet::default();
@@ -654,6 +705,12 @@ pub enum ConfigBuilderError {
     ReservedExternalPluginName {
         plugin_name: String,
     },
+    /// A JS config extended via `extends` contained a relative JS plugin specifier.
+    ///
+    /// Without origin metadata, relative specifiers are ambiguous and therefore disallowed.
+    RelativeExternalPluginSpecifierInExtends {
+        plugin_specifier: String,
+    },
     /// Multiple errors parsing rule configuration options
     RuleConfigurationErrors {
         /// The errors that occurred
@@ -708,6 +765,16 @@ impl Display for ConfigBuilderError {
                      See: https://oxc.rs/docs/guide/usage/linter/js-plugins.html",
                 )?;
                 Ok(())
+            }
+            ConfigBuilderError::RelativeExternalPluginSpecifierInExtends { plugin_specifier } => {
+                write!(
+                    f,
+                    "Relative JS plugin specifiers are not supported in configs provided via `extends` in `oxlint.config.ts`.\n\
+                     \n\
+                     Found: {plugin_specifier:?}\n\
+                     \n\
+                     Use a package name (e.g. \"eslint-plugin-foo\") or an absolute path instead."
+                )
             }
             ConfigBuilderError::RuleConfigurationErrors { errors } => {
                 for (i, error) in errors.iter().enumerate() {
