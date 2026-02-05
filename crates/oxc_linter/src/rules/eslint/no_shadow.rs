@@ -180,6 +180,42 @@ fn test() {
         ("var x = 1; function foo() { var x = 2; }", Some(serde_json::json!([{ "allow": ["x"] }]))),
         // Reassign
         ("let x = true; if (x) { x = false; }", Some(serde_json::json!([{ "allow": ["x"] }]))),
+        // --- hoist = never: do NOT report if the outer declaration happens later ---
+        (
+            "function f() { { let x = 1; } let x = 2; }",
+            Some(serde_json::json!([{ "hoist": "never" }])),
+        ),
+        // hoist = never: even if the outer is a function declaration, "never" should NOT report when it appears later
+        (
+            "function f() { { let x = 1; } function x() {} }",
+            Some(serde_json::json!([{ "hoist": "never" }])),
+        ),
+        // --- hoist = functions: do NOT report if the outer declaration happens later and it is NOT a function declaration ---
+        (
+            "function f() { { let x = 1; } var x = 2; }",
+            Some(serde_json::json!([{ "hoist": "functions" }])),
+        ),
+        (
+            "function f() { { let C = 1; } class C {} }",
+            Some(serde_json::json!([{ "hoist": "functions" }])),
+        ),
+        // --- allow: should suppress the diagnostic regardless of hoist setting ---
+        (
+            "function f() { { let x = 1; } let x = 2; }",
+            Some(serde_json::json!([{ "hoist": "all", "allow": ["x"] }])),
+        ),
+        // allow multiple names
+        (
+            "let x = 1; function f(){ let x = 2; } let y = 1; function g(){ let y = 2; }",
+            Some(serde_json::json!([{ "allow": ["x", "y"] }])),
+        ),
+        // allow applied to destructuring (you already have the failing version; this ensures the escape hatch works)
+        ("const x = 1; { const { x } = { x: 2 }; }", Some(serde_json::json!([{ "allow": ["x"] }]))),
+        // Outer is NOT a function declaration; it's a const variable initialized with a function expression.
+        (
+            "function f() { { let x = 1; } const x = function() {}; }",
+            Some(serde_json::json!([{ "hoist": "functions" }])),
+        ),
     ];
 
     let fail = vec![
@@ -205,6 +241,31 @@ fn test() {
         ("const x = 1; { const { x } = { x: 2 }; }", None),
         // Array destructuring shadowing in nested scope
         ("const x = 1; { const [x] = [2]; }", None),
+        ("let x = 1; { { let x = 3; } let x = 2; }", None),
+        // --- hoist = all: DO report even if the outer declaration happens later ---
+        (
+            "function f() { { let x = 1; } let x = 2; }",
+            Some(serde_json::json!([{ "hoist": "all" }])),
+        ),
+        // --- hoist = functions: DO report if the shadowed symbol is a function declaration even when it appears later ---
+        (
+            "function f() { { let x = 1; } function x() {} }",
+            Some(serde_json::json!([{ "hoist": "functions" }])),
+        ),
+        // hoist = all: should also report when the outer is var and appears later (generalized hoisting behavior)
+        (
+            "function f() { { let x = 1; } var x = 2; }",
+            Some(serde_json::json!([{ "hoist": "all" }])),
+        ),
+        // hoist = never: should still report the normal case (outer first, inner later)
+        (
+            "function f() { let x = 2; { let x = 1; } }",
+            Some(serde_json::json!([{ "hoist": "never" }])),
+        ),
+        // --- allow: allowing only "x" must NOT allow "y" ---
+        ("let y = 1; function g(){ let y = 2; }", Some(serde_json::json!([{ "allow": ["x"] }]))),
+        // allow is case-sensitive
+        ("let x = 1; function f(){ let x = 2; }", Some(serde_json::json!([{ "allow": ["X"] }]))),
     ];
 
     Tester::new(NoShadow::NAME, NoShadow::PLUGIN, pass, fail).test_and_snapshot();
