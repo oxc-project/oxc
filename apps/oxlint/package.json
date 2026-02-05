@@ -37,7 +37,9 @@
   },
   "devDependencies": {
     "@arethetypeswrong/core": "catalog:",
+    "@babel/code-frame": "^7.28.6",
     "@napi-rs/cli": "catalog:",
+    "@types/babel__code-frame": "^7.27.0",
     "@types/esquery": "^1.5.4",
     "@types/estree": "^1.0.8",
     "@types/json-schema": "^7.0.15",
@@ -59,7 +61,8 @@
     "tsx": "^4.21.0",
     "type-fest": "^5.2.0",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "vscode-languageserver-protocol": "^3.17.5"
   },
   "napi": {
     "binaryName": "oxlint",
