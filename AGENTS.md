@@ -321,4 +321,4 @@ Tests are TypeScript files in each package's `test/` directory.
 
 ---
 
-For human contributors see `CONTRIBUTING.md` and [oxc.rs](https://oxc.rs)
+For human contributors see `CONTRIBUTING.md` and [oxc.rs](https://oxc.rs/docs/contribute/introduction.html)
