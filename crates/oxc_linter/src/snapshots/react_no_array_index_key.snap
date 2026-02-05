@@ -12,6 +12,24 @@ source: crates/oxc_linter/src/tester.rs
   help: Use a unique data-dependent key to avoid unnecessary rerenders
 
   ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={`abc${index}`} />
+   ·                    ───────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:20]
+ 1 │ things.map((thing, index) => (
+ 2 │             <Hello key={1 + index} />
+   ·                    ───────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
    ╭─[no_array_index_key.tsx:2:34]
  1 │ things.map((thing, index) => (
  2 │             <Hello thing={thing} key={index} />
@@ -25,6 +43,24 @@ source: crates/oxc_linter/src/tester.rs
  1 │ things.map((thing, index) => (
  2 │             React.cloneElement(thing, { key: index })
    ·                                       ──────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:39]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: `abc${index}` })
+   ·                                       ──────────────────────
+ 3 │           ));
+   ╰────
+  help: Use a unique data-dependent key to avoid unnecessary rerenders
+
+  ⚠ eslint-plugin-react(no-array-index-key): Usage of Array index in keys is not allowed
+   ╭─[no_array_index_key.tsx:2:39]
+ 1 │ things.map((thing, index) => (
+ 2 │             React.cloneElement(thing, { key: 1 + index })
+   ·                                       ──────────────────
  3 │           ));
    ╰────
   help: Use a unique data-dependent key to avoid unnecessary rerenders
