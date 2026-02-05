@@ -2,7 +2,10 @@ pub mod return_checker;
 
 use std::borrow::Cow;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, FunctionBody, Statement},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -18,12 +21,78 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn expect_return(method_name: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("Missing return on some path for array method {method_name:?}"))
-        .with_help(format!(
-            "Array method {method_name:?} needs to have valid return on all code paths"
-        ))
-        .with_label(span)
+#[derive(Debug, Clone, Copy)]
+enum MissingReturnHint {
+    SwitchWithoutDefault,
+    IfWithoutElse,
+}
+
+fn guess_missing_return_hint(
+    function_body: &FunctionBody<'_>,
+) -> Option<(Span, MissingReturnHint)> {
+    let last_statement = function_body.statements.last()?;
+    match last_statement {
+        Statement::SwitchStatement(stmt) => {
+            let has_default = stmt.cases.iter().any(oxc_ast::ast::SwitchCase::is_default_case);
+            (!has_default).then_some((stmt.span, MissingReturnHint::SwitchWithoutDefault))
+        }
+        Statement::IfStatement(stmt) => {
+            (stmt.alternate.is_none()).then_some((stmt.span, MissingReturnHint::IfWithoutElse))
+        }
+        _ => None,
+    }
+}
+
+fn expect_return(
+    method_name: &str,
+    array_method_span: Span,
+    function_body: &FunctionBody<'_>,
+    allow_implicit: bool,
+) -> OxcDiagnostic {
+    let (span, hint) = guess_missing_return_hint(function_body)
+        .map_or((function_body.span, None), |(span, hint)| (span, Some(hint)));
+
+    let value_requirement = if allow_implicit {
+        ""
+    } else {
+        "\nReturn a value on each path (or enable `allowImplicit` to allow `return;`)."
+    };
+
+    let (message, help) = match hint {
+        Some(MissingReturnHint::SwitchWithoutDefault) => (
+            format!(
+                "Callback for array method {method_name:?} may fall through a `switch` without returning"
+            ),
+            format!(
+                "This `switch` has no `default` case, so the callback may reach the end without a `return`. Add a `default` that returns/throws, or add a final `return` after the `switch`.{value_requirement}"
+            ),
+        ),
+        Some(MissingReturnHint::IfWithoutElse) => (
+            format!(
+                "Callback for array method {method_name:?} may reach the end of an `if` without returning"
+            ),
+            format!(
+                "This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.{value_requirement}"
+            ),
+        ),
+        None => (
+            format!("Callback for array method {method_name:?} does not return on all code paths"),
+            format!(
+                "{method_name:?} uses the callback's return value. Add a `return` on every possible code path.{value_requirement}"
+            ),
+        ),
+    };
+
+    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(span);
+    if allow_implicit {
+        diagnostic = diagnostic.with_note("With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.");
+    }
+    if hint.is_some() {
+        diagnostic = diagnostic
+            .and_label(array_method_span.label(format!("{method_name:?} is called here.")));
+    }
+
+    diagnostic
 }
 
 fn expect_no_return(method_name: &str, call_span: Span, return_span: Span) -> OxcDiagnostic {
@@ -132,7 +201,9 @@ impl Rule for ArrayCallbackReturn {
                     if !return_status.must_return() {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
-                            function_body.span,
+                            array_method_span,
+                            function_body,
+                            self.allow_implicit,
                         ));
                     }
                 }
@@ -140,7 +211,9 @@ impl Rule for ArrayCallbackReturn {
                     if !return_status.must_return() || return_status.may_return_implicit() {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
-                            function_body.span,
+                            array_method_span,
+                            function_body,
+                            self.allow_implicit,
                         ));
                     }
                 }
@@ -458,6 +531,22 @@ fn test() {
         ("foo.flatMap(function foo() {})", None),
         ("foo.map(function() {})", None),
         ("foo.map(function foo() {})", None),
+        (
+            r#"const fruits = [{ name: "apple" }, { name: "banana" }] as const;
+
+const _test = fruits.map((fruit) => {
+  switch (fruit.name) {
+    case "apple": {
+      return "a"
+    }
+
+    case "banana": {
+      return "b"
+    }
+  }
+});"#,
+            None,
+        ),
         ("foo.reduce(function() {})", None),
         ("foo.reduce(function foo() {})", None),
         ("foo.reduceRight(function() {})", None),
