@@ -2,47 +2,57 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:1:14]
  1 │ app.get('/', async function (req, res) {})
    ·              ──┬──
    ·                ╰── Async handler is used here
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:1:14]
  1 │ app.get('/', async (req, res) =>  {})
    ·              ──┬──
    ·                ╰── Async handler is used here
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:1:14]
  1 │ app.get('/', async (req, res, next) =>  {})
    ·              ──┬──
    ·                ╰── Async handler is used here
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:1:20]
  1 │ weirdName.get('/', async (req, res) =>  {})
    ·                    ──┬──
    ·                      ╰── Async handler is used here
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:1:20]
  1 │ weirdName.get('/', async (req, res) =>  {})
    ·                    ──┬──
    ·                      ╰── Async handler is used here
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:3:27]
  1 │ 
  2 │             async function foo(req, res) {}
@@ -50,12 +60,14 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── Async handler 'foo' is declared here
  3 │             app.post('/', foo)
    ·                           ─┬─
-   ·                            ╰── and is registered here
+   ·                            ╰── and is registered here for route `/`
  4 │             
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:3:27]
  1 │ 
  2 │             const foo = async (req, res) => {}
@@ -63,12 +75,14 @@ source: crates/oxc_linter/src/tester.rs
    ·                           ╰── Async handler is declared here
  3 │             app.post('/', foo)
    ·                           ─┬─
-   ·                            ╰── and is registered here
+   ·                            ╰── and is registered here for route `/`
  4 │             
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:3:21]
  1 │ 
  2 │             async function middleware(req, res, next) {}
@@ -79,9 +93,11 @@ source: crates/oxc_linter/src/tester.rs
    ·                          ╰── and is registered here
  4 │             
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.
 
-  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handlers should not be async.
+  ⚠ oxc(no-async-endpoint-handlers): Express endpoint handler for `/` should not be `async`.
    ╭─[no_async_endpoint_handlers.tsx:4:27]
  1 │ 
  2 │             async function foo(req, res) {}
@@ -90,7 +106,9 @@ source: crates/oxc_linter/src/tester.rs
  3 │             const bar = foo;
  4 │             app.post('/', bar)
    ·                           ─┬─
-   ·                            ╰── and is registered here
+   ·                            ╰── and is registered here for route `/`
  5 │             
    ╰────
-  help: Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.
+  help: Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).
+        Express does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.
+  note: If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`.

@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{Atom, CompactStr, Span};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde_json::Value;
@@ -35,6 +35,7 @@ pub fn no_async_handlers(
     function_span: Span,
     registered_span: Option<Span>,
     name: Option<&str>,
+    endpoint: Option<&str>,
 ) -> OxcDiagnostic {
     #[expect(clippy::cast_possible_truncation)]
     const ASYNC_LEN: u32 = "async".len() as u32;
@@ -42,18 +43,24 @@ pub fn no_async_handlers(
     // Only cover "async" in "async function (req, res) {}" or "async (req, res) => {}"
     let async_span = Span::sized(function_span.start, ASYNC_LEN);
 
+    let registration_note = endpoint.map(|endpoint| format!(" for route `{endpoint}`"));
+    let registered_label = registration_note.as_deref().map_or_else(
+        || "and is registered here".to_string(),
+        |note| format!("and is registered here{note}"),
+    );
+
     let labels: &[LabeledSpan] = match (registered_span, name) {
         // handler is declared separately from registration
         // `async function foo(req, res) {}; app.get('/foo', foo);`
         (Some(span), Some(name)) => &[
             async_span.label(format!("Async handler '{name}' is declared here")),
-            span.primary_label("and is registered here"),
+            span.primary_label(registered_label),
         ],
         // Shouldn't happen, since separate declaration/registration requires an
         // identifier to be bound
         (Some(span), None) => &[
             async_span.label("Async handler is declared here"),
-            span.primary_label("and is registered here"),
+            span.primary_label(registered_label),
         ],
         // `app.get('/foo', async function foo(req, res) {});`
         (None, Some(name)) => &[async_span.label(format!("Async handler '{name}' is used here"))],
@@ -62,9 +69,18 @@ pub fn no_async_handlers(
         (None, None) => &[async_span.label("Async handler is used here")],
     };
 
-    OxcDiagnostic::warn("Express endpoint handlers should not be async.")
+    let warning = endpoint.map_or_else(
+        || "Express endpoint handler should not be `async`.".to_string(),
+        |endpoint| format!("Express endpoint handler for `{endpoint}` should not be `async`."),
+    );
+
+    OxcDiagnostic::warn(warning)
         .with_labels(labels.iter().cloned())
-        .with_help("Express <= 4.x does not handle Promise rejections. Use `new Promise((resolve, reject) => { ... }).catch(next)` instead.")
+        .with_help(
+            "Wrap the async handler and forward errors to `next()` (e.g. `(req, res, next) => Promise.resolve(handler(req, res, next)).catch(next)`).\nExpress does not automatically handle rejected promises from async handlers, which results in unhandled promise rejections and server crashes.",
+        ).with_note(
+            "If you're on Express 5, disable this rule. To allow specific functions, add their names to `allowedNames`."
+        )
 }
 
 declare_oxc_lint!(
@@ -180,26 +196,32 @@ impl Rule for NoAsyncEndpointHandlers {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let kind = node.kind();
-        let Some((_endpoint, args)) = utils::as_endpoint_registration(&kind) else {
+        let Some((endpoint, args)) = utils::as_endpoint_registration(&kind) else {
             return;
         };
         for arg in
             args.iter().filter_map(Argument::as_expression).map(Expression::get_inner_expression)
         {
-            self.check_endpoint_arg(ctx, arg);
+            self.check_endpoint_arg(ctx, endpoint, arg);
         }
     }
 }
 
 impl NoAsyncEndpointHandlers {
-    fn check_endpoint_arg<'a>(&self, ctx: &LintContext<'a>, arg: &Expression<'a>) {
+    fn check_endpoint_arg<'a>(
+        &self,
+        ctx: &LintContext<'a>,
+        endpoint: Option<Atom<'a>>,
+        arg: &Expression<'a>,
+    ) {
         let mut visited = FxHashSet::default();
-        self.check_endpoint_expr(ctx, None, None, arg, &mut visited);
+        self.check_endpoint_expr(ctx, endpoint, None, None, arg, &mut visited);
     }
 
     fn check_endpoint_expr<'a>(
         &self,
         ctx: &LintContext<'a>,
+        endpoint: Option<Atom<'a>>,
         id_name: Option<&str>,
         registered_at: Option<Span>,
         arg: &Expression<'a>,
@@ -229,7 +251,9 @@ impl NoAsyncEndpointHandlers {
                 let decl_node = ctx.nodes().get_node(decl_id);
                 let registered_at = registered_at.or(Some(handler.span));
                 match decl_node.kind() {
-                    AstKind::Function(f) => self.check_function(ctx, registered_at, id_name, f),
+                    AstKind::Function(f) => {
+                        self.check_function(ctx, endpoint, registered_at, id_name, f);
+                    }
                     AstKind::VariableDeclarator(decl) => {
                         if let Some(init) = &decl.init {
                             if let Expression::Identifier(id) = &init
@@ -240,7 +264,14 @@ impl NoAsyncEndpointHandlers {
                             {
                                 return;
                             }
-                            self.check_endpoint_expr(ctx, id_name, registered_at, init, visited);
+                            self.check_endpoint_expr(
+                                ctx,
+                                endpoint,
+                                id_name,
+                                registered_at,
+                                init,
+                                visited,
+                            );
                         }
                     }
                     _ => {}
@@ -250,10 +281,10 @@ impl NoAsyncEndpointHandlers {
                 match func {
                     // `app.get('/', (async?) function (req, res) {}`
                     Expression::FunctionExpression(f) => {
-                        self.check_function(ctx, registered_at, id_name, f);
+                        self.check_function(ctx, endpoint, registered_at, id_name, f);
                     }
                     Expression::ArrowFunctionExpression(f) => {
-                        self.check_arrow(ctx, registered_at, id_name, f);
+                        self.check_arrow(ctx, endpoint, registered_at, id_name, f);
                     }
                     _ => unreachable!(),
                 }
@@ -265,6 +296,7 @@ impl NoAsyncEndpointHandlers {
     fn check_function<'a>(
         &self,
         ctx: &LintContext<'a>,
+        endpoint: Option<Atom<'a>>,
         registered_at: Option<Span>,
         id_name: Option<&str>,
         f: &Function<'a>,
@@ -278,12 +310,18 @@ impl NoAsyncEndpointHandlers {
             return;
         }
 
-        ctx.diagnostic(no_async_handlers(f.span, registered_at, name));
+        ctx.diagnostic(no_async_handlers(
+            f.span,
+            registered_at,
+            name,
+            endpoint.map(|endpoint| endpoint.as_str()),
+        ));
     }
 
     fn check_arrow<'a>(
         &self,
         ctx: &LintContext<'a>,
+        endpoint: Option<Atom<'a>>,
         registered_at: Option<Span>,
         id_name: Option<&str>,
         f: &ArrowFunctionExpression<'a>,
@@ -295,7 +333,12 @@ impl NoAsyncEndpointHandlers {
             return;
         }
 
-        ctx.diagnostic(no_async_handlers(f.span, registered_at, id_name));
+        ctx.diagnostic(no_async_handlers(
+            f.span,
+            registered_at,
+            id_name,
+            endpoint.map(|endpoint| endpoint.as_str()),
+        ));
     }
 
     fn is_allowed_name(&self, name: &str) -> bool {
