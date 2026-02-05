@@ -3,7 +3,7 @@
  */
 
 import { filePath } from "./context.ts";
-import { getFixes } from "./fix.ts";
+import { getFixes, getSuggestions } from "./fix.ts";
 import { initLines, lines, lineStartIndices, debugAssertLinesIsInitialized } from "./location.ts";
 import { sourceText } from "./source_code.ts";
 import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
@@ -34,7 +34,7 @@ interface DiagnosticBase {
   loc?: LocationWithOptionalEnd | LineColumn;
   data?: DiagnosticData | null | undefined;
   fix?: FixFn;
-  suggest?: Suggestion[];
+  suggest?: Suggestion[] | null | undefined;
 }
 
 /**
@@ -52,15 +52,22 @@ export type DiagnosticData = Record<string, string | number | boolean | bigint |
 
 /**
  * Suggested fix.
- * NOT IMPLEMENTED YET.
  */
 export type Suggestion = RequireAtLeastOne<SuggestionBase, "desc" | "messageId">;
 
 interface SuggestionBase {
   desc?: string;
   messageId?: string;
-  fix: FixFn;
   data?: DiagnosticData | null | undefined;
+  fix: FixFn;
+}
+
+/**
+ * Suggested fix in form sent to Rust.
+ */
+export interface SuggestionReport {
+  message: string;
+  fixes: Fix[];
 }
 
 // Diagnostic in form sent to Rust.
@@ -71,6 +78,7 @@ export interface DiagnosticReport {
   end: number;
   ruleIndex: number;
   fixes: Fix[] | null;
+  suggestions: SuggestionReport[] | null;
   messageId: string | null;
   // Only used in conformance tests
   loc?: LocationWithOptionalEnd | null;
@@ -183,6 +191,7 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
     end,
     ruleIndex: ruleDetails.ruleIndex,
     fixes: getFixes(diagnostic, ruleDetails),
+    suggestions: getSuggestions(diagnostic, ruleDetails),
   });
 
   // We need the original location in conformance tests
@@ -190,21 +199,21 @@ export function report(diagnostic: Diagnostic, ruleDetails: RuleDetails): void {
 }
 
 /**
- * Get message from a diagnostic.
+ * Get message from a diagnostic or suggestion.
  *
  * Resolve message from `messageId` if present, and interpolate placeholders {{key}} with data values.
  *
  * @param message - Provided message string
  * @param messageId - Provided message ID
- * @param descriptor - Diagnostic object
+ * @param descriptor - Diagnostic or suggestion object
  * @param ruleDetails - `RuleDetails` object, containing rule-specific `messages`
  * @returns Message string
  * @throws {Error|TypeError} If neither `message` nor `messageId` provided, or of wrong type
  */
-function getMessage(
+export function getMessage(
   message: string | null | undefined,
   messageId: string | null,
-  descriptor: Diagnostic,
+  descriptor: Diagnostic | Suggestion,
   ruleDetails: RuleDetails,
 ): string {
   // Resolve from `messageId` if present, otherwise use `message`
