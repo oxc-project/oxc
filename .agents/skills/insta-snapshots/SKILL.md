@@ -9,10 +9,8 @@ This skill guides you through working with [insta](https://insta.rs) snapshot te
 
 Insta is a snapshot testing library for Rust. Oxc uses it extensively for:
 
-- Parser conformance tests (`tasks/coverage/snapshots/`)
-- Isolated declarations tests (`crates/oxc_isolated_declarations/tests/snapshots/`)
-- Semantic analysis tests (`crates/oxc_semantic/tests/snapshots/`)
 - Linter rule tests (`crates/oxc_linter/src/snapshots/`)
+- Semantic analysis tests (`crates/oxc_semantic/tests/snapshots/`)
 - Other crate-specific snapshot tests
 
 Snapshots track **expected test outputs** (often failures or errors). When code changes, new snapshots are generated as `.snap.new` files for review.
@@ -91,9 +89,9 @@ git diff <path/to/snapshots/>
 
 ### Working with specific test files:
 
-1. Run: `cargo test -p oxc_isolated_declarations specific_test_name`
+1. Run: `cargo test -p oxc_linter specific_test_name`
 2. Read: `cargo insta pending-snapshots` - look for `specific_test_name.snap.new`
-3. Accept: `cargo insta accept -p oxc_isolated_declarations`
+3. Accept: `cargo insta accept -p oxc_linter`
 
 ## Snapshot File Formats
 
