@@ -168,12 +168,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else {
                 ModifierKinds::none()
             };
-            self.verify_modifiers(
-                &modifiers,
-                allowed_modifiers,
-                true,
-                diagnostics::cannot_appear_on_a_parameter,
-            );
+            if func_kind == FunctionKind::Constructor {
+                self.verify_modifiers(
+                    &modifiers,
+                    allowed_modifiers,
+                    true,
+                    diagnostics::cannot_appear_on_a_parameter,
+                );
+            } else if modifiers.accessibility().is_some()
+                || modifiers.contains_readonly()
+                || modifiers.contains_override()
+            {
+                for modifier in modifiers.iter() {
+                    if modifier.kind == ModifierKind::Public
+                        || modifier.kind == ModifierKind::Private
+                        || modifier.kind == ModifierKind::Protected
+                        || modifier.kind == ModifierKind::Readonly
+                        || modifier.kind == ModifierKind::Override
+                    {
+                        self.error(diagnostics::parameter_property_only_allowed_in_constructor(
+                            modifier.span(),
+                        ));
+                    }
+                }
+            } else {
+                self.verify_modifiers(
+                    &modifiers,
+                    allowed_modifiers,
+                    true,
+                    diagnostics::cannot_appear_on_a_parameter,
+                );
+            }
         } else {
             self.verify_modifiers(
                 &modifiers,
