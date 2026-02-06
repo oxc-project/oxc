@@ -133,19 +133,14 @@ async function loadTailwindPlugin(): Promise<typeof import("prettier-plugin-tail
 
 // ---
 
-const TAILWIND_RELEVANT_PARSERS = new Set(["html", "vue", "angular", "glimmer"]);
-
 /**
- * Load Tailwind CSS plugin lazily for Prettier when:
- * - Option flag is set (by Rust side)
- * - And, the `parser` is relevant for Tailwind CSS
+ * Load Tailwind CSS plugin lazily when `options._useTailwindPlugin` flag is set.
+ * The flag is added by Rust side only for relevant parsers.
  *
- * Option mapping (experimentalTailwindcss.xxx → tailwindXxx) is done in Rust side.
+ * Option mapping (experimentalTailwindcss.xxx → tailwindXxx) is also done in Rust side.
  */
 async function setupTailwindPlugin(options: Options): Promise<void> {
   if ("_useTailwindPlugin" in options === false) return;
-  // PERF: Skip loading Tailwind plugin for parsers that don't use it
-  if (!TAILWIND_RELEVANT_PARSERS.has(options.parser as string)) return;
 
   const tailwindPlugin = await loadTailwindPlugin();
 
@@ -162,8 +157,7 @@ export interface SortTailwindClassesArgs {
 }
 
 /**
- * Process Tailwind CSS classes found in JSX attributes.
- * Option mapping (`experimentalTailwindcss.xxx` → `tailwindXxx`) is done in Rust side.
+ * Process Tailwind CSS classes found in JS/TS files in batch.
  * @param args - Object containing filepath, classes, and options
  * @returns Array of sorted class strings (same order/length as input)
  */
@@ -210,20 +204,12 @@ async function loadOxfmtPlugin(): Promise<Plugin> {
 
 // ---
 
-// Parsers that can embed JS/TS code
-const OXFMT_RELEVANT_PARSERS = new Set([
-  // "html",
-  // "angular",
-  // "vue",
-  // "lwc",
-  // "mjml",
-  "markdown",
-  "mdx",
-]);
-
+/**
+ * Load oxfmt plugin for js-in-xxx parsers when `options._oxfmtPluginOptionsJson` is set.
+ * The flag is added by Rust side only for relevant parsers.
+ */
 async function setupOxfmtPlugin(options: Options): Promise<void> {
-  // Skip loading oxfmt plugin for parsers that don't embed JS/TS
-  if (!OXFMT_RELEVANT_PARSERS.has(options.parser as string)) return;
+  if ("_oxfmtPluginOptionsJson" in options === false) return;
 
   const oxcPlugin = await loadOxfmtPlugin();
 
