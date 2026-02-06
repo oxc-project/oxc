@@ -86,7 +86,8 @@ pub struct LintFileResult {
 #[derive(Clone, Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct JsFix {
-    pub range: [u32; 2],
+    pub start: u32,
+    pub end: u32,
     pub text: String,
 }
 
@@ -109,7 +110,7 @@ pub fn convert_and_merge_js_fixes(
     let is_single = fixes.len() == 1;
 
     let mut fixes = fixes.into_iter().map(|fix| {
-        let mut span = Span::new(fix.range[0], fix.range[1]);
+        let mut span = Span::new(fix.start, fix.end);
         span_converter.convert_span_back(&mut span);
         Fix::new(fix.text, span)
     });

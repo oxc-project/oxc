@@ -13,7 +13,7 @@ const rule: Rule = {
     // Check file has not been formatted by accident.
     // We want the fixture files not to have trailing whitespace to check suggestions at very end of file.
     const sourceText = context.sourceCode.text;
-    assert(!sourceText.endsWith("\n"), "Fixture has been formatted");
+    assert(!sourceText.endsWith("\n"), "Fixture file has been formatted");
 
     const path = context.filename;
     const filename = path.slice(path.lastIndexOf(pathSep) + 1);

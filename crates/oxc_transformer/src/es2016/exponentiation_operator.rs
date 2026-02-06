@@ -35,7 +35,7 @@
 use oxc_allocator::{CloneIn, TakeIn, Vec as ArenaVec};
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -162,12 +162,11 @@ impl<'a> ExponentiationOperator<'a, '_> {
         let pow_left = if let Some(symbol_id) = reference.symbol_id() {
             // This variable is declared in scope so evaluating it multiple times can't trigger a getter.
             // No need for a temp var.
-            ctx.create_bound_ident_expr(SPAN, ident.name.into(), symbol_id, ReferenceFlags::Read)
+            ctx.create_bound_ident_expr(SPAN, ident.name, symbol_id, ReferenceFlags::Read)
         } else {
             // Unbound reference. Could possibly trigger a getter so we need to only evaluate it once.
             // Assign to a temp var.
-            let reference =
-                ctx.create_unbound_ident_expr(SPAN, ident.name.into(), ReferenceFlags::Read);
+            let reference = ctx.create_unbound_ident_expr(SPAN, ident.name, ReferenceFlags::Read);
             let binding = self.create_temp_var(reference, &mut temp_var_inits, ctx);
             binding.create_read_expression(ctx)
         };
@@ -489,7 +488,7 @@ impl<'a> ExponentiationOperator<'a, '_> {
                     // No need for a temp var.
                     return ctx.create_bound_ident_expr(
                         SPAN,
-                        ident.name.into(),
+                        ident.name,
                         symbol_id,
                         ReferenceFlags::Read,
                     );
@@ -538,8 +537,12 @@ impl<'a> ExponentiationOperator<'a, '_> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let math_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Math");
-        let object =
-            ctx.create_ident_expr(SPAN, Atom::from("Math"), math_symbol_id, ReferenceFlags::Read);
+        let object = ctx.create_ident_expr(
+            SPAN,
+            Ident::new_const("Math"),
+            math_symbol_id,
+            ReferenceFlags::Read,
+        );
         let property = ctx.ast.identifier_name(SPAN, "pow");
         let callee =
             Expression::from(ctx.ast.member_expression_static(SPAN, object, property, false));

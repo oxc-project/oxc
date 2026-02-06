@@ -7,7 +7,7 @@ use oxc_syntax::class::ClassId;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use base54::base54;
-use oxc_allocator::{Allocator, BitSet, Vec};
+use oxc_allocator::{Allocator, BitSet, HashSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
@@ -304,14 +304,15 @@ impl<'t> Mangler<'t> {
         generate_name: G,
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
+        let symbols_len = scoping.symbols_len();
 
         let temp_allocator = self.temp_allocator.as_ref();
 
         let top_level = self.options.top_level(program.source_type);
         let (exported_names, exported_symbols) = if top_level && program.source_type.is_module() {
-            Mangler::collect_exported_symbols(program)
+            Mangler::collect_exported_symbols(program, temp_allocator, symbols_len)
         } else {
-            Default::default()
+            (HashSet::new_in(temp_allocator), None)
         };
         let (keep_name_names, keep_name_symbols) = Mangler::collect_keep_name_symbols(
             self.options.keep_names,
@@ -459,7 +460,7 @@ impl<'t> Mangler<'t> {
 
         let frequencies = self.tally_slot_frequencies(
             scoping,
-            &exported_symbols,
+            exported_symbols.as_ref(),
             keep_name_symbols.as_ref(),
             total_number_of_slots,
             &slots,
@@ -553,7 +554,7 @@ impl<'t> Mangler<'t> {
     fn tally_slot_frequencies<'a>(
         &'a self,
         scoping: &Scoping,
-        exported_symbols: &FxHashSet<SymbolId>,
+        exported_symbols: Option<&BitSet<'a>>,
         keep_name_symbols: Option<&BitSet<'a>>,
         total_number_of_slots: usize,
         slots: &[Slot],
@@ -570,7 +571,10 @@ impl<'t> Mangler<'t> {
             let symbol_id = SymbolId::from_usize(symbol_id);
             let symbol_scope_id = scoping.symbol_scope_id(symbol_id);
             if symbol_scope_id == root_scope_id
-                && (!top_level || exported_symbols.contains(&symbol_id))
+                && (!top_level
+                    || exported_symbols.is_some_and(|exported_symbols| {
+                        exported_symbols.has_bit(symbol_id.index())
+                    }))
             {
                 continue;
             }
@@ -599,27 +603,27 @@ impl<'t> Mangler<'t> {
 
     fn collect_exported_symbols<'a>(
         program: &Program<'a>,
-    ) -> (FxHashSet<Atom<'a>>, FxHashSet<SymbolId>) {
-        program
-            .body
-            .iter()
-            .filter_map(|statement| {
-                let Statement::ExportNamedDeclaration(v) = statement else { return None };
-                v.declaration.as_ref()
-            })
-            .flat_map(|decl| {
-                if let Declaration::VariableDeclaration(decl) = decl {
-                    itertools::Either::Left(
-                        decl.declarations
-                            .iter()
-                            .filter_map(|decl| decl.id.get_binding_identifier()),
-                    )
-                } else {
-                    itertools::Either::Right(decl.id().into_iter())
+        allocator: &'a Allocator,
+        symbols_len: usize,
+    ) -> (HashSet<'a, Atom<'a>>, Option<BitSet<'a>>) {
+        let mut exported_symbols = BitSet::new_in(symbols_len, allocator);
+        let mut exported_names = HashSet::new_in(allocator);
+        for statement in &program.body {
+            let Statement::ExportNamedDeclaration(v) = statement else { continue };
+            let Some(decl) = &v.declaration else { continue };
+            if let Declaration::VariableDeclaration(decl) = decl {
+                for decl in &decl.declarations {
+                    if let Some(id) = decl.id.get_binding_identifier() {
+                        exported_names.insert(id.name.as_atom());
+                        exported_symbols.set_bit(id.symbol_id().index());
+                    }
                 }
-            })
-            .map(|id| (id.name.as_atom(), id.symbol_id()))
-            .collect()
+            } else if let Some(id) = decl.id() {
+                exported_names.insert(id.name.as_atom());
+                exported_symbols.set_bit(id.symbol_id().index());
+            }
+        }
+        (exported_names, Some(exported_symbols))
     }
 
     fn collect_keep_name_symbols<'a>(

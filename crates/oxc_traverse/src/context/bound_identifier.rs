@@ -2,7 +2,8 @@ use oxc_ast::ast::{
     AssignmentTarget, BindingIdentifier, BindingPattern, Expression, IdentifierReference,
     SimpleAssignmentTarget,
 };
-use oxc_span::{Atom, SPAN, Span};
+use oxc_span::{SPAN, Span};
+use oxc_str::Ident;
 use oxc_syntax::{reference::ReferenceFlags, symbol::SymbolId};
 
 use crate::TraverseCtx;
@@ -34,23 +35,23 @@ use super::MaybeBoundIdentifier;
 /// * `BoundIdentifier` is smaller than `BindingIdentifier`, so takes less memory when you store
 ///   it for later use.
 /// * `BoundIdentifier` is `Clone` (unlike `BindingIdentifier`).
-/// * `BoundIdentifier` re-uses the same `Atom` for all `BindingIdentifier` / `IdentifierReference`s
+/// * `BoundIdentifier` re-uses the same `Ident` for all `BindingIdentifier` / `IdentifierReference`s
 ///   created from it.
 #[derive(Debug, Clone)]
 pub struct BoundIdentifier<'a> {
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     pub symbol_id: SymbolId,
 }
 
 impl<'a> BoundIdentifier<'a> {
     /// Create `BoundIdentifier` for `name` and `symbol_id`
-    pub fn new(name: Atom<'a>, symbol_id: SymbolId) -> Self {
+    pub fn new(name: Ident<'a>, symbol_id: SymbolId) -> Self {
         Self { name, symbol_id }
     }
 
     /// Create `BoundIdentifier` from a `BindingIdentifier`
     pub fn from_binding_ident(ident: &BindingIdentifier<'a>) -> Self {
-        Self { name: ident.name.into(), symbol_id: ident.symbol_id() }
+        Self { name: ident.name, symbol_id: ident.symbol_id() }
     }
 
     /// Convert `BoundIdentifier` to `MaybeBoundIdentifier`

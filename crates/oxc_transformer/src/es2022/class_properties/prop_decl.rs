@@ -2,7 +2,7 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_ast::{NONE, ast::*};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::reference::ReferenceFlags;
 
 use crate::{
@@ -344,7 +344,7 @@ impl<'a> ClassProperties<'a, '_> {
         let object_symbol_id = ctx.scoping().find_binding(ctx.current_scope_id(), "Object");
         let object = ctx.create_ident_expr(
             SPAN,
-            Atom::from("Object"),
+            Ident::new_const("Object"),
             object_symbol_id,
             ReferenceFlags::Read,
         );

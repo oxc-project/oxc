@@ -1160,8 +1160,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSConditionalType<'a>> {
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSParenthesizedType<'a>> {
-    fn write(&self, f: &mut Formatter<'_, 'a>) {
-        write!(f, ["(", self.type_annotation(), ")"]);
+    fn write(&self, _f: &mut Formatter<'_, 'a>) {
+        unreachable!("No `TSParenthesizedType` as we disabled `preserve_parens` in the parser")
     }
 }
 

@@ -41,7 +41,7 @@ use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVe
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Atom, Ident, SPAN};
+use oxc_span::{Ident, SPAN};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -173,11 +173,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             );
 
             ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, static_block_new_scope_id);
-            ctx.scoping_mut().move_binding(
-                scope_id,
-                static_block_new_scope_id,
-                Ident::from(using_ctx.name),
-            );
+            ctx.scoping_mut().move_binding(scope_id, static_block_new_scope_id, using_ctx.name);
             *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::StrictMode;
 
             block.set_scope_id(static_block_new_scope_id);
@@ -292,11 +288,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             let current_hoist_scope_id = ctx.current_hoist_scope_id();
             node.block.set_scope_id(block_stmt_scope_id);
             ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, current_hoist_scope_id);
-            ctx.scoping_mut().move_binding(
-                scope_id,
-                current_hoist_scope_id,
-                Ident::from(using_ctx.name),
-            );
+            ctx.scoping_mut().move_binding(scope_id, current_hoist_scope_id, using_ctx.name);
 
             ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
         }
@@ -349,7 +341,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
                             }
                             _ => (
                                 ctx.generate_binding_in_current_scope(
-                                    Atom::from("_default"),
+                                    Ident::new_const("_default"),
                                     SymbolFlags::FunctionScopedVariable,
                                 ),
                                 SPAN,
@@ -820,7 +812,7 @@ impl<'a> ExplicitResourceManagement<'a, '_> {
         // We can skip using `generate_uid` here as no code within the `catch` block which can use a
         // binding called `_`. `using_ctx` is a UID with prefix `_usingCtx`.
         let ident = ctx.generate_binding(
-            Atom::from("_"),
+            Ident::new_const("_"),
             block_scope_id,
             SymbolFlags::CatchVariable | SymbolFlags::FunctionScopedVariable,
         );

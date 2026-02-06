@@ -105,7 +105,7 @@ declare_oxc_lint!(
     /// ```
     NoMisleadingCharacterClass,
     eslint,
-    nursery, // TODO: change category to `correctness`, after oxc-project/oxc#13436
+    correctness,
     config = NoMisleadingCharacterClass,
 );
 

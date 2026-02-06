@@ -12,7 +12,7 @@
   help: Remove the debugger statement
 
 Found 0 warnings and 1 error.
-Finished in Xms on 2 files with 91 rules using X threads.
+Finished in Xms on 2 files with 92 rules using X threads.
 ```
 
 # stderr

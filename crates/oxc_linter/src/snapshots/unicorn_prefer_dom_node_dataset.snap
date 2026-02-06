@@ -108,11 +108,17 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `element.setAttribute("DATA-Foo-bar", "🦄")` with `element.dataset.fooBar = "🦄"`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:9]
+ 1 │ element.setAttribute('data-a"b', "zaz");
+   ·         ────────────
+   ╰────
+  help: Replace `element.setAttribute('data-a"b', "zaz")` with `element.dataset["a\"b"] = "zaz"`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:19]
  1 │ optional?.element.setAttribute("data-unicorn", "🦄");
    ·                   ────────────
    ╰────
-  help: Replace `optional?.element.setAttribute("data-unicorn", "🦄")` with `optional?.element.dataset.unicorn = "🦄"`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:21]
@@ -196,6 +202,13 @@ source: crates/oxc_linter/src/tester.rs
    ·                         ──────────
    ╰────
   help: Replace `element.removeAttribute("data-foo")` with `delete element.dataset.foo`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:25]
+ 1 │ element.removeAttribute('data-a"b');
+   ·                         ──────────
+   ╰────
+  help: Replace `element.removeAttribute('data-a"b')` with `delete element.dataset["a\"b"]`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:52]
@@ -309,11 +322,17 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `element.querySelector("#selector").hasAttribute("data-AllowAccess")` with `Object.hasOwn(element.querySelector("#selector").dataset, "allowaccess")`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:9]
+ 1 │ element.hasAttribute('data-a"b');
+   ·         ────────────
+   ╰────
+  help: Replace `element.hasAttribute('data-a"b')` with `Object.hasOwn(element.dataset, "a\"b")`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:19]
  1 │ optional?.element.hasAttribute("data-unicorn");
    ·                   ────────────
    ╰────
-  help: Replace `optional?.element.hasAttribute("data-unicorn")` with `Object.hasOwn(optional?.element.dataset, "unicorn")`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:9]
@@ -405,6 +424,13 @@ source: crates/oxc_linter/src/tester.rs
    ·                                    ────────────
    ╰────
   help: Replace `element.querySelector("#selector").getAttribute("data-AllowAccess")` with `element.querySelector("#selector").dataset.allowaccess`.
+
+  ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
+   ╭─[prefer_dom_node_dataset.mjs:1:9]
+ 1 │ element.getAttribute('data-a"b');
+   ·         ────────────
+   ╰────
+  help: Replace `element.getAttribute('data-a"b')` with `element.dataset["a\"b"]`.
 
   ⚠ eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.
    ╭─[prefer_dom_node_dataset.mjs:1:19]

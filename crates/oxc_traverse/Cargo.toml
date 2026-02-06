@@ -30,6 +30,7 @@ oxc_data_structures = { workspace = true, features = ["stack"] }
 oxc_ecmascript = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
+oxc_str = { workspace = true }
 oxc_syntax = { workspace = true }
 
 itoa = { workspace = true }

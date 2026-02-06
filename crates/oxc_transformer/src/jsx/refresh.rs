@@ -17,7 +17,7 @@ use oxc_ast_visit::{
     walk::{walk_call_expression, walk_declaration},
 };
 use oxc_semantic::{ReferenceFlags, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_span::{Atom, GetSpan, Ident, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::{Ancestor, BoundIdentifier, Traverse};
 
@@ -336,11 +336,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactRefresh<'a, '_> {
 
         if !is_builtin_hook(&hook_name) {
             // Check if a corresponding binding exists where we emit the signature.
-            let (binding_name, is_member_expression): (Option<Atom>, _) = match &call_expr.callee {
-                Expression::Identifier(ident) => (Some(ident.name.into()), false),
+            let (binding_name, is_member_expression): (Option<Ident>, _) = match &call_expr.callee {
+                Expression::Identifier(ident) => (Some(ident.name), false),
                 Expression::StaticMemberExpression(member) => {
                     if let Expression::Identifier(object) = &member.object {
-                        (Some(object.name.into()), true)
+                        (Some(object.name), true)
                     } else {
                         (None, false)
                     }
@@ -531,7 +531,7 @@ impl<'a> ReactRefresh<'a, '_> {
     ) -> Statement<'a> {
         let left = self.create_registration(id.name.into(), ctx);
         let right =
-            ctx.create_bound_ident_expr(SPAN, id.name.into(), id.symbol_id(), ReferenceFlags::Read);
+            ctx.create_bound_ident_expr(SPAN, id.name, id.symbol_id(), ReferenceFlags::Read);
         let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
         ctx.ast.statement_expression(SPAN, expr)
     }

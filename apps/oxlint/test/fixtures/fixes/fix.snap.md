@@ -5,7 +5,7 @@
 ```
   x Error running JS plugin.
   | File path: <fixture>/files/range_end_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 111
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 116
 
   x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_end_out_of_bounds.js
@@ -17,7 +17,7 @@
 
   x Error running JS plugin.
   | File path: <fixture>/files/range_end_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 119
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 124
 
   x Plugin `fixes-plugin/fixes` returned invalid fixes.
   | File path: <fixture>/files/range_start_after_end.js
@@ -29,11 +29,11 @@
 
   x Error running JS plugin.
   | File path: <fixture>/files/range_start_negative.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 111
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 110
 
   x Error running JS plugin.
   | File path: <fixture>/files/range_start_too_large.js
-  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 119
+  | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 118
 
   x fixes-plugin(fixes): end out of bounds
    ,-[files/range_end_out_of_bounds.js:1:5]

@@ -1,8 +1,13 @@
 use cow_utils::CowUtils;
-use oxc_ast::{AstKind, ast::Argument};
+use oxc_allocator::Allocator;
+use oxc_ast::{
+    AstBuilder, AstKind,
+    ast::{Argument, CallExpression, Expression},
+};
+use oxc_codegen::CodegenOptions;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_syntax::identifier::is_identifier_name;
 
 use crate::{
@@ -113,7 +118,7 @@ impl Rule for PreferDomNodeDataset {
         match method_name {
             "setAttribute" => {
                 ctx.diagnostic_with_fix(set(span), |fixer| {
-                    if member_expr.optional() {
+                    if call_uses_optional_chain(call_expr) {
                         return fixer.noop();
                     }
                     if !is_value_not_usable(node, ctx) {
@@ -167,6 +172,10 @@ impl Rule for PreferDomNodeDataset {
             }
             "hasAttribute" => {
                 ctx.diagnostic_with_fix(has(span), |fixer| {
+                    if call_uses_optional_chain(call_expr) {
+                        return fixer.noop();
+                    }
+
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -224,8 +233,42 @@ fn is_value_not_usable(node: &AstNode, ctx: &LintContext) -> bool {
     false
 }
 
-fn dataset_property_text(name: &str) -> String {
-    if is_identifier_name(name) { format!(".{name}") } else { format!(r#"["{name}"]"#) }
+fn call_uses_optional_chain(call_expr: &CallExpression) -> bool {
+    call_expr.optional || expression_uses_optional_chain(&call_expr.callee)
+}
+
+fn expression_uses_optional_chain(expr: &Expression) -> bool {
+    let expr = expr.get_inner_expression();
+
+    if matches!(expr, Expression::ChainExpression(_)) {
+        return true;
+    }
+
+    if let Some(member_expr) = expr.as_member_expression() {
+        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
+    }
+
+    if let Expression::CallExpression(call_expr) = expr {
+        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
+    }
+
+    false
+}
+
+fn to_string_literal_text(fixer: RuleFixer, text: &str) -> String {
+    let mut codegen = fixer.codegen().with_options(CodegenOptions::default());
+    let alloc = Allocator::default();
+    let ast = AstBuilder::new(&alloc);
+    codegen.print_expression(&ast.expression_string_literal(SPAN, ast.atom(text), None));
+    codegen.into_source_text()
+}
+
+fn dataset_property_text(fixer: RuleFixer, name: &str) -> String {
+    if is_identifier_name(name) {
+        format!(".{name}")
+    } else {
+        format!("[{}]", to_string_literal_text(fixer, name))
+    }
 }
 
 fn fix_to_dataset_assignment(
@@ -237,7 +280,7 @@ fn fix_to_dataset_assignment(
     ctx: &LintContext,
 ) -> RuleFix {
     let object_text = ctx.source_range(object_span);
-    let property_access = dataset_property_text(property_name);
+    let property_access = dataset_property_text(fixer, property_name);
     let fixed = format!("{object_text}.dataset{property_access} = {value}");
     fixer.replace(call_span, fixed)
 }
@@ -250,7 +293,7 @@ fn fix_to_dataset_access(
     ctx: &LintContext,
 ) -> RuleFix {
     let object_text = ctx.source_range(object_span);
-    let property_access = dataset_property_text(property_name);
+    let property_access = dataset_property_text(fixer, property_name);
     let fixed = format!("{object_text}.dataset{property_access}");
     fixer.replace(call_span, fixed)
 }
@@ -263,7 +306,7 @@ fn fix_to_dataset_delete(
     ctx: &LintContext,
 ) -> RuleFix {
     let object_text = ctx.source_range(object_span);
-    let property_access = dataset_property_text(property_name);
+    let property_access = dataset_property_text(fixer, property_name);
     let fixed = format!("delete {object_text}.dataset{property_access}");
     fixer.replace(call_span, fixed)
 }
@@ -276,7 +319,8 @@ fn fix_to_has_own(
     ctx: &LintContext,
 ) -> RuleFix {
     let object_text = ctx.source_range(object_span);
-    let fixed = format!(r#"Object.hasOwn({object_text}.dataset, "{property_name}")"#);
+    let property_name_text = to_string_literal_text(fixer, property_name);
+    let fixed = format!("Object.hasOwn({object_text}.dataset, {property_name_text})");
     fixer.replace(call_span, fixed)
 }
 
@@ -363,6 +407,7 @@ fn test() {
         r#"element.setAttribute("DATA--FOO", "🦄");"#,
         r#"element.setAttribute("DATA- ", "🦄");"#,
         r#"element.setAttribute("DATA-Foo-bar", "🦄");"#,
+        r#"element.setAttribute('data-a"b', "zaz");"#,
         r#"optional?.element.setAttribute("data-unicorn", "🦄");"#,
         r#"console.log(element.setAttribute("data-unicorn", "🦄"))"#,
         r"element.removeAttribute('data-unicorn');",
@@ -376,6 +421,7 @@ fn test() {
         r#"element.removeAttribute("data-foo.bar");"#,
         r#"element.removeAttribute("data-foo-bar");"#,
         r#"element.removeAttribute("data-foo");"#,
+        r#"element.removeAttribute('data-a"b');"#,
         r##"element.querySelector("#selector").removeAttribute("data-AllowAccess");"##,
         r#"element.removeAttribute("data-");"#,
         r#"optional?.element.removeAttribute("data-unicorn");"#,
@@ -392,6 +438,7 @@ fn test() {
         r#"element.hasAttribute("data-foo-bar");"#,
         r#"element.hasAttribute("data-foo");"#,
         r##"element.querySelector("#selector").hasAttribute("data-AllowAccess");"##,
+        r#"element.hasAttribute('data-a"b');"#,
         r#"optional?.element.hasAttribute("data-unicorn");"#,
         r#"element.hasAttribute("data-unicorn").toString()"#,
         r"element.getAttribute('data-unicorn');",
@@ -406,6 +453,7 @@ fn test() {
         r#"element.getAttribute("data-foo-bar");"#,
         r#"element.getAttribute("data-foo");"#,
         r##"element.querySelector("#selector").getAttribute("data-AllowAccess");"##,
+        r#"element.getAttribute('data-a"b');"#,
         r#"optional?.element.getAttribute("data-unicorn");"#,
         r#"element.getAttribute("data-unicorn").toString()"#,
         r#"(await promise).getAttribute("data-foo")"#,
@@ -436,6 +484,11 @@ fn test() {
         (r#"element.setAttribute("DATA--FOO", "🦄");"#, r#"element.dataset.Foo = "🦄";"#),
         (r#"element.setAttribute("DATA- ", "🦄");"#, r#"element.dataset[" "] = "🦄";"#),
         (r#"element.setAttribute("DATA-Foo-bar", "🦄");"#, r#"element.dataset.fooBar = "🦄";"#),
+        (r#"element.setAttribute('data-a"b', "zaz");"#, r#"element.dataset["a\"b"] = "zaz";"#),
+        (
+            r#"optional?.element.setAttribute("data-unicorn", "🦄");"#,
+            r#"optional?.element.setAttribute("data-unicorn", "🦄");"#,
+        ),
         (r"element.removeAttribute('data-unicorn');", r"delete element.dataset.unicorn;"),
         (r#"element.removeAttribute("data-unicorn");"#, r"delete element.dataset.unicorn;"),
         (r#"element.removeAttribute("data-unicorn",);"#, r"delete element.dataset.unicorn;"),
@@ -446,6 +499,7 @@ fn test() {
         (r#"element.removeAttribute("data-foo.bar");"#, r#"delete element.dataset["foo.bar"];"#),
         (r#"element.removeAttribute("data-foo-bar");"#, r"delete element.dataset.fooBar;"),
         (r#"element.removeAttribute("data-foo");"#, r"delete element.dataset.foo;"),
+        (r#"element.removeAttribute('data-a"b');"#, r#"delete element.dataset["a\"b"];"#),
         (
             r##"element.querySelector("#selector").removeAttribute("data-AllowAccess");"##,
             r##"delete element.querySelector("#selector").dataset.allowaccess;"##,
@@ -484,9 +538,10 @@ fn test() {
             r##"element.querySelector("#selector").hasAttribute("data-AllowAccess");"##,
             r##"Object.hasOwn(element.querySelector("#selector").dataset, "allowaccess");"##,
         ),
+        (r#"element.hasAttribute('data-a"b');"#, r#"Object.hasOwn(element.dataset, "a\"b");"#),
         (
             r#"optional?.element.hasAttribute("data-unicorn");"#,
-            r#"Object.hasOwn(optional?.element.dataset, "unicorn");"#,
+            r#"optional?.element.hasAttribute("data-unicorn");"#,
         ),
         (
             r#"element.hasAttribute("data-unicorn").toString()"#,
@@ -502,6 +557,7 @@ fn test() {
         (r#"element.getAttribute("data-foo.bar");"#, r#"element.dataset["foo.bar"];"#),
         (r#"element.getAttribute("data-foo-bar");"#, r"element.dataset.fooBar;"),
         (r#"element.getAttribute("data-foo");"#, r"element.dataset.foo;"),
+        (r#"element.getAttribute('data-a"b');"#, r#"element.dataset["a\"b"];"#),
         (
             r##"element.querySelector("#selector").getAttribute("data-AllowAccess");"##,
             r##"element.querySelector("#selector").dataset.allowaccess;"##,
