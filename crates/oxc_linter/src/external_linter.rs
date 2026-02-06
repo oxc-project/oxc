@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     config::{OxlintEnv, OxlintGlobals},
     context::ContextHost,
-    fixer::{CompositeFix, Fix, FixKind, MergeFixesError},
+    fixer::{CompositeFix, Fix, MergeFixesError},
 };
 
 pub type ExternalLinterCreateWorkspaceCb =
@@ -111,12 +111,26 @@ pub fn convert_and_merge_js_fixes(
     let mut fixes = fixes.into_iter().map(|fix| {
         let mut span = Span::new(fix.range[0], fix.range[1]);
         span_converter.convert_span_back(&mut span);
-        Fix::new(fix.text, span).with_kind(FixKind::Fix)
+        Fix::new(fix.text, span)
     });
 
     if is_single {
         #[expect(clippy::missing_panics_doc, reason = "infallible")]
-        Ok(fixes.next().unwrap())
+        let fix = fixes.next().unwrap();
+
+        // Same validation logic as in `CompositeFix::merge_fixes_fallible`.
+        // We use `source_text.get(start, end).is_none()` instead of just `end > source_text.len()`
+        // to also check that `start` and `end` are on UTF-8 character boundaries.
+        // It's possible for offsets not to be on UTF-8 character boundaries if the original UTF-16 offset
+        // was in middle of a surrogate pair (2 x UTF-16 characters, 1 x 4-byte UTF-8 character).
+        if fix.span.start > fix.span.end {
+            Err(MergeFixesError::NegativeRange(fix.span))
+        } else if source_text.get(fix.span.start as usize..fix.span.end as usize).is_none() {
+            // `end..end` matches the error from `CompositeFix::merge_fixes_fallible`
+            Err(MergeFixesError::InvalidRange(fix.span.end, fix.span.end))
+        } else {
+            Ok(fix)
+        }
     } else {
         CompositeFix::merge_fixes_fallible(fixes.collect(), source_text)
     }
