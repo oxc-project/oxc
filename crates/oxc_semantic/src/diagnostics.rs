@@ -62,12 +62,6 @@ pub fn unexpected_arguments(x0: &str, span1: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Private identifier '#{x0}' is not allowed outside class bodies"))
-        .with_label(span1)
-}
-
-#[cold]
 pub fn private_field_undeclared(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Private field '#{x0}' must be declared in an enclosing class"))
         .with_label(span1)

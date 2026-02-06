@@ -804,6 +804,14 @@ pub fn unexpected_private_identifier(span: Span) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn private_identifier_outside_class(name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "Private identifier '#{name}' is not allowed outside class bodies"
+    ))
+    .with_label(span)
+}
+
+#[cold]
 pub fn import_arguments(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Dynamic imports can only accept a module specifier and an optional set of attributes as arguments").with_label(span)
 }
