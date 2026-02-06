@@ -37,7 +37,7 @@ expression: json
       "markdownDescription": "Print spaces between brackets in object literals.\n\n- Default: `true`"
     },
     "embeddedLanguageFormatting": {
-      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\nJS-in-XXX is fully supported but still be handled by Prettier.\n\n- Default: `\"auto\"`",
+      "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
       "anyOf": [
         {
           "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
@@ -46,7 +46,7 @@ expression: json
           "type": "null"
         }
       ],
-      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\nJS-in-XXX is fully supported but still be handled by Prettier.\n\n- Default: `\"auto\"`"
+      "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
     },
     "endOfLine": {
       "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",
@@ -332,7 +332,7 @@ expression: json
           "markdownDescription": "Print spaces between brackets in object literals.\n\n- Default: `true`"
         },
         "embeddedLanguageFormatting": {
-          "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\nJS-in-XXX is fully supported but still be handled by Prettier.\n\n- Default: `\"auto\"`",
+          "description": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`",
           "anyOf": [
             {
               "$ref": "#/definitions/EmbeddedLanguageFormattingConfig"
@@ -341,7 +341,7 @@ expression: json
               "type": "null"
             }
           ],
-          "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\nJS-in-XXX is fully supported but still be handled by Prettier.\n\n- Default: `\"auto\"`"
+          "markdownDescription": "Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.\n\nNOTE: XXX-in-JS support is incomplete.\n\n- Default: `\"auto\"`"
         },
         "endOfLine": {
           "description": "Which end of line characters to apply.\n\nNOTE: `\"auto\"` is not supported.\n\n- Default: `\"lf\"`\n- Overrides `.editorconfig.end_of_line`",

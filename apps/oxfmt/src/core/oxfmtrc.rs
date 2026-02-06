@@ -158,7 +158,6 @@ pub struct FormatConfig {
     /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
     ///
     /// NOTE: XXX-in-JS support is incomplete.
-    /// JS-in-XXX is fully supported but still be handled by Prettier.
     ///
     /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -810,6 +809,8 @@ pub struct OxfmtOptions {
 ///   - `end_of_line` -> `endOfLine`
 ///   - `indent_style` -> `useTabs`
 ///   - `indent_size` -> `tabWidth`
+///
+/// Also, for (j|t)s-in-xxx embedded formatting, prepare options for `prettier-plugin-oxfmt`
 pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
     let Some(obj) = config.as_object_mut() else {
         return;
@@ -836,24 +837,17 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
         }),
     );
 
-    // Already handled by Oxfmt
-    obj.remove("overrides");
-
-    // Below are our own extensions, just remove them
-    obj.remove("ignorePatterns");
-    obj.remove("insertFinalNewline");
-    obj.remove("experimentalSortImports");
-    obj.remove("experimentalSortPackageJson");
+    // Flags for JS side to know which external Prettier plugins should be loaded
+    if obj.contains_key("experimentalTailwindcss") {
+        obj.insert("_useTailwindPlugin".to_string(), Value::Number(1.into()));
+    }
 
     // Map `experimentalTailwindcss` options to Prettier's tailwind plugin format,
     // by adding `tailwind` prefix to each field.
     // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
-    if let Some(tailwind) = obj.remove("experimentalTailwindcss")
-        && let Some(tailwind) = tailwind.as_object()
+    if let Some(tailwind) = obj.get("experimentalTailwindcss")
+        && let Some(tailwind) = tailwind.as_object().cloned()
     {
-        // NOTE: Internal flag for JS side to signal that plugin is enabled
-        obj.insert("_tailwindPluginEnabled".to_string(), Value::Bool(true));
-
         for (src, dst) in [
             ("config", "tailwindConfig"),
             ("stylesheet", "tailwindStylesheet"),
@@ -866,6 +860,56 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
                 obj.insert(dst.to_string(), v.clone());
             }
         }
+    }
+
+    // Bundle all related options into a single JSON string for `prettier-plugin-oxfmt`.
+    // Reasons are:
+    // - During `embed()` processing, Prettier's option normalization adds many internal options
+    //   - Like `originalText`, `rangeXxx` that we don't use
+    // - Prettier plugin option does not support nested object
+    //   - If flatten, need to enumerate all fields as `plugin.options`
+    //
+    // So, we explicitly list and pack what we need.
+    // Although this could be done on the JS side,
+    // keep all option-related processing here and make it explicit.
+    {
+        let mut oxfmt_plugin_options = serde_json::Map::new();
+        for key in [
+            "printWidth",
+            "useTabs",
+            "tabWidth",
+            "endOfLine",
+            "singleQuote",
+            "bracketSpacing",
+            "bracketSameLine",
+            "semi",
+            "trailingComma",
+            "arrowParens",
+            "quoteProps",
+            "jsxSingleQuote",
+            "experimentalSortImports",
+            "experimentalTailwindcss",
+        ] {
+            if let Some(value) = obj.get(key) {
+                oxfmt_plugin_options.insert(key.to_string(), value.clone());
+            }
+        }
+
+        if let Ok(json_str) = serde_json::to_string(&Value::Object(oxfmt_plugin_options)) {
+            obj.insert("_oxfmtPluginOptionsJson".to_string(), Value::String(json_str));
+        }
+    }
+
+    // To minimize payload size, remove Prettier unaware options
+    for key in [
+        "experimentalSortImports",
+        "experimentalTailwindcss",
+        "experimentalSortPackageJson",
+        "insertFinalNewline",
+        "overrides",
+        "ignorePatterns",
+    ] {
+        obj.remove(key);
     }
 
     // Any other fields are preserved as-is.
