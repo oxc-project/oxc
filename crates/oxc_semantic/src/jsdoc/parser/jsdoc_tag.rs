@@ -342,7 +342,7 @@ mod test {
                 Some(("t2", "{t2}")),
             ),
             ("/** @k3 { t3  } */", Some(("t3", "{ t3  }"))),
-            ("/** @k4 x{t4}y */", Some(("t4", "{t4}"))),
+            ("/** @k4 x{t4}y */", None),
             ("/** @k5 {t5}} */", Some(("t5", "{t5}"))),
             ("/** @k6  */", None),
             ("/** @k7 x */", None),
@@ -467,6 +467,24 @@ c7 */",
             ),
             ("/** @param {t15}a */", Some(("t15", "{t15}")), Some(("a", "a")), ("", " ")),
             ("/** @type{t16}n16*/", Some(("t16", "{t16}")), Some(("n16", "n16")), ("", "")),
+            (
+                "/** @param entries Entries in the {@link SearchableMap} */",
+                None,
+                Some(("entries", "entries")),
+                ("Entries in the {@link SearchableMap}", " Entries in the {@link SearchableMap} "),
+            ),
+            (
+                "/** @param bar - With braces {} */",
+                None,
+                Some(("bar", "bar")),
+                ("- With braces {}", " - With braces {} "),
+            ),
+            (
+                "/** @param {string} name See {@link Foo} */",
+                Some(("string", "{string}")),
+                Some(("name", "name")),
+                ("See {@link Foo}", " See {@link Foo} "),
+            ),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);
