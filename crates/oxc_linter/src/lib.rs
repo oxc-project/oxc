@@ -551,7 +551,8 @@ impl Linter {
         const BOM: &str = "\u{feff}";
         const BOM_LEN: usize = BOM.len();
 
-        let mut source_text = program.source_text;
+        let original_source_text = program.source_text;
+        let mut source_text = original_source_text;
         let has_bom = source_text.starts_with(BOM);
         if has_bom {
             source_text = &source_text[BOM_LEN..];
@@ -643,7 +644,7 @@ impl Linter {
                     // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
                     let create_fix = |fixes| match convert_and_merge_js_fixes(
                         fixes,
-                        source_text,
+                        original_source_text,
                         &span_converter,
                     ) {
                         Ok(fix) => Some(fix),

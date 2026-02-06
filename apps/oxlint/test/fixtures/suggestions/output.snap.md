@@ -3,6 +3,34 @@
 
 # stdout
 ```
+  x suggestions-plugin(suggestions): Replace "a" with "daddy"
+   ,-[files/bom.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | g = b
+   `----
+
+  x suggestions-plugin(suggestions): Prefix "c" with "magi"
+   ,-[files/bom.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | g = b
+   `----
+
+  x suggestions-plugin(suggestions): Replace "g" with "rage"
+   ,-[files/bom.js:2:1]
+ 1 | ﻿a = c;
+ 2 | g = b
+   : ^
+   `----
+
+  x suggestions-plugin(suggestions): Replace "b" with "abacus"
+   ,-[files/bom.js:2:5]
+ 1 | ﻿a = c;
+ 2 | g = b
+   :     ^
+   `----
+
   x suggestions-plugin(suggestions): Remove debugger statement
    ,-[files/index.js:1:1]
  1 | debugger;
@@ -105,8 +133,8 @@
     : ^^^^^^^^^
     `----
 
-Found 0 warnings and 13 errors.
-Finished in Xms on 1 file with 1 rules using X threads.
+Found 0 warnings and 17 errors.
+Finished in Xms on 2 files with 1 rules using X threads.
 ```
 
 # stderr
