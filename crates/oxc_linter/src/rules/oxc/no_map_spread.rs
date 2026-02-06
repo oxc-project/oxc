@@ -51,7 +51,8 @@ fn no_map_spread_diagnostic(
                 "Spreading to modify object properties in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an object"), first])
-            .with_help("Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object"),
+            .with_help("Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object")
+            .with_note("Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable."),
             // Array
             Spread::Array(_) => OxcDiagnostic::warn(
                 "Spreading to modify array elements in `map` calls is inefficient",
