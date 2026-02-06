@@ -196,6 +196,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_class_body(&mut self) -> Box<'a, ClassBody<'a>> {
         let span = self.start_span();
+        self.state.class_body_depth += 1;
         let class_elements = self.parse_normal_list_breakable(Kind::LCurly, Kind::RCurly, |p| {
             // Skip empty class element `;`
             if p.eat(Kind::Semicolon) {
@@ -206,6 +207,7 @@ impl<'a> ParserImpl<'a> {
             }
             Some(Self::parse_class_element(p))
         });
+        self.state.class_body_depth -= 1;
         self.ast.alloc_class_body(self.end_span(span), class_elements)
     }
 
