@@ -1363,7 +1363,7 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         kind: TSMethodSignatureKind,
     ) -> TSSignature<'a> {
-        let (key, computed) = self.parse_property_name();
+        let (key, computed) = self.parse_property_name(false);
         let (this_param, params) =
             self.parse_formal_parameters(FunctionKind::Declaration, FormalParameterKind::Signature);
         let return_type = self.parse_ts_return_type_annotation();
@@ -1420,7 +1420,7 @@ impl<'a> ParserImpl<'a> {
         span: u32,
         modifiers: &Modifiers<'a>,
     ) -> TSSignature<'a> {
-        let (key, computed) = self.parse_property_name();
+        let (key, computed) = self.parse_property_name(false);
         let optional = self.eat(Kind::Question);
 
         let kind = self.cur_kind();

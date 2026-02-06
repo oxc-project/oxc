@@ -62,7 +62,7 @@ impl<'a> ParserImpl<'a> {
         let asterisk_token = self.eat(Kind::Star);
         let token_is_identifier =
             self.cur_kind().is_identifier_reference(self.ctx.has_yield(), self.ctx.has_await());
-        let (key, computed) = self.parse_property_name();
+        let (key, computed) = self.parse_property_name(false);
 
         if asterisk_token || matches!(self.cur_kind(), Kind::LParen | Kind::LAngle) {
             self.verify_modifiers(
@@ -165,7 +165,14 @@ impl<'a> ParserImpl<'a> {
     /// `PropertyName`[Yield, Await] :
     ///    `LiteralPropertyName`
     ///    `ComputedPropertyName`[?Yield, ?Await]
-    pub(crate) fn parse_property_name(&mut self) -> (PropertyKey<'a>, bool) {
+    ///
+    /// `allow_private_identifier` should only be `true` in class element contexts.
+    /// For other contexts we still parse `#name` for error recovery, emit an error,
+    /// and continue with a `PropertyKey::PrivateIdentifier`.
+    pub(crate) fn parse_property_name(
+        &mut self,
+        allow_private_identifier: bool,
+    ) -> (PropertyKey<'a>, bool) {
         let mut computed = false;
         let key = match self.cur_kind() {
             Kind::Str => PropertyKey::from(self.parse_literal_expression()),
@@ -174,6 +181,16 @@ impl<'a> ParserImpl<'a> {
             Kind::LBrack => {
                 computed = true;
                 PropertyKey::from(self.parse_computed_property_name())
+            }
+            Kind::PrivateIdentifier => {
+                let private_ident = self.parse_private_identifier();
+                if !allow_private_identifier {
+                    self.error(diagnostics::private_identifier_outside_class(
+                        &private_ident.name,
+                        private_ident.span,
+                    ));
+                }
+                PropertyKey::PrivateIdentifier(self.alloc(private_ident))
             }
             _ => {
                 let ident = self.parse_identifier_name();
@@ -202,7 +219,7 @@ impl<'a> ParserImpl<'a> {
         kind: PropertyKind,
         modifiers: &Modifiers<'a>,
     ) -> Box<'a, ObjectProperty<'a>> {
-        let (key, computed) = self.parse_property_name();
+        let (key, computed) = self.parse_property_name(false);
         let function = self.parse_method(false, false, FunctionKind::ObjectMethod);
         match kind {
             PropertyKind::Get => self.check_getter(&function),
