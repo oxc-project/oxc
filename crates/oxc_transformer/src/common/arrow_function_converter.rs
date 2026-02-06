@@ -96,7 +96,7 @@ use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut::walk_expression};
 use oxc_data_structures::stack::{NonEmptyStack, SparseStack};
 use oxc_semantic::{ReferenceFlags, SymbolId};
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, Ident, SPAN};
 use oxc_syntax::{
     scope::{ScopeFlags, ScopeId},
     symbol::SymbolFlags,
@@ -879,7 +879,11 @@ impl<'a> ArrowFunctionConverter<'a> {
         let original_scope_id = ctx.scoping().symbol_scope_id(binding.symbol_id);
         if target_scope_id != original_scope_id {
             ctx.scoping_mut().set_symbol_scope_id(binding.symbol_id, target_scope_id);
-            ctx.scoping_mut().move_binding(original_scope_id, target_scope_id, &binding.name);
+            ctx.scoping_mut().move_binding(
+                original_scope_id,
+                target_scope_id,
+                Ident::from(binding.name),
+            );
         }
     }
 
@@ -1023,7 +1027,7 @@ impl<'a> ArrowFunctionConverter<'a> {
     /// Rename the `arguments` symbol to a new name.
     fn rename_arguments_symbol(symbol_id: SymbolId, name: Atom<'a>, ctx: &mut TraverseCtx<'a>) {
         let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
-        ctx.scoping_mut().rename_symbol(symbol_id, scope_id, name.as_str());
+        ctx.scoping_mut().rename_symbol(symbol_id, scope_id, Ident::from(name));
     }
 
     /// Transform the identifier reference for `arguments` if it's affected after transformation.
@@ -1062,7 +1066,7 @@ impl<'a> ArrowFunctionConverter<'a> {
         if symbol_id.is_none() {
             let reference = ctx.scoping_mut().get_reference_mut(reference_id);
             reference.set_symbol_id(binding.symbol_id);
-            ctx.scoping_mut().delete_root_unresolved_reference(&ident.name, reference_id);
+            ctx.scoping_mut().delete_root_unresolved_reference(ident.name, reference_id);
             ctx.scoping_mut().add_resolved_reference(binding.symbol_id, reference_id);
         }
 

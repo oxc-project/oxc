@@ -309,6 +309,15 @@ impl ESTree for Ident<'_> {
     }
 }
 
+/// Hash map keyed by [`Ident`].
+pub type IdentHashMap<'a, V> = rustc_hash::FxHashMap<Ident<'a>, V>;
+
+/// Arena-allocated hash map keyed by [`Ident`].
+pub type ArenaIdentHashMap<'alloc, V> = oxc_allocator::HashMap<'alloc, Ident<'alloc>, V>;
+
+/// Hash set of [`Ident`].
+pub type IdentHashSet<'a> = rustc_hash::FxHashSet<Ident<'a>>;
+
 /// Creates an [`Ident`] using interpolation of runtime expressions.
 ///
 /// Identical to [`std`'s `format!` macro](std::format), except:

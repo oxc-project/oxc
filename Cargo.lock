@@ -2339,6 +2339,7 @@ dependencies = [
  "oxc-schemars",
  "oxc_allocator",
  "oxc_estree",
+ "rustc-hash",
  "serde",
 ]
 

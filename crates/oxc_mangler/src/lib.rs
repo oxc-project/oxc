@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr};
+use oxc_span::{Atom, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -333,8 +333,8 @@ impl<'t> Mangler<'t> {
             // Scopes with direct eval: collect binding names as reserved (they can be
             // accessed by eval at runtime) and skip slot assignment (keep original names).
             if scoping.scope_flags(scope_id).contains_direct_eval() {
-                for (&name, _) in bindings {
-                    eval_reserved_names.insert(name);
+                for (name, _) in bindings {
+                    eval_reserved_names.insert(name.as_str());
                 }
                 continue;
             }
@@ -527,7 +527,7 @@ impl<'t> Mangler<'t> {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, new_name);
+                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
                 }
             }
         }
