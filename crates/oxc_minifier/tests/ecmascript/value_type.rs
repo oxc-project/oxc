@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{IdentifierReference, Statement};
+use oxc_ast::ast::{ClassElement, IdentifierReference, Statement};
 use oxc_ecmascript::{
     GlobalContext,
     constant_evaluation::{DetermineValueType, ValueType},
@@ -42,6 +42,35 @@ fn test_with_global_variables(
     };
     let result = stmt.expression.value_type(&global_reference_checker);
     assert_eq!(result, expected, "{source_text}");
+}
+
+fn test_private_in_class(source_text: &str, expected: ValueType) {
+    let wrapped_source_text = format!("class C {{ #foo; static {{ {source_text}; }} }}");
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, &wrapped_source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{wrapped_source_text}");
+    assert!(ret.errors.is_empty(), "{wrapped_source_text}");
+
+    let global_reference_checker = GlobalReferenceChecker {
+        global_variable_names: vec![
+            "undefined".to_string(),
+            "NaN".to_string(),
+            "Infinity".to_string(),
+        ],
+    };
+
+    let Some(Statement::ClassDeclaration(class_decl)) = ret.program.body.first() else {
+        panic!("should have a class declaration: {wrapped_source_text}");
+    };
+    let Some(ClassElement::StaticBlock(static_block)) = class_decl.body.body.get(1) else {
+        panic!("should have a static block in class body: {wrapped_source_text}");
+    };
+    let Some(Statement::ExpressionStatement(stmt)) = static_block.body.first() else {
+        panic!("should have an expression statement in static block: {wrapped_source_text}");
+    };
+
+    let result = stmt.expression.value_type(&global_reference_checker);
+    assert_eq!(result, expected, "{wrapped_source_text}");
 }
 
 #[test]
@@ -167,7 +196,7 @@ fn binary_tests() {
     test("foo <= bar", ValueType::Boolean);
     test("foo > bar", ValueType::Boolean);
     test("foo >= bar", ValueType::Boolean);
-    test("#foo in bar", ValueType::Boolean);
+    test_private_in_class("#foo in bar", ValueType::Boolean);
 }
 
 #[test]

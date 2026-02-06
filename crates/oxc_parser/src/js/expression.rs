@@ -175,6 +175,9 @@ impl<'a> ParserImpl<'a> {
         if let Expression::PrivateInExpression(private_in_expr) = right {
             return self.fatal_error(diagnostics::private_in_private(private_in_expr.span));
         }
+        if self.state.class_body_depth == 0 {
+            self.error(diagnostics::private_identifier_outside_class(&left.name, left.span));
+        }
         self.ast.expression_private_in(self.end_span(lhs_span), left, right)
     }
 
@@ -899,6 +902,12 @@ impl<'a> ParserImpl<'a> {
     ) -> Expression<'a> {
         Expression::from(if self.cur_kind() == Kind::PrivateIdentifier {
             let private_ident = self.parse_private_identifier();
+            if self.state.class_body_depth == 0 {
+                self.error(diagnostics::private_identifier_outside_class(
+                    &private_ident.name,
+                    private_ident.span,
+                ));
+            }
             self.ast.member_expression_private_field_expression(
                 self.end_span(lhs_span),
                 lhs,

@@ -297,15 +297,6 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     }
 }
 
-pub fn check_private_identifier_outside_class(
-    ident: &PrivateIdentifier,
-    ctx: &SemanticBuilder<'_>,
-) {
-    if ctx.class_table_builder.current_class_id.is_none() {
-        ctx.error(diagnostics::private_not_in_class(&ident.name, ident.span));
-    }
-}
-
 fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {

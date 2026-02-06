@@ -729,7 +729,13 @@ fn test() {
         ),
         // class members are ignored
         ("this.foo.map(x => ({ ...x }))", None),
-        ("this.#foo.map(x => ({ ...x }))", None),
+        (
+            "class Foo {
+                #foo = []
+                m() { this.#foo.map(x => ({ ...x })) }
+            }",
+            None,
+        ),
         // indirection
         (
             // Spread does not occur within `map`
@@ -791,7 +797,7 @@ fn test() {
         ("foo[1].map(x => ({ ...x }))", None),
         ("foo?.bar?.map(x => ({ ...x }))", None),
         ("(foo ?? bar).map(x => ({ ...x }))", None),
-        ("obj.#foo.map(x => ({ ...x }))", None),
+        ("obj['#foo'].map(x => ({ ...x }))", None),
         // spread variations
         ("a.map(x => ({ ...x.y }))", None),
         ("a.map(x => ({ ...x[y] }))", None),

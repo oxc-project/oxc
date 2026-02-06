@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Statement;
+use oxc_ast::ast::{ClassElement, Statement};
 use oxc_ecmascript::{WithoutGlobalReferenceInformation, constant_evaluation::IsInt32OrUint32};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -15,6 +15,26 @@ fn test(source_text: &str, expected: bool) {
     };
     let result = stmt.expression.is_int32_or_uint32(&WithoutGlobalReferenceInformation {});
     assert_eq!(result, expected, "{source_text}");
+}
+
+fn test_private_in_class(source_text: &str, expected: bool) {
+    let wrapped_source_text = format!("class C {{ #foo; static {{ {source_text}; }} }}");
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, &wrapped_source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{wrapped_source_text}");
+    assert!(ret.errors.is_empty(), "{wrapped_source_text}");
+
+    let Some(Statement::ClassDeclaration(class_decl)) = ret.program.body.first() else {
+        panic!("should have a class declaration: {wrapped_source_text}");
+    };
+    let Some(ClassElement::StaticBlock(static_block)) = class_decl.body.body.get(1) else {
+        panic!("should have a static block in class body: {wrapped_source_text}");
+    };
+    let Some(Statement::ExpressionStatement(stmt)) = static_block.body.first() else {
+        panic!("should have an expression statement in static block: {wrapped_source_text}");
+    };
+    let result = stmt.expression.is_int32_or_uint32(&WithoutGlobalReferenceInformation {});
+    assert_eq!(result, expected, "{wrapped_source_text}");
 }
 
 #[test]
@@ -77,7 +97,7 @@ fn binary_tests() {
     test("foo <= bar", false);
     test("foo > bar", false);
     test("foo >= bar", false);
-    test("#foo in bar", false);
+    test_private_in_class("#foo in bar", false);
 }
 
 #[test]

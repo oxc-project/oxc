@@ -249,11 +249,11 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider using `Object.assign` instead
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
-   ╭─[no_map_spread.tsx:1:10]
- 1 │ obj.#foo.map(x => ({ ...x }))
-   ·          ─┬─         ──┬─
-   ·           │            ╰── It should be mutated in place
-   ·           ╰── This map call spreads an object
+   ╭─[no_map_spread.tsx:1:13]
+ 1 │ obj['#foo'].map(x => ({ ...x }))
+   ·             ─┬─         ──┬─
+   ·              │            ╰── It should be mutated in place
+   ·              ╰── This map call spreads an object
    ╰────
   help: Consider using `Object.assign` instead
 

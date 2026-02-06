@@ -271,7 +271,7 @@ fn test() {
         ("{ let Object = function() {}; Object.prototype.p = 0 }", None), // { "ecmaVersion": 6 }
         ("x = Object.prototype.p", None),
         ("x = Array.prototype.p", None),
-        ("Array.#prototype.p = 0", None),
+        ("Array['#prototype'].p = 0", None),
         ("foo(Number.prototype.xyz).x = 1", None),
         ("let { z = Array.prototype.p } = {} ", None),
         ("Object.x.defineProperty(Array.prototype, 'p', {value: 0})", None),

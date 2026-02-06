@@ -1098,7 +1098,10 @@ fn test_fold_logical_expression_to_assignment_expression() {
     test("var x; x.y || (x.y = 3)", "var x; x.y ||= 3");
     test("var x; x['y'] || (x['y'] = 3)", "var x; x.y ||= 3");
     test("var x; x[0] || (x[0] = 3)", "var x; x[0] ||= 3");
-    test("var x; x.#y || (x.#y = 3)", "var x; x.#y ||= 3");
+    test(
+        "class C { #y; static f(x) { x.#y || (x.#y = 3) } }",
+        "class C { #y; static f(x) { x.#y ||= 3 } }",
+    );
     test("function _() { this.x || (this.x = 3) }", "function _() { this.x ||= 3 }");
     test_same("x.y || (x.y = 3)");
     // this can be compressed if `y` does not have side effect

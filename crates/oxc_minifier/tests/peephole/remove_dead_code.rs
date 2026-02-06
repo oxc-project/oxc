@@ -197,7 +197,7 @@ fn remove_unused_expressions_in_sequence() {
     test("typeof 0", "");
 
     test_same("delete (0, foo);");
-    test_same("delete (0, foo.#bar);");
+    test_same("class C { #bar; static f(foo) { delete (0, foo.#bar); } }");
     test_same("delete (0, foo.bar);");
     test_same("delete (0, foo[bar]);");
     test_same("delete (0, foo?.bar);");

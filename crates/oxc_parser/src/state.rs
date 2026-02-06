@@ -31,6 +31,9 @@ pub struct ParserState<'a> {
     /// Used to determine if a statement needs to be stored for potential reparsing
     /// in unambiguous mode.
     pub encountered_await_identifier: bool,
+
+    /// Nesting depth of class bodies currently being parsed.
+    pub class_body_depth: u32,
 }
 
 impl ParserState<'_> {
@@ -41,6 +44,7 @@ impl ParserState<'_> {
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),
             encountered_await_identifier: false,
+            class_body_depth: 0,
         }
     }
 }

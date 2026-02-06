@@ -129,7 +129,10 @@ fn test_fold_normal_assignment_to_combined_assignment() {
 
     // GetValue(x) has no sideeffect when x is a resolved identifier
     test("var x; x.y = x.y + 3", "var x; x.y += 3");
-    test("var x; x.#y = x.#y + 3", "var x; x.#y += 3");
+    test(
+        "class C { #y; static f(x) { x.#y = x.#y + 3 } }",
+        "class C { #y; static f(x) { x.#y += 3 } }",
+    );
     test_same("x.y = x.y + 3");
     // this can be compressed if `y` does not have side effect
     test_same("var x; x[y] = x[y] + 3");
@@ -924,7 +927,10 @@ fn test_flatten_nested_chain_expression() {
     test("(a?.b)?.(arg)", "a?.b?.(arg)");
     test("(a?.b)?.[0]", "a?.b?.[0]");
     test("(a?.b)?.[key]", "a?.b?.[key]");
-    test("(a?.#b)?.c", "a?.#b?.c");
+    test(
+        "class C { #b; static f(a) { return (a?.#b)?.c } }",
+        "class C { #b; static f(a) { return a?.#b?.c } }",
+    );
     test_same("a.b?.c");
     test_same("a?.b?.c");
     test_same("(a?.b).c");

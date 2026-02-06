@@ -3,7 +3,7 @@ use javascript_globals::GLOBALS;
 use rustc_hash::FxHashSet;
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::{Expression, IdentifierReference, Statement};
+use oxc_ast::ast::{ClassElement, Expression, IdentifierReference, Statement};
 use oxc_ecmascript::{
     GlobalContext,
     side_effects::{
@@ -94,6 +94,26 @@ fn test_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
 }
 
 #[track_caller]
+fn test_in_class_static_block_with_ctx(source_text: &str, ctx: &Ctx, expected: bool) {
+    let wrapped_source_text = format!("class C {{ #bar; #b; static {{ {source_text}; }} }}");
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, &wrapped_source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{wrapped_source_text}");
+    assert!(ret.errors.is_empty(), "{wrapped_source_text}");
+
+    let Some(Statement::ClassDeclaration(class_decl)) = ret.program.body.first() else {
+        panic!("should have a class declaration: {wrapped_source_text}");
+    };
+    let Some(ClassElement::StaticBlock(static_block)) = class_decl.body.body.get(2) else {
+        panic!("should have a static block in class body: {wrapped_source_text}");
+    };
+    let Some(Statement::ExpressionStatement(stmt)) = static_block.body.first() else {
+        panic!("should have an expression statement in static block: {wrapped_source_text}");
+    };
+    assert_eq!(stmt.expression.may_have_side_effects(ctx), expected, "{wrapped_source_text}");
+}
+
+#[track_caller]
 fn test_in_function(source_text: &str, expected: bool) {
     let ctx = Ctx::default();
     let allocator = Allocator::default();
@@ -142,6 +162,42 @@ fn test_assign_target_with_global_variables(
     };
 
     assert_eq!(assign_expr.left.may_have_side_effects(&ctx), expected, "{source_text}");
+}
+
+#[track_caller]
+fn test_assign_target_in_class_static_block_with_global_variables(
+    source_text: &str,
+    global_variable_names: &[&'static str],
+    expected: bool,
+) {
+    let ctx = Ctx {
+        global_variable_names: global_variable_names.iter().copied().collect(),
+        ..Default::default()
+    };
+    let wrapped_source_text = format!("class C {{ #b; static {{ {source_text}; }} }}");
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, &wrapped_source_text, SourceType::mjs()).parse();
+    assert!(!ret.panicked, "{wrapped_source_text}");
+    assert!(ret.errors.is_empty(), "{wrapped_source_text}");
+
+    let Some(stmt) = ret.program.body.first() else {
+        panic!("should have a class declaration: {wrapped_source_text}");
+    };
+    let Statement::ClassDeclaration(class_decl) = stmt else {
+        panic!("should have a class declaration: {wrapped_source_text}");
+    };
+    let Some(ClassElement::StaticBlock(static_block)) = class_decl.body.body.get(1) else {
+        panic!("should have a static block in class body: {wrapped_source_text}");
+    };
+    let Some(Statement::ExpressionStatement(stmt)) = static_block.body.first() else {
+        panic!("should have an expression statement in static block: {wrapped_source_text}");
+    };
+    let Expression::AssignmentExpression(assign_expr) = &stmt.expression.without_parentheses()
+    else {
+        panic!("should have a assignment expression: {wrapped_source_text}");
+    };
+
+    assert_eq!(assign_expr.left.may_have_side_effects(&ctx), expected, "{wrapped_source_text}");
 }
 
 /// <https://github.com/google/closure-compiler/blob/v20240609/test/com/google/javascript/jscomp/AstAnalyzerTest.java#L362>
@@ -1019,8 +1075,8 @@ fn test_property_read_side_effects_support() {
     test_with_ctx("foo[0]", &none_ctx, false);
     test_with_ctx("foo[0n]", &none_ctx, false);
     test_with_ctx("foo[bar()]", &none_ctx, true);
-    test_with_ctx("foo.#bar", &all_ctx, true);
-    test_with_ctx("foo.#bar", &none_ctx, false);
+    test_in_class_static_block_with_ctx("foo.#bar", &all_ctx, true);
+    test_in_class_static_block_with_ctx("foo.#bar", &none_ctx, false);
     test_with_ctx("({ bar } = foo)", &all_ctx, true);
     // test_with_ctx("({ bar } = foo)", &none_ctx, false);
 }
@@ -1128,7 +1184,7 @@ fn test_assignment_targets() {
     test_assign_target("a['b'] = 1", false);
     test_assign_target("a[foo()] = 1", true); // `foo()` may have sideeffect
     test_assign_target_with_global_variables("a['b'] = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
-    test_assign_target("a.#b = 1", false);
-    test_assign_target_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
-    test_assign_target("(foo(), a).#b = 1", true); // `foo()` may have sideeffect
+    test_assign_target_in_class_static_block_with_global_variables("a.#b = 1", &[], false);
+    test_assign_target_in_class_static_block_with_global_variables("a.#b = 1", &["a"], true); // `a` might not be declared and cause ReferenceError in strict mode
+    test_assign_target_in_class_static_block_with_global_variables("(foo(), a).#b = 1", &[], true); // `foo()` may have sideeffect
 }
