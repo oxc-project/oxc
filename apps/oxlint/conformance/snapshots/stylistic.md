@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   129 | 100.0% |
-| Fully passing     |   127 |  98.4% |
-| Partially passing |     2 |   1.6% |
+| Fully passing     |   116 |  89.9% |
+| Partially passing |    13 |  10.1% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,13 +18,12 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 18416 | 100.0% |
-| Passing     | 18303 |  99.4% |
-| Failing     |     7 |   0.0% |
+| Passing     | 18241 |  99.0% |
+| Failing     |    69 |   0.4% |
 | Skipped     |   106 |   0.6% |
 
 ## Fully Passing Rules
 
-- `array-bracket-newline` (210 tests) (1 skipped)
 - `array-bracket-spacing` (143 tests)
 - `array-element-newline` (167 tests)
 - `arrow-parens` (110 tests)
@@ -39,7 +38,6 @@
 - `comma-style` (140 tests) (10 skipped)
 - `computed-property-spacing` (126 tests)
 - `computed-property-spacing` (10 tests)
-- `curly-newline` (111 tests)
 - `dot-location` (80 tests)
 - `dot-location` (4 tests)
 - `dot-location` (9 tests)
@@ -49,13 +47,10 @@
 - `function-call-argument-newline` (64 tests)
 - `function-call-spacing` (200 tests)
 - `function-call-spacing` (27 tests) (1 skipped)
-- `function-paren-newline` (198 tests)
 - `generator-star-spacing` (203 tests)
 - `implicit-arrow-linebreak` (62 tests)
 - `indent` (1096 tests) (1 skipped)
-- `indent` (413 tests) (17 skipped)
 - `indent` (159 tests)
-- `indent-binary-ops` (48 tests) (2 skipped)
 - `jsx-child-element-spacing` (82 tests)
 - `jsx-closing-bracket-location` (327 tests)
 - `jsx-closing-tag-location` (44 tests)
@@ -69,7 +64,6 @@
 - `jsx-indent-props` (120 tests)
 - `jsx-max-props-per-line` (119 tests)
 - `jsx-newline` (84 tests)
-- `jsx-one-expression-per-line` (342 tests)
 - `jsx-pascal-case` (128 tests)
 - `jsx-quotes` (18 tests)
 - `jsx-self-closing-comp` (141 tests)
@@ -98,7 +92,6 @@
 - `newline-per-chained-call` (37 tests)
 - `no-confusing-arrow` (30 tests)
 - `no-extra-parens` (1114 tests)
-- `no-extra-parens` (109 tests)
 - `no-extra-semi` (50 tests)
 - `no-extra-semi` (10 tests)
 - `no-floating-decimal` (8 tests)
@@ -112,8 +105,6 @@
 - `no-whitespace-before-property` (192 tests)
 - `no-whitespace-before-property` (9 tests)
 - `nonblock-statement-body-position` (48 tests)
-- `object-curly-newline` (144 tests) (2 skipped)
-- `object-curly-newline` (335 tests)
 - `object-curly-spacing` (201 tests)
 - `object-curly-spacing` (122 tests)
 - `object-property-newline` (73 tests)
@@ -137,9 +128,7 @@
 - `space-before-blocks` (26 tests)
 - `space-before-function-paren` (87 tests)
 - `space-before-function-paren` (13 tests)
-- `space-in-parens` (139 tests)
 - `space-infix-ops` (74 tests)
-- `space-infix-ops` (182 tests) (1 skipped)
 - `space-unary-ops` (116 tests)
 - `spaced-comment` (102 tests)
 - `switch-colon-spacing` (46 tests)
@@ -154,10 +143,3101 @@
 
 ## Rules with Failures
 
+- `array-bracket-newline` - 207 / 210 (98.6%)
+- `curly-newline` - 89 / 111 (80.2%)
+- `function-paren-newline` - 197 / 198 (99.5%)
+- `indent` - 410 / 413 (99.3%)
+- `indent-binary-ops` - 38 / 48 (79.2%)
+- `jsx-one-expression-per-line` - 330 / 342 (96.5%)
 - `jsx-props-no-multi-spaces` - 81 / 82 (98.8%)
 - `jsx-tag-spacing` - 211 / 217 (97.2%)
+- `no-extra-parens` - 107 / 109 (98.2%)
+- `object-curly-newline` - 143 / 144 (99.3%)
+- `object-curly-newline` - 330 / 335 (98.5%)
+- `space-in-parens` - 137 / 139 (98.6%)
+- `space-infix-ops` - 181 / 182 (99.5%)
 
 ## Rules with Failures Detail
+
+### `array-bracket-newline`
+
+Pass: 206 / 210 (98.1%)
+Fail: 3 / 210 (1.4%)
+Skip: 1 / 210 (0.5%)
+
+#### array-bracket-newline > invalid
+
+```js
+var foo = [];
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "var foo = [\n];",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "messageId": "missingOpeningLinebreak",
+      "line": 1,
+      "column": 11,
+      "endLine": 1,
+      "endColumn": 12
+    },
+    {
+      "messageId": "missingClosingLinebreak",
+      "line": 1,
+      "column": 12,
+      "endLine": 1,
+      "endColumn": 13
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var foo = [\n\n];'
+- 'var foo = [\n];'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### array-bracket-newline > invalid
+
+```js
+var foo = [];
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "var foo = [\n];",
+  "options": [
+    {
+      "minItems": 0
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "missingOpeningLinebreak",
+      "line": 1,
+      "column": 11
+    },
+    {
+      "messageId": "missingClosingLinebreak",
+      "line": 1,
+      "column": 12
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var foo = [\n\n];'
+- 'var foo = [\n];'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### array-bracket-newline > invalid
+
+```js
+var [] = foo;
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {},
+    "ecmaVersion": 6
+  },
+  "output": "var [\n] = foo;",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "messageId": "missingOpeningLinebreak",
+      "line": 1,
+      "column": 5
+    },
+    {
+      "messageId": "missingClosingLinebreak",
+      "line": 1,
+      "column": 6
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var [\n\n] = foo;'
+- 'var [\n] = foo;'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `curly-newline`
+
+Pass: 89 / 111 (80.2%)
+Fail: 22 / 111 (19.8%)
+Skip: 0 / 111 (0.0%)
+
+#### curly-newline > invalid
+
+```js
+{}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{\n}",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 2,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
+
+'{\n\n}' !== '{\n}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+for(;;){{}}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "for(;;){{\n}}",
+  "options": [
+    {
+      "BlockStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 9,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 10,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'for(;;){{\n\n}}'
+- 'for(;;){{\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+if(true){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{if(true){\n}}",
+  "options": [
+    {
+      "IfStatementConsequent": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 9,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 10,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{if(true){\n\n}}'
+- '{if(true){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+if(true){}else{}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{if(true){}else{\n}}",
+  "options": [
+    {
+      "IfStatementAlternative": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 15,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 16,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{if(true){}else{\n\n}}'
+- '{if(true){}else{\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+do{}while(true)
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{do{\n}while(true)}",
+  "options": [
+    {
+      "DoWhileStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 3,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 4,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{do{\n\n}while(true)}'
+- '{do{\n}while(true)}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+for(const {} in {}){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{for(const {} in {}){\n}}",
+  "options": [
+    {
+      "ForInStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 20,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 21,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{for(const {} in {}){\n\n}}'
+- '{for(const {} in {}){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+for(const {} of {}){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{for(const {} of {}){\n}}",
+  "options": [
+    {
+      "ForOfStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 20,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 21,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{for(const {} of {}){\n\n}}'
+- '{for(const {} of {}){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+for(;;){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{for(;;){\n}}",
+  "options": [
+    {
+      "ForStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 8,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 9,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{for(;;){\n\n}}'
+- '{for(;;){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+while({}){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{while({}){\n}}",
+  "options": [
+    {
+      "WhileStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 10,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 11,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{while({}){\n\n}}'
+- '{while({}){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+switch({}){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{switch({}){\n}}",
+  "options": [
+    {
+      "SwitchStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 11,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 12,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{switch({}){\n\n}}'
+- '{switch({}){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+switch({}){case {}: {}}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{switch({}){case {}: {\n}}}",
+  "options": [
+    {
+      "SwitchCase": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 21,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 22,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{switch({}){case {}: {\n\n}}}'
+- '{switch({}){case {}: {\n}}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+try{}finally{}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{try{\n}finally{}}",
+  "options": [
+    {
+      "TryStatementBlock": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 4,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 5,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{try{\n\n}finally{}}'
+- '{try{\n}finally{}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+try{}catch(_){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{try{}catch(_){\n}}",
+  "options": [
+    {
+      "TryStatementHandler": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 14,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 15,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{try{}catch(_){\n\n}}'
+- '{try{}catch(_){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+try{}finally{}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{try{}finally{\n}}",
+  "options": [
+    {
+      "TryStatementFinalizer": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 13,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 14,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{try{}finally{\n\n}}'
+- '{try{}finally{\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+(() => {})
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{(() => {\n})}",
+  "options": [
+    {
+      "ArrowFunctionExpression": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 8,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 9,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{(() => {\n\n})}'
+- '{(() => {\n})}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+function _() {}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{function _() {\n}}",
+  "options": [
+    {
+      "FunctionDeclaration": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 14,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 15,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{function _() {\n\n}}'
+- '{function _() {\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+(function() {})
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{(function() {\n})}",
+  "options": [
+    {
+      "FunctionExpression": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 13,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 14,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{(function() {\n\n})}'
+- '{(function() {\n})}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+void {_(){}}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{void {_(){\n}}}",
+  "options": [
+    {
+      "Property": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 10,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 11,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{void {_(){\n\n}}}'
+- '{void {_(){\n}}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+(class {})
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{(class {\n})}",
+  "options": [
+    {
+      "ClassBody": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 8,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 9,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{(class {\n\n})}'
+- '{(class {\n})}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+(class {static{}})
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{(class {static{\n}})}",
+  "options": [
+    {
+      "StaticBlock": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 15,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 16,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{(class {static{\n\n}})}'
+- '{(class {static{\n}})}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+with({}){}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{with({}){\n}}",
+  "options": [
+    {
+      "WithStatement": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 9,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 10,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{with({}){\n\n}}'
+- '{with({}){\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### curly-newline > invalid
+
+```js
+{
+module _{}
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{module _{\n}}",
+  "options": [
+    {
+      "TSModuleBlock": "always"
+    }
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 1,
+      "messageId": "unexpectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 9,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 2,
+      "column": 10,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    },
+    {
+      "line": 3,
+      "column": 1,
+      "messageId": "unexpectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{module _{\n\n}}'
+- '{module _{\n}}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `function-paren-newline`
+
+Pass: 197 / 198 (99.5%)
+Fail: 1 / 198 (0.5%)
+Skip: 0 / 198 (0.0%)
+
+#### function-paren-newline > invalid
+
+```js
+function baz() {}
+```
+
+```json
+{
+  "output": "function baz(\n) {}",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "messageId": "expectedAfter"
+    },
+    {
+      "messageId": "expectedBefore"
+    }
+  ]
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'function baz(\n\n) {}'
+- 'function baz(\n) {}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `indent`
+
+Pass: 393 / 413 (95.2%)
+Fail: 3 / 413 (0.7%)
+Skip: 17 / 413 (4.1%)
+
+#### jsx-indent > invalid
+
+```js
+const IndexPage = () => (
+  <h1>
+Hi people
+<button/>
+</h1>
+);
+// features: [], parser: default, , options: [2], 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "parser": {}
+  },
+  "output": "const IndexPage = () => (\n  <h1>\n    Hi people\n<button/>\n  </h1>\n);\n// features: [], parser: default, , options: [2], ",
+  "options": [
+    2
+  ],
+  "errors": [
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "4 spaces",
+        "actual": 0
+      },
+      "line": 2
+    },
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "4 spaces",
+        "actual": 0
+      },
+      "line": 4
+    },
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "2 spaces",
+        "actual": 0
+      },
+      "line": 5
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  'const IndexPage = () => (\n' +
+    '  <h1>\n' +
+    '    Hi people\n' +
++   '    <button/>\n' +
+-   '<button/>\n' +
+    '  </h1>\n' +
+    ');\n' +
+    '// features: [], parser: default, , options: [2], '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-indent > invalid
+
+```js
+const IndexPage = () => (
+  <h1>
+Hi people
+<button/>
+</h1>
+);
+// features: [], parser: @babel/eslint-parser, , options: [2], 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      },
+      "requireConfigFile": false,
+      "babelOptions": {
+        "presets": [
+          "@babel/preset-react"
+        ],
+        "plugins": [
+          "@babel/plugin-syntax-do-expressions",
+          "@babel/plugin-syntax-function-bind",
+          [
+            "@babel/plugin-syntax-decorators",
+            {
+              "legacy": true
+            }
+          ]
+        ],
+        "parserOpts": {
+          "allowSuperOutsideMethod": false,
+          "allowReturnOutsideFunction": false
+        }
+      }
+    },
+    "parser": {}
+  },
+  "output": "const IndexPage = () => (\n  <h1>\n    Hi people\n<button/>\n  </h1>\n);\n// features: [], parser: @babel/eslint-parser, , options: [2], ",
+  "options": [
+    2
+  ],
+  "errors": [
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "4 spaces",
+        "actual": 0
+      },
+      "line": 2
+    },
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "4 spaces",
+        "actual": 0
+      },
+      "line": 4
+    },
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "2 spaces",
+        "actual": 0
+      },
+      "line": 5
+    }
+  ],
+  "_parser": {
+    "specifier": "@babel/eslint-parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  'const IndexPage = () => (\n' +
+    '  <h1>\n' +
+    '    Hi people\n' +
++   '    <button/>\n' +
+-   '<button/>\n' +
+    '  </h1>\n' +
+    ');\n' +
+    '// features: [], parser: @babel/eslint-parser, , options: [2], '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-indent > invalid
+
+```js
+const IndexPage = () => (
+  <h1>
+Hi people
+<button/>
+</h1>
+);
+// features: [], parser: @typescript-eslint/parser, , options: [2], 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      }
+    },
+    "parser": {}
+  },
+  "output": "const IndexPage = () => (\n  <h1>\n    Hi people\n<button/>\n  </h1>\n);\n// features: [], parser: @typescript-eslint/parser, , options: [2], ",
+  "options": [
+    2
+  ],
+  "errors": [
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "4 spaces",
+        "actual": 0
+      },
+      "line": 2
+    },
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "4 spaces",
+        "actual": 0
+      },
+      "line": 4
+    },
+    {
+      "messageId": "wrongIndentation",
+      "data": {
+        "expected": "2 spaces",
+        "actual": 0
+      },
+      "line": 5
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  'const IndexPage = () => (\n' +
+    '  <h1>\n' +
+    '    Hi people\n' +
++   '    <button/>\n' +
+-   '<button/>\n' +
+    '  </h1>\n' +
+    ');\n' +
+    '// features: [], parser: @typescript-eslint/parser, , options: [2], '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `indent-binary-ops`
+
+Pass: 36 / 48 (75.0%)
+Fail: 10 / 48 (20.8%)
+Skip: 2 / 48 (4.2%)
+
+#### indent-binary-ops > invalid
+
+```js
+function foo() {
+  if (a
+  || b
+      || c || d
+        || (d && b)
+  ) {
+    foo()
+  }
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "function foo() {\n  if (a\n    || b\n    || c || d\n    || (d && b)\n  ) {\n    foo()\n  }\n}",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  'function foo() {\n' +
+    '  if (a\n' +
+    '    || b\n' +
++   '  || c || d\n' +
++   '      || (d && b)\n' +
+-   '    || c || d\n' +
+-   '    || (d && b)\n' +
+    '  ) {\n' +
+    '    foo()\n' +
+    '  }\n' +
+    '}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+if (
+  typeof woof === 'string' &&
+  typeof woof === 'string' &&
+    typeof woof === 'string' &&
+  isNaN(null) &&
+    isNaN(NaN)
+) {
+  return;
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "if (\n  typeof woof === 'string' &&\n  typeof woof === 'string' &&\n  typeof woof === 'string' &&\n  isNaN(null) &&\n  isNaN(NaN)\n) {\n  return;\n}",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  'if (\n' +
+    "  typeof woof === 'string' &&\n" +
+    "  typeof woof === 'string' &&\n" +
+    "  typeof woof === 'string' &&\n" +
++   '    isNaN(null) &&\n' +
+-   '  isNaN(null) &&\n' +
+    '  isNaN(NaN)\n' +
+    ') {\n' +
+    '  return;\n' +
+    '}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+const a = (
+  (b
+      && c)
+    || (d
+  && e)
+)
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "const a = (\n  (b\n    && c)\n  || (d\n    && e)\n)",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'const a = (\n  (b\n    && c)\n    || (d\n      && e)\n)'
+- 'const a = (\n  (b\n    && c)\n  || (d\n    && e)\n)'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+{
+  const a = false
+  || (a && b)
+  || (c && d)
+  || (e && f)
+  || (g && h)
+}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{\n  const a = false\n    || (a && b)\n    || (c && d)\n    || (e && f)\n    || (g && h)\n}",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '{\n' +
+    '  const a = false\n' +
+    '    || (a && b)\n' +
++   '  || (c && d)\n' +
++   '  || (e && f)\n' +
++   '  || (g && h)\n' +
+-   '    || (c && d)\n' +
+-   '    || (e && f)\n' +
+-   '    || (g && h)\n' +
+    '}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+const a = 1
++ 2
+    + 3;
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "const a = 1\n  + 2\n  + 3;",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'const a = 1\n  + 2\n+ 3;'
+- 'const a = 1\n  + 2\n  + 3;'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+a = 1
+- 2
+    - 3;
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "a = 1\n  - 2\n  - 3;",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'a = 1\n  - 2\n- 3;'
+- 'a = 1\n  - 2\n  - 3;'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+const a = 1 *
+2 *
+    3;
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "const a = 1 *\n  2 *\n  3;",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'const a = 1 *\n  2 *\n3;'
+- 'const a = 1 *\n  2 *\n  3;'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+a = 1 /
+2 /
+    3;
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "a = 1 /\n  2 /\n  3;",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'a = 1 /\n  2 /\n3;'
+- 'a = 1 /\n  2 /\n  3;'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+this.a = this.b
+|| 2
+    || 3;
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "this.a = this.b\n  || 2\n  || 3;",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'this.a = this.b\n  || 2\n|| 3;'
+- 'this.a = this.b\n  || 2\n  || 3;'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### indent-binary-ops > invalid
+
+```js
+{ aaaaa &&
+      bbbbb &&
+    ccccc }
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "{ aaaaa &&\n  bbbbb &&\n  ccccc }",
+  "errors": "__unknown__",
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '{ aaaaa &&\n  bbbbb &&\n      ccccc }'
+- '{ aaaaa &&\n  bbbbb &&\n  ccccc }'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `jsx-one-expression-per-line`
+
+Pass: 330 / 342 (96.5%)
+Fail: 12 / 342 (3.5%)
+Skip: 0 / 342 (0.0%)
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <App>
+          foo {"bar"} baz
+        </App>
+      
+// features: [], parser: default, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <App>\n          foo \n{' '}\n{\"bar\"} baz\n        </App>\n      \n// features: [], parser: default, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"bar\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": " baz        "
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        <App>\n' +
+    '          foo \n' +
+    "{' '}\n" +
++   '{"bar"}\n' +
++   "{' '}\n" +
++   'baz\n' +
++   '</App>\n' +
+-   '{"bar"} baz\n' +
+-   '        </App>\n' +
+    '      \n' +
+    '// features: [], parser: default, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <App>
+          foo {"bar"} baz
+        </App>
+      
+// features: [], parser: @babel/eslint-parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      },
+      "requireConfigFile": false,
+      "babelOptions": {
+        "presets": [
+          "@babel/preset-react"
+        ],
+        "plugins": [
+          "@babel/plugin-syntax-do-expressions",
+          "@babel/plugin-syntax-function-bind",
+          [
+            "@babel/plugin-syntax-decorators",
+            {
+              "legacy": true
+            }
+          ]
+        ],
+        "parserOpts": {
+          "allowSuperOutsideMethod": false,
+          "allowReturnOutsideFunction": false
+        }
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <App>\n          foo \n{' '}\n{\"bar\"} baz\n        </App>\n      \n// features: [], parser: @babel/eslint-parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"bar\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": " baz        "
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@babel/eslint-parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        <App>\n' +
+    '          foo \n' +
+    "{' '}\n" +
++   '{"bar"}\n' +
++   "{' '}\n" +
++   'baz\n' +
++   '</App>\n' +
+-   '{"bar"} baz\n' +
+-   '        </App>\n' +
+    '      \n' +
+    '// features: [], parser: @babel/eslint-parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <App>
+          foo {"bar"} baz
+        </App>
+      
+// features: [], parser: @typescript-eslint/parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <App>\n          foo \n{' '}\n{\"bar\"} baz\n        </App>\n      \n// features: [], parser: @typescript-eslint/parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"bar\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": " baz        "
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        <App>\n' +
+    '          foo \n' +
+    "{' '}\n" +
++   '{"bar"}\n' +
++   "{' '}\n" +
++   'baz\n' +
++   '</App>\n' +
+-   '{"bar"} baz\n' +
+-   '        </App>\n' +
+    '      \n' +
+    '// features: [], parser: @typescript-eslint/parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <App>
+
+          foo {"bar"} baz
+
+        </App>
+      
+// features: [], parser: default, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <App>\n\n          foo \n{' '}\n{\"bar\"} baz\n\n        </App>\n      \n// features: [], parser: default, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"bar\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": " baz        "
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        <App>\n' +
+    '\n' +
+    '          foo \n' +
+    "{' '}\n" +
++   '{"bar"}\n' +
++   "{' '}\n" +
++   'baz\n' +
+-   '{"bar"} baz\n' +
+    '\n' +
++   '</App>\n' +
+-   '        </App>\n' +
+    '      \n' +
+    '// features: [], parser: default, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <App>
+
+          foo {"bar"} baz
+
+        </App>
+      
+// features: [], parser: @babel/eslint-parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      },
+      "requireConfigFile": false,
+      "babelOptions": {
+        "presets": [
+          "@babel/preset-react"
+        ],
+        "plugins": [
+          "@babel/plugin-syntax-do-expressions",
+          "@babel/plugin-syntax-function-bind",
+          [
+            "@babel/plugin-syntax-decorators",
+            {
+              "legacy": true
+            }
+          ]
+        ],
+        "parserOpts": {
+          "allowSuperOutsideMethod": false,
+          "allowReturnOutsideFunction": false
+        }
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <App>\n\n          foo \n{' '}\n{\"bar\"} baz\n\n        </App>\n      \n// features: [], parser: @babel/eslint-parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"bar\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": " baz        "
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@babel/eslint-parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        <App>\n' +
+    '\n' +
+    '          foo \n' +
+    "{' '}\n" +
++   '{"bar"}\n' +
++   "{' '}\n" +
++   'baz\n' +
+-   '{"bar"} baz\n' +
+    '\n' +
++   '</App>\n' +
+-   '        </App>\n' +
+    '      \n' +
+    '// features: [], parser: @babel/eslint-parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <App>
+
+          foo {"bar"} baz
+
+        </App>
+      
+// features: [], parser: @typescript-eslint/parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <App>\n\n          foo \n{' '}\n{\"bar\"} baz\n\n        </App>\n      \n// features: [], parser: @typescript-eslint/parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"bar\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": " baz        "
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        <App>\n' +
+    '\n' +
+    '          foo \n' +
+    "{' '}\n" +
++   '{"bar"}\n' +
++   "{' '}\n" +
++   'baz\n' +
+-   '{"bar"} baz\n' +
+    '\n' +
++   '</App>\n' +
+-   '        </App>\n' +
+    '      \n' +
+    '// features: [], parser: @typescript-eslint/parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        const IndexPage = () => (
+          <h1>{"Hi people"}<button/></h1>
+        );
+      
+// features: [], parser: default, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        const IndexPage = () => (\n          <h1>\n{\"Hi people\"}<button/></h1>\n        );\n      \n// features: [], parser: default, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"Hi people\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "button"
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        const IndexPage = () => (\n' +
+    '          <h1>\n' +
++   '{"Hi people"}\n' +
++   '<button/>\n' +
++   '</h1>\n' +
+-   '{"Hi people"}<button/></h1>\n' +
+    '        );\n' +
+    '      \n' +
+    '// features: [], parser: default, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        const IndexPage = () => (
+          <h1>{"Hi people"}<button/></h1>
+        );
+      
+// features: [], parser: @babel/eslint-parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      },
+      "requireConfigFile": false,
+      "babelOptions": {
+        "presets": [
+          "@babel/preset-react"
+        ],
+        "plugins": [
+          "@babel/plugin-syntax-do-expressions",
+          "@babel/plugin-syntax-function-bind",
+          [
+            "@babel/plugin-syntax-decorators",
+            {
+              "legacy": true
+            }
+          ]
+        ],
+        "parserOpts": {
+          "allowSuperOutsideMethod": false,
+          "allowReturnOutsideFunction": false
+        }
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        const IndexPage = () => (\n          <h1>\n{\"Hi people\"}<button/></h1>\n        );\n      \n// features: [], parser: @babel/eslint-parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"Hi people\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "button"
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@babel/eslint-parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        const IndexPage = () => (\n' +
+    '          <h1>\n' +
++   '{"Hi people"}\n' +
++   '<button/>\n' +
++   '</h1>\n' +
+-   '{"Hi people"}<button/></h1>\n' +
+    '        );\n' +
+    '      \n' +
+    '// features: [], parser: @babel/eslint-parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        const IndexPage = () => (
+          <h1>{"Hi people"}<button/></h1>
+        );
+      
+// features: [], parser: @typescript-eslint/parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        const IndexPage = () => (\n          <h1>\n{\"Hi people\"}<button/></h1>\n        );\n      \n// features: [], parser: @typescript-eslint/parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "{\"Hi people\"}"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "button"
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
+  '\n' +
+    '        const IndexPage = () => (\n' +
+    '          <h1>\n' +
++   '{"Hi people"}\n' +
++   '<button/>\n' +
++   '</h1>\n' +
+-   '{"Hi people"}<button/></h1>\n' +
+    '        );\n' +
+    '      \n' +
+    '// features: [], parser: @typescript-eslint/parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <Layout>
+        <p>Welcome to your new Gatsby site.</p>
+        <p>Now go build something great.</p>
+        <h1>Hi people<button/></h1>
+        </Layout>
+      
+// features: [], parser: default, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <Layout>\n        <p>\nWelcome to your new Gatsby site.\n</p>\n        <p>\nNow go build something great.\n</p>\n        <h1>\nHi people<button/></h1>\n        </Layout>\n      \n// features: [], parser: default, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Welcome to your new Gatsby site."
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Now go build something great."
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Hi people"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "button"
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+... Skipped lines
+
+  '\n' +
+    '        <Layout>\n' +
+    '        <p>\n' +
+    'Welcome to your new Gatsby site.\n' +
+    '</p>\n' +
+...
+    '        <h1>\n' +
++   'Hi people\n' +
++   '<button/>\n' +
++   '</h1>\n' +
+-   'Hi people<button/></h1>\n' +
+    '        </Layout>\n' +
+    '      \n' +
+    '// features: [], parser: default, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <Layout>
+        <p>Welcome to your new Gatsby site.</p>
+        <p>Now go build something great.</p>
+        <h1>Hi people<button/></h1>
+        </Layout>
+      
+// features: [], parser: @babel/eslint-parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      },
+      "requireConfigFile": false,
+      "babelOptions": {
+        "presets": [
+          "@babel/preset-react"
+        ],
+        "plugins": [
+          "@babel/plugin-syntax-do-expressions",
+          "@babel/plugin-syntax-function-bind",
+          [
+            "@babel/plugin-syntax-decorators",
+            {
+              "legacy": true
+            }
+          ]
+        ],
+        "parserOpts": {
+          "allowSuperOutsideMethod": false,
+          "allowReturnOutsideFunction": false
+        }
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <Layout>\n        <p>\nWelcome to your new Gatsby site.\n</p>\n        <p>\nNow go build something great.\n</p>\n        <h1>\nHi people<button/></h1>\n        </Layout>\n      \n// features: [], parser: @babel/eslint-parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Welcome to your new Gatsby site."
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Now go build something great."
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Hi people"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "button"
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@babel/eslint-parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+... Skipped lines
+
+  '\n' +
+    '        <Layout>\n' +
+    '        <p>\n' +
+    'Welcome to your new Gatsby site.\n' +
+    '</p>\n' +
+...
+    '        <h1>\n' +
++   'Hi people\n' +
++   '<button/>\n' +
++   '</h1>\n' +
+-   'Hi people<button/></h1>\n' +
+    '        </Layout>\n' +
+    '      \n' +
+    '// features: [], parser: @babel/eslint-parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### jsx-one-expression-per-line > invalid
+
+```js
+
+        <Layout>
+        <p>Welcome to your new Gatsby site.</p>
+        <p>Now go build something great.</p>
+        <h1>Hi people<button/></h1>
+        </Layout>
+      
+// features: [], parser: @typescript-eslint/parser, , , 
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true,
+        "modules": true,
+        "legacyDecorators": false
+      }
+    },
+    "parser": {}
+  },
+  "output": "\n        <Layout>\n        <p>\nWelcome to your new Gatsby site.\n</p>\n        <p>\nNow go build something great.\n</p>\n        <h1>\nHi people<button/></h1>\n        </Layout>\n      \n// features: [], parser: @typescript-eslint/parser, , , ",
+  "errors": [
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Welcome to your new Gatsby site."
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Now go build something great."
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "Hi people"
+      }
+    },
+    {
+      "messageId": "moveToNewLine",
+      "data": {
+        "descriptor": "button"
+      }
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+... Skipped lines
+
+  '\n' +
+    '        <Layout>\n' +
+    '        <p>\n' +
+    'Welcome to your new Gatsby site.\n' +
+    '</p>\n' +
+...
+    '        <h1>\n' +
++   'Hi people\n' +
++   '<button/>\n' +
++   '</h1>\n' +
+-   'Hi people<button/></h1>\n' +
+    '        </Layout>\n' +
+    '      \n' +
+    '// features: [], parser: @typescript-eslint/parser, , , '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
 
 ### `jsx-props-no-multi-spaces`
 
@@ -516,4 +3596,565 @@ Error: Overlapping token/comments: last end: 118, next start: 54
     at debugCheckTokensAndComments (apps/oxlint/dist/lint.js)
     at initTokensAndComments (apps/oxlint/dist/lint.js)
     at Object.isSpaceBetween (apps/oxlint/dist/lint.js)
+
+
+### `no-extra-parens`
+
+Pass: 107 / 109 (98.2%)
+Fail: 2 / 109 (1.8%)
+Skip: 0 / 109 (0.0%)
+
+#### no-extra-parens > invalid
+
+```js
+type Foo = ((import('x')))[]
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "parser": {}
+  },
+  "output": "type Foo = import('x')[]",
+  "recursive": null,
+  "errors": [
+    {
+      "messageId": "unexpected"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ "type Foo = (import('x'))[]"
+- "type Foo = import('x')[]"
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### no-extra-parens > invalid
+
+```js
+type Foo = boolean | ((Bar & Baz))
+```
+
+```json
+{
+  "languageOptions": {
+    "parserOptions": {
+      "ecmaFeatures": {
+        "jsx": true
+      }
+    },
+    "parser": {}
+  },
+  "output": "type Foo = boolean | Bar & Baz",
+  "recursive": null,
+  "errors": [
+    {
+      "messageId": "unexpected"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'type Foo = boolean | (Bar & Baz)'
+- 'type Foo = boolean | Bar & Baz'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `object-curly-newline`
+
+Pass: 141 / 144 (97.9%)
+Fail: 1 / 144 (0.7%)
+Skip: 2 / 144 (1.4%)
+
+#### object-curly-newline > invalid
+
+```js
+var a = {};
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "var a = {\n};",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 9,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 10,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'var a = {\n\n};'
+- 'var a = {\n};'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `object-curly-newline`
+
+Pass: 330 / 335 (98.5%)
+Fail: 5 / 335 (1.5%)
+Skip: 0 / 335 (0.0%)
+
+#### object-curly-newline > invalid
+
+```js
+type Foo = {}// "always"
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "type Foo = {\n}// \"always\"",
+  "errors": [
+    {
+      "line": 1,
+      "column": 12,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 13,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "options": [
+    "always"
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'type Foo = {\n\n}// "always"'
+- 'type Foo = {\n}// "always"'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### object-curly-newline > invalid
+
+```js
+type Foo = {}// "always"
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "type Foo = {\n}// \"always\"",
+  "errors": [
+    {
+      "line": 1,
+      "column": 12,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 13,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "options": [
+    {
+      "TSTypeLiteral": "always"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'type Foo = {\n\n}// "always"'
+- 'type Foo = {\n}// "always"'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### object-curly-newline > invalid
+
+```js
+interface Foo {}// "always"
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "interface Foo {\n}// \"always\"",
+  "errors": [
+    {
+      "line": 1,
+      "column": 15,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 16,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "options": [
+    "always"
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'interface Foo {\n\n}// "always"'
+- 'interface Foo {\n}// "always"'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### object-curly-newline > invalid
+
+```js
+interface Foo {}// "always"
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "interface Foo {\n}// \"always\"",
+  "errors": [
+    {
+      "line": 1,
+      "column": 15,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 16,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "options": [
+    {
+      "TSInterfaceBody": "always"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'interface Foo {\n\n}// "always"'
+- 'interface Foo {\n}// "always"'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### object-curly-newline > invalid
+
+```js
+enum Foo {}
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "enum Foo {\n}",
+  "options": [
+    "always"
+  ],
+  "errors": [
+    {
+      "line": 1,
+      "column": 10,
+      "messageId": "expectedLinebreakAfterOpeningBrace"
+    },
+    {
+      "line": 1,
+      "column": 11,
+      "messageId": "expectedLinebreakBeforeClosingBrace"
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'enum Foo {\n\n}'
+- 'enum Foo {\n}'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `space-in-parens`
+
+Pass: 137 / 139 (98.6%)
+Fail: 2 / 139 (1.4%)
+Skip: 0 / 139 (0.0%)
+
+#### space-in-parens > invalid
+
+```js
+foo()
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "foo( )",
+  "options": [
+    "never",
+    {
+      "exceptions": [
+        "empty"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "missingOpeningSpace",
+      "line": 1,
+      "column": 4
+    },
+    {
+      "messageId": "missingClosingSpace",
+      "line": 1,
+      "column": 5
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'foo(  )'
+- 'foo( )'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+#### space-in-parens > invalid
+
+```js
+foo( bar() )
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "foo(bar( ))",
+  "options": [
+    "never",
+    {
+      "exceptions": [
+        "empty"
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "messageId": "rejectedOpeningSpace",
+      "line": 1,
+      "column": 5
+    },
+    {
+      "messageId": "missingOpeningSpace",
+      "line": 1,
+      "column": 9
+    },
+    {
+      "messageId": "missingClosingSpace",
+      "line": 1,
+      "column": 10
+    },
+    {
+      "messageId": "rejectedClosingSpace",
+      "line": 1,
+      "column": 11
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ 'foo(bar(  ))'
+- 'foo(bar( ))'
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
+
+
+### `space-infix-ops`
+
+Pass: 180 / 182 (98.9%)
+Fail: 1 / 182 (0.5%)
+Skip: 1 / 182 (0.5%)
+
+#### space-infix-ops > invalid
+
+```js
+
+        type Test=|string|(((() => void)))|string;
+      
+```
+
+```json
+{
+  "languageOptions": {
+    "parser": {}
+  },
+  "output": "\n        type Test = |string | (((() => void))) | string;\n      ",
+  "errors": [
+    {
+      "messageId": "missingSpace",
+      "column": 18,
+      "line": 2
+    },
+    {
+      "messageId": "missingSpace",
+      "column": 19,
+      "line": 2
+    },
+    {
+      "messageId": "missingSpace",
+      "column": 26,
+      "line": 2
+    },
+    {
+      "messageId": "missingSpace",
+      "column": 43,
+      "line": 2
+    }
+  ],
+  "_parser": {
+    "specifier": "@typescript-eslint/parser",
+    "lang": "ts"
+  }
+}
+```
+
+AssertionError [ERR_ASSERTION]: Output is incorrect
++ actual - expected
+
++ '\n        type Test =  | string | (((() => void))) | string;\n      '
+- '\n        type Test = |string | (((() => void))) | string;\n      '
+
+    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
+    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
+    at apps/oxlint/dist/plugins-dev.js
+    at it (apps/oxlint/conformance/src/capture.ts:123:5)
 

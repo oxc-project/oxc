@@ -27,6 +27,18 @@ export declare const enum Severity {
   Advice = 'Advice'
 }
 /**
+ * Apply fixes to source text and return the fixed code.
+ *
+ * - `source_text` is the original source code.
+ * - `fixes_json` is a JSON string containing `Vec<Vec<JsFix>>` — an array of fix groups, one per diagnostic.
+ *
+ * Each group's fixes are merged, then all merged fixes are applied to `source_text`.
+ *
+ * Fix ranges are converted from UTF-16 code units to UTF-8 bytes.
+ */
+export declare function applyFixes(sourceText: string, fixesJson: string): string | null
+
+/**
  * Get offset within a `Uint8Array` which is aligned on `BUFFER_ALIGN`.
  *
  * Does not check that the offset is within bounds of `buffer`.
