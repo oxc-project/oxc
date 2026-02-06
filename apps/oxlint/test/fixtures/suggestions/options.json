@@ -1,4 +1,5 @@
 {
   "fix": true,
-  "fixSuggestions": true
+  "fixSuggestions": true,
+  "singleThread": true
 }

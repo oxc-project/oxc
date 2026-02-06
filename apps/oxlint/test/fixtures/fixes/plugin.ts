@@ -1,6 +1,9 @@
+import { sep as pathSep } from "node:path";
 import assert from "node:assert";
 
 import type { Diagnostic, Node, Plugin, Rule } from "#oxlint/plugins";
+
+const U32_MAX_PLUS_ONE = 2 ** 32;
 
 const rule: Rule = {
   meta: {
@@ -12,7 +15,11 @@ const rule: Rule = {
     const sourceText = context.sourceCode.text;
     assert(!sourceText.endsWith("\n"), "Fixture file has been formatted");
 
+    const path = context.filename;
+    const filename = path.slice(path.lastIndexOf(pathSep) + 1);
+
     let debuggerCount = 0;
+
     return {
       DebuggerStatement(node) {
         debuggerCount++;
@@ -33,6 +40,7 @@ const rule: Rule = {
           context.report({ message: `this in fix function is not report object`, node });
         }
       },
+
       Identifier(node) {
         switch (node.name) {
           case "a":
@@ -145,6 +153,116 @@ const rule: Rule = {
                 yield fixer.insertTextBeforeRange(range, "cow");
               },
             });
+
+          // Test behavior when `fix` returns a fix with illegal range.
+          // Check behavior is correct for both `fix` returning a single fix and returning multiple fixes.
+          case "x":
+            switch (filename) {
+              case "range_start_after_end.js":
+                context.report({
+                  message: "start after end",
+                  node,
+                  fix(fixer) {
+                    return fixer.removeRange([3, 2]);
+                  },
+                });
+                context.report({
+                  message: "start after end multiple",
+                  node,
+                  fix(fixer) {
+                    return [fixer.removeRange([0, 0]), fixer.removeRange([3, 2])];
+                  },
+                });
+                break;
+
+              case "range_end_out_of_bounds.js":
+                context.report({
+                  message: "end out of bounds",
+                  node,
+                  fix(fixer) {
+                    return fixer.removeRange([0, sourceText.length + 1]);
+                  },
+                });
+                context.report({
+                  message: "end out of bounds multiple",
+                  node,
+                  fix(fixer) {
+                    return [
+                      fixer.removeRange([0, 0]),
+                      fixer.removeRange([0, sourceText.length + 1]),
+                    ];
+                  },
+                });
+                break;
+
+              case "range_start_too_large.js":
+                context.report({
+                  message: "start too large",
+                  node,
+                  fix(fixer) {
+                    return fixer.removeRange([U32_MAX_PLUS_ONE, 0]);
+                  },
+                });
+                context.report({
+                  message: "start too large multiple",
+                  node,
+                  fix(fixer) {
+                    return [fixer.removeRange([0, 0]), fixer.removeRange([U32_MAX_PLUS_ONE, 0])];
+                  },
+                });
+                break;
+
+              case "range_end_too_large.js":
+                context.report({
+                  message: "end too large",
+                  node,
+                  fix(fixer) {
+                    return fixer.removeRange([0, U32_MAX_PLUS_ONE]);
+                  },
+                });
+                context.report({
+                  message: "end too large multiple",
+                  node,
+                  fix(fixer) {
+                    return [fixer.removeRange([0, 0]), fixer.removeRange([0, U32_MAX_PLUS_ONE])];
+                  },
+                });
+                break;
+
+              case "range_start_negative.js":
+                context.report({
+                  message: "start negative",
+                  node,
+                  fix(fixer) {
+                    return fixer.removeRange([-10, 0]);
+                  },
+                });
+                context.report({
+                  message: "start negative multiple",
+                  node,
+                  fix(fixer) {
+                    return [fixer.removeRange([0, 0]), fixer.removeRange([-10, 0])];
+                  },
+                });
+                break;
+
+              case "range_end_negative.js":
+                context.report({
+                  message: "end negative",
+                  node,
+                  fix(fixer) {
+                    return fixer.removeRange([0, -10]);
+                  },
+                });
+                context.report({
+                  message: "end negative multiple",
+                  node,
+                  fix(fixer) {
+                    return [fixer.removeRange([0, 0]), fixer.removeRange([0, -10])];
+                  },
+                });
+                break;
+            }
         }
       },
     };
