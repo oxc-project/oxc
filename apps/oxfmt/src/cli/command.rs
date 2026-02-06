@@ -28,9 +28,11 @@ pub struct FormatCommand {
     pub ignore_options: IgnoreOptions,
     #[bpaf(external)]
     pub runtime_options: RuntimeOptions,
-    /// Single file, single path or list of paths.
+    /// Single file, path or list of paths.
+    /// Glob patterns are also supported.
+    /// (Be sure to quote them, otherwise your shell may expand them before passing.)
+    /// Exclude patterns with `!` prefix like `'!**/fixtures/*.js'` are also supported.
     /// If not provided, current working directory is used.
-    /// Glob is supported only for exclude patterns like `'!**/fixtures/*.js'`.
     // `bpaf(fallback)` seems to have issues with `many` or `positional`,
     // so we implement the fallback behavior in code instead.
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]

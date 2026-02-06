@@ -45,4 +45,16 @@ describe("exclude_nested", () => {
     const snapshot = await runAndSnapshot(fixturesDir, testCases);
     expect(snapshot).toMatchSnapshot();
   });
+
+  it("should handle glob include with glob exclude", async () => {
+    const testCases = [
+      // Glob include all .js, glob exclude error.js
+      ["--check", "*", "!**/error.js"],
+      // Glob include foo/**/*.js, glob exclude bar directory
+      ["--check", "foo/**/*.js", "!**/bar/*"],
+    ];
+
+    const snapshot = await runAndSnapshot(fixturesDir, testCases);
+    expect(snapshot).toMatchSnapshot();
+  });
 });
