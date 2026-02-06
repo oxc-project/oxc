@@ -1214,9 +1214,7 @@ impl<'a> AstBuilder<'a> {
         name: IdentifierName<'a>,
         arguments: Vec<'a, Argument<'a>>,
     ) -> Expression<'a> {
-        Expression::V8IntrinsicExpression(
-            self.alloc_v_8_intrinsic_expression(span, name, arguments),
-        )
+        Expression::V8IntrinsicExpression(self.alloc_v8_intrinsic_expression(span, name, arguments))
     }
 
     /// Build an [`IdentifierName`].
@@ -8532,14 +8530,14 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`V8IntrinsicExpression`].
     ///
     /// If you want the built node to be allocated in the memory arena,
-    /// use [`AstBuilder::alloc_v_8_intrinsic_expression`] instead.
+    /// use [`AstBuilder::alloc_v8_intrinsic_expression`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn v_8_intrinsic_expression(
+    pub fn v8_intrinsic_expression(
         self,
         span: Span,
         name: IdentifierName<'a>,
@@ -8551,20 +8549,20 @@ impl<'a> AstBuilder<'a> {
     /// Build a [`V8IntrinsicExpression`], and store it in the memory arena.
     ///
     /// Returns a [`Box`] containing the newly-allocated node.
-    /// If you want a stack-allocated node, use [`AstBuilder::v_8_intrinsic_expression`] instead.
+    /// If you want a stack-allocated node, use [`AstBuilder::v8_intrinsic_expression`] instead.
     ///
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `name`
     /// * `arguments`
     #[inline]
-    pub fn alloc_v_8_intrinsic_expression(
+    pub fn alloc_v8_intrinsic_expression(
         self,
         span: Span,
         name: IdentifierName<'a>,
         arguments: Vec<'a, Argument<'a>>,
     ) -> Box<'a, V8IntrinsicExpression<'a>> {
-        Box::new_in(self.v_8_intrinsic_expression(span, name, arguments), self.allocator)
+        Box::new_in(self.v8_intrinsic_expression(span, name, arguments), self.allocator)
     }
 
     /// Build a [`BooleanLiteral`].
