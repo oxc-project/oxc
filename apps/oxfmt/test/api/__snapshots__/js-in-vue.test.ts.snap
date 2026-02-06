@@ -1,0 +1,33 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-imports 1`] = `
+"<script lang="ts">
+  import z from "z";
+  import a from "a";
+  import m from "m";
+</script>
+<script lang="ts" setup>
+  import z from "z";
+  import a from "a";
+  import m from "m";
+</script>
+<template>
+  <div>{{ a + m + z }}</div>
+</template>
+"
+`;
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ sort-tailwindcss 1`] = `
+"<script setup>
+  import { ref } from "vue";
+  import clsx from "clsx";
+
+  const count = ref(0);
+  const cls = clsx("flex p-4");
+</script>
+<template>
+  <div class="flex p-4">{{ count }}</div>
+  <div class="flex p-4">{{ count }}</div>
+</template>
+"
+`;

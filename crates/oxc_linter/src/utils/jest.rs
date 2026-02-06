@@ -260,7 +260,7 @@ fn collect_ids_referenced_to_global<'c>(
         .scoping()
         .root_unresolved_references()
         .iter()
-        .filter(|(name, _)| JEST_METHOD_NAMES.contains(name))
+        .filter(|(name, _)| JEST_METHOD_NAMES.contains(&name.as_str()))
         .flat_map(|(_, reference_ids)| reference_ids.iter().copied())
 }
 

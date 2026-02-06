@@ -45,6 +45,7 @@ json-strip-comments = { workspace = true }
 miette = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
+rustc-hash = { workspace = true }
 schemars = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

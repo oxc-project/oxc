@@ -114,7 +114,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FormalParameter<'a>> {
                 if self.optional {
                     write!(f, "?");
                 }
-                write!(f, self.type_annotation());
+
+                if let Some(type_ann) = self.type_annotation() {
+                    if f.comments().has_comment_before(type_ann.span().start) {
+                        write!(f, space());
+                    }
+                    write!(f, type_ann);
+                }
             })
             .memoized();
 

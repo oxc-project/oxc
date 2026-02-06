@@ -4,7 +4,7 @@ use oxc_allocator::{Allocator, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_ast_visit::Visit;
 use oxc_semantic::{NodeId, Reference, Scoping};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -236,6 +236,7 @@ impl<'a> TraverseScoping<'a> {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
+        let name = Ident::from(name);
         let symbol_id = self.scoping.create_symbol(SPAN, name, flags, scope_id, NodeId::DUMMY);
         self.scoping.add_binding(scope_id, name, symbol_id);
 
@@ -300,7 +301,7 @@ impl<'a> TraverseScoping<'a> {
     pub fn create_unbound_reference(&mut self, name: &str, flags: ReferenceFlags) -> ReferenceId {
         let reference = Reference::new(NodeId::DUMMY, self.current_scope_id, flags);
         let reference_id = self.scoping.create_reference(reference);
-        self.scoping.add_root_unresolved_reference(name, reference_id);
+        self.scoping.add_root_unresolved_reference(Ident::from(name), reference_id);
         reference_id
     }
 
@@ -339,7 +340,7 @@ impl<'a> TraverseScoping<'a> {
         if let Some(symbol_id) = symbol_id {
             self.scoping.delete_resolved_reference(symbol_id, reference_id);
         } else {
-            self.scoping.delete_root_unresolved_reference(name, reference_id);
+            self.scoping.delete_root_unresolved_reference(Ident::from(name), reference_id);
         }
     }
 

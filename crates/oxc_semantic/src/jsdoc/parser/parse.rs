@@ -43,6 +43,13 @@ pub fn parse_jsdoc(
     let mut in_double_quotes = false;
     let mut in_single_quotes = false;
 
+    // Tracks whether we're at the logical start of a line.
+    // Only `@` at the start of a line (after optional whitespace and `*` markers)
+    // should be treated as a new tag. This prevents false positives from `@` in
+    // email addresses (e.g. `user@example.com`) or npm scoped packages
+    // (e.g. `@vue/shared`) appearing mid-line in tag descriptions.
+    let mut at_line_start = true;
+
     // This flag tells us if we have already found the main comment block.
     // The first part before any @tags is considered the comment. Everything after is a tag.
     let mut comment_found = false;
@@ -89,7 +96,7 @@ pub fn parse_jsdoc(
             '[' => square_brace_depth += 1,
             ']' => square_brace_depth = square_brace_depth.saturating_sub(1),
 
-            '@' if can_parse => {
+            '@' if can_parse && at_line_start => {
                 let part = &source_text[start..end];
                 let span = Span::new(
                     jsdoc_span_start + u32::try_from(start).unwrap_or_default(),
@@ -108,6 +115,16 @@ pub fn parse_jsdoc(
                 start = end;
             }
             _ => {}
+        }
+
+        // Update line-start tracking:
+        // - `\n` resets to true (new line)
+        // - Whitespace and `*` preserve true (JSDoc line leaders like ` * `)
+        // - Everything else sets to false
+        if ch == '\n' {
+            at_line_start = true;
+        } else if at_line_start && !matches!(ch, ' ' | '\t' | '\r' | '*') {
+            at_line_start = false;
         }
 
         // Move the `end` pointer forward by the character's length

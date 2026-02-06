@@ -889,7 +889,7 @@ impl<'a> Visit<'a> for BindingMover<'a, '_> {
         let symbol_id = ident.symbol_id();
         let current_scope_id = symbols.symbol_scope_id(symbol_id);
         let scopes = self.ctx.scoping_mut();
-        scopes.move_binding(current_scope_id, self.target_scope_id, ident.name.as_str());
+        scopes.move_binding(current_scope_id, self.target_scope_id, ident.name);
         let symbols = self.ctx.scoping_mut();
         symbols.set_symbol_scope_id(symbol_id, self.target_scope_id);
     }

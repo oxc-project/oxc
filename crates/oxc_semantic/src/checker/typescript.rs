@@ -183,24 +183,36 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
     }
 
     if !class.r#declare && !ctx.in_declare_scope() {
+        let mut is_in_overload_group = false;
         for (a, b) in class.body.body.iter().map(Some).chain(vec![None]).tuple_windows() {
             if let Some(ClassElement::MethodDefinition(a)) = a
                 && !a.r#type.is_abstract()
                 && !a.optional
                 && a.value.r#type == FunctionType::TSEmptyBodyFunctionExpression
-                && b.is_none_or(|b| match b {
-                    ClassElement::StaticBlock(_)
-                    | ClassElement::PropertyDefinition(_)
-                    | ClassElement::AccessorProperty(_)
-                    | ClassElement::TSIndexSignature(_) => true,
-                    ClassElement::MethodDefinition(b) => b.key.static_name() != a.key.static_name(),
-                })
             {
-                if a.kind.is_constructor() {
-                    ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                let next_is_same = b.is_some_and(|b| {
+                    matches!(b,
+                        ClassElement::MethodDefinition(b)
+                            if b.key.static_name() == a.key.static_name()
+                    )
+                });
+                if next_is_same {
+                    is_in_overload_group = true;
+                } else if a.key.static_name().is_some() || is_in_overload_group {
+                    // Report error for:
+                    // 1. Methods with static names that are not followed by an implementation
+                    // 2. The last overload in a computed-name overload group (e.g. [Symbol.iterator])
+                    if a.kind.is_constructor() {
+                        ctx.error(diagnostics::constructor_implementation_missing(a.key.span()));
+                    } else {
+                        ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                    }
+                    is_in_overload_group = false;
                 } else {
-                    ctx.error(diagnostics::function_implementation_missing(a.key.span()));
+                    is_in_overload_group = false;
                 }
+            } else {
+                is_in_overload_group = false;
             }
         }
     }

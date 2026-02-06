@@ -1,10 +1,5 @@
 import { format as napiFormat } from "./bindings";
-import {
-  resolvePlugins,
-  formatEmbeddedCode,
-  formatFile,
-  sortTailwindClasses,
-} from "./libs/prettier";
+import { resolvePlugins, formatEmbeddedCode, formatFile, sortTailwindClasses } from "./libs/apis";
 import type { Options } from "prettier";
 
 // napi-JS `oxfmt` API entry point

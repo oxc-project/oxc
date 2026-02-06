@@ -1,0 +1,252 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`js-in-xxx > should format with full-config 1`] = `
+"--- FILE -----------
+test.md
+--- BEFORE ---------
+Header
+======
+
+_Look,_ code blocks are formatted *too!*
+
+\`\`\` js
+function identity(x) { return x }
+\`\`\`
+
+\`\`\`ts
+const a:string ="x";
+\`\`\`
+
+\`\`\`\`tsx
+const X=()=>(
+<>
+  <P> ... </P>
+</>)
+\`\`\`\`
+
+Pilot|Airport|Hours
+--|:--:|--:
+John Doe|SKG|1338
+Jane Roe|JFK|314
+
+- - - - - - - - - - - - - - -
+
++ List
+ + with a [link] (/to/somewhere)
++ and [another one]
+
+
+  [another one]:  http://example.com 'Example title'
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Curabitur consectetur maximus risus, sed maximus tellus tincidunt et.
+
+--- AFTER ----------
+# Header
+
+_Look,_ code blocks are formatted _too!_
+
+\`\`\`js
+function identity(x) {
+  return x;
+}
+\`\`\`
+
+\`\`\`ts
+const a: string = "x";
+\`\`\`
+
+\`\`\`tsx
+const X = () => (
+  <>
+    <P> ... </P>
+  </>
+);
+\`\`\`
+
+| Pilot    | Airport | Hours |
+| -------- | :-----: | ----: |
+| John Doe |   SKG   |  1338 |
+| Jane Roe |   JFK   |   314 |
+
+---
+
+- List
+- with a [link] (/to/somewhere)
+- and [another one]
+
+  [another one]: http://example.com "Example title"
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+Curabitur consectetur maximus risus, sed maximus tellus tincidunt et.
+
+--------------------
+
+--- FILE -----------
+test.mdx
+--- BEFORE ---------
+import     {     Baz } from     './Fixture'
+import { Buz  }   from './Fixture'
+
+export  const   foo    = {
+  hi:     \`Fudge \${Baz.displayName || 'Baz'}\`,
+  authors: [
+     'fred',
+           'sally'
+    ]
+}
+
+# Hello,    world!
+
+
+ I'm an awesome   paragraph.
+
+<!-- I'm a comment -->
+
+<Foo bg='red'>
+      <Bar    >hi    </Bar>
+       {  hello       }
+       {     /* another comment */}
+</Foo>
+
+\`\`\`
+test codeblock
+\`\`\`
+
+\`\`\`js
+module.exports =         'test'
+\`\`\`
+
+\`\`\`sh
+npm i -g foo
+\`\`\`
+
+| Test  | Table   |
+|    :---     | :----  |
+|   Col1  | Col2    |
+
+export   default     ({children   }) => < div>{    children}</div>
+
+
+--- AFTER ----------
+import { Baz } from "./Fixture";
+import { Buz } from "./Fixture";
+
+export const foo = {
+  hi: \`Fudge \${Baz.displayName || "Baz"}\`,
+  authors: ["fred", "sally"],
+};
+
+# Hello, world!
+
+I'm an awesome paragraph.
+
+<!-- I'm a comment -->
+
+<Foo bg="red">
+  <Bar>hi </Bar>
+  {hello}
+  {/* another comment */}
+</Foo>
+
+\`\`\`
+test codeblock
+\`\`\`
+
+\`\`\`js
+module.exports = "test";
+\`\`\`
+
+\`\`\`sh
+npm i -g foo
+\`\`\`
+
+| Test | Table |
+| :--- | :---- |
+| Col1 | Col2  |
+
+export default ({ children }) => <div>{children}</div>;
+
+--------------------
+
+--- FILE -----------
+app.vue
+--- BEFORE ---------
+<script setup lang="ts">
+import z from "z";
+  import a from "a";
+    import m from "m";
+
+const count = ref(0);
+</script>
+<template>
+  <div class="p-4 flex m-0">{{ count }}</div>
+  <button class="m-2 p-1 flex">Click</button>
+  <p>Templates are formatted as well...
+    </p>
+</template>
+
+<style>
+.and { css: too !important }
+</style>
+
+--- AFTER ----------
+<script setup lang="ts">
+  import z from "z";
+  import a from "a";
+  import m from "m";
+
+  const count = ref(0);
+</script>
+<template>
+  <div class="m-0 flex p-4">{{ count }}</div>
+  <button class="m-2 flex p-1">Click</button>
+  <p>Templates are formatted as well...</p>
+</template>
+
+<style>
+  .and {
+    css: too !important;
+  }
+</style>
+
+--------------------
+
+--- FILE -----------
+multi-script.vue
+--- BEFORE ---------
+<script lang="ts">
+import z from "z";
+import a from "a";
+
+export default { name: "App" };
+</script>
+<script setup lang="ts">
+import m from "m";
+import b from "b";
+
+const count = ref(0);
+</script>
+<template>
+  <div>{{ count }}</div>
+</template>
+
+--- AFTER ----------
+<script lang="ts">
+  import z from "z";
+  import a from "a";
+
+  export default { name: "App" };
+</script>
+<script setup lang="ts">
+  import m from "m";
+  import b from "b";
+
+  const count = ref(0);
+</script>
+<template>
+  <div>{{ count }}</div>
+</template>
+
+--------------------"
+`;

@@ -1292,7 +1292,7 @@ impl<'a> AstKind<'a> {
     }
 
     #[inline]
-    pub fn as_v_8_intrinsic_expression(self) -> Option<&'a V8IntrinsicExpression<'a>> {
+    pub fn as_v8_intrinsic_expression(self) -> Option<&'a V8IntrinsicExpression<'a>> {
         if let Self::V8IntrinsicExpression(v) = self { Some(v) } else { None }
     }
 

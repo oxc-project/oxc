@@ -41,7 +41,7 @@ use oxc_allocator::{Address, Box as ArenaBox, GetAddress, TakeIn, Vec as ArenaVe
 use oxc_ast::{NONE, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{ScopeFlags, ScopeId, SymbolFlags};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Ident, SPAN};
 use oxc_traverse::{BoundIdentifier, Traverse};
 
 use crate::{
@@ -127,7 +127,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             ),
         };
         ctx.scoping_mut().set_symbol_scope_id(for_of_init_symbol_id, scope_id);
-        ctx.scoping_mut().move_binding(for_of_stmt_scope_id, scope_id, &for_of_init_name);
+        ctx.scoping_mut().move_binding(for_of_stmt_scope_id, scope_id, for_of_init_name);
 
         if let Statement::BlockStatement(body) = &mut for_of_stmt.body {
             // `for (const _x of y) { x(); }` -> `for (const _x of y) { using x = _x; x(); }`
@@ -173,7 +173,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             );
 
             ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, static_block_new_scope_id);
-            ctx.scoping_mut().move_binding(scope_id, static_block_new_scope_id, &using_ctx.name);
+            ctx.scoping_mut().move_binding(
+                scope_id,
+                static_block_new_scope_id,
+                Ident::from(using_ctx.name),
+            );
             *ctx.scoping_mut().scope_flags_mut(scope_id) = ScopeFlags::StrictMode;
 
             block.set_scope_id(static_block_new_scope_id);
@@ -288,7 +292,11 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a, '_>
             let current_hoist_scope_id = ctx.current_hoist_scope_id();
             node.block.set_scope_id(block_stmt_scope_id);
             ctx.scoping_mut().set_symbol_scope_id(using_ctx.symbol_id, current_hoist_scope_id);
-            ctx.scoping_mut().move_binding(scope_id, current_hoist_scope_id, &using_ctx.name);
+            ctx.scoping_mut().move_binding(
+                scope_id,
+                current_hoist_scope_id,
+                Ident::from(using_ctx.name),
+            );
 
             ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
         }

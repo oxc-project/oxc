@@ -631,6 +631,27 @@ fn test() {
           None,
           None,
       ),
+      (
+          "
+          /**
+           * @license bcrypt.js (c) 2013 Daniel Wirtz <dcode@dcode.io>
+           * Released under the Apache License, Version 2.0
+           */
+          function quux () { }
+      ",
+          None,
+          None,
+      ),
+      (
+          "
+          /**
+           * @see Uses @vue/shared package
+           */
+          function quux () { }
+      ",
+          None,
+          None,
+      ),
     ];
 
     let fail = vec![

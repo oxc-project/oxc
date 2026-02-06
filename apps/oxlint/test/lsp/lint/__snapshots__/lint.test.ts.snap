@@ -1,0 +1,85 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`LSP linting > basic linting > should handle default/test.ts 1`] = `
+"--- FILE -----------
+default/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
+exports[`LSP linting > basic linting > should handle default/test.tsx 1`] = `
+"--- FILE -----------
+default/test.tsx
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
+exports[`LSP linting > config options > should apply config from config-default/test.ts 1`] = `
+"--- FILE -----------
+config-default/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Warning: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
+exports[`LSP linting > config options > should apply config from config-disabled/test.ts 1`] = `
+"--- FILE -----------
+config-disabled/test.ts
+--- Diagnostics ---------
+
+--------------------"
+`;
+
+exports[`LSP linting > config options > should apply config from config-js-plugin/test.js 1`] = `
+"--- FILE -----------
+config-js-plugin/test.js
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: Custom name JS Plugin Test Rule.
+  2 |
+--------------------"
+`;
+
+exports[`LSP linting > config options > should apply config from config-severity/test.ts 1`] = `
+"--- FILE -----------
+config-severity/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
+exports[`LSP linting > config options > should apply config from config-ts-config/test.js 1`] = `
+"--- FILE -----------
+config-ts-config/test.js
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;
+
+exports[`LSP linting > initializationOptions > should use custom config path from configPath 1`] = `
+"--- FILE -----------
+custom-config-path/test.ts
+--- Diagnostics ---------
+> 1 | debugger;
+    | ^^^^^^^^^ Error: \`debugger\` statement is not allowed
+help: Remove the debugger statement
+  2 |
+--------------------"
+`;

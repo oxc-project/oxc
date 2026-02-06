@@ -202,10 +202,6 @@ impl<'a> Modifiers<'a> {
         self.flags.contains(target.into())
     }
 
-    pub fn contains_all_flags(&self, flags: ModifierFlags) -> bool {
-        self.flags.contains(flags)
-    }
-
     pub fn iter(&self) -> impl Iterator<Item = &Modifier> + '_ {
         self.modifiers.as_ref().into_iter().flat_map(|modifiers| modifiers.iter())
     }
@@ -330,13 +326,7 @@ impl<'a> ParserImpl<'a> {
             let kind = self.cur_kind();
             self.bump_any();
             let modifier = self.modifier(kind, self.end_span(span));
-            if modifier.kind == ModifierKind::Export {
-                self.error(diagnostics::modifier_must_precede_other_modifier(
-                    &modifier,
-                    ModifierKind::Declare,
-                ));
-            }
-            self.check_for_duplicate_modifiers(flags, &modifier);
+            self.check_modifier(flags, &modifier);
             flags.set(modifier_flags, true);
             modifiers.push(modifier);
         }
@@ -395,7 +385,7 @@ impl<'a> ParserImpl<'a> {
             if modifier.is_static() {
                 has_seen_static_modifier = true;
             }
-            self.check_for_duplicate_modifiers(modifier_flags, &modifier);
+            self.check_modifier(modifier_flags, &modifier);
             modifier_flags.set(modifier.kind.into(), true);
             modifiers.get_or_insert_with(|| self.ast.vec()).push(modifier);
         }
@@ -492,16 +482,128 @@ impl<'a> ParserImpl<'a> {
         kind == Kind::LBrack || kind == Kind::PrivateIdentifier || kind.is_literal_property_name()
     }
 
-    fn check_for_duplicate_modifiers(&mut self, seen_flags: ModifierFlags, modifier: &Modifier) {
-        if matches!(
-            modifier.kind,
-            ModifierKind::Public | ModifierKind::Protected | ModifierKind::Private
-        ) && seen_flags
-            .intersects(ModifierFlags::PUBLIC | ModifierFlags::PROTECTED | ModifierFlags::PRIVATE)
-        {
-            self.error(diagnostics::accessibility_modifier_already_seen(modifier));
-        } else if seen_flags.contains(modifier.kind.into()) {
-            self.error(diagnostics::modifier_already_seen(modifier));
+    fn check_modifier(&mut self, flags: ModifierFlags, modifier: &Modifier) {
+        match modifier.kind {
+            ModifierKind::Public | ModifierKind::Private | ModifierKind::Protected => {
+                if flags.intersects(ModifierFlags::ACCESSIBILITY) {
+                    self.error(diagnostics::accessibility_modifier_already_seen(modifier));
+                } else if flags.contains(ModifierFlags::OVERRIDE) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Override,
+                    ));
+                } else if flags.contains(ModifierFlags::STATIC) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Static,
+                    ));
+                } else if flags.contains(ModifierFlags::ACCESSOR) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Accessor,
+                    ));
+                } else if flags.contains(ModifierFlags::READONLY) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Readonly,
+                    ));
+                } else if flags.contains(ModifierFlags::ASYNC) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Async,
+                    ));
+                } else if flags.contains(ModifierFlags::ABSTRACT) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Abstract,
+                    ));
+                }
+            }
+            ModifierKind::Static => {
+                if flags.contains(ModifierFlags::STATIC) {
+                    self.error(diagnostics::modifier_already_seen(modifier));
+                } else if flags.contains(ModifierFlags::READONLY) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Readonly,
+                    ));
+                } else if flags.contains(ModifierFlags::ASYNC) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Async,
+                    ));
+                } else if flags.contains(ModifierFlags::ACCESSOR) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Accessor,
+                    ));
+                } else if flags.contains(ModifierFlags::OVERRIDE) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Override,
+                    ));
+                }
+            }
+            ModifierKind::Override => {
+                if flags.contains(ModifierFlags::OVERRIDE) {
+                    self.error(diagnostics::modifier_already_seen(modifier));
+                } else if flags.contains(ModifierFlags::READONLY) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Readonly,
+                    ));
+                } else if flags.contains(ModifierFlags::ACCESSOR) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Accessor,
+                    ));
+                } else if flags.contains(ModifierFlags::ASYNC) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Async,
+                    ));
+                }
+            }
+            ModifierKind::Abstract => {
+                if flags.contains(ModifierFlags::ABSTRACT) {
+                    self.error(diagnostics::modifier_already_seen(modifier));
+                } else if flags.contains(ModifierFlags::OVERRIDE) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Override,
+                    ));
+                } else if flags.contains(ModifierFlags::ACCESSOR) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Accessor,
+                    ));
+                }
+            }
+            ModifierKind::Export => {
+                if flags.contains(ModifierFlags::EXPORT) {
+                    self.error(diagnostics::modifier_already_seen(modifier));
+                } else if flags.contains(ModifierFlags::DECLARE) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Declare,
+                    ));
+                } else if flags.contains(ModifierFlags::ABSTRACT) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Abstract,
+                    ));
+                } else if flags.contains(ModifierFlags::ASYNC) {
+                    self.error(diagnostics::modifier_must_precede_other_modifier(
+                        modifier,
+                        ModifierKind::Async,
+                    ));
+                }
+            }
+            _ => {
+                if flags.contains(modifier.kind.into()) {
+                    self.error(diagnostics::modifier_already_seen(modifier));
+                }
+            }
         }
     }
 

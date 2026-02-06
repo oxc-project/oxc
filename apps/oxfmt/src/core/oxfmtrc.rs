@@ -10,6 +10,8 @@ use oxc_formatter::{
 };
 use oxc_toml::Options as TomlFormatterOptions;
 
+use super::FormatFileStrategy;
+
 /// Configuration options for the Oxfmt.
 ///
 /// Most options are the same as Prettier's options, but not all of them.
@@ -158,7 +160,6 @@ pub struct FormatConfig {
     /// Control whether to format embedded parts (For example, CSS-in-JS, or JS-in-Vue, etc.) in the file.
     ///
     /// NOTE: XXX-in-JS support is incomplete.
-    /// JS-in-XXX is fully supported but still be handled by Prettier.
     ///
     /// - Default: `"auto"`
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -799,7 +800,7 @@ pub struct OxfmtOptions {
     pub insert_final_newline: bool,
 }
 
-/// Populates the raw config JSON with resolved `FormatOptions` values.
+/// Syncs resolved `FormatOptions` values into the raw config JSON.
 /// This ensures `external_formatter`(Prettier) receives the same options that `oxc_formatter` uses.
 ///
 /// Only options that meet one of these criteria need to be mapped:
@@ -810,7 +811,10 @@ pub struct OxfmtOptions {
 ///   - `end_of_line` -> `endOfLine`
 ///   - `indent_style` -> `useTabs`
 ///   - `indent_size` -> `tabWidth`
-pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
+///
+/// This function should be called once during config caching.
+/// For strategy-specific options (plugin flags), use [`finalize_external_options()`] separately.
+pub fn sync_external_options(config: &mut Value, options: &FormatOptions) {
     let Some(obj) = config.as_object_mut() else {
         return;
     };
@@ -836,38 +840,6 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
         }),
     );
 
-    // Already handled by Oxfmt
-    obj.remove("overrides");
-
-    // Below are our own extensions, just remove them
-    obj.remove("ignorePatterns");
-    obj.remove("insertFinalNewline");
-    obj.remove("experimentalSortImports");
-    obj.remove("experimentalSortPackageJson");
-
-    // Map `experimentalTailwindcss` options to Prettier's tailwind plugin format,
-    // by adding `tailwind` prefix to each field.
-    // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
-    if let Some(tailwind) = obj.remove("experimentalTailwindcss")
-        && let Some(tailwind) = tailwind.as_object()
-    {
-        // NOTE: Internal flag for JS side to signal that plugin is enabled
-        obj.insert("_tailwindPluginEnabled".to_string(), Value::Bool(true));
-
-        for (src, dst) in [
-            ("config", "tailwindConfig"),
-            ("stylesheet", "tailwindStylesheet"),
-            ("functions", "tailwindFunctions"),
-            ("attributes", "tailwindAttributes"),
-            ("preserveWhitespace", "tailwindPreserveWhitespace"),
-            ("preserveDuplicates", "tailwindPreserveDuplicates"),
-        ] {
-            if let Some(v) = tailwind.get(src) {
-                obj.insert(dst.to_string(), v.clone());
-            }
-        }
-    }
-
     // Any other fields are preserved as-is.
     // - e.g. `htmlWhitespaceSensitivity`, `vueIndentScriptAndStyle`, etc.
     //   - Defined in `Oxfmtrc`, but only used by Prettier
@@ -875,6 +847,118 @@ pub fn populate_prettier_config(options: &FormatOptions, config: &mut Value) {
     //   - It does not mean plugin works correctly with Oxfmt
     //   - Oxfmt still not aware of any plugin-defined languages
     // Other options defined independently by plugins are also left as they are.
+}
+
+/// Parsers that can embed JS/TS code and benefit from Tailwind plugin
+#[cfg(feature = "napi")]
+static TAILWIND_PARSERS: phf::Set<&'static str> = phf::phf_set! {
+    "html",
+    "vue",
+    "angular",
+    "glimmer",
+};
+
+/// Parsers that can embed JS/TS code and benefit from oxfmt plugin.
+/// For now, expressions are not supported.
+/// - e.g. `__vue_expression` in `vue`
+/// - e.g. `__ng_directive` in `angular`
+#[cfg(feature = "napi")]
+static OXFMT_PARSERS: phf::Set<&'static str> = phf::phf_set! {
+    // "html",
+    // "vue",
+    "markdown",
+    "mdx",
+};
+
+/// Finalizes external options by adding plugin-specific flags based on the formatting strategy.
+/// This should be called during `resolve()` after getting cached config.
+///
+/// - `_useTailwindPlugin`: Flag for JS side to load Tailwind plugin
+/// - `_oxfmtPluginOptionsJson`: Bundled options for `prettier-plugin-oxfmt`
+///
+/// Also removes Prettier-unaware options to minimize payload size.
+pub fn finalize_external_options(config: &mut Value, strategy: &FormatFileStrategy) {
+    let Some(obj) = config.as_object_mut() else {
+        return;
+    };
+
+    // Determine if Tailwind plugin should be used based on config and strategy
+    let use_tailwind = obj.contains_key("experimentalTailwindcss")
+        && match strategy {
+            FormatFileStrategy::OxcFormatter { .. } => true,
+            #[cfg(feature = "napi")]
+            FormatFileStrategy::ExternalFormatter { parser_name, .. } => {
+                TAILWIND_PARSERS.contains(parser_name)
+            }
+            _ => false,
+        };
+
+    // Add Tailwind plugin flag and map options
+    // See: https://github.com/tailwindlabs/prettier-plugin-tailwindcss#options
+    if use_tailwind {
+        if let Some(tailwind) =
+            obj.get("experimentalTailwindcss").and_then(|v| v.as_object()).cloned()
+        {
+            for (src, dst) in [
+                ("config", "tailwindConfig"),
+                ("stylesheet", "tailwindStylesheet"),
+                ("functions", "tailwindFunctions"),
+                ("attributes", "tailwindAttributes"),
+                ("preserveWhitespace", "tailwindPreserveWhitespace"),
+                ("preserveDuplicates", "tailwindPreserveDuplicates"),
+            ] {
+                if let Some(v) = tailwind.get(src) {
+                    obj.insert(dst.to_string(), v.clone());
+                }
+            }
+        }
+        obj.insert("_useTailwindPlugin".to_string(), Value::Number(1.into()));
+    }
+
+    // Build oxfmt plugin options JSON for js-in-xxx parsers
+    #[cfg(feature = "napi")]
+    if let FormatFileStrategy::ExternalFormatter { parser_name, .. } = strategy
+        && OXFMT_PARSERS.contains(parser_name)
+    {
+        let mut oxfmt_plugin_options = serde_json::Map::new();
+
+        for key in [
+            "printWidth",
+            "useTabs",
+            "tabWidth",
+            "endOfLine",
+            "singleQuote",
+            "bracketSpacing",
+            "bracketSameLine",
+            "semi",
+            "trailingComma",
+            "arrowParens",
+            "quoteProps",
+            "jsxSingleQuote",
+            "experimentalSortImports",
+            "experimentalTailwindcss",
+        ] {
+            if let Some(value) = obj.get(key) {
+                oxfmt_plugin_options.insert(key.to_string(), value.clone());
+            }
+        }
+
+        if let Ok(json_str) = serde_json::to_string(&Value::Object(oxfmt_plugin_options)) {
+            obj.insert("_oxfmtPluginOptionsJson".to_string(), Value::String(json_str));
+        }
+    }
+
+    // To minimize payload size, remove Prettier unaware options
+    for key in [
+        "experimentalSortImports",
+        "experimentalTailwindcss",
+        "experimentalSortPackageJson",
+        "insertFinalNewline",
+        "overrides",
+        "ignorePatterns",
+    ] {
+        obj.remove(key);
+    }
 }
 
 // ---
@@ -1081,24 +1165,24 @@ mod tests {
 }
 
 #[cfg(test)]
-mod tests_populate_prettier_config {
+mod tests_sync_external_options {
     use super::*;
 
     #[test]
-    fn test_populate_prettier_config_defaults() {
+    fn test_sync_external_options_defaults() {
         let json_string = r"{}";
         let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
         let config: FormatConfig = serde_json::from_str(json_string).unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
 
-        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
+        sync_external_options(&mut raw_config, &oxfmt_options.format_options);
 
         let obj = raw_config.as_object().unwrap();
         assert_eq!(obj.get("printWidth").unwrap(), 100);
     }
 
     #[test]
-    fn test_populate_prettier_config_with_user_values() {
+    fn test_sync_external_options_with_user_values() {
         let json_string = r#"{
             "printWidth": 80,
             "ignorePatterns": ["*.min.js"],
@@ -1108,14 +1192,15 @@ mod tests_populate_prettier_config {
         let config: FormatConfig = serde_json::from_str(json_string).unwrap();
         let oxfmt_options = config.into_oxfmt_options().unwrap();
 
-        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
+        sync_external_options(&mut raw_config, &oxfmt_options.format_options);
 
         let obj = raw_config.as_object().unwrap();
         // User-specified value is preserved via FormatOptions
         assert_eq!(obj.get("printWidth").unwrap(), 80);
-        // oxfmt extensions are removed
-        assert!(!obj.contains_key("ignorePatterns"));
-        assert!(!obj.contains_key("experimentalSortImports"));
+        // oxfmt extensions are preserved (for caching)
+        // They will be removed later by `finalize_external_options()`
+        assert!(obj.contains_key("ignorePatterns"));
+        assert!(obj.contains_key("experimentalSortImports"));
     }
 
     #[test]
@@ -1153,7 +1238,7 @@ mod tests_populate_prettier_config {
     }
 
     #[test]
-    fn test_populate_prettier_config_removes_overrides() {
+    fn test_sync_external_options_preserves_overrides() {
         let json_string = r#"{
             "tabWidth": 2,
             "overrides": [
@@ -1164,10 +1249,41 @@ mod tests_populate_prettier_config {
         let oxfmtrc: Oxfmtrc = serde_json::from_str(json_string).unwrap();
         let oxfmt_options = oxfmtrc.format_config.into_oxfmt_options().unwrap();
 
-        populate_prettier_config(&oxfmt_options.format_options, &mut raw_config);
+        sync_external_options(&mut raw_config, &oxfmt_options.format_options);
 
         let obj = raw_config.as_object().unwrap();
+        // Overrides are preserved (for caching)
+        // They will be removed later by `finalize_external_options()`
+        assert!(obj.contains_key("overrides"));
+    }
+
+    #[test]
+    fn test_finalize_external_options_removes_oxfmt_extensions() {
+        use std::path::PathBuf;
+
+        use oxc_span::SourceType;
+
+        let json_string = r#"{
+            "tabWidth": 2,
+            "overrides": [
+                { "files": ["*.test.js"], "options": { "tabWidth": 4 } }
+            ],
+            "ignorePatterns": ["*.min.js"],
+            "experimentalSortImports": { "order": "asc" }
+        }"#;
+        let mut raw_config: Value = serde_json::from_str(json_string).unwrap();
+
+        let strategy = super::super::FormatFileStrategy::OxcFormatter {
+            path: PathBuf::from("test.js"),
+            source_type: SourceType::mjs(),
+        };
+        finalize_external_options(&mut raw_config, &strategy);
+
+        let obj = raw_config.as_object().unwrap();
+        // oxfmt extensions are removed by finalize_external_options
         assert!(!obj.contains_key("overrides"));
+        assert!(!obj.contains_key("ignorePatterns"));
+        assert!(!obj.contains_key("experimentalSortImports"));
     }
 }
 

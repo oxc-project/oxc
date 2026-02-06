@@ -288,18 +288,21 @@ pub fn arguments_grouped_layout(
     // To avoid redundant `can_group_expression_argument` calls, we handle this case specially.
     if args.len() == 2 {
         let [first, second] = args else { unreachable!("args.len() == 2 guarantees two elements") };
-        let first = first.as_expression()?;
         let second = second.as_expression()?;
+
+        // `as_expression()` returns `None` for SpreadElement, which is fine since SpreadElement
+        // can never match the last arg's type (used for same-type checking in `should_group_last_argument_impl`).
+        let first_expr = first.as_expression();
 
         if can_group_expression_argument(second, f) {
             // Check if we should group the last argument (second)
-            should_group_last_argument_impl(2, Some(first), second, f)
-                .then_some(GroupedCallArgumentLayout::GroupedLastArgument)
-        } else {
-            // Check if we should group the first argument instead
-            should_group_first_argument(first, second, f)
-                .then_some(GroupedCallArgumentLayout::GroupedFirstArgument)
+            return should_group_last_argument_impl(2, first_expr, second, f)
+                .then_some(GroupedCallArgumentLayout::GroupedLastArgument);
         }
+
+        // Only check first argument grouping if first is an expression (not SpreadElement)
+        should_group_first_argument(first_expr?, second, f)
+            .then_some(GroupedCallArgumentLayout::GroupedFirstArgument)
     } else {
         // For other cases (not exactly 2 arguments), only check last argument grouping
         should_group_last_argument(args, f)

@@ -6,7 +6,7 @@ use crate::{
     ast, diagnostics,
     parser::{
         pattern_parser::{character, state::State, unicode_property},
-        reader::Reader,
+        reader::{EscapeKind, Reader},
         span_factory::SpanFactory,
     },
     surrogate_pair,
@@ -31,6 +31,16 @@ impl<'a> PatternParser<'a> {
             reader,
             state: State::new(unicode_mode, unicode_sets_mode),
             span_factory: SpanFactory::new(span_offset),
+        }
+    }
+
+    /// Converts an `EscapeKind` from the reader to the appropriate `CharacterKind`.
+    /// This is used to preserve information about how a character was written in source code.
+    fn escape_kind_to_character_kind(escape_kind: EscapeKind) -> ast::CharacterKind {
+        match escape_kind {
+            EscapeKind::None => ast::CharacterKind::Symbol,
+            EscapeKind::Unicode => ast::CharacterKind::UnicodeEscape,
+            EscapeKind::Hexadecimal => ast::CharacterKind::HexadecimalEscape,
         }
     }
 
@@ -311,12 +321,13 @@ impl<'a> PatternParser<'a> {
 
         // PatternCharacter
         if let Some(cp) = self.reader.peek().filter(|&cp| !character::is_syntax_character(cp)) {
+            let kind = Self::escape_kind_to_character_kind(self.reader.peek_escape_kind());
             self.reader.advance();
 
             return Ok(Some(ast::Term::Character(Box::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Symbol,
+                    kind,
                     value: cp,
                 },
                 self.allocator,
@@ -445,11 +456,12 @@ impl<'a> PatternParser<'a> {
         }
 
         // ExtendedPatternCharacter
+        let escape_kind = self.reader.peek_escape_kind();
         if let Some(cp) = self.consume_extended_pattern_character() {
             return Ok(Some(ast::Term::Character(Box::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Symbol,
+                    kind: Self::escape_kind_to_character_kind(escape_kind),
                     value: cp,
                 },
                 self.allocator,
@@ -957,12 +969,13 @@ impl<'a> PatternParser<'a> {
             .peek()
             .filter(|&cp| cp != '\\' as u32 && cp != ']' as u32 && cp != '-' as u32)
         {
+            let kind = Self::escape_kind_to_character_kind(self.reader.peek_escape_kind());
             self.reader.advance();
 
             return Ok(Some(ast::CharacterClassContents::Character(Box::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Symbol,
+                    kind,
                     value: cp,
                 },
                 self.allocator,
@@ -1451,11 +1464,12 @@ impl<'a> PatternParser<'a> {
             && !character::is_class_set_reserved_double_punctuator(cp1, cp2)
             && !character::is_class_set_syntax_character(cp1)
         {
+            let kind = Self::escape_kind_to_character_kind(self.reader.peek_escape_kind());
             self.reader.advance();
 
             return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.offset()),
-                kind: ast::CharacterKind::Symbol,
+                kind,
                 value: cp1,
             }));
         }

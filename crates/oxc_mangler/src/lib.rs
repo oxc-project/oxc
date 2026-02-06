@@ -11,7 +11,7 @@ use oxc_allocator::{Allocator, BitSet, Vec};
 use oxc_ast::ast::{Declaration, Program, Statement};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_semantic::{AstNodes, Reference, Scoping, Semantic, SemanticBuilder, SymbolId};
-use oxc_span::{Atom, CompactStr};
+use oxc_span::{Atom, CompactStr, Ident};
 
 pub(crate) mod base54;
 mod keep_names;
@@ -296,15 +296,19 @@ impl<'t> Mangler<'t> {
     ) {
         let (scoping, ast_nodes) = semantic.scoping_mut_and_nodes();
 
+        let temp_allocator = self.temp_allocator.as_ref();
+
         let (exported_names, exported_symbols) = if self.options.top_level {
             Mangler::collect_exported_symbols(program)
         } else {
             Default::default()
         };
-        let (keep_name_names, keep_name_symbols) =
-            Mangler::collect_keep_name_symbols(self.options.keep_names, scoping, ast_nodes);
-
-        let temp_allocator = self.temp_allocator.as_ref();
+        let (keep_name_names, keep_name_symbols) = Mangler::collect_keep_name_symbols(
+            self.options.keep_names,
+            temp_allocator,
+            scoping,
+            ast_nodes,
+        );
 
         // All symbols with their assigned slots. Keyed by symbol id.
         let mut slots = Vec::from_iter_in(iter::repeat_n(0, scoping.symbols_len()), temp_allocator);
@@ -333,17 +337,19 @@ impl<'t> Mangler<'t> {
             // Scopes with direct eval: collect binding names as reserved (they can be
             // accessed by eval at runtime) and skip slot assignment (keep original names).
             if scoping.scope_flags(scope_id).contains_direct_eval() {
-                for (&name, _) in bindings {
-                    eval_reserved_names.insert(name);
+                for (name, _) in bindings {
+                    eval_reserved_names.insert(name.as_str());
                 }
                 continue;
             }
 
             // Sort `bindings` in declaration order.
             tmp_bindings.clear();
-            tmp_bindings.extend(
-                bindings.values().copied().filter(|binding| !keep_name_symbols.contains(binding)),
-            );
+            tmp_bindings.extend(bindings.values().copied().filter(|binding| {
+                !keep_name_symbols
+                    .as_ref()
+                    .is_some_and(|keep_name_symbols| keep_name_symbols.has_bit(binding.index()))
+            }));
             if tmp_bindings.is_empty() {
                 continue;
             }
@@ -444,7 +450,7 @@ impl<'t> Mangler<'t> {
         let frequencies = self.tally_slot_frequencies(
             scoping,
             &exported_symbols,
-            &keep_name_symbols,
+            keep_name_symbols.as_ref(),
             total_number_of_slots,
             &slots,
         );
@@ -527,7 +533,7 @@ impl<'t> Mangler<'t> {
             // rename the variables
             for (symbol_to_rename, new_name) in symbols_to_rename_with_new_names {
                 for &symbol_id in &symbol_to_rename.symbol_ids {
-                    scoping.set_symbol_name(symbol_id, new_name);
+                    scoping.set_symbol_name(symbol_id, Ident::from(new_name.as_str()));
                 }
             }
         }
@@ -537,7 +543,7 @@ impl<'t> Mangler<'t> {
         &'a self,
         scoping: &Scoping,
         exported_symbols: &FxHashSet<SymbolId>,
-        keep_name_symbols: &FxHashSet<SymbolId>,
+        keep_name_symbols: Option<&BitSet<'a>>,
         total_number_of_slots: usize,
         slots: &[Slot],
     ) -> Vec<'a, SlotFrequency<'a>> {
@@ -562,7 +568,9 @@ impl<'t> Mangler<'t> {
             if is_special_name(scoping.symbol_name(symbol_id)) {
                 continue;
             }
-            if keep_name_symbols.contains(&symbol_id) {
+            if keep_name_symbols
+                .is_some_and(|keep_name_symbols| keep_name_symbols.has_bit(symbol_id.index()))
+            {
                 continue;
             }
             let index = slot as usize;
@@ -604,11 +612,15 @@ impl<'t> Mangler<'t> {
 
     fn collect_keep_name_symbols<'a>(
         keep_names: MangleOptionsKeepNames,
+        temp_allocator: &'t Allocator,
         scoping: &'a Scoping,
         nodes: &AstNodes,
-    ) -> (FxHashSet<&'a str>, FxHashSet<SymbolId>) {
-        let ids = collect_name_symbols(keep_names, scoping, nodes);
-        (ids.iter().map(|id| scoping.symbol_name(*id)).collect(), ids)
+    ) -> (FxHashSet<&'a str>, Option<BitSet<'t>>) {
+        if !keep_names.function && !keep_names.class {
+            return (FxHashSet::default(), None);
+        }
+        let ids = collect_name_symbols(keep_names, temp_allocator, scoping, nodes);
+        (ids.ones().map(|id| scoping.symbol_name(SymbolId::from_usize(id))).collect(), Some(ids))
     }
 
     /// Collects and generates mangled names for private members using semantic information
