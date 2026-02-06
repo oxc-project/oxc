@@ -9,7 +9,7 @@ import { sourceText } from "./source_code.ts";
 import { debugAssertIsNonNull, typeAssertIs } from "../utils/asserts.ts";
 
 import type { RequireAtLeastOne } from "type-fest";
-import type { Fix, FixFn } from "./fix.ts";
+import type { FixFn, FixReport } from "./fix.ts";
 import type { RuleDetails } from "./load.ts";
 import type { LineColumn, Ranged } from "./location.ts";
 
@@ -67,7 +67,7 @@ interface SuggestionBase {
  */
 export interface SuggestionReport {
   message: string;
-  fixes: Fix[];
+  fixes: FixReport[];
 }
 
 // Diagnostic in form sent to Rust.
@@ -77,7 +77,7 @@ export interface DiagnosticReport {
   start: number;
   end: number;
   ruleIndex: number;
-  fixes: Fix[] | null;
+  fixes: FixReport[] | null;
   suggestions: SuggestionReport[] | null;
   messageId: string | null;
   // Only used in conformance tests
