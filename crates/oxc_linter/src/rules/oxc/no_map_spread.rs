@@ -33,9 +33,9 @@ fn no_map_spread_diagnostic(
     assert!(!spans.is_empty());
     let mut spread_labels = spread.spread_spans().into_iter();
     let first_message = if spans.len() == 1 {
-        "This spread creates an unnecessary copy"
+        "This spread allocates a new value on each iteration"
     } else {
-        "These spreads create unnecessary copies"
+        "These spreads allocate new values on each iteration"
     };
     let first = spread_labels.next().unwrap().label(first_message);
     let others = spread_labels.map(LabeledSpan::from);
@@ -51,16 +51,23 @@ fn no_map_spread_diagnostic(
                 "Spreading to modify object properties in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an object"), first])
-            .with_help("Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object")
-            .with_note("Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable."),
+            .with_help(
+                "If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading",
+            )
+            .with_note(
+                "`Object.assign` mutates the first argument. Disable this rule if copy-on-write behavior is required.",
+            ),
             // Array
             Spread::Array(_) => OxcDiagnostic::warn(
                 "Spreading to modify array elements in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an array"), first])
-            .with_help("Consider using `Array.prototype.push()` or `.concat()` to add elements, this avoids copying the entire array")
-            .with_note("Note: `push` mutates the original arrays in the array. `concat` does not but has different semantics than spreading. Disable this rule if neither is acceptable.")
-            ,
+            .with_help(
+                "If in-place mutation is acceptable, use `push` (or `concat` when semantics match) instead of spreading",
+            )
+            .with_note(
+                "`push` mutates the array. `concat` returns a new array and is not equivalent for every iterable.",
+            ),
         };
 
     diagnostic.and_labels(others).and_labels(returned_label)
