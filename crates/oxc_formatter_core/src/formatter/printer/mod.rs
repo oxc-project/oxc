@@ -1327,7 +1327,7 @@ mod tests {
 
     fn format<'a>(
         allocator: &'a Allocator,
-        root: &dyn Format<'a, SimpleFormatContext<'a>>,
+        root: &(dyn Format<'a, SimpleFormatContext<'a>> + 'a),
     ) -> Printed {
         format_with_options(
             allocator,
@@ -1343,7 +1343,7 @@ mod tests {
 
     fn format_with_options<'a>(
         allocator: &'a Allocator,
-        root: &dyn Format<'a, SimpleFormatContext<'a>>,
+        root: &(dyn Format<'a, SimpleFormatContext<'a>> + 'a),
         options: PrinterOptions,
     ) -> Printed {
         let formatted = crate::format!(SimpleFormatContext::new(allocator), [root]);
@@ -1591,7 +1591,7 @@ two lines`,
     #[test]
     fn test_fill_breaks() {
         let allocator = Allocator::default();
-        let mut state = FormatState::new(FormatContext::dummy(&allocator));
+        let mut state = FormatState::new(SimpleFormatContext::new(&allocator));
         let mut buffer = VecBuffer::new(&mut state);
         let mut formatter = Formatter::new(&mut buffer);
 
@@ -1668,28 +1668,10 @@ two lines`,
     }
     #[test]
     fn conditional_with_group_id_in_fits() {
-        let allocator = Allocator::default();
-        let content = format_with(|f| {
-            let group_id = f.group_id("test");
-            write!(
-                f,
-                [
-                    group(&format_args!(
-                        token("The referenced group breaks."),
-                        hard_line_break()
-                    ))
-                    .with_group_id(Some(group_id)),
-                    group(&format_args!(
-                        token("This group breaks because:"),
-                        soft_line_break_or_space(),
-                        if_group_fits_on_line(&token("This content fits but should not be printed.")).with_group_id(Some(group_id)),
-                        if_group_breaks(&token("It measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text.")).with_group_id(Some(group_id)),
-                    ))
-                ]
-            );
-        });
+        let allocator = Box::leak(Box::new(Allocator::default()));
+        let content = ConditionalWithGroupIdInFits;
 
-        let printed = format(&allocator, &content);
+        let printed = format(allocator, &content);
 
         assert_eq!(
             printed.as_code(),
@@ -1699,33 +1681,10 @@ two lines`,
 
     #[test]
     fn out_of_order_group_ids() {
-        let allocator = Allocator::default();
-        let content = format_with(|f| {
-            let id_1 = f.group_id("id-1");
-            let id_2 = f.group_id("id-2");
+        let allocator = Box::leak(Box::new(Allocator::default()));
+        let content = OutOfOrderGroupIds;
 
-            write!(
-                f,
-                [group(&token("Group with id-2")).with_group_id(Some(id_2)), hard_line_break()]
-            );
-
-            write!(f,
-            [
-                group(&token("Group with id-1 does not fit on the line because it exceeds the line width of 100 characters by..........")).with_group_id(Some(id_1)),
-                hard_line_break()
-            ]);
-
-            write!(
-                f,
-                [
-                    if_group_fits_on_line(&token("Group 2 fits")).with_group_id(Some(id_2)),
-                    hard_line_break(),
-                    if_group_breaks(&token("Group 1 breaks")).with_group_id(Some(id_1))
-                ]
-            );
-        });
-
-        let printed = format(&allocator, &content);
+        let printed = format(allocator, &content);
 
         assert_eq!(
             printed.as_code(),
@@ -1783,6 +1742,61 @@ Group 1 breaks"
                     )),
                     token("]")
                 ))]
+            );
+        }
+    }
+
+    struct ConditionalWithGroupIdInFits;
+
+    impl<'ast> Format<'ast, SimpleFormatContext<'ast>> for ConditionalWithGroupIdInFits {
+        fn fmt(&self, f: &mut Formatter<'_, 'ast, SimpleFormatContext<'ast>>) {
+            let group_id = f.group_id("test");
+            write!(
+                f,
+                [
+                    group(&format_args!(
+                        token("The referenced group breaks."),
+                        hard_line_break()
+                    ))
+                    .with_group_id(Some(group_id)),
+                    group(&format_args!(
+                        token("This group breaks because:"),
+                        soft_line_break_or_space(),
+                        if_group_fits_on_line(&token("This content fits but should not be printed.")).with_group_id(Some(group_id)),
+                        if_group_breaks(&token("It measures with the 'if_group_breaks' variant because the referenced group breaks and that's just way too much text.")).with_group_id(Some(group_id)),
+                    ))
+                ]
+            );
+        }
+    }
+
+    struct OutOfOrderGroupIds;
+
+    impl<'ast> Format<'ast, SimpleFormatContext<'ast>> for OutOfOrderGroupIds {
+        fn fmt(&self, f: &mut Formatter<'_, 'ast, SimpleFormatContext<'ast>>) {
+            let id_1 = f.group_id("id-1");
+            let id_2 = f.group_id("id-2");
+
+            write!(
+                f,
+                [group(&token("Group with id-2")).with_group_id(Some(id_2)), hard_line_break()]
+            );
+
+            write!(
+                f,
+                [
+                    group(&token("Group with id-1 does not fit on the line because it exceeds the line width of 100 characters by..........")).with_group_id(Some(id_1)),
+                    hard_line_break()
+                ]
+            );
+
+            write!(
+                f,
+                [
+                    if_group_fits_on_line(&token("Group 2 fits")).with_group_id(Some(id_2)),
+                    hard_line_break(),
+                    if_group_breaks(&token("Group 1 breaks")).with_group_id(Some(id_1))
+                ]
             );
         }
     }

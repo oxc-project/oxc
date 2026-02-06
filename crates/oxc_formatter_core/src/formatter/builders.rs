@@ -1795,9 +1795,9 @@ where
     should_expand: bool,
 }
 
-impl<Ctx> Group<'_, '_, Ctx>
+impl<'ast, Ctx> Group<'_, 'ast, Ctx>
 where
-    for<'ast> Ctx: FormatContext<'ast>,
+    Ctx: FormatContext<'ast>,
 {
     pub fn with_group_id(mut self, group_id: Option<GroupId>) -> Self {
         self.group_id = group_id;
