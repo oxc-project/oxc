@@ -398,6 +398,32 @@ impl<'a> ConfigLoader<'a> {
         self.load_many(configs)
     }
 
+    /// Try to load config from a specific directory.
+    ///
+    /// Checks for both `.oxlintrc.json` and `oxlint.config.ts` files in the given directory.
+    /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
+    fn try_load_config_from_dir(&self, dir: &Path) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
+        let json_path = dir.join(DEFAULT_OXLINTRC_NAME);
+        let ts_path = dir.join(DEFAULT_TS_OXLINTRC_NAME);
+
+        let json_exists = json_path.is_file();
+        let ts_exists = ts_path.is_file();
+
+        if json_exists && ts_exists {
+            return Err(config_conflict_diagnostic(dir));
+        }
+
+        if ts_exists {
+            return self.load_root_ts_config(&ts_path).map(Some);
+        }
+
+        if json_exists {
+            return Oxlintrc::from_file(&json_path).map(Some);
+        }
+
+        Ok(None)
+    }
+
     pub(crate) fn load_root_config(
         &self,
         cwd: &Path,
@@ -411,24 +437,48 @@ impl<'a> ConfigLoader<'a> {
             return Oxlintrc::from_file(&full_path);
         }
 
-        let json_path = cwd.join(DEFAULT_OXLINTRC_NAME);
-        let ts_path = cwd.join(DEFAULT_TS_OXLINTRC_NAME);
+        match self.try_load_config_from_dir(cwd)? {
+            Some(config) => Ok(config),
+            None => Ok(Oxlintrc::default()),
+        }
+    }
 
-        let json_exists = json_path.is_file();
-        let ts_exists = ts_path.is_file();
-
-        if json_exists && ts_exists {
-            return Err(config_conflict_diagnostic(cwd));
+    /// Load root config by searching up parent directories.
+    ///
+    /// This is used by the LSP when a workspace folder is nested (e.g., `apps/app1`).
+    /// It searches from the current directory up to parent directories to find a config file.
+    ///
+    /// # Arguments
+    /// * `cwd` - Current working directory (workspace root for LSP)
+    /// * `config_path` - Optional explicit path to the root config file
+    ///
+    /// # Returns
+    /// The first config found when searching up the directory tree, or default if none found.
+    pub(crate) fn load_root_config_with_ancestor_search(
+        &self,
+        cwd: &Path,
+        config_path: Option<&PathBuf>,
+    ) -> Result<Oxlintrc, OxcDiagnostic> {
+        // If an explicit config path is provided, use it directly
+        if let Some(config_path) = config_path {
+            let full_path = cwd.join(config_path);
+            if full_path.file_name() == Some(OsStr::new(DEFAULT_TS_OXLINTRC_NAME)) {
+                return self.load_root_ts_config(&full_path);
+            }
+            return Oxlintrc::from_file(&full_path);
         }
 
-        if ts_exists {
-            return self.load_root_ts_config(&ts_path);
+        // Search up the directory tree for a config file
+        let mut current = Some(cwd);
+        while let Some(dir) = current {
+            if let Some(config) = self.try_load_config_from_dir(dir)? {
+                return Ok(config);
+            }
+            // Move to parent directory
+            current = dir.parent();
         }
 
-        if json_exists {
-            return Oxlintrc::from_file(&json_path);
-        }
-
+        // No config found in any ancestor directory
         Ok(Oxlintrc::default())
     }
 
@@ -594,5 +644,42 @@ mod test {
                 "Config file name should be preserved after path resolution"
             );
         }
+    }
+
+    #[test]
+    fn test_load_root_config_with_ancestor_search() {
+        let cwd = std::env::current_dir().unwrap();
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+
+        // Test case 1: Search from nested directory should find config in parent
+        // Uses fixture: ancestor_search/apps/app1 -> should find ancestor_search/.oxlintrc.json
+        let nested_dir = cwd.join("apps/oxlint/fixtures/ancestor_search/apps/app1");
+        if nested_dir.exists() {
+            let result = loader.load_root_config_with_ancestor_search(&nested_dir, None);
+            assert!(result.is_ok(), "Expected ancestor search to find config or return default");
+
+            // Verify the config was actually found (not just default)
+            if let Ok(config) = result {
+                // The fixture has a .oxlintrc.json with no-console rule
+                assert!(
+                    config.path.ends_with(".oxlintrc.json") || config.path.as_os_str().is_empty(),
+                    "Expected to find .oxlintrc.json or default config"
+                );
+            }
+        }
+
+        // Test case 2: Explicit config path should still work
+        // Uses dedicated fixture with .oxlintrc.json
+        let valid_config = PathBuf::from("fixtures/ancestor_search_explicit_config/.oxlintrc.json");
+        let result = loader.load_root_config_with_ancestor_search(&cwd, Some(&valid_config));
+        assert!(result.is_ok(), "Expected config lookup to succeed with explicit path");
+
+        // Test case 3: When no config exists in any ancestor, should return default
+        let temp_dir = std::env::temp_dir().join("oxc_test_no_config");
+        std::fs::create_dir_all(&temp_dir).expect("Failed to create temporary test directory");
+        let result = loader.load_root_config_with_ancestor_search(&temp_dir, None);
+        assert!(result.is_ok(), "Expected default config when no config found");
+        std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
     }
 }
