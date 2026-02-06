@@ -642,15 +642,20 @@ impl Linter {
                     }
 
                     // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
-                    let create_fix = |fixes| match convert_and_merge_js_fixes(
+                    let create_fix = |fixes, fix_kind| match convert_and_merge_js_fixes(
                         fixes,
                         original_source_text,
                         &span_converter,
                     ) {
-                        Ok(fix) => Some(fix),
+                        Ok(fix) => Some(fix.with_kind(fix_kind)),
                         Err(err) => {
+                            let fixes_type = if fix_kind.contains(FixKind::Suggestion) {
+                                "suggestions"
+                            } else {
+                                "fixes"
+                            };
                             let message = format!(
-                                "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid {fixes_type}.\nFile path: {path}\n{err}"
                             );
                             ctx_host.push_diagnostic(Message::new(
                                 OxcDiagnostic::error(message),
@@ -661,7 +666,7 @@ impl Linter {
                     };
 
                     // Convert fix
-                    let fix = diagnostic.fixes.and_then(create_fix);
+                    let fix = diagnostic.fixes.and_then(|fixes| create_fix(fixes, FixKind::Fix));
 
                     // Convert suggestions (only if fix kind allows suggestions), and combine with fix
                     let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
@@ -674,11 +679,8 @@ impl Linter {
                         }
 
                         for suggestion in suggestions {
-                            if let Some(fix) = create_fix(suggestion.fixes) {
-                                fixes.push(
-                                    fix.with_message(suggestion.message)
-                                        .with_kind(FixKind::Suggestion),
-                                );
+                            if let Some(fix) = create_fix(suggestion.fixes, FixKind::Suggestion) {
+                                fixes.push(fix.with_message(suggestion.message));
                             }
                         }
 

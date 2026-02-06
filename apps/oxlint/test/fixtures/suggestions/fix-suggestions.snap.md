@@ -7,11 +7,11 @@
   | File path: <fixture>/files/range_end_negative.js
   | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `-10`, expected u32 at line 1 column 158
 
-  x Plugin `suggestions-plugin/suggestions` returned invalid fixes.
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
   | File path: <fixture>/files/range_end_out_of_bounds.js
   | Invalid range: 7..7
 
-  x Plugin `suggestions-plugin/suggestions` returned invalid fixes.
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
   | File path: <fixture>/files/range_end_out_of_bounds.js
   | Invalid range: 7..7
 
@@ -19,11 +19,11 @@
   | File path: <fixture>/files/range_end_too_large.js
   | Failed to deserialize JSON returned by `lintFile`: invalid value: integer `4294967296`, expected u32 at line 1 column 166
 
-  x Plugin `suggestions-plugin/suggestions` returned invalid fixes.
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
   | File path: <fixture>/files/range_start_after_end.js
   | Negative range is invalid: Span { start: 3, end: 2 }
 
-  x Plugin `suggestions-plugin/suggestions` returned invalid fixes.
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
   | File path: <fixture>/files/range_start_after_end.js
   | Negative range is invalid: Span { start: 3, end: 2 }
 
