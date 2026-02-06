@@ -1,3 +1,5 @@
+import assert from "node:assert";
+
 import type { Node, Plugin, Rule, Suggestion } from "#oxlint/plugins";
 
 const rule: Rule = {
@@ -5,6 +7,11 @@ const rule: Rule = {
     hasSuggestions: true,
   },
   create(context) {
+    // Check file has not been formatted by accident.
+    // We want the fixture files not to have trailing whitespace to check suggestions at very end of file.
+    const sourceText = context.sourceCode.text;
+    assert(!sourceText.endsWith("\n"), "Fixture has been formatted");
+
     let debuggerCount = 0;
     return {
       DebuggerStatement(node) {

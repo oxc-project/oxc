@@ -6,6 +6,8 @@
     "**/fixtures/**",
     "!apps/oxlint/test/fixtures/**",
     "apps/oxlint/test/fixtures/bom/files/**",
+    "apps/oxlint/test/fixtures/fixes/files/**",
+    "apps/oxlint/test/fixtures/suggestions/files/**",
     "**/dist/**",
     "**/generated/**",
     "**/CHANGELOG.md",

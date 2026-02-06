@@ -27,5 +27,4 @@ let granular = 9;
 let cowabunga = 10;
 
 
-
 ```
