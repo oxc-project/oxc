@@ -1,3 +1,5 @@
+import assert from "node:assert";
+
 import type { Diagnostic, Node, Plugin, Rule } from "#oxlint/plugins";
 
 const rule: Rule = {
@@ -5,6 +7,11 @@ const rule: Rule = {
     fixable: "code",
   },
   create(context) {
+    // Check file has not been formatted by accident.
+    // We want the fixture files not to have trailing whitespace to check fixes at very end of file.
+    const sourceText = context.sourceCode.text;
+    assert(!sourceText.endsWith("\n"), "Fixture file has been formatted");
+
     let debuggerCount = 0;
     return {
       DebuggerStatement(node) {
