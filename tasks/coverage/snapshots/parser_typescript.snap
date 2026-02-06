@@ -3,7 +3,7 @@ commit: 95e3aaa9
 parser_typescript Summary:
 AST Parsed     : 9842/9842 (100.00%)
 Positive Passed: 9841/9842 (99.99%)
-Negative Passed: 1529/2557 (59.80%)
+Negative Passed: 1530/2558 (59.81%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -2320,6 +2320,13 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/Va
    ·              ─────────────
  5 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/TransportStream.ts:1:2]
+ 1 │ G@�G@�G@�
+   ·  ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Getters and setters must have an implementation.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
