@@ -4,7 +4,7 @@
 use indexmap::map::Entry;
 use oxc_allocator::{Address, GetAddress, TakeIn, UnstableAddress};
 use oxc_ast::{NONE, ast::*};
-use oxc_span::{Ident, SPAN};
+use oxc_span::{Atom, Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     reference::ReferenceFlags,
@@ -97,7 +97,7 @@ impl<'a> ClassProperties<'a, '_> {
                         // Note: Current scope is outside class.
                         let binding = ctx.generate_uid_in_current_hoist_scope(&ident.name);
                         private_props.insert(
-                            ident.name.into(),
+                            ident.name,
                             PrivateProp::new(binding, prop.r#static, None, false),
                         );
                     }
@@ -134,7 +134,7 @@ impl<'a> ClassProperties<'a, '_> {
                             SymbolFlags::Function,
                         );
 
-                        match private_props.entry(ident.name.into()) {
+                        match private_props.entry(ident.name) {
                             Entry::Occupied(mut entry) => {
                                 // If there's already a binding for this private property,
                                 // it's a setter or getter, so store the binding in `binding2`.
@@ -157,7 +157,7 @@ impl<'a> ClassProperties<'a, '_> {
                     if let PropertyKey::PrivateIdentifier(ident) = &prop.key {
                         let dummy_binding = BoundIdentifier::new(Ident::empty(), SymbolId::new(0));
                         private_props.insert(
-                            ident.name.into(),
+                            ident.name,
                             PrivateProp::new(dummy_binding, prop.r#static, None, true),
                         );
                     }
@@ -851,14 +851,14 @@ impl<'a> ClassProperties<'a, '_> {
 
     /// `_classPrivateFieldLooseKey("prop")`
     fn create_private_prop_key_loose(
-        name: Atom<'a>,
+        name: Ident<'a>,
         transform_ctx: &TransformCtx<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         transform_ctx.helper_call_expr(
             Helper::ClassPrivateFieldLooseKey,
             SPAN,
-            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, name, None))),
+            ctx.ast.vec1(Argument::from(ctx.ast.expression_string_literal(SPAN, Atom::from(name), None))),
             ctx,
         )
     }

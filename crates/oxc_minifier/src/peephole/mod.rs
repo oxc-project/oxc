@@ -514,7 +514,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name.into());
+        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.field.name);
     }
 
     fn exit_private_in_expression(
@@ -525,7 +525,7 @@ impl<'a> Traverse<'a, MinifierState<'a>> for PeepholeOptimizations {
         if ctx.state.dce {
             return;
         }
-        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name.into());
+        ctx.state.class_symbols_stack.push_private_member_to_current_class(node.left.name);
     }
 }
 

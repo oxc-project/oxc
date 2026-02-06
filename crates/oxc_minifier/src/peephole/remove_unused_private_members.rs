@@ -1,5 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_ecmascript::side_effects::MayHaveSideEffects;
+use oxc_span::Ident;
 
 use crate::ctx::Ctx;
 
@@ -21,7 +22,7 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
                     return true;
                 };
-                let name: Atom = private_id.name.into();
+                let name = private_id.name;
                 if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
@@ -31,14 +32,14 @@ impl<'a> PeepholeOptimizations {
                 let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
                     return true;
                 };
-                let name: Atom = private_id.name.into();
+                let name = private_id.name;
                 ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name)
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                     return true;
                 };
-                let name: Atom = private_id.name.into();
+                let name = private_id.name;
                 if ctx.state.class_symbols_stack.is_private_member_used_in_current_class(&name) {
                     return true;
                 }
@@ -54,25 +55,25 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    pub fn get_declared_private_symbols(body: &ClassBody<'a>) -> impl Iterator<Item = Atom<'a>> {
+    pub fn get_declared_private_symbols(body: &ClassBody<'a>) -> impl Iterator<Item = Ident<'a>> {
         body.body.iter().filter_map(|element| match element {
             ClassElement::PropertyDefinition(prop) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &prop.key else {
                     return None;
                 };
-                Some(private_id.name.into())
+                Some(private_id.name)
             }
             ClassElement::MethodDefinition(method) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &method.key else {
                     return None;
                 };
-                Some(private_id.name.into())
+                Some(private_id.name)
             }
             ClassElement::AccessorProperty(accessor) => {
                 let PropertyKey::PrivateIdentifier(private_id) = &accessor.key else {
                     return None;
                 };
-                Some(private_id.name.into())
+                Some(private_id.name)
             }
             ClassElement::StaticBlock(_) => None,
             ClassElement::TSIndexSignature(_) => {
