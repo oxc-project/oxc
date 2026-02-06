@@ -3,10 +3,13 @@ use std::{fmt::Debug, sync::Arc};
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeMap};
 
 use oxc_allocator::Allocator;
+use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
+use oxc_span::Span;
 
 use crate::{
     config::{OxlintEnv, OxlintGlobals},
     context::ContextHost,
+    fixer::{CompositeFix, Fix, FixKind, MergeFixesError},
 };
 
 pub type ExternalLinterCreateWorkspaceCb =
@@ -92,6 +95,31 @@ pub struct JsFix {
 pub struct JsSuggestion {
     pub message: String,
     pub fixes: Vec<JsFix>,
+}
+
+/// Convert a `Vec<JsFix>` to a single [`Fix`], including converting spans from UTF-16 to UTF-8.
+pub fn convert_and_merge_js_fixes(
+    fixes: Vec<JsFix>,
+    source_text: &str,
+    span_converter: &Utf8ToUtf16,
+) -> Result<Fix, MergeFixesError> {
+    // JS should send `None` instead of `Some([])`
+    debug_assert!(!fixes.is_empty());
+
+    let is_single = fixes.len() == 1;
+
+    let mut fixes = fixes.into_iter().map(|fix| {
+        let mut span = Span::new(fix.range[0], fix.range[1]);
+        span_converter.convert_span_back(&mut span);
+        Fix::new(fix.text, span).with_kind(FixKind::Fix)
+    });
+
+    if is_single {
+        #[expect(clippy::missing_panics_doc, reason = "infallible")]
+        Ok(fixes.next().unwrap())
+    } else {
+        CompositeFix::merge_fixes_fallible(fixes.collect(), source_text)
+    }
 }
 
 #[derive(Clone)]
