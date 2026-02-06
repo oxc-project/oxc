@@ -89,6 +89,9 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: Does not report errors since `.js` file with `checkJs: false`
     // OXC: Reports errors
     "plainJSRedeclare3.ts",
+    // TSC: Allows import+const redeclaration in `.js` file with `allowJs: true`
+    // OXC: Reports redeclaration error per ES spec
+    "usedImportNotElidedInJs.ts",
     // TSC: Parse without error, they support BOM
     // OXC: We do not ignore or exclude BOM, will be invalid character error
     "bom-utf16be.ts",
