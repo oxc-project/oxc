@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     config::{OxlintEnv, OxlintGlobals},
     context::ContextHost,
-    fixer::{CompositeFix, Fix, FixKind, MergeFixesError},
+    fixer::{CompositeFix, Fix, MergeFixesError},
 };
 
 pub type ExternalLinterCreateWorkspaceCb =
@@ -111,7 +111,7 @@ pub fn convert_and_merge_js_fixes(
     let mut fixes = fixes.into_iter().map(|fix| {
         let mut span = Span::new(fix.range[0], fix.range[1]);
         span_converter.convert_span_back(&mut span);
-        Fix::new(fix.text, span).with_kind(FixKind::Fix)
+        Fix::new(fix.text, span)
     });
 
     if is_single {
