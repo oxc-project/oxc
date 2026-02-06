@@ -1,7 +1,9 @@
 use std::{
+    borrow::Cow,
     collections::BTreeSet,
     ffi::OsStr,
     io::{ErrorKind, Read, Write, stderr},
+    iter, mem,
     path::{Path, PathBuf},
     sync::{Arc, Mutex},
 };
@@ -730,8 +732,6 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
 impl Message {
     /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
     fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
-        use std::{borrow::Cow, iter, mem};
-
         let fix = if val.fixes.is_empty() {
             None
         } else {
@@ -741,7 +741,7 @@ impl Message {
                     content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
-                    kind: crate::fixer::FixKind::Fix,
+                    kind: FixKind::Fix,
                 })
                 .collect();
 
@@ -756,7 +756,7 @@ impl Message {
                     content: Cow::Owned(fix.text),
                     span: Span::new(fix.range.pos, fix.range.end),
                     message: None,
-                    kind: crate::fixer::FixKind::Suggestion,
+                    kind: FixKind::Suggestion,
                 })
                 .collect();
 
@@ -1200,7 +1200,7 @@ mod test {
     use oxc_span::Span;
 
     use crate::{
-        fixer::{Message, PossibleFixes},
+        fixer::{FixKind, Message, PossibleFixes},
         tsgolint::{Fix, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
 
@@ -1262,7 +1262,7 @@ mod test {
                 content: "fixedhello".into(),
                 span: Span::new(0, 10),
                 message: None,
-                kind: crate::fixer::FixKind::Fix
+                kind: FixKind::Fix
             })
         );
     }
@@ -1311,13 +1311,13 @@ mod test {
                     content: "hello".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
-                    kind: crate::fixer::FixKind::Suggestion
+                    kind: FixKind::Suggestion
                 },
                 crate::fixer::Fix {
                     content: "helloworld".into(),
                     span: Span::new(0, 10),
                     message: Some("Suggestion 2".into()),
-                    kind: crate::fixer::FixKind::Suggestion
+                    kind: FixKind::Suggestion
                 },
             ])
         );
@@ -1355,13 +1355,13 @@ mod test {
                     content: "fixed".into(),
                     span: Span::new(0, 5),
                     message: None,
-                    kind: crate::fixer::FixKind::Fix
+                    kind: FixKind::Fix
                 },
                 crate::fixer::Fix {
                     content: "Suggestion 1".into(),
                     span: Span::new(0, 5),
                     message: Some("Suggestion 1".into()),
-                    kind: crate::fixer::FixKind::Suggestion,
+                    kind: FixKind::Suggestion,
                 },
             ])
         );
