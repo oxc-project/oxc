@@ -117,6 +117,14 @@ pub fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_
     use FormatNumberLiteralState::{DecimalPart, Exponent, IntegerPart};
 
     let text = text.cow_to_ascii_lowercase();
+
+    // Bail out for numbers with numeric separators (underscores).
+    // Prettier's regex-based approach preserves them implicitly because `\d` doesn't match `_`.
+    // The only transformation that still applies is adding a leading zero (`.1_1` → `0.1_1`).
+    if text.contains('_') {
+        return if text.starts_with('.') { Cow::Owned(format!("0{text}")) } else { text };
+    }
+
     let mut copied_or_ignored_chars = 0usize;
     let mut iter = text.bytes().enumerate();
     let mut curr = iter.next();
