@@ -292,31 +292,13 @@ impl<'a> ParserImpl<'a> {
                 self.error(diagnostics::decorators_are_not_valid_here(decorator.span));
             }
 
-            // No modifiers except `static` and `readonly` are valid here, and they must appear in that order
+            // No modifiers except `static` and `readonly` are valid here
             self.verify_modifiers(
                 &modifiers,
                 ModifierFlags::READONLY | ModifierFlags::STATIC,
                 true,
                 diagnostics::cannot_appear_on_an_index_signature,
             );
-            if modifiers.contains_all_flags(ModifierFlags::READONLY | ModifierFlags::STATIC) {
-                // Has both `readonly` and `static` modifiers. Make sure `static` comes before `readonly`.
-                let mut has_seen_readonly_modifier = false;
-                for modifier in modifiers.iter() {
-                    match modifier.kind {
-                        ModifierKind::Readonly => has_seen_readonly_modifier = true,
-                        ModifierKind::Static => {
-                            if has_seen_readonly_modifier {
-                                self.error(diagnostics::modifier_must_precede_other_modifier(
-                                    modifier,
-                                    ModifierKind::Readonly,
-                                ));
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-            }
 
             return ClassElement::TSIndexSignature(
                 self.parse_index_signature_declaration(span, &modifiers),
