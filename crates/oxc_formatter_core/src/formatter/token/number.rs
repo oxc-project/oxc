@@ -1,0 +1,280 @@
+use std::{borrow::Cow, num::NonZeroUsize};
+
+use cow_utils::CowUtils;
+
+use crate::formatter::{Format, Formatter, prelude::*};
+
+#[derive(Debug, Default, Clone, Copy)]
+pub struct NumberFormatOptions {
+    /// Controls how numbers with trailing decimal zeroes are formatted.
+    ///
+    /// Prettier behaves differently when printing numbers like `x.00000` in different languages:
+    /// - In JavaScript: `x.00000` is printed as `x.0`
+    /// - In CSS: `x.00000` is printed as `x`
+    keep_one_trailing_decimal_zero: bool,
+}
+
+impl NumberFormatOptions {
+    pub fn keep_one_trailing_decimal_zero() -> Self {
+        Self { keep_one_trailing_decimal_zero: true }
+    }
+}
+
+pub fn format_number_token(
+    text: &str,
+    options: NumberFormatOptions,
+) -> CleanedNumberLiteralText<'_>
+where
+{
+    CleanedNumberLiteralText { text, options }
+}
+
+pub struct CleanedNumberLiteralText<'a> {
+    text: &'a str,
+    options: NumberFormatOptions,
+}
+
+impl<'a, Ctx> Format<'a, Ctx> for CleanedNumberLiteralText<'a>
+where
+    Ctx: crate::formatter::FormatContext<'a>,
+{
+    fn fmt(&self, f: &mut Formatter<'_, 'a, Ctx>) {
+        let text = format_trimmed_number(self.text, self.options);
+        text_without_whitespace(f.context().allocator().alloc_str(&text)).fmt(f);
+    }
+}
+
+/// Checks if a number string is "simple" - only digits, or digits.digits.
+/// Matches Prettier's `isSimpleNumber`: `/^(?:\d+|\d+\.\d+)$/u`
+///
+/// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/property.js#L11-L14>
+///
+/// Examples of simple numbers: "1", "123", "1.5", "0.1"
+/// Examples of non-simple numbers: "1e10", "0x10", "1_000", ".1", "1."
+pub fn is_simple_number(s: &str) -> bool {
+    if s.is_empty() {
+        return false;
+    }
+
+    let bytes = s.as_bytes();
+    let mut i = 0;
+
+    // Must start with a digit
+    if !bytes[i].is_ascii_digit() {
+        return false;
+    }
+
+    // Consume integer part (at least one digit required)
+    while i < bytes.len() && bytes[i].is_ascii_digit() {
+        i += 1;
+    }
+
+    // If we've consumed everything, it's a simple integer
+    if i == bytes.len() {
+        return true;
+    }
+
+    // If there's more, it must be a dot followed by at least one digit
+    if bytes[i] != b'.' {
+        return false;
+    }
+    i += 1;
+
+    // Must have at least one digit after the dot
+    if i >= bytes.len() || !bytes[i].is_ascii_digit() {
+        return false;
+    }
+
+    // Consume the rest - must all be digits
+    while i < bytes.len() {
+        if !bytes[i].is_ascii_digit() {
+            return false;
+        }
+        i += 1;
+    }
+
+    true
+}
+
+enum FormatNumberLiteralState {
+    IntegerPart,
+    DecimalPart(FormatNumberLiteralDecimalPart),
+    Exponent(FormatNumberLiteralExponent),
+}
+
+struct FormatNumberLiteralDecimalPart {
+    dot_index: usize,
+    last_non_zero_index: Option<NonZeroUsize>,
+}
+
+struct FormatNumberLiteralExponent {
+    e_index: usize,
+    is_negative: bool,
+    first_digit_index: Option<NonZeroUsize>,
+    first_non_zero_index: Option<NonZeroUsize>,
+}
+
+// Regex-free version of https://github.com/prettier/prettier/blob/ca246afacee8e6d5db508dae01730c9523bbff1d/src/common/util.js#L341-L356
+// TODO: Use arena String to construct the cleaned text.
+pub fn format_trimmed_number(text: &str, options: NumberFormatOptions) -> Cow<'_, str> {
+    use FormatNumberLiteralState::{DecimalPart, Exponent, IntegerPart};
+
+    let text = text.cow_to_ascii_lowercase();
+    let mut copied_or_ignored_chars = 0usize;
+    let mut iter = text.bytes().enumerate();
+    let mut curr = iter.next();
+    let mut state = IntegerPart;
+
+    // Will be filled only if and when the first place that needs reformatting is detected.
+    let mut cleaned_text = String::new();
+
+    // Look at only the start of the text, ignore any sign, and make sure numbers always start with a digit. Add 0 if missing.
+    if let Some((_, b'+' | b'-')) = curr {
+        curr = iter.next();
+    }
+    if let Some((curr_index, b'.')) = curr {
+        cleaned_text.push_str(&text[copied_or_ignored_chars..curr_index]);
+        copied_or_ignored_chars = curr_index;
+        cleaned_text.push('0');
+    }
+
+    // Loop over the rest of the text, applying the remaining rules.
+    loop {
+        // We use a None pseudo-char at the end of the string to simplify the match cases that follow
+        let curr_or_none_terminator_char = match curr {
+            Some((curr_index, curr_char)) => (curr_index, Some(curr_char)),
+            None => (text.len(), None),
+        };
+        // Look for termination of the decimal part or exponent and see if we need to print it differently.
+        match (&state, curr_or_none_terminator_char) {
+            (
+                DecimalPart(FormatNumberLiteralDecimalPart {
+                    dot_index,
+                    last_non_zero_index: None,
+                }),
+                (curr_index, Some(b'e') | None),
+            ) => {
+                // The decimal part equals zero, ignore it completely. However when the `keep_one_trailing_decimal_zero` option is enabled, print `.0` unless there was *only* a trailing dot.
+                if curr_index > dot_index + 1 && options.keep_one_trailing_decimal_zero {
+                    cleaned_text.push_str(&text[copied_or_ignored_chars..=*dot_index]);
+                    cleaned_text.push('0');
+                } else {
+                    cleaned_text.push_str(&text[copied_or_ignored_chars..*dot_index]);
+                }
+                copied_or_ignored_chars = curr_index;
+            }
+            (
+                DecimalPart(FormatNumberLiteralDecimalPart {
+                    last_non_zero_index: Some(last_non_zero_index),
+                    ..
+                }),
+                (curr_index, Some(b'e') | None),
+            ) if last_non_zero_index.get() < curr_index - 1 => {
+                // The decimal part ends with at least one zero, ignore them but copy the part from the dot until the last non-zero.
+                cleaned_text.push_str(&text[copied_or_ignored_chars..=last_non_zero_index.get()]);
+                copied_or_ignored_chars = curr_index;
+            }
+            (
+                Exponent(FormatNumberLiteralExponent {
+                    e_index, first_non_zero_index: None, ..
+                }),
+                (curr_index, None),
+            ) => {
+                // The exponent equals zero, ignore it completely.
+                cleaned_text.push_str(&text[copied_or_ignored_chars..*e_index]);
+                copied_or_ignored_chars = curr_index;
+            }
+            (
+                Exponent(FormatNumberLiteralExponent {
+                    e_index,
+                    is_negative,
+                    first_digit_index: Some(first_digit_index),
+                    first_non_zero_index: Some(first_non_zero_index),
+                }),
+                (curr_index, None),
+            ) if (first_digit_index.get() > e_index + 1 && !is_negative)
+                || (first_non_zero_index.get() > first_digit_index.get()) =>
+            {
+                // The exponent begins with a plus or at least one zero, ignore them but copy the part from the first non-zero until the end.
+                cleaned_text.push_str(&text[copied_or_ignored_chars..=*e_index]);
+                if *is_negative {
+                    cleaned_text.push('-');
+                }
+                cleaned_text.push_str(&text[first_non_zero_index.get()..curr_index]);
+                copied_or_ignored_chars = curr_index;
+            }
+            _ => {}
+        }
+
+        // Update state after the current char
+        match (&state, curr) {
+            // Cases entering or remaining in decimal part
+            (_, Some((curr_index, b'.'))) => {
+                state = DecimalPart(FormatNumberLiteralDecimalPart {
+                    dot_index: curr_index,
+                    last_non_zero_index: None,
+                });
+            }
+            (DecimalPart(decimal_part), Some((curr_index, b'1'..=b'9'))) => {
+                state = DecimalPart(FormatNumberLiteralDecimalPart {
+                    // SAFETY: We've already entered InDecimalPart, so curr_index must be >0
+                    last_non_zero_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
+                    ..*decimal_part
+                });
+            }
+            // Cases entering or remaining in exponent
+            (_, Some((curr_index, b'e'))) => {
+                state = Exponent(FormatNumberLiteralExponent {
+                    e_index: curr_index,
+                    is_negative: false,
+                    first_digit_index: None,
+                    first_non_zero_index: None,
+                });
+            }
+            (Exponent(exponent), Some((_, b'-'))) => {
+                state = Exponent(FormatNumberLiteralExponent { is_negative: true, ..*exponent });
+            }
+            (
+                Exponent(exponent @ FormatNumberLiteralExponent { first_digit_index: None, .. }),
+                Some((curr_index, curr_char @ b'0'..=b'9')),
+            ) => {
+                state = Exponent(FormatNumberLiteralExponent {
+                    // SAFETY: We've already entered InExponent, so curr_index must be >0
+                    first_digit_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
+                    first_non_zero_index: if curr_char == b'0' {
+                        None
+                    } else {
+                        // SAFETY: We've already entered InExponent, so curr_index must be >0
+                        Some(unsafe { NonZeroUsize::new_unchecked(curr_index) })
+                    },
+                    ..*exponent
+                });
+            }
+            (
+                Exponent(exponent @ FormatNumberLiteralExponent { first_non_zero_index: None, .. }),
+                Some((curr_index, b'1'..=b'9')),
+            ) => {
+                state = Exponent(FormatNumberLiteralExponent {
+                    // SAFETY: We've already entered InExponent, so curr_index must be >0
+                    first_non_zero_index: Some(unsafe { NonZeroUsize::new_unchecked(curr_index) }),
+                    ..*exponent
+                });
+            }
+            _ => {}
+        }
+
+        // Repeat or exit
+        match curr {
+            None | Some((_, b'x') /* hex bailout */) => break,
+            Some(_) => curr = iter.next(),
+        }
+    }
+
+    if cleaned_text.is_empty() {
+        text
+    } else {
+        // Append any unconsidered text
+        cleaned_text.push_str(&text[copied_or_ignored_chars..]);
+        Cow::Owned(cleaned_text)
+    }
+}

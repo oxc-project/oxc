@@ -1,5 +1,10 @@
 use std::{fmt, num::ParseIntError, str::FromStr};
 
+use oxc_formatter_core::{
+    IndentStyle as CoreIndentStyle, IndentWidth as CoreIndentWidth, IndentWidthProvider,
+    LineEnding as CoreLineEnding, LineWidth as CoreLineWidth, printer::AsPrinterOptions,
+};
+
 pub use crate::formatter::{Buffer, Format, FormatResult, token::string::Quote};
 use crate::{
     formatter::{
@@ -153,6 +158,33 @@ impl FormatOptions {
 
     pub fn as_print_options(&self) -> PrinterOptions {
         PrinterOptions::from(self)
+    }
+}
+
+impl AsPrinterOptions for FormatOptions {
+    fn as_print_options(&self) -> oxc_formatter_core::formatter::printer::PrinterOptions {
+        let indent_width = CoreIndentWidth::try_from(self.indent_width.value()).unwrap_or_default();
+        let line_width = CoreLineWidth::try_from(self.line_width.value()).unwrap_or_default();
+
+        oxc_formatter_core::formatter::printer::PrinterOptions::default()
+            .with_indent_style(if self.indent_style.is_tab() {
+                CoreIndentStyle::Tab
+            } else {
+                CoreIndentStyle::Space
+            })
+            .with_indent_width(indent_width)
+            .with_print_width(line_width.into())
+            .with_line_ending(match self.line_ending {
+                LineEnding::Lf => CoreLineEnding::Lf,
+                LineEnding::Crlf => CoreLineEnding::Crlf,
+                LineEnding::Cr => CoreLineEnding::Cr,
+            })
+    }
+}
+
+impl IndentWidthProvider for FormatOptions {
+    fn indent_width(&self) -> CoreIndentWidth {
+        CoreIndentWidth::try_from(self.indent_width.value()).unwrap_or_default()
     }
 }
 
