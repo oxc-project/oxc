@@ -4,7 +4,7 @@
 # stdout
 ```
 Found 0 warnings and 0 errors.
-Finished in Xms on 2 files with 1 rules using X threads.
+Finished in Xms on 4 files with 1 rules using X threads.
 ```
 
 # stderr
@@ -14,6 +14,13 @@ Finished in Xms on 2 files with 1 rules using X threads.
 # File altered: files/bom.js
 ```
 ﻿daddy = magic;
+rage = abacus
+```
+
+# File altered: files/bom_and_unicode.js
+```
+﻿daddy = magic;
+// 😀🤪😆😎🤮
 rage = abacus
 ```
 
@@ -34,4 +41,11 @@ let cowabunga = 10;
 let kaboom = 11;
 
 
+```
+
+# File altered: files/unicode.js
+```
+daddy = magic;
+// 😀🤪😆😎🤮
+rage = abacus
 ```

@@ -31,6 +31,34 @@
    :     ^
    `----
 
+  x suggestions-plugin(suggestions): Replace "a" with "daddy"
+   ,-[files/bom_and_unicode.js:1:4]
+ 1 | ﻿a = c;
+   : ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x suggestions-plugin(suggestions): Prefix "c" with "magi"
+   ,-[files/bom_and_unicode.js:1:8]
+ 1 | ﻿a = c;
+   :     ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x suggestions-plugin(suggestions): Replace "g" with "rage"
+   ,-[files/bom_and_unicode.js:3:1]
+ 2 | // 😀🤪😆😎🤮
+ 3 | g = b
+   : ^
+   `----
+
+  x suggestions-plugin(suggestions): Replace "b" with "abacus"
+   ,-[files/bom_and_unicode.js:3:5]
+ 2 | // 😀🤪😆😎🤮
+ 3 | g = b
+   :     ^
+   `----
+
   x suggestions-plugin(suggestions): Remove debugger statement
    ,-[files/index.js:1:1]
  1 | debugger;
@@ -133,8 +161,36 @@
     : ^^^^^^^^^
     `----
 
-Found 0 warnings and 17 errors.
-Finished in Xms on 2 files with 1 rules using X threads.
+  x suggestions-plugin(suggestions): Replace "a" with "daddy"
+   ,-[files/unicode.js:1:1]
+ 1 | a = c;
+   : ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x suggestions-plugin(suggestions): Prefix "c" with "magi"
+   ,-[files/unicode.js:1:5]
+ 1 | a = c;
+   :     ^
+ 2 | // 😀🤪😆😎🤮
+   `----
+
+  x suggestions-plugin(suggestions): Replace "g" with "rage"
+   ,-[files/unicode.js:3:1]
+ 2 | // 😀🤪😆😎🤮
+ 3 | g = b
+   : ^
+   `----
+
+  x suggestions-plugin(suggestions): Replace "b" with "abacus"
+   ,-[files/unicode.js:3:5]
+ 2 | // 😀🤪😆😎🤮
+ 3 | g = b
+   :     ^
+   `----
+
+Found 0 warnings and 25 errors.
+Finished in Xms on 4 files with 1 rules using X threads.
 ```
 
 # stderr
