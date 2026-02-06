@@ -248,7 +248,7 @@ impl<'a> TraverseScoping<'a> {
     /// Creates a symbol with the provided name and flags and adds it to the specified scope.
     pub fn generate_binding(
         &mut self,
-        name: Atom<'a>,
+        name: Ident<'a>,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
@@ -261,7 +261,7 @@ impl<'a> TraverseScoping<'a> {
     /// Creates a symbol with the provided name and flags and adds it to the current scope.
     pub fn generate_binding_in_current_scope(
         &mut self,
-        name: Atom<'a>,
+        name: Ident<'a>,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
         self.generate_binding(name, self.current_scope_id, flags)
@@ -276,7 +276,7 @@ impl<'a> TraverseScoping<'a> {
     /// starting with a digit (0-9) is fine.
     ///
     /// See comments on `UidGenerator` for further details.
-    pub fn generate_uid_name(&mut self, name: &str, allocator: &'a Allocator) -> Atom<'a> {
+    pub fn generate_uid_name(&mut self, name: &str, allocator: &'a Allocator) -> Ident<'a> {
         // If `uid_generator` is not already populated, initialize it
         let uid_generator =
             self.uid_generator.get_or_insert_with(|| UidGenerator::new(&self.scoping, allocator));

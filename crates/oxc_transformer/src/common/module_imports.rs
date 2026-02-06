@@ -38,7 +38,7 @@ use indexmap::{IndexMap, map::Entry as IndexMapEntry};
 
 use oxc_ast::{NONE, ast::*};
 use oxc_semantic::ReferenceFlags;
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Ident, SPAN};
 use oxc_syntax::symbol::SymbolId;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -228,7 +228,7 @@ impl<'a> ModuleImportsStore<'a> {
     ) -> Statement<'a> {
         let callee = ctx.create_ident_expr(
             SPAN,
-            Atom::from("require"),
+            Ident::new_const("require"),
             require_symbol_id,
             ReferenceFlags::read(),
         );
