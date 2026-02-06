@@ -203,15 +203,6 @@ mod test {
             (
                 "
                 /**
-                 * multi
-                 * line @k1 c1
-                 */
-                ",
-                "@k1 c1\n                 ",
-            ),
-            (
-                "
-                /**
                  * @k2 c2a
                  * c2b
                  *
@@ -228,7 +219,6 @@ mod test {
                 ",
                 "@k3 c3\n                 ",
             ),
-            ("/** single line @k4 c4 */", "@k4 c4 "),
             (
                 "
                 /**
@@ -257,8 +247,6 @@ mod test {
     #[test]
     fn jsdoc_tag_kind() {
         for (source_text, tag_kind, tag_kind_span_text) in [
-            ("/** single line @k1 c1 */", "k1", "@k1"),
-            ("/** single line @k2*/", "k2", "@k2"),
             (
                 "/**
              * multi
@@ -269,16 +257,8 @@ mod test {
                 "k3",
                 "@k3",
             ),
-            (
-                "/**
-             * multi
-             * line @k4
-             */",
-                "k4",
-                "@k4",
-            ),
             (" /**@*/ ", "", "@"),
-            (" /**@@*/ ", "", "@"),
+            (" /**@@*/ ", "@", "@@"),
             (" /** @あいう え */ ", "あいう", "@あいう"),
         ] {
             let allocator = Allocator::default();
@@ -294,8 +274,6 @@ mod test {
     #[test]
     fn jsdoc_tag_comment() {
         for (source_text, parsed_comment_part) in [
-            ("/** single line @k1 c1 */", ("c1", " c1 ")),
-            ("/** single line @k2*/", ("", "")),
             (
                 "/**
              * multi
@@ -304,13 +282,6 @@ mod test {
              * c3b
              */",
                 ("c3a\nc3b", " c3a\n             * c3b\n             "),
-            ),
-            (
-                "/**
-             * multi
-             * line @k4
-             */",
-                ("", "\n             "),
             ),
             ("/**@k5 c5 w/ {@inline}!*/", ("c5 w/ {@inline}!", " c5 w/ {@inline}!")),
             (" /**@k6 */ ", ("", " ")),

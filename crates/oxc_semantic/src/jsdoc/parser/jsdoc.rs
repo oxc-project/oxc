@@ -82,7 +82,12 @@ line2
     #[test]
     fn jsdoc_comment() {
         for (source_text, parsed, span_text, tag_len) in [
-            ("/** single line @k1 c1 @k2 */", "single line", " single line ", 2),
+            (
+                "/** single line @k1 c1 @k2 */",
+                "single line @k1 c1 @k2",
+                " single line @k1 c1 @k2 ",
+                0,
+            ),
             (
                 "/**
              * multi
@@ -162,9 +167,9 @@ line2
                 "
     /** ハロー @comment だよ*/
 ",
-                "ハロー",
-                " ハロー ",
-                1,
+                "ハロー @comment だよ",
+                " ハロー @comment だよ",
+                0,
             ),
         ] {
             let allocator = Allocator::default();
