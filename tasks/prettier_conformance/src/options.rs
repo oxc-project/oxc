@@ -12,6 +12,7 @@ pub enum TestLanguage {
     #[default]
     Js,
     Ts,
+    Json,
 }
 
 impl TestLanguage {
@@ -19,6 +20,7 @@ impl TestLanguage {
         match self {
             Self::Js => "js",
             Self::Ts => "ts",
+            Self::Json => "json",
         }
     }
 
@@ -29,6 +31,7 @@ impl TestLanguage {
             // There is no `tsx` directory, just check it works with TS
             // `SourceType`.`variant` is handled by spec file extension
             Self::Ts => ["typescript", "jsx"],
+            Self::Json => return vec![base.join("json").join("json")],
         }
         .iter()
         .map(|dir| base.join(dir))

@@ -17,5 +17,6 @@ fn main() {
     };
 
     TestRunner::new(options.clone()).run();
-    TestRunner::new(TestRunnerOptions { language: TestLanguage::Ts, ..options }).run();
+    TestRunner::new(TestRunnerOptions { language: TestLanguage::Ts, ..options.clone() }).run();
+    TestRunner::new(TestRunnerOptions { language: TestLanguage::Json, ..options }).run();
 }
