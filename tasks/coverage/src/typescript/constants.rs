@@ -98,6 +98,9 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: Allows `catch({x}) { var x; }` (destructured catch param + var redeclaration)
     // OXC: Reports redeclaration error per Annex B §B.3.4 (only simple identifiers are exempt)
     "asyncWithVarShadowing_es6.ts",
+    // TSC: Allows top-level `using` in scripts (no import/export)
+    // OXC: Rejects per TC39 spec — `using` is not allowed at the top level of scripts
+    "usingDeclarations.14.ts",
 ];
 // spellchecker:on
 
