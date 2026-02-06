@@ -1,3 +1,4 @@
+use cow_utils::CowUtils;
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -189,7 +190,7 @@ fn strip_data_prefix(s: &str) -> Option<&str> {
 
 /// converts a kebab-case string (after data- prefix is removed) to camelCase
 fn dash_to_camel_case(s: &str) -> String {
-    let s_lower = s.to_lowercase();
+    let s_lower = s.cow_to_lowercase();
     let mut result = String::with_capacity(s_lower.len());
     let mut capitalize_next = false;
 
