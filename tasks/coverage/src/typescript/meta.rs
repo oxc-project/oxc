@@ -168,6 +168,7 @@ impl TestCaseContent {
         });
 
         let settings = CompilerSettings::new(&current_file_options);
+        let package_json_types = Self::collect_package_json_types(&test_unit_data);
 
         let test_unit_data = test_unit_data
             .into_iter()
@@ -193,9 +194,7 @@ impl TestCaseContent {
             })
             .filter_map(|mut unit| {
                 let mut source_type = Self::get_source_type(Path::new(&unit.name), &settings)?;
-                if Self::get_module_detection_mode(&settings, &unit.name) == "force"
-                    && !Self::is_declaration_file(&unit.name)
-                {
+                if Self::is_forced_module(&settings, &unit.name, &package_json_types) {
                     source_type = source_type.with_module(true);
                 }
                 unit.source_type = source_type;
@@ -232,25 +231,95 @@ impl TestCaseContent {
         Some(source_type)
     }
 
-    fn get_module_detection_mode<'a>(settings: &'a CompilerSettings, filename: &str) -> &'a str {
-        let mode = settings.module_detection.first().map_or("auto", |v| v.as_str());
-        if mode != "auto" {
-            return mode;
+    /// Should this file be forced into module mode?
+    ///
+    /// Matches TypeScript's `moduleDetection` behavior:
+    /// * `force` — every non-declaration file is a module
+    /// * `legacy` — only files with import/export are modules (handled by the parser's unambiguous mode)
+    /// * `auto` (default) — like legacy, plus JSX-with-react-jsx and package.json `"type":"module"` checks
+    ///
+    /// When `moduleDetection` is unset, node-style modules (`node16`..`nodenext`) default to `force`.
+    /// <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/compiler/utilities.ts#L9035-L9047>
+    fn is_forced_module(
+        settings: &CompilerSettings,
+        filename: &str,
+        package_json_types: &FxHashMap<String, Option<String>>,
+    ) -> bool {
+        if filename.ends_with(".d.ts")
+            || filename.ends_with(".d.mts")
+            || filename.ends_with(".d.cts")
+        {
+            return false;
         }
 
-        let file_ext = std::path::Path::new(filename).extension();
-        if file_ext
-            .is_some_and(|ext| ext.eq_ignore_ascii_case("jsx") || ext.eq_ignore_ascii_case("tsx"))
-            && settings.jsx.first() == Some(&"react-jsx".to_string())
-        {
-            return "force";
+        let is_node_esm = settings
+            .modules
+            .iter()
+            .any(|m| matches!(m.as_str(), "node16" | "node18" | "node20" | "nodenext"));
+
+        match settings.module_detection.first().map(String::as_str) {
+            Some("force") => true,
+            Some("legacy") => false,
+            // Unset: node-style modules default to "force", everything else to "auto"
+            None if is_node_esm => true,
+            // "auto" (explicit or default fallthrough)
+            _ => {
+                let ext = Path::new(filename).extension();
+                let is_jsx = ext.is_some_and(|e| {
+                    e.eq_ignore_ascii_case("jsx") || e.eq_ignore_ascii_case("tsx")
+                });
+                // react-jsx JSX files are always modules
+                if is_jsx && settings.jsx.first().is_some_and(|j| j == "react-jsx") {
+                    return true;
+                }
+                // Node-style modules: nearest package.json "type":"module" → module
+                is_node_esm
+                    && Self::find_package_type(filename, package_json_types) == Some("module")
+            }
         }
-        // NOTE: should check `package.json` "type" field, use `legacy` for now
-        "legacy"
     }
 
-    fn is_declaration_file(name: &str) -> bool {
-        name.ends_with(".d.ts") || name.ends_with(".d.mts") || name.ends_with(".d.cts")
+    /// Walk ancestor directories of `filename` looking for a `package.json`,
+    /// and return its `"type"` field value (e.g. `Some("module")`).
+    fn find_package_type<'a>(
+        filename: &str,
+        package_json_types: &'a FxHashMap<String, Option<String>>,
+    ) -> Option<&'a str> {
+        let mut dir = Path::new(filename)
+            .parent()
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        loop {
+            if let Some(type_value) = package_json_types.get(&dir) {
+                return type_value.as_deref();
+            }
+            match dir.rfind('/') {
+                Some(pos) => dir.truncate(pos),
+                None if !dir.is_empty() => dir.clear(),
+                None => break,
+            }
+        }
+        None
+    }
+
+    /// Collect `"type"` fields from all `package.json` test units.
+    /// Returns a map from directory path to the `"type"` value.
+    fn collect_package_json_types(units: &[TestUnitData]) -> FxHashMap<String, Option<String>> {
+        units
+            .iter()
+            .filter(|unit| Path::new(&unit.name).file_name().is_some_and(|f| f == "package.json"))
+            .map(|unit| {
+                let dir = Path::new(&unit.name)
+                    .parent()
+                    .map(|p| p.to_string_lossy().into_owned())
+                    .unwrap_or_default();
+                let type_value: Option<String> =
+                    serde_json::from_str::<serde_json::Value>(&unit.content)
+                        .ok()
+                        .and_then(|v| v.get("type")?.as_str().map(String::from));
+                (dir, type_value)
+            })
+            .collect()
     }
 
     // TypeScript error files can be:

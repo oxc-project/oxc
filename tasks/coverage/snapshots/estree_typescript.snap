@@ -2,12 +2,22 @@ commit: 95e3aaa9
 
 estree_typescript Summary:
 AST Parsed     : 9776/9776 (100.00%)
-Positive Passed: 9768/9776 (99.92%)
+Positive Passed: 9758/9776 (99.82%)
 Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleDetectionIsolatedModulesCjsFileScope.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension2.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/moduleNodeImportRequireEmit.ts
 
-Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension5.ts
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/sideEffectImports2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/compiler/tripleSlashTypesReferenceWithMissingExports.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension7.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/moduleResolutionWithoutExtension8.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/cjsErrors.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/externalModules/rewriteRelativeImportExtensions/emitModuleCommonJS.ts
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/importDefer/importDeferComments.ts
 
@@ -18,4 +28,14 @@ Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/jsxReactTestSuit
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitEntities.tsx
 
 Mismatch: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxReactEmitNesting.tsx
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/allowJs/nodeModulesAllowJsCjsFromJs.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports1.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports2.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/node/esmModuleExports3.ts
+
+Mismatch: tasks/coverage/typescript/tests/cases/conformance/nonjsExtensions/declarationFilesForNodeNativeModules.ts
 
