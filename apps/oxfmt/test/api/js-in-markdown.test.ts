@@ -37,12 +37,12 @@ But we are not!
 `;
     const result = await format("a.md", input);
 
-    expect(result.code).not.contains(";");
+    expect(result.code).not.toContain(";");
     expect(result.errors).toStrictEqual([]);
 
     const result2 = await format("a.md", input, { semi: false });
 
-    expect(result2.code).not.contains(";");
+    expect(result2.code).not.toContain(";");
     expect(result2.errors).toStrictEqual([]);
   });
 
