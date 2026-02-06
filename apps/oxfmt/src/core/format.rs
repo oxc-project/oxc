@@ -82,7 +82,7 @@ impl SourceFormatter {
                     insert_final_newline,
                 },
             ) => (
-                self.format_by_json_formatter(source_text, path, *json_format_options).or_else(
+                Self::format_by_json_formatter(source_text, path, *json_format_options).or_else(
                     |err| {
                         if err.is_parse_error() {
                             #[cfg(feature = "napi")]
@@ -219,7 +219,6 @@ impl SourceFormatter {
 
     #[instrument(level = "debug", name = "oxfmt::format::oxc_formatter_json", skip_all)]
     fn format_by_json_formatter(
-        &self,
         source_text: &str,
         _path: &Path,
         options: JsonFormatOptions,
