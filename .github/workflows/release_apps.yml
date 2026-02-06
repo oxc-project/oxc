@@ -104,6 +104,23 @@ jobs:
             target: powerpc64le-unknown-linux-gnu
             build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
+              export TARGET_CC=riscv64-linux-gnu-gcc
+              export CXX=riscv64-linux-gnu-g++
+              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-musl
+            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+
     name: Build Oxlint ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     env:
@@ -141,8 +158,14 @@ jobs:
         run: ${{ matrix.build }}
 
       - name: Build Rust binary
-        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') && !contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
         run: cross build --release -p oxlint --features allocator --target=${{ matrix.target }}
+
+      - name: Build Rust binary (zigbuild)
+        if: ${{ contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
+        run: |
+          pip3 install cargo-zigbuild
+          cargo zigbuild --release -p oxlint --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
@@ -357,6 +380,23 @@ jobs:
             target: powerpc64le-unknown-linux-gnu
             build: pnpm run build-napi-release --target powerpc64le-unknown-linux-gnu --use-napi-cross
 
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-gnu
+            build: |
+              sudo apt-get update
+              sudo apt-get install gcc-riscv64-linux-gnu g++-riscv64-linux-gnu -y
+              export TARGET_CC=riscv64-linux-gnu-gcc
+              export CXX=riscv64-linux-gnu-g++
+              pnpm run build-napi-release --target riscv64gc-unknown-linux-gnu
+
+          - os: ubuntu-latest
+            target: riscv64gc-unknown-linux-musl
+            build: pnpm run build-napi-release --target riscv64gc-unknown-linux-musl -x
+
+          - os: ubuntu-latest
+            target: s390x-unknown-linux-gnu
+            build: export CFLAGS="-fuse-ld=lld" && pnpm run build-napi-release --target s390x-unknown-linux-gnu --use-napi-cross
+
     name: Build Oxfmt ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     env:
@@ -394,8 +434,14 @@ jobs:
         run: ${{ matrix.build }}
 
       - name: Build Rust binary
-        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') }}
+        if: ${{ !contains(matrix.target, 'wasm') && !contains(matrix.target, 'android') && !contains(matrix.target, 'ohos') && !contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
         run: cross build --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
+
+      - name: Build Rust binary (zigbuild)
+        if: ${{ contains(matrix.target, 'riscv64gc-unknown-linux-musl') }}
+        run: |
+          pip3 install cargo-zigbuild
+          cargo zigbuild --release -p oxfmt --no-default-features --features allocator --target=${{ matrix.target }}
 
       - name: Upload NAPI artifact
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
