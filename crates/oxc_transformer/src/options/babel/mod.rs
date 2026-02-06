@@ -117,28 +117,39 @@ fn default_as_true() -> bool {
 
 impl BabelOptions {
     /// Read options.json and merge them with options.json from ancestors directories.
+    ///
+    /// Babel's fixture hierarchy: task → suite → category.
+    /// Suite options.json REPLACES category plugins (not merge).
+    ///
     /// # Panics
     pub fn from_test_path(path: &Path) -> Self {
         let mut babel_options: Option<Self> = None;
         let mut plugins_json = None;
         let mut presets_json = None;
+        // Track if suite level (level 1) has options.json - if so, skip category plugins
+        let mut suite_has_options = false;
 
-        for path in path.ancestors().take(3) {
+        for (level, path) in path.ancestors().take(3).enumerate() {
             let file = path.join("options.json");
             if !file.exists() {
                 continue;
+            }
+
+            if level == 1 {
+                suite_has_options = true;
             }
 
             let content = std::fs::read_to_string(&file).unwrap();
             let mut new_value = serde_json::from_str::<serde_json::Value>(&content).unwrap();
 
             let new_plugins = new_value.as_object_mut().unwrap().remove("plugins");
-            if plugins_json.is_none() {
+            // Skip category (level 2) plugins if suite (level 1) has options.json
+            if plugins_json.is_none() && !(level == 2 && suite_has_options) {
                 plugins_json = new_plugins;
             }
 
             let new_presets = new_value.as_object_mut().unwrap().remove("presets");
-            if presets_json.is_none() {
+            if presets_json.is_none() && !(level == 2 && suite_has_options) {
                 presets_json = new_presets;
             }
 
