@@ -58,7 +58,7 @@
  9 | let g = 7;
    `----
 
-  x suggestions-plugin(suggestions): Replace "g" with "numpty"
+  x suggestions-plugin(suggestions): Replace "g" with "rage"
     ,-[files/index.js:9:5]
   8 | let f = 6;
   9 | let g = 7;

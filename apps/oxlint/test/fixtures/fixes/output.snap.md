@@ -58,7 +58,7 @@
  9 | let g = 7;
    `----
 
-  x fixes-plugin(fixes): Replace "g" with "numpty"
+  x fixes-plugin(fixes): Replace "g" with "rage"
     ,-[files/index.js:9:5]
   8 | let f = 6;
   9 | let g = 7;
