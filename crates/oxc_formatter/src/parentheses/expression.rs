@@ -1029,6 +1029,7 @@ fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_>) ->
     match parent {
         AstNodes::TSNonNullExpression(_)
         | AstNodes::StaticMemberExpression(_)
+        | AstNodes::PrivateFieldExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
         _ if is_class_extends(span, parent) || parent.is_call_like_callee_span(span) => {
             return true;
