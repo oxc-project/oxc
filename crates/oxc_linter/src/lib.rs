@@ -70,7 +70,7 @@ pub use crate::{
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
-        JsFix, LintFileResult, LoadPluginResult,
+        JsFix, LintFileResult, LoadPluginResult, convert_and_merge_js_fixes,
     },
     external_plugin_store::{ExternalOptionsId, ExternalPluginStore, ExternalRuleId},
     fixer::{Fix, FixKind, Message, PossibleFixes},
@@ -641,37 +641,21 @@ impl Linter {
                     }
 
                     // Convert a `Vec<JsFix>` to a `Fix`, including converting spans back to UTF-8
-                    let create_fix = |fixes: Vec<JsFix>| {
-                        debug_assert!(!fixes.is_empty()); // JS should send `None` instead of `Some([])`
-
-                        let is_single = fixes.len() == 1;
-
-                        let fixes = fixes.into_iter().map(|fix| {
-                            // TODO: Validate span offsets are within bounds and `start <= end`.
-                            // Also make sure offsets do not fall in middle of a multi-byte UTF-8 character.
-                            // That's possible if UTF-16 offset points to middle of a surrogate pair.
-                            let mut span = Span::new(fix.range[0], fix.range[1]);
-                            span_converter.convert_span_back(&mut span);
-                            Fix::new(fix.text, span).with_kind(FixKind::Fix)
-                        });
-
-                        if is_single {
-                            Some(fixes.into_iter().next().unwrap())
-                        } else {
-                            let fixes = fixes.collect::<Vec<_>>();
-                            match CompositeFix::merge_fixes_fallible(fixes, source_text) {
-                                Ok(fix) => Some(fix),
-                                Err(err) => {
-                                    let message = format!(
-                                        "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
-                                    );
-                                    ctx_host.push_diagnostic(Message::new(
-                                        OxcDiagnostic::error(message),
-                                        PossibleFixes::None,
-                                    ));
-                                    None
-                                }
-                            }
+                    let create_fix = |fixes| match convert_and_merge_js_fixes(
+                        fixes,
+                        source_text,
+                        &span_converter,
+                    ) {
+                        Ok(fix) => Some(fix),
+                        Err(err) => {
+                            let message = format!(
+                                "Plugin `{plugin_name}/{rule_name}` returned invalid fixes.\nFile path: {path}\n{err}"
+                            );
+                            ctx_host.push_diagnostic(Message::new(
+                                OxcDiagnostic::error(message),
+                                PossibleFixes::None,
+                            ));
+                            None
                         }
                     };
 
