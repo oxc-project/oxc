@@ -809,6 +809,23 @@ mod test {
     }
 
     #[test]
+    fn binary_file() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+
+        // U+FFFD as a standalone token — file appears to be binary
+        let ret = Parser::new(&allocator, "\u{FFFD}", source_type).parse();
+        assert!(ret.program.is_empty());
+        assert_eq!(ret.errors.len(), 1);
+        assert_eq!(ret.errors[0].to_string(), "File appears to be binary.");
+
+        // U+FFFD inside string literals — should parse fine
+        let ret = Parser::new(&allocator, "\"oops \u{FFFD} oops\";", source_type).parse();
+        assert!(!ret.program.is_empty());
+        assert!(ret.errors.is_empty());
+    }
+
+    #[test]
     fn memory_leak() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
