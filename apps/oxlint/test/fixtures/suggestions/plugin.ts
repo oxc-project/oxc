@@ -126,18 +126,18 @@ const rule: Rule = {
 
           case "g":
             return context.report({
-              message: 'Replace "g" with "numpty"',
+              message: 'Replace "g" with "rage"',
               node,
               suggest: [
                 {
                   desc: "Do it",
                   fix(fixer) {
-                    // Fixes can be in any order
+                    // Add text before and after the node only, to test combining fixes that include original source.
+                    // Fixes can be in any order.
                     return [
-                      fixer.insertTextAfter(node, "ty"),
                       // Test that any object with `range` property works
-                      fixer.replaceText({ range: [node.start, node.end] } as Node, "mp"),
-                      fixer.insertTextBefore(node, "nu"),
+                      fixer.insertTextAfter({ range: [node.start, node.end] }, "e"),
+                      fixer.insertTextBefore(node, "ra"),
                     ];
                   },
                 },
