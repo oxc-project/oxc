@@ -7,8 +7,8 @@
 | Status            | Count | %      |
 | ----------------- | ----- | ------ |
 | Total rules       |   292 | 100.0% |
-| Fully passing     |   286 |  97.9% |
-| Partially passing |     6 |   2.1% |
+| Fully passing     |   287 |  98.3% |
+| Partially passing |     5 |   1.7% |
 | Fully failing     |     0 |   0.0% |
 | Load errors       |     0 |   0.0% |
 | No tests run      |     0 |   0.0% |
@@ -18,8 +18,8 @@
 | Status      | Count | %      |
 | ----------- | ----- | ------ |
 | Total tests | 33159 | 100.0% |
-| Passing     | 32869 |  99.1% |
-| Failing     |    12 |   0.0% |
+| Passing     | 32871 |  99.1% |
+| Failing     |    10 |   0.0% |
 | Skipped     |   278 |   0.8% |
 
 ## Fully Passing Rules
@@ -303,6 +303,7 @@
 - `symbol-description` (8 tests)
 - `template-curly-spacing` (57 tests)
 - `template-tag-spacing` (63 tests)
+- `unicode-bom` (7 tests)
 - `use-isnan` (214 tests)
 - `valid-typeof` (54 tests)
 - `vars-on-top` (61 tests)
@@ -318,7 +319,6 @@
 - `no-unused-labels` - 23 / 26 (88.5%)
 - `object-curly-newline` - 143 / 144 (99.3%)
 - `space-in-parens` - 137 / 139 (98.6%)
-- `unicode-bom` - 5 / 7 (71.4%)
 
 ## Rules with Failures Detail
 
@@ -766,67 +766,6 @@ AssertionError [ERR_ASSERTION]: Output is incorrect
 + 'foo(bar(  ))'
 - 'foo(bar( ))'
 
-    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
-    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
-    at apps/oxlint/dist/plugins-dev.js
-    at it (apps/oxlint/conformance/src/capture.ts:123:5)
-
-
-### `unicode-bom`
-
-Pass: 5 / 7 (71.4%)
-Fail: 2 / 7 (28.6%)
-Skip: 0 / 7 (0.0%)
-
-#### unicode-bom > invalid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "output": " var a = 123;",
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-Error: Failed to apply fixes
-    at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
-    at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
-    at apps/oxlint/dist/plugins-dev.js
-    at it (apps/oxlint/conformance/src/capture.ts:123:5)
-
-
-#### unicode-bom > invalid
-
-```js
-﻿ var a = 123;
-```
-
-```json
-{
-  "output": " var a = 123;",
-  "options": [
-    "never"
-  ],
-  "errors": [
-    {
-      "messageId": "unexpected",
-      "line": 1,
-      "column": 1
-    }
-  ]
-}
-```
-
-Error: Failed to apply fixes
     at assertInvalidTestCasePasses (apps/oxlint/dist/plugins-dev.js)
     at runInvalidTestCase (apps/oxlint/dist/plugins-dev.js)
     at apps/oxlint/dist/plugins-dev.js
