@@ -12029,14 +12029,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:3:3]
- 2 │   method();
- 3 │   #method();
-   ·   ───────
- 4 │   declare method();
-   ╰────
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/typescript/invalid-class-method-empty-body/input.js:4:11]
  3 │   #method();
  4 │   declare method();

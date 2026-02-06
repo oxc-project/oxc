@@ -2,7 +2,7 @@ commit: 95e3aaa9
 
 parser_typescript Summary:
 AST Parsed     : 9843/9843 (100.00%)
-Positive Passed: 9839/9843 (99.96%)
+Positive Passed: 9841/9843 (99.98%)
 Negative Passed: 1529/2557 (59.80%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
@@ -2073,26 +2073,6 @@ Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/async/es6/asy
      ·             ╰── It can not be redeclared here
  132 │     }
      ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName11.ts:2:5]
- 1 │ class C {
- 2 │    [e]();
-   ·     ─
- 3 │ }
-   ╰────
-
-Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts
-
-  × TS(2391): Function implementation is missing or not immediately following the declaration.
-   ╭─[typescript/tests/cases/conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName11.ts:2:5]
- 1 │ class C {
- 2 │    [e]();
-   ·     ─
- 3 │ }
-   ╰────
 
 Expect to Parse: tasks/coverage/typescript/tests/cases/conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.14.ts
 
