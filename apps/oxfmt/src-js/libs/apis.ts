@@ -198,7 +198,7 @@ let oxfmtPluginCache: Plugin;
 async function loadOxfmtPlugin(): Promise<Plugin> {
   if (oxfmtPluginCache) return oxfmtPluginCache;
 
-  oxfmtPluginCache = (await import("./prettier-plugin-oxfmt")) as Plugin;
+  oxfmtPluginCache = (await import("./prettier-plugin-oxfmt/index")) as Plugin;
   return oxfmtPluginCache;
 }
 
