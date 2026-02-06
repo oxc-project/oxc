@@ -106,7 +106,7 @@ use rustc_hash::FxHashMap;
 
 use oxc_ast::{NONE, ast::*};
 use oxc_ast_visit::{VisitMut, walk_mut};
-use oxc_span::SPAN;
+use oxc_span::{Ident, SPAN};
 use oxc_syntax::{
     node::NodeId,
     scope::{ScopeFlags, ScopeId},
@@ -236,7 +236,8 @@ impl<'a> ClassProperties<'a, '_> {
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             let rest_element =
                 ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-            params_rest = Some(ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE));
+            params_rest =
+                Some(ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE));
             stmts.push(ctx.ast.statement_expression(SPAN, create_super_call(&args_binding, ctx)));
         }
         // TODO: Should these have the span of the original `PropertyDefinition`s?
@@ -311,7 +312,8 @@ impl<'a> ClassProperties<'a, '_> {
             {
                 let rest_element =
                     ctx.ast.binding_rest_element(SPAN, args_binding.create_binding_pattern(ctx));
-                let rest = ctx.ast.alloc_formal_parameter_rest(SPAN, rest_element, NONE);
+                let rest =
+                    ctx.ast.alloc_formal_parameter_rest(SPAN, ctx.ast.vec(), rest_element, NONE);
                 ctx.ast.alloc_formal_parameters(
                     SPAN,
                     FormalParameterKind::ArrowFormalParameters,
@@ -430,7 +432,7 @@ impl<'a> ClassProperties<'a, '_> {
             // Save replacement name in `clashing_symbols`
             *name = new_name;
             // Rename symbol and binding
-            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, new_name.as_str());
+            ctx.scoping_mut().rename_symbol(symbol_id, constructor_scope_id, Ident::from(new_name));
         }
 
         // Rename identifiers for clashing symbols in constructor params and body

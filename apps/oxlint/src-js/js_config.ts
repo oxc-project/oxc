@@ -12,6 +12,72 @@ type LoadJsConfigsResult =
   | { Failures: { path: string; error: string }[] }
   | { Error: string };
 
+function validateConfigExtends(root: object): void {
+  const visited = new WeakSet<object>();
+  const inStack = new WeakSet<object>();
+  const stackObjects: object[] = [];
+  const stackPaths: string[] = [];
+
+  const formatCycleError = (refPath: string, cycleStart: string, idx: number): string => {
+    const cycle =
+      idx === -1
+        ? `${cycleStart} -> ${cycleStart}`
+        : [...stackPaths.slice(idx), cycleStart].join(" -> ");
+
+    return (
+      "`extends` contains a circular reference.\n\n" +
+      `${refPath} points back to ${cycleStart}\n` +
+      `Cycle: ${cycle}`
+    );
+  };
+
+  const visit = (config: object, path: string): void => {
+    if (visited.has(config)) return;
+    if (inStack.has(config)) {
+      const idx = stackObjects.indexOf(config);
+      const cycleStart = idx === -1 ? "<unknown>" : stackPaths[idx];
+      throw new Error(formatCycleError(path, cycleStart, idx));
+    }
+
+    inStack.add(config);
+    stackObjects.push(config);
+    stackPaths.push(path);
+
+    const maybeExtends = (config as Record<string, unknown>).extends;
+    if (maybeExtends !== undefined) {
+      if (!Array.isArray(maybeExtends)) {
+        throw new Error(
+          "`extends` must be an array of config objects (strings/paths are not supported).",
+        );
+      }
+      for (let i = 0; i < maybeExtends.length; i++) {
+        const item = maybeExtends[i];
+        if (typeof item !== "object" || item === null || Array.isArray(item)) {
+          throw new Error(
+            `\`extends[${i}]\` must be a config object (strings/paths are not supported).`,
+          );
+        }
+
+        const itemPath = `${path}.extends[${i}]`;
+        if (inStack.has(item)) {
+          const idx = stackObjects.indexOf(item);
+          const cycleStart = idx === -1 ? "<unknown>" : stackPaths[idx];
+          throw new Error(formatCycleError(itemPath, cycleStart, idx));
+        }
+
+        visit(item, itemPath);
+      }
+    }
+
+    inStack.delete(config);
+    stackObjects.pop();
+    stackPaths.pop();
+    visited.add(config);
+  };
+
+  visit(root, "<root>");
+}
+
 /**
  * Load JavaScript config files in parallel.
  *
@@ -42,6 +108,8 @@ export async function loadJsConfigs(paths: string[]): Promise<string> {
             `Configuration file must wrap its default export with defineConfig() from "oxlint".`,
           );
         }
+
+        validateConfigExtends(config as object);
 
         return { path, config };
       }),

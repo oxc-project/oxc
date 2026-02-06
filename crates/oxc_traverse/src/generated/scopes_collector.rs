@@ -73,7 +73,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Expression::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
             Expression::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
             Expression::TSInstantiationExpression(it) => self.visit_ts_instantiation_expression(it),
-            Expression::V8IntrinsicExpression(it) => self.visit_v_8_intrinsic_expression(it),
+            Expression::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             Expression::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             Expression::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             Expression::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
@@ -175,7 +175,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_ts_instantiation_expression(it)
             }
             ArrayExpressionElement::V8IntrinsicExpression(it) => {
-                self.visit_v_8_intrinsic_expression(it)
+                self.visit_v8_intrinsic_expression(it)
             }
             ArrayExpressionElement::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
@@ -255,7 +255,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             PropertyKey::TSInstantiationExpression(it) => {
                 self.visit_ts_instantiation_expression(it)
             }
-            PropertyKey::V8IntrinsicExpression(it) => self.visit_v_8_intrinsic_expression(it),
+            PropertyKey::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             PropertyKey::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             PropertyKey::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             PropertyKey::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
@@ -375,7 +375,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             Argument::TSTypeAssertion(it) => self.visit_ts_type_assertion(it),
             Argument::TSNonNullExpression(it) => self.visit_ts_non_null_expression(it),
             Argument::TSInstantiationExpression(it) => self.visit_ts_instantiation_expression(it),
-            Argument::V8IntrinsicExpression(it) => self.visit_v_8_intrinsic_expression(it),
+            Argument::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             Argument::ComputedMemberExpression(it) => self.visit_computed_member_expression(it),
             Argument::StaticMemberExpression(it) => self.visit_static_member_expression(it),
             Argument::PrivateFieldExpression(it) => self.visit_private_field_expression(it),
@@ -763,7 +763,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             ForStatementInit::TSInstantiationExpression(it) => {
                 self.visit_ts_instantiation_expression(it)
             }
-            ForStatementInit::V8IntrinsicExpression(it) => self.visit_v_8_intrinsic_expression(it),
+            ForStatementInit::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             ForStatementInit::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }
@@ -967,6 +967,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
 
     #[inline]
     fn visit_formal_parameter_rest(&mut self, it: &FormalParameterRest<'a>) {
+        self.visit_decorators(&it.decorators);
         self.visit_binding_rest_element(&it.rest);
         if let Some(type_annotation) = &it.type_annotation {
             self.visit_ts_type_annotation(type_annotation);
@@ -1204,7 +1205,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
                 self.visit_ts_instantiation_expression(it)
             }
             ExportDefaultDeclarationKind::V8IntrinsicExpression(it) => {
-                self.visit_v_8_intrinsic_expression(it)
+                self.visit_v8_intrinsic_expression(it)
             }
             ExportDefaultDeclarationKind::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
@@ -1237,7 +1238,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     }
 
     #[inline]
-    fn visit_v_8_intrinsic_expression(&mut self, it: &V8IntrinsicExpression<'a>) {
+    fn visit_v8_intrinsic_expression(&mut self, it: &V8IntrinsicExpression<'a>) {
         self.visit_arguments(&it.arguments);
     }
 
@@ -1368,7 +1369,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
             JSXExpression::TSInstantiationExpression(it) => {
                 self.visit_ts_instantiation_expression(it)
             }
-            JSXExpression::V8IntrinsicExpression(it) => self.visit_v_8_intrinsic_expression(it),
+            JSXExpression::V8IntrinsicExpression(it) => self.visit_v8_intrinsic_expression(it),
             JSXExpression::ComputedMemberExpression(it) => {
                 self.visit_computed_member_expression(it)
             }

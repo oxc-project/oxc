@@ -1,13 +1,14 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, JSXAttributeItem, JSXAttributeName,
-        JSXAttributeValue, JSXElement, JSXExpression, ObjectPropertyKind, PropertyKey,
+        Argument, BindingIdentifier, CallExpression, Expression, JSXAttributeItem,
+        JSXAttributeName, JSXAttributeValue, JSXElement, ObjectPropertyKind, PropertyKey,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::SymbolId;
+use oxc_span::{GetSpan, Span};
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -58,7 +59,7 @@ fn check_jsx_element<'a>(
     ctx: &'a LintContext,
     prop_name: &'static str,
 ) {
-    let Some(index_param_name) = find_index_param_name(node, ctx) else {
+    let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
 
@@ -79,11 +80,7 @@ fn check_jsx_element<'a>(
             continue;
         };
 
-        let JSXExpression::Identifier(expr) = &container.expression else {
-            continue;
-        };
-
-        if expr.name.as_str() == index_param_name {
+        if span_contains_symbol_reference(ctx, index_param_symbol_id, container.expression.span()) {
             ctx.diagnostic(no_array_index_key_diagnostic(attr.span));
         }
     }
@@ -94,7 +91,7 @@ fn check_react_clone_element<'a>(
     node: &'a AstNode,
     ctx: &'a LintContext,
 ) {
-    let Some(index_param_name) = find_index_param_name(node, ctx) else {
+    let Some(index_param_symbol_id) = find_index_param_symbol_id(node, ctx) else {
         return;
     };
 
@@ -112,30 +109,36 @@ fn check_react_clone_element<'a>(
                 continue;
             };
 
-            let Expression::Identifier(value_ident) = &prop.value else {
-                continue;
-            };
-
-            if key_ident.name.as_str() == "key" && value_ident.name.as_str() == index_param_name {
+            if key_ident.name.as_str() == "key"
+                && span_contains_symbol_reference(ctx, index_param_symbol_id, prop.value.span())
+            {
                 ctx.diagnostic(no_array_index_key_diagnostic(obj_expr.span));
             }
         }
     }
 }
 
-fn find_index_param_name<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<&'a str> {
+fn span_contains_symbol_reference(ctx: &LintContext, symbol_id: SymbolId, span: Span) -> bool {
+    ctx.scoping().get_resolved_reference_ids(symbol_id).iter().any(|&reference_id| {
+        let reference = ctx.scoping().get_reference(reference_id);
+        let reference_span = ctx.nodes().get_node(reference.node_id()).span();
+        span.contains_inclusive(reference_span)
+    })
+}
+
+fn find_index_param_symbol_id<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<SymbolId> {
     for ancestor in ctx.nodes().ancestors(node.id()) {
         if let AstKind::CallExpression(call_expr) = ancestor.kind() {
             let Expression::StaticMemberExpression(expr) = &call_expr.callee else {
-                return None;
+                continue;
             };
 
             if SECOND_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_name_by_position(call_expr, 1);
+                return find_index_param_symbol_id_by_position(call_expr, 1);
             }
 
             if THIRD_INDEX_METHODS.contains(&expr.property.name.as_str()) {
-                return find_index_param_name_by_position(call_expr, 2);
+                return find_index_param_symbol_id_by_position(call_expr, 2);
             }
         }
     }
@@ -143,16 +146,28 @@ fn find_index_param_name<'a>(node: &'a AstNode, ctx: &'a LintContext) -> Option<
     None
 }
 
-fn find_index_param_name_by_position<'a>(
-    call_expr: &'a CallExpression,
+fn find_index_param_symbol_id_by_position(
+    call_expr: &CallExpression,
     position: usize,
-) -> Option<&'a str> {
+) -> Option<SymbolId> {
     call_expr.arguments.first().and_then(|argument| match argument {
-        Argument::ArrowFunctionExpression(arrow_fn_expr) => {
-            Some(arrow_fn_expr.params.items.get(position)?.pattern.get_identifier_name()?.as_str())
-        }
+        Argument::ArrowFunctionExpression(arrow_fn_expr) => Some(
+            arrow_fn_expr
+                .params
+                .items
+                .get(position)?
+                .pattern
+                .get_binding_identifier()
+                .map(BindingIdentifier::symbol_id)?,
+        ),
         Argument::FunctionExpression(regular_fn_expr) => Some(
-            regular_fn_expr.params.items.get(position)?.pattern.get_identifier_name()?.as_str(),
+            regular_fn_expr
+                .params
+                .items
+                .get(position)?
+                .pattern
+                .get_binding_identifier()
+                .map(BindingIdentifier::symbol_id)?,
         ),
         _ => None,
     })
@@ -240,11 +255,27 @@ fn test() {
           ));
         ",
         r"things.map((thing, index) => (
+            <Hello key={`abc${index}`} />
+          ));
+        ",
+        r"things.map((thing, index) => (
+            <Hello key={1 + index} />
+          ));
+        ",
+        r"things.map((thing, index) => (
             <Hello thing={thing} key={index} />
           ));
         ",
         r"things.map((thing, index) => (
             React.cloneElement(thing, { key: index })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: `abc${index}` })
+          ));
+        ",
+        r"things.map((thing, index) => (
+            React.cloneElement(thing, { key: 1 + index })
           ));
         ",
         r"things.forEach((thing, index) => {

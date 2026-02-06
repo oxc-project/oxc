@@ -1,6 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
+
   ⚠ eslint-plugin-unicorn(relative-url-style): Remove the `./` prefix from the relative URL.
    ╭─[relative_url_style.tsx:1:9]
  1 │ new URL("./foo", base)

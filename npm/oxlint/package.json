@@ -39,10 +39,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./plugins": {
-      "types": "./dist/plugins.d.ts",
-      "default": "./dist/plugins.js"
-    },
     "./plugins-dev": {
       "types": "./dist/plugins-dev.d.ts",
       "default": "./dist/plugins-dev.js"

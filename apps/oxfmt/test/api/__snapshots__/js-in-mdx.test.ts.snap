@@ -1,0 +1,92 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Format js-in-mdx with prettier-plugin-oxfmt > should be disabled by \`embeddedLanguageFormatting: 'off'\` 1`] = `
+"\`\`\`js
+const x=1;
+const y=2;
+console.log(x+y);
+\`\`\`
+"
+`;
+
+exports[`Format js-in-mdx with prettier-plugin-oxfmt > should be disabled by prettier-ignore 1`] = `
+"# Mdx
+
+## Disabled
+
+<!-- prettier-ignore -->
+\`\`\`ts
+const x=1;
+const y=2;
+console.log(x+y);
+\`\`\`
+
+## Enabled
+
+\`\`\`jsx
+const X = () => (
+  <>
+    <div>JSX</div>
+    <hr />
+  </>
+);
+\`\`\`
+"
+`;
+
+exports[`Format js-in-mdx with prettier-plugin-oxfmt > should format code block in .mdx 1`] = `
+"# MDX
+
+\`\`\`js
+const greet = (name) => {
+  return \`Hello, \${name}!\`;
+};
+console.log(greet("World"));
+\`\`\`
+
+Some more text here.
+
+\`\`\`typescript
+interface Person {
+  name: string;
+  age: number;
+}
+
+console.log(person);
+\`\`\`
+"
+`;
+
+exports[`Format js-in-mdx with prettier-plugin-oxfmt > should format import/export in .mdx 1`] = `
+"import React from "react";
+import { useState } from "react";
+
+- foo
+  - bar
+
+export const MyComponent = () => (
+  <div>
+    <h1>Hello, MDX!</h1>
+    <p>This is a sample MDX file.</p>
+  </div>
+);
+"
+`;
+
+exports[`Format js-in-mdx with prettier-plugin-oxfmt > should work oxfmt-ignore in import/export 1`] = `
+"import React from "react";
+// oxfmt-ignore
+import {useState} from "react"
+
+- foo
+  - bar
+
+export const MyComponent = () => (
+  <div>
+    <h1>Hello, MDX!</h1>
+    {/* oxfmt-ignore */}
+    <p>This is a sample MDX file.</p>
+  </div>
+);
+"
+`;

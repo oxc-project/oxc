@@ -370,4 +370,49 @@ mod test {
         .unwrap();
         assert_eq!(ret1.to_string(), ret2.to_string());
     }
+
+    /// Test for <https://github.com/oxc-project/oxc/issues/13660>
+    /// Unicode escapes in string literals should be detected as CharacterKind::UnicodeEscape
+    #[test]
+    fn unicode_escape_in_string_literal() {
+        use crate::ast::{CharacterClassContents, CharacterKind, Term};
+
+        let allocator = Allocator::default();
+
+        // RegExp literal: /[A\u0301]/
+        let pattern1 =
+            LiteralParser::new(&allocator, r"[A\u0301]", None, Options::default()).parse().unwrap();
+
+        // RegExp constructor: RegExp("[A\u0301]") - the string literal has the escape resolved
+        let pattern2 =
+            ConstructorParser::new(&allocator, r#""[A\u0301]""#, None, Options::default())
+                .parse()
+                .unwrap();
+
+        // Extract the character class from both patterns
+        let get_char_kinds = |pattern: &crate::ast::Pattern<'_>| -> Vec<CharacterKind> {
+            let term = &pattern.body.body[0].body[0];
+            if let Term::CharacterClass(cc) = term {
+                cc.body
+                    .iter()
+                    .filter_map(|item| {
+                        if let CharacterClassContents::Character(c) = item {
+                            Some(c.kind)
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            } else {
+                vec![]
+            }
+        };
+
+        let kinds1 = get_char_kinds(&pattern1);
+        let kinds2 = get_char_kinds(&pattern2);
+
+        // Both should have: Symbol (A), UnicodeEscape (\u0301)
+        assert_eq!(kinds1, vec![CharacterKind::Symbol, CharacterKind::UnicodeEscape]);
+        assert_eq!(kinds2, vec![CharacterKind::Symbol, CharacterKind::UnicodeEscape]);
+    }
 }

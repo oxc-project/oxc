@@ -128,9 +128,18 @@ impl GlobSet {
                 .into_iter()
                 .map(|pat| {
                     let pattern = pat.as_ref();
+                    // Normalize patterns starting with "./" to remove the prefix
+                    // since paths are matched relative to the config file's directory
+                    let (pattern, had_dot_slash) =
+                        pattern.strip_prefix("./").map_or((pattern, false), |s| (s, true));
+
                     if pattern.contains('/') {
                         pattern.to_owned()
+                    } else if had_dot_slash {
+                        // Pattern started with "./", treat as literal path relative to config
+                        pattern.to_owned()
                     } else {
+                        // Pattern has no path separator, make it recursive
                         let mut s = String::with_capacity(pattern.len() + 3);
                         s.push_str("**/");
                         s.push_str(pattern);
@@ -168,6 +177,49 @@ mod test {
         .unwrap();
         assert!(config.files.is_match("lib/foo.ts"));
         assert!(!config.files.is_match("src/foo.ts"));
+
+        // Test that patterns with "./" prefix are normalized
+        // Fixes https://github.com/oxc-project/oxc/issues/18952
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./index.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("index.js"));
+        assert!(!config.files.is_match("src/index.js"));
+
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./src/*.ts",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("src/foo.ts"));
+        assert!(!config.files.is_match("lib/foo.ts"));
+
+        // Test "./*.js" pattern - should match only files in current directory
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./*.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("file.js"));
+        assert!(!config.files.is_match("src/file.js"));
+        assert!(!config.files.is_match("nested/dir/file.js"));
+
+        // Test "./**/*.js" pattern - should match .js files in all subdirectories
+        let config: OxlintOverride = from_value(json!({
+            "files": ["./**/*.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("src/file.js"));
+        assert!(config.files.is_match("nested/dir/file.js"));
+        assert!(config.files.is_match("file.js"));
+        assert!(!config.files.is_match("file.ts"));
+
+        // Test that patterns with "../" prefix are kept as-is (not normalized)
+        let config: OxlintOverride = from_value(json!({
+            "files": ["../foo.js",],
+        }))
+        .unwrap();
+        assert!(config.files.is_match("../foo.js"));
+        assert!(!config.files.is_match("foo.js"));
     }
 
     #[test]

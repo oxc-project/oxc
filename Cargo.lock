@@ -152,9 +152,9 @@ checksum = "5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510"
 
 [[package]]
 name = "bytes"
-version = "1.10.1"
+version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
+checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "cast"
@@ -1853,6 +1853,7 @@ name = "oxc_coverage"
 version = "0.0.0"
 dependencies = [
  "console 0.16.2",
+ "cow-utils",
  "encoding_rs",
  "encoding_rs_io",
  "itertools",
@@ -2338,6 +2339,7 @@ dependencies = [
  "oxc-schemars",
  "oxc_allocator",
  "oxc_estree",
+ "rustc-hash",
  "serde",
 ]
 
@@ -3743,15 +3745,6 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
-
-[[package]]
-name = "vscode_docs"
-version = "0.0.0"
-dependencies = [
- "cow-utils",
- "serde",
- "serde_json",
-]
 
 [[package]]
 name = "vsimd"

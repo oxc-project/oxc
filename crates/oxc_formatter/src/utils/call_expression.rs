@@ -56,8 +56,11 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
         }
 
         // it("description", ..)
-        // it(Test.name, ..)
-        (_, Some(second), third) if arguments.len() <= 3 && contains_a_test_pattern(callee) => {
+        (Some(first), Some(second), third)
+            if arguments.len() <= 3
+                && matches!(first, Argument::StringLiteral(_) | Argument::TemplateLiteral(_))
+                && contains_a_test_pattern(callee) =>
+        {
             // it('name', callback, duration)
             if !matches!(third, None | Some(Argument::NumericLiteral(_))) {
                 return false;

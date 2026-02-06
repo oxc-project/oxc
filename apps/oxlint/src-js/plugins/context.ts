@@ -320,7 +320,7 @@ export type LanguageOptions = Readonly<typeof LANGUAGE_OPTIONS>;
 // However, we still want to discourage using these deprecated methods/getters in rules, because such rules
 // will not work in ESLint 10 in compatibility mode.
 //
-// TODO: When we write a rule tester, throw an error in the tester if the rule uses deprecated methods/getters.
+// TODO: Throw an error in `RuleTester` if the rule uses deprecated methods/getters.
 // We'll need to offer an option to opt out of these errors, for rules which delegate to another rule whose code
 // the author doesn't control.
 const FILE_CONTEXT = Object.freeze({

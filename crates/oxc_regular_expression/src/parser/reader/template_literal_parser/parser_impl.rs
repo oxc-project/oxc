@@ -3,15 +3,16 @@ use oxc_span::Span;
 
 use crate::parser::reader::{
     Options,
-    ast::CodePoint,
+    ast::{CodePoint, EscapeKind},
     characters::{
         CR, LF, LS, PS, is_line_terminator, is_non_escape_character, is_single_escape_character,
     },
     template_literal_parser::{ast, diagnostics},
 };
 
-// Internal representation of escape sequence resolved unit in a string literal.
-type OffsetsAndCp = ((u32, u32), u32);
+// Internal representation of escape sequence resolved unit in a template literal.
+// ((start, end), code_point, escape_kind)
+type OffsetsAndCp = ((u32, u32), u32, EscapeKind);
 
 pub struct Parser {
     // NOTE: In JavaScript, template literals are UTF-16 encoded,
@@ -27,7 +28,7 @@ pub struct Parser {
 impl Parser {
     fn handle_code_point(
         body: &mut Vec<CodePoint>,
-        (offsets, cp): OffsetsAndCp,
+        (offsets, cp, escape_kind): OffsetsAndCp,
         span_offset: u32,
         combine_surrogate_pair: bool,
     ) {
@@ -35,13 +36,13 @@ impl Parser {
 
         if combine_surrogate_pair || (0..=0xffff).contains(&cp) {
             // If the code point is in the BMP or if forced, just push it
-            body.push(CodePoint { span, value: cp });
+            body.push(CodePoint { span, value: cp, escape_kind });
         } else {
             // Otherwise, split the code point into a surrogate pair, sharing the same span
             let (lead, trail) =
                 (0xd800 + ((cp - 0x10000) >> 10), 0xdc00 + ((cp - 0x10000) & 0x3ff));
-            body.push(CodePoint { span, value: lead });
-            body.push(CodePoint { span, value: trail });
+            body.push(CodePoint { span, value: lead, escape_kind });
+            body.push(CodePoint { span, value: trail, escape_kind });
         }
     }
 
@@ -126,22 +127,22 @@ impl Parser {
         // $ [lookahead ≠ {]
         if self.peek() == Some('$') && self.peek2() != Some('{') {
             self.advance();
-            return Ok(Some(((offset_start, self.offset()), '$' as u32)));
+            return Ok(Some(((offset_start, self.offset()), '$' as u32, EscapeKind::None)));
         }
 
         if self.eat('\\') {
-            if let Some(cp) = self.parse_template_escape_sequence(offset_start)? {
-                return Ok(Some(((offset_start, self.offset()), cp)));
+            if let Some((cp, escape_kind)) = self.parse_template_escape_sequence(offset_start)? {
+                return Ok(Some(((offset_start, self.offset()), cp, escape_kind)));
             }
             if let Some(cp) = self.parse_not_escape_sequence()? {
-                return Ok(Some(((offset_start, self.offset()), cp)));
+                return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
             }
         }
         if let Some(cp) = self.parse_line_continuation() {
-            return Ok(Some(((offset_start, self.offset()), cp)));
+            return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
         }
         if let Some(cp) = self.parse_line_terminator_sequence() {
-            return Ok(Some(((offset_start, self.offset()), cp)));
+            return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
         }
 
         if let Some(ch) = self.peek() {
@@ -159,7 +160,7 @@ impl Parser {
 
             self.advance();
 
-            return Ok(Some(((offset_start, self.offset()), ch as u32)));
+            return Ok(Some(((offset_start, self.offset()), ch as u32, EscapeKind::None)));
         }
 
         Ok(None)
@@ -172,19 +173,22 @@ impl Parser {
     //     HexEscapeSequence
     //     UnicodeEscapeSequence
     // ```
-    fn parse_template_escape_sequence(&mut self, offset_start: u32) -> Result<Option<u32>> {
+    fn parse_template_escape_sequence(
+        &mut self,
+        offset_start: u32,
+    ) -> Result<Option<(u32, EscapeKind)>> {
         if let Some(cp) = self.parse_character_escape_sequence() {
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::None)));
         }
         if self.peek() == Some('0') && self.peek2().is_none_or(|ch| !ch.is_ascii_digit()) {
             self.advance();
-            return Ok(Some(0x00));
+            return Ok(Some((0x00, EscapeKind::None)));
         }
         if let Some(cp) = self.parse_hex_escape_sequence()? {
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::Hexadecimal)));
         }
         if let Some(cp) = self.parse_unicode_escape_sequence(offset_start)? {
-            return Ok(Some(cp));
+            return Ok(Some((cp, EscapeKind::Unicode)));
         }
 
         Ok(None)

@@ -15,7 +15,7 @@ use super::{
     FormatFileStrategy,
     oxfmtrc::{
         EndOfLineConfig, FormatConfig, OxfmtOptions, OxfmtOverrideConfig, Oxfmtrc,
-        populate_prettier_config,
+        finalize_external_options, sync_external_options,
     },
     utils,
 };
@@ -59,12 +59,10 @@ pub fn resolve_options_from_value(
 
     let mut external_options =
         serde_json::to_value(&format_config).expect("FormatConfig serialization should not fail");
-
     let oxfmt_options = format_config
         .into_oxfmt_options()
         .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
-
-    populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
+    sync_external_options(&mut external_options, &oxfmt_options.format_options);
 
     Ok(ResolvedOptions::from_oxfmt_options(oxfmt_options, external_options, strategy))
 }
@@ -98,11 +96,16 @@ pub enum ResolvedOptions {
 
 impl ResolvedOptions {
     /// Build `ResolvedOptions` from `OxfmtOptions`, `external_options`, and `FormatFileStrategy`.
+    ///
+    /// This also applies plugin-specific options (Tailwind, oxfmt plugin flags) based on strategy.
     fn from_oxfmt_options(
         oxfmt_options: OxfmtOptions,
-        external_options: Value,
+        mut external_options: Value,
         strategy: &FormatFileStrategy,
     ) -> Self {
+        // Apply plugin-specific options based on strategy
+        finalize_external_options(&mut external_options, strategy);
+
         #[cfg(feature = "napi")]
         let OxfmtOptions { format_options, toml_options, sort_package_json, insert_final_newline } =
             oxfmt_options;
@@ -259,7 +262,10 @@ impl ConfigResolver {
             .into_oxfmt_options()
             .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
-        populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
+        // Apply common Prettier mappings for caching.
+        // Plugin options will be added later in `resolve()` via `finalize_external_options()`.
+        // If we finalize here, every per-file options contain plugin options even if not needed.
+        sync_external_options(&mut external_options, &oxfmt_options.format_options);
 
         // Save cache for fast path: no per-file overrides
         self.cached_options = Some((oxfmt_options, external_options));
@@ -277,6 +283,8 @@ impl ConfigResolver {
 
     /// Resolve options for a specific file path.
     /// Priority: oxfmtrc base → oxfmtrc overrides → editorconfig (fallback for unset fields) -> defaults
+    ///
+    /// Returns cached options (with `strategy: None` applied) for later plugin option addition.
     fn resolve_options(&self, path: &Path) -> (OxfmtOptions, Value) {
         let has_editorconfig_overrides =
             self.editorconfig.as_ref().is_some_and(|ec| has_editorconfig_overrides(ec, path));
@@ -312,12 +320,10 @@ impl ConfigResolver {
         // NOTE: See `build_and_validate()` for details about `external_options` handling
         let mut external_options = serde_json::to_value(&format_config)
             .expect("FormatConfig serialization should not fail");
-
         let oxfmt_options = format_config
             .into_oxfmt_options()
             .expect("If this fails, there is an issue with override values");
-
-        populate_prettier_config(&oxfmt_options.format_options, &mut external_options);
+        sync_external_options(&mut external_options, &oxfmt_options.format_options);
 
         (oxfmt_options, external_options)
     }

@@ -2,792 +2,950 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ Array.from(x, function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:30]
  1 │ Array.from(x, function foo() {})
    ·                              ──
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() {})
    ·                      ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.every(function foo() {})
    ·                          ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:23]
  1 │ foo.filter(function() {})
    ·                       ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:27]
  1 │ foo.filter(function foo() {})
    ·                           ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.find"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.find" does not return on all code paths
    ╭─[array_callback_return.tsx:1:21]
  1 │ foo.find(function() {})
    ·                     ──
    ╰────
-  help: Array method "Array.prototype.find" needs to have valid return on all code paths
+  help: "Array.prototype.find" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.find"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.find" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.find(function foo() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.find" needs to have valid return on all code paths
+  help: "Array.prototype.find" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.findLast"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.findLast" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.findLast(function() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.findLast" needs to have valid return on all code paths
+  help: "Array.prototype.findLast" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.findLast"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.findLast" does not return on all code paths
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo.findLast(function foo() {})
    ·                             ──
    ╰────
-  help: Array method "Array.prototype.findLast" needs to have valid return on all code paths
+  help: "Array.prototype.findLast" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.findIndex"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.findIndex" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.findIndex(function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.prototype.findIndex" needs to have valid return on all code paths
+  help: "Array.prototype.findIndex" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.findIndex"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.findIndex" does not return on all code paths
    ╭─[array_callback_return.tsx:1:30]
  1 │ foo.findIndex(function foo() {})
    ·                              ──
    ╰────
-  help: Array method "Array.prototype.findIndex" needs to have valid return on all code paths
+  help: "Array.prototype.findIndex" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.findLastIndex"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.findLastIndex" does not return on all code paths
    ╭─[array_callback_return.tsx:1:30]
  1 │ foo.findLastIndex(function() {})
    ·                              ──
    ╰────
-  help: Array method "Array.prototype.findLastIndex" needs to have valid return on all code paths
+  help: "Array.prototype.findLastIndex" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.findLastIndex"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.findLastIndex" does not return on all code paths
    ╭─[array_callback_return.tsx:1:34]
  1 │ foo.findLastIndex(function foo() {})
    ·                                  ──
    ╰────
-  help: Array method "Array.prototype.findLastIndex" needs to have valid return on all code paths
+  help: "Array.prototype.findLastIndex" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.flatMap"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.flatMap" does not return on all code paths
    ╭─[array_callback_return.tsx:1:24]
  1 │ foo.flatMap(function() {})
    ·                        ──
    ╰────
-  help: Array method "Array.prototype.flatMap" needs to have valid return on all code paths
+  help: "Array.prototype.flatMap" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.flatMap"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.flatMap" does not return on all code paths
    ╭─[array_callback_return.tsx:1:28]
  1 │ foo.flatMap(function foo() {})
    ·                            ──
    ╰────
-  help: Array method "Array.prototype.flatMap" needs to have valid return on all code paths
+  help: "Array.prototype.flatMap" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.map"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.map" does not return on all code paths
    ╭─[array_callback_return.tsx:1:20]
  1 │ foo.map(function() {})
    ·                    ──
    ╰────
-  help: Array method "Array.prototype.map" needs to have valid return on all code paths
+  help: "Array.prototype.map" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.map"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.map" does not return on all code paths
    ╭─[array_callback_return.tsx:1:24]
  1 │ foo.map(function foo() {})
    ·                        ──
    ╰────
-  help: Array method "Array.prototype.map" needs to have valid return on all code paths
+  help: "Array.prototype.map" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.reduce"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.map" may fall through a `switch` without returning
+    ╭─[array_callback_return.tsx:3:22]
+  2 │     
+  3 │     const _test = fruits.map((fruit) => {
+    ·                          ─┬─
+    ·                           ╰── "Array.prototype.map" is called here.
+  4 │ ╭─▶   switch (fruit.name) {
+  5 │ │       case "apple": {
+  6 │ │         return "a"
+  7 │ │       }
+  8 │ │   
+  9 │ │       case "banana": {
+ 10 │ │         return "b"
+ 11 │ │       }
+ 12 │ ╰─▶   }
+ 13 │     });
+    ╰────
+  help: This `switch` has no `default` case, so the callback may reach the end without a `return`. Add a `default` that returns/throws, or add a final `return` after the `switch`.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
+
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduce" does not return on all code paths
    ╭─[array_callback_return.tsx:1:23]
  1 │ foo.reduce(function() {})
    ·                       ──
    ╰────
-  help: Array method "Array.prototype.reduce" needs to have valid return on all code paths
+  help: "Array.prototype.reduce" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.reduce"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduce" does not return on all code paths
    ╭─[array_callback_return.tsx:1:27]
  1 │ foo.reduce(function foo() {})
    ·                           ──
    ╰────
-  help: Array method "Array.prototype.reduce" needs to have valid return on all code paths
+  help: "Array.prototype.reduce" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.reduceRight"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduceRight" does not return on all code paths
    ╭─[array_callback_return.tsx:1:28]
  1 │ foo.reduceRight(function() {})
    ·                            ──
    ╰────
-  help: Array method "Array.prototype.reduceRight" needs to have valid return on all code paths
+  help: "Array.prototype.reduceRight" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.reduceRight"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduceRight" does not return on all code paths
    ╭─[array_callback_return.tsx:1:32]
  1 │ foo.reduceRight(function foo() {})
    ·                                ──
    ╰────
-  help: Array method "Array.prototype.reduceRight" needs to have valid return on all code paths
+  help: "Array.prototype.reduceRight" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.some"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.some" does not return on all code paths
    ╭─[array_callback_return.tsx:1:21]
  1 │ foo.some(function() {})
    ·                     ──
    ╰────
-  help: Array method "Array.prototype.some" needs to have valid return on all code paths
+  help: "Array.prototype.some" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.some"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.some" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.some(function foo() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.some" needs to have valid return on all code paths
+  help: "Array.prototype.some" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.sort"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.sort" does not return on all code paths
    ╭─[array_callback_return.tsx:1:21]
  1 │ foo.sort(function() {})
    ·                     ──
    ╰────
-  help: Array method "Array.prototype.sort" needs to have valid return on all code paths
+  help: "Array.prototype.sort" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.sort"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.sort" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.sort(function foo() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.sort" needs to have valid return on all code paths
+  help: "Array.prototype.sort" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.toSorted"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.toSorted" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.toSorted(function() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.toSorted" needs to have valid return on all code paths
+  help: "Array.prototype.toSorted" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.toSorted"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.toSorted" does not return on all code paths
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo.toSorted(function foo() {})
    ·                             ──
    ╰────
-  help: Array method "Array.prototype.toSorted" needs to have valid return on all code paths
+  help: "Array.prototype.toSorted" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:30]
  1 │ foo.bar.baz.every(function() {})
    ·                              ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:34]
  1 │ foo.bar.baz.every(function foo() {})
    ·                                  ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo["every"](function() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo["every"](function foo() {})
    ·                             ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo[`every`](function() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo[`every`](function foo() {})
    ·                             ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:17]
  1 │ foo.every(() => {})
    ·                 ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
-   ╭─[array_callback_return.tsx:1:22]
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function() { if (a) return true; })
-   ·                      ───────────────────────
+   ·     ──┬──              ───────────────────
+   ·       ╰── "Array.prototype.every" is called here.
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
-   ╭─[array_callback_return.tsx:1:25]
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function cb() { if (a) return true; })
-   ·                         ───────────────────────
+   ·     ──┬──                 ───────────────────
+   ·       ╰── "Array.prototype.every" is called here.
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() { switch (a) { case 0: break; default: return true; } })
    ·                      ───────────────────────────────────────────────────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.every(function foo() { switch (a) { case 0: break; default: return true; } })
    ·                          ───────────────────────────────────────────────────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() { try { bar(); } catch (err) { return true; } })
    ·                      ───────────────────────────────────────────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.every(function foo() { try { bar(); } catch (err) { return true; } })
    ·                          ───────────────────────────────────────────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() { return; })
    ·                      ───────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.every(function foo() { return; })
    ·                          ───────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
-   ╭─[array_callback_return.tsx:1:22]
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function() { if (a) return; })
-   ·                      ──────────────────
+   ·     ──┬──              ──────────────
+   ·       ╰── "Array.prototype.every" is called here.
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
-   ╭─[array_callback_return.tsx:1:26]
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" may reach the end of an `if` without returning
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.every(function foo() { if (a) return; })
-   ·                          ──────────────────
+   ·     ──┬──                  ──────────────
+   ·       ╰── "Array.prototype.every" is called here.
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: This `if` has no `else` branch, so the callback may reach the end without a `return`. Add an `else`, or add a final `return`/`throw` after the `if`.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() { if (a) return; else return; })
    ·                      ───────────────────────────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.every(function foo() { if (a) return; else return; })
    ·                          ───────────────────────────────
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:28]
  1 │ foo.every(cb || function() {})
    ·                            ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:32]
  1 │ foo.every(cb || function foo() {})
    ·                                ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.every(a ? function() {} : function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:42]
  1 │ foo.every(a ? function() {} : function() {})
    ·                                          ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:30]
  1 │ foo.every(a ? function foo() {} : function bar() {})
    ·                              ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:50]
  1 │ foo.every(a ? function foo() {} : function bar() {})
    ·                                                  ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:41]
  1 │ foo.every(function(){ return function() {}; }())
    ·                                         ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:45]
  1 │ foo.every(function(){ return function foo() {}; }())
    ·                                             ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:17]
  1 │ foo.every(() => {})
    ·                 ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:17]
  1 │ foo.every(() => {})
    ·                 ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ Array.from(x, function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() {})
    ·                      ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:27]
  1 │ foo.filter(function foo() {})
    ·                           ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.find"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.find" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.find(function foo() {})
    ·                         ──
    ╰────
-  help: Array method "Array.prototype.find" needs to have valid return on all code paths
+  help: "Array.prototype.find" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.map"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.map" does not return on all code paths
    ╭─[array_callback_return.tsx:1:20]
  1 │ foo.map(function() {})
    ·                    ──
    ╰────
-  help: Array method "Array.prototype.map" needs to have valid return on all code paths
+  help: "Array.prototype.map" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.reduce"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduce" does not return on all code paths
    ╭─[array_callback_return.tsx:1:23]
  1 │ foo.reduce(function() {})
    ·                       ──
    ╰────
-  help: Array method "Array.prototype.reduce" needs to have valid return on all code paths
+  help: "Array.prototype.reduce" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.reduceRight"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.reduceRight" does not return on all code paths
    ╭─[array_callback_return.tsx:1:28]
  1 │ foo.reduceRight(function() {})
    ·                            ──
    ╰────
-  help: Array method "Array.prototype.reduceRight" needs to have valid return on all code paths
+  help: "Array.prototype.reduceRight" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:34]
  1 │ foo.bar.baz.every(function foo() {})
    ·                                  ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:28]
  1 │ foo.every(cb || function() {})
    ·                            ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.sort"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.sort" does not return on all code paths
    ╭─[array_callback_return.tsx:1:35]
  1 │ ["foo","bar"].sort(function foo() {})
    ·                                   ──
    ╰────
-  help: Array method "Array.prototype.sort" needs to have valid return on all code paths
+  help: "Array.prototype.sort" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.toSorted"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.toSorted" does not return on all code paths
    ╭─[array_callback_return.tsx:1:39]
  1 │ ["foo","bar"].toSorted(function foo() {})
    ·                                       ──
    ╰────
-  help: Array method "Array.prototype.toSorted" needs to have valid return on all code paths
+  help: "Array.prototype.toSorted" uses the callback's return value. Add a `return` on every possible code path.
+  note: With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:18]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(x => x)
-   ·                  ─
+   ·     ───┬───      ┬
+   ·        │         ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:25]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(function(x) { if (a == b) {return x;}})
-   ·                         ──────────────────────────
+   ·     ───┬───                                   ┬
+   ·        │                                      ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:29]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(function bar(x) { return x;})
-   ·                             ────────────
+   ·     ───┬───                          ┬
+   ·        │                             ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:18]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(x => x)
-   ·                  ─
+   ·     ───┬───      ┬
+   ·        │         ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:20]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(val => y += val)
-   ·                    ────────
+   ·     ───┬───        ────┬───
+   ·        │               ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:28]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:15]
  1 │ ["foo","bar"].forEach(x => ++x)
-   ·                            ───
+   ·               ───┬───      ─┬─
+   ·                  │          ╰── This returned value is ignored.
+   ·                  ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:24]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:11]
  1 │ foo.bar().forEach(x => x === y)
-   ·                        ───────
+   ·           ───┬───      ───┬───
+   ·              │            ╰── This returned value is ignored.
+   ·              ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:43]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(function() {return function() { if (a == b) { return a; }}}())
-   ·                                           ────────────────────────────
+   ·     ───┬───                                                      ┬
+   ·        │                                                         ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:25]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(function(x) { if (a == b) {return x;}})
-   ·                         ──────────────────────────
+   ·     ───┬───                                   ┬
+   ·        │                                      ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:25]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(function(x) { if (a == b) {return undefined;}})
-   ·                         ──────────────────────────────────
+   ·     ───┬───                                   ────┬────
+   ·        │                                          ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:29]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(function bar(x) { return x;})
-   ·                             ────────────
+   ·     ───┬───                          ┬
+   ·        │                             ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:29]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(function bar(x) { return x;})
-   ·                             ────────────
+   ·     ───┬───                          ┬
+   ·        │                             ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:35]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:11]
  1 │ foo.bar().forEach(function bar(x) { return x;})
-   ·                                   ────────────
+   ·           ───┬───                          ┬
+   ·              │                             ╰── This returned value is ignored.
+   ·              ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:39]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:15]
  1 │ ["foo","bar"].forEach(function bar(x) { return x;})
-   ·                                       ────────────
+   ·               ───┬───                          ┬
+   ·                  │                             ╰── This returned value is ignored.
+   ·                  ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:20]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach((x) => { return x;})
-   ·                    ────────────
+   ·     ───┬───                 ┬
+   ·        │                    ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ Array.from(x, function() {})
    ·                          ──
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.every(function() {})
    ·                      ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:27]
  1 │ foo.filter(function foo() {})
    ·                           ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:27]
  1 │ foo.filter(function foo() { return; })
    ·                           ───────────
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.every"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.every" does not return on all code paths
    ╭─[array_callback_return.tsx:1:28]
  1 │ foo.every(cb || function() {})
    ·                            ──
    ╰────
-  help: Array method "Array.prototype.every" needs to have valid return on all code paths
+  help: "Array.prototype.every" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:19]
  1 │ foo.filter(bar => { baz(); } )
    ·                   ──────────
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:2:7]
  1 │ foo.filter(
  2 │ () => {} )
    ·       ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo.filter(bar || ((baz) => {}) )
    ·                             ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:19]
  1 │ foo.filter(bar => { return; })
    ·                   ───────────
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:24]
  1 │ Array.from(foo, bar => { bar })
    ·                        ───────
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:20]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach(bar => bar)
-   ·                    ───
+   ·     ───┬───        ─┬─
+   ·        │            ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:44]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach((function () { return (bar) => bar; })())
-   ·                                            ───
+   ·     ───┬───                                ─┬─
+   ·        │                                    ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:2:16]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach((() => {
+   ·     ───┬───
+   ·        ╰── "Array.prototype.forEach" is called here.
  2 │  return bar => bar; })())
-   ·                ───
+   ·                ─┬─
+   ·                 ╰── This returned value is ignored.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:22]
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
  1 │ foo.forEach((bar) => { if (bar) { return; } else { return bar ; } })
-   ·                      ──────────────────────────────────────────────
+   ·     ───┬───                                               ─┬─
+   ·        │                                                   ╰── This returned value is ignored.
+   ·        ╰── "Array.prototype.forEach" is called here.
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.filter(function(){})
    ·                      ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:23]
  1 │ foo.filter(function (){})
    ·                       ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:2:3]
  1 │ foo.filter(function
  2 │ (){})
    ·   ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:26]
  1 │ foo.filter(function bar(){})
    ·                          ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:28]
  1 │ foo.filter(function bar  (){})
    ·                            ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:2:8]
  1 │ foo.filter(function
  2 │  bar() {})
    ·        ──
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:31]
  1 │ Array.from(foo, function bar(){})
    ·                               ──
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:34]
  1 │ Array.from(foo, bar ? function (){} : baz)
    ·                                  ──
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:27]
  1 │ ╭─▶ foo.filter(function bar() { return 
  2 │ ╰─▶  })
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
-   ╭─[array_callback_return.tsx:1:25]
- 1 │ ╭─▶ foo.forEach(function () { 
- 2 │ │   if (baz) return bar
- 3 │ │   else return
- 4 │ ╰─▶  })
+  ⚠ eslint(array-callback-return): Unexpected return value in callback for "Array.prototype.forEach"
+   ╭─[array_callback_return.tsx:1:5]
+ 1 │ foo.forEach(function () { 
+   ·     ───┬───
+   ·        ╰── "Array.prototype.forEach" is called here.
+ 2 │ if (baz) return bar
+   ·                 ─┬─
+   ·                  ╰── This returned value is ignored.
+ 3 │ else return
    ╰────
-  help: Array method "Array.prototype.forEach" expects no useless return from the function
+  help: "Array.prototype.forEach" ignores the callback's return value. Remove the returned value (use `return;` or no `return`), or use `map`/`flatMap` if you meant to produce a new array.
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:19]
  1 │ foo?.filter(() => { console.log('hello') })
    ·                   ────────────────────────
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:21]
  1 │ (foo?.filter)(() => { console.log('hello') })
    ·                     ────────────────────────
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:23]
  1 │ Array?.from([], () => { console.log('hello') })
    ·                       ────────────────────────
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.from" does not return on all code paths
    ╭─[array_callback_return.tsx:1:25]
  1 │ (Array?.from)([], () => { console.log('hello') })
    ·                         ────────────────────────
    ╰────
-  help: Array method "Array.from" needs to have valid return on all code paths
+  help: "Array.from" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).
 
-  ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
+  ⚠ eslint(array-callback-return): Callback for array method "Array.prototype.filter" does not return on all code paths
    ╭─[array_callback_return.tsx:1:40]
  1 │ foo?.filter((function() { return () => { console.log('hello') } })?.())
    ·                                        ────────────────────────
    ╰────
-  help: Array method "Array.prototype.filter" needs to have valid return on all code paths
+  help: "Array.prototype.filter" uses the callback's return value. Add a `return` on every possible code path.
+        Return a value on each path (or enable `allowImplicit` to allow `return;`).

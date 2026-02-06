@@ -138,6 +138,9 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "imageSizes" => phf_set! {"link"},
     "imageSrcSet" => phf_set! {"link"},
     "property" => phf_set! {"meta"},
+    // https://html.spec.whatwg.org/multipage/popover.html#the-popovertarget-attribute
+    "popoverTarget" => phf_set! {"button", "input"},
+    "popoverTargetAction" => phf_set! {"button", "input"},
     "viewBox" => phf_set! {"marker", "pattern", "svg", "symbol", "view"},
     "as" => phf_set! {"link"},
     "align" => phf_set! {
@@ -196,7 +199,7 @@ const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
 const DOM_PROPERTIES_NAMES: Set<&'static str> = phf_set! {
     // Global attributes - can be used on any HTML/DOM element
     // See https://developer.mozilla.org/en-US/docs/Web/HTML/Global_attributes
-    "dir", "draggable", "hidden", "id", "lang", "nonce", "part", "slot", "style", "title", "translate", "inert",
+    "dir", "draggable", "hidden", "id", "lang", "nonce", "part", "popover", "slot", "style", "title", "translate", "inert",
     // Element specific attributes
     // See https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes (includes global attributes too)
     // To be considered if these should be added also to ATTRIBUTE_TAGS_MAP
@@ -332,6 +335,8 @@ const DOM_ATTRIBUTES_TO_CAMEL: Map<&'static str, &'static str> = phf_map! {
     "crossorigin" => "crossOrigin",
     "for" => "htmlFor",
     "nomodule" => "noModule",
+    "popovertarget" => "popoverTarget",
+    "popovertargetaction" => "popoverTargetAction",
     // svg
     "accent-height" => "accentHeight",
     "alignment-baseline" => "alignmentBaseline",
@@ -674,6 +679,12 @@ fn test() {
             r#"<dialog onClose={handler} open id="dialog" returnValue="something" onCancel={handler2} />"#,
             None,
         ),
+        (r#"<div popover="auto" />"#, None),
+        (r#"<button popoverTarget="locale-switcher" popoverTargetAction="show" />"#, None),
+        (
+            r#"<input type="button" popoverTarget="locale-switcher" popoverTargetAction="show" />"#,
+            None,
+        ),
         (
             r#"
 			        <table align="top">
@@ -739,6 +750,8 @@ fn test() {
         (r#"<div download="foo" />"#, None),
         (r#"<div imageSrcSet="someImageSrcSet" />"#, None),
         (r#"<div imageSizes="someImageSizes" />"#, None),
+        (r#"<div popoverTarget="locale-switcher" />"#, None),
+        (r#"<div popoverTargetAction="show" />"#, None),
         (r#"<div data-xml-anything="invalid" />"#, None),
         (
             r#"<div data-testID="bar" data-under_sCoRe="bar" />;"#,

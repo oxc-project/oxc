@@ -164,6 +164,7 @@ impl LanguageServer for Backend {
                     .map(|workspace_options| workspace_options.options.clone())
                     .unwrap_or_default();
 
+                debug!("starting worker in initialize with options: {option:?}");
                 worker.start_worker(option).await;
             }
         }
@@ -224,6 +225,7 @@ impl LanguageServer for Backend {
             for (index, worker) in needed_configurations.values().copied().enumerate() {
                 // get the configuration from the response and start the worker
                 let configuration = configurations.get(index).unwrap_or(&serde_json::Value::Null);
+                debug!("starting worker in initialize with options: {configuration:?}");
                 worker.start_worker(configuration.clone()).await;
 
                 // run diagnostics for all known files in the workspace of the worker.
