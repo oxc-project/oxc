@@ -477,6 +477,7 @@ impl<'a> SemanticBuilder<'a> {
     /// Declare an unresolved reference in the current scope.
     ///
     /// # Panics
+    #[inline]
     pub(crate) fn declare_reference(
         &mut self,
         name: Ident<'a>,
@@ -513,6 +514,28 @@ impl<'a> SemanticBuilder<'a> {
     /// This gets called every time [`SemanticBuilder`] exits a scope.
     fn resolve_references_for_current_scope(&mut self) {
         let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
+
+        if current_refs.is_empty() {
+            return;
+        }
+
+        // Fast path: scope has no bindings — skip resolution, just merge to parent.
+        // Many scopes (if-blocks, try-blocks, loop bodies without `let`) have no bindings,
+        // so all unresolved references just bubble up unchanged.
+        if self.scoping.get_bindings(self.current_scope_id).is_empty() {
+            // Union by size: swap so we drain the smaller map into the larger one.
+            if current_refs.len() > parent_refs.len() {
+                mem::swap(current_refs, parent_refs);
+            }
+            for (name, references) in current_refs.drain() {
+                if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                    parent_reference_ids.extend(references);
+                } else {
+                    parent_refs.insert(name, references);
+                }
+            }
+            return;
+        }
 
         for (name, mut references) in current_refs.drain() {
             // Try to resolve a reference.
@@ -2517,6 +2540,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
+    #[inline]
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flags = self.resolve_reference_usages();
         let reference = Reference::new(self.current_node_id, self.current_scope_id, flags);
