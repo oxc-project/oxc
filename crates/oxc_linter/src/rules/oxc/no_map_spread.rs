@@ -51,14 +51,16 @@ fn no_map_spread_diagnostic(
                 "Spreading to modify object properties in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an object"), first])
-            .with_help("Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object")
-            .with_note("Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable."),
+            .with_help("Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object")
+            .with_note("Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable."),
             // Array
             Spread::Array(_) => OxcDiagnostic::warn(
                 "Spreading to modify array elements in `map` calls is inefficient",
             )
             .with_labels([map_call.label("This map call spreads an array"), first])
-            .with_help("Use `Array.prototype.push()` or `.concat()` to add elements without copying the entire array"),
+            .with_help("Consider using `Array.prototype.push()` or `.concat()` to add elements, this avoids copying the entire array")
+            .with_note("Note: `push` mutates the original arrays in the array. `concat` does not but has different semantics than spreading. Disable this rule if neither is acceptable.")
+            ,
         };
 
     diagnostic.and_labels(others).and_labels(returned_label)

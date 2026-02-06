@@ -9,8 +9,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │            ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -19,8 +19,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │            ╰── These spreads create unnecessary copies
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:23]
@@ -29,8 +29,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                        │            ╰── This spread creates an unnecessary copy
    ·                        ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -39,8 +39,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                    ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify array elements in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -49,7 +49,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │           ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an array
    ╰────
-  help: Use `Array.prototype.push()` or `.concat()` to add elements without copying the entire array
+  help: Consider using `Array.prototype.push()` or `.concat()` to add elements, this avoids copying the entire array
+  note: Note: `push` mutates the original arrays in the array. `concat` does not but has different semantics than spreading. Disable this rule if neither is acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify array elements in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -58,7 +59,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │           ╰── These spreads create unnecessary copies
    ·            ╰── This map call spreads an array
    ╰────
-  help: Use `Array.prototype.push()` or `.concat()` to add elements without copying the entire array
+  help: Consider using `Array.prototype.push()` or `.concat()` to add elements, this avoids copying the entire array
+  note: Note: `push` mutates the original arrays in the array. `concat` does not but has different semantics than spreading. Disable this rule if neither is acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify array elements in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -67,7 +69,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                    ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an array
    ╰────
-  help: Use `Array.prototype.push()` or `.concat()` to add elements without copying the entire array
+  help: Consider using `Array.prototype.push()` or `.concat()` to add elements, this avoids copying the entire array
+  note: Note: `push` mutates the original arrays in the array. `concat` does not but has different semantics than spreading. Disable this rule if neither is acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:3]
@@ -76,8 +79,8 @@ source: crates/oxc_linter/src/tester.rs
    ·    │              ╰── This spread creates an unnecessary copy
    ·    ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -86,8 +89,8 @@ source: crates/oxc_linter/src/tester.rs
    ·              │              ╰── This spread creates an unnecessary copy
    ·              ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -96,8 +99,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │            ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:39]
@@ -106,8 +109,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        │            ╰── This spread creates an unnecessary copy
    ·                                        ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -117,8 +120,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                      ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -128,8 +131,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                      ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -148,8 +151,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                     ╰── Map returns the spread here
  7 │             }
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -158,8 +161,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                      ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -168,8 +171,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                                            ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -178,8 +181,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                            ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:13]
@@ -188,8 +191,8 @@ source: crates/oxc_linter/src/tester.rs
    ·              │                    ╰── This spread creates an unnecessary copy
    ·              ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:13]
@@ -198,8 +201,8 @@ source: crates/oxc_linter/src/tester.rs
    ·              │                        ╰── This spread creates an unnecessary copy
    ·              ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -208,8 +211,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │               ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -218,8 +221,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │                          ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -228,8 +231,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │             ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:7]
@@ -238,8 +241,8 @@ source: crates/oxc_linter/src/tester.rs
    ·        │            ╰── This spread creates an unnecessary copy
    ·        ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:8]
@@ -248,8 +251,8 @@ source: crates/oxc_linter/src/tester.rs
    ·         │            ╰── This spread creates an unnecessary copy
    ·         ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:11]
@@ -258,8 +261,8 @@ source: crates/oxc_linter/src/tester.rs
    ·            │            ╰── This spread creates an unnecessary copy
    ·            ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:14]
@@ -268,8 +271,8 @@ source: crates/oxc_linter/src/tester.rs
    ·               │            ╰── This spread creates an unnecessary copy
    ·               ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:10]
@@ -278,8 +281,8 @@ source: crates/oxc_linter/src/tester.rs
    ·           │            ╰── This spread creates an unnecessary copy
    ·           ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:3]
@@ -288,8 +291,8 @@ source: crates/oxc_linter/src/tester.rs
    ·    │             ╰── This spread creates an unnecessary copy
    ·    ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:3]
@@ -298,8 +301,8 @@ source: crates/oxc_linter/src/tester.rs
    ·    │             ╰── This spread creates an unnecessary copy
    ·    ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:3]
@@ -308,8 +311,8 @@ source: crates/oxc_linter/src/tester.rs
    ·    │               ╰── This spread creates an unnecessary copy
    ·    ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:28]
@@ -318,8 +321,8 @@ source: crates/oxc_linter/src/tester.rs
    ·                             │               ╰── This spread creates an unnecessary copy
    ·                             ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
 
   ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
    ╭─[no_map_spread.tsx:1:20]
@@ -328,5 +331,5 @@ source: crates/oxc_linter/src/tester.rs
    ·                     │               ╰── This spread creates an unnecessary copy
    ·                     ╰── This map call spreads an object
    ╰────
-  help: Use `Object.assign(obj, { newProp })` to modify properties without copying the entire object
-  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if that is not acceptable.
+  help: Consider using `Object.assign(obj, { newProp })` to modify properties in place, this avoids copying the entire object
+  note: Note: `Object.assign` mutates the original objects in the array. Disable this rule if this is not acceptable.
