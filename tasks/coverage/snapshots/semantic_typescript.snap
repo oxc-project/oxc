@@ -221,7 +221,7 @@ rebuilt        : SymbolId(0): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/accessors_spec_section-4.5_inference.ts
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9)]
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(0)]
 rebuilt        : SymbolId(0): [ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/aliasInaccessibleModule.ts
@@ -514,8 +514,8 @@ Symbol span mismatch for "EmptyTypes":
 after transform: SymbolId(0): Span { start: 10, end: 20 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "base":
-after transform: SymbolId(2): [ReferenceId(2), ReferenceId(9), ReferenceId(11), ReferenceId(12), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(23)]
-rebuilt        : SymbolId(3): [ReferenceId(1), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(18)]
+after transform: SymbolId(2): [ReferenceId(9), ReferenceId(11), ReferenceId(12), ReferenceId(14), ReferenceId(15), ReferenceId(17), ReferenceId(23), ReferenceId(2)]
+rebuilt        : SymbolId(3): [ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(18), ReferenceId(1)]
 Symbol flags mismatch for "NonEmptyTypes":
 after transform: SymbolId(28): SymbolFlags(ValueModule)
 rebuilt        : SymbolId(23): SymbolFlags(BlockScopedVariable)
@@ -523,8 +523,8 @@ Symbol span mismatch for "NonEmptyTypes":
 after transform: SymbolId(28): Span { start: 2231, end: 2244 }
 rebuilt        : SymbolId(23): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "base":
-after transform: SymbolId(30): [ReferenceId(39), ReferenceId(46), ReferenceId(48), ReferenceId(49), ReferenceId(51), ReferenceId(52), ReferenceId(54), ReferenceId(60)]
-rebuilt        : SymbolId(25): [ReferenceId(38), ReferenceId(48), ReferenceId(50), ReferenceId(52), ReferenceId(57)]
+after transform: SymbolId(30): [ReferenceId(46), ReferenceId(48), ReferenceId(49), ReferenceId(51), ReferenceId(52), ReferenceId(54), ReferenceId(60), ReferenceId(39)]
+rebuilt        : SymbolId(25): [ReferenceId(48), ReferenceId(50), ReferenceId(52), ReferenceId(57), ReferenceId(38)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/arrayBufferIsViewNarrowsType.ts
 Unresolved references mismatch:
@@ -2034,7 +2034,7 @@ Symbol flags mismatch for "SyntaxKind":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "SyntaxKind":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(27)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0), ReferenceId(4), ReferenceId(27)]
 rebuilt        : SymbolId(0): [ReferenceId(5)]
 Reference symbol mismatch for "every":
 after transform: SymbolId(10) "every"
@@ -4263,8 +4263,8 @@ Symbol flags mismatch for "User":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "User":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(11)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(0), ReferenceId(1), ReferenceId(13)]
+rebuilt        : SymbolId(0): [ReferenceId(8), ReferenceId(10), ReferenceId(11), ReferenceId(5), ReferenceId(6)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/controlFlowCommaExpressionAssertionWithinTernary.ts
 Bindings mismatch:
@@ -5908,15 +5908,15 @@ Symbol flags mismatch for "TestEnum":
 after transform: SymbolId(0): SymbolFlags(ConstEnum)
 rebuilt        : SymbolId(0): SymbolFlags(BlockScopedVariable)
 Symbol reference IDs mismatch for "TestEnum":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(0), ReferenceId(1)]
 rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(4)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/declarationEmitTypeParameterNameReusedInOverloads.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(5), ReferenceId(11)]
+after transform: SymbolId(0): [ReferenceId(5), ReferenceId(11), ReferenceId(0)]
 rebuilt        : SymbolId(1): [ReferenceId(1)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2)]
+after transform: SymbolId(1): [ReferenceId(2), ReferenceId(1)]
 rebuilt        : SymbolId(2): [ReferenceId(4)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(8)]
@@ -7893,7 +7893,7 @@ after transform: [ReferenceId(8), ReferenceId(55), ReferenceId(69), ReferenceId(
 rebuilt        : [ReferenceId(81), ReferenceId(84)]
 Unresolved reference IDs mismatch for "WeakMap":
 after transform: [ReferenceId(5), ReferenceId(9), ReferenceId(108), ReferenceId(109), ReferenceId(110)]
-rebuilt        : [ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(7)]
+rebuilt        : [ReferenceId(7), ReferenceId(2), ReferenceId(3), ReferenceId(4)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/eventEmitterPatternWithRecordOfFunction.ts
 Unresolved references mismatch:
@@ -8439,12 +8439,12 @@ Symbol flags mismatch for "Kind":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "Kind":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(14), ReferenceId(17), ReferenceId(25)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0), ReferenceId(4), ReferenceId(14), ReferenceId(17), ReferenceId(25)]
 rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(10), ReferenceId(12)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/flowInFinally1.ts
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0)]
 rebuilt        : SymbolId(0): [ReferenceId(1)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/forAwaitForIntersection1.ts
@@ -9025,7 +9025,7 @@ rebuilt        : SymbolId(6): [ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericBaseClassLiteralProperty2.ts
 Symbol reference IDs mismatch for "CollectionItem2":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(4)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(4), ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/genericCallAtYieldExpressionInGenericCall2.ts
@@ -9855,7 +9855,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["State", "f1"]
 rebuilt        : ScopeId(0): ["f1"]
 Symbol reference IDs mismatch for "state":
-after transform: SymbolId(10): [ReferenceId(10), ReferenceId(11), ReferenceId(12), ReferenceId(14)]
+after transform: SymbolId(10): [ReferenceId(10), ReferenceId(11), ReferenceId(14), ReferenceId(12)]
 rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/implicitAnyGenerics.ts
@@ -10883,7 +10883,7 @@ rebuilt        : SymbolId(4): Span { start: 0, end: 0 }
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inheritanceStaticMembersCompatible.ts
 Symbol reference IDs mismatch for "a":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(1), ReferenceId(0), ReferenceId(3)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(3)]
 Symbol reference IDs mismatch for "b":
 after transform: SymbolId(1): [ReferenceId(2), ReferenceId(5)]
@@ -10927,7 +10927,7 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/inlinedAliasAssignableToConstraintSameAsAlias.ts
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(5): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8), ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(18), ReferenceId(21), ReferenceId(24)]
+after transform: SymbolId(5): [ReferenceId(11), ReferenceId(12), ReferenceId(13), ReferenceId(18), ReferenceId(21), ReferenceId(24), ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(8)]
 rebuilt        : SymbolId(1): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/innerAliases2.ts
@@ -11891,7 +11891,7 @@ rebuilt        : ["Component"]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxChildrenSingleChildConfusableWithMultipleChildrenNoError.tsx
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(3), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6), ReferenceId(8)]
+rebuilt        : SymbolId(0): [ReferenceId(3), ReferenceId(6), ReferenceId(8), ReferenceId(2), ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/jsxComplexSignatureHasApplicabilityError.tsx
 Bindings mismatch:
@@ -14477,7 +14477,7 @@ Symbol flags mismatch for "GatewayOpcode":
 after transform: SymbolId(14): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(5): SymbolFlags(BlockScopedVariable)
 Symbol reference IDs mismatch for "GatewayOpcode":
-after transform: SymbolId(14): [ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(16), ReferenceId(27), ReferenceId(28)]
+after transform: SymbolId(14): [ReferenceId(6), ReferenceId(13), ReferenceId(16), ReferenceId(11), ReferenceId(27), ReferenceId(28)]
 rebuilt        : SymbolId(5): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/newArrays.ts
@@ -14491,7 +14491,7 @@ Symbol span mismatch for "M":
 after transform: SymbolId(0): Span { start: 10, end: 11 }
 rebuilt        : SymbolId(1): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(1): [ReferenceId(0), ReferenceId(2)]
+after transform: SymbolId(1): [ReferenceId(2), ReferenceId(0)]
 rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/noAsConstNameLookup.ts
@@ -14872,7 +14872,7 @@ rebuilt        : ["E", "E2", "val"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/numericIndexerConstraint3.ts
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
 Symbol reference IDs mismatch for "B":
 after transform: SymbolId(1): [ReferenceId(1)]
@@ -15166,16 +15166,16 @@ rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks1.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(12)]
+after transform: SymbolId(0): [ReferenceId(8), ReferenceId(12), ReferenceId(3), ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived1":
-after transform: SymbolId(1): [ReferenceId(4), ReferenceId(9)]
+after transform: SymbolId(1): [ReferenceId(9), ReferenceId(4)]
 rebuilt        : SymbolId(1): []
 Symbol reference IDs mismatch for "Derived2":
-after transform: SymbolId(2): [ReferenceId(5), ReferenceId(10)]
+after transform: SymbolId(2): [ReferenceId(10), ReferenceId(5)]
 rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch for "Derived3":
-after transform: SymbolId(3): [ReferenceId(6), ReferenceId(11)]
+after transform: SymbolId(3): [ReferenceId(11), ReferenceId(6)]
 rebuilt        : SymbolId(3): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/overloadOnConstConstraintChecks2.ts
@@ -17143,7 +17143,7 @@ rebuilt        : ["print"]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactHOCSpreadprops.tsx
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(11)]
-rebuilt        : SymbolId(2): [ReferenceId(1), ReferenceId(2)]
+rebuilt        : SymbolId(2): [ReferenceId(2), ReferenceId(1)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactNamespaceImportPresevation.tsx
 Bindings mismatch:
@@ -17185,7 +17185,7 @@ rebuilt        : ["Bar", "React", "_Bar", "x"]
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactReadonlyHOCAssignabilityReal.tsx
 Symbol reference IDs mismatch for "React":
 after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(10)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(1)]
+rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reactSFCAndFunctionResolvable.tsx
 Bindings mismatch:
@@ -17435,7 +17435,7 @@ Symbol redeclarations mismatch for "Foo":
 after transform: SymbolId(0): [Span { start: 17, end: 20 }, Span { start: 62, end: 65 }]
 rebuilt        : SymbolId(0): []
 Unresolved reference IDs mismatch for "C":
-after transform: [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(6)]
+after transform: [ReferenceId(2), ReferenceId(0), ReferenceId(3), ReferenceId(6)]
 rebuilt        : [ReferenceId(5)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/recursiveResolveDeclaredMembers.ts
@@ -17543,7 +17543,7 @@ Symbol flags mismatch for "Type":
 after transform: SymbolId(0): SymbolFlags(RegularEnum)
 rebuilt        : SymbolId(0): SymbolFlags(FunctionScopedVariable)
 Symbol reference IDs mismatch for "Type":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(14), ReferenceId(33)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0), ReferenceId(4), ReferenceId(6), ReferenceId(10), ReferenceId(14), ReferenceId(33)]
 rebuilt        : SymbolId(0): [ReferenceId(7), ReferenceId(8)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/reexportNameAliasedAndHoisted.ts
@@ -18159,8 +18159,8 @@ Symbol span mismatch for "Bar":
 after transform: SymbolId(1): Span { start: 14, end: 17 }
 rebuilt        : SymbolId(2): Span { start: 0, end: 0 }
 Symbol reference IDs mismatch for "Greeter":
-after transform: SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(5), ReferenceId(7), ReferenceId(13)]
-rebuilt        : SymbolId(4): [ReferenceId(1), ReferenceId(3), ReferenceId(6), ReferenceId(12)]
+after transform: SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(13), ReferenceId(5), ReferenceId(7)]
+rebuilt        : SymbolId(4): [ReferenceId(1), ReferenceId(3), ReferenceId(12), ReferenceId(6)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/compiler/sourceMapValidationDestructuringForObjectBindingPattern.ts
 Bindings mismatch:
@@ -18658,7 +18658,7 @@ Bindings mismatch:
 after transform: ScopeId(0): ["Foo", "_objectSpread", "b"]
 rebuilt        : ScopeId(0): ["Foo", "_objectSpread"]
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(2): [ReferenceId(0), ReferenceId(3)]
+after transform: SymbolId(2): [ReferenceId(3), ReferenceId(0)]
 rebuilt        : SymbolId(1): []
 Reference symbol mismatch for "b":
 after transform: SymbolId(1) "b"
@@ -20691,7 +20691,7 @@ Symbol reference IDs mismatch for "Namespace":
 after transform: SymbolId(1): [ReferenceId(3)]
 rebuilt        : SymbolId(2): []
 Symbol reference IDs mismatch for "Class":
-after transform: SymbolId(2): [ReferenceId(0), ReferenceId(1), ReferenceId(5), ReferenceId(6)]
+after transform: SymbolId(2): [ReferenceId(1), ReferenceId(0), ReferenceId(5), ReferenceId(6)]
 rebuilt        : SymbolId(3): []
 Symbol reference IDs mismatch for "Property":
 after transform: SymbolId(3): [ReferenceId(2), ReferenceId(7)]
@@ -22260,7 +22260,7 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/inheritanceAndOverriding/derivedClassOverridesPublicMembers.ts
 Symbol reference IDs mismatch for "x":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(23), ReferenceId(42), ReferenceId(44)]
+after transform: SymbolId(0): [ReferenceId(23), ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10), ReferenceId(42), ReferenceId(44)]
 rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(12)]
 Symbol reference IDs mismatch for "y":
 after transform: SymbolId(1): [ReferenceId(12), ReferenceId(13), ReferenceId(14), ReferenceId(15), ReferenceId(16), ReferenceId(17), ReferenceId(18), ReferenceId(19), ReferenceId(20), ReferenceId(21), ReferenceId(22), ReferenceId(26), ReferenceId(29), ReferenceId(33), ReferenceId(36), ReferenceId(40), ReferenceId(45)]
@@ -22359,7 +22359,7 @@ Scope parent mismatch:
 after transform: ScopeId(3): Some(ScopeId(2))
 rebuilt        : ScopeId(1): Some(ScopeId(0))
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(2): [ReferenceId(0), ReferenceId(2), ReferenceId(6)]
+after transform: SymbolId(2): [ReferenceId(2), ReferenceId(0), ReferenceId(6)]
 rebuilt        : SymbolId(6): [ReferenceId(13)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/members/privateNames/privateNameConstructorSignature.ts
@@ -22449,7 +22449,7 @@ Symbol span mismatch for "Mixin":
 after transform: SymbolId(0): Span { start: 10, end: 15 }
 rebuilt        : SymbolId(0): Span { start: 55, end: 60 }
 Symbol reference IDs mismatch for "Mixin":
-after transform: SymbolId(0): [ReferenceId(2), ReferenceId(4), ReferenceId(6), ReferenceId(11)]
+after transform: SymbolId(0): [ReferenceId(6), ReferenceId(2), ReferenceId(4), ReferenceId(11)]
 rebuilt        : SymbolId(0): [ReferenceId(2), ReferenceId(7)]
 Symbol redeclarations mismatch for "Mixin":
 after transform: SymbolId(0): [Span { start: 10, end: 15 }, Span { start: 55, end: 60 }]
@@ -22462,7 +22462,7 @@ rebuilt        : ["document"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAccessors4.ts
 Symbol reference IDs mismatch for "A":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(4)]
+after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0)]
 rebuilt        : SymbolId(0): [ReferenceId(2)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/classes/mixinAccessors5.ts
@@ -22618,7 +22618,7 @@ after transform: ScopeId(0): ["ApiEnum", "ApiEnumMember", "ApiItem"]
 rebuilt        : ScopeId(0): ["ApiEnum", "ApiEnumMember", "ApiItem", "ApiItemContainerMixin"]
 Symbol reference IDs mismatch for "ApiItem":
 after transform: SymbolId(7): [ReferenceId(5), ReferenceId(7), ReferenceId(9), ReferenceId(10), ReferenceId(11), ReferenceId(13), ReferenceId(22), ReferenceId(25)]
-rebuilt        : SymbolId(0): [ReferenceId(0), ReferenceId(5)]
+rebuilt        : SymbolId(0): [ReferenceId(5), ReferenceId(0)]
 Symbol reference IDs mismatch for "ApiEnumMember":
 after transform: SymbolId(8): [ReferenceId(27)]
 rebuilt        : SymbolId(1): []
@@ -24475,7 +24475,7 @@ rebuilt        : [ReferenceId(1)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty23.ts
 Unresolved reference IDs mismatch for "Symbol":
-after transform: [ReferenceId(0), ReferenceId(2)]
+after transform: [ReferenceId(2), ReferenceId(0)]
 rebuilt        : [ReferenceId(0)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/Symbols/symbolProperty28.ts
@@ -25183,7 +25183,7 @@ rebuilt        : []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck17.ts
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
 Unresolved references mismatch:
 after transform: ["IterableIterator", "require"]
@@ -25191,7 +25191,7 @@ rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/es6/yieldExpressions/generatorTypeCheck19.ts
 Symbol reference IDs mismatch for "Foo":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
 Unresolved references mismatch:
 after transform: ["IterableIterator", "require"]
@@ -27224,7 +27224,7 @@ rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/expressions/binaryOperators/comparisonOperator/comparisonOperatorWithSubtypeObjectOnProperty.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(0), ReferenceId(1), ReferenceId(2)]
 rebuilt        : SymbolId(1): [ReferenceId(2)]
 Symbol reference IDs mismatch for "Derived":
 after transform: SymbolId(1): [ReferenceId(4)]
@@ -32064,7 +32064,7 @@ rebuilt        : ["log"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/jsx/tsxUnionTypeComponent1.tsx
 Symbol reference IDs mismatch for "React":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
+after transform: SymbolId(0): [ReferenceId(2), ReferenceId(0), ReferenceId(1), ReferenceId(6), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17)]
 rebuilt        : SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(5), ReferenceId(7), ReferenceId(10), ReferenceId(11)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/moduleResolution/allowImportingTypesDtsExtension.ts
@@ -33624,7 +33624,7 @@ rebuilt        : SymbolId(1): [ReferenceId(6)]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedCallSignatures.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9), ReferenceId(13), ReferenceId(30)]
+after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(9), ReferenceId(13), ReferenceId(30)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived1":
 after transform: SymbolId(1): [ReferenceId(2), ReferenceId(7), ReferenceId(11), ReferenceId(26)]
@@ -33635,7 +33635,7 @@ rebuilt        : SymbolId(4): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/members/typesWithSpecializedConstructSignatures.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(6), ReferenceId(10), ReferenceId(22)]
+after transform: SymbolId(0): [ReferenceId(6), ReferenceId(0), ReferenceId(1), ReferenceId(10), ReferenceId(22)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived1":
 after transform: SymbolId(1): [ReferenceId(4), ReferenceId(8)]
@@ -35321,10 +35321,10 @@ rebuilt        : SymbolId(2): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/callSignatureAssignabilityInInheritance2.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(56), ReferenceId(61), ReferenceId(67), ReferenceId(75), ReferenceId(85), ReferenceId(90), ReferenceId(92), ReferenceId(99), ReferenceId(107)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(0), ReferenceId(2), ReferenceId(56), ReferenceId(61), ReferenceId(67), ReferenceId(75), ReferenceId(85), ReferenceId(90), ReferenceId(92), ReferenceId(99), ReferenceId(107)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(8)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(57), ReferenceId(62), ReferenceId(68), ReferenceId(76), ReferenceId(82), ReferenceId(95), ReferenceId(97)]
+after transform: SymbolId(1): [ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(1), ReferenceId(57), ReferenceId(62), ReferenceId(68), ReferenceId(76), ReferenceId(82), ReferenceId(95), ReferenceId(97)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -35335,10 +35335,10 @@ rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/callSignatureAssignabilityInInheritance4.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(31), ReferenceId(38), ReferenceId(44), ReferenceId(58), ReferenceId(66)]
+after transform: SymbolId(0): [ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(31), ReferenceId(38), ReferenceId(44), ReferenceId(0), ReferenceId(2), ReferenceId(58), ReferenceId(66)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(8)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(14), ReferenceId(27), ReferenceId(35), ReferenceId(59)]
+after transform: SymbolId(1): [ReferenceId(14), ReferenceId(27), ReferenceId(35), ReferenceId(1), ReferenceId(59)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(41)]
@@ -35346,10 +35346,10 @@ rebuilt        : SymbolId(4): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/callSignatureAssignabilityInInheritance5.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(0), ReferenceId(2), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(8)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
+after transform: SymbolId(1): [ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(1), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -35360,10 +35360,10 @@ rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance2.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(56), ReferenceId(61), ReferenceId(67), ReferenceId(75), ReferenceId(85), ReferenceId(90), ReferenceId(92), ReferenceId(99), ReferenceId(107)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(40), ReferenceId(0), ReferenceId(2), ReferenceId(56), ReferenceId(61), ReferenceId(67), ReferenceId(75), ReferenceId(85), ReferenceId(90), ReferenceId(92), ReferenceId(99), ReferenceId(107)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(8)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(57), ReferenceId(62), ReferenceId(68), ReferenceId(76), ReferenceId(82), ReferenceId(95), ReferenceId(97)]
+after transform: SymbolId(1): [ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(38), ReferenceId(1), ReferenceId(57), ReferenceId(62), ReferenceId(68), ReferenceId(76), ReferenceId(82), ReferenceId(95), ReferenceId(97)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -35374,10 +35374,10 @@ rebuilt        : ["require"]
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance4.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(27), ReferenceId(35), ReferenceId(41), ReferenceId(48), ReferenceId(51), ReferenceId(68), ReferenceId(76), ReferenceId(83), ReferenceId(86), ReferenceId(88), ReferenceId(92)]
+after transform: SymbolId(0): [ReferenceId(12), ReferenceId(19), ReferenceId(23), ReferenceId(27), ReferenceId(35), ReferenceId(41), ReferenceId(48), ReferenceId(51), ReferenceId(0), ReferenceId(2), ReferenceId(68), ReferenceId(76), ReferenceId(83), ReferenceId(86), ReferenceId(88), ReferenceId(92)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(8)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(14), ReferenceId(30), ReferenceId(33), ReferenceId(37), ReferenceId(45), ReferenceId(69)]
+after transform: SymbolId(1): [ReferenceId(14), ReferenceId(30), ReferenceId(33), ReferenceId(37), ReferenceId(45), ReferenceId(1), ReferenceId(69)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(54)]
@@ -35385,10 +35385,10 @@ rebuilt        : SymbolId(4): []
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/assignmentCompatibility/constructSignatureAssignabilityInInheritance5.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(0), ReferenceId(2), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(8)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
+after transform: SymbolId(1): [ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(1), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]
@@ -36104,10 +36104,10 @@ rebuilt        : ["foo1", "foo11", "foo15", "foo16", "foo17", "foo18", "foo2", "
 
 semantic Error: tasks/coverage/typescript/tests/cases/conformance/types/typeRelationships/subtypesAndSuperTypes/subtypingWithConstructSignatures5.ts
 Symbol reference IDs mismatch for "Base":
-after transform: SymbolId(0): [ReferenceId(0), ReferenceId(2), ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
+after transform: SymbolId(0): [ReferenceId(3), ReferenceId(5), ReferenceId(6), ReferenceId(8), ReferenceId(10), ReferenceId(12), ReferenceId(14), ReferenceId(16), ReferenceId(18), ReferenceId(20), ReferenceId(24), ReferenceId(26), ReferenceId(32), ReferenceId(0), ReferenceId(2), ReferenceId(53), ReferenceId(58), ReferenceId(64), ReferenceId(72), ReferenceId(82), ReferenceId(87), ReferenceId(89), ReferenceId(96)]
 rebuilt        : SymbolId(1): [ReferenceId(2), ReferenceId(8)]
 Symbol reference IDs mismatch for "Derived":
-after transform: SymbolId(1): [ReferenceId(1), ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
+after transform: SymbolId(1): [ReferenceId(4), ReferenceId(7), ReferenceId(9), ReferenceId(11), ReferenceId(13), ReferenceId(15), ReferenceId(17), ReferenceId(19), ReferenceId(21), ReferenceId(22), ReferenceId(23), ReferenceId(30), ReferenceId(34), ReferenceId(36), ReferenceId(1), ReferenceId(54), ReferenceId(59), ReferenceId(65), ReferenceId(73), ReferenceId(79), ReferenceId(92), ReferenceId(94)]
 rebuilt        : SymbolId(2): [ReferenceId(5)]
 Symbol reference IDs mismatch for "Derived2":
 after transform: SymbolId(2): [ReferenceId(28)]

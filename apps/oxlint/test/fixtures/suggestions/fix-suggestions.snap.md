@@ -4,11 +4,17 @@
 # stdout
 ```
 Found 0 warnings and 0 errors.
-Finished in Xms on 1 file with 1 rules using X threads.
+Finished in Xms on 2 files with 1 rules using X threads.
 ```
 
 # stderr
 ```
+```
+
+# File altered: files/bom.js
+```
+﻿daddy = magic;
+rage = abacus
 ```
 
 # File altered: files/index.js
@@ -21,12 +27,11 @@ let magic = 3;
 let damned = 4;
 let elephant = 5;
 let feck = 6;
-let numpty = 7;
+let rage = 7;
 let dangermouse = 8;
 let granular = 9;
 let cowabunga = 10;
 let kaboom = 11;
-
 
 
 ```

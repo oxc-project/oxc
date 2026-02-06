@@ -7,7 +7,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 use crate::LintContext;
 
 mod fix;
-pub use fix::{CompositeFix, Fix, FixKind, PossibleFixes, RuleFix};
+pub use fix::{CompositeFix, Fix, FixKind, MergeFixesError, PossibleFixes, RuleFix};
 
 /// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
@@ -333,6 +333,7 @@ impl<'a> Fixer<'a> {
     }
 
     #[cfg(test)]
+    #[must_use]
     pub fn with_fix_index(mut self, fix_index: u8) -> Self {
         self.fix_index = fix_index;
         self

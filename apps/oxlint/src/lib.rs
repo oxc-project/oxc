@@ -45,7 +45,13 @@ mod js_plugins;
 // `--features allocator` is only used in release builds.
 #[cfg(all(
     feature = "allocator",
-    not(any(target_arch = "arm", miri, target_os = "freebsd", target_family = "wasm"))
+    not(any(
+        target_arch = "arm",
+        target_arch = "riscv64",
+        miri,
+        target_os = "freebsd",
+        target_family = "wasm"
+    ))
 ))]
 #[global_allocator]
 static GLOBAL: mimalloc_safe::MiMalloc = mimalloc_safe::MiMalloc;

@@ -88,7 +88,6 @@ pub struct Oxlintrc {
     /// [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
     ///
     /// Note: JS plugins are experimental and not subject to semver.
-    /// They are not supported in the language server (and thus editor integrations) at present.
     ///
     /// Examples:
     ///

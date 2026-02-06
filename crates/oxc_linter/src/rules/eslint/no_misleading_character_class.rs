@@ -105,7 +105,7 @@ declare_oxc_lint!(
     /// ```
     NoMisleadingCharacterClass,
     eslint,
-    nursery, // TODO: change category to `correctness`, after oxc-project/oxc#13660 and oxc-project/oxc#13436
+    nursery, // TODO: change category to `correctness`, after oxc-project/oxc#13436
     config = NoMisleadingCharacterClass,
 );
 
@@ -442,13 +442,13 @@ fn test() {
         (r"/[👨\u200d👩\u200d👦]/u", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\u00B7\u0300-\u036F]/u", Some(serde_json::json!([{ "allowEscape": true }]))),
         (r"/[\n\u0305]/", Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (r#"RegExp("[\uD83D\uDC4D]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (r#"RegExp("[A\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
+        (r#"RegExp("[\uD83D\uDC4D]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
+        (r#"RegExp("[A\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
         (r#"RegExp("[\x41\\u0301]")"#, Some(serde_json::json!([{ "allowEscape": true }]))),
-        // (
-        //     r#"RegExp(`[\uD83D\uDC4D]`) // Backslash + "uD83D" + Backslash + "uDC4D""#,
-        //     Some(serde_json::json!([{ "allowEscape": true }])),
-        // ),
+        (
+            r#"RegExp(`[\uD83D\uDC4D]`) // Backslash + "uD83D" + Backslash + "uDC4D""#,
+            Some(serde_json::json!([{ "allowEscape": true }])),
+        ),
     ];
 
     let fail = vec![

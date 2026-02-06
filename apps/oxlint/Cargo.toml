@@ -54,10 +54,10 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 tracing-subscriber = { workspace = true, features = [] } # Omit the `regex` feature
 tower-lsp-server = { workspace = true, features = ["proposed"] }
 
-[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_family = "wasm")))'.dependencies]
+[target.'cfg(not(any(target_os = "linux", target_os = "freebsd", target_arch = "arm", target_arch = "riscv64", target_family = "wasm")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = ["skip_collect_on_exit"] }
 
-[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64")))'.dependencies]
+[target.'cfg(all(target_os = "linux", not(target_arch = "arm"), not(target_arch = "aarch64"), not(target_arch = "riscv64")))'.dependencies]
 mimalloc-safe = { workspace = true, optional = true, features = [
   "skip_collect_on_exit",
   "local_dynamic_tls",

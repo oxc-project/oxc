@@ -222,7 +222,6 @@ Read more about JS plugins in
 [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
 Note: JS plugins are experimental and not subject to semver.
-They are not supported in the language server (and thus editor integrations) at present.
 
 Examples:
 
@@ -348,7 +347,6 @@ Read more about JS plugins in
 [the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
 Note: JS plugins are experimental and not subject to semver.
-They are not supported in the language server (and thus editor integrations) at present.
 
 
 ##### overrides[n].jsPlugins[n]

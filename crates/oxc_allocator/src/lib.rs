@@ -54,6 +54,7 @@ mod convert;
 mod from_raw_parts;
 pub mod hash_map;
 pub mod hash_set;
+mod passthrough_hasher;
 #[cfg(feature = "pool")]
 mod pool;
 mod string_builder;
@@ -73,6 +74,7 @@ pub use clone_in::CloneIn;
 pub use convert::{FromIn, IntoIn};
 pub use hash_map::HashMap;
 pub use hash_set::HashSet;
+pub use passthrough_hasher::{PassthroughBuildHasher, PassthroughHasher};
 #[cfg(feature = "pool")]
 pub use pool::*;
 pub use string_builder::StringBuilder;

@@ -438,6 +438,7 @@ impl Scoping {
         });
     }
 
+    #[inline]
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
         self.references.push(reference)
     }

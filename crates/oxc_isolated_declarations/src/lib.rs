@@ -13,7 +13,7 @@ use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
 use oxc_ast::{AstBuilder, NONE, ast::*};
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, GetSpan, SPAN, SourceType};
+use oxc_span::{Atom, GetSpan, IdentHashSet, SPAN, SourceType};
 
 use crate::{diagnostics::function_with_assigning_properties, scope::ScopeTree};
 
@@ -575,7 +575,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let assignable_properties_for_namespace =
             IsolatedDeclarations::get_assignable_properties_for_namespaces(stmts);
 
-        let mut can_expando_function_names = FxHashSet::default();
+        let mut can_expando_function_names = IdentHashSet::default();
         for stmt in stmts {
             match stmt {
                 Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {

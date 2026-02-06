@@ -1,3 +1,5 @@
+import assert from "node:assert";
+
 import type { Node, Plugin, Rule, Suggestion } from "#oxlint/plugins";
 
 const rule: Rule = {
@@ -5,6 +7,11 @@ const rule: Rule = {
     hasSuggestions: true,
   },
   create(context) {
+    // Check file has not been formatted by accident.
+    // We want the fixture files not to have trailing whitespace to check suggestions at very end of file.
+    const sourceText = context.sourceCode.text;
+    assert(!sourceText.endsWith("\n"), "Fixture has been formatted");
+
     let debuggerCount = 0;
     return {
       DebuggerStatement(node) {
@@ -119,18 +126,18 @@ const rule: Rule = {
 
           case "g":
             return context.report({
-              message: 'Replace "g" with "numpty"',
+              message: 'Replace "g" with "rage"',
               node,
               suggest: [
                 {
                   desc: "Do it",
                   fix(fixer) {
-                    // Fixes can be in any order
+                    // Add text before and after the node only, to test combining fixes that include original source.
+                    // Fixes can be in any order.
                     return [
-                      fixer.insertTextAfter(node, "ty"),
                       // Test that any object with `range` property works
-                      fixer.replaceText({ range: [node.start, node.end] } as Node, "mp"),
-                      fixer.insertTextBefore(node, "nu"),
+                      fixer.insertTextAfter({ range: [node.start, node.end] }, "e"),
+                      fixer.insertTextBefore(node, "ra"),
                     ];
                   },
                 },

@@ -444,3 +444,11 @@ fn test_redeclaration() {
         .has_number_of_references(0) // no references to the function
         .test();
 }
+
+// https://github.com/oxc-project/oxc/issues/18719
+#[test]
+fn test_function_var_redeclaration_in_module() {
+    // Both orderings should produce a redeclaration error in module mode
+    SemanticTester::js("function a() {} var a = ''").has_error("already been declared");
+    SemanticTester::js("var a = ''; function a() {}").has_error("already been declared");
+}

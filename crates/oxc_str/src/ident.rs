@@ -1,10 +1,6 @@
 //! Identifier string type.
 
-use std::{
-    borrow::{Borrow, Cow},
-    fmt, hash,
-    ops::Deref,
-};
+use std::{borrow::Cow, fmt, hash, ops::Deref};
 
 use oxc_allocator::{Allocator, CloneIn, Dummy, FromIn, StringBuilder as ArenaStringBuilder};
 #[cfg(feature = "serialize")]
@@ -238,11 +234,12 @@ impl AsRef<str> for Ident<'_> {
     }
 }
 
-impl Borrow<str> for Ident<'_> {
-    #[expect(clippy::inline_always)]
-    #[inline(always)] // Because this is a no-op
-    fn borrow(&self) -> &str {
-        self.as_str()
+/// Allows looking up an `Ident`-keyed hashbrown map with a `&str` key,
+/// without requiring `Ident: Borrow<str>`.
+impl oxc_allocator::hash_map::Equivalent<Ident<'_>> for str {
+    #[inline]
+    fn equivalent(&self, key: &Ident<'_>) -> bool {
+        self == key.as_str()
     }
 }
 
@@ -309,14 +306,14 @@ impl ESTree for Ident<'_> {
     }
 }
 
-/// Hash map keyed by [`Ident`].
-pub type IdentHashMap<'a, V> = rustc_hash::FxHashMap<Ident<'a>, V>;
+/// Hash map keyed by [`Ident`], using hashbrown with FxHash.
+pub type IdentHashMap<'a, V> = hashbrown::HashMap<Ident<'a>, V, rustc_hash::FxBuildHasher>;
 
 /// Arena-allocated hash map keyed by [`Ident`].
 pub type ArenaIdentHashMap<'alloc, V> = oxc_allocator::HashMap<'alloc, Ident<'alloc>, V>;
 
-/// Hash set of [`Ident`].
-pub type IdentHashSet<'a> = rustc_hash::FxHashSet<Ident<'a>>;
+/// Hash set of [`Ident`], using hashbrown with FxHash.
+pub type IdentHashSet<'a> = hashbrown::HashSet<Ident<'a>, rustc_hash::FxBuildHasher>;
 
 /// Creates an [`Ident`] using interpolation of runtime expressions.
 ///

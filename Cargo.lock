@@ -2336,6 +2336,7 @@ name = "oxc_str"
 version = "0.112.0"
 dependencies = [
  "compact_str",
+ "hashbrown 0.16.1",
  "oxc-schemars",
  "oxc_allocator",
  "oxc_estree",
