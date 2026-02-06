@@ -614,10 +614,17 @@ pub fn check_variable_declarator_redeclaration(
     decl: &VariableDeclarator,
     ctx: &SemanticBuilder<'_>,
 ) {
-    if decl.kind != VariableDeclarationKind::Var
-        || ctx.current_scope_flags().intersects(ScopeFlags::Top | ScopeFlags::Function)
+    if decl.kind != VariableDeclarationKind::Var {
+        return;
+    }
+
+    let scope_flags = ctx.current_scope_flags();
+    // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
+    // in script mode, but in module mode at the top level, function declarations are
+    // lexically scoped, so `function a() {}; var a;` is a redeclaration error.
+    if scope_flags.intersects(ScopeFlags::Top | ScopeFlags::Function)
+        && !(ctx.source_type.is_module() && scope_flags.is_top())
     {
-        // `function a() {}; var a;` and `function b() { function a() {}; var a; }` are valid
         return;
     }
 
@@ -625,7 +632,8 @@ pub fn check_variable_declarator_redeclaration(
         let redeclarations = ctx.scoping.symbol_redeclarations(ident.symbol_id());
         let Some(rd) = redeclarations.iter().nth_back(1) else { return };
 
-        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode
+        // `{ function f() {}; var f; }` is invalid in both strict and non-strict mode.
+        // In module mode at the top level, `function f() {}; var f;` is also invalid.
         if rd.flags.is_function() {
             ctx.error(diagnostics::redeclaration(&ident.name, rd.span, decl.span));
         }
