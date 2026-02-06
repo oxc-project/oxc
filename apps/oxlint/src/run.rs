@@ -223,10 +223,6 @@ async fn lint_impl(
 
     // If --lsp flag is set, run the language server
     if command.lsp {
-        // Disable JS plugins support except in tests.
-        // TODO: Remove this line once we have solidified the implementation and thoroughly tested it.
-        let external_linter = if cfg!(feature = "testing") { external_linter } else { None };
-
         crate::lsp::run_lsp(external_linter, js_config_loader).await;
         return CliRunResult::LintSucceeded;
     }
