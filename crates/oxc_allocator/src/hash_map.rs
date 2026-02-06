@@ -1,14 +1,19 @@
-//! A hash map without `Drop`, that uses [`FxHasher`] to hash keys, and stores data in arena allocator.
+//! A hash map without `Drop` that stores data in arena allocator.
+//!
+//! By default uses [`FxHasher`] to hash keys. The hasher can be customized via the `S` type
+//! parameter (e.g. [`PassthroughBuildHasher`] for pre-computed hashes).
 //!
 //! See [`HashMap`] for more details.
 //!
 //! [`FxHasher`]: rustc_hash::FxHasher
+//! [`PassthroughBuildHasher`]: crate::PassthroughBuildHasher
 
 // All methods which just delegate to `hashbrown::HashMap` methods marked `#[inline(always)]`
 #![expect(clippy::inline_always)]
 
 use std::{
-    hash::Hash,
+    fmt,
+    hash::{BuildHasher, Hash},
     mem::ManuallyDrop,
     ops::{Deref, DerefMut},
 };
@@ -28,9 +33,11 @@ pub use hashbrown::{
 
 use crate::Allocator;
 
-type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc Bump>;
+type InnerHashMap<'alloc, K, V, S> = hashbrown::HashMap<K, V, S, &'alloc Bump>;
 
-/// A hash map without `Drop`, that uses [`FxHasher`] to hash keys, and stores data in arena allocator.
+/// A hash map without `Drop` that stores data in arena allocator.
+///
+/// Uses [`FxHasher`] by default. The hasher can be customized via the `S` type parameter.
 ///
 /// Just a thin wrapper around [`hashbrown::HashMap`], which disables the `Drop` implementation.
 ///
@@ -49,8 +56,15 @@ type FxHashMap<'alloc, K, V> = hashbrown::HashMap<K, V, FxBuildHasher, &'alloc B
 /// a [`HashMap`] will refuse to compile if either key or value is a [`Drop`] type.
 ///
 /// [`FxHasher`]: rustc_hash::FxHasher
-#[derive(Debug)]
-pub struct HashMap<'alloc, K, V>(pub(crate) ManuallyDrop<FxHashMap<'alloc, K, V>>);
+pub struct HashMap<'alloc, K, V, S = FxBuildHasher>(
+    pub(crate) ManuallyDrop<InnerHashMap<'alloc, K, V, S>>,
+);
+
+impl<K: fmt::Debug, V: fmt::Debug, S> fmt::Debug for HashMap<'_, K, V, S> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_map().entries(self.0.iter()).finish()
+    }
+}
 
 /// SAFETY: Even though `Bump` is not `Sync`, we can make `HashMap<K, V>` `Sync` if both `K` and `V`
 /// are `Sync` because:
@@ -86,12 +100,12 @@ pub struct HashMap<'alloc, K, V>(pub(crate) ManuallyDrop<FxHashMap<'alloc, K, V>
 ///
 /// TODO: Fix these holes.
 /// TODO: Remove any other methods that currently allow performing allocations with only a `&self` reference.
-unsafe impl<K: Sync, V: Sync> Sync for HashMap<'_, K, V> {}
+unsafe impl<K: Sync, V: Sync, S: Sync> Sync for HashMap<'_, K, V, S> {}
 
 // TODO: `IntoIter`, `Drain`, and other consuming iterators provided by `hashbrown` are `Drop`.
 // Wrap them in `ManuallyDrop` to prevent that.
 
-impl<'alloc, K, V> HashMap<'alloc, K, V> {
+impl<'alloc, K, V, S> HashMap<'alloc, K, V, S> {
     /// Const assertions that `K` and `V` are not `Drop`.
     /// Must be referenced in all methods which create a `HashMap`.
     const ASSERT_K_AND_V_ARE_NOT_DROP: () = {
@@ -105,65 +119,33 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
         );
     };
 
-    /// Creates an empty [`HashMap`]. It will be allocated with the given allocator.
+    /// Creates an empty [`HashMap`] with the given hasher. It will be allocated with the given allocator.
     ///
     /// The hash map is initially created with a capacity of 0, so it will not allocate
     /// until it is first inserted into.
     #[inline(always)]
-    pub fn new_in(allocator: &'alloc Allocator) -> Self {
+    pub fn with_hasher_in(hasher: S, allocator: &'alloc Allocator) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let inner = FxHashMap::with_hasher_in(FxBuildHasher, allocator.bump());
+        let inner = InnerHashMap::with_hasher_in(hasher, allocator.bump());
         Self(ManuallyDrop::new(inner))
     }
 
-    /// Creates an empty [`HashMap`] with the specified capacity. It will be allocated with the given allocator.
+    /// Creates an empty [`HashMap`] with the specified capacity and hasher.
+    /// It will be allocated with the given allocator.
     ///
     /// The hash map will be able to hold at least capacity elements without reallocating.
     /// If capacity is 0, the hash map will not allocate.
     #[inline(always)]
-    pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
-        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
-
-        let inner =
-            FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
-        Self(ManuallyDrop::new(inner))
-    }
-
-    /// Create a new [`HashMap`] whose elements are taken from an iterator and
-    /// allocated in the given `allocator`.
-    ///
-    /// This is behaviorally identical to [`FromIterator::from_iter`].
-    #[inline]
-    pub fn from_iter_in<I: IntoIterator<Item = (K, V)>>(
-        iter: I,
+    pub fn with_capacity_and_hasher_in(
+        capacity: usize,
+        hasher: S,
         allocator: &'alloc Allocator,
-    ) -> Self
-    where
-        K: Eq + Hash,
-    {
+    ) -> Self {
         const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
 
-        let iter = iter.into_iter();
-
-        // Use the iterator's lower size bound.
-        // This follows `hashbrown::HashMap`'s `from_iter` implementation.
-        //
-        // This is a trade-off:
-        // * Negative: If lower bound is too low, the `HashMap` may have to grow and reallocate during `for_each` loop.
-        // * Positive: Avoids potential large over-allocation for iterators where upper bound may be a large over-estimate
-        //   e.g. filter iterators.
-        let capacity = iter.size_hint().0;
-        let map = FxHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
-        // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
-        // to drop the `FxHashMap` in case of a panic in iterator's `next` method
-        let mut map = ManuallyDrop::new(map);
-
-        iter.for_each(|(k, v)| {
-            map.insert(k, v);
-        });
-
-        Self(map)
+        let inner = InnerHashMap::with_capacity_and_hasher_in(capacity, hasher, allocator.bump());
+        Self(ManuallyDrop::new(inner))
     }
 
     /// Creates a consuming iterator visiting all the keys in arbitrary order.
@@ -202,9 +184,67 @@ impl<'alloc, K, V> HashMap<'alloc, K, V> {
     }
 }
 
+/// Methods that use the default [`FxBuildHasher`].
+impl<'alloc, K, V> HashMap<'alloc, K, V> {
+    /// Creates an empty [`HashMap`]. It will be allocated with the given allocator.
+    ///
+    /// The hash map is initially created with a capacity of 0, so it will not allocate
+    /// until it is first inserted into.
+    #[inline(always)]
+    pub fn new_in(allocator: &'alloc Allocator) -> Self {
+        Self::with_hasher_in(FxBuildHasher, allocator)
+    }
+
+    /// Creates an empty [`HashMap`] with the specified capacity. It will be allocated with the given allocator.
+    ///
+    /// The hash map will be able to hold at least capacity elements without reallocating.
+    /// If capacity is 0, the hash map will not allocate.
+    #[inline(always)]
+    pub fn with_capacity_in(capacity: usize, allocator: &'alloc Allocator) -> Self {
+        Self::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator)
+    }
+
+    /// Create a new [`HashMap`] whose elements are taken from an iterator and
+    /// allocated in the given `allocator`.
+    ///
+    /// This is behaviorally identical to [`FromIterator::from_iter`].
+    #[inline]
+    pub fn from_iter_in<I: IntoIterator<Item = (K, V)>>(
+        iter: I,
+        allocator: &'alloc Allocator,
+    ) -> Self
+    where
+        K: Eq + Hash,
+    {
+        const { Self::ASSERT_K_AND_V_ARE_NOT_DROP };
+
+        let iter = iter.into_iter();
+
+        // Use the iterator's lower size bound.
+        // This follows `hashbrown::HashMap`'s `from_iter` implementation.
+        //
+        // This is a trade-off:
+        // * Negative: If lower bound is too low, the `HashMap` may have to grow and reallocate during `for_each` loop.
+        // * Positive: Avoids potential large over-allocation for iterators where upper bound may be a large over-estimate
+        //   e.g. filter iterators.
+        let capacity = iter.size_hint().0;
+        let map =
+            InnerHashMap::with_capacity_and_hasher_in(capacity, FxBuildHasher, allocator.bump());
+        // Wrap in `ManuallyDrop` *before* calling `for_each`, so compiler doesn't insert unnecessary code
+        // to drop the `FxHashMap` in case of a panic in iterator's `next` method
+        let mut map = ManuallyDrop::new(map);
+
+        iter.for_each(|(k, v)| {
+            map.insert(k, v);
+        });
+
+        Self(map)
+    }
+}
+
 // Provide access to all `hashbrown::HashMap`'s methods via deref
-impl<'alloc, K, V> Deref for HashMap<'alloc, K, V> {
-    type Target = FxHashMap<'alloc, K, V>;
+impl<'alloc, K, V, S> Deref for HashMap<'alloc, K, V, S> {
+    type Target = InnerHashMap<'alloc, K, V, S>;
 
     #[inline]
     fn deref(&self) -> &Self::Target {
@@ -212,14 +252,14 @@ impl<'alloc, K, V> Deref for HashMap<'alloc, K, V> {
     }
 }
 
-impl<'alloc, K, V> DerefMut for HashMap<'alloc, K, V> {
+impl<'alloc, K, V, S> DerefMut for HashMap<'alloc, K, V, S> {
     #[inline]
-    fn deref_mut(&mut self) -> &mut FxHashMap<'alloc, K, V> {
+    fn deref_mut(&mut self) -> &mut InnerHashMap<'alloc, K, V, S> {
         &mut self.0
     }
 }
 
-impl<'alloc, K, V> IntoIterator for HashMap<'alloc, K, V> {
+impl<'alloc, K, V, S> IntoIterator for HashMap<'alloc, K, V, S> {
     type IntoIter = IntoIter<K, V, &'alloc Bump>;
     type Item = (K, V);
 
@@ -236,8 +276,8 @@ impl<'alloc, K, V> IntoIterator for HashMap<'alloc, K, V> {
     }
 }
 
-impl<'alloc, 'i, K, V> IntoIterator for &'i HashMap<'alloc, K, V> {
-    type IntoIter = <&'i FxHashMap<'alloc, K, V> as IntoIterator>::IntoIter;
+impl<'alloc, 'i, K, V, S> IntoIterator for &'i HashMap<'alloc, K, V, S> {
+    type IntoIter = <&'i InnerHashMap<'alloc, K, V, S> as IntoIterator>::IntoIter;
     type Item = (&'i K, &'i V);
 
     /// Creates an iterator over the entries of a `HashMap` in arbitrary order.
@@ -251,8 +291,8 @@ impl<'alloc, 'i, K, V> IntoIterator for &'i HashMap<'alloc, K, V> {
     }
 }
 
-impl<'alloc, 'i, K, V> IntoIterator for &'i mut HashMap<'alloc, K, V> {
-    type IntoIter = <&'i mut FxHashMap<'alloc, K, V> as IntoIterator>::IntoIter;
+impl<'alloc, 'i, K, V, S> IntoIterator for &'i mut HashMap<'alloc, K, V, S> {
+    type IntoIter = <&'i mut InnerHashMap<'alloc, K, V, S> as IntoIterator>::IntoIter;
     type Item = (&'i K, &'i mut V);
 
     /// Creates an iterator over the entries of a `HashMap` in arbitrary order
@@ -267,10 +307,11 @@ impl<'alloc, 'i, K, V> IntoIterator for &'i mut HashMap<'alloc, K, V> {
     }
 }
 
-impl<K, V> PartialEq for HashMap<'_, K, V>
+impl<K, V, S> PartialEq for HashMap<'_, K, V, S>
 where
     K: Eq + Hash,
     V: PartialEq,
+    S: BuildHasher,
 {
     #[inline(always)]
     fn eq(&self, other: &Self) -> bool {
@@ -278,10 +319,11 @@ where
     }
 }
 
-impl<K, V> Eq for HashMap<'_, K, V>
+impl<K, V, S> Eq for HashMap<'_, K, V, S>
 where
     K: Eq + Hash,
     V: Eq,
+    S: BuildHasher,
 {
 }
 
