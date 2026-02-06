@@ -92,9 +92,6 @@ pub static NOT_SUPPORTED_TEST_PATHS: phf::Set<&'static str> = phf::phf_set![
     // TSC: Parse without error, they support BOM
     // OXC: We do not ignore or exclude BOM, will be invalid character error
     "bom-utf16be.ts",
-    // TSC: This is just a binary file, but their test project skips reading
-    // OXC: Try to parse, and fail
-    "TransportStream.ts",
     // TSC: Allows `catch({x}) { var x; }` (destructured catch param + var redeclaration)
     // OXC: Reports redeclaration error per Annex B §B.3.4 (only simple identifiers are exempt)
     "asyncWithVarShadowing_es6.ts",

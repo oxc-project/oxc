@@ -33,6 +33,10 @@ impl<'a> Lexer<'a> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
         let c = self.peek_char().unwrap();
         match c {
+            // U+FFFD (replacement character) appears when a binary file is decoded as UTF-8.
+            // This is likely a binary file that cannot be parsed.
+            // <https://github.com/microsoft/TypeScript/blob/main/src/compiler/scanner.ts>
+            '\u{FFFD}' => self.handle_binary_file(),
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
                 self.consume_char();
@@ -43,6 +47,13 @@ impl<'a> Lexer<'a> {
             c if is_irregular_line_terminator(c) => self.handle_irregular_line_terminator(c),
             _ => self.handle_invalid_unicode_char(c),
         }
+    }
+
+    #[cold]
+    fn handle_binary_file(&mut self) -> Kind {
+        self.error(diagnostics::file_appears_to_be_binary());
+        self.source.advance_to_end();
+        Kind::Eof
     }
 
     #[cold]

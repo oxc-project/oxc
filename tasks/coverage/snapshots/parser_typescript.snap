@@ -3,7 +3,7 @@ commit: 95e3aaa9
 parser_typescript Summary:
 AST Parsed     : 9841/9841 (100.00%)
 Positive Passed: 9841/9841 (100.00%)
-Negative Passed: 1529/2557 (59.80%)
+Negative Passed: 1530/2558 (59.81%)
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tests/cases/compiler/FunctionDeclaration4.ts
@@ -2312,6 +2312,13 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  5 │ }
    ╰────
 
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tests/cases/compiler/TransportStream.ts:1:2]
+ 1 │ G@�G@�G@�
+   ·  ▲
+   ╰────
+  help: Try inserting a semicolon here
+
   × Getters and setters must have an implementation.
     ╭─[typescript/tests/cases/compiler/abstractPropertyNegative.ts:16:9]
  15 │     abstract notAllowed: string;
@@ -4586,11 +4593,7 @@ Expect Syntax Error: tasks/coverage/typescript/tests/cases/conformance/types/wit
  293 │     class interface { }
      ╰────
 
-  × Invalid Character `�`
-   ╭─[typescript/tests/cases/compiler/corrupted.ts:1:1]
- 1 │ ���
-   · ─
-   ╰────
+  × TS(1490): File appears to be binary.
 
   × TS(2391): Function implementation is missing or not immediately following the declaration.
    ╭─[typescript/tests/cases/compiler/crashOnMethodSignatures.ts:2:5]
