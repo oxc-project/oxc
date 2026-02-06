@@ -748,30 +748,20 @@ impl Message {
             Some(CompositeFix::merge_fixes(fix_vec, source_text))
         };
 
-        let suggestions = mem::take(&mut val.suggestions).into_iter().map(|mut suggestion| {
-            let last_fix_index = suggestion.fixes.len().wrapping_sub(1);
+        let suggestions = mem::take(&mut val.suggestions).into_iter().map(|suggestion| {
             let fix_vec = suggestion
                 .fixes
                 .into_iter()
-                .enumerate()
-                .map(|(i, fix)| {
-                    // Don't clone the message description on last turn of loop
-                    let message = if i < last_fix_index {
-                        suggestion.message.description.clone()
-                    } else {
-                        mem::take(&mut suggestion.message.description)
-                    };
-
-                    crate::fixer::Fix {
-                        content: Cow::Owned(fix.text),
-                        span: Span::new(fix.range.pos, fix.range.end),
-                        message: Some(Cow::Owned(message)),
-                        kind: crate::fixer::FixKind::Suggestion,
-                    }
+                .map(|fix| crate::fixer::Fix {
+                    content: Cow::Owned(fix.text),
+                    span: Span::new(fix.range.pos, fix.range.end),
+                    message: None,
+                    kind: crate::fixer::FixKind::Suggestion,
                 })
                 .collect();
 
             CompositeFix::merge_fixes(fix_vec, source_text)
+                .with_message(suggestion.message.description)
         });
 
         #[expect(clippy::from_iter_instead_of_collect)]
