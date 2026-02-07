@@ -705,7 +705,7 @@ impl Scoping {
 
     /// Check if a symbol is declared in a certain scope.
     pub fn scope_has_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> bool {
-        self.cell.borrow_dependent().bindings[scope_id].contains_key(name.as_str())
+        self.cell.borrow_dependent().bindings[scope_id].contains_key(&name)
     }
 
     /// Get the symbol bound to an identifier name in a scope.
@@ -717,7 +717,7 @@ impl Scoping {
     ///
     /// [`find_binding`]: Scoping::find_binding
     pub fn get_binding(&self, scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
-        self.cell.borrow_dependent().bindings[scope_id].get(name.as_str()).copied()
+        self.cell.borrow_dependent().bindings[scope_id].get(&name).copied()
     }
 
     /// Find a binding by name in a scope or its ancestors.
