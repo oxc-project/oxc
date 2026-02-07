@@ -1,5 +1,4 @@
 use memchr::{memmem::Finder, memmem::FinderRev};
-use oxc_span::VALID_EXTENSIONS;
 
 use crate::loader::JavaScriptSource;
 
@@ -16,11 +15,6 @@ const COMMENT_END: &str = "-->";
 /// File extensions that can contain JS/TS code in certain parts, such as in `<script>` tags, and can
 /// be loaded using the [`PartialLoader`].
 pub const LINT_PARTIAL_LOADER_EXTENSIONS: &[&str] = &["astro", "svelte"];
-
-/// All valid JavaScript/TypeScript extensions, plus additional framework files that
-/// contain JavaScript/TypeScript code in them (e.g., Vue, Astro, Svelte, etc.).
-pub const LINTABLE_EXTENSIONS: &[&str] =
-    constcat::concat_slices!([&str]: VALID_EXTENSIONS, LINT_PARTIAL_LOADER_EXTENSIONS);
 
 pub struct PartialLoader;
 
