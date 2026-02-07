@@ -1,7 +1,7 @@
 //! String interner for arena-allocated identifier strings.
 //!
 //! Provides a 2-tier cache (L1 direct-mapped + L2 hash table) for deduplicating
-//! strings allocated in the bump arena. Each interned string is stored with a
+//! strings in a dedicated append-only arena. Each interned string is stored with a
 //! header containing a precomputed hash and length.
 //!
 //! # Arena layout
@@ -20,8 +20,6 @@ use std::{
 
 use hashbrown::HashTable;
 use rustc_hash::FxBuildHasher;
-
-use crate::bump::Bump;
 
 /// Header prepended to every interned string in the arena.
 ///
@@ -48,6 +46,120 @@ const _: () = assert!(align_of::<InternedStrHeader>() == 8);
 
 /// Size of [`InternedStrHeader`] in bytes.
 pub const HEADER_SIZE: usize = size_of::<InternedStrHeader>();
+
+/// Alignment for arena chunks — matches [`InternedStrHeader`] alignment.
+const ARENA_ALIGN: usize = align_of::<InternedStrHeader>();
+
+/// Initial capacity for the first arena chunk (4 KiB).
+const ARENA_INITIAL_CAPACITY: usize = 4096;
+
+/// Simple append-only arena for interned string storage.
+///
+/// Allocates 8-byte-aligned chunks via the global allocator.
+/// When the current chunk is full, it is retired and a new chunk
+/// of double the size is allocated. Retired chunks are never freed
+/// until [`reset`] or [`Drop`], so all pointers remain stable.
+///
+/// [`reset`]: StringArena::reset
+pub(crate) struct StringArena {
+    /// Start of the current (active) chunk.
+    ptr: NonNull<u8>,
+    /// Bytes used in the current chunk.
+    offset: usize,
+    /// Total capacity of the current chunk.
+    cap: usize,
+    /// Retired chunks kept alive for pointer stability: `(pointer, capacity, used_bytes)`.
+    prev: std::vec::Vec<(NonNull<u8>, usize, usize)>,
+}
+
+impl StringArena {
+    pub(crate) const fn new() -> Self {
+        Self { ptr: NonNull::dangling(), offset: 0, cap: 0, prev: std::vec::Vec::new() }
+    }
+
+    /// Allocate `size` bytes aligned to [`ARENA_ALIGN`].
+    /// Returns a pointer to the start of the allocation.
+    #[inline]
+    pub(crate) fn alloc(&mut self, size: usize) -> NonNull<u8> {
+        let aligned = (self.offset + (ARENA_ALIGN - 1)) & !(ARENA_ALIGN - 1);
+        if aligned + size <= self.cap {
+            self.offset = aligned + size;
+            // SAFETY: `aligned` is within `[0, self.cap)` and `self.ptr` points to
+            // a valid allocation of at least `self.cap` bytes.
+            unsafe { NonNull::new_unchecked(self.ptr.as_ptr().add(aligned)) }
+        } else {
+            self.grow(size)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn grow(&mut self, size: usize) -> NonNull<u8> {
+        // Retire current chunk if it has any capacity.
+        if self.cap > 0 {
+            self.prev.push((self.ptr, self.cap, self.offset));
+        }
+
+        // New chunk: at least double previous, at least ARENA_INITIAL_CAPACITY, at least `size`.
+        let new_cap = (self.cap * 2).max(ARENA_INITIAL_CAPACITY).max(size);
+        // SAFETY: `ARENA_ALIGN` is 8 (a valid power of 2) and `new_cap > 0`.
+        let layout = unsafe { Layout::from_size_align_unchecked(new_cap, ARENA_ALIGN) };
+        // SAFETY: `layout` has non-zero size.
+        let ptr = unsafe { std::alloc::alloc(layout) };
+        let Some(ptr) = NonNull::new(ptr) else {
+            std::alloc::handle_alloc_error(layout);
+        };
+
+        self.ptr = ptr;
+        self.cap = new_cap;
+        self.offset = size;
+
+        ptr
+    }
+
+    /// Reset the arena, freeing all retired chunks.
+    /// Keeps the current (largest) chunk for reuse.
+    pub(crate) fn reset(&mut self) {
+        for &(ptr, cap, _) in &self.prev {
+            // SAFETY: Each chunk was allocated with `Layout::from_size_align(cap, ARENA_ALIGN)`.
+            unsafe {
+                let layout = Layout::from_size_align_unchecked(cap, ARENA_ALIGN);
+                std::alloc::dealloc(ptr.as_ptr(), layout);
+            }
+        }
+        self.prev.clear();
+        self.offset = 0;
+    }
+
+    /// Total capacity across all chunks (current + retired).
+    pub(crate) fn capacity(&self) -> usize {
+        self.prev.iter().map(|&(_, cap, _)| cap).sum::<usize>() + self.cap
+    }
+
+    /// Total bytes used across all chunks (current + retired).
+    pub(crate) fn used_bytes(&self) -> usize {
+        self.prev.iter().map(|&(_, _, used)| used).sum::<usize>() + self.offset
+    }
+}
+
+impl Drop for StringArena {
+    fn drop(&mut self) {
+        for &(ptr, cap, _) in &self.prev {
+            // SAFETY: Each chunk was allocated with `Layout::from_size_align(cap, ARENA_ALIGN)`.
+            unsafe {
+                let layout = Layout::from_size_align_unchecked(cap, ARENA_ALIGN);
+                std::alloc::dealloc(ptr.as_ptr(), layout);
+            }
+        }
+        if self.cap > 0 {
+            // SAFETY: Current chunk was allocated with `Layout::from_size_align(self.cap, ARENA_ALIGN)`.
+            unsafe {
+                let layout = Layout::from_size_align_unchecked(self.cap, ARENA_ALIGN);
+                std::alloc::dealloc(self.ptr.as_ptr(), layout);
+            }
+        }
+    }
+}
 
 /// Raw pointer + length pair stored in the interner's caches.
 /// Points to the first byte of the string data (past the header).
@@ -88,6 +200,7 @@ const L1_SIZE: usize = 256;
 pub(crate) struct StringInterner {
     l1: [RawStr; L1_SIZE],
     l2: HashTable<RawStr>,
+    arena: StringArena,
 }
 
 // SAFETY: `StringInterner` is only accessed via `&self` on `Allocator` through `UnsafeCell`.
@@ -104,21 +217,25 @@ impl Default for StringInterner {
 
 impl StringInterner {
     pub(crate) fn new() -> Self {
-        Self { l1: [RawStr::NULL; L1_SIZE], l2: HashTable::new() }
+        Self { l1: [RawStr::NULL; L1_SIZE], l2: HashTable::new(), arena: StringArena::new() }
     }
 
     /// Intern a string, returning a [`NonNull<u8>`] pointing to the string bytes
     /// in the arena (with the header at a negative offset).
     ///
     /// If the string was previously interned, returns the existing pointer.
-    /// Otherwise allocates `[header][bytes]` in the bump arena.
-    #[expect(clippy::cast_possible_truncation)]
-    pub(crate) fn intern(&mut self, s: &str, bump: &Bump) -> NonNull<u8> {
+    /// Otherwise allocates `[header][bytes]` in the interner's own arena.
+    ///
+    /// The L1 cache check (hot path) is inlined at every call site.
+    /// L2 check and allocation are in a separate cold function.
+    #[expect(clippy::inline_always, clippy::cast_possible_truncation)]
+    #[inline(always)]
+    pub(crate) fn intern(&mut self, s: &str) -> NonNull<u8> {
         let hash = fx_hash(s);
         let idx = (hash as usize) % L1_SIZE;
         let s_len = s.len() as u32;
 
-        // L1 check (fast path)
+        // L1 check (hot path — inlined at every call site)
         let cached = self.l1[idx];
         if !cached.ptr.is_null() && cached.len == s_len {
             // SAFETY: `cached.ptr` was stored from a valid arena-allocated interned string.
@@ -129,6 +246,16 @@ impl StringInterner {
             }
         }
 
+        self.intern_slow(s, hash, idx, s_len)
+    }
+
+    /// Slow path for interning: L2 lookup + arena allocation.
+    ///
+    /// Separated from [`intern`] so that the L1 fast path can be inlined
+    /// without bloating call sites with the L2 and allocation code.
+    #[cold]
+    #[inline(never)]
+    fn intern_slow(&mut self, s: &str, hash: u64, idx: usize, s_len: u32) -> NonNull<u8> {
         // L2 check
         let l2_result = self.l2.find(hash, |raw| {
             // SAFETY: All `RawStr` entries in L2 were stored from valid arena-allocated strings.
@@ -142,7 +269,7 @@ impl StringInterner {
         }
 
         // Cache miss — allocate in arena
-        let bytes_ptr = alloc_interned_str(bump, s, hash);
+        let bytes_ptr = alloc_interned_str(&mut self.arena, s, hash);
         let raw = RawStr { ptr: bytes_ptr, len: s_len };
         self.l2.insert_unique(hash, raw, |r| {
             // SAFETY: `r.ptr` points to string bytes with a valid header at negative offset.
@@ -154,10 +281,21 @@ impl StringInterner {
         unsafe { NonNull::new_unchecked(bytes_ptr.cast_mut()) }
     }
 
-    /// Reset the interner, clearing both caches.
+    /// Reset the interner, clearing both caches and the string arena.
     pub(crate) fn reset(&mut self) {
         self.l1 = [RawStr::NULL; L1_SIZE];
         self.l2.clear();
+        self.arena.reset();
+    }
+
+    /// Total capacity of the string arena.
+    pub(crate) fn arena_capacity(&self) -> usize {
+        self.arena.capacity()
+    }
+
+    /// Total bytes used in the string arena.
+    pub(crate) fn arena_used_bytes(&self) -> usize {
+        self.arena.used_bytes()
     }
 }
 
@@ -183,16 +321,15 @@ unsafe fn read_header(bytes_ptr: *const u8) -> &'static InternedStrHeader {
     unsafe { &*bytes_ptr.sub(HEADER_SIZE).cast::<InternedStrHeader>() }
 }
 
-/// Allocate `[InternedStrHeader][string bytes]` in the bump arena.
+/// Allocate `[InternedStrHeader][string bytes]` in the string arena.
 /// Returns a pointer to the first byte of the string data (past the header).
 #[expect(clippy::cast_possible_truncation, clippy::cast_ptr_alignment)]
-fn alloc_interned_str(bump: &Bump, s: &str, hash: u64) -> *const u8 {
+fn alloc_interned_str(arena: &mut StringArena, s: &str, hash: u64) -> *const u8 {
     let total = HEADER_SIZE + s.len();
-    let layout = Layout::from_size_align(total, align_of::<InternedStrHeader>()).unwrap();
-    let ptr = bump.alloc_layout(layout);
+    let ptr = arena.alloc(total);
 
     // SAFETY: `ptr` is freshly allocated with sufficient size for header + string bytes,
-    // and aligned to `align_of::<InternedStrHeader>()`.
+    // and aligned to 8 bytes (ARENA_ALIGN == align_of::<InternedStrHeader>()).
     unsafe {
         let header_ptr = ptr.as_ptr().cast::<InternedStrHeader>();
         header_ptr.write(InternedStrHeader::new(hash, s.len() as u32));

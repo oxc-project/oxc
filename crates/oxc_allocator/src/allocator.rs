@@ -223,6 +223,8 @@ use crate::tracking::AllocationStats;
 pub struct Allocator {
     bump: Bump,
     /// String interner for deduplicating identifier strings.
+    /// Owns a dedicated append-only arena for interned string storage,
+    /// separate from `bump` so strings are contiguous in memory.
     interner: UnsafeCell<StringInterner>,
     /// Used to track number of allocations made in this allocator when `track_allocations` feature is enabled
     #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
@@ -552,7 +554,9 @@ impl Allocator {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn capacity(&self) -> usize {
-        self.bump.allocated_bytes()
+        // SAFETY: We have `&self` and `Allocator` is `!Sync`, so no concurrent access.
+        let interner = unsafe { &*self.interner.get() };
+        self.bump.allocated_bytes() + interner.arena_capacity()
     }
 
     /// Calculate the total size of data used in this [`Allocator`], in bytes.
@@ -622,7 +626,9 @@ impl Allocator {
         for (_, size) in chunks_iter {
             bytes += size;
         }
-        bytes
+        // SAFETY: We have `&self` and `Allocator` is `!Sync`, so no concurrent access.
+        let interner = unsafe { &*self.interner.get() };
+        bytes + interner.arena_used_bytes()
     }
 
     /// Intern a string into the arena, returning a [`NonNull<u8>`] pointing to the string bytes.
@@ -644,7 +650,7 @@ impl Allocator {
         // 1. `Allocator` is `!Sync`, so only one thread can access it.
         // 2. No other code can access the interner while we hold `&self`.
         let interner = unsafe { &mut *self.interner.get() };
-        interner.intern(s, &self.bump)
+        interner.intern(s)
     }
 
     /// Get inner [`Bump`].
