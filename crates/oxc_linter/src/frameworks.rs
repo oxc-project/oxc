@@ -69,6 +69,11 @@ impl FrameworkFlags {
     pub const fn is_jest(self) -> bool {
         self.contains(Self::Jest)
     }
+
+    #[inline]
+    pub const fn is_vue(self) -> bool {
+        self.contains(Self::Vue)
+    }
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>
