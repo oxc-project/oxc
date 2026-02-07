@@ -154,6 +154,8 @@ fn test() {
         // When both default and named exports are re-exported from the same source,
         // using the named export's name for the default import is not confusing.
         r#"import userEvent from "./re-export-default-and-named""#,
+        // Also allowed.
+        r#"import { userEvent } from "./re-export-default-and-named""#,
     ];
 
     let fail = vec![
