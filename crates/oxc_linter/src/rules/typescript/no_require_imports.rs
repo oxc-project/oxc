@@ -133,7 +133,7 @@ impl Rule for NoRequireImports {
             AstKind::CallExpression(call_expr) => {
                 if node.scope_id() != ctx.scoping().root_scope_id()
                     && let Some(id) = call_expr.callee.get_identifier_reference()
-                    && !id.is_global_reference_name("require", ctx.scoping())
+                    && !id.is_global_reference_name(Ident::new_const("require"), ctx.scoping())
                 {
                     return;
                 }
