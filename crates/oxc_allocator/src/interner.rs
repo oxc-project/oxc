@@ -79,7 +79,8 @@ impl StringArena {
 
     /// Allocate `size` bytes aligned to [`ARENA_ALIGN`].
     /// Returns a pointer to the start of the allocation.
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn alloc(&mut self, size: usize) -> NonNull<u8> {
         let aligned = (self.offset + (ARENA_ALIGN - 1)) & !(ARENA_ALIGN - 1);
         if aligned + size <= self.cap {
@@ -174,16 +175,15 @@ struct RawStr {
 impl RawStr {
     const NULL: Self = Self { ptr: std::ptr::null(), len: 0 };
 
-    /// Reconstruct a `&str` from the raw pointer and length.
+    /// Reconstruct a `&[u8]` from the raw pointer and length.
     ///
     /// # Safety
     /// The pointer must be valid and point to `len` bytes of valid UTF-8.
-    #[inline]
-    unsafe fn as_str(&self) -> &str {
-        // SAFETY: Caller guarantees `ptr` is valid for `len` bytes of UTF-8.
-        let slice = unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) };
-        // SAFETY: The string was originally valid UTF-8 when interned.
-        unsafe { std::str::from_utf8_unchecked(slice) }
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    unsafe fn as_bytes(&self) -> &[u8] {
+        // SAFETY: Caller guarantees `ptr` is valid for `len` bytes.
+        unsafe { std::slice::from_raw_parts(self.ptr, self.len as usize) }
     }
 }
 
@@ -226,40 +226,44 @@ impl StringInterner {
     /// If the string was previously interned, returns the existing pointer.
     /// Otherwise allocates `[header][bytes]` in the interner's own arena.
     ///
-    /// The L1 cache check (hot path) is inlined at every call site.
-    /// L2 check and allocation are in a separate cold function.
+    /// The L1 cache check (hot path) is inlined at every call site and uses a cheap
+    /// byte-based index (no hashing). `fx_hash` is only computed on L1 miss inside
+    /// the cold `intern_slow` function.
     #[expect(clippy::inline_always, clippy::cast_possible_truncation)]
     #[inline(always)]
     pub(crate) fn intern(&mut self, s: &str) -> NonNull<u8> {
-        let hash = fx_hash(s);
-        let idx = (hash as usize) % L1_SIZE;
         let s_len = s.len() as u32;
+        let idx = l1_index(s);
 
-        // L1 check (hot path — inlined at every call site)
+        // L1 check (hot path — no hashing, inlined at every call site)
         let cached = self.l1[idx];
         if !cached.ptr.is_null() && cached.len == s_len {
             // SAFETY: `cached.ptr` was stored from a valid arena-allocated interned string.
-            let cached_str = unsafe { cached.as_str() };
-            if cached_str == s {
+            if unsafe { cached.as_bytes() } == s.as_bytes() {
                 // SAFETY: `cached.ptr` was allocated in the arena and is non-null.
                 return unsafe { NonNull::new_unchecked(cached.ptr.cast_mut()) };
             }
         }
 
-        self.intern_slow(s, hash, idx, s_len)
+        // Hash computed inside intern_slow (keeps inlined fast path minimal)
+        self.intern_slow(s, idx, s_len)
     }
 
-    /// Slow path for interning: L2 lookup + arena allocation.
+    /// Slow path for interning: hash computation + L2 lookup + arena allocation.
     ///
     /// Separated from [`intern`] so that the L1 fast path can be inlined
     /// without bloating call sites with the L2 and allocation code.
+    /// `fx_hash` is computed here rather than in `intern()` to keep the
+    /// always-inlined fast path as small as possible.
     #[cold]
     #[inline(never)]
-    fn intern_slow(&mut self, s: &str, hash: u64, idx: usize, s_len: u32) -> NonNull<u8> {
+    fn intern_slow(&mut self, s: &str, idx: usize, s_len: u32) -> NonNull<u8> {
+        let hash = fx_hash(s);
+
         // L2 check
         let l2_result = self.l2.find(hash, |raw| {
             // SAFETY: All `RawStr` entries in L2 were stored from valid arena-allocated strings.
-            raw.len == s_len && unsafe { raw.as_str() == s }
+            raw.len == s_len && unsafe { raw.as_bytes() } == s.as_bytes()
         });
         if let Some(entry) = l2_result {
             let entry = *entry;
@@ -271,10 +275,12 @@ impl StringInterner {
         // Cache miss — allocate in arena
         let bytes_ptr = alloc_interned_str(&mut self.arena, s, hash);
         let raw = RawStr { ptr: bytes_ptr, len: s_len };
+        #[expect(clippy::cast_ptr_alignment)]
         self.l2.insert_unique(hash, raw, |r| {
             // SAFETY: `r.ptr` points to string bytes with a valid header at negative offset.
-            // The pointer was originally aligned to `InternedStrHeader` alignment.
-            unsafe { read_header(r.ptr).hash }
+            // Hash is first field (u64) at ptr - HEADER_SIZE. Alignment is guaranteed
+            // because the header was allocated at 8-byte alignment.
+            unsafe { r.ptr.sub(HEADER_SIZE).cast::<u64>().read() }
         });
         self.l1[idx] = raw;
         // SAFETY: `bytes_ptr` was just allocated in the arena and is non-null.
@@ -299,26 +305,25 @@ impl StringInterner {
     }
 }
 
+/// Cheap L1 index from string bytes — no full hash computation.
+/// Uses first byte, last byte, and length for reasonable distribution
+/// across 256 slots.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+fn l1_index(s: &str) -> usize {
+    let bytes = s.as_bytes();
+    let len = bytes.len();
+    let first = if len > 0 { bytes[0] as usize } else { 0 };
+    let last = if len > 1 { bytes[len - 1] as usize } else { first };
+    (first.wrapping_mul(31) ^ last ^ len) % L1_SIZE
+}
+
 /// Compute FxHash of a byte string.
 #[inline]
 pub fn fx_hash(s: &str) -> u64 {
     let mut hasher = FxBuildHasher.build_hasher();
     hasher.write(s.as_bytes());
     hasher.finish()
-}
-
-/// Read the [`InternedStrHeader`] from a pointer to interned string bytes.
-///
-/// # Safety
-/// `bytes_ptr` must point to string bytes that were allocated via [`alloc_interned_str`],
-/// with a valid [`InternedStrHeader`] at `bytes_ptr - HEADER_SIZE`. The original allocation
-/// must have been aligned to `align_of::<InternedStrHeader>()`.
-#[inline]
-#[expect(clippy::cast_ptr_alignment)]
-unsafe fn read_header(bytes_ptr: *const u8) -> &'static InternedStrHeader {
-    // SAFETY: The header is at `bytes_ptr - HEADER_SIZE`. The original allocation was aligned
-    // to `align_of::<InternedStrHeader>()`, so the header pointer is properly aligned.
-    unsafe { &*bytes_ptr.sub(HEADER_SIZE).cast::<InternedStrHeader>() }
 }
 
 /// Allocate `[InternedStrHeader][string bytes]` in the string arena.
@@ -348,14 +353,16 @@ fn alloc_interned_str(arena: &mut StringArena, s: &str, hash: u64) -> *const u8 
 /// pointing to valid interned string bytes with a valid [`InternedStrHeader`] at `ptr - HEADER_SIZE`.
 ///
 /// [`Allocator::intern_str`]: crate::Allocator::intern_str
-#[inline]
+#[expect(clippy::inline_always, clippy::cast_ptr_alignment)]
+#[inline(always)]
 pub unsafe fn interned_str_from_ptr<'a>(ptr: NonNull<u8>) -> &'a str {
-    // SAFETY: Caller guarantees `ptr` was returned by `intern_str`, so the header is valid.
-    let header = unsafe { read_header(ptr.as_ptr()) };
+    // Read `len` directly from header. Layout: [hash:u64 @ -16][len:u32 @ -8][_pad:u32 @ -4][string @ 0]
+    // SAFETY: Caller guarantees `ptr` was returned by `intern_str`. The `len` field is at
+    // `ptr - 8` (offset 8 in the 16-byte header). The pointer is 8-byte aligned, so `ptr - 8`
+    // is 4-byte aligned (valid for u32 read).
+    let len = unsafe { ptr.as_ptr().sub(8).cast::<u32>().read() as usize };
     // SAFETY: The string bytes are valid UTF-8, allocated contiguously after the header.
-    let slice = unsafe { std::slice::from_raw_parts(ptr.as_ptr(), header.len as usize) };
-    // SAFETY: The string was valid UTF-8 when it was interned.
-    unsafe { std::str::from_utf8_unchecked(slice) }
+    unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(ptr.as_ptr(), len)) }
 }
 
 #[cfg(test)]

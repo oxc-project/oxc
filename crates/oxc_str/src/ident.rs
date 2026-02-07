@@ -117,12 +117,13 @@ impl<'a> Ident<'a> {
     }
 
     /// Get the precomputed FxHash stored in the interned string header.
-    #[expect(clippy::cast_ptr_alignment)]
-    #[inline]
+    #[expect(clippy::inline_always, clippy::cast_ptr_alignment)]
+    #[inline(always)]
     pub fn precomputed_hash(&self) -> u64 {
+        // Read hash directly — it's the first field (u64) at ptr - HEADER_SIZE.
         // SAFETY: `self.ptr` was created by `intern_str`. The header is at `ptr - HEADER_SIZE`,
-        // and the original allocation was aligned to `align_of::<InternedStrHeader>()`.
-        unsafe { (*self.ptr.as_ptr().sub(HEADER_SIZE).cast::<InternedStrHeader>()).hash }
+        // and the original allocation was aligned to 8 bytes.
+        unsafe { self.ptr.as_ptr().sub(HEADER_SIZE).cast::<u64>().read() }
     }
 }
 
@@ -341,7 +342,8 @@ impl PartialEq<Ident<'_>> for Cow<'_, str> {
 }
 
 impl hash::Hash for Ident<'_> {
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn hash<H: hash::Hasher>(&self, hasher: &mut H) {
         hasher.write_u64(self.precomputed_hash());
     }
