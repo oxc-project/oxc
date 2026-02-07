@@ -9,6 +9,7 @@ use std::{
 };
 
 use indexmap::IndexSet;
+use oxc_ast::ast::Program;
 use rayon::iter::ParallelDrainRange;
 use rayon::{
     Scope,
@@ -21,10 +22,9 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{Allocator, AllocatorGuard, AllocatorPool};
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
-use oxc_parser::{ParseOptions, Parser};
 use oxc_resolver::Resolver;
 use oxc_semantic::{Semantic, SemanticBuilder};
-use oxc_span::{CompactStr, SourceType, VALID_EXTENSIONS};
+use oxc_span::{CompactStr, SourceType, Span, VALID_EXTENSIONS};
 
 use crate::{
     Fixer, LINTABLE_EXTENSIONS, Linter, Message, PossibleFixes,
@@ -957,7 +957,7 @@ impl Runtime {
         mut out_sections: Option<&mut SectionContents<'a>>,
     ) -> SmallVec<[Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1]> {
         let section_sources = PartialLoader::parse(ext, source_text)
-            .unwrap_or_else(|| vec![JavaScriptSource::partial(source_text, source_type, 0)]);
+            .unwrap_or_else(|| vec![JavaScriptSource::new(source_text, source_type)]);
 
         let mut section_module_records = SmallVec::<
             [Result<ResolvedModuleRecord, Vec<OxcDiagnostic>>; 1],
@@ -966,9 +966,10 @@ impl Runtime {
             match self.process_source_section(
                 path,
                 allocator,
-                section_source.source_text,
-                section_source.source_type,
                 check_syntax_errors,
+                todo!(),
+                todo!(),
+                todo!(),
             ) {
                 Ok((record, semantic)) => {
                     section_module_records.push(Ok(record));
@@ -1008,35 +1009,24 @@ impl Runtime {
         &self,
         path: &Path,
         allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
         check_syntax_errors: bool,
+        program: Program<'a>,
+        irregular_whitespaces: Box<[Span]>,
+        module_record: &oxc_syntax::module_record::ModuleRecord,
     ) -> Result<(ResolvedModuleRecord, Semantic<'a>), Vec<OxcDiagnostic>> {
-        let ret = Parser::new(allocator, source_text, source_type)
-            .with_options(ParseOptions {
-                parse_regular_expression: true,
-                allow_return_outside_function: true,
-                ..ParseOptions::default()
-            })
-            .parse();
-
-        if !ret.errors.is_empty() {
-            return Err(if ret.is_flow_language { vec![] } else { ret.errors });
-        }
-
         let semantic_ret = SemanticBuilder::new()
             .with_cfg(true)
             .with_check_syntax_error(check_syntax_errors)
-            .build(allocator.alloc(ret.program));
+            .build(allocator.alloc(program));
 
         if !semantic_ret.errors.is_empty() {
             return Err(semantic_ret.errors);
         }
 
         let mut semantic = semantic_ret.semantic;
-        semantic.set_irregular_whitespaces(ret.irregular_whitespaces);
+        semantic.set_irregular_whitespaces(irregular_whitespaces);
 
-        let module_record = Arc::new(ModuleRecord::new(path, &ret.module_record, &semantic));
+        let module_record = Arc::new(ModuleRecord::new(path, module_record, &semantic));
 
         let mut resolved_module_requests: Vec<ResolvedModuleRequest> = vec![];
 
