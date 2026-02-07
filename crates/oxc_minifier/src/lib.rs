@@ -67,6 +67,9 @@ use rustc_hash::FxHashMap;
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
 
 pub use crate::{compressor::Compressor, options::*};
+#[expect(unused_imports, reason = "Provides rustdoc link target in reused ancestor docs")]
+#[doc(hidden)]
+pub(crate) use crate::traverse_context::MinifierTraverseCtx as TraverseCtx;
 
 #[derive(Debug, Clone)]
 pub struct MinifierOptions {
