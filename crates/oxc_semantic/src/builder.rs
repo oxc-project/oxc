@@ -406,7 +406,7 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
     ) -> SymbolId {
         if let Some(symbol_id) =
-            self.check_redeclaration(scope_id, span, name.as_str(), excludes, true)
+            self.check_redeclaration(scope_id, span, name, excludes, true)
         {
             self.add_redeclare_variable(symbol_id, includes, span);
             self.scoping.union_symbol_flag(symbol_id, includes);
@@ -439,12 +439,12 @@ impl<'a> SemanticBuilder<'a> {
         &self,
         scope_id: ScopeId,
         span: Span,
-        name: &str,
+        name: Ident<'_>,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scoping.get_binding(scope_id, name.into()).or_else(|| {
-            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+        let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
+            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name.as_str()).copied())
         })?;
 
         // `(function n(n) {})()`
@@ -467,7 +467,7 @@ impl<'a> SemanticBuilder<'a> {
             let flags = self.scoping.symbol_flags(symbol_id);
             if flags.intersects(excludes) {
                 let symbol_span = self.scoping.symbol_span(symbol_id);
-                self.error(redeclaration(name, symbol_span, span));
+                self.error(redeclaration(&name, symbol_span, span));
             }
         }
 

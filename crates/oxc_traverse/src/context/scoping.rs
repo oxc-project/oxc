@@ -232,11 +232,10 @@ impl<'a> TraverseScoping<'a> {
     #[inline]
     pub(crate) fn add_binding(
         &mut self,
-        name: &str,
+        name: Ident<'_>,
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> SymbolId {
-        let name = Ident::from(name);
         let symbol_id = self.scoping.create_symbol(SPAN, name, flags, scope_id, NodeId::DUMMY);
         self.scoping.add_binding(scope_id, name, symbol_id);
 
@@ -252,7 +251,7 @@ impl<'a> TraverseScoping<'a> {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = self.add_binding(name.as_str(), scope_id, flags);
+        let symbol_id = self.add_binding(name, scope_id, flags);
         BoundIdentifier::new(name, symbol_id)
     }
 
