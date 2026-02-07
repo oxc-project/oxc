@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use rustc_hash::FxHashMap;
 
 use oxc_index::IndexVec;
-use oxc_span::{Atom, Ident, Span};
+use oxc_span::{Ident, Span};
 use oxc_syntax::{
     class::{ClassId, ElementId, ElementKind},
     node::NodeId,
@@ -33,13 +33,13 @@ impl<'a> Element<'a> {
 #[derive(Debug)]
 pub struct PrivateIdentifierReference<'a> {
     pub id: NodeId,
-    pub name: Atom<'a>,
+    pub name: Ident<'a>,
     pub span: Span,
     pub element_ids: Vec<ElementId>,
 }
 
 impl<'a> PrivateIdentifierReference<'a> {
-    pub fn new(id: NodeId, name: Atom<'a>, span: Span, element_ids: Vec<ElementId>) -> Self {
+    pub fn new(id: NodeId, name: Ident<'a>, span: Span, element_ids: Vec<ElementId>) -> Self {
         Self { id, name, span, element_ids }
     }
 }
