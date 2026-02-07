@@ -121,7 +121,7 @@ impl<'a> ParserImpl<'a> {
         let span = self.cur_token().span();
         let name = self.cur_string();
         self.bump_remap(kind);
-        (span, Ident::from_in(name, self.ast.allocator))
+        (span, self.ast.ident(name))
     }
 
     pub(crate) fn check_identifier(&mut self, kind: Kind, ctx: Context) {
