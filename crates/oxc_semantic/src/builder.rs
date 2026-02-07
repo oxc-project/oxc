@@ -443,7 +443,7 @@ impl<'a> SemanticBuilder<'a> {
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scoping.get_binding(scope_id, name).or_else(|| {
+        let symbol_id = self.scoping.get_binding(scope_id, name.into()).or_else(|| {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
 

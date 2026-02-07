@@ -71,7 +71,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
 
                         // Hoist current symbol to target scope when it is not already declared
                         // in the target scope.
-                        if !builder.scoping.scope_has_binding(target_scope_id, &name) {
+                        if !builder.scoping.scope_has_binding(target_scope_id, name) {
                             // remove current scope binding and add to target scope
                             // avoid same symbols appear in multi-scopes
                             builder.scoping.remove_binding(scope_id, name);
